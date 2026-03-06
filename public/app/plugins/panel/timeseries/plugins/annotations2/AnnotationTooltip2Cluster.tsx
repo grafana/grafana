@@ -33,9 +33,8 @@ export const AnnotationTooltip2Cluster = ({
   const styles = useStyles2(getStyles);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
 
-  let annotationTooltipComponents: React.ReactNode[] = [];
-
-  let clusterIdx = annoVals.clusterIdx?.[annoIdx];
+  const annotationTooltipComponents: React.ReactNode[] = [];
+  const clusterIdx = annoVals.clusterIdx?.[annoIdx];
 
   for (let i = 0; i < annoVals.time.length; i++) {
     if (annoVals.clusterIdx?.[i] === clusterIdx && i !== annoIdx) {
