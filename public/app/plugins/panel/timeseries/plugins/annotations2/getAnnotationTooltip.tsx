@@ -18,18 +18,19 @@ export function getAnnotationTooltip(
   onAnnotationDelete?: (id: string) => void
 ) {
   const annoId = annoVals.id?.[annoIdx];
-  const dashboardUID = annoVals.dashboardUID?.[annoIdx];
+  const dashboardUID = annoVals.dashboardUID?.[annoIdx] ?? undefined;
+  const timeEnd = annoVals.timeEnd?.[annoIdx];
 
   // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
-  const canUpdateAnno = dashboardUID !== undefined && annoId !== undefined && annoId > 0;
+  const canUpdateAnno = dashboardUID !== undefined && annoId != null && annoId > 0;
   const canEdit = canUpdateAnno && canEditAnnotations(dashboardUID);
   const canDelete = canUpdateAnno && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
   let time: string = timeFormatter(annoVals.time[annoIdx], timeZone);
   let text: string = annoVals.text?.[annoIdx] ?? '';
 
-  if (annoVals.isRegion?.[annoIdx] && annoVals.timeEnd?.[annoIdx] !== undefined) {
-    time += ' - ' + timeFormatter(annoVals.timeEnd[annoIdx], timeZone);
+  if (annoVals.isRegion?.[annoIdx] && timeEnd != null) {
+    time += ' - ' + timeFormatter(timeEnd, timeZone);
   }
 
   // Alerting specific
@@ -44,7 +45,7 @@ export function getAnnotationTooltip(
 
   return {
     title,
-    onDelete: annoId !== undefined && onAnnotationDelete ? () => onAnnotationDelete(annoId?.toString()) : undefined,
+    onDelete: annoId != null && onAnnotationDelete ? () => onAnnotationDelete(annoId?.toString()) : undefined,
     canEdit,
     canDelete,
     time,

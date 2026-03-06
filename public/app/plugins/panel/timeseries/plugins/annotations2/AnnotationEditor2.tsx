@@ -64,7 +64,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const timeEnd = annoVals.timeEnd?.[annoIdx];
   const timeVal = annoVals.time[annoIdx];
   const time =
-    isRegionAnnotation && timeEnd !== undefined
+    isRegionAnnotation && timeEnd != null
       ? `${timeFormatter(timeVal)} - ${timeFormatter(timeEnd)}`
       : timeFormatter(timeVal);
 
@@ -103,7 +103,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
       </div>
       <Form<AnnotationEditFormDTO>
         onSubmit={onSubmit}
-        defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
+        defaultValues={{ description: annoVals.text?.[annoIdx] ?? '', tags: annoVals.tags?.[annoIdx] || [] }}
       >
         {({ register, errors, control }) => {
           return (

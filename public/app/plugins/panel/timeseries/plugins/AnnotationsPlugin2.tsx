@@ -47,23 +47,29 @@ enum ClusteringMode {
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 
+type NullableString = null | string;
+type NullableNumber = null | number;
+
 export type AnnotationVals = {
-  id?: number[];
-  dashboardUID?: string[];
   time: number[];
-  timeEnd?: number[];
-  text?: string[];
-  title?: string[];
   isRegion?: boolean[];
   color?: string[];
-  alertId?: number[];
-  newState?: string[];
+
+  id?: NullableNumber[];
+  clusterIdx?: NullableNumber[];
+  timeEnd?: NullableNumber[];
+  alertId?: NullableNumber[];
+
+  text?: NullableString[];
+  title?: NullableString[];
+  dashboardUID?: NullableString[];
+  newState?: NullableString[];
+  login?: NullableString[];
+  avatarUrl?: NullableString[];
+
   /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
   data?: unknown[];
-  login?: string[];
-  avatarUrl?: string[];
   tags?: string[][];
-  clusterIdx?: Array<number | null>;
 };
 
 export type XYAnnoVals = {
@@ -217,16 +223,17 @@ export const AnnotationsPlugin2 = ({
               if (skipClusteredAnno(vals, i)) {
                 continue;
               }
-              let color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
+              const isRegion = vals.isRegion?.[i];
+              const timeEnd = vals.timeEnd?.[i];
+              const color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
 
-              let x0 = u.valToPos(vals.time[i], 'x', true);
+              const x0 = u.valToPos(vals.time[i], 'x', true);
               renderLine(ctx, y0, y1, x0, color);
 
               // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
               // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
-
-              if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
-                let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+              if (isRegion && timeEnd) {
+                const x1 = u.valToPos(timeEnd, 'x', true);
                 renderLine(ctx, y0, y1, x1, color);
 
                 if (canvasRegionRendering) {
@@ -312,13 +319,16 @@ export const AnnotationsPlugin2 = ({
         if (skipClusteredAnno(vals, i)) {
           continue;
         }
-        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+        const isRegion = vals.isRegion?.[i];
+        const timeEnd = vals.timeEnd?.[i];
+        const color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+        const left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+
         let style: React.CSSProperties | null = null;
         let isVisible = true;
 
-        if (vals.isRegion?.[i] && vals.timeEnd?.[i] !== undefined) {
-          let right = Math.round(plot.valToPos(vals.timeEnd[i], 'x')) || 0; // handles -0
+        if (isRegion && timeEnd != null) {
+          let right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 

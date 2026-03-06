@@ -9,7 +9,7 @@ export function AnnotationTooltipBody({
   alertText,
   tags,
 }: {
-  title?: string;
+  title?: string | null;
   text: string;
   alertText: string;
   tags: string[];

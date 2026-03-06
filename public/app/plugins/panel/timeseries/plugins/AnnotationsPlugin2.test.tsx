@@ -5,6 +5,7 @@ import uPlot from 'uplot';
 
 import {
   applyFieldOverrides,
+  arrayToDataFrame,
   createDataFrame,
   createTheme,
   dateTimeFormat,
@@ -645,7 +646,7 @@ describe('AnnotationsPlugin2', () => {
       it('should render each frame into separate lanes in the viz', () => {
         setUp({
           annotations: [mockAlertingFrame, mockIRMAnnotationRegion],
-          multiLane: true,
+          annotationsOptions: { multiLane: true },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers).toHaveLength(14);
@@ -756,7 +757,7 @@ describe('AnnotationsPlugin2', () => {
       it('multi-lane disables indicator line and rect fill', () => {
         setUp({
           annotations: [mockAnnotationFrame],
-          multiLane: true,
+          annotationsOptions: { multiLane: true },
         });
         const mockU = createMockUPlot();
         const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;

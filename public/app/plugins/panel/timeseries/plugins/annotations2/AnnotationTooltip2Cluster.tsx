@@ -65,7 +65,7 @@ export const AnnotationTooltip2Cluster = ({
             canEdit={canEdit}
             canDelete={canDelete}
             isPinned={false}
-            onEdit={annotationId !== undefined ? () => onEdit(annotationId) : undefined}
+            onEdit={annotationId != null ? () => onEdit(annotationId) : undefined}
             onDelete={onDelete}
             onRemove={(e) => {
               // Don't trigger onClick
