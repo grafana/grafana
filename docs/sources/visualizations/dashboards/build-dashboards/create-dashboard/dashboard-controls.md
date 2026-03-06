@@ -165,3 +165,5 @@ To add a URL link to your dashboard, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+## Add filters
