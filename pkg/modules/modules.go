@@ -20,6 +20,7 @@ type Engine interface {
 type Registry interface {
 	RegisterModule(name string, fn func() (services.Service, error))
 	RegisterInvisibleModule(name string, fn func() (services.Service, error))
+	RegisterListener(listener services.ManagerListener)
 }
 
 type Manager interface {
@@ -39,9 +40,10 @@ type service struct {
 	targets       []string
 	dependencyMap map[string][]string
 
-	moduleManager  *tracing.ModuleManagerWrapper
-	serviceManager *services.Manager
-	serviceMap     map[string]services.Service
+	moduleManager    *tracing.ModuleManagerWrapper
+	serviceManager   *services.Manager
+	serviceMap       map[string]services.Service
+	managerListeners []services.ManagerListener
 }
 
 func New(
@@ -105,6 +107,10 @@ func (m *service) starting(ctx context.Context) error {
 		m.log.Warn("No modules registered...")
 		<-ctx.Done()
 		return nil
+	}
+
+	for _, l := range m.managerListeners {
+		m.serviceManager.AddListener(l)
 	}
 
 	listener := newServiceListener(m.log, m)
@@ -185,6 +191,12 @@ func (m *service) RegisterModule(name string, fn func() (services.Service, error
 // Invisible modules are not visible to the user, and are intended to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, fn func() (services.Service, error)) {
 	m.moduleManager.RegisterInvisibleModule(name, fn)
+}
+
+// RegisterListener registers a listener to the service manager lifecycle events.
+// Must be called before starting the service manager.
+func (m *service) RegisterListener(listener services.ManagerListener) {
+	m.managerListeners = append(m.managerListeners, listener)
 }
 
 func (m *service) IsModuleEnabled(name string) bool {

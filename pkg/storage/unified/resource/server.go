@@ -43,7 +43,8 @@ type ResourceServer interface {
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
 }
 
@@ -51,7 +52,8 @@ type ResourceServer interface {
 type SearchServer interface {
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
 }
 
@@ -248,7 +250,7 @@ type ResourceServerOptions struct {
 	OverridesService *OverridesService
 
 	// Diagnostics
-	Diagnostics resourcepb.DiagnosticsServer
+	Diagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
@@ -437,7 +439,7 @@ type server struct {
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
 	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
 	now              func() int64
@@ -1584,7 +1586,7 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	return s.diagnostics.IsHealthy(ctx, req)
+	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 // GetBlob implements BlobStore.

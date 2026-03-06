@@ -160,7 +160,7 @@ type searchServer struct {
 
 	injectFailuresPercent int
 
-	backendDiagnostics resourcepb.DiagnosticsServer
+	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
 // maybeInjectFailure returns an error for a configured percentage of calls.
@@ -720,7 +720,7 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 	if s.backendDiagnostics == nil {
 		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
 	}
-	return s.backendDiagnostics.IsHealthy(ctx, req)
+	return s.backendDiagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
