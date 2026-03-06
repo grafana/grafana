@@ -1548,6 +1548,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
+  * Use the new team service that uses the app platform APIs
+  * @default true
+  */
+  kubernetesTeamService?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

@@ -2673,6 +2673,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamService",
+        "resourceVersion": "1772786727038",
+        "creationTimestamp": "2026-03-06T08:45:27Z"
+      },
+      "spec": {
+        "description": "Use the new team service that uses the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesTeamSync",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

@@ -826,6 +826,10 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
