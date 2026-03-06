@@ -3197,7 +3197,18 @@
     },
     "silences": {
       "affected-instances": "Affected alert instances",
+      "filter": {
+        "search-by-matchers": "Search by matchers",
+        "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
+        "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
+      },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "operator": {
+        "equals": "Equals",
+        "matches-regex": "Matches regex",
+        "not-equal": "Not equal",
+        "not-matches-regex": "Does not match regex"
+      },
       "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "silences-editor": {
@@ -3211,10 +3222,6 @@
       "placeholder-whos-creating-the-silence": "Who's creating the silence",
       "save-silence": "Save silence",
       "saving": "Saving..."
-    },
-    "silences-filter": {
-      "search-by-matchers-tooltip": "Filter silences by using a comma separated list of matchers, e.g.",
-      "search-query-input-placeholder-search": "Search"
     },
     "silences-table": {
       "label-section-expired": "Expired silences ({{numExpired}})",
@@ -11737,7 +11744,7 @@
       "dialog-label": "Navigation",
       "dock": "Dock menu",
       "list-label": "Navigation",
-      "open": "Open menu",
+      "open": "Main menu",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12625,6 +12632,7 @@
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
+      "error-save-failed": "Failed to save repository setting",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-connection": "GitHub App connection",
@@ -13187,6 +13195,10 @@
       "make-sure": "Create a token with these permissions"
     },
     "warning-title-default": "Warning",
+    "watch-stream": {
+      "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
+      "error-title": "Live updates unavailable"
+    },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",
       "alert-point-1": "Resources can still be created, edited, or deleted during this process, but changes may not be exported.",
@@ -14722,7 +14734,12 @@
       "label-tags": "Tags",
       "placeholder-add-tags": "Add tags",
       "save": "Save",
-      "saving": "Saving"
+      "saving": "Saving",
+      "tooltip-close": "Close"
+    },
+    "annotation-marker": {
+      "annotation-label": "Annotation",
+      "annotation-region-label": "Annotation region"
     },
     "annotation-tooltip2": {
       "tooltip-delete": "Delete",
