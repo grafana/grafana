@@ -59,10 +59,10 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
 keywords:
- - saved queries
- - reuse queries
- - saved query
- - reuse query
+  - saved queries
+  - reuse queries
+  - saved query
+  - reuse query
 ---
 
 # Query and transform data
