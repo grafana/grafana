@@ -106,8 +106,11 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
+	// Use a cancellable context for the stream so that if a migration function
+	// fails, the server-side handler is notified and releases its bulk lock.
+	// Without this, the SQLite retry path would fail with "bulk export is already
+	// running" because the abandoned stream from the first attempt still holds the lock.
 	streamCtx, cancel := context.WithCancel(ctx)
-	// cancelling the ctx will rollback and releases bulk lock in case of error
 	defer cancel()
 
 	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)

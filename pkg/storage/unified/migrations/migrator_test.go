@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"google.golang.org/grpc"
 
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
@@ -24,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -439,13 +443,15 @@ func cleanupLegacyTables(t *testing.T, testCases []testcases.ResourceMigratorTes
 	}
 }
 
-// When a migration function fails, test that server BulkProcess handler releases its bulk lock.
 func TestUnifiedMigration_Migrate_CancelsStreamContextOnError(t *testing.T) {
+	// Regression test: when a migration function fails, the stream context must be
+	// canceled so the server-side BulkProcess handler releases its bulk lock.
+	// Without this, the SQLite retry path gets "bulk export is already running".
 	mockClient := resource.NewMockResourceClient(t)
 
 	var capturedCtx context.Context
 	mockClient.EXPECT().
-		BulkProcess(mock.Anything).
+		BulkProcess(mock.Anything, mock.Anything).
 		Run(func(ctx context.Context, opts ...grpc.CallOption) {
 			capturedCtx = ctx
 		}).
@@ -485,7 +491,7 @@ func TestUnifiedMigration_Migrate_CancelsStreamContextOnMigratorError(t *testing
 
 	var capturedCtx context.Context
 	mockClient.EXPECT().
-		BulkProcess(mock.Anything).
+		BulkProcess(mock.Anything, mock.Anything).
 		Run(func(ctx context.Context, opts ...grpc.CallOption) {
 			capturedCtx = ctx
 		}).
@@ -529,6 +535,111 @@ func (n *noopBulkProcessClient) Send(*resourcepb.BulkRequest) error {
 
 func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
 	return &resourcepb.BulkResponse{}, nil
+}
+
+// TestIntegrationMigrate_SQLiteRetryReleasesLock verifies that when a migration
+// fails and is retried (the SQLite parquet-buffer fallback path), the bulk lock
+// from the first attempt is properly released so the retry succeeds.
+// This is an end-to-end test using the real SQL backend, in-process gRPC, and
+// the actual bulkLock — the exact stack that failed before the fix.
+func TestIntegrationMigrate_SQLiteRetryReleasesLock(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// Use a standalone SQLite database to avoid interference from other tests.
+	dbPath := t.TempDir() + "/bulk-lock-test.db"
+	cfg := setting.NewCfg()
+	sec := cfg.SectionWithEnvOverrides("database")
+	sec.Key("type").SetValue("sqlite3")
+	sec.Key("path").SetValue(dbPath)
+
+	eDB, err := dbimpl.ProvideResourceDB(nil, cfg, nil)
+	require.NoError(t, err)
+
+	backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
+		DBProvider: eDB,
+		IsHA:       false,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+	svc, ok := backend.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	t.Cleanup(func() {
+		_ = services.StopAndAwaitTerminated(context.Background(), svc)
+	})
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	require.NoError(t, err)
+
+	client := resource.NewLocalResourceClient(server)
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(migrations.MigrationDefinition{
+		ID:          "test-retry",
+		MigrationID: "test retry migration",
+		Resources: []migrations.ResourceInfo{
+			{GroupResource: gr},
+		},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				// no-op: we control success/failure at the Migrate level
+				return nil
+			},
+		},
+	})
+
+	migrator := migrations.ProvideUnifiedMigrator(client, registry)
+	migrateOpts := migrations.MigrateOptions{
+		Namespace: "default",
+		Resources: []schema.GroupResource{gr},
+	}
+
+	// First call: register a failing migrator to simulate the first attempt.
+	// The migrator sends one request before failing, which ensures the server
+	// handler has entered its Recv() loop and holds the bulkLock.
+	failRegistry := migrations.NewMigrationRegistry()
+	failRegistry.Register(migrations.MigrationDefinition{
+		ID:          "test-retry",
+		MigrationID: "test retry migration",
+		Resources: []migrations.ResourceInfo{
+			{GroupResource: gr},
+		},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				// Send a request so the server enters its processing loop (holding the bulk lock).
+				_ = stream.Send(&resourcepb.BulkRequest{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     gr.Group,
+						Resource:  gr.Resource,
+						Name:      "test-item",
+					},
+					Action: resourcepb.BulkRequest_ADDED,
+					Value:  []byte(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"test-item","namespace":"default"},"spec":{"title":"Test"}}`),
+				})
+				return fmt.Errorf("simulated SQLite cache spill failure")
+			},
+		},
+	})
+	failMigrator := migrations.ProvideUnifiedMigrator(client, failRegistry)
+	authCtx := identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), "default")
+	_, err = failMigrator.Migrate(authCtx, migrateOpts)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "simulated SQLite cache spill failure")
+
+	// Second call: the bulk lock must have been released. This is the retry attempt.
+	// Before the fix, this would fail with "bulk export is already running".
+	// The context cancellation propagates asynchronously to the server, so we
+	// use require.Eventually to allow time for the lock to be released.
+	require.Eventually(t, func() bool {
+		authCtx = identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), "default")
+		rsp, err := migrator.Migrate(authCtx, migrateOpts)
+		return err == nil && rsp != nil && rsp.Error == nil
+	}, 5*time.Second, 50*time.Millisecond, "bulk lock was not released after context cancellation")
 }
 
 func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
