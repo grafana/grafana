@@ -117,9 +117,6 @@ export function ImportForm({
         </Field>
         {inputs.dataSources &&
           inputs.dataSources.map((input: DataSourceInput, index: number) => {
-            if (input.pluginId === ExpressionDatasourceRef.type) {
-              return null;
-            }
             const dataSourceOption = `dataSources.${index}` as const;
             const current = watchDataSources ?? [];
             return (
