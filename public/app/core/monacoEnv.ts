@@ -1,5 +1,4 @@
 import { monacoLanguageRegistry } from '@grafana/data';
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 export function setMonacoEnv() {
   // Do not use window.self here, as it will not work in the worker context

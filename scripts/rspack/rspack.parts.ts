@@ -155,28 +155,44 @@ export function getExperiments(env: Record<string, unknown> = {}) {
 export function getModuleRules(env: Record<string, unknown> = {}) {
   const commonModuleRules: RuleSetRules = [
     {
-      test: /\.(jsx?|tsx?)$/,
-      use: [
-        {
-          loader: 'builtin:swc-loader',
-          options: {
-            jsc: {
-              parser: {
-                syntax: 'typescript',
-                tsx: true,
-              },
-              transform: {
-                react: {
-                  runtime: 'automatic',
-                  development: Boolean(env.development),
-                  // refresh: Boolean(env.development),
-                },
+      test: /\.tsx$/,
+      use: {
+        loader: 'builtin:swc-loader',
+        options: {
+          jsc: {
+            parser: {
+              syntax: 'typescript',
+              jsx: true,
+            },
+            externalHelpers: true,
+            preserveAllComments: false,
+            transform: {
+              react: {
+                runtime: 'automatic',
+                throwIfNamespace: true,
+                useBuiltins: false,
               },
             },
-            // env: { targets: 'defaults' },
           },
         },
-      ],
+      },
+      type: 'javascript/auto',
+    },
+    {
+      test: /\.ts$/,
+      use: {
+        loader: 'builtin:swc-loader',
+        options: {
+          jsc: {
+            parser: {
+              syntax: 'typescript',
+            },
+            externalHelpers: true,
+            preserveAllComments: false,
+          },
+        },
+      },
+      type: 'javascript/auto',
     },
     {
       test: /\.(sa|sc|c)ss$/,
