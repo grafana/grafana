@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,12 +34,22 @@ export class WhatsNewSplash extends SceneObjectBase<WhatsNewSplashState> {
   static Component = WhatsNewSplashComponent;
 }
 
+type Concept = 'A' | 'B' | 'C';
+
+interface ConceptProps {
+  currentSlide: number;
+  setCurrentSlide: (i: number) => void;
+  onClose: () => void;
+}
+
 interface SlideContent {
   index: number;
   title: string;
   featureTitle: string;
   featureDescription: string;
   iconPath: string;
+  tabLabel: string;
+  tabIcon: string;
   heroContent: React.ReactNode;
 }
 
@@ -266,6 +276,8 @@ const SLIDES: Omit<SlideContent, 'heroContent'>[] = [
     featureDescription:
       'Build complex queries with multiple data sources, transformations, and expressions with more clarity. The new stack component gives you a bird\'s eye view of your data structure and frees up your workspace.',
     iconPath: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+    tabLabel: 'Query stack',
+    tabIcon: 'layers-alt',
   },
   {
     index: 1,
@@ -274,6 +286,8 @@ const SLIDES: Omit<SlideContent, 'heroContent'>[] = [
     featureDescription:
       'Chain multiple transformations to filter, join, group, and compute new fields from your raw data. No need to modify your queries — transform the results directly in Grafana.',
     iconPath: 'M4 6h16M4 12h16M4 18h7',
+    tabLabel: 'Transformations',
+    tabIcon: 'shuffle',
   },
   {
     index: 2,
@@ -282,84 +296,224 @@ const SLIDES: Omit<SlideContent, 'heroContent'>[] = [
     featureDescription:
       'Create and manage alert rules directly from the panel editor. Get notified when your metrics cross thresholds, and see alert states inline with your data.',
     iconPath: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+    tabLabel: 'Alerting',
+    tabIcon: 'bell',
   },
 ];
 
 const HERO_COMPONENTS = [StackHero, TransformationsHero, AlertingHero];
 
-function WhatsNewSplashComponent({ model }: SceneComponentProps<WhatsNewSplash>) {
-  const styles = useStyles2(getStyles);
-  const [currentSlide, setCurrentSlide] = useState(0);
+function ConceptSwitcher({
+  concept,
+  setConcept,
+}: {
+  concept: Concept;
+  setConcept: (c: Concept) => void;
+}) {
+  const styles = useStyles2(getConceptSwitcherStyles);
+  return (
+    <div className={styles.pill} onClick={(e) => e.stopPropagation()}>
+      {(['A', 'B', 'C'] as Concept[]).map((c) => (
+        <button key={c} className={c === concept ? styles.btnActive : styles.btn} onClick={() => setConcept(c)}>
+          {c}
+        </button>
+      ))}
+    </div>
+  );
+}
 
+function ConceptA({ currentSlide, setCurrentSlide, onClose }: ConceptProps) {
+  const styles = useStyles2(getStyles);
   const slide = SLIDES[currentSlide];
   const HeroComponent = HERO_COMPONENTS[currentSlide];
   const totalSlides = SLIDES.length;
 
-  const goNext = () => setCurrentSlide((s) => Math.min(s + 1, totalSlides - 1));
-  const goPrev = () => setCurrentSlide((s) => Math.max(s - 1, 0));
+  const goNext = () => setCurrentSlide(Math.min(currentSlide + 1, totalSlides - 1));
+  const goPrev = () => setCurrentSlide(Math.max(currentSlide - 1, 0));
+
+  return (
+    <>
+      <div className={styles.heroPane}>
+        <HeroComponent />
+      </div>
+      <div className={styles.contentPane}>
+        <div className={styles.closeBtn}>
+          <IconButton name="times" tooltip="Close" onClick={onClose} size="xl" />
+        </div>
+
+        <div className={styles.badge}>NEW IN GRAFANA 13</div>
+
+        <div className={styles.slideCounter}>
+          {currentSlide + 1}/{totalSlides}
+        </div>
+
+        <h1 className={styles.title}>{slide.title}</h1>
+
+        <div className={styles.featureBlock}>
+          <div className={styles.featureIcon}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} width={32} height={32}>
+              <path strokeLinecap="round" strokeLinejoin="round" d={slide.iconPath} />
+            </svg>
+          </div>
+          <h3 className={styles.featureTitle}>{slide.featureTitle}</h3>
+          <p className={styles.featureDescription}>{slide.featureDescription}</p>
+        </div>
+
+        <div className={styles.footer}>
+          <div className={styles.pagination}>
+            <button className={styles.arrowBtn} onClick={goPrev} disabled={currentSlide === 0} aria-label="Previous">
+              ‹
+            </button>
+            <div className={styles.dots}>
+              {SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  className={i === currentSlide ? styles.dotActive : styles.dot}
+                  onClick={() => setCurrentSlide(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              className={styles.arrowBtn}
+              onClick={goNext}
+              disabled={currentSlide === totalSlides - 1}
+              aria-label="Next"
+            >
+              ›
+            </button>
+          </div>
+
+          <Button variant="primary" onClick={onClose}>
+            Got it!
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ConceptB({ currentSlide, setCurrentSlide, onClose }: ConceptProps) {
+  const slide = SLIDES[currentSlide];
+  const isLast = currentSlide === SLIDES.length - 1;
+  const progressPct = ((currentSlide + 1) / SLIDES.length) * 100;
+  const styles = useStyles2(getConceptBStyles);
+  const sharedStyles = useStyles2(getStyles);
+
+  return (
+    <>
+      <div className={styles.progressTrack}>
+        <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
+      </div>
+
+      <div className={sharedStyles.heroPane}>
+        <StackHero />
+      </div>
+
+      <div className={sharedStyles.contentPane}>
+        <div className={styles.badgeRow}>
+          <span className={sharedStyles.badge}>NEW IN GRAFANA</span>
+          <span className={styles.slideCountInline}>
+            {currentSlide + 1} of {SLIDES.length}
+          </span>
+        </div>
+
+        <div className={styles.numberBadge}>{currentSlide + 1}</div>
+
+        <h2 className={sharedStyles.featureTitle}>{slide.featureTitle}</h2>
+        <p className={sharedStyles.featureDescription}>{slide.featureDescription}</p>
+
+        <div className={sharedStyles.footer}>
+          <button className={styles.skipBtn} onClick={onClose}>
+            Skip all
+          </button>
+          {isLast ? (
+            <Button variant="primary" onClick={onClose}>
+              Got it!
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={() => setCurrentSlide(currentSlide + 1)}>
+              Next <Icon name="arrow-right" size="sm" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ConceptC({ currentSlide, setCurrentSlide, onClose }: ConceptProps) {
+  const slide = SLIDES[currentSlide];
+  const styles = useStyles2(getConceptCStyles);
+  const sharedStyles = useStyles2(getStyles);
+
+  return (
+    <>
+      <div className={sharedStyles.heroPane}>
+        <StackHero />
+      </div>
+
+      <div className={sharedStyles.contentPane}>
+        <div className={sharedStyles.closeBtn}>
+          <IconButton name="times" tooltip="Close" onClick={onClose} size="xl" />
+        </div>
+
+        <span className={sharedStyles.badge}>NEW IN GRAFANA</span>
+
+        <div className={styles.tabRow}>
+          {SLIDES.map((s, i) => (
+            <button
+              key={i}
+              className={cx(styles.tab, { [styles.tabActive]: i === currentSlide })}
+              onClick={() => setCurrentSlide(i)}
+            >
+              <Icon name={s.tabIcon as any} size="sm" />
+              {s.tabLabel}
+            </button>
+          ))}
+        </div>
+
+        <h2 className={sharedStyles.featureTitle}>{slide.featureTitle}</h2>
+        <p className={sharedStyles.featureDescription}>{slide.featureDescription}</p>
+
+        <div className={sharedStyles.footer}>
+          <a
+            href="https://grafana.com/docs/grafana/latest/whatsnew/"
+            target="_blank"
+            rel="noreferrer"
+            className={styles.changelogLink}
+          >
+            <Icon name="external-link-alt" size="sm" /> Read full changelog
+          </a>
+          <Button variant="secondary" onClick={onClose}>
+            Got it!
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function WhatsNewSplashComponent({ model }: SceneComponentProps<WhatsNewSplash>) {
+  const styles = useStyles2(getStyles);
+  const [concept, setConcept] = useState<Concept>('A');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const props: ConceptProps = { currentSlide, setCurrentSlide, onClose: model.onClose };
 
   return (
     <div className={styles.backdrop} onClick={model.onClose}>
+      <ConceptSwitcher
+        concept={concept}
+        setConcept={(c) => {
+          setConcept(c);
+          setCurrentSlide(0);
+        }}
+      />
       <div className={styles.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        {/* Left: Hero image pane */}
-        <div className={styles.heroPane}>
-          <HeroComponent />
-        </div>
-
-        {/* Right: Content pane */}
-        <div className={styles.contentPane}>
-          <div className={styles.closeBtn}>
-            <IconButton name="times" tooltip="Close" onClick={model.onClose} size="xl" />
-          </div>
-
-          <div className={styles.badge}>NEW IN GRAFANA 13</div>
-
-          <div className={styles.slideCounter}>
-            {currentSlide + 1}/{totalSlides}
-          </div>
-
-          <h1 className={styles.title}>{slide.title}</h1>
-
-          <div className={styles.featureBlock}>
-            <div className={styles.featureIcon}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} width={32} height={32}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={slide.iconPath} />
-              </svg>
-            </div>
-            <h3 className={styles.featureTitle}>{slide.featureTitle}</h3>
-            <p className={styles.featureDescription}>{slide.featureDescription}</p>
-          </div>
-
-          <div className={styles.footer}>
-            <div className={styles.pagination}>
-              <button className={styles.arrowBtn} onClick={goPrev} disabled={currentSlide === 0} aria-label="Previous">
-                ‹
-              </button>
-              <div className={styles.dots}>
-                {SLIDES.map((_, i) => (
-                  <button
-                    key={i}
-                    className={i === currentSlide ? styles.dotActive : styles.dot}
-                    onClick={() => setCurrentSlide(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-              <button
-                className={styles.arrowBtn}
-                onClick={goNext}
-                disabled={currentSlide === totalSlides - 1}
-                aria-label="Next"
-              >
-                ›
-              </button>
-            </div>
-
-            <Button variant="primary" onClick={model.onClose}>
-              Got it!
-            </Button>
-          </div>
-        </div>
+        {concept === 'A' && <ConceptA {...props} />}
+        {concept === 'B' && <ConceptB {...props} />}
+        {concept === 'C' && <ConceptC {...props} />}
       </div>
     </div>
   );
@@ -488,6 +642,7 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       boxShadow: `0 0 48px 0 #45556C`,
       backgroundColor: theme.colors.background.primary,
+      position: 'relative',
     }),
     heroPane: css({
       width: '44%',
@@ -622,6 +777,143 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       cursor: 'pointer',
       padding: 0,
+    }),
+  };
+}
+
+function getConceptSwitcherStyles(theme: GrafanaTheme2) {
+  return {
+    pill: css({
+      position: 'fixed',
+      top: theme.spacing(2),
+      right: theme.spacing(2),
+      zIndex: theme.zIndex.modal + 1,
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.pill,
+      padding: theme.spacing(0.5),
+    }),
+    btn: css({
+      width: 28,
+      height: 28,
+      borderRadius: theme.shape.radius.pill,
+      border: 'none',
+      background: 'transparent',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.bodySmall.fontSize,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+    btnActive: css({
+      width: 28,
+      height: 28,
+      borderRadius: theme.shape.radius.pill,
+      border: 'none',
+      background: theme.v1.palette.orange,
+      color: '#fff',
+      cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+  };
+}
+
+function getConceptBStyles(theme: GrafanaTheme2) {
+  return {
+    progressTrack: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 3,
+      background: theme.colors.border.weak,
+      zIndex: 1,
+    }),
+    progressFill: css({
+      height: '100%',
+      background: theme.v1.palette.orange,
+      transition: 'width 300ms ease',
+    }),
+    badgeRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginBottom: theme.spacing(3),
+    }),
+    slideCountInline: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    numberBadge: css({
+      width: 40,
+      height: 40,
+      background: theme.v1.palette.orange,
+      borderRadius: theme.shape.radius.default,
+      color: '#fff',
+      fontWeight: theme.typography.fontWeightBold,
+      fontSize: '1.2rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing(2),
+    }),
+    skipBtn: css({
+      background: 'none',
+      border: 'none',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      fontSize: theme.typography.body.fontSize,
+      padding: 0,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+  };
+}
+
+function getConceptCStyles(theme: GrafanaTheme2) {
+  return {
+    tabRow: css({
+      display: 'flex',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      marginBottom: theme.spacing(3),
+      gap: 0,
+    }),
+    tab: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+      padding: theme.spacing(1, 1.5),
+      background: 'none',
+      border: 'none',
+      borderBottom: '2px solid transparent',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginBottom: -1,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+    tabActive: css({
+      color: theme.colors.text.primary,
+      borderBottom: `2px solid ${theme.v1.palette.orange}`,
+    }),
+    changelogLink: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+      textDecoration: 'none',
+      fontSize: theme.typography.body.fontSize,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
 }
