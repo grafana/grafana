@@ -10,6 +10,7 @@ export default defineConfig({
     css: false, // disables CSS processing entirely in tests
     environment: 'jsdom',
     include: [
+      'packages/grafana-alerting/**/*.test.{ts,tsx}',
       'packages/grafana-data/**/*.test.{ts,tsx}',
       'packages/grafana-runtime/**/*.test.{ts,tsx}',
       'packages/grafana-ui/**/*.test.{ts,tsx}',

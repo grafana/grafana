@@ -80,6 +80,7 @@ module.exports = {
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   testPathIgnorePatterns: [
     '/node_modules/',
+    '<rootDir>/packages/grafana-alerting',
     '<rootDir>/packages/grafana-data',
     '<rootDir>/packages/grafana-runtime',
     '<rootDir>/packages/grafana-ui',
