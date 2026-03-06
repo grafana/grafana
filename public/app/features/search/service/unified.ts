@@ -207,6 +207,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
           return;
         }
 
+        // We append the frames and align the fields here, but if there are new fields, view won't know about them
+        // and won't be accessible by doing `view.get(0).newField` for example
         appendFrame(view.dataFrame, frame);
 
         // Add all the location lookup info
@@ -224,7 +226,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
     return {
       totalRows: meta.count ?? first.length,
+
+      // This will be mutated when loadMoreItems is called.
       view,
+
       // Not using the startIndex because it is required to satisfy the typing that is shared between this and SQL
       // searcher. The SQL searcher though does not support loadMoreItems at all though so I guess it's just weird.
       // TODO: maybe we can just remove it. SearchResultsTable seems to be using it but obviously it does not do
@@ -236,6 +241,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         }
         return pending;
       },
+
       isItemLoaded: (index: number): boolean => {
         return index < view.dataFrame.length;
       },

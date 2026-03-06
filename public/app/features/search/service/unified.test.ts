@@ -20,15 +20,15 @@ setupMockServer();
 describe('Unified Storage Searcher', () => {
   it('should perform search with basic query', async () => {
     const query: SearchQuery = {
-      query: 'test',
+      query: '*',
       limit: 50,
     };
 
     server.use(
-      getCustomSearchHandler({
-        folders: [{ name: 'folder1', title: 'Folder 1', resource: 'folders' }],
-        dashboards: [{ name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' }],
-      })
+      getCustomSearchHandler([
+        { name: 'folder1', title: 'Folder 1', resource: 'folder' },
+        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+      ])
     );
 
     const searcher = new UnifiedSearcher(mockFallbackSearcher);
@@ -47,17 +47,15 @@ describe('Unified Storage Searcher', () => {
 
   it('should perform search and sync folders with missing folder', async () => {
     server.use(
-      getCustomSearchHandler({
-        folders: [{ name: 'folder2', title: 'Folder 2', resource: 'folders' }],
-        dashboards: [
-          { name: 'db1', title: 'DB 1', resource: 'dashboards', folder: 'folder1' },
-          { name: 'db2', title: 'DB 2', resource: 'dashboards', folder: 'folder2' },
-        ],
-      })
+      getCustomSearchHandler([
+        { name: 'folder2', title: 'Folder 2', resource: 'folder' },
+        { name: 'db1', title: 'DB 1', resource: 'dashboard', folder: 'folder1' },
+        { name: 'db2', title: 'DB 2', resource: 'dashboard', folder: 'folder2' },
+      ])
     );
 
     const query: SearchQuery = {
-      query: 'test',
+      query: '*',
       limit: 50,
     };
 
@@ -77,6 +75,35 @@ describe('Unified Storage Searcher', () => {
     expect(locationInfo?.folder2.name).toBe('Folder 2');
   });
 
+  it('should perform paging', async () => {
+    const query: SearchQuery = {
+      query: '*',
+      limit: 1,
+    };
+
+    server.use(
+      getCustomSearchHandler([
+        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards' },
+        { name: 'dashboard2', title: 'Dashboard 2', resource: 'dashboards', description: 'foobar' },
+      ])
+    );
+
+    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const response = await searcher.search(query);
+
+    expect(response.view.length).toBe(1);
+
+    await response.loadMoreItems(0, 1);
+
+    expect(response.view.length).toBe(2);
+    // TODO: right now this does not work (see unified.ts#getNextPage() for details) once the frame appending is fixed
+    //  properly these expects should work
+    // expect(response.view.get(0).description).toBe(null);
+    // expect(response.view.get(1).description).toBe('foobar');
+  });
+});
+
+describe('toDashboardResults', () => {
   it('can create dashboard search results and set meta sortBy so column is added for sprinkles sort field', () => {
     const mockHits: SearchHit[] = [
       {

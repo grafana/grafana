@@ -20,20 +20,48 @@ const typeFilterMap: Record<string, string> = {
 
 const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
 
-export function getCustomSearchHandler(options: { folders?: DashboardHit[]; dashboards?: DashboardHit[] }) {
+type HitFilterArray = Array<(hit: DashboardHit) => boolean>;
+
+export function getCustomSearchHandler(hits: DashboardHit[]) {
   return http.get(searchRoute, ({ request }) => {
     const url = new URL(request.url);
-    let hits: DashboardHit[] = [];
-    const types = url.searchParams.getAll('type');
-    if (types.includes('folder') || !types.length) {
-      hits = hits.concat(options.folders ?? []);
+    // TODO: query filter
+    const limitFilter = parseInt(url.searchParams.get('limit') || '', 10) || hits.length;
+    const folderFilter = url.searchParams.get('folder') || null;
+    const typeFilter = url.searchParams.getAll('type') || [];
+    const nameFilter = url.searchParams.getAll('name');
+    const tagFilter = url.searchParams.getAll('tag') || null;
+    const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
+
+    const filters: HitFilterArray = [];
+
+    if (nameFilter.length > 0) {
+      const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
+      filters.push((hit) => filteredNameFilter.includes(hit.name));
     }
-    if (types.includes('dashboard') || !types.length) {
-      hits = hits.concat(options.dashboards ?? []);
+
+    if (typeFilter.length) {
+      filters.push((hit) => typeFilter.includes(hit.resource));
     }
+
+    if (tagFilter && tagFilter.length > 0) {
+      filters.push((hit) => Boolean(hit.tags?.some((tag) => tagFilter.includes(tag))));
+    }
+
+    if (folderFilter && folderFilter !== 'general') {
+      filters.push((hit) => hit.folder === folderFilter);
+    }
+
+    if (folderFilter === 'general') {
+      filters.push((hit) => hit.folder === undefined || hit.folder === 'general');
+    }
+
+    const filtered = hits.filter((hit) => filters.every((fn) => fn(hit)));
+    const sliced = filtered.slice(offset, offset + limitFilter);
+
     return HttpResponse.json({
-      hits: hits,
-      totalHits: hits.length,
+      totalHits: filtered.length,
+      hits: sliced,
     });
   });
 }
@@ -42,9 +70,9 @@ const getDefaultSearchHandler = () =>
   http.get(searchRoute, ({ request }) => {
     const limitFilter = new URL(request.url).searchParams.get('limit') || null;
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
-    const typeFilter = new URL(request.url).searchParams.get('type') || null;
+    const typeFilters = new URL(request.url).searchParams.getAll('type');
     const nameFilter = new URL(request.url).searchParams.getAll('name');
-    const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
+    const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
 
     const filtered = mockTree.filter((filterItem) => {
@@ -58,8 +86,8 @@ const getDefaultSearchHandler = () =>
         filters.push(({ item }) => filteredNameFilter.includes(item.uid));
       }
 
-      if (typeFilter) {
-        filters.push(({ item }) => item.kind === mappedTypeFilter);
+      if (mappedTypeFilters.length) {
+        filters.push(({ item }) => mappedTypeFilters.includes(item.kind));
       }
 
       if (tagFilter && tagFilter.length > 0) {
@@ -104,7 +132,7 @@ const getDefaultSearchHandler = () =>
     const sliced = limitFilter ? mapped.slice(0, parseInt(limitFilter, 10)) : mapped;
 
     return HttpResponse.json({
-      totalHits: sliced.length,
+      totalHits: filtered.length,
       hits: sliced,
     });
   });
