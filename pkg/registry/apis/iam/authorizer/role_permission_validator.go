@@ -15,9 +15,9 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 )
@@ -217,11 +217,6 @@ func (v *RolePermissionValidator) parsePermission(act, sc string) (*permission, 
 
 // checkUserCanDelegatePermission checks if the user has permission to delegate the given permission.
 func (v *RolePermissionValidator) checkUserCanDelegatePermission(ctx context.Context, authInfo types.AuthInfo, user identity.Requester, perm *permission) error {
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("no auth info in context")
-	}
-
 	// if not already marked as k8s permission, try to find the mapping to translate legacy RBAC to K8s format
 	if !perm.k8sPermission {
 		group, resource, verb, ok := v.translateRBACActionToK8s(perm.action.resource, perm.action.verb)
@@ -334,11 +329,6 @@ func (v *RolePermissionValidator) checkLegacyPermission(ctx context.Context, aut
 			"scope", perm.scope.originalScope,
 		)
 		return apierrors.NewBadRequest(fmt.Sprintf("legacy permission '%s' on scope '%s' is not supported: use K8s format permissions (group/resource:verb) instead", fullAction, perm.scope.originalScope))
-	}
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get user from context: %w", err)
 	}
 
 	v.logger.Debug("checking legacy permission not in mapper using AccessControl",
@@ -523,7 +513,7 @@ func buildRoleFromSpec(spec map[string]interface{}, perms []iamv0.RolespecPermis
 		Spec: iamv0.RoleSpec{
 			Permissions:        perms,
 			PermissionsOmitted: parsePermissionsOmittedSliceFromSpec(spec),
-			RoleRefs:          roleRefs,
+			RoleRefs:           roleRefs,
 		},
 	}
 }
