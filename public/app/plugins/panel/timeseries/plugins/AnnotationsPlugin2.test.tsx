@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { applyFieldOverrides, createDataFrame, createTheme, FieldConfigOptionsRegistry } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  arrayToDataFrame,
+  createDataFrame,
+  createTheme,
+  FieldConfigOptionsRegistry,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
@@ -84,7 +90,10 @@ uplotMockInstance.setData.mockImplementationOnce(() => {});
 describe('AnnotationsPlugin2', () => {
   let hooks: Record<string, (u: uPlot) => {}> = {};
   let config: UPlotConfigBuilder;
-  const setUp = (props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2>>) => {
+  const setUp = (
+    props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2>>,
+    configOverride?: UPlotConfigBuilder
+  ) => {
     function applyReady() {
       act(() => {
         //@ts-ignore
@@ -109,7 +118,7 @@ describe('AnnotationsPlugin2', () => {
     const result = render(
       <div>
         <AnnotationsPlugin2
-          config={config}
+          config={configOverride ?? config}
           timeZone={'browser'}
           newRange={null}
           setNewRange={function (newRange: TimeRange2 | null): void {}}
@@ -131,6 +140,7 @@ describe('AnnotationsPlugin2', () => {
       addHook: jest.fn((type, hook) => {
         hooks[type] = hook;
       }),
+      scales: [{ props: { scaleKey: 'x' } }, { props: { scaleKey: 'y' } }],
     } as unknown as UPlotConfigBuilder;
   });
 
@@ -493,13 +503,11 @@ describe('AnnotationsPlugin2', () => {
       });
     });
   });
-
   describe('wip', () => {
     // These might be better to test in e2e since they are generated in the parent viz component
     it.todo('can create annotation region');
     it.todo('can create annotation');
   });
-
   describe('annotation fields', () => {
     describe('alert state', () => {
       // when newState and alertId are both defined we show a custom alert header
@@ -548,7 +556,6 @@ describe('AnnotationsPlugin2', () => {
       });
     });
   });
-
   describe('options', () => {
     describe('multiRowAnnotations', () => {
       it('should render each frame into separate lanes in the viz', () => {
@@ -563,7 +570,6 @@ describe('AnnotationsPlugin2', () => {
       });
     });
   });
-
   describe('overrides', () => {
     afterEach(() => {
       jest.restoreAllMocks();
@@ -590,6 +596,138 @@ describe('AnnotationsPlugin2', () => {
       await event(firstMarker);
       expect(screen.getByText('Action 1')).toBeVisible();
       expect(screen.getByText('Action 2')).toBeVisible();
+    });
+  });
+  // These are somewhat fragile regression tests, but as long as the uplot draw hook implementation is not changed they should pass
+  describe('uplot', () => {
+    function createMockUPlot(overrides: Partial<uPlot> = {}): uPlot {
+      const ctx = {
+        save: jest.fn(),
+        restore: jest.fn(),
+        beginPath: jest.fn(),
+        rect: jest.fn(),
+        clip: jest.fn(),
+        lineWidth: 0,
+        setLineDash: jest.fn(),
+        fillStyle: '',
+        fillRect: jest.fn(),
+        strokeStyle: '',
+        strokeRect: jest.fn(),
+        stroke: jest.fn(),
+        moveTo: jest.fn(),
+        lineTo: jest.fn(),
+      } as unknown as CanvasRenderingContext2D;
+      const valToPos = jest.fn().mockImplementation((val: number) => val);
+      return {
+        ctx,
+        bbox: { left: 0, top: 0, width: 600, height: 200 },
+        valToPos,
+        root: { querySelector: jest.fn(() => null) },
+        ...overrides,
+      } as unknown as uPlot;
+    }
+
+    function invokeDrawHook(hooks: Record<string, (u: uPlot) => void>, mockU: uPlot) {
+      if (hooks.draw) {
+        hooks.draw(mockU);
+      }
+    }
+
+    beforeEach(() => {
+      hooks = {};
+      config = {
+        addHook: jest.fn((type, hook) => {
+          hooks[type] = hook;
+        }),
+        scales: [{ props: { scaleKey: 'x' } }, { props: { scaleKey: 'y' } }],
+      } as unknown as UPlotConfigBuilder;
+    });
+
+    describe('xAnnos', () => {
+      it('should draw point annotations indicator lines', () => {
+        setUp({ annotations: [mockAnnotationFrame] }, config);
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+        expect(ctx.rect).toHaveBeenCalledWith(0, 0, 600, 200);
+        expect(ctx.lineWidth).toBe(2);
+        // The actual dashed line
+        expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+        // No region fill
+        expect(ctx.fillRect).not.toHaveBeenCalled();
+      });
+      it('should draw region fill', () => {
+        setUp({
+          annotations: [mockIRMAnnotationRegion],
+          canvasRegionRendering: true,
+        });
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+        // Also dashed lines
+        expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+        // Yes region fill
+        expect(ctx.fillRect).toHaveBeenCalled();
+      });
+      it('multi-lane disables indicator line and rect fill', () => {
+        setUp({
+          annotations: [mockAnnotationFrame],
+          multiLane: true,
+        });
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+
+        expect(ctx.stroke).not.toHaveBeenCalled();
+        expect(ctx.fillRect).not.toHaveBeenCalled();
+        expect(ctx.setLineDash).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('xyAnnos', () => {
+      const getXYMarkProps = (lineStyle: 'solid' | 'dash') => {
+        const time = 0;
+        const xMin = 10;
+        const xMax = 100;
+        const yMin = 20;
+        const yMax = 50;
+        const xymark = arrayToDataFrame([
+          {
+            time,
+            xMin,
+            xMax,
+            yMin,
+            yMax,
+            isRegion: true,
+            fillOpacity: 0.15,
+            lineWidth: 1,
+            lineStyle,
+          },
+        ]);
+        xymark.name = 'xymark';
+        return { xMin, xMax, yMin, yMax, xymark };
+      };
+
+      it('should render solid rect', () => {
+        const { xMin, xMax, yMin, yMax, xymark } = getXYMarkProps('solid');
+        setUp({ annotations: [xymark] }, config);
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+        expect(ctx.fillRect).toHaveBeenNthCalledWith(1, xMin, yMax, xMax - xMin, yMin - yMax);
+        expect(ctx.setLineDash).toHaveBeenCalledWith([]);
+        expect(ctx.strokeRect).toHaveBeenCalledWith(xMin, yMax, xMax - xMin, yMin - yMax);
+        expect(ctx.stroke).not.toHaveBeenCalled();
+      });
+
+      it('should render dashed rect', () => {
+        const { xymark } = getXYMarkProps('dash');
+        setUp({ annotations: [xymark] }, config);
+        const mockU = createMockUPlot();
+        const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+        invokeDrawHook(hooks, mockU);
+        expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+      });
     });
   });
 });
