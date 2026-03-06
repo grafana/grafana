@@ -62,8 +62,13 @@ func NewApp() *cli.Command {
 			},
 			&cli.BoolFlag{
 				Name:  "image-renderer",
-				Usage: "Install the image renderer plugin",
+				Usage: "Enable the image renderer plugin",
 				Value: false,
+			},
+			&cli.StringFlag{
+				Name:  "image-renderer-version",
+				Usage: "When enabling the image renderer, which version to use",
+				Value: "latest",
 			},
 		},
 		Action: run,
@@ -76,6 +81,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
 	imageRenderer := cmd.Bool("image-renderer")
+	imageRendererVersion := cmd.String("image-renderer-version")
 	runnerFlags := cmd.String("flags")
 
 	d, err := dagger.Connect(ctx)
@@ -104,7 +110,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		GrafanaTarGz:         targz,
 		YarnCache:            yarnCache,
 		License:              license,
-		InstallImageRenderer: imageRenderer,
+		StartImageRenderer:   imageRenderer,
+		ImageRendererVersion: imageRendererVersion,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
