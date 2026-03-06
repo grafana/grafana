@@ -4151,12 +4151,12 @@
       "placeholder": "Cerca o vai a..."
     },
     "section": {
-      "actions": "Azioni",
       "dashboard-search-results": "Dashboard",
+      "dashboards": "",
       "folder-search-results": "Cartelle",
-      "pages": "Pagine",
-      "preferences": "Preferenze",
-      "recent-dashboards": "Dashboard recenti",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Ambiti recenti"
     }
   },

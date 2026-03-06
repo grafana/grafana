@@ -4151,12 +4151,12 @@
       "placeholder": "Zoek of ga naar ..."
     },
     "section": {
-      "actions": "Acties",
       "dashboard-search-results": "Dashboards",
+      "dashboards": "",
       "folder-search-results": "Mappen",
-      "pages": "Pagina's",
-      "preferences": "Voorkeuren",
-      "recent-dashboards": "Recente dashboards",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Recente scopes"
     }
   },

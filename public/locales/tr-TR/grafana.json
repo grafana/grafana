@@ -4151,12 +4151,12 @@
       "placeholder": "Ara veya şuraya git:"
     },
     "section": {
-      "actions": "İşlemler",
       "dashboard-search-results": "Panolar",
+      "dashboards": "",
       "folder-search-results": "Klasörler",
-      "pages": "Sayfalar",
-      "preferences": "Tercihler",
-      "recent-dashboards": "Son panolar",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Son kapsamlar"
     }
   },

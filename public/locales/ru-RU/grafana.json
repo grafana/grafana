@@ -4191,12 +4191,12 @@
       "placeholder": "Поиск или переход к..."
     },
     "section": {
-      "actions": "Действия",
       "dashboard-search-results": "Дашборды",
+      "dashboards": "",
       "folder-search-results": "Папки",
-      "pages": "Страницы",
-      "preferences": "Настройки",
-      "recent-dashboards": "Последние дашборды",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Недавние области"
     }
   },

@@ -2,24 +2,32 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl } from 'kbar';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, useRegisterActions, ActionImpl } from 'kbar';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
 
+import { CategoryPillBar } from './CategoryPillBar';
+import { ContextActionStepList, ContextActionStepState } from './ContextActionStepList';
+import { FacetBreadcrumbs } from './FacetBreadcrumbs';
+import { FacetPillBar } from './FacetPillBar';
+import { FacetValueList } from './FacetValueList';
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
+import { KeyboardHints } from './KeyboardHints';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { ContextActionEntry, useContextActions } from './actions/useContextActions';
 import { useDynamicExtensionResults } from './actions/useDynamicExtensionActions';
 import { CommandPaletteAction } from './types';
+import { useFacetState } from './useFacetState';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
@@ -32,19 +40,29 @@ export function CommandPalette() {
 }
 
 /**
- * Actual contents of the command palette. As KBarPortal controls the mount of this component this is split so that
- * we can run code only after command palette is opened.
+ * Actual contents of the command palette. KBarPortal controls the mount of this component,
+ * so this is split to run code only after command palette is opened.
  * @constructor
  */
 function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
+  const [hasDetailPanel, setHasDetailPanel] = useState(false);
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId, actions } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
+    actions: state.actions,
   }));
+
+  // True when drilled into an entity that has a detail panel (action view, not browsing)
+  const isInsideEntity = Boolean(
+    currentRootActionId &&
+    actions[currentRootActionId] &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    (actions[currentRootActionId] as ActionImpl & { detailPanel?: React.ReactNode }).detailPanel
+  );
 
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
@@ -52,24 +70,249 @@ function CommandPaletteContents() {
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
 
-  // Fetch dynamic results from plugins - these bypass kbar's fuzzy filtering
-  // since they're already filtered by the plugin's searchProvider
-  const { results: dynamicResults, isLoading: isDynamicLoading } = useDynamicExtensionResults(searchQuery);
+  // Context-aware actions (time range, filters, etc.)
+  const contextActionEntries = useContextActions();
+  const [contextStepState, setContextStepState] = useState<ContextActionStepState | null>(null);
+  const isInContextActionMode = contextStepState !== null;
 
-  // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
-  // dashboards category right now, so if any category is selected, we don't show these).
-  // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
-  // the currentRootActionId. Because these search results are manually added to the list later, they would show every
-  // time.
+  const enterContextStepMode = useCallback(
+    (entry: ContextActionEntry) => {
+      if (!entry.config.steps) {
+        return;
+      }
+      setContextStepState({
+        currentStep: entry.config.steps,
+        breadcrumbs: [],
+        selectedOptions: [],
+      });
+    },
+    []
+  );
+
+  const exitContextStepMode = useCallback(() => {
+    setContextStepState(null);
+  }, []);
+
+  // Build kbar actions for context entries, wiring step-based ones to enterContextStepMode
+  const contextActions = useMemo(
+    () =>
+      contextActionEntries.map((entry) => {
+        if (entry.hasSteps) {
+          return {
+            ...entry.action,
+            perform: () => enterContextStepMode(entry),
+          };
+        }
+        return entry.action;
+      }),
+    [contextActionEntries, enterContextStepMode]
+  );
+  useRegisterActions(contextActions, [contextActions]);
+
+  // Category selection: scopes command palette to a specific provider category
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Active facets state lives here to break the dependency cycle between
+  // useFacetState (needs facet definitions) and useDynamicExtensionResults (needs activeFacets).
+  const [activeFacetsState, setActiveFacetsState] = useState<Record<string, string>>({});
+
+  // Fetch dynamic results from plugins with facet + category support
+  const {
+    results: dynamicResults,
+    isLoading: isDynamicLoading,
+    availableFacets,
+    availableCategories,
+    resultCount: dynamicResultCount,
+  } = useDynamicExtensionResults(searchQuery, activeFacetsState, selectedCategory);
+
+  // Facet state management (uses availableFacets from registry)
+  const facetState = useFacetState(availableFacets, searchQuery);
+  const {
+    activeFacets,
+    activeFacetLabels,
+    selectingFacetId,
+    filteredFacetValues,
+    isLoadingFacetValues,
+    facetSearchQuery,
+    activateFacet,
+    selectFacetValue,
+    removeFacet,
+    cancelFacetSelection,
+    resetFacets,
+    setFacetSearchQuery,
+  } = facetState;
+
+  // Sync facetState.activeFacets → activeFacetsState for the search provider
+  useEffect(() => {
+    setActiveFacetsState(activeFacets);
+  }, [activeFacets]);
+
+  const hasCategories = availableCategories.length > 0;
+  const selectedCategoryIcon = useMemo(() => {
+    if (!selectedCategory) {
+      return undefined;
+    }
+    const cat = availableCategories.find((c) => c.label === selectedCategory);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return cat?.icon as IconName | undefined;
+  }, [selectedCategory, availableCategories]);
+  const hasFacets = availableFacets.length > 0;
+  const isInFacetMode = selectingFacetId !== null;
+  const hasActiveFacets = Object.keys(activeFacets).length > 0;
+  const selectingFacet = selectingFacetId ? availableFacets.find((f) => f.id === selectingFacetId) : null;
+
+  const handleSelectCategory = useCallback(
+    (label: string) => {
+      if (selectedCategory === label) {
+        return;
+      }
+      resetFacets();
+      setActiveFacetsState({});
+      setSelectedCategory(label);
+    },
+    [selectedCategory, resetFacets]
+  );
+
+  const handleDeselectCategory = useCallback(() => {
+    setSelectedCategory(null);
+    resetFacets();
+    setActiveFacetsState({});
+  }, [resetFacets]);
+
+  // Backspace with empty search: entity view → entity list → clear facets → deselect category
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== 'Backspace' || searchQuery.length > 0) {
+        return;
+      }
+      if (isInFacetMode || isInContextActionMode) {
+        return;
+      }
+      if (isInsideEntity) {
+        e.preventDefault();
+        query.setCurrentRootAction(undefined);
+        query.setSearch('');
+        return;
+      }
+      if (!selectedCategory) {
+        return;
+      }
+      e.preventDefault();
+      if (hasActiveFacets) {
+        const lastActiveFacet = [...availableFacets].reverse().find((f) => f.id in activeFacets);
+        if (lastActiveFacet) {
+          removeFacet(lastActiveFacet.id);
+        }
+      } else {
+        handleDeselectCategory();
+      }
+    },
+    [
+      searchQuery,
+      selectedCategory,
+      isInFacetMode,
+      isInContextActionMode,
+      isInsideEntity,
+      query,
+      hasActiveFacets,
+      availableFacets,
+      activeFacets,
+      removeFacet,
+      handleDeselectCategory,
+    ]
+  );
+
+  // Compute the shortcut range string for keyboard hints
+  const shortcutRange = useMemo(() => {
+    if (selectedCategory && hasFacets) {
+      const keys = availableFacets.map((f) => f.shortcutKey).filter((k): k is string => k != null);
+      if (keys.length === 0) {
+        return undefined;
+      }
+      return keys.length === 1 ? keys[0] : `${keys[0]}-${keys[keys.length - 1]}`;
+    }
+    if (!selectedCategory && hasCategories) {
+      const count = availableCategories.length;
+      return count === 1 ? '1' : `1-${count}`;
+    }
+    return undefined;
+  }, [selectedCategory, hasFacets, availableFacets, hasCategories, availableCategories]);
+
+  // Unified Cmd+N keyboard shortcuts: categories (no category selected) or facets (category selected)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey) {
+        return;
+      }
+
+      if (selectedCategory && hasFacets) {
+        const facet = availableFacets.find((f) => f.shortcutKey === e.key);
+        if (facet) {
+          e.preventDefault();
+          e.stopPropagation();
+          activateFacet(facet.id);
+        }
+      } else if (!selectedCategory && hasCategories) {
+        const index = parseInt(e.key, 10) - 1;
+        if (index >= 0 && index < availableCategories.length) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleSelectCategory(availableCategories[index].label);
+        }
+      }
+    };
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, [selectedCategory, hasFacets, availableFacets, activateFacet, hasCategories, availableCategories, handleSelectCategory]);
+
+  // Escape handler: step back through the hierarchy before closing palette.
+  // Priority order: context action mode → drill-down → facet selection → category → close.
+  useEffect(() => {
+    const hasState = isInContextActionMode || currentRootActionId || isInFacetMode || selectedCategory;
+    if (!hasState) {
+      return;
+    }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') {
+        return;
+      }
+
+      // Context action mode handles its own Escape via stopImmediatePropagation
+      if (isInContextActionMode) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      if (currentRootActionId) {
+        query.setCurrentRootAction(null);
+        query.setSearch('');
+        return;
+      }
+      if (isInFacetMode) {
+        cancelFacetSelection();
+        return;
+      }
+      if (selectedCategory) {
+        handleDeselectCategory();
+        return;
+      }
+    };
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, [isInContextActionMode, currentRootActionId, isInFacetMode, selectedCategory, query, cancelFacetSelection, handleDeselectCategory]);
+
+  // Dashboard/folder search: hidden when scoped to a category or in facet/drill mode
   const { searchResults: dashboardFolderResults, isFetchingSearchResults } = useSearchResults({
     searchQuery,
-    show: !currentRootActionId,
+    show: !currentRootActionId && !isInFacetMode && !selectedCategory,
   });
 
-  // Combine all search results (dashboard/folder results + dynamic plugin results)
+  // Combine all search results. Hide flat results when drilled in, in facet mode, or irrelevant.
   const searchResults = useMemo(
-    () => [...dashboardFolderResults, ...dynamicResults],
-    [dashboardFolderResults, dynamicResults]
+    () => (currentRootActionId || isInFacetMode ? [] : [...dashboardFolderResults, ...dynamicResults]),
+    [dashboardFolderResults, dynamicResults, currentRootActionId, isInFacetMode]
   );
 
   const ref = useRef<HTMLDivElement>(null);
@@ -85,30 +328,189 @@ function CommandPaletteContents() {
     reportInteraction('command_palette_opened');
   }, []);
 
+  // Section title override when scoped to a category
+  const facetedSectionCategory = useMemo(() => {
+    if (!selectedCategory) {
+      return undefined;
+    }
+    if (hasActiveFacets) {
+      return `${selectedCategory} (${dynamicResultCount})`;
+    }
+    return selectedCategory;
+  }, [selectedCategory, hasActiveFacets, dynamicResultCount]);
+
+
   return (
     <KBarPositioner className={styles.positioner}>
-      <KBarAnimator className={styles.animator}>
+      <KBarAnimator className={cx(styles.animator, hasDetailPanel && styles.animatorWide)}>
         <FocusScope contain autoFocus restoreFocus>
           <div {...overlayProps} {...dialogProps}>
-            <div className={styles.searchContainer}>
-              <Icon name="search" size="md" className={styles.searchIcon} />
-              <AncestorBreadcrumbs />
+            {/* KBarSearch container — visually hidden in facet/context-action mode but stays mounted so kbar keeps its input ref */}
+            <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly, isInsideEntity && styles.searchContainerEntity)}>
+              {(currentRootActionId || selectedCategory) && (
+                <IconButton
+                  name="arrow-left"
+                  size="xl"
+                  variant="secondary"
+                  aria-label={t('command-palette.search-box.back', 'Go back')}
+                  className={styles.clearButton}
+                  tabIndex={-1}
+                  onClick={() => {
+                    if (isInsideEntity) {
+                      query.setCurrentRootAction(undefined);
+                      query.setSearch('');
+                    } else if (currentRootActionId) {
+                      const parent = actions[currentRootActionId].parent;
+                      query.setCurrentRootAction(parent);
+                      query.setSearch('');
+                    } else if (selectedCategory) {
+                      handleDeselectCategory();
+                    }
+                    query.getInput().focus();
+                  }}
+                />
+              )}
+              {selectedCategory ? (
+                <FacetBreadcrumbs
+                  category={selectedCategory}
+                  categoryIcon={selectedCategoryIcon}
+                  facets={availableFacets}
+                  activeFacets={activeFacets}
+                  activeFacetLabels={activeFacetLabels}
+                  selectingFacetId={null}
+                  selectedEntity={
+                    currentRootActionId && isInsideEntity && actions[currentRootActionId]
+                      ? {
+                          name: actions[currentRootActionId].name,
+                          icon: actions[currentRootActionId].icon,
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <AncestorBreadcrumbs />
+              )}
               <KBarSearch
-                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
-                className={styles.search}
+                defaultPlaceholder={
+                  currentRootActionId && actions[currentRootActionId]
+                    ? currentRootActionId.startsWith('scopes')
+                      ? t('command-palette.search-box.placeholder-scopes', 'Search by {{name}}...', {
+                          name: getScopesLevelLabel(currentRootActionId, actions[currentRootActionId].name),
+                        })
+                      : isInsideEntity
+                        ? ''
+                        : t('command-palette.search-box.placeholder-drilldown', 'Search {{name}}...', {
+                            name: getDrilldownPlaceholderName(actions[currentRootActionId].name),
+                          })
+                    : selectedCategory
+                      ? t('command-palette.search-box.placeholder-filtered', 'Search by entity name...')
+                      : t('command-palette.search-box.placeholder', 'Type a command or search...')
+                }
+                className={cx(styles.search, isInsideEntity && styles.hiddenInput)}
+                onKeyDown={handleSearchKeyDown}
+                readOnly={isInsideEntity}
               />
+              {searchQuery && (
+                <IconButton
+                  name="times"
+                  size="lg"
+                  variant="secondary"
+                  aria-label={t('command-palette.search-box.clear', 'Clear search')}
+                  className={styles.clearButton}
+                  tabIndex={-1}
+                  onClick={() => {
+                    query.setSearch('');
+                    query.getInput().focus();
+                  }}
+                />
+              )}
               <div className={styles.loadingBarContainer}>
                 {(isFetchingSearchResults || isDynamicLoading) && <LoadingBar width={500} delay={0} />}
               </div>
             </div>
-            {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
-            <div className={styles.resultsContainer}>
-              <RenderResults
-                isFetchingSearchResults={isFetchingSearchResults || isDynamicLoading}
-                searchResults={searchResults}
-                searchQuery={searchQuery}
+
+            {/* Body — context action step mode, facet value selection, or normal results */}
+            {isInContextActionMode ? (
+              <ContextActionStepList
+                state={contextStepState}
+                onTransition={(next) => {
+                  if (next === null) {
+                    exitContextStepMode();
+                  } else {
+                    setContextStepState(next);
+                  }
+                }}
+                onClose={() => {
+                  exitContextStepMode();
+                  query.setVisualState(VisualState.animatingOut);
+                }}
               />
-            </div>
+            ) : isInFacetMode && selectingFacet && selectedCategory ? (
+              <>
+                <FacetValueList
+                  values={filteredFacetValues}
+                  isLoading={isLoadingFacetValues}
+                  facetLabel={selectingFacet.label}
+                  onSelect={selectFacetValue}
+                  searchQuery={facetSearchQuery}
+                  onSearchQueryChange={setFacetSearchQuery}
+                  placeholder={selectingFacet.placeholder}
+                  onBack={cancelFacetSelection}
+                  breadcrumbs={
+                    <FacetBreadcrumbs
+                      category={selectedCategory}
+                      categoryIcon={selectedCategoryIcon}
+                      facets={availableFacets}
+                      activeFacets={activeFacets}
+                      activeFacetLabels={activeFacetLabels}
+                      selectingFacetId={selectingFacetId}
+                    />
+                  }
+                />
+                <KeyboardHints
+                  escAction="back"
+                  showFacetShortcuts={false}
+                  showSelect={filteredFacetValues.length > 0}
+                />
+              </>
+            ) : (
+              <>
+                {/* Category pills (when no category selected) */}
+                {!selectedCategory && hasCategories && !currentRootActionId && (
+                  <CategoryPillBar
+                    categories={availableCategories}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={handleSelectCategory}
+                  />
+                )}
+                {/* Facet pills (when scoped to a category) */}
+                {selectedCategory && hasFacets && !currentRootActionId && (
+                  <FacetPillBar
+                    facets={availableFacets}
+                    activeFacets={activeFacets}
+                    activeFacetLabels={activeFacetLabels}
+                    onActivateFacet={activateFacet}
+                  />
+                )}
+                {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
+                <div>
+                  <RenderResults
+                    isFetchingSearchResults={isFetchingSearchResults || isDynamicLoading}
+                    searchResults={searchResults}
+                    searchQuery={searchQuery}
+                    onHasDetailPanelChange={setHasDetailPanel}
+                    facetedSectionCategory={facetedSectionCategory}
+                    selectedCategory={selectedCategory}
+                  />
+                </div>
+                <KeyboardHints
+                  escAction={selectedCategory || hasActiveFacets || currentRootActionId ? 'back' : 'close'}
+                  showFacetShortcuts={!currentRootActionId && (hasCategories || hasFacets)}
+                  facetShortcutRange={shortcutRange}
+                  showSelect={true}
+                />
+              </>
+            )}
           </div>
         </FocusScope>
       </KBarAnimator>
@@ -131,17 +533,30 @@ function AncestorBreadcrumbs() {
     currentRootActionId: state.currentRootActionId,
   }));
 
-  // To show breadcrumbs of actions selected if they are nested
-  const ancestorActions = currentRootActionId
-    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
-    : [];
+  const currentAction = currentRootActionId ? actions[currentRootActionId] : undefined;
+  const ancestorActions = currentAction ? [...currentAction.ancestors, currentAction] : [];
 
   return (
     ancestorActions.length > 0 && (
       <span className={styles.breadcrumbs}>
         {ancestorActions.map((action, index) => (
-          <React.Fragment key={action.id || index}>{action.name}&nbsp;/&nbsp;</React.Fragment>
+          <React.Fragment key={action.id || index}>
+            {index > 0 && <span className={styles.breadcrumbSeparator}>/</span>}
+            <span className={styles.breadcrumbBadge}>
+              {index === 0 && action.icon && (
+                <span className={styles.breadcrumbIcon}>{action.icon}</span>
+              )}
+              {action.name}
+            </span>
+          </React.Fragment>
         ))}
+        {currentRootActionId && (
+          currentRootActionId.startsWith('scopes')
+            ? (currentRootActionId.split('/').length - 1) < 2
+            : true
+        ) && (
+          <span className={styles.breadcrumbSeparator}>/</span>
+        )}
       </span>
     )
   );
@@ -151,11 +566,29 @@ interface RenderResultsProps {
   isFetchingSearchResults: boolean;
   searchResults: CommandPaletteAction[];
   searchQuery: string;
+  onHasDetailPanelChange?: (hasPanel: boolean) => void;
+  facetedSectionCategory?: string;
+  selectedCategory?: string | null;
 }
 
-const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: RenderResultsProps) => {
+interface ActionWithDetailPanel extends ActionImpl {
+  detailPanel?: React.ReactNode;
+}
+
+const RenderResults = ({
+  isFetchingSearchResults,
+  searchResults,
+  searchQuery,
+  onHasDetailPanelChange,
+  facetedSectionCategory,
+  selectedCategory,
+}: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
-  const { query } = useKBar();
+  const { query, actions, activeIndex, currentRootActionId } = useKBar((state) => ({
+    actions: state.actions,
+    activeIndex: state.activeIndex,
+    currentRootActionId: state.currentRootActionId,
+  }));
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
@@ -194,11 +627,64 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     return groups;
   }, [searchResults, dashboardsSectionTitle, foldersSectionTitle]);
 
-  const items = useMemo(() => {
-    const results = [...kbarResults];
+  const hasDrilldownDetailPanel = useMemo(() => {
+    if (!currentRootActionId) {
+      return false;
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const parent = actions[currentRootActionId] as ActionWithDetailPanel | undefined;
+    return parent?.detailPanel != null;
+  }, [currentRootActionId, actions]);
 
-    // Add all grouped search results (folders, dashboards, and dynamic results)
-    // Folders first, then dynamic results, then dashboards
+  const items = useMemo(() => {
+    // Entity action view: drilled into an entity with a detail panel — no section header, just actions
+    if (currentRootActionId && hasDrilldownDetailPanel) {
+      const actionItems = kbarResults.filter((r): r is ActionImpl => typeof r !== 'string');
+      return actionItems;
+    }
+
+    // When scoped to a category, include only dynamic plugin results from kbar (skip static actions)
+    if (selectedCategory) {
+      const dynamicItems = kbarResults.filter(
+        (r): r is ActionImpl => typeof r !== 'string' && r.id.startsWith('dynamic-')
+      );
+
+      const results: Array<ActionImpl | string> = [];
+      if (dynamicItems.length > 0) {
+        const header = facetedSectionCategory ?? `${selectedCategory}(${dynamicItems.length})`;
+        results.push(header);
+        results.push(...dynamicItems);
+      }
+
+      groupedSearchResults.forEach((sectionItems, section) => {
+        if (section !== dashboardsSectionTitle && section !== foldersSectionTitle && sectionItems.length > 0) {
+          const header = facetedSectionCategory ?? `${section}(${sectionItems.length})`;
+          results.push(header);
+          results.push(...sectionItems);
+        }
+      });
+
+      return results;
+    }
+
+    const results: Array<ActionImpl | string> = [];
+
+    if (currentRootActionId) {
+      const parentAction = actions[currentRootActionId];
+      if (parentAction) {
+        if (currentRootActionId.startsWith('scopes')) {
+          const label = getScopesLevelLabel(currentRootActionId, parentAction.name);
+          results.push(label.charAt(0).toUpperCase() + label.slice(1));
+        } else {
+          results.push(parentAction.name);
+        }
+      }
+      results.push(...kbarResults.filter((r): r is ActionImpl => typeof r !== 'string'));
+      return results;
+    }
+
+    results.push(...kbarResults);
+
     const folderResults = groupedSearchResults.get(foldersSectionTitle) ?? [];
     if (folderResults.length > 0) {
       results.push(foldersSectionTitle);
@@ -206,10 +692,10 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     }
 
     // Add dynamic plugin results (any section that's not dashboard/folder)
-    groupedSearchResults.forEach((items, section) => {
-      if (section !== dashboardsSectionTitle && section !== foldersSectionTitle && items.length > 0) {
-        results.push(section);
-        results.push(...items);
+    groupedSearchResults.forEach((sectionItems, section) => {
+      if (section !== dashboardsSectionTitle && section !== foldersSectionTitle && sectionItems.length > 0) {
+        results.push(facetedSectionCategory ?? section);
+        results.push(...sectionItems);
       }
     });
 
@@ -220,43 +706,101 @@ const RenderResults = ({ isFetchingSearchResults, searchResults, searchQuery }: 
     }
 
     return results;
-  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle]);
+  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle, facetedSectionCategory, selectedCategory, currentRootActionId, actions, hasDrilldownDetailPanel]);
+
+  // Resolve the detail panel for the currently active item.
+  // When drilled into children, use the parent action's panel.
+  const activeDetailPanel = useMemo(() => {
+    if (currentRootActionId) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const parent = actions[currentRootActionId] as ActionWithDetailPanel | undefined;
+      return parent?.detailPanel ?? null;
+    }
+    const activeItem = items[activeIndex];
+    if (activeItem && typeof activeItem !== 'string') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return (activeItem as ActionWithDetailPanel).detailPanel ?? null;
+    }
+    return null;
+  }, [currentRootActionId, actions, items, activeIndex]);
+
+  useEffect(() => {
+    onHasDetailPanelChange?.(activeDetailPanel != null);
+  }, [activeDetailPanel, onHasDetailPanelChange]);
 
   const showEmptyState = !isFetchingSearchResults && items.length === 0;
   useEffect(() => {
     showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
   }, [showEmptyState]);
 
-  return showEmptyState ? (
-    <EmptyState variant="not-found" role="alert" message={t('command-palette.empty-state.message', 'No results found')}>
-      {isAssistantAvailable && (
-        <OpenAssistantButton
-          origin="grafana/command-palette-empty-state"
-          prompt={`Search for ${searchQuery}`}
-          title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
-          onClick={query.toggle}
-        />
-      )}
-    </EmptyState>
-  ) : (
+  if (showEmptyState) {
+    return (
+      <EmptyState
+        variant="not-found"
+        role="alert"
+        message={t('command-palette.empty-state.message', 'No results found')}
+      >
+        {isAssistantAvailable && (
+          <OpenAssistantButton
+            origin="grafana/command-palette-empty-state"
+            prompt={`Search for ${searchQuery}`}
+            title={t('command-palette.empty-state.button-title', 'Search with Grafana Assistant')}
+            onClick={query.toggle}
+          />
+        )}
+      </EmptyState>
+    );
+  }
+
+  const resultsList = (
     <KBarResults
       items={items}
       maxHeight={650}
       onRender={({ item, active }) => {
-        const isFirst = items[0] === item;
-
         const renderedItem =
           typeof item === 'string' ? (
-            <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
+            <div className={styles.sectionHeader}>{item}</div>
           ) : (
-            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
+            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} stacked={activeDetailPanel != null} />
           );
 
         return renderedItem;
       }}
     />
   );
+
+  if (!activeDetailPanel) {
+    return resultsList;
+  }
+
+  return (
+    <div className={styles.splitPane}>
+      <div className={styles.splitPaneLeft} style={hasDrilldownDetailPanel ? { paddingTop: 12 } : undefined}>{resultsList}</div>
+      <div className={styles.splitPaneRight}>{activeDetailPanel}</div>
+    </div>
+  );
 };
+
+const DRILLDOWN_PLACEHOLDER_NAMES: Record<string, string> = {
+  'Change theme': 'themes',
+};
+
+function getDrilldownPlaceholderName(actionName: string): string {
+  return DRILLDOWN_PLACEHOLDER_NAMES[actionName] ?? actionName.toLowerCase();
+}
+
+const PRODUCT_NAMES = new Set(['Loki', 'Mimir', 'Tempo', 'Pyroscope']);
+
+function getScopesLevelLabel(actionId: string, actionName: string): string {
+  if (actionId === 'scopes') {
+    return t('command-palette.scopes.level-category', 'category');
+  }
+  const depth = actionId.split('/').length - 1;
+  if (depth === 1) {
+    return t('command-palette.scopes.level-type', 'type');
+  }
+  return PRODUCT_NAMES.has(actionName) ? actionName : actionName.toLowerCase();
+}
 
 const getCommandPalettePosition = () => {
   const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
@@ -271,7 +815,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: '4px !important',
+      paddingTop: '5vh !important',
       '&::before': {
         content: '""',
         position: 'fixed',
@@ -279,25 +823,38 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
         right: 0,
         bottom: 0,
         left: 0,
-        background: theme.components.overlay.background,
+        background: 'rgba(0, 0, 0, 0.25)',
       },
     }),
     animator: css({
       width: '100%',
-      maxWidth: theme.breakpoints.values.md,
-      background: theme.colors.background.primary,
+      maxWidth: 796,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
-      border: `1px solid ${theme.colors.border.weak}`,
+      position: 'relative',
+      background:
+        'radial-gradient(222.44% 269.03% at -37.28% -70%, rgba(42, 48, 55, 0.80) 16.94%, rgba(18, 20, 23, 0.70) 80.25%)',
+      boxShadow: '0 4px 34px 0 rgba(0, 0, 0, 0.50)',
+      backdropFilter: 'blur(7.5px)',
       overflow: 'hidden',
-      boxShadow: theme.shadows.z3,
-      [theme.breakpoints.up('lg')]: {
-        position: 'fixed',
-        right: lateralSpace,
-        left: lateralSpace,
-        maxWidth: 'unset',
-        width: 'unset',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('max-width', { duration: theme.transitions.duration.short }),
       },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'inherit',
+        padding: '1px',
+        background: 'radial-gradient(circle at top left, #535355 0%, #2e2f31 43%, #1f2023 100%)',
+        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+        WebkitMaskComposite: 'xor',
+        maskComposite: 'exclude',
+        pointerEvents: 'none',
+      },
+    }),
+    animatorWide: css({
+      maxWidth: 960,
     }),
     loadingBarContainer: css({
       position: 'absolute',
@@ -307,49 +864,92 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     searchContainer: css({
       alignItems: 'center',
-      background: theme.components.input.background,
+      background: 'transparent',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(2.5, 2),
       position: 'relative',
       justifyContent: 'space-between',
     }),
     search: css({
-      fontSize: theme.typography.fontSize,
       width: '100%',
       boxSizing: 'border-box',
       outline: 'none',
       border: 'none',
-      color: theme.components.input.text,
+      background: 'transparent',
+      color: theme.colors.text.primary,
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '18px',
+      fontWeight: 400,
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
+      '&::placeholder': {
+        color: theme.colors.text.secondary,
+      },
     }),
     spinner: css({
       height: '22px',
     }),
-    resultsContainer: css({
-      paddingBottom: theme.spacing(1),
+    splitPane: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    splitPaneLeft: css({
+      flex: '1 1 55%',
+      minWidth: 0,
+      overflow: 'hidden',
+    }),
+    splitPaneRight: css({
+      flex: '1 1 45%',
+      minWidth: 0,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      maxHeight: 650,
+      overflowY: 'auto',
+      overflowX: 'hidden',
     }),
     sectionHeader: css({
-      padding: theme.spacing(1.5, 2, 2, 2),
+      padding: theme.spacing(1.5, 2, 0.5, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      marginTop: theme.spacing(1),
-    }),
-    sectionHeaderFirst: css({
-      paddingBottom: theme.spacing(1),
-      borderTop: 'none',
-      marginTop: 0,
     }),
     breadcrumbs: css({
       label: 'breadcrumbs',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.body.lineHeight,
-      color: theme.colors.text.primary,
       display: 'flex',
       alignItems: 'center',
       whiteSpace: 'nowrap',
+      gap: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
+    }),
+    breadcrumbBadge: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      fontSize: '18px',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: '#ccccdc',
+      background: theme.colors.action.selected,
+      borderRadius: theme.shape.radius.default,
+      padding: '0 6px',
+      height: '32px',
+      lineHeight: '32px',
+      letterSpacing: '-0.045px',
+    }),
+    breadcrumbIcon: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      '& > svg': {
+        width: '20px',
+        height: '20px',
+      },
+    }),
+    breadcrumbSeparator: css({
+      color: 'rgba(204, 204, 220, 0.4)',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
     }),
     scopesText: css({
       label: 'scopesText',
@@ -358,11 +958,34 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
     }),
-    searchIcon: css({
-      marginRight: theme.spacing(1),
+    srOnly: css({
+      position: 'absolute',
+      width: '1px',
+      height: '1px',
+      padding: 0,
+      margin: '-1px',
+      overflow: 'hidden',
+      clip: 'rect(0, 0, 0, 0)',
+      whiteSpace: 'nowrap',
+      borderWidth: 0,
+    }),
+    searchContainerEntity: css({
+      justifyContent: 'flex-start',
+    }),
+    hiddenInput: css({
+      width: 0,
+      padding: 0,
+      overflow: 'hidden',
+    }),
+    clearButton: css({
+      color: theme.colors.text.secondary,
+      flexShrink: 0,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     selectedScope: css({
-      background: theme.colors.background.secondary,
+      background: 'rgba(255, 255, 255, 0.10)',
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0, 0.5),
       fontSize: theme.typography.bodySmall.fontSize,

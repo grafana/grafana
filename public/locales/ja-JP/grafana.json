@@ -4131,12 +4131,12 @@
       "placeholder": "検索またはジャンプ先を指定..."
     },
     "section": {
-      "actions": "操作",
       "dashboard-search-results": "ダッシュボード",
+      "dashboards": "",
       "folder-search-results": "フォルダ",
-      "pages": "ページ",
-      "preferences": "環境設定",
-      "recent-dashboards": "最近のダッシュボード",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "最近のスコープ"
     }
   },

@@ -4191,12 +4191,12 @@
       "placeholder": "Wyszukaj lub przejdź do…"
     },
     "section": {
-      "actions": "Działania",
       "dashboard-search-results": "Pulpity",
+      "dashboards": "",
       "folder-search-results": "Foldery",
-      "pages": "Strony",
-      "preferences": "Właściwości",
-      "recent-dashboards": "Ostatnie pulpity",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Ostatnie zakresy"
     }
   },

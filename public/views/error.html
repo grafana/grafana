@@ -10,10 +10,12 @@
 
     <base href="[[.AppSubUrl]]/" />
 
+    [[ if .Assets ]]
     [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.Assets.Light]]" />
     [[ else ]]
     <link rel="stylesheet" href="[[.Assets.Dark]]" />
+    [[ end ]]
     [[ end ]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png" />

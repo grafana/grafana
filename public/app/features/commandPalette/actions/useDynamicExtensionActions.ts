@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Action, useKBar, useRegisterActions } from 'kbar';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { CommandPaletteDynamicResult, PluginExtensionCommandPaletteContext } from '@grafana/data';
@@ -6,7 +7,12 @@ import { appEvents } from 'app/core/app_events';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { createOpenModalFunction } from '../../plugins/extensions/utils';
-import { commandPaletteDynamicRegistry, CommandPaletteDynamicSearchResult } from '../CommandPaletteDynamicRegistry';
+import {
+  commandPaletteDynamicRegistry,
+  CommandPaletteDynamicSearchResult,
+  DynamicProviderCategory,
+} from '../CommandPaletteDynamicRegistry';
+import { CommandPaletteDynamicFacet } from '../facetTypes';
 import { CommandPaletteAction } from '../types';
 import { EXTENSIONS_PRIORITY } from '../values';
 
@@ -14,22 +20,75 @@ interface DynamicResultWithPluginId extends CommandPaletteDynamicResult {
   pluginId: string;
 }
 
+function buildEventHelpers(result: DynamicResultWithPluginId, searchQuery: string) {
+  const extensionPointId = 'grafana/commandpalette/action';
+  return {
+    context: { searchQuery, signal: new AbortController().signal },
+    extensionPointId,
+    openModal: createOpenModalFunction({
+      pluginId: result.pluginId,
+      title: result.title,
+      description: result.description,
+      extensionPointId,
+      path: result.path,
+      category: result.section,
+    }),
+    openSidebar: (componentTitle: string, context?: Record<string, unknown>) => {
+      appEvents.publish(
+        new OpenExtensionSidebarEvent({
+          props: context,
+          pluginId: result.pluginId,
+          componentTitle,
+        })
+      );
+    },
+    closeSidebar: () => {
+      appEvents.publish(new CloseExtensionSidebarEvent());
+    },
+    toggleSidebar: (componentTitle: string, context?: Record<string, unknown>) => {
+      appEvents.publish(
+        new ToggleExtensionSidebarEvent({
+          props: context,
+          pluginId: result.pluginId,
+          componentTitle,
+        })
+      );
+    },
+  };
+}
+
 /**
- * Fetches dynamic results from plugin extensions without registering them with kbar.
- * This allows the results to bypass kbar's fuzzy filtering since they're already
- * filtered by the plugin's searchProvider function.
+ * Fetches dynamic results from plugin extensions.
  *
- * Returns flat CommandPaletteAction[] that can be concatenated with other search results.
+ * Flat results (no children) bypass kbar's store and are returned as
+ * CommandPaletteAction[] for manual merging into search results.
+ *
+ * Hierarchical results (with children) are registered with kbar via
+ * useRegisterActions so that the parent/child drill-down mechanism works.
  */
-export function useDynamicExtensionResults(searchQuery: string): {
+export function useDynamicExtensionResults(
+  searchQuery: string,
+  activeFacets?: Record<string, string>,
+  selectedCategory?: string | null
+): {
   results: CommandPaletteAction[];
   isLoading: boolean;
+  availableFacets: CommandPaletteDynamicFacet[];
+  availableCategories: DynamicProviderCategory[];
+  resultCount: number;
 } {
   const [dynamicResults, setDynamicResults] = useState<DynamicResultWithPluginId[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableFacets, setAvailableFacets] = useState<CommandPaletteDynamicFacet[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<DynamicProviderCategory[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounce the search query
+  const { currentRootActionId } = useKBar((state) => ({
+    currentRootActionId: state.currentRootActionId,
+  }));
+
+  const isDrilledIntoDynamic = Boolean(currentRootActionId?.startsWith('dynamic-'));
+
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
   useDebounce(
@@ -40,31 +99,58 @@ export function useDynamicExtensionResults(searchQuery: string): {
     [searchQuery]
   );
 
+  // Load categories from registry once
   useEffect(() => {
-    // Cancel previous request
+    commandPaletteDynamicRegistry.getCategories().then(setAvailableCategories);
+  }, []);
+
+  // Load facets filtered by selected category (empty when no category selected)
+  useEffect(() => {
+    if (!selectedCategory) {
+      setAvailableFacets([]);
+      return;
+    }
+    commandPaletteDynamicRegistry.getFacets(selectedCategory).then((facetsMap) => {
+      const allFacets: CommandPaletteDynamicFacet[] = [];
+      facetsMap.forEach((facets) => allFacets.push(...facets));
+      setAvailableFacets(allFacets);
+    });
+  }, [selectedCategory]);
+
+  const activeFacetsKey = JSON.stringify(activeFacets ?? {});
+
+  useEffect(() => {
+    // When drilled into a dynamic result's children, keep existing results stable
+    if (isDrilledIntoDynamic) {
+      setIsLoading(false);
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Clear results if query is too short
-    if (debouncedSearchQuery.length < 2) {
+    if (!selectedCategory && debouncedSearchQuery.length < 2) {
       setDynamicResults([]);
       setIsLoading(false);
       return;
     }
 
-    // Create new abort controller
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
     setIsLoading(true);
 
-    const context: PluginExtensionCommandPaletteContext = {
+    const context: PluginExtensionCommandPaletteContext & {
+      activeFacets?: Record<string, string>;
+      selectedCategory?: string;
+    } = {
       searchQuery: debouncedSearchQuery,
       signal: abortController.signal,
+      activeFacets,
+      selectedCategory: selectedCategory ?? undefined,
     };
 
-    // Execute search across all registered providers
     commandPaletteDynamicRegistry
       .search(context)
       .then((resultsMap: Map<string, CommandPaletteDynamicSearchResult>) => {
@@ -79,12 +165,10 @@ export function useDynamicExtensionResults(searchQuery: string): {
             allResults.push({
               ...item,
               pluginId: config.pluginId,
-              // Use item's section or fall back to config's category
               section: item.section ?? config.config.category,
             });
           });
         });
-
         setDynamicResults(allResults);
         setIsLoading(false);
       })
@@ -96,66 +180,86 @@ export function useDynamicExtensionResults(searchQuery: string): {
         }
       });
 
-    // Cleanup
     return () => {
       abortController.abort();
     };
-  }, [debouncedSearchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, isDrilledIntoDynamic, activeFacetsKey, selectedCategory]);
 
-  // Convert dynamic results to CommandPaletteAction[]
-  const results: CommandPaletteAction[] = useMemo(() => {
-    return dynamicResults.map((result) => {
-      const section = result.section ?? 'Dynamic Results';
+  // Register hierarchical results (with children) in kbar's store
+  const hierarchicalActions: Action[] = useMemo(() => {
+    const actions: Action[] = [];
+    dynamicResults
+      .filter((r) => r.children && r.children.length > 0)
+      .forEach((result) => {
+        const parentId = `dynamic-${result.pluginId}-${result.id}`;
+        const section = result.section ?? 'Dynamic Results';
 
-      return {
-        id: `dynamic-${result.pluginId}-${result.id}`,
-        name: result.title,
-        section,
-        subtitle: result.description,
-        priority: EXTENSIONS_PRIORITY - 0.5,
-        keywords: result.keywords?.join(' '),
-        perform: () => {
-          if (result.onSelect) {
-            const extensionPointId = 'grafana/commandpalette/action';
-            result.onSelect(result, {
-              context: { searchQuery: debouncedSearchQuery, signal: new AbortController().signal },
-              extensionPointId,
-              openModal: createOpenModalFunction({
-                pluginId: result.pluginId,
-                title: result.title,
-                description: result.description,
-                extensionPointId,
-                path: result.path,
-                category: result.section,
-              }),
-              openSidebar: (componentTitle, context) => {
-                appEvents.publish(
-                  new OpenExtensionSidebarEvent({
-                    props: context,
-                    pluginId: result.pluginId,
-                    componentTitle,
-                  })
-                );
-              },
-              closeSidebar: () => {
-                appEvents.publish(new CloseExtensionSidebarEvent());
-              },
-              toggleSidebar: (componentTitle, context) => {
-                appEvents.publish(
-                  new ToggleExtensionSidebarEvent({
-                    props: context,
-                    pluginId: result.pluginId,
-                    componentTitle,
-                  })
-                );
-              },
-            });
-          }
-        },
-        url: result.path,
-      };
-    });
+        const parentAction: Action & { detailPanel?: React.ReactNode } = {
+          id: parentId,
+          name: result.title,
+          subtitle: result.description,
+          section,
+          icon: result.icon,
+          priority: EXTENSIONS_PRIORITY - 0.5,
+          keywords: result.keywords?.join(' '),
+        };
+        if (result.detailPanel) {
+          parentAction.detailPanel = result.detailPanel;
+        }
+        actions.push(parentAction);
+
+        result.children!.forEach((child) => {
+          const childPerform = child.onSelect
+            ? () => {
+                child.onSelect!(child, buildEventHelpers(result, debouncedSearchQuery));
+              }
+            : undefined;
+
+          actions.push({
+            id: `${parentId}/${child.id}`,
+            name: child.title,
+            subtitle: child.description,
+            parent: parentId,
+            icon: child.icon,
+            perform: childPerform,
+            keywords: child.keywords?.join(' '),
+          });
+        });
+      });
+    return actions;
   }, [dynamicResults, debouncedSearchQuery]);
 
-  return { results, isLoading };
+  useRegisterActions(hierarchicalActions, [hierarchicalActions]);
+
+  // Convert flat results (no children) to CommandPaletteAction[]
+  const results: CommandPaletteAction[] = useMemo(() => {
+    return dynamicResults
+      .filter((r) => !r.children || r.children.length === 0)
+      .map((result) => {
+        const section = result.section ?? 'Dynamic Results';
+
+        const perform = result.onSelect
+          ? () => {
+              result.onSelect!(result, buildEventHelpers(result, debouncedSearchQuery));
+            }
+          : undefined;
+
+        return {
+          id: `dynamic-${result.pluginId}-${result.id}`,
+          name: result.title,
+          section,
+          subtitle: result.description,
+          priority: EXTENSIONS_PRIORITY - 0.5,
+          keywords: result.keywords?.join(' '),
+          perform,
+          url: result.path,
+          icon: result.icon,
+          secondaryActions: result.secondaryActions,
+          detailPanel: result.detailPanel,
+        };
+      });
+  }, [dynamicResults, debouncedSearchQuery]);
+
+  return { results, isLoading, availableFacets, availableCategories, resultCount: dynamicResults.length };
 }

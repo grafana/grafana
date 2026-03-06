@@ -3,7 +3,7 @@ import { setIn } from 'immutable';
 import { ScopeNode } from '@grafana/data';
 
 import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
-import { SCOPES_PRIORITY } from '../values';
+import { DASHBOARDS_PRIORITY } from '../values';
 
 import { mapScopeNodeToAction, mapScopesNodesTreeToActions } from './scopesUtils';
 
@@ -27,7 +27,7 @@ describe('mapScopeNodeToAction', () => {
       id: 'parent1/scope1',
       name: 'Scope 1',
       keywords: 'Scope 1 scope1',
-      priority: SCOPES_PRIORITY,
+      priority: DASHBOARDS_PRIORITY,
       parent: 'parent1',
       perform: expect.any(Function),
       subtitle: 'Parent Scope',
@@ -42,7 +42,7 @@ describe('mapScopeNodeToAction', () => {
       id: 'parent1/scope1',
       name: 'Scope 1',
       keywords: 'Scope 1 scope1',
-      priority: SCOPES_PRIORITY,
+      priority: DASHBOARDS_PRIORITY,
       parent: 'parent1',
       subtitle: 'Parent Scope',
     });
@@ -58,8 +58,8 @@ describe('mapScopeNodeToAction', () => {
       id: 'scopes/scope1',
       name: 'Scope 1',
       keywords: 'Scope 1 scope1',
-      priority: SCOPES_PRIORITY,
-      section: 'Scopes',
+      priority: DASHBOARDS_PRIORITY,
+      section: 'Dashboards',
       subtitle: 'Parent Scope',
       perform: expect.any(Function),
     });

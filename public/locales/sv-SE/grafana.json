@@ -4151,12 +4151,12 @@
       "placeholder": "Sök eller hoppa till …"
     },
     "section": {
-      "actions": "Åtgärder",
       "dashboard-search-results": "Instrumentpaneler",
+      "dashboards": "",
       "folder-search-results": "Mappar",
-      "pages": "Sidor",
-      "preferences": "Inställningar",
-      "recent-dashboards": "Senaste paneler",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Senaste omfattningar"
     }
   },

@@ -301,6 +301,8 @@ export type DynamicPluginExtensionCommandPaletteContext = {
   searchQuery: string;
   /** Signal for request cancellation */
   signal: AbortSignal;
+  /** Currently active facet filters (facetId → selected valueId). Empty when no facets applied. */
+  activeFacets?: Record<string, string>;
 };
 
 export type PluginExtensionResourceAttributesContext = {
@@ -361,6 +363,30 @@ type Dashboard = {
 // --------------------------------------------------------
 
 /**
+ * A child action for multi-level command palette drill-down.
+ * Shown when the user selects a parent result that has children.
+ */
+export type CommandPaletteDynamicResultChild = {
+  /** Unique identifier for this child (scoped to parent) */
+  id: string;
+  /** Display title */
+  title: string;
+  /** Optional subtitle or description */
+  description?: string;
+  /** Optional icon (React element) displayed to the left of the title */
+  icon?: React.ReactNode;
+  /** Optional keywords for search matching within the sub-menu */
+  keywords?: string[];
+  /**
+   * Action handler when this child is selected.
+   * If not provided, will use `path` for navigation.
+   */
+  onSelect?: CommandPaletteDynamicResultAction;
+  /** Optional URL to navigate to (alternative to onSelect) */
+  path?: string;
+};
+
+/**
  * A single dynamic result item returned by a command palette search provider
  */
 export type CommandPaletteDynamicResult = {
@@ -381,8 +407,21 @@ export type CommandPaletteDynamicResult = {
   /**
    * Action handler when this result is selected.
    * If not provided, will use `path` for navigation.
+   * Ignored when `children` is provided.
    */
   onSelect?: CommandPaletteDynamicResultAction;
+  /** Optional icon (React element) displayed to the left of the title */
+  icon?: React.ReactNode;
+  /** Optional React element rendered on the right side for secondary actions (e.g. buttons) */
+  secondaryActions?: React.ReactNode;
+  /**
+   * Optional child actions for multi-level drill-down.
+   * When provided, selecting this result drills into the children
+   * instead of executing `onSelect` or navigating to `path`.
+   */
+  children?: CommandPaletteDynamicResultChild[];
+  /** Optional detail panel rendered beside the results list when this item is active */
+  detailPanel?: React.ReactNode;
 };
 
 /**
@@ -399,6 +438,181 @@ export type CommandPaletteDynamicResultAction = (
 export type CommandPaletteDynamicSearchProvider = (
   context: DynamicPluginExtensionCommandPaletteContext
 ) => Promise<CommandPaletteDynamicResult[]>;
+
+// Faceted Search Types
+// --------------------------------------------------------
+
+/**
+ * Context passed to facet value providers.
+ */
+export interface CommandPaletteFacetContext {
+  /** The current search query */
+  searchQuery: string;
+  /** Currently active facet selections (facetId → selected valueId) */
+  activeFacets: Record<string, string>;
+  /** Signal for request cancellation */
+  signal: AbortSignal;
+}
+
+/**
+ * A single selectable value within a facet.
+ */
+export interface CommandPaletteFacetValue {
+  /** Unique identifier for this value */
+  id: string;
+  /** Display label */
+  label: string;
+  /** Optional count of matching results */
+  count?: number;
+  /** Optional icon displayed to the left of the label */
+  icon?: React.ReactNode;
+}
+
+/**
+ * A facet definition for progressive narrowing in command palette results.
+ * Facets allow users to filter results by specific dimensions (e.g. type, region).
+ */
+export interface CommandPaletteDynamicFacet {
+  /** Unique identifier for this facet */
+  id: string;
+  /** Display label (e.g. "Type", "Region") */
+  label: string;
+  /** Keyboard shortcut number ('1'-'9'). Displayed as Cmd+1, Cmd+2, etc. */
+  shortcutKey?: string;
+  /** Placeholder text for the search input when this facet is active */
+  placeholder?: string;
+  /**
+   * Provider function that returns available values for this facet.
+   * Receives the current active facets so values can be contextually filtered.
+   */
+  getValues: (context: CommandPaletteFacetContext) => Promise<CommandPaletteFacetValue[]>;
+}
+
+// Context-Aware Command Palette Action Types
+// --------------------------------------------------------
+
+/**
+ * Page context passed to isAvailable/perform callbacks for context-aware actions.
+ */
+export interface CommandPalettePageContext {
+  pathname: string;
+  search: string;
+}
+
+/**
+ * A single option shown in a context action step dropdown.
+ */
+export interface ContextStepOption {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  description?: string;
+  /** Group header for visual grouping (e.g., "Quick ranges" vs "Time controls") */
+  group?: string;
+}
+
+/**
+ * A breadcrumb entry tracking selections across steps.
+ */
+export interface ContextStepBreadcrumb {
+  label: string;
+  value: string;
+}
+
+/**
+ * Transition returned by onSelect to control what happens after a selection.
+ */
+export type ContextStepTransition =
+  | { type: 'next'; step: CommandPaletteContextStep; breadcrumb: ContextStepBreadcrumb }
+  | { type: 'apply'; close?: boolean }
+  | { type: 'callback'; fn: () => void; close?: boolean }
+  | { type: 'goBack'; breadcrumb?: ContextStepBreadcrumb };
+
+/**
+ * A step in a multi-level context action flow.
+ * Each step defines a pill label, placeholder, options, and selection handler.
+ */
+export interface CommandPaletteContextStep {
+  pillLabel: string;
+  pillIcon?: string;
+  placeholder: string;
+  multiSelect?: boolean;
+  /** Controls when selections take effect. 'eager' (default) applies immediately; 'deferred' batches until Cmd+Enter. */
+  applyMode?: 'eager' | 'deferred';
+  getOptions: (
+    query: string,
+    signal: AbortSignal,
+    breadcrumbs: ContextStepBreadcrumb[]
+  ) => Promise<ContextStepOption[]>;
+  onSelect: (option: ContextStepOption, breadcrumbs: ContextStepBreadcrumb[]) => ContextStepTransition;
+  onApply?: (selected: ContextStepOption[], breadcrumbs: ContextStepBreadcrumb[]) => void;
+  /** Called on Cmd+Enter when applyMode is 'deferred'. Receives all accumulated breadcrumbs so the plugin can batch-apply. */
+  onCommit?: (breadcrumbs: ContextStepBreadcrumb[]) => void;
+  /** Called when a breadcrumb is removed via Backspace. Allows the plugin to un-apply the filter in eager mode. */
+  onRemoveBreadcrumb?: (breadcrumb: ContextStepBreadcrumb) => void;
+  /**
+   * When going back from this step (via Escape with multi-select), collapse this many
+   * additional history entries. Default 0 (go back one level).
+   * Useful for N-level flows (e.g. label -> operator -> values) where Escape from the
+   * deepest step should return to the root instead of the intermediate step.
+   */
+  collapseSteps?: number;
+  /**
+   * Custom breadcrumb builder when collapsing multiple steps.
+   * Receives the breadcrumbs accumulated across the collapsed levels and the
+   * comma-separated summary of selected values.
+   * If not provided, breadcrumbs are joined by their labels.
+   */
+  buildCollapsedBreadcrumb?: (breadcrumbs: ContextStepBreadcrumb[], summary: string) => ContextStepBreadcrumb;
+  /**
+   * Optional static help panel displayed to the right of the options list.
+   * Useful for showing syntax hints, examples, or contextual guidance.
+   */
+  helpPanel?: ContextStepHelpPanel;
+}
+
+/**
+ * Static help content rendered as a right sidebar alongside the options list.
+ */
+export interface ContextStepHelpPanel {
+  sections: ContextStepHelpSection[];
+}
+
+/**
+ * A section within the help panel (e.g., "Common regex patterns", "Examples").
+ */
+export interface ContextStepHelpSection {
+  title: string;
+  items: ContextStepHelpItem[];
+}
+
+/**
+ * A single item in a help section.
+ */
+export interface ContextStepHelpItem {
+  /** Symbol or code snippet (displayed in a code-style badge) */
+  symbol: string;
+  /** Optional description text next to the symbol */
+  description?: string;
+}
+
+/**
+ * Configuration for a context-aware command palette action.
+ * Context actions appear conditionally based on the current page.
+ */
+export interface CommandPaletteContextActionConfig {
+  id: string;
+  title: string;
+  icon?: string;
+  /** Section in the results list. Defaults to 'Pages'. */
+  section?: string;
+  /** Determines if this action is available on the current page. */
+  isAvailable: (context: CommandPalettePageContext) => boolean;
+  /** Simple action with no drill-down (e.g., "Clear filters"). */
+  perform?: (context: CommandPalettePageContext) => void;
+  /** Step-based drill-down (e.g., "Select time range", "Add filter"). */
+  steps?: CommandPaletteContextStep;
+}
 
 /**
  * Configuration for registering a dynamic command palette provider
@@ -421,4 +635,11 @@ export type PluginExtensionCommandPaletteDynamicConfig = {
    * Return an empty array to skip results for the current search.
    */
   searchProvider: CommandPaletteDynamicSearchProvider;
+
+  /**
+   * Optional facets for progressive narrowing of results.
+   * When provided, the command palette renders facet pills and supports
+   * keyboard-shortcut-driven filtering.
+   */
+  facets?: CommandPaletteDynamicFacet[];
 };
