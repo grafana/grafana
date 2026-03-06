@@ -22,12 +22,20 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type k8sUserClient interface {
+	Get(ctx context.Context, identifier resource.Identifier) (*iamv0alpha1.User, error)
+	List(ctx context.Context, namespace string, opts resource.ListOptions) (*iamv0alpha1.UserList, error)
+	Create(ctx context.Context, obj *iamv0alpha1.User, opts resource.CreateOptions) (*iamv0alpha1.User, error)
+	Update(ctx context.Context, obj *iamv0alpha1.User, opts resource.UpdateOptions) (*iamv0alpha1.User, error)
+	UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus iamv0alpha1.UserStatus, opts resource.UpdateOptions) (*iamv0alpha1.User, error)
+}
+
 type K8sUserService struct {
 	logger             log.Logger
 	namespaceMapper    request.NamespaceMapper
 	restConfigProvider apiserver.RestConfigProvider
 	clientGenerator    resource.ClientGenerator
-	userClient         *iamv0alpha1.UserClient
+	userClient         k8sUserClient
 	initClients        sync.Once
 }
 
