@@ -451,6 +451,10 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
+	// FlagPermissionLens
+	// Shows a Resource Access tab on service accounts with effective permissions across dashboards, folders, and datasources
+	FlagPermissionLens = "permissionLens"
+
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"

@@ -3,13 +3,15 @@ import React, { memo, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModel } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { Role } from 'app/types/accessControl';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 import { TeamWithRoles } from 'app/types/teams';
 import { UserDTO, UserOrg } from 'app/types/user';
+
+import { ResourceAccessPage } from 'app/features/serviceaccounts/ResourceAccess/ServiceAccountResourceAccessPage';
 
 import { UserInformationPage } from './UserInformationPage';
 import type { RoleWithOrg } from './UserPermissionsPage';
@@ -25,12 +27,15 @@ type UserPageRouteParams = {
 enum PageTypes {
   Information = 'information',
   Roles = 'roles',
+  ResourceAccess = 'resourceaccess',
 }
 
 function getPageType(page: string | undefined): PageTypes {
   switch (page) {
     case PageTypes.Roles:
       return PageTypes.Roles;
+    case PageTypes.ResourceAccess:
+      return PageTypes.ResourceAccess;
     case PageTypes.Information:
     default:
       return PageTypes.Information;
@@ -102,6 +107,11 @@ const UserPages = memo(() => {
         return <UserInformationPage user={user} onUserDelete={handleUserDelete} />;
       case PageTypes.Roles:
         return <UserRolesPageWrapper user={user} />;
+      case PageTypes.ResourceAccess:
+        if (config.featureToggles.permissionLens) {
+          return <ResourceAccessPage entityId={user.id} entityType="user" />;
+        }
+        return null;
       default:
         return <UserInformationPage user={user} onUserDelete={handleUserDelete} />;
     }

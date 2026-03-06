@@ -3,12 +3,14 @@ import { memo, useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
+import { ResourceAccessPage } from './ResourceAccess/ServiceAccountResourceAccessPage';
 import { ServiceAccountInformationPage } from './ServiceAccountInformationPage';
 import { ServiceAccountManagementPage } from './ServiceAccountManagementPage';
 import { ServiceAccountRolesPage } from './ServiceAccountRolesPage';
@@ -27,6 +29,7 @@ enum PageTypes {
   Tokens = 'tokens',
   Management = 'management',
   Roles = 'roles',
+  ResourceAccess = 'resourceaccess',
 }
 
 function getPageType(page: string | undefined): PageTypes {
@@ -37,6 +40,8 @@ function getPageType(page: string | undefined): PageTypes {
       return PageTypes.Management;
     case PageTypes.Roles:
       return PageTypes.Roles;
+    case PageTypes.ResourceAccess:
+      return PageTypes.ResourceAccess;
     case PageTypes.Information:
     default:
       return PageTypes.Information;
@@ -117,6 +122,11 @@ const ServiceAccountPages = memo(() => {
       case PageTypes.Roles:
         if (contextSrv.licensedAccessControlEnabled()) {
           return <ServiceAccountRolesPage serviceAccount={serviceAccount} />;
+        }
+        return null;
+      case PageTypes.ResourceAccess:
+        if (config.featureToggles.permissionLens) {
+          return <ResourceAccessPage entityId={serviceAccount.id} entityType="service-account" />;
         }
         return null;
       default:

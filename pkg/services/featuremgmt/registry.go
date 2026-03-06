@@ -1239,6 +1239,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "permissionLens",
+			Description:  "Shows a Resource Access tab on service accounts with effective permissions across dashboards, folders, and datasources",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "managedDualWriter",
 			Description:  "Pick the dual write mode from database configs",
 			Stage:        FeatureStageExperimental,

@@ -790,6 +790,11 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
+  * Shows a Resource Access tab on service accounts with effective permissions across dashboards, folders, and datasources
+  * @default false
+  */
+  permissionLens?: boolean;
+  /**
   * Pick the dual write mode from database configs
   * @default false
   */

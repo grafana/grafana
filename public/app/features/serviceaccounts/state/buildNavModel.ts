@@ -1,5 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ServiceAccountDTO } from 'app/types/serviceaccount';
@@ -61,6 +62,17 @@ export function buildNavModel(serviceAccount: ServiceAccountDTO | null, uid: str
       id: `serviceaccount-roles-${uid}`,
       text: t('serviceaccounts.build-nav-model.roles', 'Roles'),
       url: `/org/serviceaccounts/edit/${uid}/roles`,
+    });
+  }
+
+  // Resource Access tab (Permission Lens)
+  if (config.featureToggles.permissionLens) {
+    navModel.children!.push({
+      active: false,
+      icon: 'eye',
+      id: `serviceaccount-resourceaccess-${uid}`,
+      text: t('serviceaccounts.build-nav-model.resource-access', 'Resource Access'),
+      url: `/org/serviceaccounts/edit/${uid}/resourceaccess`,
     });
   }
 
