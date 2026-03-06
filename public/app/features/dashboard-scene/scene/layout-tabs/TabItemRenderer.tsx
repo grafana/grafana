@@ -73,7 +73,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             className={cx(
               isConditionallyHidden && styles.hidden,
               // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
-
               isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
               (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
               (isSelected || isSourceSelected) && styles.selectedTab,
@@ -229,6 +228,6 @@ function getDraggableStyle(style: React.CSSProperties | undefined, snapshot: Dra
 
   return {
     ...style,
-    transition: 'all 0.01s',
+    transitionDuration: '0.01s',
   };
 }

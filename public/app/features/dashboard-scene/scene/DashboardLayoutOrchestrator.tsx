@@ -285,9 +285,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const draggedHeaderEl = this._draggedTab?.containerRef?.current ?? undefined;
     if (draggedHeaderEl) {
       const rect = draggedHeaderEl.getBoundingClientRect();
-      // Use at least 1px to ensure placeholder is visible even if width/height are extremely small
-      this._draggedTabWidth = Math.max(1, Math.round(rect.width));
-      this._draggedTabHeight = Math.max(1, Math.round(rect.height));
+      this._draggedTabWidth = rect.width;
+      this._draggedTabHeight = rect.height;
     }
 
     document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
@@ -302,22 +301,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     if (dropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget = dropTarget;
     } else {
-      this.cleanUpTabDrag();
+      this._lastDropTarget = null;
       return;
     }
 
-    // moving to a new manager
-    if (dropTarget !== this._sourceDropTarget) {
-      this._lastDropTarget = dropTarget;
-
-      // Handled by hello-pangea/dnd - skip calculations
-      if (dropTarget === this._sourceDropTarget) {
-        return;
-      }
-
-      dropTarget.setIsDropTarget(true);
-    }
-
+    dropTarget.setIsDropTarget(true);
     const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._draggedTab!.state.key);
     const targetTabIndex = dropTarget?.getTabsIncludingRepeats().findIndex((t) => t.state.key === tabUnderMouse);
 
@@ -349,44 +337,39 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
+    if (!this._draggedTab) {
+      return;
+    }
+
     const sourceManager = this._sourceDropTarget;
-    const destinationManager = !targetIndex ? this._lastDropTarget : sourceManager;
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === this._draggedTab);
 
-    if (!targetIndex && destinationManager && destinationManager instanceof TabsLayoutManager) {
-      targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
-    }
-
-    const tab = this._draggedTab;
-
-    if (!tab) {
-      return;
-    }
-
-    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === tab);
-    this._draggedTab = undefined;
-
-    // moving within the same TabsLayoutManager
-    if (sourceManager === destinationManager) {
-      if (sourceIndex === targetIndex) {
-        return;
+    // targetIndex !== undefined => dropped in the same manager, target index provided by hello-pangea
+    if (targetIndex !== undefined) {
+      if (sourceIndex !== targetIndex) {
+        sourceManager.moveTab(sourceIndex, targetIndex);
       }
-      sourceManager.moveTab(sourceIndex, targetIndex!);
+      this.cleanUpTabDrag();
       return;
     }
-    // moving to a different TabsLayoutManager
-    else if (destinationManager && destinationManager instanceof TabsLayoutManager) {
-      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex!);
-      // When moving a tab into a new tab group, make it the active tab.
-      this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
-    }
 
-    this.cleanUpTabDrag();
+    // dropped in a different manager => handled by the orchestrator
+    if (this._lastDropTarget instanceof TabsLayoutManager) {
+      const destinationManager = this._lastDropTarget;
+      targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
+
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
+      // When moving a tab into a new tab group, make it the active tab.
+      this._moveTabBetweenManagers(this._draggedTab, sourceManager, destinationManager, realDestinationIndex);
+      this.cleanUpTabDrag();
+    }
   }
 
   private cleanUpTabDrag() {
     if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget.setIsDropTarget?.(false);
     }
+    this._draggedTab = undefined;
     this._lastDropTarget = null;
   }
 
