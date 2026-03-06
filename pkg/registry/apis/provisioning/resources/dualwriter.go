@@ -171,15 +171,25 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// When the feature flag is enabled, write a _folder.json with a stable UID
-	// for this folder only. Intermediate ancestor folders are not given a
-	// _folder.json automatically — they receive one only when explicitly created.
+	// When the feature flag is enabled, write folder metadata for every path segment
+	// (ancestor and leaf), skipping any segment that already has one.
 	var stableUID string
 	if r.folderMetadataEnabled {
-		uid := util.GenerateShortUID()
-		manifest := NewFolderManifest(uid, safepath.Base(opts.Path))
-		var err error
-		stableUID, err = WriteFolderMetadata(ctx, r.repo, opts.Path, manifest, opts.Ref, opts.Message)
+		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
+			folderPath := segPath + "/"
+			existing, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			if readErr == nil {
+				// _folder.json already exists; reuse its UID for this segment
+				stableUID = existing.Name
+				return nil
+			}
+			// Not found or unreadable: write a new _folder.json
+			uid := util.GenerateShortUID()
+			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
+			var writeErr error
+			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
+			return writeErr
+		})
 		if err != nil {
 			return nil, err
 		}
