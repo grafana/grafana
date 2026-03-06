@@ -52,4 +52,14 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
    */
   showIf?: (currentOptions: TOptions, data?: DataFrame[], annotations?: DataFrame[]) => boolean | undefined;
+
+  /**
+   * When true, this option will appear in the dashboard edit pane for quick editing
+   * without entering the full panel editor.
+   *
+   * Only the first 5 options with `quickEdit: true` will be shown.
+   *
+   * @alpha
+   */
+  quickEdit?: boolean;
 }
