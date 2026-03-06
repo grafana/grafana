@@ -136,6 +136,7 @@ export function getFieldOverrideCategories(
               data={data ?? []}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
+              scope={override.matcher.scope}
             />
           );
         },

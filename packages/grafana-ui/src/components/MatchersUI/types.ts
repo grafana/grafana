@@ -15,5 +15,6 @@ export interface MatcherUIProps<T> {
   id?: string;
   data: DataFrame[];
   options: T;
+  scope?: MatcherScope;
   onChange: (options: T, scope?: MatcherScope) => void;
 }
