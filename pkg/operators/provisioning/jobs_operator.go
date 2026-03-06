@@ -229,7 +229,7 @@ func setupWorkers(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients)
+	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -242,7 +242,7 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, resources.IsFolderMetadataEnabled(cfg))
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
