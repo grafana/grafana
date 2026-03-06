@@ -12,6 +12,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -81,9 +82,11 @@ export class TabsLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
-    // Maybe not needed, depending on if we want nested tabs or tabs within rows
-    throw new Error('Method not implemented.');
+  // a single panel ID generator is shared across all tabs to ensure that each gets a unique range of panel IDs.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
+    const gen = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
+    const newTabs = this.state.tabs.map((tab) => tab.duplicate(gen));
+    return this.clone({ tabs: newTabs, key: undefined });
   }
 
   public duplicateTab(tab: TabItem) {
