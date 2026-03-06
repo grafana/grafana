@@ -132,6 +132,7 @@ export function mapScopeNodeToAction(
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: DASHBOARDS_PRIORITY,
       parent: parentId,
+      icon: createElement(Icon, { name: 'search' }),
     };
 
     // TODO: some non leaf nodes can also be selectable, but we don't have a way to show that in the UI yet.
@@ -148,6 +149,7 @@ export function mapScopeNodeToAction(
       priority: DASHBOARDS_PRIORITY,
       section: t('command-palette.section.dashboards', 'Dashboards'),
       subtitle: subtitle,
+      icon: createElement(Icon, { name: 'search' }),
       perform: () => {
         selectScope(scopeNode.metadata.name);
       },
