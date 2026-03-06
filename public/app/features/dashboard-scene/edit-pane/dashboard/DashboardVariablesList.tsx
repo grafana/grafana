@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
@@ -16,6 +15,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { dashboardEditActions } from '../shared';
 
 import { partitionSceneObjects } from './helpers';
+import { getDraggableListStyles } from './styles';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
 const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';
@@ -28,6 +28,7 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 };
 
 export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
+  const styles = useStyles2(getDraggableListStyles);
   const { variables } = set.useState();
   const { editable, nonEditable } = useMemo(() => partitionVariablesByEditability(variables), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
@@ -105,6 +106,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
       <DragDropContext onDragEnd={onDragEnd}>
         <OptionsPaneCategory
           id={ID_VISIBLE_LIST}
+          className={styles.sectionContainer}
           title={t('dashboard-scene.variables-list.title-above-dashboard', 'Above dashboard ({{count}})', {
             count: visible.length,
           })}
@@ -113,6 +115,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
         </OptionsPaneCategory>
         <OptionsPaneCategory
           id={ID_CONTROLS_MENU_LIST}
+          className={styles.sectionContainer}
           title={t('dashboard-scene.variables-list.title-controls-menu', 'Controls menu ({{count}})', {
             count: controlsMenu.length,
           })}
@@ -125,6 +128,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
         </OptionsPaneCategory>
         <OptionsPaneCategory
           id={ID_HIDDEN_LIST}
+          className={styles.sectionContainer}
           title={t('dashboard-scene.variables-list.title-hidden', 'Hidden ({{count}})', {
             count: hidden.length,
           })}
@@ -157,7 +161,7 @@ function VariablesSection({
   droppableId: string;
   onClickVariable: (variable: SceneVariable) => void;
 }) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getDraggableListStyles);
 
   const onClickVariableItem = useCallback(
     (variable: SceneVariable) => {
@@ -187,7 +191,7 @@ function VariablesSection({
                     </Tooltip>
                   </div>
                   <div
-                    className={styles.variableName}
+                    className={styles.itemName}
                     role="button"
                     tabIndex={0}
                     onClick={() => onClickVariableItem(variable)}
@@ -252,68 +256,4 @@ export function partitionVariablesByDisplay(variables: SceneVariable[]) {
     }
   });
   return { visible, controlsMenu, hidden };
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    title: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(0.5),
-      alignItems: 'center',
-      lineHeight: 1,
-      marginBottom: theme.spacing(1),
-    }),
-    titleIcon: css({
-      color: theme.colors.text.secondary,
-    }),
-    list: css({
-      listStyle: 'none',
-      margin: 0,
-      padding: 0,
-      minHeight: theme.spacing(4), // leave space for droping variables on an empty list
-    }),
-    listItem: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0.25),
-    }),
-    variableName: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(0.5),
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      cursor: 'pointer',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-      button: {
-        visibility: 'hidden',
-      },
-      '&:hover': {
-        color: theme.colors.text.link,
-        button: {
-          visibility: 'visible',
-        },
-      },
-    }),
-    dragHandle: css({
-      display: 'flex',
-      alignItems: 'center',
-      cursor: 'grab',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-      '&:active': {
-        cursor: 'grabbing',
-      },
-    }),
-  };
 }

@@ -16,6 +16,7 @@ import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
 
 import { partitionSceneObjects } from './helpers';
+import { getDraggableListStyles } from './styles';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -31,6 +32,7 @@ const DROPPABLE_TO_HIDE: Record<
 };
 
 export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const styles = useStyles2(getDraggableListStyles);
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
     () => partitionAnnotationsByDisplay(annotationLayers),
@@ -95,6 +97,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       <DragDropContext onDragEnd={onDragEnd}>
         <OptionsPaneCategory
           id={ID_VISIBLE_LIST}
+          className={styles.sectionContainer}
           title={t(
             'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
             'Above dashboard ({{count}})',
@@ -111,6 +114,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         </OptionsPaneCategory>
         <OptionsPaneCategory
           id={ID_CONTROLS_MENU_LIST}
+          className={styles.sectionContainer}
           title={t(
             'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
             'Controls menu ({{count}})',
@@ -127,6 +131,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         </OptionsPaneCategory>
         <OptionsPaneCategory
           id={ID_HIDDEN_LIST}
+          className={styles.sectionContainer}
           title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
             count: hidden.length,
           })}
@@ -189,7 +194,7 @@ function AnnotationsSection({
                     </Tooltip>
                   </div>
                   <div
-                    className={styles.name}
+                    className={styles.itemName}
                     role="button"
                     tabIndex={0}
                     onClick={() => onClickAnnotationItem(annotation)}
@@ -282,65 +287,7 @@ export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerPr
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    title: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(0.5),
-      alignItems: 'center',
-      lineHeight: 1,
-      marginBottom: theme.spacing(1),
-    }),
-    titleIcon: css({
-      color: theme.colors.text.secondary,
-    }),
-    list: css({
-      listStyle: 'none',
-      margin: 0,
-      padding: 0,
-      minHeight: theme.spacing(4), // leave space for droping items on an empty list
-    }),
-    listItem: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0.25),
-    }),
-    name: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(0.5),
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      cursor: 'pointer',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-      button: {
-        visibility: 'hidden',
-      },
-      '&:hover': {
-        color: theme.colors.text.link,
-        button: {
-          visibility: 'visible',
-        },
-      },
-    }),
-    dragHandle: css({
-      display: 'flex',
-      alignItems: 'center',
-      cursor: 'grab',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-      '&:active': {
-        cursor: 'grabbing',
-      },
-    }),
+    ...getDraggableListStyles(theme),
     color: css({
       display: 'inline-block',
       width: theme.spacing(1),
