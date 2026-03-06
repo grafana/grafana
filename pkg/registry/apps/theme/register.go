@@ -54,8 +54,8 @@ func RegisterAppInstaller(
 }
 
 func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
-	if gr.Resource == "userthemes" {
-		return NewUserThemeStorageAuthorizer()
+	if gr.Resource == "themes" {
+		return NewThemeStorageAuthorizer()
 	}
 	return nil
 }

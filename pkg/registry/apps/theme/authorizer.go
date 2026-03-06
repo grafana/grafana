@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,20 +15,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
-var _ storewrapper.ResourceStorageAuthorizer = (*UserThemeStorageAuthorizer)(nil)
+var _ storewrapper.ResourceStorageAuthorizer = (*ThemeStorageAuthorizer)(nil)
 
-var userThemeGroupResource = schema.GroupResource{
+var themeGroupResource = schema.GroupResource{
 	Group:    themeV0alpha1.GroupVersion.Group,
-	Resource: "userthemes",
+	Resource: "themes",
 }
 
-// adminGroups are the groups that bypass the userID ownership check.
+// storageAdminGroups are the groups that bypass the userID ownership check.
 var storageAdminGroups = []string{"grafana:admin"}
 
-type UserThemeStorageAuthorizer struct{}
+type ThemeStorageAuthorizer struct{}
 
-func NewUserThemeStorageAuthorizer() *UserThemeStorageAuthorizer {
-	return &UserThemeStorageAuthorizer{}
+func NewThemeStorageAuthorizer() *ThemeStorageAuthorizer {
+	return &ThemeStorageAuthorizer{}
 }
 
 func isAdmin(authInfo types.AuthInfo) bool {
@@ -39,7 +40,17 @@ func isAdmin(authInfo types.AuthInfo) bool {
 	return false
 }
 
-func (a *UserThemeStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+// isUserTheme checks if a theme name has a user ID prefix (contains a ".").
+// Returns the user ID prefix if it's a user theme, or empty string for global themes.
+func isUserTheme(name string) string {
+	dotIndex := strings.IndexByte(name, '.')
+	if dotIndex < 0 {
+		return ""
+	}
+	return name[:dotIndex]
+}
+
+func (a *ThemeStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return storewrapper.ErrUnauthenticated
@@ -49,19 +60,26 @@ func (a *UserThemeStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.O
 		return nil
 	}
 
-	ut, ok := obj.(*themeV0alpha1.UserTheme)
+	t, ok := obj.(*themeV0alpha1.Theme)
 	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("expected UserTheme, got %T: %w", obj, storewrapper.ErrUnexpectedType))
+		return apierrors.NewInternalError(fmt.Errorf("expected Theme, got %T: %w", obj, storewrapper.ErrUnexpectedType))
 	}
 
-	if ut.Spec.UserID != authInfo.GetIdentifier() {
-		return apierrors.NewForbidden(userThemeGroupResource, ut.Name, fmt.Errorf("access denied"))
+	ownerID := isUserTheme(t.Name)
+	if ownerID == "" {
+		// Global theme — accessible to everyone
+		return nil
+	}
+
+	// User theme — only the owner can access it
+	if ownerID != authInfo.GetIdentifier() {
+		return apierrors.NewForbidden(themeGroupResource, t.Name, fmt.Errorf("access denied"))
 	}
 
 	return nil
 }
 
-func (a *UserThemeStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+func (a *ThemeStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, storewrapper.ErrUnauthenticated
@@ -71,16 +89,22 @@ func (a *UserThemeStorageAuthorizer) FilterList(ctx context.Context, list runtim
 		return list, nil
 	}
 
-	l, ok := list.(*themeV0alpha1.UserThemeList)
+	l, ok := list.(*themeV0alpha1.ThemeList)
 	if !ok {
-		return nil, apierrors.NewInternalError(fmt.Errorf("expected UserThemeList, got %T: %w", list, storewrapper.ErrUnexpectedType))
+		return nil, apierrors.NewInternalError(fmt.Errorf("expected ThemeList, got %T: %w", list, storewrapper.ErrUnexpectedType))
 	}
 
-	var filtered []themeV0alpha1.UserTheme
+	var filtered []themeV0alpha1.Theme
 	for _, item := range l.Items {
-		if item.Spec.UserID == authInfo.GetIdentifier() {
+		ownerID := isUserTheme(item.Name)
+		if ownerID == "" {
+			// Global theme — include for everyone
+			filtered = append(filtered, item)
+		} else if ownerID == authInfo.GetIdentifier() {
+			// User's own theme — include
 			filtered = append(filtered, item)
 		}
+		// Other users' themes — skip
 	}
 
 	l.Items = filtered
@@ -88,14 +112,14 @@ func (a *UserThemeStorageAuthorizer) FilterList(ctx context.Context, list runtim
 }
 
 // Write operations defer to admission validation.
-func (a *UserThemeStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+func (a *ThemeStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
 	return nil
 }
 
-func (a *UserThemeStorageAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (a *ThemeStorageAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
 	return nil
 }
 
-func (a *UserThemeStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+func (a *ThemeStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
 	return nil
 }

@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
-import { useGetUserThemeQuery, useUpdateUserThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { useGetThemeQuery, useUpdateThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { Trans, t } from '@grafana/i18n';
@@ -11,6 +11,7 @@ import { Box, Button, CodeEditor, Field, Input, Stack, useStyles2 } from '@grafa
 
 import { Page } from '../../../core/components/Page/Page';
 import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
+import { getUserThemeResourceName, stripUserThemePrefix } from '../../themes/userThemeUtils';
 
 interface FormData {
   themeJson: string;
@@ -19,8 +20,9 @@ interface FormData {
 
 export default function EditCustomThemePage() {
   const { name } = useParams<{ name: string }>();
-  const { data: theme, isLoading: isLoadingTheme } = useGetUserThemeQuery({ name: name! });
-  const [updateTheme, { isLoading }] = useUpdateUserThemeMutation();
+  const fullName = getUserThemeResourceName(name!);
+  const { data: theme, isLoading: isLoadingTheme } = useGetThemeQuery({ name: fullName });
+  const [updateTheme, { isLoading }] = useUpdateThemeMutation();
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
 
@@ -44,7 +46,7 @@ export default function EditCustomThemePage() {
   useEffect(() => {
     if (theme) {
       reset({
-        themeID: theme.metadata.name,
+        themeID: stripUserThemePrefix(theme.metadata.name!),
         themeJson: JSON.stringify(theme.spec, null, 2),
       });
     }
@@ -60,7 +62,7 @@ export default function EditCustomThemePage() {
 
   const onSubmit = async ({ themeJson }: FormData) => {
     await updateTheme({
-      name: name!,
+      name: fullName,
       patch: { spec: JSON.parse(themeJson) },
     });
     navigate('/profile?tab=themes');

@@ -32,10 +32,6 @@ func New(cfg app.Config) (app.App, error) {
 				Kind:      themeV0alpha1.ThemeKind(),
 				Validator: NewValidator(),
 			},
-			{
-				Kind:      themeV0alpha1.UserThemeKind(),
-				Validator: NewUserThemeValidator(),
-			},
 		},
 	}
 
@@ -58,6 +54,6 @@ func New(cfg app.Config) (app.App, error) {
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := themeV0alpha1.GroupVersion
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {themeV0alpha1.ThemeKind(), themeV0alpha1.UserThemeKind()},
+		gv: {themeV0alpha1.ThemeKind()},
 	}
 }

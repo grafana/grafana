@@ -74,30 +74,6 @@ themeV0alpha1: {
     operations: [
       "CREATE",
       "UPDATE",
-    ]
-  }
-  codegen: {
-    ts: {
-      enabled: true
-    }
-    go: {
-      enabled: true
-    }
-  }
-  schema: {
-    spec: #ThemeSpec
-  }
-}
-
-userThemeV0alpha1: {
-  kind: "UserTheme"
-  scope: "Namespaced"
-  pluralName: "UserThemes"
-  selectableFields: ["spec.userID"]
-  validation: {
-    operations: [
-      "CREATE",
-      "UPDATE",
       "DELETE",
     ]
   }
@@ -110,10 +86,7 @@ userThemeV0alpha1: {
     }
   }
   schema: {
-    spec: {
-      userID: string
-      #ThemeSpec
-    }
+    spec: #ThemeSpec
   }
 }
 

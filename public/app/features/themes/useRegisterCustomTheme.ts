@@ -1,17 +1,13 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 
-import {
-  Theme,
-  useGetThemeQuery,
-  useGetUserThemeQuery,
-  useListThemeQuery,
-  useListUserThemeQuery,
-} from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { Theme, useGetThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme, registerCustomTheme, isRegisteredTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { changeTheme } from '../../core/services/theme';
+
+import { isUserTheme } from './userThemeUtils';
 
 /**
  * Render-nothing component that fetches all custom themes from the API at app
@@ -30,13 +26,6 @@ export function useRegisterCustomTheme() {
           name: configTheme,
         }
   );
-  const { data: userThemeData } = useGetUserThemeQuery(
-    exists
-      ? skipToken
-      : {
-          name: configTheme,
-        }
-  );
 
   useEffect(() => {
     if (data) {
@@ -44,23 +33,17 @@ export function useRegisterCustomTheme() {
     }
   }, [data]);
 
-  useEffect(() => {
-    if (userThemeData) {
-      registerTheme(userThemeData, true);
-    }
-  }, [userThemeData]);
-
   return null;
 }
 
-function registerTheme(theme: Theme, isUserTheme?: boolean) {
+function registerTheme(theme: Theme) {
   const configTheme = config.bootData.user.theme;
 
   registerCustomTheme({
     id: theme.metadata.name!,
     name: theme.spec.name,
     isExtra: true,
-    isUser: isUserTheme,
+    isUser: isUserTheme(theme.metadata.labels),
     build: () => createTheme(theme.spec),
   });
 

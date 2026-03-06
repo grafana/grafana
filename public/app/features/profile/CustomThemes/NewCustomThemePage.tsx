@@ -3,15 +3,15 @@ import { useEffect, useId, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { API_GROUP, API_VERSION, useCreateUserThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { API_GROUP, API_VERSION, useCreateThemeMutation } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme as createGrafanaTheme, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Box, Button, CodeEditor, Field, Input, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../../../core/components/Page/Page';
 import { ThemePreview } from '../../../core/components/Theme/ThemePreview';
+import { getUserThemeResourceName, getUserThemeLabels } from '../../themes/userThemeUtils';
 import { fetchGcomTheme, validateGcomTheme } from '../../themes/utils';
 
 interface FormData {
@@ -31,7 +31,7 @@ export default function NewCustomThemePage() {
     subTitle: t('profile.new-custom-theme-page.page-nav.sub-title', 'Add a new custom theme visible only to you'),
   };
 
-  const [createTheme, { isLoading }] = useCreateUserThemeMutation();
+  const [createTheme, { isLoading }] = useCreateThemeMutation();
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
   const {
@@ -105,16 +105,14 @@ export default function NewCustomThemePage() {
 
   const onSubmit = async ({ themeJson, themeID }: FormData) => {
     await createTheme({
-      userTheme: {
+      theme: {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
-        kind: 'UserTheme',
+        kind: 'Theme',
         metadata: {
-          name: themeID,
+          name: getUserThemeResourceName(themeID),
+          labels: getUserThemeLabels(),
         },
-        spec: {
-          ...JSON.parse(themeJson),
-          userID: config.bootData.user.uid,
-        },
+        spec: JSON.parse(themeJson),
       },
     });
     navigate('/profile?tab=themes');

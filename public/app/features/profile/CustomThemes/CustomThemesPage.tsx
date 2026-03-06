@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Theme, useDeleteUserThemeMutation, useListUserThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { Theme, useDeleteThemeMutation, useListThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
 import { createTheme } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, Grid, LinkButton, Stack } from '@grafana/ui';
 
 import { ThemeCard } from '../../themes/ThemeCard';
+import { stripUserThemePrefix } from '../../themes/userThemeUtils';
 
 export default function CustomThemesPage() {
-  const customThemes = useListUserThemeQuery({});
-  const [deleteTheme] = useDeleteUserThemeMutation();
+  const customThemes = useListThemeQuery({
+    labelSelector: `grafana.app/user-id=${config.bootData.user.uid}`,
+  });
+  const [deleteTheme] = useDeleteThemeMutation();
   const [themeToDelete, setThemeToDelete] = useState<Theme>();
   const navigate = useNavigate();
 
@@ -41,7 +45,7 @@ export default function CustomThemesPage() {
                   build: () => createTheme(themeOption.spec),
                 }}
                 key={themeOption.metadata.uid}
-                onEdit={() => navigate(`/profile/themes/${themeOption.metadata.name}/edit`)}
+                onEdit={() => navigate(`/profile/themes/${stripUserThemePrefix(themeOption.metadata.name!)}/edit`)}
                 onRemove={() => setThemeToDelete(themeOption)}
               />
             ))}

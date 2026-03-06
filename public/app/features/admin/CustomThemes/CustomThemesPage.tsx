@@ -10,7 +10,7 @@ import { Page } from '../../../core/components/Page/Page';
 import { ThemeCard } from '../../themes/ThemeCard';
 
 export default function CustomThemesPage() {
-  const customThemes = useListThemeQuery({});
+  const customThemes = useListThemeQuery({ labelSelector: '!grafana.app/user-id' });
   const [deleteTheme] = useDeleteThemeMutation();
   const [themeToDelete, setThemeToDelete] = useState<Theme>();
   const navigate = useNavigate();
