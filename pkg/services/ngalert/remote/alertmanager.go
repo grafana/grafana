@@ -19,11 +19,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
-	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/http/v0mimir"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/grafana/alerting/utils/hash"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
@@ -362,26 +360,10 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, dbConfig *models
 	}
 	amConfig.Receivers = decryptedReceivers
 
-	var templates []definition.PostableApiTemplate
-	templateFiles := make(map[string]string)
-	for _, t := range c.Templates {
-		switch t.Kind {
-		case alertingTemplates.GrafanaKind:
-			templateFiles[t.Name] = t.Template
-		case alertingTemplates.MimirKind:
-			templates = append(templates, definition.PostableApiTemplate{
-				Name:    t.Name,
-				Content: t.Template,
-				Kind:    definition.MimirTemplateKind,
-			})
-		}
-	}
-
 	payload := remoteClient.UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: remoteClient.GrafanaAlertmanagerConfig{
-			TemplateFiles:      templateFiles,
 			AlertmanagerConfig: amConfig,
-			Templates:          templates,
+			Templates:          notifier.TemplateDefinitionsToPostableAPITemplates(c.Templates),
 		},
 		CreatedAt:     time.Now().Unix(),
 		Promoted:      am.promoteConfig,

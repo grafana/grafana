@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/templates"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -109,4 +110,28 @@ func IntegrationConfigToPostableGrafanaReceiver(r *alertingModels.IntegrationCon
 		Settings:              definition.RawMessage(r.Settings),
 		SecureSettings:        r.SecureSettings,
 	}
+}
+
+// TemplateDefinitionToPostableAPITemplate converts a templates.TemplateDefinition to a definition.PostableApiTemplate
+func TemplateDefinitionToPostableAPITemplate(t templates.TemplateDefinition) definition.PostableApiTemplate {
+	var kind definition.TemplateKind
+	switch t.Kind {
+	case templates.GrafanaKind:
+		kind = definition.GrafanaTemplateKind
+	case templates.MimirKind:
+		kind = definition.MimirTemplateKind
+	}
+	return definition.PostableApiTemplate{
+		Name:    t.Name,
+		Content: t.Template,
+		Kind:    kind,
+	}
+}
+
+func TemplateDefinitionsToPostableAPITemplates(ts []templates.TemplateDefinition) []definition.PostableApiTemplate {
+	defs := make([]definition.PostableApiTemplate, 0, len(ts))
+	for _, t := range ts {
+		defs = append(defs, TemplateDefinitionToPostableAPITemplate(t))
+	}
+	return defs
 }
