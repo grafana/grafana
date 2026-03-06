@@ -7519,25 +7519,6 @@
       "message": "Veri kaynağı bulunamadı"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Sütun adı"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Sütunu temizle",
-        "label-clear-row": "Satırı temizle",
-        "label-remove-all-data": "Tüm verileri kaldır",
-        "label-search": "Ara..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Sütunu temizle",
-        "label-delete-column": "Sütunu sil",
-        "label-rename-column": "Sütunu yeniden adlandır",
-        "label-set-field-type": "Alan türünü ayarla"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Yeni veri kaynaklarını yapılandırma izniniz yok"

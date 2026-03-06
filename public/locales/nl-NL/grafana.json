@@ -7519,25 +7519,6 @@
       "message": "Geen gegevensbronnen gevonden"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Kolomnaam"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Kolom wissen",
-        "label-clear-row": "Rij wissen",
-        "label-remove-all-data": "Alle data verwijderen",
-        "label-search": "Zoeken..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Kolom wissen",
-        "label-delete-column": "Kolom verwijderen",
-        "label-rename-column": "Kolom hernoemen",
-        "label-set-field-type": "Type veld instellen"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Je hebt geen toestemming om nieuwe gegevensbronnen te configureren"

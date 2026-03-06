@@ -7483,25 +7483,6 @@
       "message": "데이터 소스를 찾을 수 없습니다."
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "열 이름"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "열 지우기",
-        "label-clear-row": "행 지우기",
-        "label-remove-all-data": "모든 데이터 제거",
-        "label-search": "검색..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "열 지우기",
-        "label-delete-column": "열 삭제",
-        "label-rename-column": "열 이름 변경",
-        "label-set-field-type": "필드 유형 설정"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "새 데이터 소스를 구성할 권한이 없습니다"

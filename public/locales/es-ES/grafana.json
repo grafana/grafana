@@ -7519,25 +7519,6 @@
       "message": "No se ha encontrado ninguna fuente de datos"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Nombre de la columna"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Borrar columna",
-        "label-clear-row": "Borrar fila",
-        "label-remove-all-data": "Borrar todos los datos",
-        "label-search": "Buscar…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Borrar columna",
-        "label-delete-column": "Eliminar columna",
-        "label-rename-column": "Cambiar nombre de la columna",
-        "label-set-field-type": "Definir tipo de campo"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "No tienes permiso para configurar nuevas fuentes de datos"

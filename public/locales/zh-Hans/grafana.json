@@ -7483,25 +7483,6 @@
       "message": "未找到数据源"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "列名称"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "清除列",
-        "label-clear-row": "清除行",
-        "label-remove-all-data": "移除所有数据",
-        "label-search": "搜索..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "清除列",
-        "label-delete-column": "删除列",
-        "label-rename-column": "重命名列",
-        "label-set-field-type": "设置字段类型"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "您没有配置新数据源的权限"

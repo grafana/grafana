@@ -7519,25 +7519,6 @@
       "message": "Keine Datenquellen gefunden"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Spaltenname"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Spalte löschen",
-        "label-clear-row": "Zeile leeren",
-        "label-remove-all-data": "Alle Daten entfernen",
-        "label-search": "Suche ..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Spalte löschen",
-        "label-delete-column": "Spalte löschen",
-        "label-rename-column": "Spalte umbenennen",
-        "label-set-field-type": "Feldtyp festlegen"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Sie haben keine Berechtigung, neue Datenquellen zu konfigurieren"

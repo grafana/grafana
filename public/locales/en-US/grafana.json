@@ -7519,25 +7519,6 @@
       "message": "No data sources found"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Column name"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-clear-row": "Clear row",
-        "label-remove-all-data": "Remove all data",
-        "label-search": "Search..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-delete-column": "Delete column",
-        "label-rename-column": "Rename column",
-        "label-set-field-type": "Set field type"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "You do not have permission to configure new data sources"

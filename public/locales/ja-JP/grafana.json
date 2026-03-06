@@ -7483,25 +7483,6 @@
       "message": "データソースが見つかりません"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "列名"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "列をクリア",
-        "label-clear-row": "行をクリア",
-        "label-remove-all-data": "すべてのデータを削除",
-        "label-search": "検索..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "列をクリア",
-        "label-delete-column": "列を削除",
-        "label-rename-column": "列名を変更",
-        "label-set-field-type": "フィールドタイプを設定"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "新しいデータソースを設定する権限がありません"

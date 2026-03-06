@@ -7519,25 +7519,6 @@
       "message": "Inga datakällor hittades"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Namn på kolumn"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Rensa kolumn",
-        "label-clear-row": "Rensa rad",
-        "label-remove-all-data": "Radera alla data",
-        "label-search": "Sök …"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Rensa kolumn",
-        "label-delete-column": "Ta bort kolumn",
-        "label-rename-column": "Byt namn på kolumn",
-        "label-set-field-type": "Ange fälttyp"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Du saknar behörighet att konfigurera nya datakällor"
