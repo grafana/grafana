@@ -39,6 +39,7 @@ export const ComboboxList = <T extends string | number>({
   isMultiSelect = false,
   error = false,
   loading = false,
+  noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
 
