@@ -1032,10 +1032,7 @@ export interface LibraryPanelRef {
   uid: string;
 }
 
-/**
- * Custom matcher scopes beyond the standard field matchers
- */
-export type MatcherScope = ('nested' | 'annotation');
+export type MatcherScope = ('series' | 'nested' | 'annotation');
 
 /**
  * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
@@ -1051,7 +1048,7 @@ export interface MatcherConfig {
    */
   options?: unknown;
   /**
-   * If set, limits this matcher to fields of that type. If not set, matcher applies to all non-nested fields.
+   * If set, limits this matcher to fields of that type. If not set, "series" mode is used.
    */
   scope?: MatcherScope;
 }

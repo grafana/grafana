@@ -352,7 +352,7 @@ func (DashboardDataTransformerConfig) OpenAPIModelName() string {
 type DashboardMatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
-	// If set, limits this matcher to fields of that type. If not set, matcher applies to all non-nested fields.
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
 	Scope *DashboardMatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options interface{} `json:"options,omitempty"`
@@ -370,11 +370,11 @@ func (DashboardMatcherConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherConfig"
 }
 
-// Custom matcher scopes beyond the standard field matchers
 // +k8s:openapi-gen=true
 type DashboardMatcherScope string
 
 const (
+	DashboardMatcherScopeSeries     DashboardMatcherScope = "series"
 	DashboardMatcherScopeNested     DashboardMatcherScope = "nested"
 	DashboardMatcherScopeAnnotation DashboardMatcherScope = "annotation"
 )

@@ -3161,7 +3161,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref common.Referen
 					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
-							Description: "If set, limits this matcher to fields of that type. If not set, matcher applies to all non-nested fields.",
+							Description: "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
