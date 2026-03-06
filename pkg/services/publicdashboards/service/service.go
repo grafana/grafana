@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -48,6 +49,7 @@ type PublicDashboardServiceImpl struct {
 	serviceWrapper     publicdashboards.ServiceWrapper
 	dashboardService   dashboards.DashboardService
 	license            licensing.Licensing
+	dsService          datasources.DataSourceService
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -69,6 +71,7 @@ func ProvideService(
 	serviceWrapper publicdashboards.ServiceWrapper,
 	dashboardService dashboards.DashboardService,
 	license licensing.Licensing,
+	dsService datasources.DataSourceService,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -82,6 +85,7 @@ func ProvideService(
 		serviceWrapper:     serviceWrapper,
 		dashboardService:   dashboardService,
 		license:            license,
+		dsService:          dsService,
 	}
 }
 

@@ -13,10 +13,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
@@ -808,6 +811,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -858,6 +862,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.buildMetricRequest(
+			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			49,
@@ -896,6 +901,7 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, "", true, []map[string]interface{}{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1398,5 +1404,134 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 			"from": from, "to": to,
 		},
 		"timezone": timezone,
+	})
+}
+
+func TestResolveStaleDatasourceUIDs(t *testing.T) {
+	orgID := int64(1)
+
+	t.Run("replaces stale UID when exactly one datasource of the same type exists", func(t *testing.T) {
+		fakeDsService := &dsfakes.FakeDataSourceService{
+			DataSources: []*datasources.DataSource{
+				{UID: "new-prom-uid", Type: "prometheus", OrgID: orgID},
+			},
+		}
+		svc := &PublicDashboardServiceImpl{
+			log:       log.New("test"),
+			dsService: fakeDsService,
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "stale-uid", "type": "prometheus"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "new-prom-uid", queries[0].GetPath("datasource", "uid").MustString())
+	})
+
+	t.Run("does not replace when datasource UID is valid", func(t *testing.T) {
+		fakeDsService := &dsfakes.FakeDataSourceService{
+			DataSources: []*datasources.DataSource{
+				{UID: "valid-uid", Type: "prometheus", OrgID: orgID},
+			},
+		}
+		svc := &PublicDashboardServiceImpl{
+			log:       log.New("test"),
+			dsService: fakeDsService,
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "valid-uid", "type": "prometheus"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "valid-uid", queries[0].GetPath("datasource", "uid").MustString())
+	})
+
+	t.Run("does not replace when multiple datasources of the same type exist", func(t *testing.T) {
+		fakeDsService := &dsfakes.FakeDataSourceService{
+			DataSources: []*datasources.DataSource{
+				{UID: "prom-1", Type: "prometheus", OrgID: orgID},
+				{UID: "prom-2", Type: "prometheus", OrgID: orgID},
+			},
+		}
+		svc := &PublicDashboardServiceImpl{
+			log:       log.New("test"),
+			dsService: fakeDsService,
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "stale-uid", "type": "prometheus"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "stale-uid", queries[0].GetPath("datasource", "uid").MustString())
+	})
+
+	t.Run("skips expression datasources", func(t *testing.T) {
+		fakeDsService := &dsfakes.FakeDataSourceService{
+			DataSources: []*datasources.DataSource{},
+		}
+		svc := &PublicDashboardServiceImpl{
+			log:       log.New("test"),
+			dsService: fakeDsService,
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "__expr__", "type": "__expr__"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "__expr__", queries[0].GetPath("datasource", "uid").MustString())
+	})
+
+	t.Run("skips queries with empty datasource type", func(t *testing.T) {
+		fakeDsService := &dsfakes.FakeDataSourceService{
+			DataSources: []*datasources.DataSource{
+				{UID: "new-uid", Type: "prometheus", OrgID: orgID},
+			},
+		}
+		svc := &PublicDashboardServiceImpl{
+			log:       log.New("test"),
+			dsService: fakeDsService,
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "stale-uid"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "stale-uid", queries[0].GetPath("datasource", "uid").MustString())
+	})
+
+	t.Run("handles nil dsService gracefully", func(t *testing.T) {
+		svc := &PublicDashboardServiceImpl{
+			log: log.New("test"),
+		}
+		queries := []*simplejson.Json{
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{"uid": "stale-uid", "type": "prometheus"},
+				"refId":      "A",
+			}),
+		}
+
+		svc.resolveStaleDatasourceUIDs(context.Background(), queries, orgID)
+
+		assert.Equal(t, "stale-uid", queries[0].GetPath("datasource", "uid").MustString())
 	})
 }

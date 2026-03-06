@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -116,6 +117,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
+		ctx,
 		dashboard,
 		publicDashboard,
 		panelId,
@@ -161,11 +163,11 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	isV2 := dashboard.Data.Get("elements").Interface() != nil
 
 	if isV2 {
-		return pd.buildMetricRequestV2(dashboard, publicDashboard, panelID, reqDTO)
+		return pd.buildMetricRequestV2(ctx, dashboard, publicDashboard, panelID, reqDTO)
 	}
 
 	// group queries by panel
@@ -174,6 +176,8 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 	if !ok {
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
+
+	pd.resolveStaleDatasourceUIDs(ctx, queries, dashboard.OrgID)
 
 	ts := buildTimeSettings(dashboard, reqDTO, publicDashboard, panelID)
 
@@ -192,13 +196,15 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 	}, nil
 }
 
-func (pd *PublicDashboardServiceImpl) buildMetricRequestV2(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequestV2(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel for V2
 	queriesByPanel := groupQueriesByPanelIdV2(dashboard.Data)
 	queries, ok := queriesByPanel[panelID]
 	if !ok {
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequestV2: public dashboard panel not found")
 	}
+
+	pd.resolveStaleDatasourceUIDs(ctx, queries, dashboard.OrgID)
 
 	ts := buildTimeSettingsV2(dashboard, reqDTO, publicDashboard, panelID)
 
@@ -428,6 +434,58 @@ func getDataSourceUidFromJsonSchemaV2(query *simplejson.Json) string {
 	}
 
 	return uid
+}
+
+// resolveStaleDatasourceUIDs checks each query's datasource UID and, if stale
+// (not found in the database), attempts to find a replacement datasource of the
+// same type within the same org. This handles the case where a provisioned
+// datasource is deleted and recreated with the same name but a different UID,
+// leaving the dashboard JSON with a stale reference. The regular dashboard
+// frontend handles this via name-based fallback in its datasource resolution,
+// but the public dashboard backend path resolves exclusively by UID.
+func (pd *PublicDashboardServiceImpl) resolveStaleDatasourceUIDs(ctx context.Context, queries []*simplejson.Json, orgID int64) {
+	if pd.dsService == nil {
+		return
+	}
+
+	for _, query := range queries {
+		uid := getDataSourceUidFromJson(query)
+		if uid == "" {
+			continue
+		}
+
+		if expr.NodeTypeFromDatasourceUID(uid) != expr.TypeDatasourceNode {
+			continue
+		}
+		if uid == grafanads.DatasourceUID {
+			continue
+		}
+
+		dsType := query.Get("datasource").Get("type").MustString()
+		if dsType == "" || dsType == "public-ds" {
+			continue
+		}
+
+		_, err := pd.dsService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			UID:   uid,
+			OrgID: orgID,
+		})
+		if err == nil {
+			continue
+		}
+
+		dsByType, err := pd.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+			OrgID: orgID,
+			Type:  dsType,
+		})
+		if err != nil || len(dsByType) != 1 {
+			continue
+		}
+
+		pd.log.Info("Resolved stale datasource UID for public dashboard query",
+			"old_uid", uid, "new_uid", dsByType[0].UID, "type", dsType)
+		query.SetPath([]string{"datasource", "uid"}, dsByType[0].UID)
+	}
 }
 
 func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
