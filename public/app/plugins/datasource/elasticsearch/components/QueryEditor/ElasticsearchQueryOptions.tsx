@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+
 import { QueryOptionGroup } from '@grafana/plugin-ui';
 import { Box, Button, InlineField, Input } from '@grafana/ui';
 
@@ -20,32 +22,40 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
   const firstMetricWithSettings =
     !isCodeEditor && firstMetric != null && isMetricAggregationWithSettings(firstMetric) ? firstMetric : null;
 
+  const isLogs = firstMetricWithSettings?.type === 'logs';
+  const isRawData =
+    firstMetricWithSettings?.type === 'raw_data' || firstMetricWithSettings?.type === 'raw_document';
+  const showSizeField = firstMetricWithSettings !== null && (isLogs || isRawData);
+  const label = isLogs ? 'Limit' : 'Size';
+  const settingName = isLogs ? 'limit' : 'size';
+  const currentValue = showSizeField
+    ? String(
+        (isLogs ? firstMetricWithSettings!.settings?.limit : firstMetricWithSettings!.settings?.size) ?? ''
+      )
+    : '';
+
+  const collapsedInfo = useMemo(() => {
+    const infoArray = [];
+    if (showSizeField && currentValue) {
+      infoArray.push(`${label}: ${currentValue}`);
+    }
+    return infoArray;
+  }, [showSizeField, currentValue, label]);
+
   let sizeField: React.ReactElement | null = null;
-  let collapsedInfo: string[] = [];
 
-  if (firstMetricWithSettings !== null) {
-    const isLogs = firstMetricWithSettings.type === 'logs';
-    const isRawData = firstMetricWithSettings.type === 'raw_data' || firstMetricWithSettings.type === 'raw_document';
+  const [localValue, setLocalValue] = useState(currentValue);
 
-    if (isLogs || isRawData) {
-      const label = isLogs ? 'Limit' : 'Size';
-      const settingName = isLogs ? 'limit' : 'size';
-      const currentValue = String(
-        (isLogs ? firstMetricWithSettings.settings?.limit : firstMetricWithSettings.settings?.size) ?? ''
-      );
-
-      if (currentValue) {
-        collapsedInfo = [`${label}: ${currentValue}`];
-      }
-
-      sizeField = (
+  if (showSizeField) {
+    sizeField = (
         <InlineField label={label} labelWidth={16} tooltip="Maximum number of documents to return">
           <Input
             type="number"
             width={10}
             placeholder="500"
-            value={currentValue}
-            onChange={(e) =>
+            value={localValue}
+            onChange={(e) => setLocalValue(e.currentTarget.value)}
+            onBlur={(e) =>
               dispatch(
                 changeMetricSetting({
                   metric: firstMetricWithSettings,
@@ -57,7 +67,6 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
           />
         </InlineField>
       );
-    }
   }
 
   if (sizeField === null && onFormat == null) {

@@ -21,15 +21,8 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
   return (
     <>
       {metrics?.map((metric, index) => {
-        switch (metric.type) {
-          case 'logs':
-            return;
-          case 'raw_data':
-            return;
-          case 'raw_document':
-            return <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />;
-          default:
-            return (
+        if (metric.type !== 'logs' && metric.type !== 'raw_data' && metric.type !== 'raw_document') {
+           return (
               <QueryEditorRow
                 key={`${metric.type}-${metric.id}`}
                 label={`Metric (${metric.id})`}
@@ -52,6 +45,7 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
               </QueryEditorRow>
             );
         }
+        return null;
       })}
     </>
   );
