@@ -1,9 +1,7 @@
-import { useCallback } from 'react';
-
-import { FieldNamePickerConfigSettings, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { FieldNamePickerConfigSettings, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { Select } from '../Select/Select';
+import { Combobox, ComboboxProps } from '../Combobox/Combobox';
 
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
@@ -15,31 +13,39 @@ export const FieldNamePicker = ({ value, onChange, context, item, id }: Props) =
   const names = useFieldDisplayNames(context.data, settings?.filter);
   const selectOptions = useSelectOptions(names, value, undefined, undefined, settings.baseNameMode);
 
-  const onSelectChange = useCallback(
-    (selection?: SelectableValue<string>) => {
-      if (selection && !frameHasName(selection.value, names)) {
-        return; // can not select name that does not exist?
-      }
-      return onChange(selection?.value);
-    },
-    [names, onChange]
-  );
-
   const selectedOption = selectOptions.find((v) => v.value === value);
-  return (
-    <>
-      <Select
-        inputId={id}
-        value={selectedOption}
-        placeholder={
-          settings.placeholderText ?? t('grafana-ui.matchers-ui.field-name-picker.placeholder', 'Select field')
+  const isClearable = settings.isClearable !== false;
+
+  const commonProps = {
+    id,
+    value: selectedOption,
+    placeholder: settings.placeholderText ?? t('grafana-ui.matchers-ui.field-name-picker.placeholder', 'Select field'),
+    options: selectOptions,
+    noOptionsMessage: settings.noFieldsMessage,
+    width: settings.width,
+  } satisfies Partial<ComboboxProps<string>>;
+
+  return isClearable ? (
+    <Combobox<string>
+      {...commonProps}
+      isClearable={true}
+      onChange={(opt) => {
+        if (opt != null && !frameHasName(opt.value, names)) {
+          return;
         }
-        options={selectOptions}
-        onChange={onSelectChange}
-        noOptionsMessage={settings.noFieldsMessage}
-        width={settings.width}
-        isClearable={settings.isClearable !== false}
-      />
-    </>
+        onChange(opt?.value);
+      }}
+    />
+  ) : (
+    <Combobox<string>
+      {...commonProps}
+      isClearable={false}
+      onChange={(opt) => {
+        if (!frameHasName(opt.value, names)) {
+          return;
+        }
+        onChange(opt.value);
+      }}
+    />
   );
 };

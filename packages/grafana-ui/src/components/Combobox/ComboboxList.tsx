@@ -24,6 +24,7 @@ interface ComboboxListProps<T extends string | number> {
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
+  noOptionsMessage?: string;
   error?: boolean;
   loading?: boolean;
 }
@@ -167,7 +168,7 @@ export const ComboboxList = <T extends string | number>({
 
       <div aria-live="polite">
         {error && <AsyncError />}
-        {!loading && options.length === 0 && !error && <NotFoundError />}
+        {!loading && options.length === 0 && !error && <NotFoundError message={noOptionsMessage} />}
         {loading && options.length === 0 && <LoadingOptions />}
       </div>
     </ScrollContainer>

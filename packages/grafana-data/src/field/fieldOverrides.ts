@@ -72,7 +72,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 export function applyFieldOverrides(
   options: ApplyFieldOverrideOptions,
   data: DataFrame[] | undefined = options.data,
-  scope?: MatcherScope
+  scope: MatcherScope = 'series'
 ): DataFrame[] {
   if (!data) {
     return [];
@@ -92,7 +92,7 @@ export function applyFieldOverrides(
   const override: OverrideProps[] = [];
   if (source.overrides) {
     for (const rule of source.overrides) {
-      if (scope != null && rule.matcher.scope !== scope) {
+      if ((rule.matcher.scope ?? 'series') !== scope) {
         continue;
       }
       const info = fieldMatchers.get(rule.matcher.id);
@@ -260,6 +260,7 @@ export function applyFieldOverrides(
           }
           newValues[idx] = nestedFrame;
         }
+        // @todo should this be scoped?
         field.values = applyFieldOverrides(options, newValues);
       }
     }
