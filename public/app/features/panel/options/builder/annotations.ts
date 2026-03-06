@@ -23,4 +23,16 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
       annotations &&
       annotations?.filter((df) => df.meta?.dataTopic === DataTopic.Annotations && df.length > 0).length > 1,
   });
+
+  builder.addBooleanSwitch({
+    path: 'annotations.clustering',
+    category,
+    name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
+    description: t(
+      'grafana-ui.builder.annotations.clustering.desc',
+      'Combines high density point annotations into region annotations'
+    ),
+    defaultValue: false,
+    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+  });
 }

@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
-import { TimeZone } from '@grafana/schema';
+import { colorManipulator, DataFrame, InterpolateFunction } from '@grafana/data';
+import { TimeZone, VizAnnotations } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
   getPortalContainer,
@@ -13,25 +13,22 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
+import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
-import { ANNOTATION_LANE_SIZE, getXAnnotationFrames, getXYAnnotationFrames } from './utils';
-
-// (copied from TooltipPlugin2)
-interface TimeRange2 {
-  from: number;
-  to: number;
-}
+import { ClusteringMode, useAnnotationClustering } from './annotations2/useAnnotationClustering';
+import { useAnnotations } from './annotations2/useAnnotations';
+import { ANNOTATION_LANE_SIZE } from './utils';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
+  annotationsOptions: VizAnnotations | undefined;
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   replaceVariables: InterpolateFunction;
-  multiLane?: boolean;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -43,21 +40,49 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
   ctx.stroke();
 };
 
-// const renderUpTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
-//   ctx.beginPath();
-//   ctx.moveTo(x - w/2, y + h/2);
-//   ctx.lineTo(x + w/2, y + h/2);
-//   ctx.lineTo(x, y);
-//   ctx.closePath();
-//   ctx.fillStyle = color;
-//   ctx.fill();
-// }
-
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 
-function getVals(frame: DataFrame) {
-  let vals: Record<string, any[]> = {};
+type NullableString = null | string;
+type NullableNumber = null | number;
+
+export type AnnotationVals = {
+  time: number[];
+  isRegion?: boolean[];
+  color?: string[];
+
+  id?: NullableNumber[];
+  clusterIdx?: NullableNumber[];
+  timeEnd?: NullableNumber[];
+  alertId?: NullableNumber[];
+
+  text?: NullableString[];
+  title?: NullableString[];
+  dashboardUID?: NullableString[];
+  newState?: NullableString[];
+  login?: NullableString[];
+  avatarUrl?: NullableString[];
+
+  /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
+  data?: unknown[];
+  tags?: string[][];
+};
+
+export type XYAnnoVals = {
+  color: string[];
+  xMin: number[];
+  xMax: number[];
+  yMax: number[];
+  yMin: number[];
+  fillOpacity: number[];
+  lineWidth: number[];
+  lineStyle: string[];
+};
+
+function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  let vals = {} as T;
   frame.fields.forEach((f) => {
+    // @ts-ignore
     vals[f.name] = f.values;
   });
 
@@ -72,57 +97,33 @@ export const AnnotationsPlugin2 = ({
   setNewRange,
   replaceVariables,
   canvasRegionRendering = true,
-  multiLane = false,
+  annotationsOptions,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
-
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
+  const clusteringMode: ClusteringMode | null = annotationsOptions?.clustering ? ClusteringMode.Render : null;
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = canExecuteActions?.() ?? false;
 
-  const { xAnnos, xyAnnos } = useMemo(() => {
-    let xAnnos = getXAnnotationFrames(annotations);
-    let xyAnnos = getXYAnnotationFrames(annotations);
+  const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
-    if (newRange) {
-      let isRegion = newRange.to > newRange.from;
-
-      const wipAnnoFrame = arrayToDataFrame([
-        {
-          time: newRange.from,
-          timeEnd: isRegion ? newRange.to : null,
-          isRegion: isRegion,
-          color: DEFAULT_ANNOTATION_COLOR_HEX8,
-        },
-      ]);
-
-      wipAnnoFrame.meta = {
-        dataTopic: DataTopic.Annotations,
-        custom: {
-          isWip: true,
-        },
-      };
-
-      xAnnos.push(wipAnnoFrame);
-    }
-
-    return {
-      xAnnos,
-      xyAnnos,
-    };
-  }, [annotations, newRange]);
-
+  const clusteredAnnos = useAnnotationClustering({
+    annotations: xAnnos,
+    clusteringMode,
+    plotBox: plot?.bbox,
+    timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
+  });
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
 
-  const xAnnoRef = useRef(xAnnos);
-  xAnnoRef.current = xAnnos;
+  const xAnnoRef = useRef(clusteredAnnos);
+  xAnnoRef.current = clusteredAnnos;
 
   const xyAnnoRef = useRef(xyAnnos);
   xyAnnoRef.current = xyAnnos;
@@ -134,15 +135,13 @@ export const AnnotationsPlugin2 = ({
 
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
-      let xAxisEl = u.root.querySelector<HTMLDivElement>('.u-axis')!;
-      xAxisRef.current = xAxisEl;
+      xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       setPlot(u);
     });
 
     config.addHook('draw', (u) => {
-      let xAnnos = xAnnoRef.current;
-      let xyAnnos = xyAnnoRef.current;
-
+      const xAnnos = xAnnoRef.current;
+      const xyAnnos = xyAnnoRef.current;
       const ctx = u.ctx;
 
       ctx.save();
@@ -151,31 +150,46 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
+      // @todo Add panel options https://github.com/grafana/grafana/issues/119763
+      const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering;
+      const shouldRenderLine = !annotationsOptions?.multiLane || annotationsOptions.clustering;
+
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
-        let vals = getVals(frame);
-        if (!multiLane) {
+        const vals = getVals<AnnotationVals>(frame);
+
+        // render line
+        if (shouldRenderLine) {
           let y0 = u.bbox.top;
           let y1 = y0 + u.bbox.height;
 
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
 
-          for (let i = 0; i < vals.time.length; i++) {
-            let color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
+          // Render region
+          if (shouldRenderRegion) {
+            for (let i = 0; i < vals.time.length; i++) {
+              // skip rendering annos that are clustered (have non-null cluster index)
+              if (skipClusteredAnno(vals, i)) {
+                continue;
+              }
+              const isRegion = vals.isRegion?.[i];
+              const timeEnd = vals.timeEnd?.[i];
+              const color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
 
-            let x0 = u.valToPos(vals.time[i], 'x', true);
-            renderLine(ctx, y0, y1, x0, color);
+              const x0 = u.valToPos(vals.time[i], 'x', true);
+              renderLine(ctx, y0, y1, x0, color);
 
-            // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
-            // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
-            if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
-              let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
-              renderLine(ctx, y0, y1, x1, color);
+              // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
+              // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
+              if (isRegion && timeEnd) {
+                const x1 = u.valToPos(timeEnd, 'x', true);
+                renderLine(ctx, y0, y1, x1, color);
 
-              if (canvasRegionRendering) {
-                ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-                ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+                if (canvasRegionRendering) {
+                  ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+                  ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+                }
               }
             }
           }
@@ -184,7 +198,7 @@ export const AnnotationsPlugin2 = ({
 
       // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
       xyAnnos.forEach((frame) => {
-        let vals = getVals(frame);
+        let vals = getVals<XYAnnoVals>(frame);
 
         let xKey = config.scales[0].props.scaleKey;
         let yKey = config.scales[1].props.scaleKey;
@@ -192,10 +206,10 @@ export const AnnotationsPlugin2 = ({
         for (let i = 0; i < frame.length; i++) {
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-          let x0 = u.valToPos(vals.xMin[i], xKey, true);
-          let x1 = u.valToPos(vals.xMax[i], xKey, true);
-          let y0 = u.valToPos(vals.yMax[i], yKey, true);
-          let y1 = u.valToPos(vals.yMin[i], yKey, true);
+          let x0 = u.valToPos(vals.xMin?.[i], xKey, true);
+          let x1 = u.valToPos(vals.xMax?.[i], xKey, true);
+          let y0 = u.valToPos(vals.yMax?.[i], yKey, true);
+          let y1 = u.valToPos(vals.yMin?.[i], yKey, true);
 
           ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
@@ -217,7 +231,7 @@ export const AnnotationsPlugin2 = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, multiLane]);
+  }, [config, canvasRegionRendering, getColorByName, annotationsOptions?.multiLane, annotationsOptions?.clustering]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
@@ -226,35 +240,45 @@ export const AnnotationsPlugin2 = ({
 
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
-      // (this is temp fix until uPlot integrtion is refactored)
+      // (this is temp fix until uPlot integration is refactored)
       setTimeout(() => {
         forceUpdate();
       }, 0);
     }
   }, [xAnnos, plot]);
 
+  // Set active annotation tooltip state
+  const setPinnedAnnotationIndex = useCallback((annoIdx: string | undefined) => {
+    setPinnedAnnotationId(annoIdx);
+  }, []);
+
   if (plot) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
-    const wipVals = wipFrame ? getVals(wipFrame) : null;
-    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time[0] > 0;
+    const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
+    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
 
-    let markers = xAnnos.flatMap((frame, frameIdx) => {
+    const markers = xAnnoRef.current.flatMap((frame, frameIdx) => {
       const isWipFrame = frame?.meta?.custom?.isWip;
-      const vals = getVals(frame);
-
-      let markers: React.ReactNode[] = [];
+      const vals = getVals<AnnotationVals>(frame);
+      const markers: React.ReactNode[] = [];
 
       // Top offset for multi-lane annotations
-      const top = multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+      const top = annotationsOptions?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
       for (let i = 0; i < vals.time.length; i++) {
-        let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-        let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+        if (skipClusteredAnno(vals, i)) {
+          continue;
+        }
+        const isRegion = vals.isRegion?.[i];
+        const timeEnd = vals.timeEnd?.[i];
+        const color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+        const left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
+
         let style: React.CSSProperties | null = null;
         let isVisible = true;
 
-        if (vals.isRegion?.[i]) {
-          let right = Math.round(plot.valToPos(vals.timeEnd?.[i], 'x')) || 0; // handles -0
+        if (isRegion && timeEnd != null) {
+          let right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 
@@ -277,9 +301,9 @@ export const AnnotationsPlugin2 = ({
           const annotationKey = getAnnotationKey(frameIdx, i);
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnnotationId(annotationKey);
+              setPinnedAnnotationIndex(annotationKey);
             } else {
-              setPinnedAnnotationId(undefined);
+              setPinnedAnnotationIndex(undefined);
             }
           };
 
@@ -316,6 +340,15 @@ export const AnnotationsPlugin2 = ({
   }
 
   return null;
+};
+
+const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
+  return (
+    !vals.isRegion?.[i] &&
+    vals.clusterIdx?.[i] !== undefined &&
+    vals.clusterIdx?.[i] !== null &&
+    vals.clusterIdx?.[i] >= 0
+  );
 };
 
 /**

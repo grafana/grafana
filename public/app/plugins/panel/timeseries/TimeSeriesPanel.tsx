@@ -218,7 +218,7 @@ export const TimeSeriesPanel = ({
               <>
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
+                  annotationsOptions={options.annotations}
                   annotations={data.annotations ?? []}
                   config={uplotConfig}
                   timeZone={timeZone}

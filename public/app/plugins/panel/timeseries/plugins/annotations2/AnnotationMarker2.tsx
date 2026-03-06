@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { autoUpdate } from '@floating-ui/dom';
 import { useFloating } from '@floating-ui/react';
-import { useState } from 'react';
 import * as React from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
@@ -12,14 +12,17 @@ import { TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
+import { AnnotationVals } from '../AnnotationsPlugin2';
+
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
+import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
 
 interface AnnotationMarkerProps {
   // Annotation dataframe
   frame: DataFrame;
   // The values from the annotation fields
-  annoVals: Record<string, any[]>;
+  annoVals: AnnotationVals;
   // The value index, sometimes called rowIndex
   annoIdx: number;
   // Styles calculated from plot, e.g. calculated region width & annotation offset
@@ -39,9 +42,6 @@ interface AnnotationMarkerProps {
   replaceVariables: InterpolateFunction;
 }
 
-const STATE_DEFAULT = 0;
-const STATE_EDITING = 1;
-
 export const AnnotationMarker2 = ({
   frame,
   annoVals,
@@ -60,8 +60,16 @@ export const AnnotationMarker2 = ({
   const placement = 'bottom';
   const isRegion = annoVals?.isRegion?.[annoIdx] === true;
 
-  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  // Set when editing
+  const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
   const [isHovering, setIsHovering] = useState(false);
+  // @todo find what is setting null vs undefined
+  const isClustering =
+    annoVals.isRegion?.[annoIdx] &&
+    annoVals.clusterIdx?.[annoIdx] !== null &&
+    annoVals.clusterIdx?.[annoIdx] !== undefined &&
+    annoVals.clusterIdx?.[annoIdx] > -1;
+
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement,
@@ -79,47 +87,72 @@ export const AnnotationMarker2 = ({
 
   if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
+      // Since field overrides are not yet supported for annotation frames, every value in the field will have the same links... except the clustering index because it's generated on-the-fly and not had getFieldOverrides called on it
+      const annotationIndexForLinks = isClustering ? 0 : annoIdx;
+
       // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
-      links.push(...getDataLinks(field, annoIdx));
+      links.push(...getDataLinks(field, annotationIndexForLinks));
 
       if (canExecuteActions) {
-        actions.push(...getFieldActions(frame, field, replaceVariables, annoIdx));
+        actions.push(...getFieldActions(frame, field, replaceVariables, annotationIndexForLinks));
       }
     });
   }
 
+  // @todo sync with base branch changes
   // Is the annotation being edited
-  const showEditor = state === STATE_EDITING;
-  // Is the tooltip pinned and not being edited
-  const isTooltipPinned = isPinned && !showEditor;
-  // Is the tooltip hovered and another tooltip is not pinned and not being edited
-  const isTooltipHovered = showTooltipOnHover && isHovering && !showEditor;
-  // Show the tooltip if pinned or hovered
-  const showTooltip = isTooltipPinned || isTooltipHovered;
+  // const showEditor = state === STATE_EDITING;
+  // // Is the tooltip pinned and not being edited
+  // const isTooltipPinned = isPinned && !showEditor;
+  // // Is the tooltip hovered and another tooltip is not pinned and not being edited
+  // const isTooltipHovered = showTooltipOnHover && isHovering && !showEditor;
+  // // Show the tooltip if pinned or hovered
+  // const showTooltip = isTooltipPinned || isTooltipHovered;
 
-  const contents = showTooltip ? (
-    <AnnotationTooltip2
-      annoIdx={annoIdx}
-      annoVals={annoVals}
-      timeZone={timeZone}
-      onClose={onClose}
-      isPinned={isPinned}
-      onEdit={() => setState(STATE_EDITING)}
-      links={links}
-      actions={actions}
-    />
-  ) : showEditor ? (
-    <AnnotationEditor2
-      annoIdx={annoIdx}
-      annoVals={annoVals}
-      timeZone={timeZone}
-      dismiss={() => {
-        exitWipEdit?.();
-        setState(STATE_DEFAULT);
-        onClose();
-      }}
-    />
-  ) : null;
+  const isEditing = editAnnotationId !== null;
+  const showTooltip = (isPinned && !isEditing) || (showTooltipOnHover && isHovering && !isEditing);
+
+  // We cannot use the array index for editing annotations since clustered and wip annotations will get sorted by date, so we need to grab them by the 'id' field which is populated by the annotations API
+  const annoId = annoVals?.id?.[annoIdx];
+  const _editIdx = annoVals?.id?.findIndex((annoId) => annoId === editAnnotationId);
+  // wip will not have an id to set, so we need to pass in the raw idx of this annotation, as long as wip is not already clustered, this should continue to work
+  const editIdx = _editIdx !== undefined && _editIdx > -1 ? _editIdx : annoIdx;
+
+  const contents =
+    !isEditing && showTooltip && isClustering ? (
+      <AnnotationTooltip2Cluster
+        actions={actions}
+        links={links}
+        onClose={onClose}
+        isPinned={isPinned}
+        annoIdx={annoIdx}
+        annoVals={annoVals}
+        timeZone={timeZone}
+        onEdit={(annotationId: number) => setEditAnnotationId(annotationId)}
+      />
+    ) : showTooltip ? (
+      <AnnotationTooltip2
+        annoIdx={annoIdx}
+        annoVals={annoVals}
+        timeZone={timeZone}
+        onClose={onClose}
+        isPinned={isPinned}
+        onEdit={annoId !== undefined ? () => setEditAnnotationId(annoId) : undefined}
+        links={links}
+        actions={actions}
+      />
+    ) : isEditing ? (
+      <AnnotationEditor2
+        annoIdx={editIdx}
+        annoVals={annoVals}
+        timeZone={timeZone}
+        dismiss={() => {
+          exitWipEdit?.();
+          setEditAnnotationId(null);
+          onClose();
+        }}
+      />
+    ) : null;
 
   return (
     <button

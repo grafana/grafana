@@ -260,13 +260,13 @@ const HeatmapPanelViz = ({
             )}
             <AnnotationsPlugin2
               replaceVariables={replaceVariables}
-              multiLane={options.annotations?.multiLane}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
               canvasRegionRendering={false}
+              annotationsOptions={options.annotations}
             />
             <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </UPlotChart>

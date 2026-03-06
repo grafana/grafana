@@ -8,7 +8,9 @@ import {
   arrayToDataFrame,
   createDataFrame,
   createTheme,
+  dateTimeFormat,
   FieldConfigOptionsRegistry,
+  systemDateFormats,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
@@ -22,6 +24,7 @@ import {
   mockAnnotationFrame,
   mockIRMAnnotation,
   mockIRMAnnotationRegion,
+  mockIRMClusteringAnnotation,
 } from './mocks/mockAnnotationFrames';
 import { ANNOTATION_LANE_SIZE } from './utils';
 
@@ -45,8 +48,22 @@ jest.mock('uplot', () => {
     return Math.min(nt * plotWidth);
   });
   const redraw = jest.fn();
-  return jest.fn().mockImplementation(() => {
+  return jest.fn().mockImplementation((opts?: Partial<uPlot.Options>) => {
     return {
+      ...jest.requireActual('uplot'),
+      bbox: {
+        show: true,
+        left: 0,
+        top: 0,
+        width: plotWidth,
+        height: plotWidth,
+      },
+      scales: {
+        x: {
+          min: minTime,
+          max: maxTime,
+        },
+      },
       setData: setDataMock,
       setSize: setSizeMock,
       initialize: initializeMock,
@@ -56,9 +73,11 @@ jest.mock('uplot', () => {
       rect: {
         width: plotWidth,
       },
+
       root: {
         querySelector: jest.fn().mockImplementation(() => document.getElementById('grafana-portal-container')),
       },
+      ...opts,
     };
   });
 });
@@ -92,14 +111,18 @@ describe('AnnotationsPlugin2', () => {
   let config: UPlotConfigBuilder;
   const setUp = (
     props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2>>,
-    configOverride?: UPlotConfigBuilder
+    configOverride?: UPlotConfigBuilder,
+    uPlotProps?: Partial<uPlot.Options>
   ) => {
     function applyReady() {
       act(() => {
         //@ts-ignore
-        hooks.ready(new uPlot());
+        hooks.ready(new uPlot(uPlotProps));
       });
     }
+
+    // Manually set static property
+    uPlot.pxRatio = 2;
 
     const annotations = props?.annotations ?? [mockAnnotationFrame];
     const frames = annotations.map((fr) => createDataFrame(fr));
@@ -118,6 +141,7 @@ describe('AnnotationsPlugin2', () => {
     const result = render(
       <div>
         <AnnotationsPlugin2
+          annotationsOptions={{}}
           config={configOverride ?? config}
           timeZone={'browser'}
           newRange={null}
@@ -435,7 +459,7 @@ describe('AnnotationsPlugin2', () => {
           expect(onAnnotationDelete).not.toHaveBeenCalled();
           await userEvent.click(deleteButton);
           // from the 'id' field
-          expect(onAnnotationDelete).toHaveBeenCalledWith(4683);
+          expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
         });
       });
     });
@@ -508,6 +532,87 @@ describe('AnnotationsPlugin2', () => {
     it.todo('can create annotation region');
     it.todo('can create annotation');
   });
+
+  describe('options', () => {
+    describe('clustering', () => {
+      it('should not cluster', async () => {
+        // should cluster all points within 48px
+        setUp({
+          annotations: [mockIRMClusteringAnnotation],
+          annotationsOptions: {
+            clustering: false,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(4);
+      });
+
+      it('should cluster', async () => {
+        // should cluster all points within 48px
+        setUp({
+          annotations: [mockIRMClusteringAnnotation],
+          annotationsOptions: {
+            clustering: true,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers.length).toEqual(2);
+        await userEvent.click(markers[0]);
+
+        // The first three annotations should get clustered, let's make sure the header includes the formatted time range
+        const startTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[0], {
+          format: systemDateFormats.fullDate,
+        });
+
+        const endTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[2], {
+          format: systemDateFormats.fullDate,
+        });
+
+        expect(screen.getByText(`${startTime} - ${endTime}`));
+
+        // Assert the tooltip body contains the title and the text
+        const titles = screen.getAllByTestId('mock-annotation-title');
+        expect(titles).toHaveLength(3);
+        expect(titles[0]).toBeVisible();
+
+        const texts = screen.getAllByTestId('mock-annotation-text');
+        expect(texts).toHaveLength(3);
+        expect(texts[0]).toBeVisible();
+
+        // // Assert all of the titles are rolled-up and rendered
+        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
+        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
+        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
+        //
+        // // Assert all of the text are rolled-up and ren rendered
+        expect(texts[0]).toHaveTextContent('(>16MB)');
+        expect(texts[1]).toHaveTextContent('(>32MB)');
+        expect(texts[2]).toHaveTextContent('Declared by Ada');
+      });
+
+      it.each([userEvent.hover, userEvent.click])('clusters should render links and actions', async (event) => {
+        mockUsePanelContext.mockReturnValue({
+          canExecuteActions: () => true,
+        } as PanelContext);
+        setUp({
+          annotations: [mockAlertingFrame],
+          annotationsOptions: {
+            clustering: true,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(3);
+        // Open tooltip
+        await event(markers[0]);
+        expect(screen.getByTestId(selectors.pages.Dashboard.Annotations.clusterTooltip)).toBeVisible();
+        expect(screen.getByText('Link 1')).toBeVisible();
+        expect(screen.getByText('Link 2')).toBeVisible();
+        expect(screen.queryByText('Action 1')).toBeVisible();
+        expect(screen.queryByText('Action 2')).toBeVisible();
+      });
+    });
+  });
+
   describe('annotation fields', () => {
     describe('alert state', () => {
       // when newState and alertId are both defined we show a custom alert header
@@ -561,7 +666,7 @@ describe('AnnotationsPlugin2', () => {
       it('should render each frame into separate lanes in the viz', () => {
         setUp({
           annotations: [mockAlertingFrame, mockIRMAnnotationRegion],
-          multiLane: true,
+          annotationsOptions: { multiLane: true },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers).toHaveLength(14);
@@ -576,6 +681,9 @@ describe('AnnotationsPlugin2', () => {
     });
 
     it.each([userEvent.hover, userEvent.click])('links', async (event) => {
+      mockUsePanelContext.mockReturnValue({
+        canExecuteActions: () => false,
+      } as PanelContext);
       setUp({
         annotations: [mockAlertingFrame],
       });
@@ -583,6 +691,8 @@ describe('AnnotationsPlugin2', () => {
       await event(firstMarker);
       expect(screen.getByText('Link 1')).toBeVisible();
       expect(screen.getByText('Link 2')).toBeVisible();
+      expect(screen.queryByText('Action 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('Action 2')).not.toBeInTheDocument();
     });
 
     it.each([userEvent.hover, userEvent.click])('actions', async (event) => {
@@ -594,6 +704,8 @@ describe('AnnotationsPlugin2', () => {
       });
       const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
       await event(firstMarker);
+      expect(screen.getByText('Link 1')).toBeVisible();
+      expect(screen.getByText('Link 2')).toBeVisible();
       expect(screen.getByText('Action 1')).toBeVisible();
       expect(screen.getByText('Action 2')).toBeVisible();
     });
@@ -672,7 +784,7 @@ describe('AnnotationsPlugin2', () => {
       it('multi-lane disables indicator line and rect fill', () => {
         setUp({
           annotations: [mockAnnotationFrame],
-          multiLane: true,
+          annotationsOptions: { multiLane: true },
         });
         const mockU = createMockUPlot();
         const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;

@@ -154,7 +154,7 @@ export const StateTimelinePanel = ({
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
                 <AnnotationsPlugin2
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
+                  annotationsOptions={options.annotations}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

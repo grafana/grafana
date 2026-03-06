@@ -10,10 +10,12 @@ import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
 
+import { AnnotationVals } from '../AnnotationsPlugin2';
+
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 interface Props {
-  annoVals: Record<string, any[]>;
+  annoVals: AnnotationVals;
   annoIdx: number;
   timeZone: string;
   dismiss: () => void;
@@ -59,13 +61,16 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const isRegionAnnotation = annoVals.isRegion?.[annoIdx];
   const operation = isUpdatingAnnotation ? updateAnnotation : createAnnotation;
   const stateIndicator = isUpdatingAnnotation ? updateAnnotationState : createAnnotationState;
-  const time = isRegionAnnotation
-    ? `${timeFormatter(annoVals.time[annoIdx])} - ${timeFormatter(annoVals.timeEnd[annoIdx])}`
-    : timeFormatter(annoVals.time[annoIdx]);
+  const timeEnd = annoVals.timeEnd?.[annoIdx];
+  const timeVal = annoVals.time[annoIdx];
+  const time =
+    isRegionAnnotation && timeEnd != null
+      ? `${timeFormatter(timeVal)} - ${timeFormatter(timeEnd)}`
+      : timeFormatter(timeVal);
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
-      id: annoVals.id?.[annoIdx] ?? undefined,
+      id: annoVals.id?.[annoIdx]?.toString() ?? undefined,
       tags,
       description,
       from: Math.round(annoVals.time[annoIdx]!),
@@ -98,13 +103,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
       </div>
       <Form<AnnotationEditFormDTO>
         onSubmit={onSubmit}
-        defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
+        defaultValues={{ description: annoVals.text?.[annoIdx] ?? '', tags: annoVals.tags?.[annoIdx] || [] }}
       >
         {({ register, errors, control }) => {
           return (
             <>
               <div className={styles.content}>
                 <Field
+                  autoFocus={true}
                   label={t('timeseries.annotation-editor2.label-description', 'Description')}
                   invalid={!!errors.description}
                   error={errors?.description?.message}

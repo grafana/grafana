@@ -325,12 +325,12 @@ export const CandlestickPanel = ({
             )}
             <AnnotationsPlugin2
               replaceVariables={replaceVariables}
-              multiLane={options.annotations?.multiLane}
               annotations={data.annotations ?? []}
               config={uplotConfig}
               timeZone={timeZone}
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
+              annotationsOptions={options.annotations}
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (
