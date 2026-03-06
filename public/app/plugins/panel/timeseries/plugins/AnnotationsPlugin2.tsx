@@ -155,7 +155,7 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      // @todo Add panel options instead of disabling for multiLane and enabling for clustering
+      // @todo Add panel options https://github.com/grafana/grafana/issues/119763
       const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering;
       const shouldRenderLine = !annotationsOptions?.multiLane || annotationsOptions.clustering;
 
