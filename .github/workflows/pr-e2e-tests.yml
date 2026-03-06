@@ -18,12 +18,11 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.e2e }}
-      cloud_plugins_changed: ${{ steps.detect-changes.outputs.e2e-cloud-plugins }}
+      run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -37,7 +36,7 @@ jobs:
 
   build-backend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
     name: Build backend
     runs-on: ubuntu-x64-xlarge
     timeout-minutes: 15
@@ -76,7 +75,7 @@ jobs:
 
   build-frontend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
     name: Build frontend
     runs-on: ubuntu-x64-xlarge
     timeout-minutes: 15
@@ -128,7 +127,7 @@ jobs:
     runs-on: ubuntu-x64
     timeout-minutes: 15
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
     permissions:
       contents: read
       id-token: write
@@ -290,6 +289,7 @@ jobs:
       id-token: write
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
+        if: needs.run-playwright-tests.result != 'skipped'
         uses: actions/download-artifact@v6
         with:
           path: blobs
@@ -297,6 +297,7 @@ jobs:
           merge-multiple: true
 
       - name: Check blob reports
+        if: needs.run-playwright-tests.result != 'skipped'
         run: |
           if [ ! "$(ls -A ./blobs)" ]; then
             echo "Error: No blob reports found in ./blobs directory"
@@ -307,9 +308,11 @@ jobs:
           ls -lah ./blobs
 
       - name: Merge into HTML Report
+        if: needs.run-playwright-tests.result != 'skipped'
         run: npx playwright merge-reports --reporter html ./blobs
 
       - name: Upload HTML report
+        if: needs.run-playwright-tests.result != 'skipped'
         id: upload-html
         uses: actions/upload-artifact@v7
         with:
@@ -320,27 +323,32 @@ jobs:
       - name: Check test suites
         id: check-jobs
         uses: grafana/grafana/.github/actions/check-jobs@main
-        continue-on-error: true # Failure will be reported on Show test results step
+        continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more E2E test suites have failed"
           success-message: "All E2E test suites completed successfully"
 
-      - name: Show test results
+      - name: Check test results
         env:
           FAILED: ${{ steps.check-jobs.outputs.any-failed }}
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
           RUN_ID: ${{ github.run_id }}
+          TESTS_RAN: ${{ needs.run-playwright-tests.result != 'skipped' }}
         # sed removes the leading `../../src/` from the paths
+        # Only show the report if the tests actually ran, but fail if the `check-jobs` step failed
         run: |
-          npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
-          echo ""
-          echo "Run the following command to view the results locally:"
-          echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
-          echo ""
-          echo "Alternatively, download the test report from $REPORT_URL"
-          echo "and view it locally with:"
-          echo "  yarn playwright show-report <path-to-unzipped-report>"
+          if [ "$TESTS_RAN" = "true" ]; then
+            npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
+            echo ""
+            echo "Run the following command to view the results locally:"
+            echo "  ./scripts/view-playwright-ci.sh $RUN_ID"
+            echo ""
+            echo "Alternatively, download the test report from $REPORT_URL"
+            echo "and view it locally with:"
+            echo "  yarn playwright show-report <path-to-unzipped-report>"
+          fi
+
           if [ "$FAILED" = "true" ]; then
             exit 1
           fi
@@ -356,6 +364,7 @@ jobs:
       id-token: write
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
+        if: needs.run-playwright-tests.result != 'skipped'
         uses: actions/download-artifact@v6
         with:
           path: blobs
@@ -363,11 +372,13 @@ jobs:
           merge-multiple: true
 
       - name: Merge into JSON Report
+        if: needs.run-playwright-tests.result != 'skipped'
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
         run: npx playwright merge-reports --reporter=json ./blobs
 
       - name: Bench report
+        if: needs.run-playwright-tests.result != 'skipped'
         run: |
           docker run --rm \
             --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
@@ -419,7 +430,7 @@ jobs:
     if: always()
 
     name: All E2E tests complete
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     steps:
     - name: Placeholder step
       run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."
