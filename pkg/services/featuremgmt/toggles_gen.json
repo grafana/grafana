@@ -2347,6 +2347,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZRoleBindingsRedirect",
+        "resourceVersion": "1772825568777",
+        "creationTimestamp": "2026-03-06T19:32:48Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZRolesRedirect",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -3020,6 +3034,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/aws-datasources",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "nestedFramesFieldOverrides",
+        "resourceVersion": "1772838275804",
+        "creationTimestamp": "2026-03-06T23:04:35Z"
+      },
+      "spec": {
+        "description": "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
