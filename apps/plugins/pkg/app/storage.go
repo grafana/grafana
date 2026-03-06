@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -19,7 +20,6 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
-	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -100,6 +100,7 @@ func (s *MetaStorage) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	start := time.Now()
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -109,16 +110,22 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
-		metrics.APIRequestsTotal.WithLabelValues("list", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
+	listStart := time.Now()
 	plugins, err := pluginClient.ListAll(ctx, ns.Value, resource.ListOptions{})
+	listDuration := time.Since(listStart)
 	if err != nil {
 		logger.Error("Failed to list plugins", "error", err)
-		metrics.APIRequestsTotal.WithLabelValues("list", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
 	}
+	logger.Debug("Listed plugins from storage", "count", len(plugins.Items), "duration", listDuration.Milliseconds())
+
+	defer func() {
+		duration := time.Since(start)
+		logger.Debug("Completed metadata list", "count", len(plugins.Items), "duration", duration.Milliseconds())
+	}()
 
 	// Resolve metadata for all plugins concurrently.
 	// Results are written into a fixed-size slice so ordering is preserved
@@ -126,6 +133,7 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	// metadata lookup failed.
 	results := make([]*pluginsv0alpha1.Meta, len(plugins.Items))
 
+	metaFetchStart := time.Now()
 	g, gCtx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for i, plugin := range plugins.Items {
@@ -160,13 +168,22 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	if err = g.Wait(); err != nil {
 		return nil, err
 	}
+	metaFetchDuration := time.Since(metaFetchStart)
 
 	metaItems := make([]pluginsv0alpha1.Meta, 0, len(results))
+	successCount := 0
 	for _, r := range results {
 		if r != nil {
 			metaItems = append(metaItems, *r)
+			successCount++
 		}
 	}
+	failureCount := len(plugins.Items) - successCount
+
+	logger.Debug("Fetched metadata for plugins",
+		"successCount", successCount,
+		"failureCount", failureCount,
+		"duration", metaFetchDuration.Milliseconds())
 
 	list := &pluginsv0alpha1.MetaList{
 		TypeMeta: metav1.TypeMeta{
@@ -176,11 +193,11 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 		Items: metaItems,
 	}
 
-	metrics.APIRequestsTotal.WithLabelValues("list", "success").Inc()
 	return list, nil
 }
 
 func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	start := time.Now()
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -190,7 +207,6 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
-		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
@@ -199,7 +215,6 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		Name:      name,
 	})
 	if err != nil {
-		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, err
 	}
 
@@ -214,12 +229,10 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 				Group:    pluginsv0alpha1.APIGroup,
 				Resource: name,
 			}
-			metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 			return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
 		}
 
 		logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
-		metrics.APIRequestsTotal.WithLabelValues("get", "error").Inc()
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
@@ -236,6 +249,12 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		Kind:    pluginsv0alpha1.MetaKind().Kind(),
 	})
 
-	metrics.APIRequestsTotal.WithLabelValues("get", "success").Inc()
+	duration := time.Since(start)
+	logger.Debug("Completed metadata fetch",
+		"name", name,
+		"pluginId", plugin.Spec.Id,
+		"version", plugin.Spec.Version,
+		"duration", duration.Milliseconds())
+
 	return pluginMeta, nil
 }
