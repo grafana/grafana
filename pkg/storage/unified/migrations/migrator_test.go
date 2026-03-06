@@ -16,6 +16,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -68,6 +70,11 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		})
 		t.Logf("Using shared database path: %s", dbPath)
+	}
+
+	// Clean up leftover state from previous test runs (e.g., renamed _legacy tables).
+	if !db.IsTestDbSQLite() {
+		cleanupLegacyTables(t, testCases)
 	}
 
 	// Collect feature toggles required by all test cases
@@ -232,12 +239,10 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			t.Run(state.tc.Name(), func(t *testing.T) {
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-					// Only verify resources that are expected to be migrated, either:
-					// 1. In MigratedUnifiedResources (enabled by default), OR
-					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
-					// Resources not in either map won't have mode 5 enforced, so the K8s API
+					// Only verify resources that are expected to be migrated by default.
+					// Resources outside this map won't have mode 5 enforced, so the K8s API
 					// may still serve them from legacy storage, making verification unreliable.
-					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
+					if !setting.MigratedUnifiedResources[resourceKey] {
 						t.Skipf("Resource %s is not migrated by default, skipping verification", resourceKey)
 						return
 					}
@@ -263,13 +268,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				// EnableLog:             true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDataMigrations: false,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
+				//EnableLog:              true,
+				AppModeProduction:      true,
+				DisableAnonymous:       true,
+				DisableDataMigrations:  false,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig:   unifiedConfig,
+				MigrationParquetBuffer: true,
+				EnableFeatureToggles:   featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -288,6 +294,9 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		t.Logf("Verifying key_path is populated in resource_history after bulkimport")
 		verifyKeyPathPopulated(t, helper)
+
+		t.Logf("Verifying legacy tables were renamed")
+		verifyTablesRenamed(t, helper, testCases)
 	})
 }
 
@@ -371,6 +380,63 @@ func verifyKeyPathPopulated(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Logf("Verified %d rows in resource_history have populated key_path", populatedKeyPathCount)
 	require.Greater(t, populatedKeyPathCount, 0, "expected at least one row in resource_history with populated key_path")
 }
+
+// verifyTablesRenamed checks that legacy tables were renamed to _legacy after migration.
+func verifyTablesRenamed(t *testing.T, helper *apis.K8sTestHelper, testCases []testcases.ResourceMigratorTestCase) {
+	t.Helper()
+	engine := helper.GetEnv().SQLStore.GetEngine()
+
+	for _, tc := range testCases {
+		for _, table := range tc.RenameTables() {
+			legacyName := table + "_legacy"
+
+			exists, err := engine.IsTableExist(table)
+			require.NoError(t, err)
+			require.False(t, exists, "original table %q should no longer exist after migration", table)
+
+			exists, err = engine.IsTableExist(legacyName)
+			require.NoError(t, err)
+			require.True(t, exists, "renamed table %q should exist after migration", legacyName)
+
+			t.Logf("Verified table %q was renamed to %q", table, legacyName)
+		}
+	}
+}
+
+// cleanupLegacyTables restores _legacy tables back to their original names
+func cleanupLegacyTables(t *testing.T, testCases []testcases.ResourceMigratorTestCase) {
+	t.Helper()
+
+	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	require.NoError(t, err)
+
+	engine, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+	defer func() { _ = engine.Close() }()
+
+	// Restore renamed tables
+	for _, tc := range testCases {
+		for _, table := range tc.RenameTables() {
+			legacyName := table + "_legacy"
+			exists, err := engine.IsTableExist(legacyName)
+			require.NoError(t, err)
+			if exists {
+				origExists, err := engine.IsTableExist(table)
+				require.NoError(t, err)
+				if origExists {
+					t.Logf("Both %q and %q exist, dropping legacy table", table, legacyName)
+					_, err = engine.Exec("DROP TABLE " + engine.Quote(legacyName))
+					require.NoError(t, err)
+				} else {
+					t.Logf("Restoring %q back to %q", legacyName, table)
+					_, err = engine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", engine.Quote(legacyName), engine.Quote(table)))
+					require.NoError(t, err)
+				}
+			}
+		}
+	}
+}
+
 func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -429,7 +495,6 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -486,7 +551,6 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)
@@ -675,7 +739,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 			migrator := migrations.ProvideUnifiedMigrator(
-				nil,
 				mockClient,
 				registry,
 			)
@@ -748,7 +811,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
 	migrator := migrations.ProvideUnifiedMigrator(
-		nil,
 		mockClient,
 		registry,
 	)

@@ -168,6 +168,20 @@ describe('provisioning data mapping', () => {
     });
   });
 
+  describe('empty branch sends empty string for backend auto-detection', () => {
+    it.each(['github', 'gitlab', 'bitbucket', 'git'] as const)(
+      'sends empty branch for %s when branch is not set',
+      (type) => {
+        const formData = makeFormData(type);
+        formData.branch = '';
+        const spec = dataToSpec(formData);
+
+        const providerSpec = spec[type];
+        expect(providerSpec?.branch).toBe('');
+      }
+    );
+  });
+
   describe('local', () => {
     it('maps form data to local spec and filters branch from workflows', () => {
       const formData = makeFormData('local');

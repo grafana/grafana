@@ -160,7 +160,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart ?? '',
     tags: state.tags,
-    links: state.links,
+    links: state.links.filter((l) => l.origin === undefined),
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
@@ -174,6 +174,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     dashboard.timezone = timeRange.timeZone;
   }
 
+  delete dashboard.id; // Make sure we never save an internal ID
   return sortedDeepCloneWithoutNulls(dashboard, true);
 }
 

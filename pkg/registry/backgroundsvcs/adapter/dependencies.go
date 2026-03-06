@@ -50,10 +50,10 @@ func dependencyMap() map[string][]string {
 		Tracing:            {},
 		GrafanaAPIServer:   {Tracing},
 		PluginStore:        {GrafanaAPIServer},
-		InstallSync:        {PluginStore},
-		PluginInstaller:    {InstallSync},
+		PluginInstaller:    {PluginStore},
 		FixedRolesLoader:   {PluginInstaller},
 		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:        {Provisioning},
 		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
 		BackgroundServices: {Core},
 	}

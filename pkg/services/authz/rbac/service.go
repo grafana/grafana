@@ -68,6 +68,9 @@ type Settings struct {
 	// CacheTTL is the time to live for the permission cache entries.
 	// Set to 0 to disable caching.
 	CacheTTL time.Duration
+	// LocalFolderCacheTTL, when non-zero, adds an in-memory L1 cache in front
+	// of the remote folder cache to reduce round-trips and deserialization cost.
+	LocalFolderCacheTTL time.Duration
 }
 
 func NewService(
@@ -99,7 +102,7 @@ func NewService(
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
 		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
 		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
 		sf:              new(singleflight.Group),
 	}
@@ -146,9 +149,11 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		return deny, nil
 	}
 
+	getTree := s.newFolderTreeGetter(ctx, checkReq.Namespace, false)
+
 	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err == nil {
-		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq)
+		allowed, err := s.checkPermission(ctx, cachedPerms, checkReq, getTree)
 		if err != nil {
 			ctxLogger.Error("could not check permission", "error", err)
 			s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -170,7 +175,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		return deny, err
 	}
 
-	allowed, err := s.checkPermission(ctx, permissions, checkReq)
+	allowed, err := s.checkPermission(ctx, permissions, checkReq, getTree)
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
@@ -345,6 +350,7 @@ func (s *Service) requiresFreshData(freshnessTimestamp int64) bool {
 
 // processBatchCheckGroup processes a single group of checks that share the same action.
 // It fetches permissions once and evaluates all checks in the group against them.
+// A single folderTreeGetter is shared across all items so the tree is fetched at most once.
 func (s *Service) processBatchCheckGroup(
 	ctx context.Context,
 	ctxLogger log.Logger,
@@ -363,9 +369,11 @@ func (s *Service) processBatchCheckGroup(
 		return
 	}
 
+	getTree := s.newFolderTreeGetter(ctx, ns, group.requiresFreshData)
+
 	for i, item := range group.items {
 		checkReq := group.checkReqs[i]
-		allowed, err := s.checkPermission(ctx, permissions, checkReq)
+		allowed, err := s.checkPermission(ctx, permissions, checkReq, getTree)
 		if err != nil {
 			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
 			continue
@@ -809,7 +817,40 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 	return *basicRole, nil
 }
 
-func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+// folderTreeGetter is a lazily-evaluated, memoized function that returns the folder tree for a namespace.
+// Create one instance per logical call-site (e.g. per batch group or per single Check) so that the tree
+// is fetched at most once even when multiple items share the same getter.
+type folderTreeGetter func() (*folderTree, error)
+
+// newFolderTreeGetter returns a folderTreeGetter that fetches the folder tree at most once.
+// If skipCache is false it tries the cache first before calling buildFolderTree.
+func (s *Service) newFolderTreeGetter(ctx context.Context, ns types.NamespaceInfo, skipCache bool) folderTreeGetter {
+	var (
+		result   *folderTree
+		fetchErr error
+		fetched  bool
+	)
+	return func() (*folderTree, error) {
+		if fetched {
+			return result, fetchErr
+		}
+		fetched = true
+		if !skipCache {
+			if tree, ok := s.getCachedFolderTree(ctx, ns); ok {
+				result = &tree
+				return result, nil
+			}
+		}
+		tree, err := s.buildFolderTree(ctx, ns)
+		fetchErr = err
+		if err == nil {
+			result = &tree
+		}
+		return result, fetchErr
+	}
+}
+
+func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
 	defer span.End()
@@ -854,7 +895,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, nil
 	}
 
-	return s.checkInheritedPermissions(ctx, scopeMap, req)
+	return s.checkInheritedPermissions(ctx, scopeMap, req, getTree)
 }
 
 func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string]bool {
@@ -875,7 +916,7 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 	return permMap
 }
 
-func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest) (bool, error) {
+func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
 	if req.ParentFolder == "" {
 		return false, nil
 	}
@@ -884,17 +925,21 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	tree, ok := s.getCachedFolderTree(ctx, req.Namespace)
+	tree, err := getTree()
+	if err != nil {
+		ctxLogger.Error("could not get folder tree", "error", err)
+		return false, err
+	}
 
-	// Check cached tree is up to date
-	if !ok || !s.isFolderInTree(tree, req.ParentFolder) {
-		var err error
-		tree, err = s.buildFolderTree(ctx, req.Namespace)
+	// If the folder is missing from the tree, try a fresh build to recover from a stale cache.
+	if tree == nil || !s.isFolderInTree(*tree, req.ParentFolder) {
+		fresh, err := s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {
 			ctxLogger.Error("could not build folder and dashboard tree", "error", err)
 			return false, err
 		}
-		if !s.isFolderInTree(tree, req.ParentFolder) {
+		tree = &fresh
+		if !s.isFolderInTree(*tree, req.ParentFolder) {
 			// Not erroring here as the permission might exist but the folder wasn't synchronized yet
 			// Once in mode 5 we can deny access here
 			ctxLogger.Error("parent folder not found in folder tree", "folder", req.ParentFolder)

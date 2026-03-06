@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -982,6 +983,20 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				require.Equal(t, models.ProvenanceNone, p)
 			})
 		})
+	})
+	t.Run("returns error when folder does not exist", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(orgID)).Generate()
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+		fs := foldertest.NewFakeService()
+		fs.ExpectedError = dashboards.ErrFolderNotFound
+		service.folderService = fs
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "folder does not exist")
 	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
@@ -2606,7 +2621,9 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	quotas.EXPECT().LimitOK()
 
 	if folderService == nil {
-		folderService = foldertest.NewFakeService()
+		fs := foldertest.NewFakeService()
+		fs.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
+		folderService = fs
 	}
 
 	return AlertRuleService{
@@ -2721,6 +2738,7 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
 	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()

@@ -46,6 +46,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         variant="secondary"
       />
       <IconButton
+        aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}

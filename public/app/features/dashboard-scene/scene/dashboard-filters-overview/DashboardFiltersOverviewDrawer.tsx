@@ -59,6 +59,7 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
       }
       onClose={model.onClose}
       size="sm"
+      scrollableContent={false}
     >
       <DashboardFiltersOverview
         adhocFilters={adHocVar}
@@ -78,6 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     overflow: 'hidden',
     minWidth: 0,
+    paddingRight: theme.spacing(2),
   }),
   drawerTitle: css({
     flex: 1,

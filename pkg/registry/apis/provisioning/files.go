@@ -27,14 +27,21 @@ const (
 )
 
 type filesConnector struct {
-	getter  RepoGetter
-	access  auth.AccessChecker
-	parsers resources.ParserFactory
-	clients resources.ClientFactory
+	getter                RepoGetter
+	access                auth.AccessChecker
+	parsers               resources.ParserFactory
+	clients               resources.ClientFactory
+	folderMetadataEnabled bool
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool) *filesConnector {
+	return &filesConnector{
+		getter:                getter,
+		parsers:               parsers,
+		clients:               clients,
+		access:                access,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -165,8 +172,8 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access), nil
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), c.folderMetadataEnabled)
+	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.folderMetadataEnabled), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -324,19 +331,19 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 		return nil, err
 	}
 
-	files := &provisioning.FileList{}
+	items := make([]provisioning.FileItem, 0, len(rsp))
 	for _, v := range rsp {
 		if !v.Blob {
-			continue // folder item
+			continue
 		}
-		files.Items = append(files.Items, provisioning.FileItem{
+		items = append(items, provisioning.FileItem{
 			Path: v.Path,
 			Size: v.Size,
 			Hash: v.Hash,
 		})
 	}
 
-	return files, nil
+	return &provisioning.FileList{Items: items}, nil
 }
 
 // checkQuota verifies that the repository resource quota allows the operation.

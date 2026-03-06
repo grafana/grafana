@@ -84,7 +84,7 @@ const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unk
   typeof value === 'object' && value !== null;
 
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('options' in variable) || !variable.options[0].properties) {
+  if (!('options' in variable) || !variable.options?.[0]?.properties) {
     return [];
   }
 

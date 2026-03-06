@@ -69,6 +69,10 @@ func ValidateJob(job *provisioning.Job) error {
 		} else {
 			list = append(list, validateMoveJobOptions(job.Spec.Move)...)
 		}
+
+	case provisioning.JobActionFixFolderMetadata:
+		// No required options for fix-folder-metadata; it's a no-op placeholder
+
 	default:
 		list = append(list, field.Invalid(field.NewPath("spec", "action"), job.Spec.Action, "invalid action"))
 	}

@@ -88,6 +88,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, root
       {React.cloneElement(children, {
         ref: refs.setReference,
         ...getReferenceProps(),
+        'aria-expanded': show,
       })}
       {show && (
         <Portal root={root}>

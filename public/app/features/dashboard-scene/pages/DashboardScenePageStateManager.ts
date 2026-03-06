@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Spec as DashboardV2Spec, VariableKind, DashboardLink } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -47,6 +47,8 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
+import { loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
+import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -91,6 +93,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  defaultVariables?: VariableKind[];
+  defaultLinks?: DashboardLink[];
 }
 
 export type HomeDashboardDTO = DashboardDTO & {
@@ -148,6 +152,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
+  abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -162,7 +167,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     const rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
-      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
       locationService.replace(newUrl);
       return null;
     }
@@ -403,6 +408,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
+          id: dashboard.state.id,
           meta: dashboard.state.meta,
           uid: dashboard.state.uid,
           title: dashboard.state.title,
@@ -448,6 +454,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     if (!rsp) {
       return null;
     }
+
+    const { defaultVariables, defaultLinks } = await this.getDefaultControls(rsp);
+    options.defaultVariables = defaultVariables;
+    options.defaultLinks = defaultLinks;
 
     return this.transformResponseToScene(rsp, options);
   }
@@ -657,7 +667,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+  private async loadCommunityTemplateDashboard(gnetId: number | string): Promise<DashboardDTO> {
     // Extract mappings from URL params
     const location = locationService.getLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -689,6 +699,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
+
+  public getDefaultControls(
+    rsp: DashboardDTO
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
+    const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
+
+    return loadDefaultControlsFromDatasources(datasourceRefs);
   }
 
   public async fetchDashboard({
@@ -909,7 +927,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     if (rsp) {
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {
@@ -920,6 +938,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
+  }
+
+  public async getDefaultControls(
+    rsp: DashboardWithAccessInfo<DashboardV2Spec>
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
+    const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
+
+    return loadDefaultControlsFromDatasources(datasourceRefs);
   }
 
   public async fetchDashboard({
@@ -1217,6 +1243,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
+  }
+
+  public async getDefaultControls(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
+  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
+    if (isDashboardV2Resource(rsp)) {
+      return this.v2Manager.getDefaultControls(rsp);
+    }
+    return this.v1Manager.getDefaultControls(rsp);
   }
 }
 

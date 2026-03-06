@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 import { getAppPluginMeta, getAppPluginMetas, getAppPluginVersion, isAppPluginInstalled } from './apps';
 import {
   getListedPanelPluginIds,
+  getListedPanelPluginMetas,
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
@@ -22,6 +23,11 @@ export function useAppPluginMeta(pluginId: string) {
 
 export function usePanelPluginMetas() {
   const { loading, error, value } = useAsync(async () => getPanelPluginMetas());
+  return { loading, error, value };
+}
+
+export function useListedPanelPluginMetas() {
+  const { loading, error, value } = useAsync(async () => getListedPanelPluginMetas());
   return { loading, error, value };
 }
 
