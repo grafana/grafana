@@ -9,14 +9,14 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useScopesFromNames, useFieldDisplayNames } from './utils';
+import { useFieldDisplayNames, useScopesOptions } from './utils';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { id, options, onChange, data, scope: scopeFromProps } = props;
+  const { id, options, onChange, data, scope = 'series' } = props;
   const [regexp, setRegexp] = useState(options);
-  const [scope, setScope] = useState<MatcherScope>(scopeFromProps ?? 'series');
   const names = useFieldDisplayNames(data);
-  const matcherScopeOptions = useScopesFromNames(names, scopeFromProps);
+  const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
+  const matcherScopeOptions = useScopesOptions(uniqScopes, scope);
 
   return (
     <Stack gap={1} direction="column">
@@ -32,10 +32,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
           aria-label={t('grafana-ui.field-name-by-regex-matcher.scope-select-aria-label', 'Scope of matched series')}
           options={matcherScopeOptions}
           value={scope}
-          onChange={(opt) => {
-            setScope(opt.value);
-            onChange(regexp, opt.value);
-          }}
+          onChange={(opt) => onChange(regexp, opt.value)}
         />
       ) : null}
     </Stack>

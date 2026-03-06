@@ -196,21 +196,18 @@ export function useSelectOptions(
 /**
  * @internal
  */
-export function useScopesFromNames(
-  names: FrameFieldsDisplayNames,
-  scopeFromProps?: MatcherScope
+export function useScopesOptions(
+  uniqScopes: Set<MatcherScope>,
+  currentScope?: MatcherScope
 ): Array<ComboboxOption<MatcherScope>> {
   return useMemo(() => {
-    const uniqScopes = new Set<MatcherScope>(names.scopes.values());
-
-    if (scopeFromProps) {
-      uniqScopes.add(scopeFromProps);
-    }
-
     // Remove the series scope from the set, so we can gaurantee it's the first option, and also
     // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
     uniqScopes.delete('series');
-    if (uniqScopes.size === 0) {
+
+    const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
+
+    if (uniqScopes.size === 0 && !scopeNotFound) {
       return [];
     }
 
@@ -230,6 +227,16 @@ export function useScopesFromNames(
       });
     }
 
+    if (scopeNotFound) {
+      const innerLabel = getGroupLabelForScope(currentScope);
+
+      arr.push({
+        label: t('grafana-ui.matchers.labels.not-found', '{{name}} (not found)', { name: innerLabel }),
+        description: getGroupDescriptionForScope(currentScope),
+        value: currentScope,
+      });
+    }
+
     return arr;
-  }, [names.scopes, scopeFromProps]);
+  }, [uniqScopes, currentScope]);
 }

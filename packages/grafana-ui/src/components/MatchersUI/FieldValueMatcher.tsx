@@ -19,7 +19,7 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useScopesFromNames } from './utils';
+import { useFieldDisplayNames, useScopesOptions } from './utils';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
 
@@ -49,7 +49,8 @@ function isBooleanReducer(r: ReducerID) {
 export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope }: Props) => {
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
   const names = useFieldDisplayNames(data);
-  const matcherScopeOptions = useScopesFromNames(names, scope);
+  const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
+  const matcherScopeOptions = useScopesOptions(uniqScopes, scope);
 
   const onSetReducer = useCallback(
     (selection: ComboboxOption<ReducerID>) => {
