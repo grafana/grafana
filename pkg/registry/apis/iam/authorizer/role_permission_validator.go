@@ -80,10 +80,14 @@ func (v *RolePermissionValidator) buildReverseActionMap() {
 		mappings := v.mapper.GetAll(group)
 		for _, mapping := range mappings {
 			for _, k8sVerb := range allVerbs {
+				apiResource, ok := v.mapper.GetAPIResourceName(group, mapping.Resource())
+				if !ok {
+					continue
+				}
 				if action, ok := mapping.Action(k8sVerb); ok {
 					v.reverseActionMap[action] = mappingInfo{
 						group:    group,
-						resource: mapping.Resource(),
+						resource: apiResource,
 						verb:     k8sVerb,
 					}
 				}
