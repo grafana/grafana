@@ -12546,7 +12546,8 @@
         "title": "Delete theme"
       },
       "empty-state": "You haven't added any custom themes yet",
-      "empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana"
+      "empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana",
+      "subheading": "Custom themes"
     },
     "edit-custom-theme-page": {
       "cancel": "Cancel",

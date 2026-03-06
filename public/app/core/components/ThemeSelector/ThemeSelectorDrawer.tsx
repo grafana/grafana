@@ -43,7 +43,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
             ))}
         </div>
         <Text variant="h4">
-          <Trans i18nKey="profile.custom-themes">Custom themes</Trans>
+          <Trans i18nKey="profile.custom-themes.subheading">Custom themes</Trans>
         </Text>
         <div className={styles.grid}>
           {themes
