@@ -464,6 +464,11 @@ export interface FeatureToggles {
   */
   reportingV2Layouts?: boolean;
   /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
