@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -78,6 +78,7 @@ export type QueryLibraryContextType = {
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };
+  setUserFavorites: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   isEditingQuery: boolean;
   setIsEditingQuery: (isEditingQuery: boolean) => void;
   onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
@@ -117,6 +118,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   onFavorite: () => {},
   onUnfavorite: () => {},
   userFavorites: {},
+  setUserFavorites: () => {},
   isEditingQuery: false,
   setIsEditingQuery: () => {},
   onAddHistoryQueryToLibrary: () => {},

@@ -60,6 +60,7 @@ const renderPage = (
       plugins: [],
       categories: [],
       isSortAscending: true,
+      manualTestSuccessByUid: {},
     },
   })
 ): RenderResult => {

@@ -15,6 +15,7 @@ export interface DataSourcesState {
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
   isSortAscending: boolean;
+  manualTestSuccessByUid: Record<string, string>;
 }
 
 export interface DataSourceSettingsState {

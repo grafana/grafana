@@ -27,6 +27,7 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
+  recordManualDataSourceTestSuccess,
 } from './reducers';
 
 jest.mock('../api');
@@ -245,7 +246,16 @@ describe('testDataSource', () => {
         .givenThunk(testDataSource)
         .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
 
-      expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
+      expect(dispatchedActions).toEqual([
+        testDataSourceStarting(),
+        testDataSourceSucceeded(state.testingStatus),
+        expect.objectContaining({
+          type: recordManualDataSourceTestSuccess.type,
+          payload: expect.objectContaining({
+            datasourceUid: 'CW1234',
+          }),
+        }),
+      ]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
         plugin_id: 'cloudwatch',
         datasource_uid: 'CW1234',

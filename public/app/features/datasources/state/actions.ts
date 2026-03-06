@@ -45,6 +45,7 @@ import {
   dataSourcesLoaded,
   initDataSourceSettingsFailed,
   initDataSourceSettingsSucceeded,
+  recordManualDataSourceTestSuccess,
   testDataSourceFailed,
   testDataSourceStarting,
   testDataSourceSucceeded,
@@ -159,6 +160,7 @@ export const testDataSource = (
 
         const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
         dispatch(testDataSourceSucceeded(parsedResult));
+        dispatch(recordManualDataSourceTestSuccess({ datasourceUid: dsApi.uid, testedAt: new Date().toISOString() }));
 
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,

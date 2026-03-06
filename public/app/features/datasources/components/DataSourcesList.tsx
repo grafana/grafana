@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { useAdvisorHealthStatus } from '../hooks/useAdvisorHealthStatus';
+import { type AdvisorListHealthState } from '../hooks/useAdvisorHealthStatus';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -20,7 +20,14 @@ import { trackDataSourcesListViewed } from '../tracking';
 import { DataSourcesListCard } from './DataSourcesListCard';
 import { DataSourcesListHeader, type HealthFilter } from './DataSourcesListHeader';
 
-export function DataSourcesList() {
+const EMPTY_ADVISOR_HEALTH: AdvisorListHealthState = {
+  healthMap: new Map(),
+  lastChecked: undefined,
+  isLoading: false,
+  isAvailable: false,
+};
+
+export function DataSourcesList({ advisorHealth = EMPTY_ADVISOR_HEALTH }: { advisorHealth?: AdvisorListHealthState }) {
   const { isLoading } = useLoadDataSources();
   const favoriteDataSources = useFavoriteDatasources();
   const [queryParams, updateQueryParams] = useQueryParams();
@@ -34,7 +41,6 @@ export function DataSourcesList() {
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
-  const advisorHealth = useAdvisorHealthStatus();
 
   return (
     <DataSourcesListView
@@ -62,7 +68,7 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
-  advisorHealth?: { healthMap: Map<string, string>; isAvailable: boolean };
+  advisorHealth?: AdvisorListHealthState;
 };
 
 export function DataSourcesListView({
@@ -79,7 +85,7 @@ export function DataSourcesListView({
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const { healthMap, isAvailable } = advisorHealth ?? { healthMap: new Map<string, string>(), isAvailable: false };
+  const { healthMap, isAvailable } = advisorHealth ?? EMPTY_ADVISOR_HEALTH;
   const showHealthFilter = Boolean(config.featureToggles.grafanaAdvisor) && contextSrv.hasRole('Admin');
   const [healthFilter, setHealthFilter] = useState<HealthFilter>('all');
   const favoritesCheckbox =

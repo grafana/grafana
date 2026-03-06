@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCreateCheckMutation, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
-import { findLatestDatasourceCheck } from './useAdvisorHealthStatus';
+import { findLatestDatasourceCheck, isTimestampOnOrAfter } from './useAdvisorHealthStatus';
 
 const CHECK_STATUS_ANNOTATION = 'advisor.grafana.app/status';
 const DATASOURCE_CHECK_TYPE = 'datasource';
@@ -32,8 +32,7 @@ export function useRunHealthChecks() {
     if (!latest) {
       return;
     }
-    const createdAt = latest.metadata.creationTimestamp ?? '';
-    if (createdAt >= runStartedAt.current) {
+    if (isTimestampOnOrAfter(latest.metadata.creationTimestamp, runStartedAt.current)) {
       const status = latest.metadata.annotations?.[CHECK_STATUS_ANNOTATION];
       if (status === 'processed' || status === 'error') {
         setIsRunning(false);
@@ -67,11 +66,13 @@ export function useRunHealthChecks() {
     }
   }, [enabled, isRunning, createCheck]);
 
-  // Detect if a check is already in progress on mount
+  // Detect if a check is already in progress on initial data load
+  const hasDetectedInitial = useRef(false);
   useEffect(() => {
-    if (!data?.items) {
+    if (!data?.items || hasDetectedInitial.current) {
       return;
     }
+    hasDetectedInitial.current = true;
     const latest = findLatestDatasourceCheck(data.items);
     if (latest) {
       const status = latest.metadata.annotations?.[CHECK_STATUS_ANNOTATION];
