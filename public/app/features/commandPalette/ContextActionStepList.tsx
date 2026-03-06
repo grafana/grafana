@@ -5,6 +5,23 @@ import { type CommandPaletteContextStep, type ContextStepBreadcrumb, type Contex
 import { t, Trans } from '@grafana/i18n';
 import { Checkbox, Icon, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
 
+const OPERATOR_ONLY_PATTERN = /^(?:!=|=~|!~|=|:)$/;
+
+function isCompletedFilter(label: string): boolean {
+  if (OPERATOR_ONLY_PATTERN.test(label)) {
+    return false;
+  }
+  return /[=:]/.test(label);
+}
+
+function splitFilterLabel(label: string): { keyPart: string; valuePart: string | null } {
+  const match = label.match(/^(.+?)(!=|=~|!~|=|:)(.*)/);
+  if (match) {
+    return { keyPart: match[1], valuePart: match[2] + match[3] };
+  }
+  return { keyPart: label, valuePart: null };
+}
+
 export interface ContextActionStepState {
   currentStep: CommandPaletteContextStep;
   breadcrumbs: ContextStepBreadcrumb[];
@@ -135,9 +152,9 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
       if (targetState) {
         let newBreadcrumbs: ContextStepBreadcrumb[];
         if (extraBreadcrumb) {
-          const newKey = extraBreadcrumb.value.split(':')[0];
+          const newKey = splitFilterLabel(extraBreadcrumb.value).keyPart;
           const existingIdx = targetState.breadcrumbs.findIndex(
-            (bc) => bc.value.split(':')[0] === newKey
+            (bc) => splitFilterLabel(bc.value).keyPart === newKey
           );
           if (existingIdx >= 0) {
             newBreadcrumbs = [...targetState.breadcrumbs];
@@ -147,7 +164,7 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
           }
         } else if (removeKey) {
           newBreadcrumbs = targetState.breadcrumbs.filter(
-            (bc) => bc.value.split(':')[0] !== removeKey
+            (bc) => splitFilterLabel(bc.value).keyPart !== removeKey
           );
         } else {
           newBreadcrumbs = targetState.breadcrumbs;
@@ -184,7 +201,7 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         currentStep.onApply([], breadcrumbs);
       }
       if (!isDeferred && filterKey && rootStepRef.current.onRemoveBreadcrumb) {
-        const existingBc = breadcrumbs.find((bc) => bc.value.startsWith(filterKey + ':'));
+        const existingBc = breadcrumbs.find((bc) => splitFilterLabel(bc.value).keyPart === filterKey);
         if (existingBc) {
           rootStepRef.current.onRemoveBreadcrumb(existingBc);
         }
@@ -215,11 +232,14 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         case 'next': {
           historyRef.current.push(state);
           const filterKey = transition.breadcrumb.value;
-          const existingBc = breadcrumbs.find((bc) => bc.value.startsWith(filterKey + ':'));
+          const existingBc = breadcrumbs.find((bc) => splitFilterLabel(bc.value).keyPart === filterKey);
           let preSelectedOptions: ContextStepOption[] = [];
           if (existingBc) {
-            const valuesPart = existingBc.value.split(':').slice(1).join(':');
-            preSelectedOptions = valuesPart.split(',').map((v) => ({ id: v, label: v }));
+            const { valuePart } = splitFilterLabel(existingBc.value);
+            if (valuePart) {
+              const rawValue = valuePart.replace(/^(?:!=|=~|!~|=|:)/, '');
+              preSelectedOptions = rawValue.split(',').map((v) => ({ id: v, label: v }));
+            }
           }
           onTransition({
             currentStep: transition.step,
@@ -311,14 +331,16 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
 
       if (e.key === 'Backspace' && searchQuery === '') {
         e.preventDefault();
-        if (breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].label.includes(':')) {
+        if (breadcrumbs.length > 0 && isCompletedFilter(breadcrumbs[breadcrumbs.length - 1].label)) {
           const removed = breadcrumbs[breadcrumbs.length - 1];
           if (!isDeferred && rootStepRef.current.onRemoveBreadcrumb) {
             rootStepRef.current.onRemoveBreadcrumb(removed);
           }
           onTransition({ ...state, breadcrumbs: breadcrumbs.slice(0, -1) });
-        } else {
+        } else if (inProgressDepth > 0) {
           goBack();
+        } else {
+          onTransition(null);
         }
         return;
       }
@@ -360,9 +382,43 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
     applyAndGoBack();
   }, [applyAndGoBack]);
 
+  const { completedBreadcrumbs, inProgressBreadcrumbs } = useMemo(() => {
+    let splitIdx = breadcrumbs.length;
+    for (let i = breadcrumbs.length - 1; i >= 0; i--) {
+      if (isCompletedFilter(breadcrumbs[i].label)) {
+        break;
+      }
+      splitIdx = i;
+    }
+    return {
+      completedBreadcrumbs: breadcrumbs.slice(0, splitIdx),
+      inProgressBreadcrumbs: breadcrumbs.slice(splitIdx),
+    };
+  }, [breadcrumbs]);
+
+  const inProgressDepth = inProgressBreadcrumbs.length;
+  const isOperatorStep = inProgressDepth === 1;
+  const isValueStep = inProgressDepth >= 2;
+
+  const sectionLabel = useMemo(() => {
+    if (isOperatorStep) {
+      return t('command-palette.context-action.operator', 'Operator');
+    }
+    if (isValueStep) {
+      return inProgressBreadcrumbs[0].label;
+    }
+    return currentStep.pillLabel;
+  }, [isOperatorStep, isValueStep, inProgressBreadcrumbs, currentStep.pillLabel]);
+
   const searchPlaceholder = useMemo(() => {
+    if (isOperatorStep) {
+      return t('command-palette.context-action.search-by-operator', 'Search by operator...');
+    }
+    if (isValueStep) {
+      return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: inProgressBreadcrumbs[0].label.toLowerCase() });
+    }
     return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: currentStep.pillLabel.toLowerCase() });
-  }, [currentStep.pillLabel]);
+  }, [isOperatorStep, isValueStep, inProgressBreadcrumbs, currentStep.pillLabel]);
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
@@ -387,11 +443,8 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
             )}
             <span>{rootStepRef.current.pillLabel}</span>
           </span>
-          {breadcrumbs.map((bc, i) => {
-            const colonIdx = bc.label.indexOf(':');
-            const isCompleted = colonIdx >= 0;
-            const keyPart = isCompleted ? bc.label.slice(0, colonIdx) : bc.label;
-            const valuePart = isCompleted ? bc.label.slice(colonIdx) : null;
+          {completedBreadcrumbs.map((bc, i) => {
+            const { keyPart, valuePart } = splitFilterLabel(bc.label);
             return (
               <React.Fragment key={i}>
                 <span className={styles.separator}>/</span>
@@ -402,8 +455,21 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
               </React.Fragment>
             );
           })}
-          {breadcrumbs.length > 0 && breadcrumbs[breadcrumbs.length - 1].label.includes(':') && (
+          {completedBreadcrumbs.length > 0 && inProgressDepth === 0 && (
             <span className={styles.separator}>/</span>
+          )}
+          {inProgressDepth > 0 && (
+            <>
+              <span className={styles.separator}>/</span>
+              <span className={styles.badge}>
+                {inProgressBreadcrumbs[0].label}
+                {inProgressBreadcrumbs.length > 1 && (
+                  <span className={styles.badgeValue}>
+                    {inProgressBreadcrumbs.slice(1).map((bc) => bc.label).join('')}
+                  </span>
+                )}
+              </span>
+            </>
           )}
         </div>
         <input
@@ -422,7 +488,7 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
       <div className={currentStep.helpPanel ? styles.splitContainer : undefined}>
         <div ref={listRef} className={cx(styles.list, currentStep.helpPanel && styles.listWithPanel)} role="listbox">
           <div className={styles.sectionHeader}>
-            {currentStep.pillLabel}
+            {sectionLabel}
           </div>
           {flatItems.length === 0 && !isLoading && (
             <div className={styles.emptyState}><Trans i18nKey="command-palette.context-action.no-options">No options found</Trans></div>
@@ -450,7 +516,7 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
                 {isMultiSelect && (
                   <Checkbox value={isSelected} className={styles.checkbox} />
                 )}
-                {!isMultiSelect && (
+                {!isMultiSelect && (item.option.icon || !isOperatorStep) && (
                   <span className={styles.optionIcon}>
                     {item.option.icon || <Icon name="search" />}
                   </span>
@@ -501,7 +567,7 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
             <span><Trans i18nKey="command-palette.context-action.clear-all">Clear all</Trans></span>
           </span>
         )}
-        {(isMultiSelect || breadcrumbs.length === 0 || breadcrumbs[breadcrumbs.length - 1].label.includes(':')) && (
+        {(isMultiSelect || inProgressDepth === 0) && (
           <span className={styles.footerHint}>
             <kbd className={styles.kbd}>⌘↵</kbd>
             <span>
