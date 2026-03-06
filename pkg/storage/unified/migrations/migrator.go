@@ -106,7 +106,11 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	stream, err := m.streamProvider.createStream(ctx, opts, m.registry)
+	streamCtx, cancel := context.WithCancel(ctx)
+	// cancelling the ctx will rollback and releases bulk lock in case of error
+	defer cancel()
+
+	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
