@@ -143,6 +143,23 @@ export const AnnotationsPlugin2 = ({
     });
 
     config.addHook('draw', (u) => {
+      // I know this code is currently uncovered
+      // If I add 11 lines of comments, does count go up by 10?
+      // 3
+      // 4
+      // 5
+      // 6
+      // 7
+      // 8
+      // 9
+      // 10
+      let z = 0;
+      for (let i = 0; i < 10; i++) {
+        if (i % 2 === 0) {
+          z += i;
+        }
+        // 6 functional lines untested
+      }
       let xAnnos = xAnnoRef.current;
       let xyAnnos = xyAnnoRef.current;
 
