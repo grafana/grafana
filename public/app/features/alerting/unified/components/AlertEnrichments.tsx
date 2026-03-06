@@ -69,15 +69,17 @@ function EnrichmentItemView({ item }: { item: EnrichmentItem }) {
   const exploreHref = sanitizedLink
     ? isRelativeUrl(sanitizedLink)
       ? createRelativeUrl(sanitizedLink)
-      : sanitizedLink
+      : /^https?:\/\//i.test(sanitizedLink)
+        ? sanitizedLink
+        : undefined
     : undefined;
 
   if (item.type === 'logs') {
     return (
       <div className={styles.enrichmentItem}>
         <Stack direction="column" gap={0.5}>
-          <Stack direction="row" gap={1} alignItems="center">
-            <Badge color="blue" text={t('alerting.notification-history.enrichment-type-logs', 'logs')} />
+          <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+            <Badge color="blue" icon="gf-logs" text={t('alerting.notification-history.enrichment-type-logs', 'logs')} />
             {exploreHref && (
               <LinkButton size="sm" variant="secondary" icon="compass" href={exploreHref} target="_blank">
                 <Trans i18nKey="alerting.notification-history.enrichment-explore">View in Explore</Trans>
