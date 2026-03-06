@@ -375,6 +375,15 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		}
 	}
 
+	// Authorization check: verify user has update permission on the source folder
+	// and create permission on the target parent folder.
+	// For folder operations (by path), we only check the top-level folder being moved,
+	// not recursively checking every nested resource. This follows the permission model where
+	// folder-level operations check the folder, and individual resource operations check the resource.
+	if err := r.authorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
+		return nil, err
+	}
+
 	// For branch operations, we just perform the repository move without updating Grafana DB
 	// Always use the provisioning identity when writing
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
@@ -536,12 +545,24 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		name = parsed.Obj.GetName()
 	}
 
+	// CRITICAL SECURITY FIX: For existing resources, we must check permissions in the folder
+	// where the resource actually exists, not the folder specified in the file.
+	// This prevents a security vulnerability where a malicious file could specify
+	// a different folder to bypass permission checks.
+	folder := parsed.Meta.GetFolder()
+	if parsed.Existing != nil {
+		// Use the folder from the existing resource
+		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
+			folder = meta.GetFolder()
+		}
+	}
+
 	return r.access.Check(ctx, authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
 		Name:     name,
 		Verb:     verb,
-	}, parsed.Meta.GetFolder())
+	}, folder)
 }
 
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
@@ -565,6 +586,58 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string)
 	}, parentFolder)
 }
 
+// authorizeDeleteFolder checks if the user has permission to delete the folder.
+// For folder operations (by path), we only check the top-level folder being deleted,
+// not recursively checking every nested resource. This follows the permission model where
+// folder-level operations check the folder itself, and individual resource operations check each resource.
+func (r *DualReadWriter) authorizeDeleteFolder(ctx context.Context, path string) error {
+	// Determine the folder ID being deleted
+	folderID := ParseFolder(path, r.repo.Config().Name).ID
+
+	// Check delete permission on the folder itself
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     folderID,
+		Verb:     utils.VerbDelete,
+	}, folderID)
+}
+
+// authorizeMoveFolder checks if the user has permission to move the folder.
+// For folder operations (by path), we only check the top-level folder being moved,
+// not recursively checking every nested resource. This follows the permission model where
+// folder-level operations check the folder itself, and individual resource operations check each resource.
+func (r *DualReadWriter) authorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
+	// Check update permission on the source folder
+	sourceFolderID := ParseFolder(originalPath, r.repo.Config().Name).ID
+	if err := r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     sourceFolderID,
+		Verb:     utils.VerbUpdate,
+	}, sourceFolderID); err != nil {
+		return err
+	}
+
+	// Check create permission on the target parent folder
+	parentFolder := ""
+	if targetPath != "" {
+		parentPath := safepath.Dir(targetPath)
+		if parentPath != "" {
+			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
+		} else {
+			parentFolder = RootFolder(r.repo.Config())
+		}
+	}
+
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     "", // Empty name for create operations in parent
+		Verb:     utils.VerbCreate,
+	}, parentFolder)
+}
+
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// Reject directory delete operations for configured branch - use bulk operations instead
 	if r.isConfiguredBranch(opts) {
@@ -576,6 +649,14 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 				Message: "directory delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
 			},
 		}
+	}
+
+	// Authorization check: verify user has delete permission on the folder itself.
+	// For folder operations (by path), we only check the top-level folder being operated on,
+	// not recursively checking every nested resource. This follows the permission model where
+	// folder-level operations check the folder, and individual resource operations check the resource.
+	if err := r.authorizeDeleteFolder(ctx, opts.Path); err != nil {
+		return nil, err
 	}
 
 	// Always use the provisioning identity when writing
