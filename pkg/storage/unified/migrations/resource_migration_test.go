@@ -595,10 +595,7 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 }
 
 // retryAwareMigrator delegates Migrate to a real UnifiedMigrator and stubs
-// RebuildIndexes. On retry attempts, it waits briefly for the server goroutine
-// to process the context cancellation from the first attempt and release the
-// bulk lock. This mirrors production behavior where logging and context setup
-// between attempts provides a natural delay.
+// RebuildIndexes. It waits briefly for the server to release the bulk lock.
 type retryAwareMigrator struct {
 	real      UnifiedMigrator
 	callCount int32
@@ -608,7 +605,7 @@ func (m *retryAwareMigrator) Migrate(ctx context.Context, opts MigrateOptions) (
 	if atomic.AddInt32(&m.callCount, 1) > 1 {
 		// The context cancellation propagates asynchronously to the server goroutine.
 		// Wait briefly for it to release the bulk lock from the previous attempt.
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 	return m.real.Migrate(ctx, opts)
 }
