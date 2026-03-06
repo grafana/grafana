@@ -18,6 +18,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       path: 'legend.showLegend',
       name: t('grafana-ui.builder.legend.name-visibility', 'Visibility'),
       category,
+      quickEdit: true,
       description: '',
       defaultValue: showLegend,
     })
@@ -75,6 +76,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       path: 'legend.calcs',
       name: t('grafana-ui.builder.legend.name-values', 'Values'),
       category,
+      quickEdit: true,
       description: t('grafana-ui.builder.legend.description-values', 'Select values or calculations to show in legend'),
       editor: standardEditorsRegistry.get('stats-picker').editor,
       defaultValue: [],

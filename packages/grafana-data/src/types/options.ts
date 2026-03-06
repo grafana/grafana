@@ -57,7 +57,17 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
    * When true, this option will appear in the dashboard edit pane for quick editing
    * without entering the full panel editor.
    *
-   * Only the first 5 options with `quickEdit: true` will be shown.
+   * **Behavior:**
+   * - Only the first 5 options with `quickEdit: true` will be shown
+   * - Options appear in the order they are added to the builder
+   * - A console warning is logged if more than 5 options have `quickEdit: true`
+   *
+   * **Shared option builders:**
+   * When using shared builders like `commonOptionsBuilder.addLegendOptions()`, any
+   * `quickEdit` flags set in those builders will apply to ALL panels using them.
+   * The order depends on when the shared builder is called relative to panel-specific
+   * options. If a shared builder adds 2 quickEdit options and a panel adds 4 more,
+   * only the first 5 (based on builder order) will be shown.
    *
    * @alpha
    */

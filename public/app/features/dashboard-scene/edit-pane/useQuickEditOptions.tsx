@@ -22,7 +22,12 @@ interface UseQuickEditOptionsProps {
  * Quick edit options appear in the dashboard edit pane, allowing users to modify
  * common panel settings without entering the full panel editor.
  *
- * Only the first 5 options with `quickEdit: true` will be shown.
+ * **Behavior:**
+ * - Only the first 5 options with `quickEdit: true` will be shown
+ * - Options appear in the order they are added to the builder via `setPanelOptions()`
+ * - Shared builders (e.g., `commonOptionsBuilder.addLegendOptions()`) contribute to the
+ *   same pool of quickEdit options, in the order they are called
+ * - A console warning is logged if more than 5 options have `quickEdit: true`
  *
  * @returns OptionsPaneCategoryDescriptor with the quick edit options, or null if none are defined
  */

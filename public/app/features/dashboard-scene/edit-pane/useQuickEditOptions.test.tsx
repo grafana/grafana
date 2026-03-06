@@ -159,4 +159,133 @@ describe('useQuickEditOptions', () => {
     expect(result.current?.items[1].props.title).toBe('Option 3');
     expect(result.current?.items[2].props.title).toBe('Option 5');
   });
+
+  describe('Panel-specific quick edit configurations', () => {
+    it('should show quick edit options for stat panel (textMode, colorMode, graphMode)', () => {
+      const panel = createMockPanel();
+      const plugin = getPanelPlugin({ id: 'stat' }).setPanelOptions((builder) => {
+        builder
+          .addSelect({
+            path: 'textMode',
+            name: 'Text mode',
+            quickEdit: true,
+            settings: { options: [{ value: 'auto', label: 'Auto' }] },
+          })
+          .addSelect({
+            path: 'colorMode',
+            name: 'Color mode',
+            quickEdit: true,
+            settings: { options: [{ value: 'value', label: 'Value' }] },
+          })
+          .addRadio({
+            path: 'graphMode',
+            name: 'Graph mode',
+            quickEdit: true,
+            settings: { options: [{ value: 'none', label: 'None' }] },
+          })
+          .addRadio({
+            path: 'justifyMode',
+            name: 'Text alignment',
+            settings: { options: [{ value: 'auto', label: 'Auto' }] },
+          });
+      });
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+      expect(result.current).not.toBeNull();
+      expect(result.current?.items).toHaveLength(3);
+      expect(result.current?.items.map((i) => i.props.title)).toEqual(['Text mode', 'Color mode', 'Graph mode']);
+    });
+
+    it('should show quick edit options for text panel (mode, content)', () => {
+      const panel = createMockPanel();
+      const plugin = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) => {
+        builder
+          .addRadio({
+            path: 'mode',
+            name: 'Mode',
+            quickEdit: true,
+            settings: { options: [{ value: 'markdown', label: 'Markdown' }] },
+          })
+          .addSelect({
+            path: 'code.language',
+            name: 'Language',
+            settings: { options: [{ value: 'plaintext', label: 'Plain text' }] },
+          })
+          .addCustomEditor({
+            id: 'content',
+            path: 'content',
+            name: 'Content',
+            quickEdit: true,
+            editor: () => null,
+          });
+      });
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+      expect(result.current).not.toBeNull();
+      expect(result.current?.items).toHaveLength(2);
+      expect(result.current?.items.map((i) => i.props.title)).toEqual(['Mode', 'Content']);
+    });
+
+    it('should show quick edit options for table panel (cellHeight, enablePagination)', () => {
+      const panel = createMockPanel();
+      const plugin = getPanelPlugin({ id: 'table' }).setPanelOptions((builder) => {
+        builder
+          .addBooleanSwitch({
+            path: 'showHeader',
+            name: 'Show table header',
+          })
+          .addRadio({
+            path: 'cellHeight',
+            name: 'Cell height',
+            quickEdit: true,
+            settings: { options: [{ value: 'sm', label: 'Small' }] },
+          })
+          .addCustomEditor({
+            id: 'enablePagination',
+            path: 'enablePagination',
+            name: 'Enable pagination',
+            quickEdit: true,
+            editor: () => null,
+          });
+      });
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+      expect(result.current).not.toBeNull();
+      expect(result.current?.items).toHaveLength(2);
+      expect(result.current?.items.map((i) => i.props.title)).toEqual(['Cell height', 'Enable pagination']);
+    });
+
+    it('should show quick edit options for timeseries panel (legend visibility, legend values)', () => {
+      const panel = createMockPanel();
+      const plugin = getPanelPlugin({ id: 'timeseries' }).setPanelOptions((builder) => {
+        builder
+          .addBooleanSwitch({
+            path: 'legend.showLegend',
+            name: 'Visibility',
+            quickEdit: true,
+          })
+          .addRadio({
+            path: 'legend.displayMode',
+            name: 'Mode',
+            settings: { options: [{ value: 'list', label: 'List' }] },
+          })
+          .addCustomEditor({
+            id: 'legend.calcs',
+            path: 'legend.calcs',
+            name: 'Values',
+            quickEdit: true,
+            editor: () => null,
+          });
+      });
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+      expect(result.current).not.toBeNull();
+      expect(result.current?.items).toHaveLength(2);
+      expect(result.current?.items.map((i) => i.props.title)).toEqual(['Visibility', 'Values']);
+    });
+  });
 });
