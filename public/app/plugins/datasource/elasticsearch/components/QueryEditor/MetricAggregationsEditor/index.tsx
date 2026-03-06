@@ -22,28 +22,28 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
     <>
       {metrics?.map((metric, index) => {
         if (metric.type !== 'logs' && metric.type !== 'raw_data' && metric.type !== 'raw_document') {
-           return (
-              <QueryEditorRow
-                key={`${metric.type}-${metric.id}`}
-                label={`Metric (${metric.id})`}
-                hidden={metric.hide}
-                onHideClick={() => dispatch(toggleMetricVisibility(metric.id))}
-                onRemoveClick={totalMetrics > 1 && (() => dispatch(removeMetric(metric.id)))}
-              >
-                <MetricEditor value={metric} />
+          return (
+            <QueryEditorRow
+              key={`${metric.type}-${metric.id}`}
+              label={`Metric (${metric.id})`}
+              hidden={metric.hide}
+              onHideClick={() => dispatch(toggleMetricVisibility(metric.id))}
+              onRemoveClick={totalMetrics > 1 && (() => dispatch(removeMetric(metric.id)))}
+            >
+              <MetricEditor value={metric} />
 
-                {metricAggregationConfig[metric.type].impliedQueryType === 'metrics' && index === 0 && (
-                  <Button
-                    variant="secondary"
-                    fill="text"
-                    icon="plus"
-                    onClick={() => dispatch(addMetric(nextId))}
-                    tooltip="Add metric"
-                    aria-label="Add metric"
-                  />
-                )}
-              </QueryEditorRow>
-            );
+              {metricAggregationConfig[metric.type].impliedQueryType === 'metrics' && index === 0 && (
+                <Button
+                  variant="secondary"
+                  fill="text"
+                  icon="plus"
+                  onClick={() => dispatch(addMetric(nextId))}
+                  tooltip="Add metric"
+                  aria-label="Add metric"
+                />
+              )}
+            </QueryEditorRow>
+          );
         }
         return null;
       })}

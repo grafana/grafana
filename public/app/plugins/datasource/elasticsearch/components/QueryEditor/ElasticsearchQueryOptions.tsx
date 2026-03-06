@@ -23,15 +23,12 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
     !isCodeEditor && firstMetric != null && isMetricAggregationWithSettings(firstMetric) ? firstMetric : null;
 
   const isLogs = firstMetricWithSettings?.type === 'logs';
-  const isRawData =
-    firstMetricWithSettings?.type === 'raw_data' || firstMetricWithSettings?.type === 'raw_document';
+  const isRawData = firstMetricWithSettings?.type === 'raw_data' || firstMetricWithSettings?.type === 'raw_document';
   const showSizeField = firstMetricWithSettings !== null && (isLogs || isRawData);
   const label = isLogs ? 'Limit' : 'Size';
   const settingName = isLogs ? 'limit' : 'size';
   const currentValue = showSizeField
-    ? String(
-        (isLogs ? firstMetricWithSettings!.settings?.limit : firstMetricWithSettings!.settings?.size) ?? ''
-      )
+    ? String((isLogs ? firstMetricWithSettings!.settings?.limit : firstMetricWithSettings!.settings?.size) ?? '')
     : '';
 
   const collapsedInfo = useMemo(() => {
@@ -48,25 +45,25 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
 
   if (showSizeField) {
     sizeField = (
-        <InlineField label={label} labelWidth={16} tooltip="Maximum number of documents to return">
-          <Input
-            type="number"
-            width={10}
-            placeholder="500"
-            value={localValue}
-            onChange={(e) => setLocalValue(e.currentTarget.value)}
-            onBlur={(e) =>
-              dispatch(
-                changeMetricSetting({
-                  metric: firstMetricWithSettings,
-                  settingName,
-                  newValue: e.currentTarget.value,
-                })
-              )
-            }
-          />
-        </InlineField>
-      );
+      <InlineField label={label} labelWidth={16} tooltip="Maximum number of documents to return">
+        <Input
+          type="number"
+          width={10}
+          placeholder="500"
+          value={localValue}
+          onChange={(e) => setLocalValue(e.currentTarget.value)}
+          onBlur={(e) =>
+            dispatch(
+              changeMetricSetting({
+                metric: firstMetricWithSettings,
+                settingName,
+                newValue: e.currentTarget.value,
+              })
+            )
+          }
+        />
+      </InlineField>
+    );
   }
 
   if (sizeField === null && onFormat == null) {
