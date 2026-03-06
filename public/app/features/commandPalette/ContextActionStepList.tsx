@@ -397,28 +397,35 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
   }, [breadcrumbs]);
 
   const inProgressDepth = inProgressBreadcrumbs.length;
-  const isOperatorStep = inProgressDepth === 1;
-  const isValueStep = inProgressDepth >= 2;
+
+  const isOperatorStep = useMemo(() => {
+    if (inProgressDepth !== 1 || isMultiSelect) {
+      return false;
+    }
+    return options.length > 0 && options.every((o) => OPERATOR_ONLY_PATTERN.test(o.id));
+  }, [inProgressDepth, isMultiSelect, options]);
+
+  const isValueStep = inProgressDepth >= 2 || (inProgressDepth === 1 && !isOperatorStep);
 
   const sectionLabel = useMemo(() => {
     if (isOperatorStep) {
       return t('command-palette.context-action.operator', 'Operator');
     }
-    if (isValueStep) {
+    if (inProgressDepth >= 2) {
       return inProgressBreadcrumbs[0].label;
     }
     return currentStep.pillLabel;
-  }, [isOperatorStep, isValueStep, inProgressBreadcrumbs, currentStep.pillLabel]);
+  }, [isOperatorStep, inProgressDepth, inProgressBreadcrumbs, currentStep.pillLabel]);
 
   const searchPlaceholder = useMemo(() => {
     if (isOperatorStep) {
       return t('command-palette.context-action.search-by-operator', 'Search by operator...');
     }
-    if (isValueStep) {
+    if (inProgressDepth >= 2) {
       return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: inProgressBreadcrumbs[0].label.toLowerCase() });
     }
     return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: currentStep.pillLabel.toLowerCase() });
-  }, [isOperatorStep, isValueStep, inProgressBreadcrumbs, currentStep.pillLabel]);
+  }, [isOperatorStep, inProgressDepth, inProgressBreadcrumbs, currentStep.pillLabel]);
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
