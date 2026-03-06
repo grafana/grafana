@@ -1314,14 +1314,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:         "passwordlessMagicLinkAuthentication",
-			Description:  "Enable passwordless login via magic link authentication",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "prometheusSpecialCharsInLabelValues",
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,
