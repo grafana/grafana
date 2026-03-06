@@ -17,6 +17,7 @@ export interface Props {
 export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
+  const [hideLogo, setHideLogo] = useState(false);
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
@@ -33,6 +34,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     }
     if (autoFit) {
       params.autofitpanels = true;
+    }
+    if (hideLogo) {
+      params.hideLogo = '1';
     }
 
     if (!displayTimePicker) {
@@ -61,7 +65,16 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     >
       <FieldSet>
         <Field label={t('playlist.start-modal.label-mode', 'Mode')}>
-          <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
+          <RadioButtonGroup
+            value={mode}
+            options={modes}
+            onChange={(v) => {
+              setMode(v);
+              if (!v) {
+                setHideLogo(false);
+              }
+            }}
+          />
         </Field>
         <Field>
           <Checkbox
@@ -75,6 +88,20 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
             onChange={(e) => setAutofit(e.currentTarget.checked)}
           />
         </Field>
+        {mode && (
+          <Field>
+            <Checkbox
+              label={t('playlist.start-modal.label-hide-logo', 'Hide logo')}
+              description={t(
+                'playlist.start-modal.description-hide-logo',
+                'Hide the branding footer from the dashboard'
+              )}
+              name="hideLogo"
+              value={hideLogo}
+              onChange={(e) => setHideLogo(e.currentTarget.checked)}
+            />
+          </Field>
+        )}
         {config.featureToggles.dashboardScene && (
           <Field
             label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
