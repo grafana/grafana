@@ -24,8 +24,8 @@ import {
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
+import { useSelectableThemes } from '../../../features/themes/utils';
 import { DashboardPicker } from '../Select/DashboardPicker';
-import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
 
@@ -43,7 +43,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     homeDashboardUID: '',
   });
 
-  const themes = getSelectableThemes();
+  const themes = useSelectableThemes(props.preferenceType);
   const styles = useStyles2(getStyles);
 
   const service = useMemo(() => new PreferencesService(props.resourceUri), [props.resourceUri]);

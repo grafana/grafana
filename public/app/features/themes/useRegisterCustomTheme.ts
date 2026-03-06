@@ -1,31 +1,54 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 
-import { Theme, useListThemeQuery, useListUserThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
-import { createTheme, registerCustomTheme } from '@grafana/data';
+import {
+  Theme,
+  useGetThemeQuery,
+  useGetUserThemeQuery,
+  useListThemeQuery,
+  useListUserThemeQuery,
+} from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { createTheme, registerCustomTheme, isRegisteredTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { changeTheme } from '../../services/theme';
+import { changeTheme } from '../../core/services/theme';
 
 /**
  * Render-nothing component that fetches all custom themes from the API at app
  * start and registers them into the theme registry so they are available in
  * the theme picker on any page.
  */
-export function CustomThemeRegistrar() {
-  const { data } = useListThemeQuery({});
-  const { data: userThemeData } = useListUserThemeQuery({});
+export function useRegisterCustomTheme() {
+  const configTheme = config.bootData.user.theme;
+
+  const exists = isRegisteredTheme(configTheme);
+
+  const { data } = useGetThemeQuery(
+    exists
+      ? skipToken
+      : {
+          name: configTheme,
+        }
+  );
+  const { data: userThemeData } = useGetUserThemeQuery(
+    exists
+      ? skipToken
+      : {
+          name: configTheme,
+        }
+  );
 
   useEffect(() => {
-    for (const theme of data?.items ?? []) {
-      registerTheme(theme);
+    if (data) {
+      registerTheme(data);
     }
-  }, [data?.items]);
+  }, [data]);
 
   useEffect(() => {
-    for (const theme of userThemeData?.items ?? []) {
-      registerTheme(theme, true);
+    if (userThemeData) {
+      registerTheme(userThemeData, true);
     }
-  }, [userThemeData?.items]);
+  }, [userThemeData]);
 
   return null;
 }

@@ -22,7 +22,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
-import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
+import { getSelectableThemes } from '../../../features/themes/utils';
 
 import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
 

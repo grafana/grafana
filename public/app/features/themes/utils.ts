@@ -1,3 +1,7 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+
+import { useListThemeQuery, useListUserThemeQuery } from '@grafana/api-clients/rtkq/theme/v0alpha1';
+import { createTheme, getBuiltInThemes, registerCustomTheme } from '@grafana/data';
 import { t } from '@grafana/i18n';
 // import { getBackendSrv } from "@grafana/runtime";
 
@@ -22,3 +26,34 @@ export const fetchGcomTheme = async (themeId: string) => {
     // TODO do something with error
   }
 };
+
+export function getSelectableThemes() {
+  return getBuiltInThemes();
+}
+
+export function useSelectableThemes(type: 'org' | 'team' | 'user' = 'user') {
+  const { data } = useListThemeQuery({});
+  const { data: userThemeData } = useListUserThemeQuery(type !== 'user' ? skipToken : {});
+
+  for (const theme of data?.items ?? []) {
+    registerCustomTheme({
+      id: theme.metadata.name!,
+      name: theme.spec.name,
+      isExtra: true,
+      isUser: false,
+      build: () => createTheme(theme.spec),
+    });
+  }
+
+  for (const theme of userThemeData?.items ?? []) {
+    registerCustomTheme({
+      id: theme.metadata.name!,
+      name: theme.spec.name,
+      isExtra: true,
+      isUser: true,
+      build: () => createTheme(theme.spec),
+    });
+  }
+
+  return getBuiltInThemes();
+}

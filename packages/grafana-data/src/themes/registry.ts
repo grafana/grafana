@@ -47,6 +47,16 @@ export function getThemeById(id: string): GrafanaTheme2 {
 
 /**
  * @internal
+ * Is a valid theme in the registry
+ * @param id
+ * @returns boolean
+ */
+export function isRegisteredTheme(id: string): boolean {
+  return !!themeRegistry.getIfExists(id);
+}
+
+/**
+ * @internal
  * For internal use only
  */
 export function getBuiltInThemes() {
