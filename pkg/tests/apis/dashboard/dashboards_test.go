@@ -275,7 +275,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				"apiVersion": "playlist.grafana.app/v2",
 				"spec":       map[string]any{},
 			},
-			expect: "must not include an id on the root element",
+			expect: "dashboard payload references a non dashboard apiVersion",
 		}, {
 			name: "missing title",
 			input: map[string]any{

@@ -425,17 +425,16 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		apiVersion := obj.GetAPIVersion()
 		switch {
 		case strings.HasPrefix(apiVersion, dashboardsV1.GROUP):
+			if _, ok, err := unstructured.NestedInt64(spec, "id"); ok || err != nil {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must not include an id on the root element", nil)
+			}
 			if _, ok := spec["spec"]; !ok {
 				return response.Error(http.StatusBadRequest, "The k8s style dashboard must include the dashboard contents in the spec property", nil)
 			}
-			v, ok, _ := unstructured.NestedString(spec, "uid")
+			uid, ok, _ := unstructured.NestedString(spec, "uid")
 			if ok {
 				delete(obj.Object, "uid")
-				obj.SetName(v) // overwrite the incoming name -- this can happen from TF providers
-			}
-			_, ok, _ = unstructured.NestedString(spec, "id")
-			if ok {
-				return response.Error(http.StatusBadRequest, "The k8s style dashboard must not include an id on the root element", nil)
+				obj.SetName(uid) // overwrite the incoming name -- this might happen from TF providers
 			}
 			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
 			return hs.saveDashboardViaK8s(c, cmd, obj)
