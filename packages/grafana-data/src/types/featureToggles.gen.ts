@@ -1583,6 +1583,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryTriage?: boolean;
   /**
+  * Enables the timeline tab in the rule viewer
+  * @default false
+  */
+  alertingRuleViewerTimeline?: boolean;
+  /**
   * Whether to use the new React 19 runtime
   * @default false
   */

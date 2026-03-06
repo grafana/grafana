@@ -85,11 +85,6 @@ export function buildTimelineGroups(records: LogRecord[], notifications: Notific
   return stateGroups;
 }
 
-interface InstanceTimelineProps {
-  records: LogRecord[];
-  notifications: NotificationEntry[];
-}
-
 interface TimelineEntry {
   timestamp: number;
   type: 'state-change' | 'notifications';
@@ -138,11 +133,20 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
   return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
 }
 
-type TimelineFilter = 'all' | 'states' | 'notifications';
+export type TimelineFilter = 'all' | 'states' | 'notifications';
 
-export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
+interface InstanceTimelineProps {
+  records: LogRecord[];
+  notifications: NotificationEntry[];
+  filter?: TimelineFilter;
+  onFilterChange?: (filter: TimelineFilter) => void;
+}
+
+export function InstanceTimeline({ records, notifications, filter: filterProp, onFilterChange }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
-  const [filter, setFilter] = useState<TimelineFilter>('all');
+  const [internalFilter, setInternalFilter] = useState<TimelineFilter>('all');
+  const filter = filterProp ?? internalFilter;
+  const setFilter = onFilterChange ?? setInternalFilter;
   const filterOptions = [
     { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
     { label: t('alerting.instance-details.timeline-filter-states', 'State changes'), value: 'states' as const },
@@ -175,7 +179,7 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
 
   return (
     <Stack direction="column" gap={1}>
-      <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
+      {!filterProp && <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />}
 
       {entries.length === 0 ? (
         <Text color="secondary">
