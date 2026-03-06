@@ -75,7 +75,7 @@ describe('Unified Storage Searcher', () => {
     expect(locationInfo?.folder2.name).toBe('Folder 2');
   });
 
-  it('should perform paging', async () => {
+  it('should perform paging even with inconsistent fields', async () => {
     const query: SearchQuery = {
       query: '*',
       limit: 1,
