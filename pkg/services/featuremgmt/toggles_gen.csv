@@ -239,6 +239,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-06,alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
+2026-03-05,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false

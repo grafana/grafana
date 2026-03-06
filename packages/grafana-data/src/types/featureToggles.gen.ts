@@ -1223,6 +1223,11 @@ export interface FeatureToggles {
   */
   alertEnrichmentConditional?: boolean;
   /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */
