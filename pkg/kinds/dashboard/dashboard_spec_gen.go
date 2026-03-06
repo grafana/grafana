@@ -363,6 +363,8 @@ func NewDataTransformerConfig() *DataTransformerConfig {
 type MatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *MatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options any `json:"options,omitempty"`
 }
@@ -373,6 +375,14 @@ func NewMatcherConfig() *MatcherConfig {
 		Id: "",
 	}
 }
+
+type MatcherScope string
+
+const (
+	MatcherScopeSeries     MatcherScope = "series"
+	MatcherScopeNested     MatcherScope = "nested"
+	MatcherScopeAnnotation MatcherScope = "annotation"
+)
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
