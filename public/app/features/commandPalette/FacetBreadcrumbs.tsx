@@ -13,6 +13,10 @@ interface FacetBreadcrumbsProps {
   activeFacets: Record<string, string>;
   activeFacetLabels: Record<string, string>;
   selectingFacetId: string | null;
+  selectedEntity?: {
+    name: string;
+    icon?: React.ReactNode;
+  };
 }
 
 export function FacetBreadcrumbs({
@@ -22,6 +26,7 @@ export function FacetBreadcrumbs({
   activeFacets,
   activeFacetLabels,
   selectingFacetId,
+  selectedEntity,
 }: FacetBreadcrumbsProps) {
   const styles = useStyles2(getStyles);
 
@@ -29,8 +34,12 @@ export function FacetBreadcrumbs({
 
   return (
     <span className={styles.container}>
-      <span className={styles.category}>
-        {categoryIcon && <Icon name={categoryIcon} size="sm" className={styles.categoryIcon} />}
+      <span className={styles.badge}>
+        {categoryIcon && (
+          <span className={styles.badgeIcon}>
+            <Icon name={categoryIcon} />
+          </span>
+        )}
         {category}
       </span>
       {facets.map((facet) => {
@@ -41,20 +50,29 @@ export function FacetBreadcrumbs({
         const label = activeFacetLabels[facet.id] ?? value;
         return (
           <React.Fragment key={facet.id}>
-            <span className={styles.separator}>&nbsp;/&nbsp;</span>
-            <span className={styles.facetBadge}>
-              {facet.label}: {label}
+            <span className={styles.separator}>/</span>
+            <span className={styles.badge}>
+              {facet.label}<span className={styles.badgeValue}>: {label}</span>
             </span>
           </React.Fragment>
         );
       })}
       {selectingFacet && (
         <>
-          <span className={styles.separator}>&nbsp;/&nbsp;</span>
-          <span className={styles.facetLabel}>{selectingFacet.label}</span>
+          <span className={styles.separator}>/</span>
+          <span className={styles.badge}>{selectingFacet.label}</span>
         </>
       )}
-      <span className={styles.separator}>&nbsp;/&nbsp;</span>
+      {selectedEntity && (
+        <>
+          <span className={styles.separator}>/</span>
+          <span className={styles.entityBadge}>
+            {selectedEntity.icon && <span className={styles.badgeIcon}>{selectedEntity.icon}</span>}
+            {selectedEntity.name}
+          </span>
+        </>
+      )}
+      {!selectingFacet && !selectedEntity && <span className={styles.separator}>/</span>}
     </span>
   );
 }
@@ -66,39 +84,55 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       whiteSpace: 'nowrap',
       flexShrink: 0,
+      gap: theme.spacing(1),
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
     }),
-    category: css({
+    badge: css({
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-      background: 'rgba(255, 255, 255, 0.10)',
+      fontSize: '18px',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: '#ccccdc',
+      background: theme.colors.action.selected,
       borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(0, 0.75),
-      lineHeight: 1.6,
+      padding: '0 6px',
+      height: '32px',
+      lineHeight: '32px',
+      letterSpacing: '-0.045px',
     }),
-    categoryIcon: css({
-      opacity: 0.7,
+    badgeValue: css({
+      color: theme.colors.text.secondary,
+    }),
+    entityBadge: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      fontSize: '18px',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: theme.colors.text.secondary,
+      background: theme.colors.action.selected,
+      borderRadius: theme.shape.radius.default,
+      padding: '0 6px',
+      height: '32px',
+      lineHeight: '32px',
+      letterSpacing: '-0.045px',
+    }),
+    badgeIcon: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      '& > svg': {
+        width: '20px',
+        height: '20px',
+      },
     }),
     separator: css({
-      color: theme.colors.text.disabled,
-      fontSize: theme.typography.body.fontSize,
-    }),
-    facetBadge: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-      background: 'rgba(255, 255, 255, 0.10)',
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(0, 0.75),
-      lineHeight: 1.6,
-    }),
-    facetLabel: css({
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.secondary,
+      color: 'rgba(204, 204, 220, 0.4)',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
     }),
   };
 }

@@ -4131,12 +4131,12 @@
       "placeholder": "검색 또는 다음으로 건너뛰기..."
     },
     "section": {
-      "actions": "작업",
       "dashboard-search-results": "대시보드",
+      "dashboards": "",
       "folder-search-results": "폴더",
-      "pages": "페이지",
-      "preferences": "기본 설정",
-      "recent-dashboards": "최근 대시보드",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "최근 범위"
     }
   },

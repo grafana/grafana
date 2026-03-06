@@ -4131,12 +4131,12 @@
       "placeholder": "搜尋或跳至…"
     },
     "section": {
-      "actions": "動作",
       "dashboard-search-results": "儀表板",
+      "dashboards": "",
       "folder-search-results": "資料夾",
-      "pages": "頁面",
-      "preferences": "偏好設定",
-      "recent-dashboards": "最近的儀表板",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "最近的範圍"
     }
   },

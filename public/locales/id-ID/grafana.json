@@ -4131,12 +4131,12 @@
       "placeholder": "Cari atau lompat ke..."
     },
     "section": {
-      "actions": "Tindakan",
       "dashboard-search-results": "Dasbor",
+      "dashboards": "",
       "folder-search-results": "Folder",
-      "pages": "Halaman",
-      "preferences": "Preferensi",
-      "recent-dashboards": "Dasbor terbaru",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Cakupan terbaru"
     }
   },

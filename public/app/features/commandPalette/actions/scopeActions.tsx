@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 
-import { useRecentScopesActions } from './recentScopesActions';
+import { useClearScopesAction, useRecentScopesActions } from './recentScopesActions';
 import {
   getScopesParentAction,
   mapScopeNodeToAction,
@@ -18,6 +18,9 @@ import {
 export function useRegisterRecentScopesActions() {
   const recentScopesActions = useRecentScopesActions();
   useRegisterActions(recentScopesActions, [recentScopesActions]);
+
+  const clearScopesAction = useClearScopesAction();
+  useRegisterActions(clearScopesAction, [clearScopesAction]);
 }
 
 /**

@@ -9,19 +9,15 @@ interface ActionWithSecondaryActions extends ActionImpl {
   secondaryActions?: React.ReactNode;
 }
 
-export const ResultItem = React.forwardRef(
-  (
-    {
-      action,
-      active,
-      currentRootActionId,
-    }: {
-      action: ActionImpl;
-      active: boolean;
-      currentRootActionId: ActionId;
-    },
-    ref: React.Ref<HTMLDivElement>
-  ) => {
+interface ResultItemProps {
+  action: ActionImpl;
+  active: boolean;
+  currentRootActionId: ActionId;
+  stacked?: boolean;
+}
+
+export const ResultItem = React.forwardRef<HTMLDivElement, ResultItemProps>(
+  ({ action, active, currentRootActionId, stacked = false }, ref) => {
     const ancestors = React.useMemo(() => {
       if (!currentRootActionId) {
         return action.ancestors;
@@ -38,16 +34,11 @@ export const ResultItem = React.forwardRef(
     const { query } = useKBar();
     const styles = useStyles2(getResultItemStyles);
 
-    let name = action.name;
+    const name = action.name;
 
     const hasCommandOrLink = (action: ActionImpl) =>
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
-
-    // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
-      name += '...';
-    }
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const secondaryActions = (action as ActionWithSecondaryActions).secondaryActions;
@@ -56,20 +47,37 @@ export const ResultItem = React.forwardRef(
       <div ref={ref} className={cx(styles.row, active && styles.activeRow)}>
         <div className={styles.actionContainer}>
           {action.icon}
-          <div className={styles.textContainer}>
-            {ancestors.map((ancestor) => (
-              <React.Fragment key={ancestor.id}>
-                {!hasCommandOrLink(ancestor) && (
-                  <>
-                    <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                    <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
-                  </>
+          <div className={stacked ? styles.stackedTextWrapper : styles.textContainer}>
+            <div className={styles.textContainer}>
+              {ancestors.map((ancestor) => (
+                <React.Fragment key={ancestor.id}>
+                  {!hasCommandOrLink(ancestor) && (
+                    <>
+                      <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
+                      <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
+                    </>
+                  )}
+                </React.Fragment>
+              ))}
+              <span>{name}</span>
+            </div>
+            {stacked && action.subtitle && (
+              <span className={styles.subtitleText}>
+                {isLocationSubtitle(action.id) && (
+                  <Icon name="folder" size="sm" className={styles.subtitleIcon} />
                 )}
-              </React.Fragment>
-            ))}
-            <span>{name}</span>
+                {action.subtitle}
+              </span>
+            )}
           </div>
-          {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {!stacked && action.subtitle && (
+            <span className={styles.subtitleText}>
+              {isLocationSubtitle(action.id) && (
+                <Icon name="folder" size="sm" className={styles.subtitleIcon} />
+              )}
+              {action.subtitle}
+            </span>
+          )}
         </div>
         {secondaryActions && (
           <div
@@ -92,6 +100,10 @@ export const ResultItem = React.forwardRef(
 
 ResultItem.displayName = 'ResultItem';
 
+function isLocationSubtitle(actionId: string): boolean {
+  return actionId.startsWith('recent-dashboards') || actionId.startsWith('go/');
+}
+
 const getResultItemStyles = (theme: GrafanaTheme2) => {
   return {
     row: css({
@@ -107,7 +119,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     activeRow: css({
       color: theme.colors.text.maxContrast,
       borderRadius: theme.shape.radius.default,
-      background: 'rgba(204, 204, 220, 0.12)',
+      background: theme.colors.action.selected,
     }),
     actionContainer: css({
       display: 'flex',
@@ -115,12 +127,21 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       fontSize: theme.typography.fontSize,
       width: '100%',
+      '& > svg': {
+        color: theme.colors.text.secondary,
+      },
     }),
     textContainer: css({
       display: 'block',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    stackedTextWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     breadcrumbAncestor: css({
       color: theme.colors.text.secondary,
@@ -133,7 +154,9 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     subtitleText: css({
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
-      display: 'block',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
       flexBasis: '20%',
       flexGrow: 1,
       flexShrink: 0,
@@ -141,6 +164,10 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    subtitleIcon: css({
+      color: theme.colors.text.disabled,
+      flexShrink: 0,
     }),
     secondaryActionsContainer: css({
       display: 'none',

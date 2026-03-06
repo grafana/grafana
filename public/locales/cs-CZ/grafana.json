@@ -4191,12 +4191,12 @@
       "placeholder": "Hledat nebo přejít na…"
     },
     "section": {
-      "actions": "Akce",
       "dashboard-search-results": "Nástěnky",
+      "dashboards": "",
       "folder-search-results": "Složky",
-      "pages": "Stránky",
-      "preferences": "Preference",
-      "recent-dashboards": "Nedávné nástěnky",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Nedávné rozsahy"
     }
   },

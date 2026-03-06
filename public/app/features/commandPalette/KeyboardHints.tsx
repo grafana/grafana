@@ -5,25 +5,29 @@ import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 interface KeyboardHintsProps {
-  showBack: boolean;
+  escAction?: 'close' | 'back';
   showFacetShortcuts: boolean;
   facetShortcutRange?: string;
   showSelect: boolean;
 }
 
-export function KeyboardHints({ showBack, showFacetShortcuts, facetShortcutRange, showSelect }: KeyboardHintsProps) {
+export function KeyboardHints({ escAction, showFacetShortcuts, facetShortcutRange, showSelect }: KeyboardHintsProps) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
       <div className={styles.hints}>
-        {showBack && (
+        {escAction && (
           <span className={styles.hint}>
             <kbd className={styles.kbd}>
               <Trans i18nKey="command-palette.keyboard-hints.esc">ESC</Trans>
             </kbd>
             <span>
-              <Trans i18nKey="command-palette.keyboard-hints.back">Back</Trans>
+              {escAction === 'back' ? (
+                <Trans i18nKey="command-palette.keyboard-hints.back">Back</Trans>
+              ) : (
+                <Trans i18nKey="command-palette.keyboard-hints.close">Close</Trans>
+              )}
             </span>
           </span>
         )}
@@ -57,34 +61,37 @@ export function KeyboardHints({ showBack, showFacetShortcuts, facetShortcutRange
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
-      borderTop: '1px solid rgba(83, 83, 85, 0.5)',
-      padding: theme.spacing(0.75, 2),
+      background: 'rgba(42, 48, 55, 0.3)',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(1.5, 2),
     }),
     hints: css({
       display: 'flex',
       justifyContent: 'flex-end',
-      gap: theme.spacing(1.5),
+      gap: theme.spacing(2.5),
     }),
     hint: css({
       display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
+      gap: theme.spacing(0.75),
+      fontSize: theme.typography.body.fontSize,
+      color: theme.colors.text.primary,
     }),
     kbd: css({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
       minWidth: '22px',
-      height: '20px',
-      padding: '0 4px',
-      fontSize: '11px',
+      height: '22px',
+      padding: theme.spacing(0, 0.5),
+      ...theme.typography.bodySmall,
       fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: 1,
       color: theme.colors.text.secondary,
-      background: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      textTransform: 'uppercase',
+      background: theme.colors.action.selected,
+      border: 'none',
+      borderRadius: theme.shape.radius.sm,
     }),
   };
 }

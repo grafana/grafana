@@ -4131,12 +4131,12 @@
       "placeholder": "搜索或跳转至..."
     },
     "section": {
-      "actions": "操作",
       "dashboard-search-results": "仪表板",
+      "dashboards": "",
       "folder-search-results": "文件夹",
-      "pages": "页面",
-      "preferences": "首选项",
-      "recent-dashboards": "最近的仪表板",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "最近的范围"
     }
   },

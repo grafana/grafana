@@ -3,7 +3,24 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { type CommandPaletteContextStep, type ContextStepBreadcrumb, type ContextStepOption, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Checkbox, Icon, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, IconName, LoadingBar, useStyles2 } from '@grafana/ui';
+
+const OPERATOR_ONLY_PATTERN = /^(?:!=|=~|!~|=|:)$/;
+
+function isCompletedFilter(label: string): boolean {
+  if (OPERATOR_ONLY_PATTERN.test(label)) {
+    return false;
+  }
+  return /[=:]/.test(label);
+}
+
+function splitFilterLabel(label: string): { keyPart: string; valuePart: string | null } {
+  const match = label.match(/^(.+?)(!=|=~|!~|=|:)(.*)/);
+  if (match) {
+    return { keyPart: match[1], valuePart: match[2] + match[3] };
+  }
+  return { keyPart: label, valuePart: null };
+}
 
 export interface ContextActionStepState {
   currentStep: CommandPaletteContextStep;
@@ -95,35 +112,63 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
     return groupMap;
   }, [filteredOptions]);
 
+  const PRIORITY_OPTIONS = ['Environment', 'Region', 'Namespace'];
+
   const flatItems = useMemo(() => {
-    const items: Array<{ type: 'header'; label: string } | { type: 'option'; option: ContextStepOption }> = [];
-    groups.forEach((groupOptions, groupKey) => {
-      if (groupKey) {
-        items.push({ type: 'header', label: groupKey });
-      }
+    const allOptions: ContextStepOption[] = [];
+    groups.forEach((groupOptions) => {
       for (const option of groupOptions) {
-        items.push({ type: 'option', option });
+        allOptions.push(option);
       }
     });
-    return items;
+
+    allOptions.sort((a, b) => {
+      const aIdx = PRIORITY_OPTIONS.indexOf(a.label);
+      const bIdx = PRIORITY_OPTIONS.indexOf(b.label);
+      if (aIdx >= 0 && bIdx >= 0) {
+        return aIdx - bIdx;
+      }
+      if (aIdx >= 0) {
+        return -1;
+      }
+      if (bIdx >= 0) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return allOptions.map((option) => ({ type: 'option' as const, option }));
   }, [groups]);
 
-  const selectableItems = useMemo(
-    () => flatItems.filter((item): item is { type: 'option'; option: ContextStepOption } => item.type === 'option'),
-    [flatItems]
-  );
+  const selectableItems = flatItems;
 
   const goBack = useCallback(
-    (extraBreadcrumb?: ContextStepBreadcrumb, levels = 1) => {
+    (extraBreadcrumb?: ContextStepBreadcrumb, levels = 1, removeKey?: string) => {
       const history = historyRef.current;
       let targetState: ContextActionStepState | null = null;
       for (let i = 0; i < levels && history.length > 0; i++) {
         targetState = history.pop()!;
       }
       if (targetState) {
-        const newBreadcrumbs = extraBreadcrumb
-          ? [...targetState.breadcrumbs, extraBreadcrumb]
-          : targetState.breadcrumbs;
+        let newBreadcrumbs: ContextStepBreadcrumb[];
+        if (extraBreadcrumb) {
+          const newKey = splitFilterLabel(extraBreadcrumb.value).keyPart;
+          const existingIdx = targetState.breadcrumbs.findIndex(
+            (bc) => splitFilterLabel(bc.value).keyPart === newKey
+          );
+          if (existingIdx >= 0) {
+            newBreadcrumbs = [...targetState.breadcrumbs];
+            newBreadcrumbs[existingIdx] = extraBreadcrumb;
+          } else {
+            newBreadcrumbs = [...targetState.breadcrumbs, extraBreadcrumb];
+          }
+        } else if (removeKey) {
+          newBreadcrumbs = targetState.breadcrumbs.filter(
+            (bc) => splitFilterLabel(bc.value).keyPart !== removeKey
+          );
+        } else {
+          newBreadcrumbs = targetState.breadcrumbs;
+        }
         onTransition({ ...targetState, breadcrumbs: newBreadcrumbs });
       } else {
         onTransition(null);
@@ -150,6 +195,18 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         const internalKey = lastBc?.value || currentStep.pillLabel;
         goBack({ label: `${displayLabel}:${summary}`, value: `${internalKey}:${summary}` });
       }
+    } else if (isMultiSelect && selectedIds.size === 0) {
+      const filterKey = breadcrumbs[breadcrumbs.length - 1]?.value;
+      if (!isDeferred && currentStep.onApply) {
+        currentStep.onApply([], breadcrumbs);
+      }
+      if (!isDeferred && filterKey && rootStepRef.current.onRemoveBreadcrumb) {
+        const existingBc = breadcrumbs.find((bc) => splitFilterLabel(bc.value).keyPart === filterKey);
+        if (existingBc) {
+          rootStepRef.current.onRemoveBreadcrumb(existingBc);
+        }
+      }
+      goBack(undefined, 1, filterKey);
     } else {
       goBack();
     }
@@ -172,14 +229,25 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
 
       const transition = currentStep.onSelect(option, breadcrumbs);
       switch (transition.type) {
-        case 'next':
+        case 'next': {
           historyRef.current.push(state);
+          const filterKey = transition.breadcrumb.value;
+          const existingBc = breadcrumbs.find((bc) => splitFilterLabel(bc.value).keyPart === filterKey);
+          let preSelectedOptions: ContextStepOption[] = [];
+          if (existingBc) {
+            const { valuePart } = splitFilterLabel(existingBc.value);
+            if (valuePart) {
+              const rawValue = valuePart.replace(/^(?:!=|=~|!~|=|:)/, '');
+              preSelectedOptions = rawValue.split(',').map((v) => ({ id: v, label: v }));
+            }
+          }
           onTransition({
             currentStep: transition.step,
             breadcrumbs: [...breadcrumbs, transition.breadcrumb],
-            selectedOptions: [],
+            selectedOptions: preSelectedOptions,
           });
           break;
+        }
         case 'apply':
           if (transition.close !== false) {
             onClose();
@@ -209,12 +277,13 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         finalBreadcrumbs = [...breadcrumbs.slice(0, -1), { label: `${filterKey}:${summary}`, value: `${filterKey}:${summary}` }];
       }
       rootStepRef.current.onCommit(finalBreadcrumbs);
-    } else if (isMultiSelect && selectedIds.size > 0 && currentStep.onApply) {
-      const selected = options.filter((o) => selectedIds.has(o.id));
-      currentStep.onApply(selected, breadcrumbs);
+      onClose();
+    } else if (isMultiSelect) {
+      applyAndGoBack();
+    } else {
+      onClose();
     }
-    onClose();
-  }, [isDeferred, isMultiSelect, selectedIds, options, currentStep, breadcrumbs, onClose]);
+  }, [isDeferred, isMultiSelect, selectedIds, options, currentStep, breadcrumbs, onClose, applyAndGoBack]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -230,6 +299,12 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         handleApply();
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Backspace' && isMultiSelect) {
+        e.preventDefault();
+        setSelectedIds(new Set());
         return;
       }
 
@@ -256,19 +331,21 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
 
       if (e.key === 'Backspace' && searchQuery === '') {
         e.preventDefault();
-        if (breadcrumbs.length > 0) {
+        if (breadcrumbs.length > 0 && isCompletedFilter(breadcrumbs[breadcrumbs.length - 1].label)) {
           const removed = breadcrumbs[breadcrumbs.length - 1];
           if (!isDeferred && rootStepRef.current.onRemoveBreadcrumb) {
             rootStepRef.current.onRemoveBreadcrumb(removed);
           }
           onTransition({ ...state, breadcrumbs: breadcrumbs.slice(0, -1) });
+        } else if (inProgressDepth > 0) {
+          goBack();
         } else {
-          goBack(); // exit context action mode (same as Back button or Escape)
+          onTransition(null);
         }
         return;
       }
     },
-    [applyAndGoBack, handleApply, selectableItems, activeIndex, handleSelectOption, searchQuery, breadcrumbs, isDeferred, state, onTransition, goBack]
+    [applyAndGoBack, handleApply, selectableItems, activeIndex, handleSelectOption, searchQuery, goBack, isMultiSelect, breadcrumbs, isDeferred, state, onTransition]
   );
 
   useEffect(() => {
@@ -281,20 +358,13 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
       return;
     }
 
-    const prevSibling = activeEl.previousElementSibling;
-    let scrollTarget: HTMLElement = activeEl;
-    if (prevSibling instanceof HTMLElement && prevSibling.hasAttribute('data-group-header')) {
-      scrollTarget = prevSibling;
-    }
-
     const containerRect = container.getBoundingClientRect();
     const elRect = activeEl.getBoundingClientRect();
-    const targetRect = scrollTarget.getBoundingClientRect();
 
     if (elRect.bottom > containerRect.bottom) {
       container.scrollTop += elRect.bottom - containerRect.bottom;
-    } else if (targetRect.top < containerRect.top) {
-      container.scrollTop -= containerRect.top - targetRect.top;
+    } else if (elRect.top < containerRect.top) {
+      container.scrollTop -= containerRect.top - elRect.top;
     }
   }, [activeIndex]);
 
@@ -312,41 +382,107 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
     applyAndGoBack();
   }, [applyAndGoBack]);
 
+  const { completedBreadcrumbs, inProgressBreadcrumbs } = useMemo(() => {
+    let splitIdx = breadcrumbs.length;
+    for (let i = breadcrumbs.length - 1; i >= 0; i--) {
+      if (isCompletedFilter(breadcrumbs[i].label)) {
+        break;
+      }
+      splitIdx = i;
+    }
+    return {
+      completedBreadcrumbs: breadcrumbs.slice(0, splitIdx),
+      inProgressBreadcrumbs: breadcrumbs.slice(splitIdx),
+    };
+  }, [breadcrumbs]);
+
+  const inProgressDepth = inProgressBreadcrumbs.length;
+
+  const isOperatorStep = useMemo(() => {
+    if (inProgressDepth !== 1 || isMultiSelect) {
+      return false;
+    }
+    return options.length > 0 && options.every((o) => OPERATOR_ONLY_PATTERN.test(o.id));
+  }, [inProgressDepth, isMultiSelect, options]);
+
+  const isValueStep = inProgressDepth >= 2 || (inProgressDepth === 1 && !isOperatorStep);
+
+  const sectionLabel = useMemo(() => {
+    if (isOperatorStep) {
+      return t('command-palette.context-action.operator', 'Operator');
+    }
+    if (inProgressDepth >= 2) {
+      return inProgressBreadcrumbs[0].label;
+    }
+    return currentStep.pillLabel;
+  }, [isOperatorStep, inProgressDepth, inProgressBreadcrumbs, currentStep.pillLabel]);
+
+  const searchPlaceholder = useMemo(() => {
+    if (isOperatorStep) {
+      return t('command-palette.context-action.search-by-operator', 'Search by operator...');
+    }
+    if (inProgressDepth >= 2) {
+      return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: inProgressBreadcrumbs[0].label.toLowerCase() });
+    }
+    return t('command-palette.context-action.search-by', 'Search by {{label}}...', { label: currentStep.pillLabel.toLowerCase() });
+  }, [isOperatorStep, inProgressDepth, inProgressBreadcrumbs, currentStep.pillLabel]);
+
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div onKeyDown={handleKeyDown}>
       <div className={styles.inputContainer}>
-        <button className={styles.backButton} onClick={handleBack} aria-label={t('command-palette.context-action.back', 'Back')} type="button">
-          <Icon name="arrow-left" size="md" />
-        </button>
+        <IconButton
+          name="arrow-left"
+          size="xl"
+          variant="secondary"
+          aria-label={t('command-palette.context-action.back', 'Back')}
+          className={styles.backButton}
+          tabIndex={-1}
+          onClick={handleBack}
+        />
         <div className={styles.breadcrumbs}>
-          {rootStepRef.current.pillIcon && (
-            <span className={styles.pill}>
-              {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
-              <Icon name={rootStepRef.current.pillIcon as IconName} size="sm" />
-              <span>{rootStepRef.current.pillLabel}</span>
-            </span>
+          <span className={styles.badge}>
+            {rootStepRef.current.pillIcon && (
+              <span className={styles.badgeIcon}>
+                {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
+                <Icon name={rootStepRef.current.pillIcon as IconName} />
+              </span>
+            )}
+            <span>{rootStepRef.current.pillLabel}</span>
+          </span>
+          {completedBreadcrumbs.map((bc, i) => {
+            const { keyPart, valuePart } = splitFilterLabel(bc.label);
+            return (
+              <React.Fragment key={i}>
+                <span className={styles.separator}>/</span>
+                <span className={styles.badge}>
+                  {keyPart}
+                  {valuePart && <span className={styles.badgeValue}>{valuePart}</span>}
+                </span>
+              </React.Fragment>
+            );
+          })}
+          {completedBreadcrumbs.length > 0 && inProgressDepth === 0 && (
+            <span className={styles.separator}>/</span>
           )}
-          {!rootStepRef.current.pillIcon && (
-            <span className={styles.pill}>{rootStepRef.current.pillLabel}</span>
-          )}
-          {breadcrumbs.map((bc, i) => (
-            <React.Fragment key={i}>
-              <span className={styles.separator}>/</span>
-              <span className={styles.pill}>{bc.label}</span>
-            </React.Fragment>
-          ))}
-          {selectedSummary && (
+          {inProgressDepth > 0 && (
             <>
-              <span className={styles.separator}>:</span>
-              <span className={styles.selectedSummary}>{selectedSummary}</span>
+              <span className={styles.separator}>/</span>
+              <span className={styles.badge}>
+                {inProgressBreadcrumbs[0].label}
+                {inProgressBreadcrumbs.length > 1 && (
+                  <span className={styles.badgeValue}>
+                    {inProgressBreadcrumbs.slice(1).map((bc) => bc.label).join('')}
+                  </span>
+                )}
+              </span>
             </>
           )}
         </div>
         <input
           ref={inputRef}
           className={styles.input}
-          placeholder={currentStep.placeholder}
+          placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           autoComplete="off"
@@ -358,51 +494,47 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
       </div>
       <div className={currentStep.helpPanel ? styles.splitContainer : undefined}>
         <div ref={listRef} className={cx(styles.list, currentStep.helpPanel && styles.listWithPanel)} role="listbox">
+          <div className={styles.sectionHeader}>
+            {sectionLabel}
+          </div>
           {flatItems.length === 0 && !isLoading && (
             <div className={styles.emptyState}><Trans i18nKey="command-palette.context-action.no-options">No options found</Trans></div>
           )}
-          {(() => {
-            let selectableIndex = 0;
-            return flatItems.map((item, idx) => {
-              if (item.type === 'header') {
-                return (
-                  <div key={`header-${idx}`} className={styles.groupHeader} data-group-header>
-                    {item.label}
-                  </div>
-                );
-              }
-              const currentSelectableIndex = selectableIndex++;
-              const isActive = currentSelectableIndex === activeIndex;
-              const isSelected = selectedIds.has(item.option.id);
-              return (
-                <div
-                  key={item.option.id}
-                  data-index={currentSelectableIndex}
-                  className={cx(styles.option, isActive && styles.optionActive)}
-                  role="option"
-                  aria-selected={isActive}
-                  tabIndex={0}
-                  onClick={() => handleSelectOption(item.option)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelectOption(item.option);
-                    }
-                  }}
-                  onMouseEnter={() => setActiveIndex(currentSelectableIndex)}
-                >
-                  {isMultiSelect && (
-                    <Checkbox value={isSelected} className={styles.checkbox} />
-                  )}
-                  {item.option.icon && <span className={styles.optionIcon}>{item.option.icon}</span>}
-                  <span className={styles.optionLabel}>{item.option.label}</span>
-                  {item.option.description && (
-                    <span className={styles.optionDescription}>{item.option.description}</span>
-                  )}
-                </div>
-              );
-            });
-          })()}
+          {flatItems.map((item, idx) => {
+            const isActive = idx === activeIndex;
+            const isSelected = selectedIds.has(item.option.id);
+            return (
+              <div
+                key={item.option.id}
+                data-index={idx}
+                className={cx(styles.option, isActive && styles.optionActive)}
+                role="option"
+                aria-selected={isActive}
+                tabIndex={0}
+                onClick={() => handleSelectOption(item.option)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectOption(item.option);
+                  }
+                }}
+                onMouseEnter={() => setActiveIndex(idx)}
+              >
+                {isMultiSelect && (
+                  <Checkbox value={isSelected} className={styles.checkbox} />
+                )}
+                {!isMultiSelect && (item.option.icon || !isOperatorStep) && (
+                  <span className={styles.optionIcon}>
+                    {item.option.icon || <Icon name="search" />}
+                  </span>
+                )}
+                <span className={styles.optionLabel}>{item.option.label}</span>
+                {item.option.description && (
+                  <span className={styles.optionDescription}>{item.option.description}</span>
+                )}
+              </div>
+            );
+          })}
         </div>
         {currentStep.helpPanel && (
           <div className={styles.helpPanel}>
@@ -429,13 +561,30 @@ export function ContextActionStepList({ state, onTransition, onClose }: ContextA
         </span>
         <span className={styles.footerHint}>
           <kbd className={styles.kbd}>↵</kbd>
-          <span><Trans i18nKey="command-palette.context-action.select">Select</Trans></span>
+          <span>
+            {isMultiSelect
+              ? <Trans i18nKey="command-palette.context-action.toggle">Toggle</Trans>
+              : <Trans i18nKey="command-palette.context-action.select">Select</Trans>
+            }
+          </span>
         </span>
-        <span className={styles.footerHint}>
-          <kbd className={styles.kbd}>⌘</kbd>
-          <kbd className={styles.kbd}><Trans i18nKey="command-palette.context-action.enter-key">Enter</Trans></kbd>
-          <span><Trans i18nKey="command-palette.context-action.done">Done</Trans></span>
-        </span>
+        {isMultiSelect && (
+          <span className={styles.footerHint}>
+            <kbd className={styles.kbd}>⌘⌫</kbd>
+            <span><Trans i18nKey="command-palette.context-action.clear-all">Clear all</Trans></span>
+          </span>
+        )}
+        {(isMultiSelect || inProgressDepth === 0) && (
+          <span className={styles.footerHint}>
+            <kbd className={styles.kbd}>⌘↵</kbd>
+            <span>
+              {isMultiSelect
+                ? <Trans i18nKey="command-palette.context-action.apply">Apply</Trans>
+                : <Trans i18nKey="command-palette.context-action.apply-filters">Apply filters</Trans>
+              }
+            </span>
+          </span>
+        )}
       </div>
     </div>
   );
@@ -446,22 +595,14 @@ function getStyles(theme: GrafanaTheme2) {
     inputContainer: css({
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(1, 2),
-      borderBottom: '1px solid rgba(83, 83, 85, 0.5)',
+      padding: theme.spacing(2.5, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
       position: 'relative',
       overflowX: 'auto',
       scrollbarWidth: 'none',
       '&::-webkit-scrollbar': { display: 'none' },
     }),
     backButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      marginRight: theme.spacing(1),
-      cursor: 'pointer',
       color: theme.colors.text.secondary,
       flexShrink: 0,
       '&:hover': {
@@ -471,29 +612,49 @@ function getStyles(theme: GrafanaTheme2) {
     breadcrumbs: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       flexShrink: 0,
-      marginRight: theme.spacing(0.5),
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
     }),
-    pill: css({
+    badge: css({
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 0.5),
-      background: 'rgba(255, 255, 255, 0.10)',
+      fontSize: '18px',
+      fontWeight: theme.typography.fontWeightRegular,
+      color: '#ccccdc',
+      background: theme.colors.action.selected,
       borderRadius: theme.shape.radius.default,
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
+      padding: '0 6px',
+      height: '32px',
+      lineHeight: '32px',
+      letterSpacing: '-0.045px',
       whiteSpace: 'nowrap',
     }),
-    separator: css({
+    badgeIcon: css({
+      display: 'inline-flex',
+      alignItems: 'center',
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.body.fontSize,
+      '& > svg': {
+        width: '20px',
+        height: '20px',
+      },
+    }),
+    badgeValue: css({
+      color: theme.colors.text.secondary,
+    }),
+    separator: css({
+      color: 'rgba(204, 204, 220, 0.4)',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
     }),
     selectedSummary: css({
       color: theme.colors.text.secondary,
-      fontSize: theme.typography.body.fontSize,
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '-0.045px',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -525,16 +686,12 @@ function getStyles(theme: GrafanaTheme2) {
     list: css({
       maxHeight: 400,
       overflowY: 'auto',
-      padding: theme.spacing(0.5, 0),
+      paddingBottom: theme.spacing(1.5),
     }),
-    groupHeader: css({
+    sectionHeader: css({
       padding: theme.spacing(1.5, 2, 0.5, 2),
-      fontFamily: 'Inter, sans-serif',
-      fontSize: 12,
-      fontStyle: 'normal',
-      fontWeight: 500,
-      lineHeight: '18px',
-      letterSpacing: '0.018px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
     }),
     option: css({
@@ -547,13 +704,13 @@ function getStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(0, 1),
     }),
     optionActive: css({
-      borderRadius: theme.shape.radius.default,
-      background: 'rgba(204, 204, 220, 0.12)',
+      background: theme.colors.action.selected,
     }),
     optionIcon: css({
       flexShrink: 0,
       display: 'flex',
       alignItems: 'center',
+      color: theme.colors.text.secondary,
     }),
     optionLabel: css({
       flex: 1,
@@ -576,7 +733,7 @@ function getStyles(theme: GrafanaTheme2) {
     listWithPanel: css({
       flex: 1,
       minWidth: 0,
-      borderRight: '1px solid rgba(83, 83, 85, 0.5)',
+      borderRight: `1px solid ${theme.colors.border.weak}`,
     }),
     helpPanel: css({
       flex: '0 0 260px',
@@ -636,24 +793,33 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       justifyContent: 'flex-end',
       alignItems: 'center',
-      gap: theme.spacing(2),
-      padding: theme.spacing(0.75, 2),
-      borderTop: '1px solid rgba(83, 83, 85, 0.5)',
+      gap: theme.spacing(2.5),
+      padding: theme.spacing(1.5, 2),
+      background: 'rgba(42, 48, 55, 0.3)',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     footerHint: css({
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(0.5),
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
+      gap: theme.spacing(0.75),
+      fontSize: theme.typography.body.fontSize,
+      color: theme.colors.text.primary,
     }),
     kbd: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: '22px',
+      height: '22px',
       padding: theme.spacing(0, 0.5),
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
-      fontSize: '10px',
+      ...theme.typography.bodySmall,
       fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: '18px',
+      lineHeight: 1,
+      color: theme.colors.text.secondary,
+      textTransform: 'uppercase',
+      background: theme.colors.action.selected,
+      border: 'none',
+      borderRadius: theme.shape.radius.sm,
     }),
   };
 }

@@ -4151,12 +4151,12 @@
       "placeholder": "Rechercher ou aller à..."
     },
     "section": {
-      "actions": "Actions",
       "dashboard-search-results": "Tableaux de bord",
+      "dashboards": "",
       "folder-search-results": "Dossiers",
-      "pages": "Pages",
-      "preferences": "Préférences",
-      "recent-dashboards": "Tableaux de bord récents",
+      "global": "",
+      "navigation": "",
+      "recents": "",
       "recent-scopes": "Portées récentes"
     }
   },

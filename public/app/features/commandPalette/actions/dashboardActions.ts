@@ -1,8 +1,10 @@
 import debounce from 'debounce-promise';
+import { createElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -35,14 +37,17 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return orderA - orderB;
   });
 
+  const locationInfo = resultsDataFrame.view.dataFrame.meta?.custom?.locationInfo;
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
-    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `recent-dashboards${url}`,
       name: `${name}`,
-      section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
+      section: t('command-palette.section.recents', 'Recents'),
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
+      subtitle: locationInfo?.[location]?.name,
+      icon: createElement(Icon, { name: 'apps' }),
     };
   });
 
@@ -73,6 +78,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
+      icon: createElement(Icon, { name: kind === 'dashboard' ? 'apps' : 'folder' }),
     };
   });
 

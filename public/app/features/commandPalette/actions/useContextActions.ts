@@ -42,7 +42,7 @@ export function useContextActions(): ContextActionEntry[] {
       const action: CommandPaletteAction = {
         id: `${CONTEXT_ACTION_PREFIX}${config.id}`,
         name: config.title,
-        section: config.section ?? 'Pages',
+        section: config.section ?? 'Page',
         priority: ACTIONS_PRIORITY + availableItems.length - index,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         icon: config.icon ? createElement(Icon, { name: config.icon as IconName }) : undefined,

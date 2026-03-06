@@ -4139,6 +4139,9 @@
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
       "light-theme": "Light",
+      "clear-scopes": "Clear scopes",
+      "open-interactive-learning": "Open interactive learning",
+      "scope": "Scope",
       "scopes": "Scopes"
     },
     "empty-state": {
@@ -4159,20 +4162,26 @@
     },
     "scopes": {
       "apply-selected-scopes": "Apply",
+      "level-category": "category",
+      "level-type": "type",
       "selected-scopes-label": "Scopes:"
     },
     "search-box": {
+      "back": "Go back",
       "clear": "Clear search",
       "placeholder": "Type a command or search...",
-      "placeholder-filtered": "Search by entity name..."
+      "placeholder-drilldown": "Search {{name}}...",
+      "placeholder-filtered": "Search by entity name...",
+      "placeholder-scopes": "Search by {{name}}..."
     },
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "dashboards": "Dashboards",
       "folder-search-results": "Folders",
-      "pages": "Pages",
-      "preferences": "Preferences",
-      "recent-dashboards": "Recent dashboards",
+      "global": "Global",
+      "navigation": "Navigation",
+      "recents": "Recents",
       "recent-scopes": "Recent scopes"
     }
   },
