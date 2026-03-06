@@ -2193,6 +2193,19 @@
     },
     {
       "metadata": {
+        "name": "inlineLogDetailsNoScrolls",
+        "resourceVersion": "1772636622548",
+        "creationTimestamp": "2026-03-04T15:03:42Z"
+      },
+      "spec": {
+        "description": "Enables an inline version of Log Details that creates no new scrolls",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "interactiveLearning",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-22T08:06:21Z"

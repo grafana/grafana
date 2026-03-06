@@ -1622,4 +1622,9 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
 }

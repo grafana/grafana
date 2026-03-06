@@ -11,6 +11,7 @@ import {
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
+import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
 import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
@@ -128,19 +129,27 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
 
     const handleLogLineResize = useCallback(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !height) {
+        return;
+      }
+      /*
+       * We want to skip measurements when the element is not visible or part of a reused node
+       * by react window, as it provides inaccurate measurements.
+       */
+      if (!intersection?.isIntersecting) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
-      const actualHeight = getLogLineDOMHeight(virtualization, logLineRef.current, calculatedHeight, log.collapsed);
+      const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
         onOverflow(index, log.uid, actualHeight);
       }
-    }, [height, index, log.collapsed, log.uid, onOverflow, virtualization]);
+    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();
@@ -199,12 +208,11 @@ const LogLineComponent = memo(
     const detailsShown = detailsDisplayed(log);
 
     return (
-      <>
+      <div ref={onOverflow ? logLineRef : undefined} data-log-index={index}>
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
-          ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
           onClick={handleClick}
@@ -305,7 +313,7 @@ const LogLineComponent = memo(
             timeZone={timeZone}
           />
         )}
-      </>
+      </div>
     );
   }
 );
