@@ -1,3 +1,4 @@
+import deepEqual from 'fast-deep-equal';
 import * as H from 'history';
 import { debounce } from 'lodash';
 
@@ -26,7 +27,6 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -195,8 +195,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _setupChangeDetection() {
     const panel = this.state.panelRef.resolve();
     const performSaveModelDiff = () => {
-      const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(panel));
-      this.setState({ isDirty: hasChanges });
+      this.setState({ isDirty: !deepEqual(this._originalSaveModel, vizPanelToPanel(panel)) });
     };
 
     const performSaveModelDiffDebounced = this.debounceSaveModelDiff
