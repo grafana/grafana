@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,10 +27,10 @@ import (
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	const repo = "empty-files-repo"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:               repo,
 		Path:               helper.ProvisioningPath,
 		Target:             "instance",
@@ -54,11 +55,11 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repo = "delete-test-repo"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
@@ -96,9 +97,9 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 
 		assert.Len(collect, dashboards.Items, 3)
 		assert.Len(collect, folders.Items, 2)
-	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 
-	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	t.Run("delete individual dashboard file on configured branch should succeed", func(t *testing.T) {
 		result := helper.AdminREST.Delete().
@@ -170,10 +171,10 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	repo := "move-test-repo"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
@@ -189,7 +190,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(dashboards.Items))
 
-	helper.validateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
+	helper.ValidateManagedDashboardsFolderMetadata(t, ctx, repo, dashboards.Items)
 
 	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
 	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
@@ -201,10 +202,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
 		// Perform the move operation using helper function (no ref = configured branch)
-		resp := helper.postFilesRequest(t, repo, filesPostOptions{
-			targetPath:   targetPath,
-			originalPath: "all-panels.json",
-			message:      "move file without content change",
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   targetPath,
+			OriginalPath: "all-panels.json",
+			Message:      "move file without content change",
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -224,11 +225,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		branchRef := "test-branch-move"
 
 		// Perform the move operation using helper function with ref parameter
-		resp := helper.postFilesRequest(t, repo, filesPostOptions{
-			targetPath:   targetPath,
-			originalPath: "all-panels.json",
-			message:      "move file without content change",
-			ref:          branchRef,
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   targetPath,
+			OriginalPath: "all-panels.json",
+			Message:      "move file without content change",
+			Ref:          branchRef,
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -263,10 +264,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetPath = "deep/nested/timeline.json"
 
 		// Perform the move operation without the file ever being synced to Grafana (no ref = configured branch)
-		resp := helper.postFilesRequest(t, repo, filesPostOptions{
-			targetPath:   targetPath,
-			originalPath: sourceFile,
-			message:      "move never-synced file to nested path",
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   targetPath,
+			OriginalPath: sourceFile,
+			Message:      "move never-synced file to nested path",
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -289,11 +290,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		updatedContent := helper.LoadFile("testdata/text-options.json")
 
 		// Perform move with content update using helper function (no ref = configured branch)
-		resp := helper.postFilesRequest(t, repo, filesPostOptions{
-			targetPath:   targetPath,
-			originalPath: sourcePath,
-			message:      "move file with content update",
-			body:         string(updatedContent),
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   targetPath,
+			OriginalPath: sourcePath,
+			Message:      "move file with content update",
+			Body:         string(updatedContent),
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -329,10 +330,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetDir = "moved-dir/"
 
 		// Move directory using helper function (no ref = configured branch)
-		resp := helper.postFilesRequest(t, repo, filesPostOptions{
-			targetPath:   targetDir,
-			originalPath: sourceDir,
-			message:      "move directory",
+		resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+			TargetPath:   targetDir,
+			OriginalPath: sourceDir,
+			Message:      "move directory",
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -369,10 +370,10 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 			require.NoError(t, result.Error(), "should create test file")
 
 			// Now try to move this file to a directory path using helper function
-			resp := helper.postFilesRequest(t, repo, filesPostOptions{
-				targetPath:   "target-dir/",
-				originalPath: "simple-test.json",
-				message:      "test move",
+			resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+				TargetPath:   "target-dir/",
+				OriginalPath: "simple-test.json",
+				Message:      "test move",
 			})
 			// nolint:errcheck
 			defer resp.Body.Close()
@@ -402,7 +403,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// create both repos concurrently to reduce duration of this test
@@ -412,7 +413,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo1,
 			Path:   path.Join(helper.ProvisioningPath, "repo1"),
 			Target: "folder",
@@ -428,7 +429,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	path2 := path.Join(helper.ProvisioningPath, "repo2")
 	go func() {
 		defer wg.Done()
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo2,
 			Path:   path2,
 			Target: "folder",
@@ -462,7 +463,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 
 		assert.Len(collect, dashboards.Items, 2)
 		assert.Len(collect, folders.Items, 2)
-	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 
 	allDashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
@@ -549,7 +550,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	t.Run("DELETE resource owned by different repository - should fail", func(t *testing.T) {
 		// Create a file manually in the second repo which has UID from first repo
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "repo2/conflicting-delete.json")
-		printFileTree(t, helper.ProvisioningPath)
+		common.PrintFileTree(t, helper.ProvisioningPath)
 
 		result := helper.AdminREST.Delete().
 			Namespace("default").
@@ -581,11 +582,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 
 	t.Run("MOVE and UPDATE file with UID already owned by different repository - should fail", func(t *testing.T) {
-		resp := helper.postFilesRequest(t, repo2, filesPostOptions{
-			targetPath:   "moved-dashboard.json",
-			originalPath: path.Join("dashboard2.json"),
-			message:      "attempt to move file from different repository",
-			body:         string(helper.LoadFile("testdata/all-panels.json")), // Content with the conflicting UID
+		resp := helper.PostFilesRequest(t, repo2, common.FilesPostOptions{
+			TargetPath:   "moved-dashboard.json",
+			OriginalPath: path.Join("dashboard2.json"),
+			Message:      "attempt to move file from different repository",
+			Body:         string(helper.LoadFile("testdata/all-panels.json")), // Content with the conflicting UID
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()
@@ -626,11 +627,11 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repo = "auth-test-repo"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
@@ -655,7 +656,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		}
 		assert.Len(collect, dashboards.Items, 1)
 		dashboardUID = dashboards.Items[0].GetName()
-	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards after sync")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards after sync")
 
 	// Grant permissions to Editor user for all dashboards using wildcard
 	// The access checker checks resource-level permissions, so we need to grant them
@@ -1007,5 +1008,109 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			// nolint:errcheck
 			defer deleteResp.Body.Close()
 		})
+	})
+}
+
+func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repo = "folder-metadata-test-repo"
+	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+
+	postFolder := func(t *testing.T, path string) *http.Response {
+		t.Helper()
+		u := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, repo, path)
+		req, err := http.NewRequest(http.MethodPost, u, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		return resp
+	}
+
+	t.Run("simple folder creation writes _folder.json with stable UID", func(t *testing.T) {
+		resp := postFolder(t, "meta-test-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating folder should succeed")
+
+		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/_folder.json")
+		require.NoError(t, err, "_folder.json should be readable via the files endpoint")
+
+		apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
+		require.Equal(t, "folder.grafana.app/v1beta1", apiVersion)
+		kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
+		require.Equal(t, "Folder", kind)
+		folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, folderUID, "_folder.json should contain a non-empty stable UID")
+		title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
+		require.Equal(t, "meta-test-folder", title)
+
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
+		require.Error(t, err, ".keep should not exist when flag is enabled")
+
+		_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
+	})
+
+	t.Run("nested creation writes _folder.json only for the leaf", func(t *testing.T) {
+		resp := postFolder(t, "parent-folder/child-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
+
+		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
+		require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
+
+		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
+		require.NoError(t, err, "child _folder.json should be readable via the files endpoint")
+
+		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
+		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
+		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, childUID, "child _folder.json should contain a non-empty stable UID")
+		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
+		require.Equal(t, "child-folder", childTitle)
+
+		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
+	})
+
+	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
+		resp := postFolder(t, "managed-parent/")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "creating parent folder should succeed")
+
+		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
+		require.NoError(t, err, "parent _folder.json should exist")
+		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, parentUID, "parent should have a non-empty stable UID")
+
+		resp2 := postFolder(t, "managed-parent/child-folder/")
+		// nolint:errcheck
+		defer resp2.Body.Close()
+		require.Equal(t, http.StatusOK, resp2.StatusCode, "creating child folder should succeed")
+
+		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/child-folder/_folder.json")
+		require.NoError(t, err, "child _folder.json should exist")
+		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, childUID, "child should have a non-empty stable UID")
+		require.NotEqual(t, parentUID, childUID, "child and parent UIDs must differ")
+
+		// Parent _folder.json must be unchanged.
+		parentWrap2, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "managed-parent/_folder.json")
+		require.NoError(t, err, "parent _folder.json should still exist after child creation")
+		parentUID2, _, _ := unstructured.NestedString(parentWrap2.Object, "resource", "file", "metadata", "name")
+		require.Equal(t, parentUID, parentUID2, "parent UID must be unchanged after child creation")
+
+		_, err = helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent Grafana folder should exist")
+		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child Grafana folder should exist")
 	})
 }
