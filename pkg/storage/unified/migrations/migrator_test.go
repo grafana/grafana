@@ -485,7 +485,7 @@ func TestUnifiedMigration_Migrate_CancelsStreamContextOnMigratorError(t *testing
 
 	var capturedCtx context.Context
 	mockClient.EXPECT().
-		BulkProcess(mock.Anything, mock.Anything).
+		BulkProcess(mock.Anything).
 		Run(func(ctx context.Context, opts ...grpc.CallOption) {
 			capturedCtx = ctx
 		}).
