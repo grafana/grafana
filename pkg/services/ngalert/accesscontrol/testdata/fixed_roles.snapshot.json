@@ -23,6 +23,9 @@
         "action": "alert.silences:read",
         "scope": "folders:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -73,6 +76,9 @@
         "action": "alert.silences:write",
         "scope": "folders:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -88,6 +94,9 @@
       {
         "action": "alert.instances:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -113,6 +122,9 @@
       {
         "action": "alert.instances:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -153,6 +165,10 @@
     "description": "Add, update, and delete contact points and notification policies in Grafana and external providers",
     "group": "Alerting",
     "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
       {
         "action": "alert.notifications.external:read",
         "scope": "datasources:*"
@@ -306,9 +322,6 @@
         "action": "alert.silences:read",
         "scope": "folders:*"
       }
-    ],
-    "grants": [
-      "Viewer"
     ]
   },
   {
@@ -333,6 +346,10 @@
       },
       {
         "action": "alert.instances:write"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
       },
       {
         "action": "alert.notifications.external:read",
@@ -472,9 +489,6 @@
         "action": "alert.silences:write",
         "scope": "folders:*"
       }
-    ],
-    "grants": [
-      "Editor"
     ]
   },
   {
@@ -499,6 +513,10 @@
       },
       {
         "action": "alert.instances:write"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
       },
       {
         "action": "alert.notifications.external:read",
@@ -731,6 +749,73 @@
     ]
   },
   {
+    "name": "fixed:alerting.notifications.external:reader",
+    "displayName": "External Notifications Reader",
+    "description": "Read notification policies and contact points in external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications.external:writer",
+    "displayName": "External Notifications Writer",
+    "description": "Add, update, and delete contact points and notification policies in external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy:reader",
+    "displayName": "Alerting legacy read permissions (DO NOT USE)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications:read"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy:writer",
+    "displayName": "Alerting legacy write permissions (DO NOT USE)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications:write"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
     "name": "fixed:alerting.receivers:reader",
     "displayName": "Contact Point Reader",
     "description": "Read all contact points in Grafana",
@@ -740,6 +825,9 @@
         "action": "alert.notifications.receivers:read",
         "scope": "receivers:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -792,6 +880,9 @@
         "action": "alert.notifications.receivers:write",
         "scope": "receivers:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -803,6 +894,9 @@
       {
         "action": "alert.notifications.templates:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -823,6 +917,9 @@
       {
         "action": "alert.notifications.templates:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -834,6 +931,9 @@
       {
         "action": "alert.notifications.time-intervals:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -851,6 +951,9 @@
       {
         "action": "alert.notifications.time-intervals:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -862,6 +965,9 @@
       {
         "action": "alert.notifications.routes:read"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -876,6 +982,9 @@
       {
         "action": "alert.notifications.routes:write"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   },
   {
@@ -888,6 +997,9 @@
         "action": "alert.notifications.inhibition-rules:read",
         "scope": "inhibition-rules:*"
       }
+    ],
+    "grants": [
+      "Viewer"
     ]
   },
   {
@@ -908,6 +1020,9 @@
         "action": "alert.notifications.inhibition-rules:write",
         "scope": "inhibition-rules:*"
       }
+    ],
+    "grants": [
+      "Editor"
     ]
   }
 ]
