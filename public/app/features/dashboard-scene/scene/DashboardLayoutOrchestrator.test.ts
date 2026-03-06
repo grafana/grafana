@@ -9,31 +9,6 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
-let lastUndo: (() => void) | undefined;
-
-jest.mock('../edit-pane/shared', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    moveElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    edit: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-  },
-  ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
-  DashboardStateChangedEvent: jest.fn().mockImplementation(() => ({})),
-}));
-
 describe('DashboardLayoutOrchestrator', () => {
   describe('cross-tab drag cancel', () => {
     it('should drop item into current tab when dropped on tab header after detach', () => {
