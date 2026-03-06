@@ -33,7 +33,7 @@ export const Page: PageType = ({
   ...otherProps
 }) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, stickyHeader ? chromeHeaderHeight : 0);
+  const styles = useStyles2(getStyles, chromeHeaderHeight);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
