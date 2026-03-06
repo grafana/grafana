@@ -613,7 +613,7 @@ export class PrometheusDatasource
 
     const filterLastIndex = new Map<string, number>();
     filters.forEach((f, i) => {
-      const compositeKey = f.origin ? `${f.key}-${f.origin}` : f.key;
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
       filterLastIndex.set(compositeKey, i);
     });
 
@@ -623,7 +623,7 @@ export class PrometheusDatasource
     const keysNeedingValueCheck = new Set<string>();
 
     filters.forEach((f, i) => {
-      const compositeKey = f.origin ? `${f.key}-${f.origin}` : f.key;
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
       const isLastWithCompositeKey = filterLastIndex.get(compositeKey) === i;
       const overriddenByUserFilter = !!f.origin && userFilterKeys.has(f.key);
 
@@ -659,7 +659,7 @@ export class PrometheusDatasource
 
     // Build filter results: check key existence, precedence, and value validity.
     filters.forEach((f, i) => {
-      const compositeKey = f.origin ? `${f.key}-${f.origin}` : f.key;
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
       const isLastWithCompositeKey = filterLastIndex.get(compositeKey) === i;
       const overriddenByUserFilter = !!f.origin && userFilterKeys.has(f.key);
 
