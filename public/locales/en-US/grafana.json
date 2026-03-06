@@ -384,10 +384,6 @@
       "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
-  "admin.edit-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
-  "admin.new-custom-theme-page.field-theme-id.validation-pattern": "Theme ID can only contain lowercase letters, numbers, hyphens and underscores",
-  "admin.new-custom-theme-page.field-theme-id.validation-required": "Theme ID is required",
-  "admin.new-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
@@ -12542,7 +12538,16 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
-    "custom-themes": "Custom themes",
+    "custom-themes": {
+      "add-button": "Add custom theme",
+      "delete-modal": {
+        "body": "Are you sure you want to delete the {{name}} theme?",
+        "confirm-text": "Delete",
+        "title": "Delete theme"
+      },
+      "empty-state": "You haven't added any custom themes yet",
+      "empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana"
+    },
     "edit-custom-theme-page": {
       "cancel": "Cancel",
       "field-preview": "Preview",
@@ -12597,16 +12602,6 @@
       "text-loading-teams": "Loading teams..."
     }
   },
-  "profile.custom-themes.add-button": "Add custom theme",
-  "profile.custom-themes.delete-modal.body": "Are you sure you want to delete the {{name}} theme?",
-  "profile.custom-themes.delete-modal.confirm-text": "Delete",
-  "profile.custom-themes.delete-modal.title": "Delete theme",
-  "profile.custom-themes.empty-state": "You haven't added any custom themes yet",
-  "profile.custom-themes.empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana",
-  "profile.edit-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
-  "profile.new-custom-theme-page.field-theme-id.validation-pattern": "Theme ID can only contain lowercase letters, numbers, hyphens and underscores",
-  "profile.new-custom-theme-page.field-theme-id.validation-required": "Theme ID is required",
-  "profile.new-custom-theme-page.field-theme-json.validation-required": "Theme JSON is required",
   "provisioned-folder-preview-banner": {
     "folder-pushed-to-repository": "Folder pushed to repository",
     "sync-needed": "The folder has been successfully pushed to the repository but is not yet available in Grafana. It will appear once changes are synced from the repository",

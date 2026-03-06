@@ -989,7 +989,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/serviceaccounts/ @grafana/identity-squad
 /public/app/features/teams/ @grafana/access-squad
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/theme/ @grafana/grafana-frontend-platform
+/public/app/features/themes/ @grafana/grafana-frontend-platform
 /public/app/features/theme-playground/ @grafana/grafana-frontend-platform
 /public/app/features/trails/ @grafana/observability-metrics
 /public/app/features/transformers/ @grafana/datapro

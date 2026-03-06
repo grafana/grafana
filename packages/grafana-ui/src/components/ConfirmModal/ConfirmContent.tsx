@@ -92,7 +92,7 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const label = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
+  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });
   return (
@@ -103,10 +103,10 @@ export const ConfirmContent = ({
         {confirmPromptText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
-              <Field disabled={disabled} label={label}>
+              <Field disabled={disabled}>
                 <Input
                   id={inputId}
-                  placeholder={confirmPromptText}
+                  placeholder={placeholder}
                   onChange={onConfirmationTextChange}
                   data-testid={selectors.pages.ConfirmModal.input}
                 />
