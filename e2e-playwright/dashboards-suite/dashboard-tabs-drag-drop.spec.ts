@@ -64,6 +64,12 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     await page.mouse.move(drop.box.x + 5, drop.box.y + 5, { steps: 20 });
     await page.mouse.up();
 
+    await expect(async () => {
+      const dragged = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
+      const bottomA = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom a');
+      expect(dragged.box.y).toEqual(bottomA.box.y);
+    }).toPass();
+
     const dragged = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
     const bottomA = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom a');
     const bottomB = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom b');
