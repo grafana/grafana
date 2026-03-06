@@ -1,10 +1,11 @@
 import { css, cx, keyframes } from '@emotion/css';
 import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAssistant, createAssistantContextItem } from '@grafana/assistant';
+import { createAssistantContextItem } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { DashboardEditPane } from 'app/features/dashboard-scene/edit-pane/DashboardEditPane';
 
 const EXAMPLE_PROMPTS = [
   'Monitor Kubernetes cluster CPU, memory, and pod health',
@@ -20,6 +21,7 @@ const PAUSE_AFTER_TYPING_MS = 2400;
 const PAUSE_AFTER_DELETING_MS = 400;
 
 interface DashboardBuilderPromptProps {
+  editPane: DashboardEditPane;
   onAddPanel: () => void;
   onPreviewTemplates?: () => void;
   onImportDashboard?: () => void;
@@ -27,12 +29,12 @@ interface DashboardBuilderPromptProps {
 }
 
 export function DashboardBuilderPrompt({
+  editPane,
   onAddPanel,
   onPreviewTemplates,
   onImportDashboard,
   datasourceUid,
 }: DashboardBuilderPromptProps) {
-  const { isAvailable, openAssistant } = useAssistant();
   const styles = useStyles2(getStyles);
   const [inputValue, setInputValue] = useState('');
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
@@ -89,10 +91,30 @@ export function DashboardBuilderPrompt({
     };
   }, [isFocused, userHasTyped]);
 
+  const buildContext = useCallback(() => {
+    const items = [];
+    if (datasourceUid) {
+      items.push(createAssistantContextItem('datasource', { datasourceUid }));
+    }
+    items.push(
+      createAssistantContextItem('structured', {
+        title: t('dashboard.ai-builder.context-title', 'Dashboard builder instructions'),
+        hidden: true,
+        data: {
+          instructions:
+            'You are in dashboard builder mode. Focus exclusively on creating and modifying panels, variables, and layout on the current dashboard. ' +
+            'Do NOT navigate away from this dashboard or suggest navigation to other pages. ' +
+            'All changes must happen on this dashboard.',
+        },
+      })
+    );
+    return items;
+  }, [datasourceUid]);
+
   const handleSubmit = useCallback(
     (e?: FormEvent) => {
       e?.preventDefault();
-      if (!inputValue.trim() || !openAssistant) {
+      if (!inputValue.trim()) {
         return;
       }
 
@@ -100,17 +122,9 @@ export function DashboardBuilderPrompt({
       setSubmittedPrompt(prompt);
       setHasSubmitted(true);
 
-      const context = datasourceUid ? [createAssistantContextItem('datasource', { datasourceUid })] : undefined;
-
-      openAssistant({
-        origin: 'dashboard/empty/ai-builder',
-        prompt,
-        context,
-        autoSend: true,
-        mode: 'dashboarding',
-      });
+      editPane.openAssistantPane(prompt, buildContext());
     },
-    [inputValue, openAssistant, datasourceUid]
+    [inputValue, editPane, buildContext]
   );
 
   const handleKeyDown = useCallback(
@@ -125,29 +139,13 @@ export function DashboardBuilderPrompt({
 
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
-      if (!openAssistant) {
-        return;
-      }
-
       setSubmittedPrompt(suggestion);
       setHasSubmitted(true);
 
-      const context = datasourceUid ? [createAssistantContextItem('datasource', { datasourceUid })] : undefined;
-
-      openAssistant({
-        origin: 'dashboard/empty/ai-builder',
-        prompt: suggestion,
-        context,
-        autoSend: true,
-        mode: 'dashboarding',
-      });
+      editPane.openAssistantPane(suggestion, buildContext());
     },
-    [openAssistant, datasourceUid]
+    [editPane, buildContext]
   );
-
-  if (!isAvailable || !openAssistant) {
-    return null;
-  }
 
   if (hasSubmitted) {
     return (
@@ -217,6 +215,22 @@ export function DashboardBuilderPrompt({
       </form>
 
       <div className={styles.suggestions}>
+        <button className={styles.actionPill} onClick={onAddPanel}>
+          <Icon name="graph-bar" size="md" />
+          <Trans i18nKey="dashboard.ai-builder.add-panel-title">Add a panel</Trans>
+        </button>
+        {onPreviewTemplates && (
+          <button className={styles.actionPill} onClick={onPreviewTemplates}>
+            <Icon name="apps" size="md" />
+            <Trans i18nKey="dashboard.ai-builder.preview-templates-title">Preview templates</Trans>
+          </button>
+        )}
+        {onImportDashboard && (
+          <button className={styles.actionPill} onClick={onImportDashboard}>
+            <Icon name="upload" size="md" />
+            <Trans i18nKey="dashboard.ai-builder.import-dashboard-title">Import a dashboard</Trans>
+          </button>
+        )}
         <span className={styles.suggestionsLabel}>
           <Trans i18nKey="dashboard.ai-builder.suggestions-label">Try:</Trans>
         </span>
@@ -225,56 +239,6 @@ export function DashboardBuilderPrompt({
             {suggestion}
           </button>
         ))}
-      </div>
-
-      <div className={styles.divider}>
-        <div className={styles.dividerLine} />
-        <span className={styles.dividerText}>
-          <Trans i18nKey="dashboard.ai-builder.divider-text">or start manually</Trans>
-        </span>
-        <div className={styles.dividerLine} />
-      </div>
-
-      <div className={styles.actions}>
-        <button className={styles.actionCard} onClick={onAddPanel}>
-          <Icon name="graph-bar" size="xl" className={styles.actionIcon} />
-          <span className={styles.actionTitle}>
-            <Trans i18nKey="dashboard.ai-builder.add-panel-title">Add a panel</Trans>
-          </span>
-          <span className={styles.actionDescription}>
-            <Trans i18nKey="dashboard.ai-builder.add-panel-description">
-              Pick a visualization and configure queries
-            </Trans>
-          </span>
-        </button>
-
-        {onPreviewTemplates && (
-          <button className={styles.actionCard} onClick={onPreviewTemplates}>
-            <Icon name="apps" size="xl" className={styles.actionIcon} />
-            <span className={styles.actionTitle}>
-              <Trans i18nKey="dashboard.ai-builder.preview-templates-title">Preview templates</Trans>
-            </span>
-            <span className={styles.actionDescription}>
-              <Trans i18nKey="dashboard.ai-builder.preview-templates-description">
-                Start from industry best-practice layouts
-              </Trans>
-            </span>
-          </button>
-        )}
-
-        {onImportDashboard && (
-          <button className={styles.actionCard} onClick={onImportDashboard}>
-            <Icon name="upload" size="xl" className={styles.actionIcon} />
-            <span className={styles.actionTitle}>
-              <Trans i18nKey="dashboard.ai-builder.import-dashboard-title">Import a dashboard</Trans>
-            </span>
-            <span className={styles.actionDescription}>
-              <Trans i18nKey="dashboard.ai-builder.import-dashboard-description">
-                Import from a file or grafana.com
-              </Trans>
-            </span>
-          </button>
-        )}
       </div>
     </div>
   );
@@ -459,66 +423,28 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
 
-    divider: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(2),
-      width: '100%',
-    }),
-
-    dividerLine: css({
-      flex: 1,
-      height: 1,
-      background: theme.colors.border.weak,
-    }),
-
-    dividerText: css({
+    actionPill: css({
       ...theme.typography.bodySmall,
-      color: theme.colors.text.disabled,
-      whiteSpace: 'nowrap',
-    }),
-
-    actions: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-      gap: theme.spacing(2),
-      width: '100%',
-    }),
-
-    actionCard: css({
-      display: 'flex',
-      flexDirection: 'column',
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(3),
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.secondary,
+      gap: theme.spacing(0.75),
+      padding: theme.spacing(0.75, 2),
+      borderRadius: theme.shape.radius.pill,
+      border: `1px dashed ${theme.colors.border.medium}`,
+      background: 'transparent',
+      color: theme.colors.text.secondary,
       cursor: 'pointer',
+      fontWeight: theme.typography.fontWeightMedium,
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: 'all 0.15s ease',
       },
-      textAlign: 'center',
 
       '&:hover': {
         background: theme.colors.action.hover,
-        borderColor: theme.colors.border.medium,
+        color: theme.colors.text.primary,
+        borderColor: theme.colors.text.disabled,
+        borderStyle: 'solid',
       },
-    }),
-
-    actionIcon: css({
-      color: theme.colors.text.secondary,
-    }),
-
-    actionTitle: css({
-      ...theme.typography.body,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-    }),
-
-    actionDescription: css({
-      ...theme.typography.bodySmall,
-      color: theme.colors.text.secondary,
     }),
 
     buildingState: css({

@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { useSceneObjectState, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -19,6 +19,8 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { PanelActionPopover, PanelHoverHint } from './PanelActionPopover';
+import { PanelProcessingOverlays } from './PanelProcessingOverlay';
 
 interface Props {
   dashboard: DashboardScene;
@@ -64,17 +66,23 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   useUpdateAppChromeActions(dashboard);
 
   /**
-   * Enable / disable selection based on dashboard isEditing state
+   * Always enable selection so the panel popover works in view mode too.
+   * Reset conversation when entering edit mode.
    */
   useEffect(() => {
-    if (isEditing) {
-      editPane.enableSelection();
-    } else {
-      editPane.disableSelection();
-    }
-  }, [isEditing, editPane]);
+    editPane.enableSelection();
+    return () => editPane.disableSelection();
+  }, [editPane]);
 
-  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane, selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+
+  const selectedPanel = useMemo(() => {
+    if (!selection) {
+      return undefined;
+    }
+    const obj = selection.getFirstObject();
+    return obj instanceof VizPanel ? obj : undefined;
+  }, [selection]);
 
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
@@ -90,6 +98,21 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   useEffect(() => {
     editPane.setState({ isDocked: sidebarContext.isDocked });
   }, [sidebarContext.isDocked, editPane]);
+
+  /**
+   * Expand sidebar when assistant pane opens
+   */
+  const ASSISTANT_PANE_WIDTH = 500;
+  useEffect(() => {
+    if (openPane === 'assistant') {
+      const diff = ASSISTANT_PANE_WIDTH - sidebarContext.paneWidth;
+      if (diff > 0) {
+        sidebarContext.onResize(diff);
+      }
+    }
+    // Only react to pane changes, not to paneWidth (avoid resize loop)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openPane]);
 
   const onClearSelection: React.PointerEventHandler<HTMLDivElement> = (evt) => {
     if (evt.shiftKey) {
@@ -149,6 +172,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {controls}
         </div>
         {renderBody()}
+        {selectedPanel && <PanelActionPopover panel={selectedPanel} editPane={editPane} dashboard={dashboard} />}
+        {!selectedPanel && <PanelHoverHint dashboard={dashboard} editPane={editPane} />}
+        <PanelProcessingOverlays editPane={editPane} dashboard={dashboard} />
       </ElementSelectionContext.Provider>
     </div>
   );

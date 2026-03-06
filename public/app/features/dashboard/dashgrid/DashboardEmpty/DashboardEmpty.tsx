@@ -142,7 +142,10 @@ const NewLayoutEmpty = ({
   if (isAssistantAvailable && isNewDashboard) {
     return (
       <DashboardBuilderPrompt
-        onAddPanel={() => editPane.openPane('add')}
+        editPane={editPane}
+        onAddPanel={() => {
+          editPane.openPane('add');
+        }}
         onPreviewTemplates={() => locationService.push('/dashboards?templateDashboards=true')}
         onImportDashboard={onImportDashboard}
         datasourceUid={dashboardLibraryDatasourceUid}

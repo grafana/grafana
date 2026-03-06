@@ -21,6 +21,14 @@ import {
   RepeatsUpdatedEvent,
 } from './shared';
 
+export interface AssistantPaneState {
+  conversationKey: string;
+  initialPrompt?: string;
+  promptDelivered?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialContext?: any[];
+}
+
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
@@ -29,9 +37,11 @@ export interface DashboardEditPaneState extends SceneObjectState {
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPaneName;
   isDocked?: boolean;
+  assistantState?: AssistantPaneState;
+  processingPanelKeys?: string[];
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'assistant';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -96,6 +106,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this._subs.add(
       dashboard.subscribeToEvent(RepeatsUpdatedEvent, () => {
         this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToState((newState, prevState) => {
+        if (newState.isEditing && !prevState.isEditing) {
+          this.setState({ assistantState: undefined });
+        }
       })
     );
 
@@ -200,8 +218,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public enableSelection() {
-    // Enable element selection
-    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
+    this.setState({
+      selectionContext: { ...this.state.selectionContext, enabled: true },
+    });
   }
 
   public disableSelection() {
@@ -228,7 +247,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     return this.state.selection?.getSelection();
   }
 
+  private lastSelectTime = 0;
+  private lastSelectId = '';
+  private static readonly DOUBLE_CLICK_THRESHOLD = 400;
+
   public selectObject(obj: SceneObject, id: string, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    const now = Date.now();
+    const isDoubleClick =
+      id === this.lastSelectId && now - this.lastSelectTime < DashboardEditPane.DOUBLE_CLICK_THRESHOLD;
+    this.lastSelectTime = now;
+    this.lastSelectId = id;
+
     if (!force) {
       if (multi) {
         if (this.state.selection?.hasValue(id)) {
@@ -237,6 +266,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         }
       } else {
         if (this.state.selection?.getFirstObject() === obj) {
+          if (isDoubleClick) {
+            this.setState({ openPane: 'element' });
+            return;
+          }
           this.clearSelection();
           return;
         }
@@ -246,7 +279,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
-    this.updateSelection(new ElementSelection(selection), selected);
+    const dashboard = getDashboardSceneFor(this);
+    const paneOnSelect = isDoubleClick ? 'element' : dashboard.state.isEditing ? 'assistant' : undefined;
+    this.updateSelection(new ElementSelection(selection), selected, paneOnSelect);
   }
 
   private removeMultiSelectedObject(id: string) {
@@ -264,17 +299,26 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this.updateSelection(new ElementSelection([...entries]), selected);
   }
 
-  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
-    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
-    // This make sure they fire before unmounting
+  private updateSelection(
+    selection: ElementSelection | undefined,
+    selected: ElementSelectionContextItem[],
+    pane?: DashboardSidebarPaneName
+  ) {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
 
+    const openPane = pane ?? this.state.openPane;
+    const assistantState =
+      openPane === 'assistant' && !this.state.assistantState
+        ? { conversationKey: `conv-${Date.now()}` }
+        : this.state.assistantState;
+
     this.setState({
       selection,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selection ? 'element' : undefined,
+      openPane,
+      assistantState,
     });
   }
 
@@ -323,7 +367,34 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public openAssistantPane(prompt: string, context?: any[], panelKeys?: string[]) {
+    if (this.state.selection) {
+      this.clearSelection(true);
+    }
+
+    this.setState({
+      openPane: 'assistant',
+      processingPanelKeys: panelKeys?.length ? panelKeys : undefined,
+      assistantState: {
+        conversationKey: `conv-${Date.now()}`,
+        initialPrompt: prompt,
+        initialContext: context,
+      },
+    });
+  }
+
+  public clearProcessingPanels() {
+    if (this.state.processingPanelKeys?.length) {
+      this.setState({ processingPanelKeys: undefined });
+    }
+  }
+
   private newObjectAddedToCanvas(obj: SceneObject) {
+    if (this.state.openPane === 'assistant') {
+      return;
+    }
+
     this.selectObject(obj, obj.state.key!);
     this.state.selection?.markAsNewElement();
   }
