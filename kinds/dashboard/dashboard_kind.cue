@@ -737,11 +737,16 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
+		// Custom matcher scopes beyond the standard field matchers
+		#MatcherScope: "nested" | "annotation" @cuetsy(kind="type")
+
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// If set, limits this matcher to fields of that type. If not set, matcher applies to all non-nested fields.
+			scope?: #MatcherScope
 			// The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
@@ -855,7 +860,7 @@ lineage: schemas: [{
 			type: "datasource"
 			// The plugin type-id
 			group: string
-		} 
+		}
 
 		#ControlSourceRef: #DatasourceControlSourceRef
 	}
