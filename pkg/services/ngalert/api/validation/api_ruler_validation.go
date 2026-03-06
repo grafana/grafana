@@ -397,8 +397,11 @@ func ValidateRuleGroup(
 }
 
 func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) (*ngmodels.NotificationSettings, error) {
-	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
+	if n.Policy == nil && n.Receiver == "" {
+		return nil, errors.New("notification policy or receiver must be specified")
+	}
 
+	s := NotificationSettingsFromAlertRuleNotificationSettings(n)
 	if err := s.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}
