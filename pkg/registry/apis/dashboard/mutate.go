@@ -37,7 +37,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
-	return fmt.Errorf("unexpected resource: %+v", a.GetResource())
+	return apierrors.NewBadRequest(fmt.Sprintf("unexpected resource: %+v", a.GetResource()))
 }
 
 func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.Attributes) (err error) {
@@ -45,7 +45,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	obj := a.GetObject()
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return err
+		return apierrors.NewInternalError(fmt.Errorf("error getting meta accessor: %w", err))
 	}
 
 	var migrationErr error
@@ -100,7 +100,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 
 		// Noop for V2
 	default:
-		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)
+		return apierrors.NewBadRequest(fmt.Sprintf("mutation error: expected dashboard, got %T", obj))
 	}
 
 	if internalID != 0 {
@@ -112,7 +112,6 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	var validationErrorList field.ErrorList
 	var validationProcessingError error
 	if migrationErr == nil {
-		// Migration check passed, validate the spec now - this will respect the field validation mode!
 		validationErrorList, validationProcessingError = b.ValidateDashboardSpec(ctx, obj, fieldValidationMode)
 	}
 
@@ -123,6 +122,9 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				field.Invalid(field.NewPath("spec"), meta.GetName(), migrationErr.Error())})
 		}
 		if validationProcessingError != nil {
+			if _, ok := validationProcessingError.(apierrors.APIStatus); !ok {
+				return apierrors.NewInternalError(validationProcessingError)
+			}
 			return validationProcessingError
 		}
 		if len(validationErrorList) > 0 {

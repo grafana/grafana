@@ -23,7 +23,7 @@ import (
 func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj runtime.Object, fieldValidationMode string) (field.ErrorList, error) {
 	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
-		return nil, fmt.Errorf("error getting meta accessor: %w", err)
+		return nil, apierrors.NewInternalError(fmt.Errorf("error getting meta accessor: %w", err))
 	}
 
 	errorOnSchemaMismatches := false
@@ -35,12 +35,11 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 		case *v1.Dashboard:
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV1)
-		case *v2alpha1.Dashboard:
-		case *v2beta1.Dashboard:
+		case *v2alpha1.Dashboard, *v2beta1.Dashboard:
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
 		default:
-			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid dashboard type: %T", obj))
 		}
 	}
 	if mode == metav1.FieldValidationWarn {

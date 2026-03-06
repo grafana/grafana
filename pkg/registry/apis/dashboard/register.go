@@ -316,7 +316,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	}
 
-	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
+	return apierrors.NewBadRequest(fmt.Sprintf("unsupported validation: %+v", a.GetResource()))
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -324,7 +324,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	obj := a.GetOperationOptions()
 	deleteOptions, ok := obj.(*metav1.DeleteOptions)
 	if !ok {
-		return fmt.Errorf("expected v1.DeleteOptions")
+		return apierrors.NewBadRequest("expected v1.DeleteOptions")
 	}
 
 	// Skip validation for forced deletions (grace period = 0)
@@ -334,7 +334,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 
 	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
 	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+		return apierrors.NewInternalError(fmt.Errorf("failed to parse namespace: %w", err))
 	}
 
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
@@ -353,7 +353,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 			return nil
 		}
 
-		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
+		return apierrors.NewInternalError(fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err))
 	}
 
 	if provisioningData != nil {
@@ -370,12 +370,12 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	title, refresh, err := getDashboardProperties(dashObj)
 	if err != nil {
-		return fmt.Errorf("error extracting dashboard properties: %w", err)
+		return apierrors.NewBadRequest(fmt.Sprintf("error extracting dashboard properties: %v", err))
 	}
 
 	accessor, err := utils.MetaAccessor(dashObj)
 	if err != nil {
-		return fmt.Errorf("error getting meta accessor: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("error getting meta accessor: %w", err))
 	}
 
 	// Basic validations
@@ -400,7 +400,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting requester: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("error getting requester: %w", err))
 	}
 
 	// Validate folder existence if specified
@@ -426,7 +426,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 		quotaReached, err := b.QuotaService.CheckQuotaReached(ctx, dashboards.QuotaTargetSrv, params)
 		if err != nil && !errors.Is(err, quota.ErrDisabled) {
-			return err
+			return apierrors.NewInternalError(fmt.Errorf("failed to check quota: %w", err))
 		}
 		if quotaReached {
 			return apierrors.NewForbidden(dashv1.DashboardResourceInfo.GroupResource(), a.GetName(), dashboards.ErrQuotaReached)
@@ -444,17 +444,17 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	title, refresh, err := getDashboardProperties(newDashObj)
 	if err != nil {
-		return fmt.Errorf("error extracting dashboard properties: %w", err)
+		return apierrors.NewBadRequest(fmt.Sprintf("error extracting dashboard properties: %v", err))
 	}
 
 	oldAccessor, err := utils.MetaAccessor(oldDashObj)
 	if err != nil {
-		return fmt.Errorf("error getting old dash meta accessor: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("error getting old dash meta accessor: %w", err))
 	}
 
 	newAccessor, err := utils.MetaAccessor(newDashObj)
 	if err != nil {
-		return fmt.Errorf("error getting new dash meta accessor: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("error getting new dash meta accessor: %w", err))
 	}
 
 	// storage will set it to the previous value if not set
@@ -466,7 +466,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	// Parse namespace for old dashboard
 	nsInfo, err := authlib.ParseNamespace(oldAccessor.GetNamespace())
 	if err != nil {
-		return fmt.Errorf("failed to parse namespace: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("failed to parse namespace: %w", err))
 	}
 
 	// Basic validations
@@ -483,7 +483,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
-			return fmt.Errorf("error getting requester: %w", err)
+			return apierrors.NewInternalError(fmt.Errorf("error getting requester: %w", err))
 		}
 
 		if err := b.verifyFolderAccessPermissions(ctx, id, newAccessor.GetFolder()); err != nil {
@@ -535,16 +535,16 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 func (b *DashboardsAPIBuilder) validateFolderManagedBySameManager(folder *unstructured.Unstructured, dashboardAccessor utils.GrafanaMetaAccessor) error {
 	folderAccessor, err := utils.MetaAccessor(folder)
 	if err != nil {
-		return fmt.Errorf("error getting meta accessor: %w", err)
+		return apierrors.NewInternalError(fmt.Errorf("error getting meta accessor: %w", err))
 	}
 
 	if folderManager, ok := folderAccessor.GetManagerProperties(); ok && folderManager.Kind == utils.ManagerKindRepo {
 		manager, ok := dashboardAccessor.GetManagerProperties()
 		if !ok {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed")
+			return apierrors.NewBadRequest("folder is managed by a repository, but the dashboard is not managed")
 		}
 		if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed by the same manager")
+			return apierrors.NewBadRequest("folder is managed by a repository, but the dashboard is not managed by the same manager")
 		}
 	}
 
@@ -570,7 +570,7 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 		title = d.Spec.Title
 		refresh = d.Spec.TimeSettings.AutoRefresh
 	default:
-		return "", "", fmt.Errorf("unsupported dashboard version: %T", obj)
+		return "", "", fmt.Errorf("unsupported dashboard version: %T", obj) //nolint:errorlint
 	}
 
 	return title, refresh, nil

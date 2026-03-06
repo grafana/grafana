@@ -2,11 +2,14 @@ package dashboard
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -192,6 +195,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 
 			if tt.expectedError {
 				require.Error(t, err)
+				var statusErr apierrors.APIStatus
+				require.ErrorAs(t, err, &statusErr, "admission errors must be APIStatus to avoid HTTP 500")
+				require.Less(t, int(statusErr.Status().Code), http.StatusInternalServerError,
+					"admission errors for invalid input should not return 500")
 				return
 			}
 			require.NoError(t, err)
@@ -222,4 +229,32 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMutateErrorsAreStatusErrors(t *testing.T) {
+	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), migration.DefaultCacheTTL)
+	b := &DashboardsAPIBuilder{
+		features: featuremgmt.WithFeatures(),
+	}
+
+	t.Run("unexpected resource returns proper status error", func(t *testing.T) {
+		err := b.Mutate(context.Background(), admission.NewAttributesRecord(
+			&dashv1.Dashboard{},
+			nil,
+			dashv1.DashboardResourceInfo.GroupVersionKind(),
+			"",
+			"test",
+			// Use a non-dashboard resource to trigger the error
+			schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "unknown"},
+			"",
+			admission.Create,
+			&metav1.CreateOptions{},
+			false,
+			nil,
+		), nil)
+		require.Error(t, err)
+		var statusErr apierrors.APIStatus
+		require.ErrorAs(t, err, &statusErr, "error must be APIStatus, not plain error")
+		require.Equal(t, int32(http.StatusBadRequest), statusErr.Status().Code)
+	})
 }
