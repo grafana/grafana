@@ -103,7 +103,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	// IsOnBehalfOfUser traverses the full actor chain and returns true only when
 	// the innermost actor is a User or ServiceAccount — correctly handles multi-hop chains.
 	if accessTokenClaims.Rest.IsOnBehalfOfUser() {
-		return s.authenticateAsServiceOrUser(*accessTokenClaims, jwtToken)
+		return s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken)
 	}
 
 	return s.authenticateAsService(*accessTokenClaims, jwtToken)
@@ -243,15 +243,15 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	}, nil
 }
 
-// authenticateAsServiceOrUser handles access tokens that carry an Actor (on-behalf-of).
-// The effective identity is the actor (user/service account/etc.); the token's
-// DelegatedPermissions are already short-listed by the issuer and are used to restrict
-// permissions the same way as when an ID token is present.
-func (s *ExtendedJWT) authenticateAsServiceOrUser(
+// authenticateAsUserViaOBO handles access tokens that carry an Actor (on-behalf-of)
+// without a separate ID token. The effective identity is always the innermost actor
+// in the chain, which is guaranteed to be a User or ServiceAccount by
+// IsOnBehalfOfUser (authlib). DelegatedPermissions restrict the user's permissions
+// the same way as when an explicit ID token is present.
+func (s *ExtendedJWT) authenticateAsUserViaOBO(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
 ) (*authn.Identity, error) {
-	// Allow access tokens with wildcard namespace or namespace matching this instance.
 	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
@@ -265,7 +265,7 @@ func (s *ExtendedJWT) authenticateAsServiceOrUser(
 	}
 
 	// NewAccessTokenAuthInfo traverses the full actor chain to find the innermost
-	// identity actor — correctly handles multi-hop OBO
+	// identity actor — correctly handles multi-hop OBO.
 	authInfo := authlib.NewAccessTokenAuthInfo(accessTokenClaims)
 	subject := authInfo.GetSubject()
 	if subject == "" {
