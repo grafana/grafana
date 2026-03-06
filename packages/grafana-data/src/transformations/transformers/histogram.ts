@@ -196,8 +196,12 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
     let yMaxField = frame.fields.find((f) => f.name === 'yMax')!;
     let countField = frame.fields.find((f) => f.name === 'count')!;
 
-    let uniqueMaxs = [...new Set(yMaxField.values)].sort((a, b) => a - b);
-    let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
+    let uniqueMaxs = [...new Set(yMaxField.values)]
+      .sort((a, b) => a - b)
+      .filter((val) => val >= histogramBucketSizes[0]);
+    let uniqueMins = [...new Set(yMinField.values)]
+      .sort((a, b) => a - b)
+      .filter((val) => val >= histogramBucketSizes[0]);
 
     // useLogScale is assumed for native histograms, we get the multiplier from first bucket's min/max bounds
     let bucketFactor = uniqueMaxs[0] / uniqueMins[0];
