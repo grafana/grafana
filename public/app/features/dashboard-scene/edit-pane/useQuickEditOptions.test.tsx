@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 import { EventBusSrv } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -18,6 +18,7 @@ describe('useQuickEditOptions', () => {
     jest.spyOn(panel, 'interpolate').mockImplementation((value) => value as string);
     jest.spyOn(panel, 'getPanelContext').mockReturnValue({
       eventBus: new EventBusSrv(),
+      eventsScope: 'local',
       onOptionsChange: jest.fn(),
     } as ReturnType<typeof panel.getPanelContext>);
     jest.spyOn(panel, 'onOptionsChange').mockImplementation(jest.fn());
