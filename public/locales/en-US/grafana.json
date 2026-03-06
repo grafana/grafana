@@ -8724,6 +8724,11 @@
     "placeholder-neutral": "auto",
     "presets": {
       "blocks": "Blocks",
+      "circle": "Circle",
+      "circle-blocks": "Circle Blocks",
+      "circle-glow": "Circle Glow",
+      "circle-segmented": "Circle Segmented",
+      "circle-spotlight": "Circle Spotlight",
       "default": "Default",
       "glow": "Glow",
       "segmented": "Segmented",
