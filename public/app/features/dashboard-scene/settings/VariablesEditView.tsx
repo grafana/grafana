@@ -23,6 +23,7 @@ import {
   WORD_CHARACTERS_REGEX,
   getVariableDefault,
   getVariableScene,
+  isVariableEditable,
 } from './variables/utils';
 
 export interface VariablesEditViewState extends DashboardEditViewState {
@@ -228,7 +229,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
-  const defaultVariables = useMemo(() => variables.filter((v) => Boolean(v.state?.origin)), [variables]);
+  const defaultVariables = useMemo(() => variables.filter((v) => !isVariableEditable(v)), [variables]);
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
