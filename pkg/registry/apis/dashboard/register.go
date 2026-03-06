@@ -658,7 +658,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
-		}); err != nil {
+		},
+		nil, // no context subresource
+	); err != nil {
 		return err
 	}
 
@@ -677,7 +679,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
-		}); err != nil {
+		},
+		nil, // no context subresource
+	); err != nil {
 		return err
 	}
 
@@ -696,7 +700,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
-		}); err != nil {
+		},
+		nil, // no context subresource
+	); err != nil {
 		return err
 	}
 
@@ -714,7 +720,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				err = b.scheme.Convert(access, &dto.Access, nil)
 			}
 			return dto, err
-		}); err != nil {
+		},
+		NewContextREST,
+	); err != nil {
 		return err
 	}
 
@@ -729,6 +737,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	libraryPanels *utils.ResourceInfo,
 	snapshots *utils.ResourceInfo,
 	newDTOFunc dtoBuilder,
+	newContextSubresource SubresourceBuilder,
 ) error {
 	// Register the versioned storage
 	storage := map[string]rest.Storage{}
@@ -752,6 +761,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		)
 		if err != nil {
 			return err
+		}
+
+		if newContextSubresource != nil {
+			storage[dashboards.StoragePath("context")] = newContextSubresource(storage[dashboards.StoragePath()])
 		}
 
 		return nil
@@ -790,6 +803,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	)
 	if err != nil {
 		return err
+	}
+
+	if newContextSubresource != nil {
+		storage[dashboards.StoragePath("context")] = newContextSubresource(storage[dashboards.StoragePath()])
 	}
 
 	// Expose read library panels

@@ -119,6 +119,44 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Dashboard'],
       }),
+      getDashboardContext: build.query<GetDashboardContextApiResponse, GetDashboardContextApiArg>({
+        query: (queryArg) => ({
+          url: `/dashboards/${queryArg.name}/context`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Dashboard'],
+      }),
+      replaceDashboardContext: build.mutation<ReplaceDashboardContextApiResponse, ReplaceDashboardContextApiArg>({
+        query: (queryArg) => ({
+          url: `/dashboards/${queryArg.name}/context`,
+          method: 'PUT',
+          body: queryArg.dashboard,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Dashboard'],
+      }),
+      updateDashboardContext: build.mutation<UpdateDashboardContextApiResponse, UpdateDashboardContextApiArg>({
+        query: (queryArg) => ({
+          url: `/dashboards/${queryArg.name}/context`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Dashboard'],
+      }),
       getDashboardDto: build.query<GetDashboardDtoApiResponse, GetDashboardDtoApiArg>({
         query: (queryArg) => ({ url: `/dashboards/${queryArg.name}/dto` }),
         providesTags: ['Dashboard'],
@@ -294,6 +332,43 @@ export type UpdateDashboardApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetDashboardContextApiResponse = /** status 200 OK */ Dashboard;
+export type GetDashboardContextApiArg = {
+  /** name of the Dashboard */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceDashboardContextApiResponse = /** status 200 OK */ Dashboard | /** status 201 Created */ Dashboard;
+export type ReplaceDashboardContextApiArg = {
+  /** name of the Dashboard */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  dashboard: Dashboard;
+};
+export type UpdateDashboardContextApiResponse = /** status 200 OK */ Dashboard | /** status 201 Created */ Dashboard;
+export type UpdateDashboardContextApiArg = {
+  /** name of the Dashboard */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
+};
 export type GetDashboardDtoApiResponse = /** status 200 OK */ DashboardWithAccessInfo;
 export type GetDashboardDtoApiArg = {
   /** name of the DashboardWithAccessInfo */
@@ -330,6 +405,10 @@ export type ApiResourceList = {
   kind?: string;
   /** resources contains the name of the resources and if they are namespaced. */
   resources: ApiResource[];
+};
+export type DashboardContext = {
+  /** Default layout that would be used when adding new containers (rows, tabs) */
+  defaultLayoutType?: string;
 };
 export type Time = string;
 export type FieldsV1 = object;
@@ -1222,6 +1301,7 @@ export type DashboardStatus = {
 export type Dashboard = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  context: DashboardContext;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
@@ -1318,6 +1398,7 @@ export type DashboardWithAccessInfo = {
   access: DashboardAccess;
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  context: DashboardContext;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
@@ -1337,6 +1418,10 @@ export const {
   useReplaceDashboardMutation,
   useDeleteDashboardMutation,
   useUpdateDashboardMutation,
+  useGetDashboardContextQuery,
+  useLazyGetDashboardContextQuery,
+  useReplaceDashboardContextMutation,
+  useUpdateDashboardContextMutation,
   useGetDashboardDtoQuery,
   useLazyGetDashboardDtoQuery,
 } = injectedRtkApi;
