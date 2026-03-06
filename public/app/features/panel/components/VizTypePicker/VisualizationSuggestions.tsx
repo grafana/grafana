@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import {
@@ -36,14 +36,14 @@ export interface Props {
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
   const structureRev = useStructureRev(data?.series ?? []);
 
   const { value, loading, error, retry } = useAsyncRetry(async () => {
-    await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
-    setHasFetched(true);
+    await new Promise((resolve) => setTimeout(resolve, hasFetchedRef.current ? 75 : 0));
+    hasFetchedRef.current = true;
     return await getAllSuggestions(data?.series);
-  }, [hasFetched, structureRev]);
+  }, [structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
@@ -118,7 +118,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   const handleSuggestionClick = useCallback(
     (suggestion: PanelPluginVisualizationSuggestion, suggestionIndex: number) => {
-      VizSuggestionsInteractions.suggestionAccepted({
+      VizSuggestionsInteractions.suggestionApplied({
         pluginId: suggestion.pluginId,
         suggestionName: suggestion.name,
         panelState,
@@ -131,6 +131,10 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         fieldConfig: suggestion.fieldConfig,
         withModKey: false,
         fromSuggestions: true,
+        suggestionMetadata: {
+          suggestionName: suggestion.name,
+          suggestionIndex: suggestionIndex + 1,
+        },
       });
     },
     [onChange, panelState]
@@ -152,13 +156,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash) {
-      VizSuggestionsInteractions.suggestionPreviewed({
-        pluginId: suggestions[0].pluginId,
-        suggestionName: suggestions[0].name,
-        panelState,
-        isAutoSelected: true,
-      });
-
       onChange({
         pluginId: suggestions[0].pluginId,
         options: suggestions[0].options,
