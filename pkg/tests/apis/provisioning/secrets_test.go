@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ import (
 func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
 	})
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}

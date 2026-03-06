@@ -588,18 +588,18 @@ var (
 		{
 			Name:         "alertingUIUseBackendFilters",
 			Description:  "Enables the UI to use certain backend-side filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingUIUseFullyCompatBackendFilters",
 			Description:  "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
@@ -1014,6 +1014,14 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingAlertListPanelEnhancements",
+			Description:  "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
 			Expression:   "false",
 		},
 		{
@@ -2486,6 +2494,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryGlobal",
 			Description:  "Enables the notification history global menu item viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryTriage",
+			Description:  "Enables the notification history timeline in the triage instance details drawer",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
