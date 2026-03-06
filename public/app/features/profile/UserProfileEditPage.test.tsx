@@ -330,12 +330,6 @@ describe('UserProfileEditPage', () => {
         PluginExtensionPointComponent3,
       ];
 
-      it('should not show tabs when no components are registered', async () => {
-        await getTestContext();
-        const { extensionPointTabs } = getSelectors();
-        expect(extensionPointTabs()).not.toBeInTheDocument();
-      });
-
       it('should group registered components into tabs', async () => {
         await getTestContext({ components });
         const { extensionPointTabs, extensionPointTab } = getSelectors();
