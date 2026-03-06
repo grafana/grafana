@@ -2460,6 +2460,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamService",
+			Description:  "Use the new team service that uses the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "true",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,
