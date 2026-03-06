@@ -534,11 +534,7 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 
 	var writer io.WriteCloser
 	var err error
-	if key.GUID != "" {
-		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
-	} else {
-		writer, err = d.kv.Save(ctx, dataSection, key.String())
-	}
+	writer, err = d.kv.Save(ctx, dataSection, key.String())
 	if err != nil {
 		return err
 	}

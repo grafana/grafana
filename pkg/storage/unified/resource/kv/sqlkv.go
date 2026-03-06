@@ -279,8 +279,8 @@ func (w *sqlWriteCloser) Close() error {
 		return nil
 	}
 
-	// Check if storage_backend injected a transaction (for backward-compatibility mode)
-	tx, ok := TxFromCtx(w.ctx)
+	// Check if storage_backend injected backwards-compatibility data.
+	compatData, ok := backwardsCompatilityDataFromCtx(w.ctx)
 	if !ok {
 		// Non-backwards-compatible mode: simple insert/update
 		// This can be simplified once resource_history columns are dropped
@@ -314,9 +314,9 @@ func (w *sqlWriteCloser) Close() error {
 	// table with `previous_resource_version` and `generation` and updates the `resource` table accordingly. See the
 	// storage_backend for the full implementation.
 	// the `resource` table is updated in datastore.go applyBackwardsCompatibleChanges method
-	dataKey, err := ParseKeyWithGUID(w.key)
+	dataKey, err := ParseKey(w.key)
 	if err != nil {
-		return fmt.Errorf("failed to parse key for GUID: %w", err)
+		return fmt.Errorf("failed to parse data key: %w", err)
 	}
 
 	var action int64
@@ -329,8 +329,8 @@ func (w *sqlWriteCloser) Close() error {
 		action = 3
 	}
 
-	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)
-	_, err = tx.ExecContext(w.ctx, query, args...)
+	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, compatData.guid, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)
+	_, err = compatData.tx.ExecContext(w.ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to save to resource_history: %w", err)
 	}

@@ -12,32 +12,34 @@ type TxExecer interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
-type txContextKey string
-
-const txKey txContextKey = "kv_db_tx"
-
-// ContextWithTx stores a transaction executor in the context.
-// This is used by storage_backend.go to pass a transaction to sqlkv for
-// backwards-compatibility mode operations.
-// Note: We store the tx as-is. The caller should ensure the type implements TxExecer.
-func ContextWithTx(ctx context.Context, tx TxExecer) context.Context {
-	return context.WithValue(ctx, txKey, tx)
+type backwardsCompatilityData struct {
+	tx   TxExecer
+	guid string
 }
 
-// TxFromCtx retrieves a transaction executor from the context.
-// Returns nil and false if no transaction is present.
-// Note: We attempt to assert to TxExecer. If the stored value is a db.Tx,
-// this will work because db.Tx.ExecContext returns sql.Result (via type alias).
-func TxFromCtx(ctx context.Context) (TxExecer, bool) {
-	val := ctx.Value(txKey)
+type backwardsCompatilityContextKey string
+
+const backwardsCompatilityKey backwardsCompatilityContextKey = "kv_backwards_compatibility"
+
+// ContextWithBackwardsCompatilityData stores the SQL compatibility data used by sqlkv when
+// storage_backend.go is emulating the legacy unified/sql write path.
+func ContextWithBackwardsCompatilityData(ctx context.Context, tx TxExecer, guid string) context.Context {
+	return context.WithValue(ctx, backwardsCompatilityKey, backwardsCompatilityData{
+		tx:   tx,
+		guid: guid,
+	})
+}
+
+func backwardsCompatilityDataFromCtx(ctx context.Context) (backwardsCompatilityData, bool) {
+	val := ctx.Value(backwardsCompatilityKey)
 	if val == nil {
-		return nil, false
+		return backwardsCompatilityData{}, false
 	}
-	tx, ok := val.(TxExecer)
-	if !ok {
-		// The stored value doesn't implement TxExecer directly
-		// This shouldn't happen if ContextWithTx was called correctly
-		return nil, false
+
+	data, ok := val.(backwardsCompatilityData)
+	if !ok || data.tx == nil || data.guid == "" {
+		return backwardsCompatilityData{}, false
 	}
-	return tx, true
+
+	return data, true
 }

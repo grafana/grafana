@@ -121,6 +121,30 @@ func TestDataKey_String(t *testing.T) {
 	}
 }
 
+func TestDataStoreSaveUsesStandardKeyWhenGUIDIsPresent(t *testing.T) {
+	bdb := setupTestBadgerDB(t)
+	ds := newDataStore(NewBadgerKV(bdb))
+
+	key := DataKey{
+		Group:           "test-group",
+		Resource:        "test-resource",
+		Namespace:       "test-namespace",
+		Name:            "test-name",
+		ResourceVersion: 1934555792099250176,
+		Action:          DataActionCreated,
+		Folder:          "test-folder",
+		GUID:            "test-guid",
+	}
+
+	require.NoError(t, ds.Save(t.Context(), key, bytes.NewReader([]byte("test-value"))))
+
+	err := bdb.View(func(txn *badger.Txn) error {
+		_, err := txn.Get([]byte(dataSection + "/" + key.String()))
+		return err
+	})
+	require.NoError(t, err)
+}
+
 func TestDataKey_Validate(t *testing.T) {
 	rv := int64(1234567890)
 

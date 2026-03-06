@@ -656,7 +656,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			if err := k.dataStore.Save(kv.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+			compatCtx := kv.ContextWithBackwardsCompatilityData(ctx, tx, dataKey.GUID)
+			if err := k.dataStore.Save(compatCtx, dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
 

@@ -30,20 +30,18 @@ type DataKey struct {
 	GUID string
 }
 
-// Temporary while we need to support unified/sql/backend compatibility.
-// Remove once we stop using RvManager in storage_backend.go
-func ParseKeyWithGUID(key string) (DataKey, error) {
+func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 5 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	rvActionFolderGUIDParts := strings.Split(parts[4], "~")
-	if len(rvActionFolderGUIDParts) != 4 {
+	rvActionFolderParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderParts) != 3 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	rv, err := strconv.ParseInt(rvActionFolderGUIDParts[0], 10, 64)
+	rv, err := strconv.ParseInt(rvActionFolderParts[0], 10, 64)
 	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderGUIDParts[0], key, err)
+		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderParts[0], key, err)
 	}
 	return DataKey{
 		Group:           parts[0],
@@ -51,20 +49,13 @@ func ParseKeyWithGUID(key string) (DataKey, error) {
 		Namespace:       parts[2],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          DataAction(rvActionFolderGUIDParts[1]),
-		Folder:          rvActionFolderGUIDParts[2],
-		GUID:            rvActionFolderGUIDParts[3],
+		Action:          DataAction(rvActionFolderParts[1]),
+		Folder:          rvActionFolderParts[2],
 	}, nil
 }
 
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
-}
-
-// Temporary while we need to support unified/sql/backend compatibility
-// Remove once we stop using RvManager in storage_backend.go
-func (k DataKey) StringWithGUID() string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
 }
 
 func (k DataKey) Equals(other DataKey) bool {
