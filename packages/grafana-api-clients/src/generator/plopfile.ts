@@ -8,6 +8,7 @@ import {
   getFilesToFormat,
   runGenerateApis,
   updatePackageJsonExports,
+  updatePackageJsonFetchExports,
   validateGroup,
   validateVersion,
 } from './helpers.ts';
@@ -21,6 +22,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
   plop.setActionType('runGenerateApis', runGenerateApis(basePath));
   plop.setActionType('formatFiles', formatFiles(basePath));
   plop.setActionType('updatePackageJsonExports', updatePackageJsonExports(basePath));
+  plop.setActionType('updatePackageJsonFetchExports', updatePackageJsonFetchExports(basePath));
 
   // Used in templates to format endpoints
   plop.setHelper('formatEndpoints', formatEndpoints());
@@ -88,6 +90,24 @@ export default function plopGenerator(plop: NodePlopAPI) {
         },
         {
           type: 'updatePackageJsonExports',
+        },
+        // Fetch client actions
+        {
+          type: 'add',
+          path: path.join(
+            basePath,
+            `packages/grafana-api-clients/src/clients/fetch/${groupName}/${version}/baseApi.ts`
+          ),
+          templateFile: './templates/fetch-baseApi.ts.hbs',
+        },
+        {
+          type: 'modify',
+          path: path.join(basePath, 'packages/grafana-api-clients/src/scripts/orval.config.ts'),
+          pattern: '// PLOP_INJECT_FETCH_API_CLIENT - Used by the API client generator',
+          templateFile: './templates/fetch-config-entry.hbs',
+        },
+        {
+          type: 'updatePackageJsonFetchExports',
         }
       );
     }
@@ -123,7 +143,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
   };
 
   const generator: PlopGeneratorConfig = {
-    description: 'Generate RTK Query API client for a Grafana API group',
+    description: 'Generate fetch and RTK Query API clients for a Grafana API group',
     prompts: [
       {
         type: 'confirm',

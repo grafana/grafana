@@ -36,16 +36,19 @@ export const formatEndpoints = () => (endpointsInput: string | string[]) => {
 
 // List of created or modified files
 export const getFilesToFormat = (groupName: string, version: string, isEnterprise = false) => {
-  const apiClientBasePath = isEnterprise
+  const rtkqApiClientBasePath = isEnterprise
     ? 'public/app/extensions/api/clients'
     : 'packages/grafana-api-clients/src/clients/rtkq';
+  const fetchApiClientBasePath = isEnterprise ? null : 'packages/grafana-api-clients/src/clients/fetch';
   const generateScriptPath = isEnterprise
     ? 'local/generate-enterprise-apis.ts'
     : 'packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts';
 
   return [
-    `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
-    `${apiClientBasePath}/${groupName}/${version}/index.ts`,
+    `${rtkqApiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
+    `${rtkqApiClientBasePath}/${groupName}/${version}/index.ts`,
+    `${fetchApiClientBasePath}/${groupName}/${version}/baseApi.ts`,
+    `${fetchApiClientBasePath}/${groupName}/${version}/client.gen.ts`,
     generateScriptPath,
     ...(isEnterprise
       ? []
@@ -53,8 +56,9 @@ export const getFilesToFormat = (groupName: string, version: string, isEnterpris
           `packages/grafana-api-clients/src/index.ts`,
           `packages/grafana-api-clients/src/clients/rtkq/index.ts`,
           `packages/grafana-api-clients/package.json`,
+          `packages/grafana-api-clients/src/scripts/orval.config.ts`,
         ]),
-  ];
+  ].filter(Boolean);
 };
 
 export const runGenerateApis =
@@ -165,6 +169,47 @@ export const updatePackageJsonExports =
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('❌ Failed to update package.json exports:', errorMessage);
       return '❌ Failed to update package.json exports. See error above.';
+    }
+  };
+
+export const updatePackageJsonFetchExports =
+  (basePath: string): PlopActionFunction =>
+  (answers) => {
+    try {
+      const { groupName, version } = answers;
+
+      if (!groupName || !version) {
+        return '❌ Missing groupName or version for package.json update';
+      }
+
+      const packageJsonPath = path.join(basePath, 'packages/grafana-api-clients/package.json');
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+      // Create the new export entry
+      const newExportKey = `./unstable/fetch/${groupName}/${version}`;
+      const newExportValue = {
+        '@grafana-app/source': `./src/clients/fetch/${groupName}/${version}/client.gen.ts`,
+        types: `./dist/types/clients/fetch/${groupName}/${version}/client.gen.d.ts`,
+        import: `./src/clients/fetch/${groupName}/${version}/client.gen.ts`,
+        require: `./src/clients/fetch/${groupName}/${version}/client.gen.ts`,
+      };
+
+      // Check if export already exists
+      if (packageJson.exports[newExportKey]) {
+        return `✅ Export for ${newExportKey} already exists in package.json`;
+      }
+
+      // Add the new export entry
+      packageJson.exports[newExportKey] = newExportValue;
+
+      // Write the updated package.json back to file
+      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+
+      return `✅ Added export for ${newExportKey} to package.json`;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ Failed to update package.json fetch exports:', errorMessage);
+      return '❌ Failed to update package.json fetch exports. See error above.';
     }
   };
 
