@@ -422,16 +422,28 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	// Items with metadata, spec, etc
 	if dashboards.LooksLikeK8sResource(spec) {
 		obj := &unstructured.Unstructured{Object: spec}
-		if strings.HasPrefix(obj.GetAPIVersion(), "dashboard.grafana.app/") {
-			uid, ok, _ := unstructured.NestedString(spec, "uid")
+		apiVersion := obj.GetAPIVersion()
+		switch {
+		case strings.HasPrefix(apiVersion, dashboardsV1.GROUP):
+			if _, ok := spec["spec"]; !ok {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must include the dashboard contents in the spec property", nil)
+			}
+			v, ok, _ := unstructured.NestedString(spec, "uid")
 			if ok {
 				delete(obj.Object, "uid")
-				obj.SetName(uid) // overwrite the incoming name -- this can happen from TF providers
+				obj.SetName(v) // overwrite the incoming name -- this can happen from TF providers
+			}
+			_, ok, _ = unstructured.NestedString(spec, "id")
+			if ok {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must not include an id on the root element", nil)
 			}
 			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
 			return hs.saveDashboardViaK8s(c, cmd, obj)
+
+		case apiVersion == "":
+			return response.Error(http.StatusBadRequest, "Dashboard appears to be a k8s style resource, but is missing an explicit apiVersion.", nil)
 		}
-		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", nil)
+		return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
 	}
 
 	_, found := spec["title"]
@@ -513,7 +525,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 
 	title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 	if title == "" {
-		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+		return response.Error(http.StatusBadRequest, "Dashboard spec is missing required title property", nil)
 	}
 
 	ctx := c.Req.Context()
@@ -524,12 +536,12 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 	client := tmp.Resource(gv.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(namespace)
 
+	obj.SetKind("Dashboard") // Writing to the dashboard API
 	obj.SetNamespace(namespace)
 	obj.SetAnnotations(map[string]string{}) // clear any annotations
 	obj.SetLabels(map[string]string{})      // clear any labels
 	delete(obj.Object, "status")
 	delete(obj.Object, "access") // can exist if you copied a /dto object
-	delete(obj.Object, "kind")   // copy from UI may have DashboardWithAccessInfo
 
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
