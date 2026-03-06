@@ -62,7 +62,7 @@ For more information about feature toggles, refer to [Configure feature toggles]
 
 ### Enable Git providers
 
-If you're using Grafana Enterprise v12.4 and want to set up Git Sync with pure Git, GitLab or Bitbucket, or if you're using Grafana OSS v12.4 and want to set up Git Sync with pure Git, add them to your configuration file:
+If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure Git, GitLab or Bitbucket, or if you're using Grafana OSS v12.4.0 and want to set up Git Sync with pure Git, add them to your configuration file:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
 1. Add the available providers:
