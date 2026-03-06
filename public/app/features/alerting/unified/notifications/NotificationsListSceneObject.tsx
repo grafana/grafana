@@ -24,11 +24,7 @@ import {
 import {
   Alert,
   Badge,
-<<<<<<< HEAD
   Icon,
-  LinkButton,
-=======
->>>>>>> 9764190dcca (Extract shared AlertEnrichments component to reduce duplication)
   LoadingBar,
   Pagination,
   Spinner,
