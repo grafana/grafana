@@ -19,6 +19,15 @@ import (
 //   - Resource operations verify permissions based on the resource's actual location
 //   - Folder operations verify permissions on the folder itself, not recursively on contents
 //   - File metadata is user-controlled and not solely trusted for permission checks
+//
+// Example Hierarchy:
+//   Team Folder (user is Editor)
+//   ├── Dashboard A (inherits at least Editor from parent)
+//   ├── Dashboard B (can have elevated permissions, e.g., Admin)
+//   └── Subfolder (inherits at least Editor from parent)
+//       └── Dashboard C (inherits at least Editor from Team Folder)
+//
+// If user is Editor on "Team Folder", they automatically have at least Editor on all contents.
 type Authorizer interface {
 	// AuthorizeResource checks if the current user has permission to perform
 	// the specified verb on the given resource.
@@ -27,20 +36,43 @@ type Authorizer interface {
 	// resource currently exists (from the database), not the folder specified in the
 	// file metadata. This ensures users cannot bypass folder permissions by declaring
 	// a different folder in their file content.
+	//
+	// Example:
+	//   - Dashboard "my-dash" exists in "team-a-folder" (user is Reader - no edit access)
+	//   - User submits file claiming dashboard is in "public-folder" (user is Editor)
+	//   - Authorization checks "team-a-folder" (actual location) → DENIED
+	//   - This prevents bypassing folder permissions via file metadata manipulation
 	AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error
 
 	// AuthorizeCreateFolder checks if the current user has permission to create
 	// a folder at the specified path. This checks create permission on the parent folder.
+	//
+	// Example:
+	//   - User wants to create "team-a/project-x/"
+	//   - Checks: create permission on "team-a" folder
+	//   - If user is Editor or Admin on "team-a", the operation is allowed
 	AuthorizeCreateFolder(ctx context.Context, path string) error
 
 	// AuthorizeDeleteFolder checks if the current user has permission to delete
 	// the folder at the specified path. This checks delete permission on the folder itself.
+	//
+	// Example:
+	//   - User wants to delete "team-a/project-x/" (contains dashboards A, B, C)
+	//   - Checks: delete permission on "team-a/project-x" folder
+	//   - Does NOT check permissions on dashboards A, B, C individually
+	//   - Folder permissions apply to all contents
 	AuthorizeDeleteFolder(ctx context.Context, path string) error
 
 	// AuthorizeMoveFolder checks if the current user has permission to move a folder
 	// from originalPath to targetPath. This checks:
 	// - Update permission on the source folder
 	// - Create permission on the target parent folder
+	//
+	// Example:
+	//   - User wants to move "team-a/old-project/" to "team-b/new-project/"
+	//   - Checks: update permission on "team-a/old-project"
+	//   - Checks: create permission on "team-b" (parent of target)
+	//   - Does NOT check permissions on contents of "old-project"
 	AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error
 
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
@@ -72,6 +104,16 @@ func NewAuthorizer(repo *provisioning.Repository, access auth.AccessChecker) Aut
 // This distinction is important because the file content is user-controlled, while the
 // existing resource location comes from the database. Checking against the actual location
 // prevents users from bypassing folder permissions by declaring a different folder in their file.
+//
+// Example - Creating a new dashboard:
+//   - File declares: folder="team-a"
+//   - Checks: create permission on "team-a" (user must be Editor or Admin)
+//
+// Example - Updating existing dashboard:
+//   - File declares: folder="public" (user is Editor)
+//   - Actual location: folder="team-a" (user is Reader - no edit access)
+//   - Checks: update permission on "team-a" (actual location)
+//   - Result: DENIED (prevents permission bypass)
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
 	// Determine the resource name for the authorization check
 	var name string
@@ -105,6 +147,10 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 //
 // Authorization is checked against the parent folder: to create a new folder, the user
 // must have create permissions on the parent folder where it will be placed.
+//
+// Example:
+//   - Creating "team-a/new-project/" requires create permission on "team-a"
+//   - Creating "top-level-folder/" requires create permission on root
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
 	// Determine parent folder from path
 	parentFolder := ""
@@ -132,6 +178,12 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 // Authorization is checked only against the folder itself. Permissions on the parent folder
 // grant at least that level of access to all children, so checking the folder is sufficient.
 // Individual nested resources are not checked separately.
+//
+// Example:
+//   Deleting "team-a/project-x/" (containing dashboards A, B, C):
+//   - Checks: delete permission on "team-a/project-x"
+//   - Does NOT check: permissions on dashboard A, B, or C
+//   - Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
 	folderID := parseFolder(path, a.repo.Name)
 
@@ -152,6 +204,12 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 //
 // Individual nested resources are not checked separately. Permissions on the source folder
 // apply to all its contents, so checking the folder itself is sufficient.
+//
+// Example:
+//   Moving "team-a/old-project/" to "team-b/new-project/":
+//   - Checks: update permission on "team-a/old-project"
+//   - Checks: create permission on "team-b" (parent of target)
+//   - Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Check update permission on the source folder
 	sourceFolderID := parseFolder(originalPath, a.repo.Name)
