@@ -13,16 +13,26 @@ export interface MatcherScopeSelectorProps {
   scope?: MatcherScope;
   scopes: Set<MatcherScope>;
   onChange: (newScope: MatcherScope) => void;
+  allowedScopes?: MatcherScope[];
 }
 
 function useScopesOptions(
   uniqScopes: Set<MatcherScope>,
-  currentScope?: MatcherScope
+  currentScope?: MatcherScope,
+  allowedScopes?: MatcherScope[]
 ): Array<ComboboxOption<MatcherScope>> {
   return useMemo(() => {
     // Remove the series scope from the set, so we can gaurantee it's the first option, and also
     // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
     uniqScopes.delete('series');
+
+    if (allowedScopes) {
+      uniqScopes.forEach((scope) => {
+        if (!allowedScopes.includes(scope)) {
+          uniqScopes.delete(scope);
+        }
+      });
+    }
 
     const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
 
@@ -57,12 +67,12 @@ function useScopesOptions(
     }
 
     return arr;
-  }, [uniqScopes, currentScope]);
+  }, [uniqScopes, currentScope, allowedScopes]);
 }
 
-export function MatcherScopeSelector({ scope, scopes, onChange }: MatcherScopeSelectorProps) {
+export function MatcherScopeSelector({ scope, scopes, onChange, allowedScopes }: MatcherScopeSelectorProps) {
   const id = useId();
-  const matcherScopeOptions = useScopesOptions(scopes, scope);
+  const matcherScopeOptions = useScopesOptions(scopes, scope, allowedScopes);
 
   if (matcherScopeOptions.length === 0) {
     return null;

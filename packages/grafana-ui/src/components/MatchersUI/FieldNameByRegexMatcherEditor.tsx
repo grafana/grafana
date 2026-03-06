@@ -11,7 +11,7 @@ import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames } from './utils';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { id, options, onChange, data, scope = 'series' } = props;
+  const { id, options, onChange, data, scope = 'series', allowedScopes } = props;
   const [regexp, setRegexp] = useState(options);
   const names = useFieldDisplayNames(data);
   const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
@@ -25,7 +25,12 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
         onChange={(e) => setRegexp(e.currentTarget.value)}
         onBlur={() => onChange(regexp, scope)}
       />
-      <MatcherScopeSelector scope={scope} scopes={uniqScopes} onChange={(newScope) => onChange(regexp, newScope)} />
+      <MatcherScopeSelector
+        scope={scope}
+        scopes={uniqScopes}
+        onChange={(newScope) => onChange(regexp, newScope)}
+        allowedScopes={allowedScopes}
+      />
     </Stack>
   );
 });

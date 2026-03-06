@@ -17,4 +17,5 @@ export interface MatcherUIProps<T> {
   options: T;
   scope?: MatcherScope;
   onChange: (options: T, scope?: MatcherScope) => void;
+  allowedScopes?: MatcherScope[];
 }

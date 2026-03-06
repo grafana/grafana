@@ -15,6 +15,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { MatcherScope } from '@grafana/schema';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -23,6 +24,11 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+
+const ALLOWED_SCOPES: MatcherScope[] = ['series'];
+if (config.featureToggles.nestedFramesFieldOverrides) {
+  ALLOWED_SCOPES.push('nested');
+}
 
 // [FIXME] Is there something else we need to do in here?
 
@@ -137,6 +143,7 @@ export function getFieldOverrideCategories(
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
               scope={override.matcher.scope}
+              allowedScopes={ALLOWED_SCOPES}
             />
           );
         },

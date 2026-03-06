@@ -13,7 +13,7 @@ import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
+  const { data, options, onChange: onChangeFromProps, id, scope = 'series', allowedScopes } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useSelectOptions(counts, scope, options);
   const uniqScopes = useMemo(() => new Set([...counts.keys()]), [counts]);
@@ -34,6 +34,7 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
         scope={scope}
         scopes={uniqScopes}
         onChange={(newScope) => onChangeFromProps(options, newScope)}
+        allowedScopes={allowedScopes}
       />
     </Stack>
   );
