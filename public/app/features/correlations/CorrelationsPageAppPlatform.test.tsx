@@ -20,10 +20,10 @@ import {
   emptyCorrelationsScenario,
   deleteCorrelationsScenario,
   editCorrelationsScenario,
-} from './mocks/correlations.scenario';
-import { prePopulateCorrelations, setupMockCorrelations } from './mocks/fixtures';
-import { setupCorrelationsMswServer } from './mocks/server';
-import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
+} from './__mocks__/correlations.scenario';
+import { prePopulateCorrelations, setupMockCorrelations } from './__mocks__/fixtures';
+import { setupCorrelationsMswServer } from './__mocks__/server';
+import { MockDataSourceSrv } from './__mocks__/useCorrelations.mocks';
 
 const server = setupCorrelationsMswServer();
 
