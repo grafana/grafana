@@ -32,11 +32,7 @@ type WebhookExtraBuilder struct {
 // FIXME: separate the URL provider from connector to simplify operators
 func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Repository) string {
 	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
-		baseURL := r.Spec.Webhook.BaseURL
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
-		return buildWebhookURL(baseURL, r)
+		return buildWebhookURL(r.Spec.Webhook.BaseURL, r)
 	}
 
 	if !b.isPublic {
@@ -49,8 +45,8 @@ func (b *WebhookExtraBuilder) WebhookURL(ctx context.Context, r *provisioning.Re
 func buildWebhookURL(baseURL string, r *provisioning.Repository) string {
 	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
 	return fmt.Sprintf(
-		"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-		baseURL,
+		"%s/apis/%s/%s/namespaces/%s/%s/%s/webhook",
+		strings.TrimRight(baseURL, "/"),
 		gvr.Group,
 		gvr.Version,
 		r.GetNamespace(),

@@ -855,6 +855,232 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	t.Run("create repository with HTTPS webhook base URL", func(t *testing.T) {
+		repo := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-with-webhook",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo With Webhook Config",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "main",
+				},
+				"webhook": map[string]any{
+					"baseUrl": "https://grafana.example.com/",
+				},
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{"create": "test-token"},
+			},
+		}}
+
+		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		require.NoError(t, err, "should create repository with webhook config")
+
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotNil(t, createdRepo.Spec.Webhook, "webhook config should be persisted")
+		require.Equal(t, "https://grafana.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+	})
+
+	t.Run("create repository with HTTP webhook base URL", func(t *testing.T) {
+		repo := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-http-webhook",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo With HTTP Webhook",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "main",
+				},
+				"webhook": map[string]any{
+					"baseUrl": "http://internal-proxy.example.com/",
+				},
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{"create": "test-token"},
+			},
+		}}
+
+		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		require.NoError(t, err, "should accept HTTP webhook base URL")
+
+		createdRepo := unstructuredToRepository(t, created)
+		require.NotNil(t, createdRepo.Spec.Webhook)
+		require.Equal(t, "http://internal-proxy.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+	})
+
+	t.Run("read back webhook config", func(t *testing.T) {
+		obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+		require.NoError(t, err, "should read back repository")
+
+		repo := unstructuredToRepository(t, obj)
+		require.NotNil(t, repo.Spec.Webhook, "webhook config should be present on read")
+		require.Equal(t, "https://grafana.example.com", repo.Spec.Webhook.BaseURL)
+	})
+
+	t.Run("update repository to change webhook base URL", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			repo := unstructuredToRepository(t, obj)
+			repo.Spec.Webhook.BaseURL = "https://new-proxy.example.com/"
+			updated := repositoryToUnstructured(t, repo)
+
+			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			require.NoError(collect, err, "should update webhook base URL")
+
+			updatedRepo := unstructuredToRepository(t, result)
+			require.NotNil(collect, updatedRepo.Spec.Webhook)
+			assert.Equal(collect, "https://new-proxy.example.com", updatedRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("update repository to remove webhook config", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
+			require.NoError(t, err)
+
+			repo := unstructuredToRepository(t, obj)
+			repo.Spec.Webhook = nil
+			updated := repositoryToUnstructured(t, repo)
+
+			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+			require.NoError(collect, err, "should clear webhook config")
+
+			updatedRepo := unstructuredToRepository(t, result)
+			assert.Nil(collect, updatedRepo.Spec.Webhook, "webhook config should be nil after removal")
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("reject unsupported scheme in webhook base URL", func(t *testing.T) {
+		repo := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-ftp-webhook",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo With FTP Webhook",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "main",
+				},
+				"webhook": map[string]any{
+					"baseUrl": "ftp://files.example.com/",
+				},
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{"create": "test-token"},
+			},
+		}}
+
+		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		require.Error(t, err, "should reject unsupported scheme")
+		assert.ErrorContains(t, err, "must use HTTP or HTTPS scheme")
+	})
+
+	t.Run("reject webhook base URL without host", func(t *testing.T) {
+		repo := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-nohost-webhook",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo Without Webhook Host",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "main",
+				},
+				"webhook": map[string]any{
+					"baseUrl": "https://",
+				},
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{"create": "test-token"},
+			},
+		}}
+
+		_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		require.Error(t, err, "should reject webhook URL without host")
+		assert.ErrorContains(t, err, "must include a host")
+	})
+
+	t.Run("allow repository without webhook section", func(t *testing.T) {
+		repo := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "repo-no-webhook",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Repo Without Webhook",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "main",
+				},
+				"workflows": []string{},
+			},
+			"secure": map[string]any{
+				"token": map[string]any{"create": "test-token"},
+			},
+		}}
+
+		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
+		require.NoError(t, err, "should create repository without webhook config")
+
+		createdRepo := unstructuredToRepository(t, created)
+		require.Nil(t, createdRepo.Spec.Webhook, "webhook should be nil when not set")
+	})
+}
+
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

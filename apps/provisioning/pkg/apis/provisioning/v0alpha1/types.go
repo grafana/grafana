@@ -356,9 +356,9 @@ func (SyncOptions) OpenAPIModelName() string {
 type WebhookConfig struct {
 	// Base URL of the Grafana instance used to construct the webhook endpoint
 	// registered with the external Git provider. Only the base URL should be
-	// provided (e.g. `https://grafana.example.com/`); the API path, namespace,
-	// and resource name are appended automatically.
-	// Must be a valid HTTPS URL.
+	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
+	// and resource name are appended automatically. Trailing slashes are stripped.
+	// Must be a valid HTTP or HTTPS URL.
 	BaseURL string `json:"baseUrl,omitempty"`
 }
 

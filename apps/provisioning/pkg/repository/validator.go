@@ -152,8 +152,9 @@ func validateWebhookBaseURL(baseURL string) field.ErrorList {
 		return list
 	}
 
-	if !strings.EqualFold(parsed.Scheme, "https") {
-		list = append(list, field.Invalid(fld, baseURL, "must use HTTPS scheme"))
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		list = append(list, field.Invalid(fld, baseURL, "must use HTTP or HTTPS scheme"))
 	}
 
 	if parsed.Host == "" {

@@ -89,8 +89,8 @@ repository: {
 			}
 			#WebhookConfig: {
 				// Base URL of the Grafana instance used to construct the webhook endpoint.
-				// The API path is appended automatically.
-				// Must be a valid HTTPS URL (e.g. `https://grafana.example.com/`).
+				// The API path is appended automatically. Trailing slashes are stripped.
+				// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
 				baseUrl?: string
 			}
 				#HealthStatus: {

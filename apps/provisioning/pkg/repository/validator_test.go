@@ -287,7 +287,7 @@ func TestValidator_Validate(t *testing.T) {
 			expectedErrs: 0,
 		},
 		{
-			name: "webhook base URL missing HTTPS",
+			name: "valid HTTP webhook base URL",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -295,13 +295,28 @@ func TestValidator_Validate(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
-						Webhook: &provisioning.WebhookConfig{BaseURL: "http://grafana.example.com/"},
+						Webhook: &provisioning.WebhookConfig{BaseURL: "http://grafana.example.com"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "webhook base URL with unsupported scheme",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "ftp://grafana.example.com/"},
 					},
 				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "must use HTTPS scheme")
+				require.Contains(t, errors.ToAggregate().Error(), "must use HTTP or HTTPS scheme")
 			},
 		},
 		{
