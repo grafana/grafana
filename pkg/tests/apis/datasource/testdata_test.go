@@ -200,7 +200,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}
 
 		// The standard JSON request/response
-		t.Run("QueryDataResponse", func(t *testing.T) {
+		t.Run("simple csv", func(t *testing.T) {
 			var statusCode int
 			result := adminClient.Post().
 				Namespace("default").
@@ -222,9 +222,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
 		})
-
-		// The standard JSON request/response
-		t.Run("Chunked QueryResponse", func(t *testing.T) {
+		t.Run("chunked", func(t *testing.T) {
 			var statusCode int
 			result := adminClient.Post().
 				Namespace("default").
@@ -232,7 +230,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				Name("test"). // datasource UID
 				SubResource("query").
 				SetHeader("Content-type", "application/json").
-				SetHeader("Accept", chunked.CONTENT_TYPE).
+				SetHeader("Accept", chunked.CONTENT_TYPE). // <<< get a chunked response
 				Body(body).
 				Do(ctx).
 				StatusCode(&statusCode)
@@ -258,26 +256,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
-}
 
-func TestIntegrationTestDatasourceAccess(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	t.Run("get DatasourceAccessInfo", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous: true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-				featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
-				featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
-			},
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"datasources.grafana-testdata-datasource.datasource.grafana.app": {
-					DualWriterMode: grafanarest.Mode0,
-				},
-			},
-		})
-
+	t.Run("access", func(t *testing.T) {
 		var datasourceAccessInfo datasourceV0alpha1.DatasourceAccessInfo
 		raw := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
