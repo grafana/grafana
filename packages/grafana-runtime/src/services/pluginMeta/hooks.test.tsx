@@ -33,41 +33,41 @@ import {
 import { apps } from './test-fixtures/config.apps';
 import { panels } from './test-fixtures/config.panels';
 
-const actualApps = jest.requireActual<typeof import('./apps')>('./apps');
-const actualPanels = jest.requireActual<typeof import('./panels')>('./panels');
-jest.mock('./apps', () => ({
-  ...jest.requireActual('./apps'),
-  getAppPluginMetas: jest.fn(),
-  getAppPluginMeta: jest.fn(),
-  isAppPluginInstalled: jest.fn(),
-  getAppPluginVersion: jest.fn(),
+const actualApps = await vi.importActual<typeof import('./apps')>('./apps');
+const actualPanels = await vi.importActual<typeof import('./panels')>('./panels');
+vi.mock('./apps', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAppPluginMetas: vi.fn(),
+  getAppPluginMeta: vi.fn(),
+  isAppPluginInstalled: vi.fn(),
+  getAppPluginVersion: vi.fn(),
 }));
-jest.mock('./panels', () => ({
-  ...jest.requireActual('./panels'),
-  getListedPanelPluginIds: jest.fn(),
-  getListedPanelPluginMetas: jest.fn(),
-  getPanelPluginMeta: jest.fn(),
-  getPanelPluginMetas: jest.fn(),
-  getPanelPluginMetasMap: jest.fn(),
-  isPanelPluginInstalled: jest.fn(),
-  getPanelPluginVersion: jest.fn(),
+vi.mock('./panels', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getListedPanelPluginIds: vi.fn(),
+  getListedPanelPluginMetas: vi.fn(),
+  getPanelPluginMeta: vi.fn(),
+  getPanelPluginMetas: vi.fn(),
+  getPanelPluginMetasMap: vi.fn(),
+  isPanelPluginInstalled: vi.fn(),
+  getPanelPluginVersion: vi.fn(),
 }));
-const getAppPluginMetaMock = jest.mocked(getAppPluginMeta);
-const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
-const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
-const getAppPluginVersionMock = jest.mocked(getAppPluginVersion);
-const getPanelPluginMetaMock = jest.mocked(getPanelPluginMeta);
-const getPanelPluginMetasMock = jest.mocked(getPanelPluginMetas);
-const getPanelPluginMetasMapMock = jest.mocked(getPanelPluginMetasMap);
-const isPanelPluginInstalledMock = jest.mocked(isPanelPluginInstalled);
-const getPanelPluginVersionMock = jest.mocked(getPanelPluginVersion);
-const getListedPanelPluginIdsMock = jest.mocked(getListedPanelPluginIds);
-const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
+const getAppPluginMetaMock = vi.mocked(getAppPluginMeta);
+const getAppPluginMetasMock = vi.mocked(getAppPluginMetas);
+const isAppPluginInstalledMock = vi.mocked(isAppPluginInstalled);
+const getAppPluginVersionMock = vi.mocked(getAppPluginVersion);
+const getPanelPluginMetaMock = vi.mocked(getPanelPluginMeta);
+const getPanelPluginMetasMock = vi.mocked(getPanelPluginMetas);
+const getPanelPluginMetasMapMock = vi.mocked(getPanelPluginMetasMap);
+const isPanelPluginInstalledMock = vi.mocked(isPanelPluginInstalled);
+const getPanelPluginVersionMock = vi.mocked(getPanelPluginVersion);
+const getListedPanelPluginIdsMock = vi.mocked(getListedPanelPluginIds);
+const getListedPanelPluginMetasMock = vi.mocked(getListedPanelPluginMetas);
 
 describe('useAppPluginMeta', () => {
   beforeEach(() => {
     setAppPluginMetas(apps);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getAppPluginMetaMock.mockImplementation(actualApps.getAppPluginMeta);
   });
 
@@ -117,7 +117,7 @@ describe('useAppPluginMeta', () => {
 describe('useAppPluginMetas', () => {
   beforeEach(() => {
     setAppPluginMetas(apps);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getAppPluginMetasMock.mockImplementation(actualApps.getAppPluginMetas);
   });
 
@@ -157,7 +157,7 @@ describe('useAppPluginMetas', () => {
 describe('useAppPluginInstalled', () => {
   beforeEach(() => {
     setAppPluginMetas(apps);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     isAppPluginInstalledMock.mockImplementation(actualApps.isAppPluginInstalled);
   });
 
@@ -207,7 +207,7 @@ describe('useAppPluginInstalled', () => {
 describe('useAppPluginVersion', () => {
   beforeEach(() => {
     setAppPluginMetas(apps);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getAppPluginVersionMock.mockImplementation(actualApps.getAppPluginVersion);
   });
 
@@ -257,7 +257,7 @@ describe('useAppPluginVersion', () => {
 describe('usePanelPluginMeta', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getPanelPluginMetaMock.mockImplementation(actualPanels.getPanelPluginMeta);
   });
 
@@ -307,7 +307,7 @@ describe('usePanelPluginMeta', () => {
 describe('usePanelPluginMetas', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getPanelPluginMetasMock.mockImplementation(actualPanels.getPanelPluginMetas);
   });
 
@@ -347,7 +347,7 @@ describe('usePanelPluginMetas', () => {
 describe('useListedPanelPluginMetas', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getListedPanelPluginMetasMock.mockImplementation(actualPanels.getListedPanelPluginMetas);
   });
 
@@ -391,7 +391,7 @@ describe('useListedPanelPluginMetas', () => {
 describe('usePanelPluginMetasMap', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getPanelPluginMetasMapMock.mockImplementation(actualPanels.getPanelPluginMetasMap);
   });
 
@@ -431,7 +431,7 @@ describe('usePanelPluginMetasMap', () => {
 describe('useListedPanelPluginIds', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getListedPanelPluginIdsMock.mockImplementation(actualPanels.getListedPanelPluginIds);
   });
 
@@ -501,7 +501,7 @@ describe('useListedPanelPluginIds', () => {
 describe('usePanelPluginInstalled', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     isPanelPluginInstalledMock.mockImplementation(actualPanels.isPanelPluginInstalled);
   });
 
@@ -551,7 +551,7 @@ describe('usePanelPluginInstalled', () => {
 describe('usePanelPluginVersion', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     getPanelPluginVersionMock.mockImplementation(actualPanels.getPanelPluginVersion);
   });
 

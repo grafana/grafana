@@ -4,15 +4,15 @@ import * as featureToggles from '../utils/featureToggles';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo, dateTimeFormatWithAbbrevation, timeZoneAbbrevation } from './formatter';
 
-// Default time zone ("browser") is set to Pacific/Easter in jest.config.js
+// Default time zone ("browser") is set to Pacific/Easter in vitest.config.ts
 const referenceDate = '2020-04-17T12:36:15.779Z';
 
 describe('dateTimeFormat (regionalFormatPreference)', () => {
-  let mockGetFeatureToggle: jest.SpyInstance;
+  let mockGetFeatureToggle: ReturnType<typeof vi.spyOn>;
 
   beforeAll(() => {
     initRegionalFormatForTests('en-AU');
-    mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
+    mockGetFeatureToggle = vi.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
       return featureName === 'localeFormatPreference';
     });
   });

@@ -16,7 +16,7 @@ import {
 
 describe('utils/colorManipulator', () => {
   const origError = console.error;
-  const consoleErrorMock = jest.fn();
+  const consoleErrorMock = vi.fn();
   afterEach(() => (console.error = origError));
   beforeEach(() => (console.error = consoleErrorMock));
 

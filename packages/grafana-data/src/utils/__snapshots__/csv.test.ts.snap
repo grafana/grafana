@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`read csv should get X and y 1`] = `
+exports[`read csv > should get X and y 1`] = `
 {
   "fields": [
     {
@@ -58,7 +58,7 @@ exports[`read csv should get X and y 1`] = `
 }
 `;
 
-exports[`read csv should read csv from local file system 1`] = `
+exports[`read csv > should read csv from local file system 1`] = `
 {
   "fields": [
     {
@@ -98,7 +98,7 @@ exports[`read csv should read csv from local file system 1`] = `
 }
 `;
 
-exports[`read csv should read csv with headers 1`] = `
+exports[`read csv > should read csv with headers 1`] = `
 {
   "fields": [
     {

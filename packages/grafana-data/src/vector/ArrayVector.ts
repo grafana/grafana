@@ -41,6 +41,6 @@ export class ArrayVector<T = unknown> extends Array<T> {
   }
 
   toJSON(): T[] {
-    return [...this]; // copy to avoid circular reference (only for jest)
+    return [...this]; // copy to avoid circular reference (only for vitest)
   }
 }

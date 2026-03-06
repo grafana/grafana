@@ -10,9 +10,9 @@ import {
 import { initPluginMetas } from './plugins';
 import { app } from './test-fixtures/config.apps';
 
-jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
+vi.mock('./plugins', async (originalImport) => ({ ...(await originalImport), initPluginMetas: vi.fn() }));
 
-const initPluginMetasMock = jest.mocked(initPluginMetas);
+const initPluginMetasMock = vi.mocked(initPluginMetas);
 
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
@@ -26,7 +26,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and apps is not initialized', () => {
     beforeEach(() => {
       setAppPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [] });
     });
 
@@ -62,7 +62,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and apps is initialized', () => {
     beforeEach(() => {
       setAppPluginMetas({ 'myorg-someplugin-app': app });
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -125,7 +125,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and apps is not initialized', () => {
     beforeEach(() => {
       setAppPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -160,7 +160,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and apps is initialized', () => {
     beforeEach(() => {
       setAppPluginMetas({ 'myorg-someplugin-app': app });
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -214,7 +214,7 @@ describe('when useMTPlugins flag is enabled', () => {
 describe('immutability', () => {
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('getAppPluginMetas should return a deep clone', async () => {

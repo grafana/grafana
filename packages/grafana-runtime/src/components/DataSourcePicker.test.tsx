@@ -5,10 +5,12 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data'
 
 import { DataSourcePicker } from './DataSourcePicker';
 
-const mockGetInstanceSettings = jest.fn();
-const mockGetList = jest.fn();
+const { mockGetInstanceSettings, mockGetList } = vi.hoisted(() => ({
+  mockGetInstanceSettings: vi.fn(),
+  mockGetList: vi.fn(),
+}));
 
-jest.mock('../services/dataSourceSrv', () => ({
+vi.mock('../services/dataSourceSrv', () => ({
   getDataSourceSrv: () => ({
     getList: mockGetList,
     getInstanceSettings: mockGetInstanceSettings,
@@ -18,7 +20,7 @@ jest.mock('../services/dataSourceSrv', () => ({
 
 describe('DataSourcePicker', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetList.mockReturnValue([]);
     mockGetInstanceSettings.mockReturnValue(undefined);
   });
@@ -58,7 +60,7 @@ describe('DataSourcePicker', () => {
       mockGetInstanceSettings.mockReturnValue(mockDs);
       mockGetList.mockReturnValue([mockDs]);
 
-      render(<DataSourcePicker current={currentUid} onChange={jest.fn()} />);
+      render(<DataSourcePicker current={currentUid} onChange={vi.fn()} />);
 
       // The full name should be visible in the select value
       expect(screen.getByText(longDatasourceName)).toBeInTheDocument();
@@ -67,7 +69,7 @@ describe('DataSourcePicker', () => {
 
   describe('onClear', () => {
     it('should call onClear when function is passed', async () => {
-      const onClear = jest.fn();
+      const onClear = vi.fn();
       const select = render(<DataSourcePicker onClear={onClear} />);
 
       const clearButton = select.getByLabelText('Clear value');

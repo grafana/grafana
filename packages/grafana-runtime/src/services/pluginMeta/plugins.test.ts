@@ -10,14 +10,14 @@ const originalFetch = global.fetch;
 let loggerMock: MonitoringLogger;
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   invalidateCache();
   loggerMock = {
-    logDebug: jest.fn(),
-    logError: jest.fn(),
-    logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logDebug: vi.fn(),
+    logError: vi.fn(),
+    logInfo: vi.fn(),
+    logMeasurement: vi.fn(),
+    logWarning: vi.fn(),
   };
   setLogger(loggerMock);
 });
@@ -37,7 +37,7 @@ describe('when useMTPlugins flag is enabled', () => {
 
   describe('and cache is not initialized', () => {
     it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.resolve({ items: [v0alpha1Meta] }),
@@ -54,7 +54,7 @@ describe('when useMTPlugins flag is enabled', () => {
 
   describe('and cache is initialized', () => {
     it('initPluginMetas should call loadPluginMetas once', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.resolve({ items: [v0alpha1Meta] }),
@@ -69,7 +69,7 @@ describe('when useMTPlugins flag is enabled', () => {
     });
 
     it('initPluginMetas should call loadPluginMetas again if refetchPluginMetas is called', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         json: () => Promise.resolve({ items: [v0alpha1Meta] }),
@@ -86,7 +86,7 @@ describe('when useMTPlugins flag is enabled', () => {
 
   describe('and errors occur', () => {
     it('initPluginMetas should log when fetch fails', async () => {
-      global.fetch = jest
+      global.fetch = vi
         .fn()
         .mockResolvedValueOnce({
           ok: false,
@@ -114,7 +114,7 @@ describe('when useMTPlugins flag is enabled', () => {
     });
 
     it('initPluginMetas should log when fetch rejects', async () => {
-      global.fetch = jest
+      global.fetch = vi
         .fn()
         .mockRejectedValueOnce(new Error('Network Error'))
         .mockResolvedValue({
@@ -150,7 +150,7 @@ describe('when useMTPlugins flag is disabled', () => {
 
   describe('and cache is not initialized', () => {
     beforeEach(() => {
-      global.fetch = jest.fn();
+      global.fetch = vi.fn();
     });
 
     it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
@@ -163,7 +163,7 @@ describe('when useMTPlugins flag is disabled', () => {
 
   describe('and cache is initialized', () => {
     beforeEach(() => {
-      global.fetch = jest.fn();
+      global.fetch = vi.fn();
     });
 
     it('initPluginMetas should return cache', async () => {

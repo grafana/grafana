@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`setFieldConfigDefaults applies the base threshold when one does not exist in the config 1`] = `
+exports[`setFieldConfigDefaults > applies the base threshold when one does not exist in the config 1`] = `
 {
   "mode": "absolute",
   "steps": [
