@@ -1363,3 +1363,265 @@ describe('PrometheusDatasource incremental query logic', () => {
     expect(mockCache.requestInfo).not.toHaveBeenCalled();
   });
 });
+
+describe('getDrilldownsApplicability', () => {
+  let ds: PrometheusDatasource;
+  const instanceSettings = {
+    url: 'proxied',
+    uid: 'ABCDEF',
+    access: 'proxy',
+    user: 'test',
+    password: 'mupp',
+    jsonData: {
+      customQueryParameters: '',
+      cacheLevel: PrometheusCacheLevel.Low,
+    } as Partial<PromOptions>,
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+  beforeEach(() => {
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
+  });
+
+  function mockLanguageProvider(opts: {
+    labelKeys?: string[];
+    labelValues?: Record<string, string[]>;
+    fetchSuggestions?: jest.Mock;
+  }) {
+    ds.languageProvider = {
+      queryLabelKeys: jest.fn().mockResolvedValue(opts.labelKeys ?? []),
+      queryLabelValues: jest.fn().mockImplementation((_tr: TimeRange, key: string) => {
+        return Promise.resolve(opts.labelValues?.[key] ?? []);
+      }),
+      fetchSuggestions: opts.fetchSuggestions ?? jest.fn().mockResolvedValue(opts.labelKeys ?? []),
+    } as unknown as PrometheusLanguageProviderInterface;
+  }
+
+  it('should mark filters with existing keys as applicable', async () => {
+    mockLanguageProvider({ labelKeys: ['env', 'cluster'], labelValues: { env: ['prod'], cluster: ['us'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [
+        { key: 'env', value: 'prod', operator: '=' },
+        { key: 'cluster', value: 'us', operator: '=' },
+      ],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toEqual([
+      { key: 'env', applicable: true, origin: undefined },
+      { key: 'cluster', applicable: true, origin: undefined },
+    ]);
+  });
+
+  it('should mark filters with non-existent keys as non-applicable', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [
+        { key: 'env', value: 'prod', operator: '=' },
+        { key: 'nonexistent', value: 'val', operator: '=' },
+      ],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
+    expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
+    expect(results[1].reason).toContain('not found');
+  });
+
+  it('should mark filters with non-existent values as non-applicable', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'missing-value', operator: '=' }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ key: 'env', applicable: false });
+    expect(results[0].reason).toContain('missing-value');
+  });
+
+  it('should handle multi-value operator "=|" and mark non-applicable when no values match', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: '', operator: '=|', values: ['nope', 'also-nope'] }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ key: 'env', applicable: false });
+  });
+
+  it('should mark "=|" as applicable when at least one value matches', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: '', operator: '=|', values: ['nope', 'prod'] }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
+  });
+
+  it('should skip value validation for negation operators', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'nonexistent', operator: '!=' }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
+  });
+
+  it('should mark origin filters overridden by user filters as non-applicable', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [
+        { key: 'env', value: 'staging', operator: '=', origin: 'dashboard' },
+        { key: 'env', value: 'prod', operator: '=' },
+      ],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]).toMatchObject({ key: 'env', applicable: false, origin: 'dashboard' });
+    expect(results[0].reason).toContain('Overridden');
+    expect(results[1]).toMatchObject({ key: 'env', applicable: true });
+  });
+
+  it('should mark duplicate filters with same composite key as non-applicable except the last', async () => {
+    mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['staging'] } });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [
+        { key: 'env', value: 'prod', operator: '=' },
+        { key: 'env', value: 'staging', operator: '=' },
+      ],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]).toMatchObject({ key: 'env', applicable: false });
+    expect(results[0].reason).toContain('Overridden');
+    expect(results[1]).toMatchObject({ key: 'env', applicable: true });
+  });
+
+  it('should check groupBy key existence', async () => {
+    mockLanguageProvider({ labelKeys: ['namespace', 'container'] });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [],
+      groupByKeys: ['namespace', 'nonexistent', 'container'],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(3);
+    expect(results[0]).toEqual({ key: 'namespace', applicable: true });
+    expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
+    expect(results[2]).toEqual({ key: 'container', applicable: true });
+  });
+
+  it('should handle combined filters and groupBy keys', async () => {
+    mockLanguageProvider({
+      labelKeys: ['env', 'namespace'],
+      labelValues: { env: ['prod'] },
+    });
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'prod', operator: '=' }],
+      groupByKeys: ['namespace', 'missing_label'],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toHaveLength(3);
+    expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
+    expect(results[1]).toEqual({ key: 'namespace', applicable: true });
+    expect(results[2]).toMatchObject({ key: 'missing_label', applicable: false });
+  });
+
+  it('should fall back to all-applicable when queryLabelKeys throws', async () => {
+    ds.languageProvider = {
+      queryLabelKeys: jest.fn().mockRejectedValue(new Error('network error')),
+      queryLabelValues: jest.fn(),
+      fetchSuggestions: jest.fn().mockRejectedValue(new Error('network error')),
+    } as unknown as PrometheusLanguageProviderInterface;
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'prod', operator: '=' }],
+      groupByKeys: ['ns'],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toEqual([
+      { key: 'env', applicable: true, origin: undefined },
+      { key: 'ns', applicable: true },
+    ]);
+  });
+
+  it('should skip value validation for a key when queryLabelValues throws', async () => {
+    ds.languageProvider = {
+      queryLabelKeys: jest.fn().mockResolvedValue(['env']),
+      queryLabelValues: jest.fn().mockRejectedValue(new Error('value fetch error')),
+      fetchSuggestions: jest.fn().mockResolvedValue(['env']),
+    } as unknown as PrometheusLanguageProviderInterface;
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'nonexistent', operator: '=' }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+    });
+
+    expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
+  });
+
+  it('should use fetchSuggestions when scopes are provided', async () => {
+    const fetchSuggestionsSpy = jest
+      .fn()
+      .mockImplementation((_tr: TimeRange, _queries: PromQuery[], _scopes?: unknown, _unused?: unknown, key?: string) => {
+        if (key === 'env') {
+          return Promise.resolve(['prod', 'staging']);
+        }
+        return Promise.resolve(['env', 'cluster']);
+      });
+    mockLanguageProvider({ fetchSuggestions: fetchSuggestionsSpy });
+
+    const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as any[];
+
+    const results = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'prod', operator: '=' }],
+      groupByKeys: [],
+      queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
+      timeRange: mockTimeRange,
+      scopes,
+    });
+
+    expect(fetchSuggestionsSpy).toHaveBeenCalledWith(mockTimeRange, expect.any(Array), scopes);
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ key: 'env', applicable: true });
+  });
+});
