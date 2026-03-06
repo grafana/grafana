@@ -228,7 +228,7 @@ func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
 				// Guard does not fire; code reaches nil dualReadWriter and panics.
 				require.Panics(t, func() {
 					//nolint:errcheck
-					connector.handleMethodRequest(context.Background(), req, opts, false, nil)
+					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil)
 				}, "guard must not intercept; code should proceed past the guard")
 			}
 		})
