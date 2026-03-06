@@ -853,6 +853,7 @@ github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81 h1:7/v8q9X
 github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81/go.mod h1:siLfyv2c92W1eN/R4QqG/+RjjX5W2+gCTRjZxBjI3TY=
 github.com/dolthub/swiss v0.2.1 h1:gs2osYs5SJkAaH5/ggVJqXQxRXtWshF6uE0lgR/Y3Gw=
 github.com/dolthub/swiss v0.2.1/go.mod h1:8AhKZZ1HK7g18j7v7k6c5cYIGEZJcPn0ARsai8cUrh0=
+github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33/go.mod h1:8pvvk5OLaLN9LLxghyczUapn/97l+mBgIb10qC1LG84=
 github.com/drone/envsubst v1.0.3 h1:PCIBwNDYjs50AsLZPYdfhSATKaRg/FJmDc2D6+C2x8g=
 github.com/drone/envsubst v1.0.3/go.mod h1:N2jZmlMufstn1KEqvbHjw40h1KyTmnVzHcSc9bFiJ2g=
 github.com/dvyukov/go-fuzz v0.0.0-20210103155950-6a8e9d1f2415 h1:q1oJaUPdmpDm/VyXosjgPgr6wS7c5iV2p0PwJD73bUI=
@@ -1065,6 +1066,7 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
 github.com/grafana/alerting v0.0.0-20260203165836-8b17916e8173/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
 github.com/grafana/alerting v0.0.0-20260206150146-b5f69c55f91a/go.mod h1:Ji0SfJChcwjgq8ljy6Y5CcYfHfAYKXjKYeysOoDS/6s=
+github.com/grafana/alerting v0.0.0-20260220113344-1de0d0f76785/go.mod h1:mReddzc4K93zI4Lb6NvuN3zDkDOXM2YnJtrveFFMa6Q=
 github.com/grafana/alerting v0.0.0-20260224103610-e1219c0c17ff/go.mod h1:F3iGi5JTG18gmc0/rWqSf/JMnuCrpr7TLAF1sjScH04=
 github.com/grafana/alerting v0.0.0-20260225130907-d8127a1d3c5d/go.mod h1:yJKl5oFNBlXSKag2OMWRwjCUi1mAuUD9Rr/CVVJ8LS8=
 github.com/grafana/alerting v0.0.0-20260225144157-3c6f7441f804/go.mod h1:Shv+GhcLCSngrk6ueBfGLU0C8sAhyYBdTTAplQtIg5s=
@@ -1085,6 +1087,8 @@ github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnm
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
+github.com/grafana/go-mysql-server v0.20.1-grafana1 h1:yA4Mzt+tTdIlQutBUaiPnepULPQ7CS4hMu2GOpHqT6s=
+github.com/grafana/go-mysql-server v0.20.1-grafana1/go.mod h1:EeYR0apo+8j2Dyxmn2ghkPlirO2S5mT1xHBrA+Efys8=
 github.com/grafana/grafana-app-sdk v0.50.2-0.20260210144258-179229bcd6c7/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk v0.50.2/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk/logging v0.48.5/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
@@ -1103,6 +1107,7 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f/go.mod h1:AsVdCBeDFN9QbgpJg+8voDAcgsW0RmNvBd70ecMMdC0=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4 h1:YTNTeDrHrNwAUZzx1ajKjf/R/wbYIoXvmb8jLdAwKMI=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4/go.mod h1:sWX4vzxYuH91qFCd2Khubo61VjbksxRcb7SDHs5SDig=
+github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f h1:fTlIj5n4x5dU63XHItug7GLjtnaeJdPqBlqg4zlABq0=
 github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f/go.mod h1:VBNcIhunCZsJ3/mcYx+j7uFf0P/108eiWa+8+Z9ll3o=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
