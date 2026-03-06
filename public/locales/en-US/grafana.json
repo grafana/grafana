@@ -12017,10 +12017,12 @@
     "start-modal": {
       "button-start": "Start {{title}}",
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
+      "description-hide-logo": "Hide the branding footer from the dashboard",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard links",
       "label-display-dashboard-controls": "Display dashboard controls",
+      "label-hide-logo": "Hide logo",
       "label-mode": "Mode",
       "label-time-and-refresh": "Time and refresh",
       "label-variables": "Variables",

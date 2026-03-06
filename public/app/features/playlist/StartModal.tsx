@@ -64,76 +64,79 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       onDismiss={onDismiss}
     >
       <FieldSet>
-        <Field label={t('playlist.start-modal.label-mode', 'Mode')}>
-          <RadioButtonGroup
-            value={mode}
-            options={modes}
-            onChange={(v) => {
-              setMode(v);
-              if (!v) {
-                setHideLogo(false);
-              }
-            }}
-          />
-        </Field>
-        <Field>
-          <Checkbox
-            label={t('playlist.start-modal.label-autofit', 'Autofit')}
-            description={t(
-              'playlist.start-modal.description-panel-heights-adjusted-screen',
-              'Panel heights will be adjusted to fit screen size'
-            )}
-            name="autofix"
-            value={autoFit}
-            onChange={(e) => setAutofit(e.currentTarget.checked)}
-          />
-        </Field>
-        {mode && (
-          <Field>
-            <Checkbox
-              label={t('playlist.start-modal.label-hide-logo', 'Hide logo')}
-              description={t(
-                'playlist.start-modal.description-hide-logo',
-                'Hide the branding footer from the dashboard'
-              )}
-              name="hideLogo"
-              value={hideLogo}
-              onChange={(e) => setHideLogo(e.currentTarget.checked)}
+        <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
+          <Field noMargin label={t('playlist.start-modal.label-mode', 'Mode')}>
+            <RadioButtonGroup
+              value={mode}
+              options={modes}
+              onChange={(v) => {
+                setMode(v);
+                if (!v) {
+                  setHideLogo(false);
+                }
+              }}
             />
           </Field>
-        )}
-        {config.featureToggles.dashboardScene && (
-          <Field
-            label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
-            description={t(
-              'playlist.start-modal.description-customize-dashboard-elements-visibility',
-              'Customize dashboard elements visibility'
-            )}
-          >
-            <Box marginTop={2} marginBottom={2}>
-              <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
-                <Checkbox
-                  label={t('playlist.start-modal.label-time-and-refresh', 'Time and refresh')}
-                  name="displayTimePicker"
-                  value={displayTimePicker}
-                  onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
-                />
-                <Checkbox
-                  label={t('playlist.start-modal.label-variables', 'Variables')}
-                  name="displayVariableControls"
-                  value={displayVariables}
-                  onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
-                />
-                <Checkbox
-                  label={t('playlist.start-modal.label-dashboard-links', 'Dashboard links')}
-                  name="displayLinks"
-                  value={displayLinks}
-                  onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
-                />
-              </Stack>
-            </Box>
+          <Field noMargin>
+            <Checkbox
+              label={t('playlist.start-modal.label-autofit', 'Autofit')}
+              description={t(
+                'playlist.start-modal.description-panel-heights-adjusted-screen',
+                'Panel heights will be adjusted to fit screen size'
+              )}
+              name="autofix"
+              value={autoFit}
+              onChange={(e) => setAutofit(e.currentTarget.checked)}
+            />
           </Field>
-        )}
+          {mode && (
+            <Field noMargin>
+              <Checkbox
+                label={t('playlist.start-modal.label-hide-logo', 'Hide logo')}
+                description={t(
+                  'playlist.start-modal.description-hide-logo',
+                  'Hide the branding footer from the dashboard'
+                )}
+                name="hideLogo"
+                value={hideLogo}
+                onChange={(e) => setHideLogo(e.currentTarget.checked)}
+              />
+            </Field>
+          )}
+          {config.featureToggles.dashboardScene && (
+            <Field
+              noMargin
+              label={t('playlist.start-modal.label-display-dashboard-controls', 'Display dashboard controls')}
+              description={t(
+                'playlist.start-modal.description-customize-dashboard-elements-visibility',
+                'Customize dashboard elements visibility'
+              )}
+            >
+              <Box marginTop={2} marginBottom={2}>
+                <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
+                  <Checkbox
+                    label={t('playlist.start-modal.label-time-and-refresh', 'Time and refresh')}
+                    name="displayTimePicker"
+                    value={displayTimePicker}
+                    onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
+                  />
+                  <Checkbox
+                    label={t('playlist.start-modal.label-variables', 'Variables')}
+                    name="displayVariableControls"
+                    value={displayVariables}
+                    onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
+                  />
+                  <Checkbox
+                    label={t('playlist.start-modal.label-dashboard-links', 'Dashboard links')}
+                    name="displayLinks"
+                    value={displayLinks}
+                    onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
+                  />
+                </Stack>
+              </Box>
+            </Field>
+          )}
+        </Stack>
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
