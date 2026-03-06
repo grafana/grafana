@@ -192,7 +192,7 @@ func TestIntegrationWatch(t *testing.T) {
 
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t)
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunTestWatch(ctx, t, store)
