@@ -3534,6 +3534,7 @@ __metadata:
     eslint: "npm:9.32.0"
     jest: "npm:29.7.0"
     tslib: "npm:2.8.1"
+    vitest: "npm:^4.0.18"
   languageName: unknown
   linkType: soft
 
