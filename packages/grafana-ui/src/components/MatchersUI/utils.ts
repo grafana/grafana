@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, FieldNamePickerBaseNameMode, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { MatcherScope } from '@grafana/schema';
 
 import { getFieldTypeIcon } from '../../types/icon';
 import { ComboboxOption } from '../Combobox/types';
@@ -17,6 +19,9 @@ export interface FrameFieldsDisplayNames {
 
   // Field mappings (duplicates are not supported)
   fields: Map<string, Field>;
+
+  // if set, the scope to use for the field.
+  scopes: Map<string, MatcherScope>;
 }
 
 /**
@@ -34,29 +39,78 @@ export function frameHasName(name: string | undefined, names: FrameFieldsDisplay
  */
 export function getFrameFieldsDisplayNames(
   data: DataFrame[],
-  filter?: (field: Field) => boolean
+  filter?: (field: Field) => boolean,
+  existingNames?: FrameFieldsDisplayNames,
+  parentData: DataFrame[] = data,
+  scope?: MatcherScope
 ): FrameFieldsDisplayNames {
-  const names: FrameFieldsDisplayNames = {
-    display: new Set<string>(),
-    raw: new Set<string>(),
-    fields: new Map<string, Field>(),
-  };
+  const names =
+    existingNames ??
+    ({
+      display: new Set(),
+      raw: new Set(),
+      fields: new Map(),
+      scopes: new Map(),
+    } satisfies FrameFieldsDisplayNames);
 
   for (const frame of data) {
     for (const field of frame.fields) {
       if (filter && !filter(field)) {
         continue;
       }
-      const disp = getFieldDisplayName(field, frame, data);
+      if (field.type === FieldType.nestedFrames) {
+        field.values.forEach((nestedData) =>
+          getFrameFieldsDisplayNames(nestedData, filter, names, parentData, 'nested')
+        );
+        continue;
+      }
+      const disp = getFieldDisplayName(field, frame, parentData);
       names.display.add(disp);
       names.fields.set(disp, field);
+      if (scope) {
+        names.scopes.set(disp, scope);
+      }
       if (field.name && disp !== field.name) {
         names.raw.add(field.name);
         names.fields.set(field.name, field);
+        if (scope) {
+          names.scopes.set(field.name, scope);
+        }
       }
     }
   }
   return names;
+}
+
+/**
+ * @internal
+ */
+export function getGroupLabelForScope(scope?: MatcherScope): string | undefined {
+  switch (scope) {
+    case 'nested':
+      return t('grafana-ui.matchers.groups.nested', 'Nested fields');
+    case 'annotation':
+      return t('grafana-ui.matchers.groups.annotation', 'Annotations');
+    case 'series':
+    default:
+      return t('grafana-ui.matchers.groups.series', 'Series');
+  }
+}
+
+/**
+ * @internal
+ */
+export function getGroupDescriptionForScope(scope: MatcherScope): string | undefined {
+  switch (scope) {
+    case 'nested':
+      return t('grafana-ui.matchers.groups.nested.description', 'Fields from nested dataframes.');
+    case 'annotation':
+      return t('grafana-ui.matchers.groups.annotation.description', 'Annotations series for this panel.');
+    case 'series':
+      return t('grafana-ui.matchers.groups.series.description', 'Fields from the dataframes in this panel.');
+    default:
+      return undefined;
+  }
 }
 
 /**
@@ -67,6 +121,7 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
     return getFrameFieldsDisplayNames(data, filter);
   }, [data, filter]);
 }
+
 /**
  * @internal
  */
@@ -79,6 +134,9 @@ export function useSelectOptions(
 ): ComboboxOption[] {
   return useMemo(() => {
     let found = false;
+
+    const shouldShowScopes = displayNames.scopes.size > 0;
+
     const options: ComboboxOption[] = [];
     if (firstItem) {
       options.push(firstItem);
@@ -90,7 +148,8 @@ export function useSelectOptions(
         }
         options.push({
           value: name,
-          label: `${name} (base field name)`,
+          label: t('grafana-ui.matchers.labels.base-field-name', '{{name}} (base field name)', { name }),
+          group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
         });
       }
     } else {
@@ -104,6 +163,7 @@ export function useSelectOptions(
             value: name,
             label: name,
             icon: field ? getFieldTypeIcon(field) : undefined,
+            group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
           });
         }
       }
@@ -116,7 +176,8 @@ export function useSelectOptions(
             }
             options.push({
               value: name,
-              label: `${name} (base field name)`,
+              label: t('grafana-ui.matchers.labels.base-field-name', '{{name}} (base field name)', { name }),
+              group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
             });
           }
         }
@@ -126,9 +187,11 @@ export function useSelectOptions(
     if (currentName && !found) {
       options.push({
         value: currentName,
-        label: `${currentName} (not found)`,
+        label: t('grafana-ui.matchers.labels.not-found', '{{name}} (not found)', { name: currentName }),
+        group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(currentName)) : undefined,
       });
     }
+
     return options;
   }, [displayNames, currentName, firstItem, fieldType, baseNameMode]);
 }
