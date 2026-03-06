@@ -9,7 +9,7 @@ import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
   useLazyGetTeamQuery,
-  useLazyGetSearchTeamsQuery,
+  useLazySearchTeamsQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -29,7 +29,7 @@ export const OwnerReferenceSelector = ({
   defaultTeamUid?: string;
 }) => {
   const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | string | null>(defaultTeamUid || null);
-  const [searchTeams, { isLoading }] = useLazyGetSearchTeamsQuery();
+  const [searchTeams, { isLoading }] = useLazySearchTeamsQuery();
   const [getTeam, { isLoading: isSelectedTeamLoading, error: selectedTeamError }] = useLazyGetTeamQuery();
 
   useEffect(() => {

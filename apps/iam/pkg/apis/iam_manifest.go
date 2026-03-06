@@ -301,6 +301,164 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/access/check": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createAccessCheck",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Required: true,
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"check": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"object"},
+																		Description: "named checks",
+																		AdditionalProperties: &spec.SchemaOrBool{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+
+																					Ref: spec.MustCreateRef("#/components/schemas/createAccessCheckAccessCheckRequest"),
+																				},
+																			},
+																		},
+																	},
+																},
+																"debug": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"boolean"},
+																		Description: "Include the request inside the response",
+																	},
+																},
+																"skipCache": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"boolean"},
+																		Description: "forces the access checker to skip any caching layer",
+																	},
+																},
+															},
+															Required: []string{
+																"check",
+																"debug",
+																"skipCache",
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"allowed": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"boolean"},
+																						},
+																					},
+																				},
+																			},
+																		},
+																		"debug": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"object"},
+																				Description: "Only included when the debug flag is enabled",
+																				Properties: map[string]spec.Schema{
+																					"auth": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"name": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"type": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"uid": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"name",
+																								"type",
+																								"uid",
+																							},
+																						},
+																					},
+																					"check": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							AdditionalProperties: &spec.SchemaOrBool{
+																								Schema: &spec.Schema{
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"object"},
+																										Properties: map[string]spec.Schema{
+																											"allowed": {
+																												SchemaProps: spec.SchemaProps{
+																													Type: []string{"boolean"},
+																												},
+																											},
+																											"check": {
+																												SchemaProps: spec.SchemaProps{
+
+																													Ref: spec.MustCreateRef("#/components/schemas/createAccessCheckAccessCheckRequest"),
+																												},
+																											},
+																										},
+																										Required: []string{
+																											"check",
+																											"allowed",
+																										},
+																									},
+																								},
+																							},
+																						},
+																					},
+																				},
+																				Required: []string{
+																					"check",
+																					"auth",
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"allowed",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/searchTeams": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -542,6 +700,64 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
+					"createAccessCheckAccessCheckRequest": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Folder identifier",
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "API group (dashboards.grafana.app)",
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "The specific resource",
+									},
+								},
+								"path": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "For non-resource requests, this will be the requested URL path",
+									},
+								},
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Kind eg dashboards",
+									},
+								},
+								"subresource": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Optional subresource",
+									},
+								},
+								"verb": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "The requested access verb.",
+									},
+								},
+							},
+							Required: []string{
+								"verb",
+								"group",
+								"resource",
+								"name",
+								"subresource",
+								"folder",
+								"path",
+							},
+						},
+					},
 					"getSearchTeamsTeamHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -699,8 +915,9 @@ var customRouteToGoResponseType = map[string]any{
 
 	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
 
-	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
-	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},
+	"v0alpha1||<namespace>/access/check|POST": v0alpha1.CreateAccessCheckResponse{},
+	"v0alpha1||<namespace>/searchTeams|GET":   v0alpha1.GetSearchTeamsResponse{},
+	"v0alpha1||<namespace>/searchUsers|GET":   v0alpha1.GetSearchUsersResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -725,7 +942,10 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+
+	"v0alpha1||<namespace>/access/check|POST": v0alpha1.CreateAccessCheckRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

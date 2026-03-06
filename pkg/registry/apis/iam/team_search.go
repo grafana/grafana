@@ -44,7 +44,7 @@ func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTea
 }
 
 func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams"].Schema
+	searchResults := defs[iamv0alpha1.GetSearchTeamsResponse{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -55,6 +55,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Search"},
 							Description: "Team search",
+							OperationId: "searchTeams",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{

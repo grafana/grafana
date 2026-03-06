@@ -127,6 +127,7 @@ func RegisterAPIService(
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                           user.NewLegacyDisplayREST(store),
+		accessHandler:                     NewAccessCheckHandler(accessClient),
 		reg:                               reg,
 		logger:                            log.New("iam.apis"),
 		features:                          features,
@@ -182,6 +183,7 @@ func NewAPIService(
 		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
 		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracingService),
 		display:                    user.NewLegacyDisplayREST(store),
+		accessHandler:              NewAccessCheckHandler(accessClient),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		coreRolesStorage:           coreRoleStorage,
@@ -830,7 +832,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	}
 
 	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
-	routes = append(routes, b.display.GetAPIRoutes(defs))
+	routes = append(routes, b.display.GetAPIRoutes(defs), b.accessHandler.GetAPIRoutes(defs))
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }

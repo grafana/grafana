@@ -1,6 +1,7 @@
 import { api } from './baseAPI';
 export const addTagTypes = [
   'API Discovery',
+  'Access',
   'Display',
   'ExternalGroupMapping',
   'Search',
@@ -19,6 +20,10 @@ const injectedRtkApi = api
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
         query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
+      }),
+      checkAccess: build.mutation<CheckAccessApiResponse, CheckAccessApiArg>({
+        query: (queryArg) => ({ url: `/access/check`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Access'],
       }),
       getDisplayMapping: build.query<GetDisplayMappingApiResponse, GetDisplayMappingApiArg>({
         query: (queryArg) => ({
@@ -170,7 +175,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Search'],
       }),
-      getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
+      searchTeams: build.query<SearchTeamsApiResponse, SearchTeamsApiArg>({
         query: (queryArg) => ({
           url: `/searchTeams`,
           params: {
@@ -753,6 +758,16 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
+export type CheckAccessApiResponse = /** status 200 undefined */ {
+  allowed: {
+    [key: string]: boolean;
+  };
+  /** Only included when the debug flag is enabled */
+  debug?: any;
+};
+export type CheckAccessApiArg = {
+  body: any;
+};
 export type GetDisplayMappingApiResponse = /** status 200 undefined */ DisplayList;
 export type GetDisplayMappingApiArg = {
   /** Display keys */
@@ -941,8 +956,18 @@ export type SearchExternalGroupMappingsApiArg = {
     externalGroups?: string[];
   };
 };
-export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
-export type GetSearchTeamsApiArg = {
+export type SearchTeamsApiResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  hits: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  maxScore: number;
+  offset: number;
+  queryCost: number;
+  totalHits: number;
+};
+export type SearchTeamsApiArg = {
   /** team name query string */
   query?: string;
   /** limit the number of results */
@@ -2212,6 +2237,7 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList = {
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
+  useCheckAccessMutation,
   useGetDisplayMappingQuery,
   useLazyGetDisplayMappingQuery,
   useListExternalGroupMappingQuery,
@@ -2224,8 +2250,8 @@ export const {
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
   useSearchExternalGroupMappingsMutation,
-  useGetSearchTeamsQuery,
-  useLazyGetSearchTeamsQuery,
+  useSearchTeamsQuery,
+  useLazySearchTeamsQuery,
   useGetSearchUsersQuery,
   useLazyGetSearchUsersQuery,
   useListServiceAccountQuery,
