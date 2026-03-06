@@ -800,6 +800,8 @@ type ElasticsearchDataQuery struct {
 	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
 	// List of metric aggregations
 	Metrics []MetricAggregation `json:"metrics,omitempty"`
+	// Metadata for variable queries
+	Meta *DataqueryElasticsearchDataQueryMeta `json:"meta,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -1090,6 +1092,16 @@ type DataqueryMovingAverageHoltWintersModelSettingsSettings struct {
 // NewDataqueryMovingAverageHoltWintersModelSettingsSettings creates a new DataqueryMovingAverageHoltWintersModelSettingsSettings object.
 func NewDataqueryMovingAverageHoltWintersModelSettingsSettings() *DataqueryMovingAverageHoltWintersModelSettingsSettings {
 	return &DataqueryMovingAverageHoltWintersModelSettingsSettings{}
+}
+
+type DataqueryElasticsearchDataQueryMeta struct {
+	TextField  *string `json:"textField,omitempty"`
+	ValueField *string `json:"valueField,omitempty"`
+}
+
+// NewDataqueryElasticsearchDataQueryMeta creates a new DataqueryElasticsearchDataQueryMeta object.
+func NewDataqueryElasticsearchDataQueryMeta() *DataqueryElasticsearchDataQueryMeta {
+	return &DataqueryElasticsearchDataQueryMeta{}
 }
 
 type DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested struct {

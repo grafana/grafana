@@ -174,6 +174,20 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertListPanelEnhancements",
+        "resourceVersion": "1772477753403",
+        "creationTimestamp": "2026-03-02T18:55:53Z"
+      },
+      "spec": {
+        "description": "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -499,6 +513,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryTriage",
+        "resourceVersion": "1772614382283",
+        "creationTimestamp": "2026-03-04T08:53:02Z"
+      },
+      "spec": {
+        "description": "Enables the notification history timeline in the triage instance details drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-22T11:07:45Z"
@@ -738,29 +766,35 @@
     {
       "metadata": {
         "name": "alertingUIUseBackendFilters",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-13T14:52:14Z"
+        "resourceVersion": "1772459444756",
+        "creationTimestamp": "2025-11-13T14:52:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-02 13:50:44.756147 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the UI to use certain backend-side filters",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingUIUseFullyCompatBackendFilters",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-24T11:42:09Z"
+        "resourceVersion": "1772459444756",
+        "creationTimestamp": "2025-11-24T11:42:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-02 13:50:44.756147 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

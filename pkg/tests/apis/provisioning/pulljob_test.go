@@ -17,13 +17,14 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Create two repositories with folder targets and separate paths to avoid file conflicts
@@ -35,7 +36,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo1,
 			Path:   path.Join(helper.ProvisioningPath, "repo1"),
 			Target: "folder",
@@ -47,7 +48,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	}()
 	go func() {
 		defer wg.Done()
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo2,
 			Path:   path.Join(helper.ProvisioningPath, "repo2"),
 			Target: "folder",
@@ -81,7 +82,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		assert.Len(collect, dashboards.Items, 2)
 		assert.Len(collect, folders.Items, 2)
-	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 
 	// Test: Pull job should fail when trying to manage resources owned by another repository
 	t.Run("pull job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
@@ -92,7 +93,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		// Copy the same file (same UID) to repo2's directory to create ownership conflict
 		conflictingFilePath := "repo2/conflicting-dashboard.json"
 		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", conflictingFilePath)
-		printFileTree(t, helper.ProvisioningPath)
+		common.PrintFileTree(t, helper.ProvisioningPath)
 
 		// Step 2: Try to pull repo2 - should fail due to ownership conflict
 		job := helper.TriggerJobAndWaitForComplete(t, repo2, provisioning.JobSpec{

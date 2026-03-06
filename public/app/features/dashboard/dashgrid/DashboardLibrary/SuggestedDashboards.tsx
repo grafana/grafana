@@ -299,10 +299,15 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         {isPreviewCommunityDashboardError && (
           <div>
             <Alert
-              title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
+              title={t(
+                'dashboard-library.suggested-dashboards-community-error-title',
+                'Error loading community dashboard'
+              )}
               severity="error"
             >
-              <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+              <Trans i18nKey="dashboard-library.suggested-dashboards-community-error-description">
+                Failed to load community dashboard.
+              </Trans>
             </Alert>
           </div>
         )}
