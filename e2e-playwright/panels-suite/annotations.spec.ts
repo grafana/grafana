@@ -97,7 +97,7 @@ const assertPanelHasAnnoCount = async (
   await expect(panelLoc).toBeVisible();
   await expect(timeSeriesMarkersLocator, 'all annotations are in the viz').toHaveCount(28);
 
-  // this is a pretty terrible way of figuring out which lane annos are in
+  // this is a pretty terrible way of figuring out which lane annos are rendered in, but it's also the only way
   const annotationsWithoutTop = panelLoc.locator(
     `[data-testid="${selectors.pages.Dashboard.Annotations.marker}"]${matcher}`
   );
