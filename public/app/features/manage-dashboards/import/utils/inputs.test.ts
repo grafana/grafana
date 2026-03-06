@@ -23,11 +23,14 @@ import {
 } from './inputs';
 
 // Mock external dependencies
+const mockGetDataSourceSrv = {
+  getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
+  get: jest.fn().mockResolvedValue({ meta: { builtIn: false } }),
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
-  }),
+  getDataSourceSrv: () => mockGetDataSourceSrv,
 }));
 
 jest.mock('../../../library-panels/state/api', () => ({
@@ -225,8 +228,8 @@ describe('extractV1Inputs', () => {
 });
 
 describe('extractV2Inputs', () => {
-  it('should return empty inputs for non-object dashboard', () => {
-    expect(extractV2Inputs(null)).toEqual(emptyInputs);
+  it('should return empty inputs for non-object dashboard', async () => {
+    expect(await extractV2Inputs(null)).toEqual(emptyInputs);
   });
 
   it.each([
@@ -277,18 +280,18 @@ describe('extractV2Inputs', () => {
         },
       },
     ],
-  ])('should collect datasource types from %s', (_source, dashboard) => {
-    const result = extractV2Inputs(dashboard);
+  ])('should collect datasource types from %s', async (_source, dashboard) => {
+    const result = await extractV2Inputs(dashboard);
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
   });
 
-  it('should handle empty dashboard gracefully', () => {
-    const result = extractV2Inputs({});
+  it('should handle empty dashboard gracefully', async () => {
+    const result = await extractV2Inputs({});
     expect(result).toEqual(emptyInputs);
   });
 
-  it('should keep distinct datasource labels', () => {
+  it('should keep distinct datasource labels', async () => {
     const dashboard = {
       elements: {},
       variables: [
@@ -306,14 +309,14 @@ describe('extractV2Inputs', () => {
       ],
     };
 
-    const result = extractV2Inputs(dashboard);
+    const result = await extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(3);
     expect(result.dataSources.map((ds) => ds.name)).toEqual(['prom-1', 'prom-2', 'prom-3']);
     expect(result.dataSources.map((ds) => ds.pluginId)).toEqual(['prometheus', 'prometheus', 'prometheus']);
   });
 
-  it('should collect multiple different datasource types', () => {
+  it('should collect multiple different datasource types', async () => {
     const dashboard = {
       elements: {},
       variables: [
@@ -328,7 +331,7 @@ describe('extractV2Inputs', () => {
       ],
     };
 
-    const result = extractV2Inputs(dashboard);
+    const result = await extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(2);
     expect(result.dataSources.map((ds) => ds.pluginId)).toContain('prometheus');
@@ -344,8 +347,49 @@ describe('extractV2Inputs', () => {
       'panels without QueryGroup data',
       { elements: { 'panel-1': { kind: 'Panel', spec: { data: { kind: 'Snapshot', spec: {} } } } } },
     ],
-  ])('should skip %s', (_name, dashboard) => {
-    expect(extractV2Inputs(dashboard).dataSources).toHaveLength(0);
+  ])('should skip %s', async (_name, dashboard) => {
+    expect((await extractV2Inputs(dashboard)).dataSources).toHaveLength(0);
+  });
+
+  it('should skip built-in datasources', async () => {
+    mockGetDataSourceSrv.get.mockResolvedValueOnce({ meta: { builtIn: true } });
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'myvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources).toHaveLength(0);
+  });
+
+  it('should keep non-built-in datasources and skip built-in ones', async () => {
+    mockGetDataSourceSrv.get
+      .mockResolvedValueOnce({ meta: { builtIn: false } })
+      .mockResolvedValueOnce({ meta: { builtIn: true } });
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'grafvar', query: { group: 'grafana', labels: { [ExportLabel]: 'grafana-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.dataSources[0].pluginId).toBe('prometheus');
   });
 });
 

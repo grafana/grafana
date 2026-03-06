@@ -169,7 +169,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
 /**
  * Extract inputs from a v2 dashboard spec
  */
-export function extractV2Inputs(dashboard: unknown): DashboardInputs {
+export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInputs> {
   const inputs: DashboardInputs = {
     dataSources: [],
     constants: [],
@@ -232,6 +232,15 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
   }
 
   for (const [label, dsType] of Object.entries(dsTypes)) {
+    try {
+      const datasource = await getDataSourceSrv().get({ type: dsType });
+      if (datasource.meta?.builtIn) {
+        continue;
+      }
+    } catch {
+      // datasource not found, still add it as an input so the user can pick one
+    }
+
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
     inputs.dataSources.push({
       name: label,
