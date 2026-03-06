@@ -103,10 +103,15 @@ const mockData: PanelData = {
 };
 
 const mockFieldConfig: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
+const mockOptions = { barShape: 'rounded' };
 
-function buildPanel(pluginId = 'timeseries', fieldConfig: FieldConfigSource = mockFieldConfig) {
+function buildPanel(
+  pluginId = 'timeseries',
+  fieldConfig: FieldConfigSource = mockFieldConfig,
+  options: Record<string, unknown> = mockOptions
+) {
   return {
-    useState: () => ({ pluginId, fieldConfig }),
+    useState: () => ({ pluginId, fieldConfig, options }),
     get state() {
       return { fieldConfig };
     },
@@ -173,7 +178,7 @@ describe('PanelStylesSection', () => {
   it('loads the plugin with the panel pluginId and gets its presets', async () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(mockImportPanelPlugin).toHaveBeenCalledWith('timeseries'));
-    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin, mockFieldConfig);
+    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin, mockFieldConfig, mockOptions);
   });
 
   it('calls onApplyPreset when a card is clicked', async () => {
@@ -203,7 +208,7 @@ describe('PanelStylesSection', () => {
     const presetsWithOptionsOnly: PanelPluginVisualizationSuggestion[] = [
       { pluginId: 'gauge', name: 'Only options', hash: 'only-options-hash', options: { barShape: 'rounded' } },
     ];
-    mockGetPresets.mockResolvedValue(presetsWithOptionsOnly);
+    mockGetPluginPresets.mockReturnValue(presetsWithOptionsOnly);
 
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
     await waitFor(() => expect(screen.getByTestId('preset-only-options-hash')).toBeInTheDocument());
@@ -230,7 +235,7 @@ describe('PanelStylesSection', () => {
     const user = userEvent.setup();
     let pluginId = 'timeseries';
     const panel = {
-      useState: () => ({ pluginId, fieldConfig: mockFieldConfig }),
+      useState: () => ({ pluginId, fieldConfig: mockFieldConfig, options: mockOptions }),
       get state() {
         return { fieldConfig: mockFieldConfig };
       },
