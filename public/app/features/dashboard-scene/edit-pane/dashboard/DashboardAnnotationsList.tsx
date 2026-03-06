@@ -21,13 +21,10 @@ const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
 const ID_HIDDEN_LIST = 'annotations-list-hidden';
 
-const DROPPABLE_TO_PLACEMENT: Record<
-  string,
-  (a: SceneDataLayerProvider) => { isHidden: boolean; placement?: 'inControlsMenu' }
-> = {
-  [ID_VISIBLE_LIST]: () => ({ isHidden: false, placement: undefined }),
-  [ID_CONTROLS_MENU_LIST]: () => ({ isHidden: false, placement: 'inControlsMenu' }),
-  [ID_HIDDEN_LIST]: () => ({ isHidden: true, placement: undefined }),
+const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'inControlsMenu' }> = {
+  [ID_VISIBLE_LIST]: { isHidden: false, placement: undefined },
+  [ID_CONTROLS_MENU_LIST]: { isHidden: false, placement: 'inControlsMenu' },
+  [ID_HIDDEN_LIST]: { isHidden: true, placement: undefined },
 };
 
 export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
@@ -70,7 +67,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       destList.splice(destination.index, 0, moved);
 
       const oldState = { isHidden: moved.state.isHidden, placement: moved.state.placement };
-      const newState = DROPPABLE_TO_PLACEMENT[destination.droppableId](moved);
+      const newState = DROPPABLE_TO_PLACEMENT[destination.droppableId];
 
       dashboardEditActions.edit({
         source: dataLayerSet,
@@ -172,7 +169,7 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
       <span
         className={styles.color}
         style={{
-          backgroundColor: theme.visualization.getColorByName(annotation.state.query.iconColor),
+          backgroundColor: theme.visualization.getColorByName(query.iconColor),
         }}
       />
       {name}
