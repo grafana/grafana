@@ -12,14 +12,21 @@ import (
 )
 
 // Authorizer handles authorization checks for provisioning file and folder operations.
-// It provides a clean abstraction for checking permissions on resources, files, and folders.
+//
+// Permission Model:
+//   - Permissions on a parent folder grant at least that level of access to all children
+//   - Children can have elevated permissions, but never reduced permissions
+//   - Resource operations verify permissions based on the resource's actual location
+//   - Folder operations verify permissions on the folder itself, not recursively on contents
+//   - File metadata is user-controlled and not solely trusted for permission checks
 type Authorizer interface {
 	// AuthorizeResource checks if the current user has permission to perform
 	// the specified verb on the given resource.
 	//
-	// SECURITY: For existing resources, this checks permissions on the folder where
-	// the resource actually exists, not the folder claimed in the file content.
-	// This prevents privilege escalation via folder claim manipulation.
+	// For existing resources, permissions are checked against the folder where the
+	// resource currently exists (from the database), not the folder specified in the
+	// file metadata. This ensures users cannot bypass folder permissions by declaring
+	// a different folder in their file content.
 	AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error
 
 	// AuthorizeCreateFolder checks if the current user has permission to create
@@ -58,14 +65,13 @@ func NewAuthorizer(repo *provisioning.Repository, access auth.AccessChecker) Aut
 // AuthorizeResource checks if the current user has permission to perform the specified
 // verb on the given resource.
 //
-// CRITICAL SECURITY FIX: For existing resources, this checks permissions in the folder
-// where the resource actually exists, not the folder specified in the file content.
-// This prevents a security vulnerability where a malicious file could specify a different
-// folder to bypass permission checks.
-//
-// Permission Model:
+// Authorization Model:
 //   - For new resources: Uses the folder from the file metadata
-//   - For existing resources: Uses the folder from the actual resource (SECURITY FIX)
+//   - For existing resources: Uses the folder where the resource currently exists
+//
+// This distinction is important because the file content is user-controlled, while the
+// existing resource location comes from the database. Checking against the actual location
+// prevents users from bypassing folder permissions by declaring a different folder in their file.
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
 	// Determine the resource name for the authorization check
 	var name string
@@ -75,12 +81,11 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		name = parsed.Obj.GetName()
 	}
 
-	// Determine the folder for the authorization check
-	// CRITICAL FIX: For existing resources, check permissions in the folder where
-	// the resource actually exists, not the folder specified in the file.
+	// Determine the folder for the authorization check.
+	// For new resources, use the folder from the file metadata.
+	// For existing resources, use the folder where the resource actually exists.
 	folder := parsed.Meta.GetFolder()
 	if parsed.Existing != nil {
-		// Use the folder from the existing resource
 		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
 			folder = meta.GetFolder()
 		}
@@ -96,7 +101,10 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 }
 
 // AuthorizeCreateFolder checks if the user has permission to create a folder at the
-// specified path. This checks create permission on the parent folder.
+// specified path.
+//
+// Authorization is checked against the parent folder: to create a new folder, the user
+// must have create permissions on the parent folder where it will be placed.
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
 	// Determine parent folder from path
 	parentFolder := ""
@@ -109,28 +117,24 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 		}
 	}
 
-	// For folder create operations, use empty name to check parent folder permissions
+	// Check create permission on the parent folder
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
-		Name:     "", // Empty name for create operations
+		Name:     "", // Empty name indicates permission check on parent
 		Verb:     utils.VerbCreate,
 	}, parentFolder)
 }
 
 // AuthorizeDeleteFolder checks if the user has permission to delete the folder at the
-// specified path. This checks delete permission on the folder itself.
+// specified path.
 //
-// Permission Model:
-// For folder operations (by path), we only check the top-level folder being deleted,
-// not recursively checking every nested resource. This follows the permission model where
-// folder-level operations check the folder itself, and individual resource operations
-// check each resource.
+// Authorization is checked only against the folder itself. Permissions on the parent folder
+// grant at least that level of access to all children, so checking the folder is sufficient.
+// Individual nested resources are not checked separately.
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
-	// Determine the folder ID being deleted
 	folderID := parseFolder(path, a.repo.Name)
 
-	// Check delete permission on the folder itself
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
@@ -142,15 +146,12 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 // AuthorizeMoveFolder checks if the user has permission to move a folder from
 // originalPath to targetPath.
 //
-// Permission Model:
-// For folder operations (by path), we only check the top-level folder being moved,
-// not recursively checking every nested resource. This follows the permission model where
-// folder-level operations check the folder itself, and individual resource operations
-// check each resource.
+// Moving a folder requires two permissions:
+//   1. Update permission on the source folder (the folder being moved)
+//   2. Create permission on the target parent folder (where it's being moved to)
 //
-// Requirements:
-//   - Update permission on the source folder
-//   - Create permission on the target parent folder
+// Individual nested resources are not checked separately. Permissions on the source folder
+// apply to all its contents, so checking the folder itself is sufficient.
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Check update permission on the source folder
 	sourceFolderID := parseFolder(originalPath, a.repo.Name)
@@ -177,7 +178,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
-		Name:     "", // Empty name for create operations in parent
+		Name:     "", // Empty name indicates permission check on parent
 		Verb:     utils.VerbCreate,
 	}, parentFolder)
 }
