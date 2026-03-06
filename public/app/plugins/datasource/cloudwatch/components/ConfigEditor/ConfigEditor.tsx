@@ -8,12 +8,10 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
-  DataSourceTestSucceeded,
-  DataSourceTestFailed,
   GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
+import { getDataSourceSrv, config, useConfigSaveReporter } from '@grafana/runtime';
 import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -46,23 +44,7 @@ export const ConfigEditor = (props: Props) => {
   });
 
   useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
-  const report = usePluginInteractionReporter();
-  useEffect(() => {
-    const successSubscription = getAppEvents().subscribe<DataSourceTestSucceeded>(DataSourceTestSucceeded, () => {
-      report('grafana_plugin_cloudwatch_save_succeeded', {
-        auth_type: options.jsonData.authType,
-      });
-    });
-    const failSubscription = getAppEvents().subscribe<DataSourceTestFailed>(DataSourceTestFailed, () => {
-      report('grafana_plugin_cloudwatch_save_failed', {
-        auth_type: options.jsonData.authType,
-      });
-    });
-    return () => {
-      successSubscription.unsubscribe();
-      failSubscription.unsubscribe();
-    };
-  }, [options.jsonData.authType, report]);
+  useConfigSaveReporter('cloudwatch', () => ({ auth_type: options.jsonData.authType ?? '' }));
   const [externalId, setExternalId] = useState('');
   useEffect(() => {
     if (!externalId && datasource) {

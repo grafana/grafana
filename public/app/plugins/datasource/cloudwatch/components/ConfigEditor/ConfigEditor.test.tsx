@@ -27,9 +27,6 @@ jest.mock('./XrayLinkConfig', () => ({
 
 const putMock = jest.fn();
 const getMock = jest.fn();
-const mockAppEvents = {
-  subscribe: () => ({ unsubscribe: jest.fn() }),
-};
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
@@ -39,7 +36,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: loadDataSourceMock,
   }),
-  getAppEvents: () => mockAppEvents,
+  useConfigSaveReporter: jest.fn(),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     awsAssumeRoleEnabled: true,

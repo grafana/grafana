@@ -58,6 +58,7 @@ export {
   createDataSourcePluginEventProperties,
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
+export { useConfigSaveReporter } from './analytics/plugins/useConfigSaveReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
 export { setMegaMenuOpenHook, useMegaMenuOpen } from './utils/megaMenuOpen';
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
