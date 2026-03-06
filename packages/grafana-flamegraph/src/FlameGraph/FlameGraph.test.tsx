@@ -9,12 +9,11 @@ import FlameGraph from './FlameGraph';
 import { FlameGraphDataContainer } from './dataTransform';
 import { data } from './testData/dataNestedSet';
 
-import 'jest-canvas-mock';
+import 'vitest-canvas-mock';
 
-jest.mock('react-use', () => {
-  const reactUse = jest.requireActual('react-use');
+vi.mock('react-use', async (originalImport) => {
   return {
-    ...reactUse,
+    ...(await originalImport()),
     useMeasure: () => {
       const ref = useRef(null);
       return [ref, { width: 1600 }];
@@ -27,12 +26,12 @@ describe('FlameGraph', () => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 
-    const setRangeMin = jest.fn();
-    const setRangeMax = jest.fn();
-    const onItemFocused = jest.fn();
-    const onSandwich = jest.fn();
-    const onFocusPillClick = jest.fn();
-    const onSandwichPillClick = jest.fn();
+    const setRangeMin = vi.fn();
+    const setRangeMax = vi.fn();
+    const onItemFocused = vi.fn();
+    const onSandwich = vi.fn();
+    const onFocusPillClick = vi.fn();
+    const onSandwichPillClick = vi.fn();
 
     const renderResult = render(
       <FlameGraph

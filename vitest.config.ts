@@ -12,6 +12,8 @@ export default defineConfig({
     include: [
       'packages/grafana-alerting/**/*.test.{ts,tsx}',
       'packages/grafana-data/**/*.test.{ts,tsx}',
+      'packages/grafana-eslint-rules/**/*.test.{ts,tsx}',
+      'packages/grafana-flamegraph/**/*.test.{ts,tsx}',
       'packages/grafana-runtime/**/*.test.{ts,tsx}',
       'packages/grafana-ui/**/*.test.{ts,tsx}',
       // TODO: uncomment when everything is migrated

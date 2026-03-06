@@ -82,6 +82,8 @@ module.exports = {
     '/node_modules/',
     '<rootDir>/packages/grafana-alerting',
     '<rootDir>/packages/grafana-data',
+    '<rootDir>/packages/grafana-eslint-rules',
+    '<rootDir>/packages/grafana-flamegraph',
     '<rootDir>/packages/grafana-runtime',
     '<rootDir>/packages/grafana-ui',
     // Decoupled plugins run their own tests so ignoring them here.

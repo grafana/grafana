@@ -13,8 +13,8 @@ function setup(props: Partial<React.ComponentProps<typeof FlameGraphMetadata>> =
          [6]
     `)!;
 
-  const onFocusPillClick = jest.fn();
-  const onSandwichPillClick = jest.fn();
+  const onFocusPillClick = vi.fn();
+  const onSandwichPillClick = vi.fn();
   const renderResult = render(
     <FlameGraphMetadata
       data={container}
