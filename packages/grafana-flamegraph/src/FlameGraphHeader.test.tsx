@@ -7,21 +7,21 @@ import { CollapsedMap } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import { ColorScheme, SelectedView } from './types';
 
-jest.mock('@grafana/assistant', () => ({
-  useAssistant: jest.fn().mockReturnValue({
+vi.mock('@grafana/assistant', () => ({
+  useAssistant: vi.fn().mockReturnValue({
     isAvailable: false,
     openAssistant: undefined,
   }),
-  createAssistantContextItem: jest.fn(),
+  createAssistantContextItem: vi.fn(),
   OpenAssistantButton: () => <div>OpenAssistantButton</div>,
 }));
 
 describe('FlameGraphHeader', () => {
   function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
-    const setSearch = jest.fn();
-    const setSelectedView = jest.fn();
-    const onReset = jest.fn();
-    const onSchemeChange = jest.fn();
+    const setSearch = vi.fn();
+    const setSelectedView = vi.fn();
+    const onReset = vi.fn();
+    const onSchemeChange = vi.fn();
 
     const renderResult = render(
       <FlameGraphHeader
@@ -31,7 +31,7 @@ describe('FlameGraphHeader', () => {
         setSelectedView={setSelectedView}
         containerWidth={1600}
         onReset={onReset}
-        onTextAlignChange={jest.fn()}
+        onTextAlignChange={vi.fn()}
         textAlign={'left'}
         showResetButton={true}
         colorScheme={ColorScheme.ValueBased}

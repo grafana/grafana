@@ -137,7 +137,7 @@ describe('Carousel', () => {
 
   it('shows warning when all images fail to load', async () => {
     const originalConsoleError = console.error;
-    console.error = jest.fn();
+    console.error = vi.fn();
 
     render(<Carousel images={testImages} />);
 

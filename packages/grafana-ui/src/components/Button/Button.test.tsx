@@ -13,7 +13,7 @@ const setup = (jsx: JSX.Element) => {
 
 describe('Button', () => {
   it('should fire onClick when not disabled', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const { user } = setup(<Button onClick={onClick}>Click me</Button>);
 
     const button = screen.getByRole('button');
@@ -23,7 +23,7 @@ describe('Button', () => {
   });
 
   it('should not fire onClick when disabled', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const { user } = setup(
       <Button disabled onClick={onClick}>
         Click me

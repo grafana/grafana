@@ -2,7 +2,7 @@ import { setTimeZoneResolver } from './common';
 import { getTimeZoneInfo } from './timezones';
 
 describe('getTimeZoneInfo', () => {
-  // global timezone is set to Pacific/Easter, see jest-config.js file
+  // global timezone is set to Pacific/Easter, see vitest-config.ts file
 
   describe('IANA canonical name of the timezone', () => {
     it('should resolve for default timezone', () => {

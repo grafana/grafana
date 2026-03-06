@@ -35,8 +35,8 @@ describe('locationUtil', () => {
       beforeEach(() => {
         locationUtil.initialize({
           config: { appSubUrl: '/subUrl' } as GrafanaConfig,
-          getVariablesUrlParams: jest.fn(),
-          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: vi.fn(),
+          getTimeRangeForUrl: vi.fn(),
         });
       });
       test('relative url', () => {
@@ -89,8 +89,8 @@ describe('locationUtil', () => {
       beforeEach(() => {
         locationUtil.initialize({
           config: {} as GrafanaConfig,
-          getVariablesUrlParams: jest.fn(),
-          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: vi.fn(),
+          getTimeRangeForUrl: vi.fn(),
         });
       });
 
@@ -151,8 +151,8 @@ describe('locationUtil', () => {
           config: {
             appSubUrl: '',
           } as GrafanaConfig,
-          getVariablesUrlParams: jest.fn(),
-          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: vi.fn(),
+          getTimeRangeForUrl: vi.fn(),
         });
       });
 
@@ -191,8 +191,8 @@ describe('locationUtil', () => {
           config: {
             appSubUrl: '/subpath',
           } as GrafanaConfig,
-          getVariablesUrlParams: jest.fn(),
-          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: vi.fn(),
+          getTimeRangeForUrl: vi.fn(),
         });
       });
 
@@ -232,8 +232,8 @@ describe('locationUtil', () => {
     beforeEach(() => {
       locationUtil.initialize({
         config: {} as GrafanaConfig,
-        getVariablesUrlParams: jest.fn(),
-        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: vi.fn(),
+        getTimeRangeForUrl: vi.fn(),
       });
     });
 
@@ -257,8 +257,8 @@ describe('locationUtil', () => {
     beforeEach(() => {
       locationUtil.initialize({
         config: {} as GrafanaConfig,
-        getVariablesUrlParams: jest.fn(),
-        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: vi.fn(),
+        getTimeRangeForUrl: vi.fn(),
       });
     });
 
@@ -322,8 +322,8 @@ describe('locationUtil', () => {
       beforeEach(() => {
         locationUtil.initialize({
           config: { appSubUrl: '/grafana' } as GrafanaConfig,
-          getVariablesUrlParams: jest.fn(),
-          getTimeRangeForUrl: jest.fn(),
+          getVariablesUrlParams: vi.fn(),
+          getTimeRangeForUrl: vi.fn(),
         });
       });
 

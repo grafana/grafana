@@ -18,20 +18,20 @@ function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusTe
 let logger: MonitoringLogger;
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   invalidateCache();
   logger = {
-    logDebug: jest.fn(),
-    logError: jest.fn(),
-    logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logDebug: vi.fn(),
+    logError: vi.fn(),
+    logInfo: vi.fn(),
+    logMeasurement: vi.fn(),
+    logWarning: vi.fn(),
   };
   setLogger(logger);
 });
 
-// heads up that all jest.fn(any function) will get the name 'mockConstructor'
-// so when getCachedPromise adds/looks up the cache key it will add/look up 'mockConstructor'
+// heads up that all vi.fn(any function) will get the name 'Mock'
+// so when getCachedPromise adds/looks up the cache key it will add/look up 'Mock'
 describe('getCachedPromise', () => {
   describe('when cache limit is reached', () => {
     test('should clear cache', async () => {
@@ -139,8 +139,8 @@ describe('getCachedPromise', () => {
 
   describe('when called without defaultValue and onError', () => {
     test('should cache promise correctly', async () => {
-      const promise = jest.fn(simulateOkRequest);
-      const promise2 = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateOkRequest);
+      const promise2 = vi.fn(simulateErrorRequest);
 
       const actual1 = await getCachedPromise(promise);
       const actual2 = await getCachedPromise(promise2);
@@ -151,8 +151,8 @@ describe('getCachedPromise', () => {
     });
 
     test('should return inflight promise', async () => {
-      const promise = jest.fn(simulateOkRequest);
-      const promiseReject = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateOkRequest);
+      const promiseReject = vi.fn(simulateErrorRequest);
 
       const promise1 = getCachedPromise(promise);
       const promise2 = getCachedPromise(promiseReject);
@@ -164,7 +164,7 @@ describe('getCachedPromise', () => {
     });
 
     test('should bubble up errors', async () => {
-      const promise = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateErrorRequest);
 
       await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
 
@@ -172,8 +172,8 @@ describe('getCachedPromise', () => {
     });
 
     test('should not invalidate cache on errors', async () => {
-      const promise = jest.fn(simulateErrorRequest);
-      const promise2 = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateErrorRequest);
+      const promise2 = vi.fn(simulateOkRequest);
 
       await expect(getCachedPromise(promise)).rejects.toThrow('Network Error');
       await expect(getCachedPromise(promise2)).rejects.toThrow('Network Error');
@@ -185,8 +185,8 @@ describe('getCachedPromise', () => {
 
   describe('when called with defaultValue but without onError', () => {
     test('should cache promise correctly', async () => {
-      const promise = jest.fn(simulateOkRequest);
-      const promise2 = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateOkRequest);
+      const promise2 = vi.fn(simulateErrorRequest);
 
       const actual1 = await getCachedPromise(promise, {
         defaultValue: { ok: false, status: 500, statusText: 'Internal Server Error' },
@@ -199,7 +199,7 @@ describe('getCachedPromise', () => {
     });
 
     test('should return inflight promise', async () => {
-      const promise = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateOkRequest);
 
       const promise1 = getCachedPromise(promise, {
         defaultValue: { ok: false, status: 500, statusText: 'Internal Server Error' },
@@ -215,7 +215,7 @@ describe('getCachedPromise', () => {
     });
 
     test('should not bubble up errors but handle them and log errors', async () => {
-      const promise = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateErrorRequest);
 
       const actual = await getCachedPromise(promise, {
         defaultValue: { ok: false, status: 500, statusText: 'Internal Server Error' },
@@ -227,13 +227,13 @@ describe('getCachedPromise', () => {
       expect(logger.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
         stack: expect.any(String),
         message: 'Network Error',
-        key: 'mockConstructor',
+        key: 'Mock',
       });
     });
 
     test('should invalidate cache when something errors', async () => {
-      const promise = jest.fn(simulateErrorRequest);
-      const promise2 = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateErrorRequest);
+      const promise2 = vi.fn(simulateOkRequest);
 
       const actual1 = await getCachedPromise(promise, {
         defaultValue: { ok: false, status: 500, statusText: 'Internal Server Error' },
@@ -250,8 +250,8 @@ describe('getCachedPromise', () => {
 
   describe('when called with onError but without defaultValue', () => {
     test('should cache promise correctly', async () => {
-      const promise = jest.fn(simulateOkRequest);
-      const promise2 = jest.fn(simulateErrorRequest);
+      const promise = vi.fn(simulateOkRequest);
+      const promise2 = vi.fn(simulateErrorRequest);
 
       const actual1 = await getCachedPromise(promise, {
         onError: async () => ({ ok: false, status: 500, statusText: 'Internal Server Error' }),
@@ -264,7 +264,7 @@ describe('getCachedPromise', () => {
     });
 
     test('should return inflight promise', async () => {
-      const promise = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateOkRequest);
 
       const promise1 = getCachedPromise(promise, {
         onError: async () => ({ ok: false, status: 500, statusText: 'Internal Server Error' }),
@@ -280,8 +280,8 @@ describe('getCachedPromise', () => {
     });
 
     test('should not bubble up errors but call onError callback', async () => {
-      const promise = jest.fn(simulateErrorRequest);
-      const onError = jest.fn(() => Promise.resolve({ ok: false, status: 500, statusText: 'Internal Server Error' }));
+      const promise = vi.fn(simulateErrorRequest);
+      const onError = vi.fn(() => Promise.resolve({ ok: false, status: 500, statusText: 'Internal Server Error' }));
 
       const actual = await getCachedPromise(promise, { onError });
 
@@ -292,8 +292,8 @@ describe('getCachedPromise', () => {
     });
 
     test('should invalidate cache when calling invalidate function', async () => {
-      const promise = jest.fn(simulateErrorRequest);
-      const promise2 = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateErrorRequest);
+      const promise2 = vi.fn(simulateOkRequest);
 
       const actual1 = await getCachedPromise(promise, {
         onError: async ({ error, invalidate }) => {
@@ -312,8 +312,8 @@ describe('getCachedPromise', () => {
     });
 
     test('should not invalidate cache if invalidate function is not called', async () => {
-      const promise = jest.fn(simulateErrorRequest);
-      const promise2 = jest.fn(simulateOkRequest);
+      const promise = vi.fn(simulateErrorRequest);
+      const promise2 = vi.fn(simulateOkRequest);
 
       const actual1 = await getCachedPromise(promise, {
         onError: async ({ error }) => {

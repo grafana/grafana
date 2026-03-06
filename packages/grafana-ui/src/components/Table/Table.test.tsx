@@ -9,8 +9,8 @@ import { Table } from './TableRT/Table';
 import { CustomHeaderRendererProps, TableRTProps } from './types';
 
 // mock transition styles to ensure consistent behaviour in unit tests
-jest.mock('@floating-ui/react', () => ({
-  ...jest.requireActual('@floating-ui/react'),
+vi.mock('@floating-ui/react', async (originalImport) => ({
+  ...(await originalImport()),
   useTransitionStyles: () => ({
     styles: {},
   }),
@@ -102,9 +102,9 @@ function applyOverrides(dataFrame: DataFrame) {
 }
 
 function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
-  const onSortByChange = jest.fn();
-  const onCellFilterAdded = jest.fn();
-  const onColumnResize = jest.fn();
+  const onSortByChange = vi.fn();
+  const onCellFilterAdded = vi.fn();
+  const onColumnResize = vi.fn();
   const props: TableRTProps = {
     ariaLabel: 'aria-label',
     data: getDataFrame(fullDataFrame),
@@ -412,9 +412,9 @@ describe('Table', () => {
       expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
 
-      const onSortByChange = jest.fn();
-      const onCellFilterAdded = jest.fn();
-      const onColumnResize = jest.fn();
+      const onSortByChange = vi.fn();
+      const onCellFilterAdded = vi.fn();
+      const onColumnResize = vi.fn();
       const props: TableRTProps = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),
@@ -550,9 +550,9 @@ describe('Table', () => {
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
 
-      const onSortByChange = jest.fn();
-      const onCellFilterAdded = jest.fn();
-      const onColumnResize = jest.fn();
+      const onSortByChange = vi.fn();
+      const onCellFilterAdded = vi.fn();
+      const onColumnResize = vi.fn();
       const props: TableRTProps = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),

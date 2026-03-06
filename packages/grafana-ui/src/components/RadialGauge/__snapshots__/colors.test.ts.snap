@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (for percentage thresholds) 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should map threshold colors correctly (for percentage thresholds) 1`] = `
 [
   {
     "color": "#73BF69",
@@ -21,7 +21,7 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 1`] = `
 [
   {
     "color": "#73BF69",
@@ -42,7 +42,7 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 2`] = `
+exports[`RadialGauge color utils > buildGradientColors > should map threshold colors correctly (with baseColor if displayProcessor does not return colors) 2`] = `
 [
   {
     "color": "#73BF69",
@@ -63,7 +63,7 @@ exports[`RadialGauge color utils buildGradientColors should map threshold colors
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should return gradient colors for by-value color mode in dark theme 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should return gradient colors for by-value color mode in dark theme 1`] = `
 [
   {
     "color": "#181b1f",
@@ -76,7 +76,7 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should return gradient colors for by-value color mode in light theme 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should return gradient colors for by-value color mode in light theme 1`] = `
 [
   {
     "color": "#ffffff",
@@ -89,7 +89,7 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should return gradient colors for continuous color modes 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should return gradient colors for continuous color modes 1`] = `
 [
   {
     "color": "rgb(0, 32, 81)",
@@ -130,7 +130,7 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should return gradient colors for fixed color mode in dark theme 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should return gradient colors for fixed color mode in dark theme 1`] = `
 [
   {
     "color": "#37237a",
@@ -147,7 +147,7 @@ exports[`RadialGauge color utils buildGradientColors should return gradient colo
 ]
 `;
 
-exports[`RadialGauge color utils buildGradientColors should return gradient colors for fixed color mode in light theme 1`] = `
+exports[`RadialGauge color utils > buildGradientColors > should return gradient colors for fixed color mode in light theme 1`] = `
 [
   {
     "color": "#a146da",

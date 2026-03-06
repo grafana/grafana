@@ -24,7 +24,7 @@ describe('The FileListItem component', () => {
   });
 
   it('should show a retry icon when error is not null and retryUpload prop is passed', async () => {
-    const retryUpload = jest.fn();
+    const retryUpload = vi.fn();
     render(<FileListItem file={{ file: file({}), id: '1', error: new DOMException('error'), retryUpload }} />);
 
     await user.click(screen.getByLabelText('Retry'));
@@ -49,7 +49,7 @@ describe('The FileListItem component', () => {
   });
 
   it('should show a Cancel button when abortUpload prop is passed', async () => {
-    const abortUpload = jest.fn();
+    const abortUpload = vi.fn();
     render(<FileListItem file={{ file: file({}), id: '1', error: null, progress: 6, abortUpload }} />);
 
     await user.click(screen.getByRole('button', { name: /cancel/i }));
@@ -58,7 +58,7 @@ describe('The FileListItem component', () => {
   });
 
   it('should show a Remove icon when removeFile prop is passed', async () => {
-    const removeFile = jest.fn();
+    const removeFile = vi.fn();
     const customFile = { file: file({}), id: '1', error: null };
     render(<FileListItem file={customFile} removeFile={removeFile} />);
 

@@ -85,12 +85,12 @@ describe('RefreshPicker', () => {
   });
   describe('ButtonSelect', () => {
     it('should show interval picker by default', () => {
-      render(<RefreshPicker onIntervalChanged={jest.fn()} />);
+      render(<RefreshPicker onIntervalChanged={vi.fn()} />);
       const button = screen.getByTestId(selectors.components.RefreshPicker.intervalButtonV2);
       expect(button).toBeInTheDocument();
     });
     it('should not show interval picker when noIntervalPicker is true', () => {
-      render(<RefreshPicker onIntervalChanged={jest.fn()} noIntervalPicker />);
+      render(<RefreshPicker onIntervalChanged={vi.fn()} noIntervalPicker />);
       const button = screen.queryByTestId(selectors.components.RefreshPicker.intervalButtonV2);
       expect(button).not.toBeInTheDocument();
     });

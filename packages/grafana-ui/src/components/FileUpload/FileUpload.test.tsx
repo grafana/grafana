@@ -19,7 +19,7 @@ describe('FileUpload', () => {
   });
 
   it('clicking the button should trigger the input', async () => {
-    const mockInputOnClick = jest.fn();
+    const mockInputOnClick = vi.fn();
     render(<FileUpload onFileUpload={() => {}} />);
     const button = screen.getByText('Upload file');
     const input = screen.getByTestId(selectors.components.FileUpload.inputField);
@@ -34,7 +34,7 @@ describe('FileUpload', () => {
   it('should display uploaded file name', async () => {
     const testFileName = 'grafana.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
-    const onFileUpload = jest.fn();
+    const onFileUpload = vi.fn();
     render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     const uploader = await screen.findByTestId(selectors.components.FileUpload.inputField);
     await user.upload(uploader, file);
@@ -45,7 +45,7 @@ describe('FileUpload', () => {
   it("should trim uploaded file's name", async () => {
     const testFileName = 'longFileName.something.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
-    const onFileUpload = jest.fn();
+    const onFileUpload = vi.fn();
     render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     const uploader = screen.getByTestId(selectors.components.FileUpload.inputField);
     await user.upload(uploader, file);

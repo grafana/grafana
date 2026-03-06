@@ -18,7 +18,7 @@ const files = [
 
 describe('The FileDropzone component', () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('should show the default text of the dropzone component when no props passed', () => {
@@ -82,7 +82,7 @@ describe('The FileDropzone component', () => {
 
   it('should use the passed readAs prop with the FileReader API', async () => {
     render(<FileDropzone readAs="readAsDataURL" />);
-    const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsDataURL');
+    const fileReaderSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
 
@@ -92,7 +92,7 @@ describe('The FileDropzone component', () => {
 
   it('should use the readAsText FileReader API if no readAs prop passed', async () => {
     render(<FileDropzone />);
-    const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsText');
+    const fileReaderSpy = vi.spyOn(FileReader.prototype, 'readAsText');
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
 
@@ -101,10 +101,10 @@ describe('The FileDropzone component', () => {
   });
 
   it('should use the onDrop that is passed', async () => {
-    const onDrop = jest.fn();
+    const onDrop = vi.fn();
     const fileToUpload = file({});
     render(<FileDropzone options={{ onDrop }} />);
-    const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsText');
+    const fileReaderSpy = vi.spyOn(FileReader.prototype, 'readAsText');
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([fileToUpload]));
 

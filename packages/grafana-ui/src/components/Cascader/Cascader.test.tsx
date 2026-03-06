@@ -51,18 +51,18 @@ describe('Cascader', () => {
     let user: ReturnType<typeof userEvent.setup>;
 
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       // Need to use delay: null here to work with fakeTimers
       // see https://github.com/testing-library/user-event/issues/833
       user = userEvent.setup({ delay: null });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('displays updated options', async () => {
-      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
+      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={vi.fn()} />);
 
       await user.click(screen.getByPlaceholderText(placeholder));
 
@@ -70,7 +70,7 @@ describe('Cascader', () => {
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
       act(() => {
-        jest.runAllTimers();
+        vi.runAllTimers();
       });
 
       await user.click(screen.getByPlaceholderText(placeholder));
@@ -80,10 +80,10 @@ describe('Cascader', () => {
     });
 
     it('filters updated results when searching', async () => {
-      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
+      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={vi.fn()} />);
 
       act(() => {
-        jest.runAllTimers();
+        vi.runAllTimers();
       });
 
       await user.type(screen.getByPlaceholderText(placeholder), 'Third');
@@ -93,7 +93,7 @@ describe('Cascader', () => {
   });
 
   it('filters results when searching', async () => {
-    render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
+    render(<Cascader placeholder={placeholder} options={options} onSelect={vi.fn()} />);
 
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
 
@@ -102,9 +102,7 @@ describe('Cascader', () => {
   });
 
   it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', async () => {
-    render(
-      <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={jest.fn()} />
-    );
+    render(<Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={vi.fn()} />);
 
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
     await userEvent.click(screen.getByText('First / Third'));
@@ -150,7 +148,7 @@ describe('Cascader', () => {
 
   it('displays last level selected when displayAllSelectedLevels is false', async () => {
     render(
-      <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={jest.fn()} />
+      <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={vi.fn()} />
     );
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
@@ -161,7 +159,7 @@ describe('Cascader', () => {
   });
 
   it('displays last level selected when displayAllSelectedLevels is not passed in', async () => {
-    render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
+    render(<Cascader placeholder={placeholder} options={options} onSelect={vi.fn()} />);
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
     await userEvent.click(screen.getByText('First'));
@@ -173,7 +171,7 @@ describe('Cascader', () => {
   it('should be properly associated with the Field label', () => {
     render(
       <Field label={'Cascader label'}>
-        <Cascader options={options} onSelect={jest.fn()} id={'cascader'} />
+        <Cascader options={options} onSelect={vi.fn()} id={'cascader'} />
       </Field>
     );
 

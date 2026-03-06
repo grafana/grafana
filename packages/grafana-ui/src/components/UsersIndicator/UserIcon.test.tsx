@@ -32,7 +32,7 @@ describe('UserIcon', () => {
   });
 
   it('calls onClick handler when clicked', async () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     const { user } = setup(<UserIcon userView={testUserView} onClick={handleClick} />);
     await user.click(screen.getByLabelText('John Smith icon'));
     expect(handleClick).toHaveBeenCalledTimes(1);

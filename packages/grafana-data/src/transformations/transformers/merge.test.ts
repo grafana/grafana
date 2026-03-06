@@ -400,7 +400,7 @@ describe('Merge multiple to single', () => {
   });
 
   it('combine two time series, where first serie fields has display processor, into one', async () => {
-    const displayProcessor: DisplayProcessor = jest.fn();
+    const displayProcessor: DisplayProcessor = vi.fn();
 
     const serieA = toDataFrame({
       name: 'A',

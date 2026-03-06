@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 
 import { FilterPill } from './FilterPill';
 
-const onClick = jest.fn();
+const onClick = vi.fn();
 
 const setup = (jsx: JSX.Element) => {
   return {

@@ -9,7 +9,8 @@
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": ["vitest/globals"]
   },
   "exclude": ["dist/**/*"],
   "include": [

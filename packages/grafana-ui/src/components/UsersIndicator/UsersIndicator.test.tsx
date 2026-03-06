@@ -38,7 +38,7 @@ describe('UsersIndicator', () => {
   });
 
   it('calls the onClick function when the user number indicator is clicked', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<UsersIndicator users={users} onClick={handleClick} limit={2} />);
     const moreUsersIcon = screen.getByRole('button', { name: 'Extra users icon' });
     expect(moreUsersIcon).toHaveTextContent('+1');

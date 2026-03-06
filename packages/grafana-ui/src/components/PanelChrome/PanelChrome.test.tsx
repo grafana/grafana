@@ -227,7 +227,7 @@ it('does not render sub-header content when panel is collapsed', () => {
 });
 
 it('does not select the panel when clicking interactive content', async () => {
-  const onSelect = jest.fn();
+  const onSelect = vi.fn();
   const user = userEvent.setup();
 
   render(
@@ -236,7 +236,7 @@ it('does not select the panel when clicking interactive content', async () => {
         enabled: true,
         selected: [],
         onSelect,
-        onClear: jest.fn(),
+        onClear: vi.fn(),
       }}
     >
       <PanelChrome width={100} height={100} selectionId="panel-1">

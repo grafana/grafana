@@ -15,7 +15,7 @@ describe('Label', () => {
   });
 
   it('calls onClick when clicked', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     render(<AlertLabel labelKey="env" value="prod" onClick={onClick} />);
 
     await userEvent.click(screen.getByRole('button'));
@@ -23,7 +23,7 @@ describe('Label', () => {
   });
 
   it('calls onClick when Enter is pressed', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     render(<AlertLabel labelKey="region" value="eu-west-1" onClick={onClick} />);
 
     const button = screen.getByRole('button');

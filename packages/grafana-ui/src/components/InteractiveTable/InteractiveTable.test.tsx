@@ -359,7 +359,7 @@ describe('InteractiveTable', () => {
     it('should call fetchData with the correct sortBy argument', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID', sortType: 'string' }];
       const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
-      const fetchData = jest.fn();
+      const fetchData = vi.fn();
       render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} fetchData={fetchData} />);
 
       const valueColumnHeader = screen.getByRole('button', {

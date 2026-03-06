@@ -33,7 +33,7 @@ describe('Store', () => {
   describe('subscribe', () => {
     it('should call subscriber when value changes', () => {
       const testKey = 'test-key';
-      const subscriber = jest.fn();
+      const subscriber = vi.fn();
       const unsubscribe = store.subscribe(testKey, subscriber);
 
       store.set(testKey, 'test-value');
@@ -48,8 +48,8 @@ describe('Store', () => {
 
     it('should handle multiple subscribers for the same key', () => {
       const testKey = 'test-key';
-      const subscriber1 = jest.fn();
-      const subscriber2 = jest.fn();
+      const subscriber1 = vi.fn();
+      const subscriber2 = vi.fn();
 
       store.subscribe(testKey, subscriber1);
       store.subscribe(testKey, subscriber2);

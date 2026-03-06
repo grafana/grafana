@@ -98,7 +98,7 @@ describe('useListFocus', () => {
 
   it('clicks focused item when Enter key is pressed', async () => {
     const ref = createRef<HTMLUListElement>();
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const { rerender } = render(getListElement(ref));
 
     const { result } = renderHook(() => useListFocus({ localRef: ref, options }));

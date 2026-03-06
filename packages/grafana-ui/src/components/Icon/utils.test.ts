@@ -19,7 +19,7 @@ describe('Icon utils', () => {
   describe('getIconRoot', () => {
     beforeEach(() => {
       // will reset the iconRoot cached value
-      jest.resetModules();
+      vi.resetModules();
     });
 
     describe('when public path is configured', () => {
@@ -28,8 +28,8 @@ describe('Icon utils', () => {
         window.__grafana_public_path__ = 'somepath/public/';
       });
 
-      it('should return icon root based on __grafana_public_path__', () => {
-        const { getIconRoot } = require('./utils');
+      it('should return icon root based on __grafana_public_path__', async () => {
+        const { getIconRoot } = await import('./utils');
         expect(getIconRoot()).toEqual('somepath/public/build/img/icons/');
       });
     });
@@ -40,8 +40,8 @@ describe('Icon utils', () => {
         window.__grafana_public_path__ = undefined;
       });
 
-      it('should return default icon root', () => {
-        const { getIconRoot } = require('./utils');
+      it('should return default icon root', async () => {
+        const { getIconRoot } = await import('./utils');
         expect(getIconRoot()).toEqual('public/build/img/icons/');
       });
     });

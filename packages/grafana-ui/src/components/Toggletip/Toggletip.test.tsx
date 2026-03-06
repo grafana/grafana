@@ -1,4 +1,4 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Button, LinkButton } from '../Button/Button';
@@ -7,7 +7,7 @@ import { Toggletip } from './Toggletip';
 
 describe('Toggletip', () => {
   it('should display toggletip after click on "Click me!" button', async () => {
-    const onOpen = jest.fn();
+    const onOpen = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onOpen={onOpen}>
         <Button type="button" data-testid="myButton">
@@ -36,7 +36,7 @@ describe('Toggletip', () => {
   });
 
   it('should not close if configured as `show=true`', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" show={true} onClose={onClose}>
         <Button type="button" data-testid="myButton">
@@ -63,7 +63,7 @@ describe('Toggletip', () => {
   });
 
   it('should not open if configured as `show=false`', async () => {
-    const onOpen = jest.fn();
+    const onOpen = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" show={false} onOpen={onOpen}>
         <Button type="button" data-testid="myButton">
@@ -80,7 +80,7 @@ describe('Toggletip', () => {
   });
 
   it('should close toggletip after click on close button', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onClose={onClose}>
         <Button type="button" data-testid="myButton">
@@ -101,7 +101,7 @@ describe('Toggletip', () => {
   });
 
   it('should close toggletip after press ESC', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onClose={onClose}>
         <Button type="button" data-testid="myButton">
@@ -120,7 +120,7 @@ describe('Toggletip', () => {
   });
 
   it('should display the toggletip after press ENTER', async () => {
-    const onOpen = jest.fn();
+    const onOpen = vi.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onOpen={onOpen}>
         <Button type="button" data-testid="myButton">
@@ -141,7 +141,7 @@ describe('Toggletip', () => {
   });
 
   it('should trap content within the overlay', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const afterInDom = 'Outside of toggletip';
 
     render(
@@ -207,7 +207,7 @@ describe('Toggletip', () => {
     });
 
     it('should restore focus to the button that opened the toggletip when closed from within the toggletip', async () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(
         <Toggletip placement="auto" content="Tooltip text" onClose={onClose}>
           <Button type="button" data-testid="myButton">
@@ -228,7 +228,7 @@ describe('Toggletip', () => {
     });
 
     it('should NOT restore focus to the button that opened the toggletip when closed from outside the toggletip', async () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       const afterInDom = 'Outside of toggletip';
 
       render(

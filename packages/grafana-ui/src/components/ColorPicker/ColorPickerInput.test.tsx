@@ -31,14 +31,14 @@ describe('ColorPickerInput', () => {
   });
 
   it('should pass correct color to onChange callback', async () => {
-    const mockOnChange = jest.fn();
+    const mockOnChange = vi.fn();
     render(<ColorPickerInput onChange={mockOnChange} />);
     await userEvent.type(screen.getByRole('textbox'), 'rgb(255,255,255)');
     await waitFor(() => expect(mockOnChange).toHaveBeenCalledWith('rgb(255, 255, 255)'));
   });
 
   it('should not pass invalid color value to onChange callback', async () => {
-    const mockOnChange = jest.fn();
+    const mockOnChange = vi.fn();
     render(<ColorPickerInput onChange={mockOnChange} />);
     await userEvent.type(screen.getByRole('textbox'), 'some text');
     // blur the input
@@ -48,7 +48,7 @@ describe('ColorPickerInput', () => {
   });
 
   it('should be able to reset selected value', async () => {
-    const mockOnChange = jest.fn();
+    const mockOnChange = vi.fn();
     render(<ColorPickerInput onChange={mockOnChange} value={'rgb(0,0,0)'} />);
     // Should show the value in the input
     expect(screen.getByDisplayValue('rgb(0,0,0)')).toBeInTheDocument();

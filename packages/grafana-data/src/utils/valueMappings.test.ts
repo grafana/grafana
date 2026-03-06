@@ -186,37 +186,39 @@ describe('Format value with value mappings', () => {
 });
 
 describe('Range mapping with null From or null To', () => {
-  expect(
-    getValueMappingResult(
-      [
-        {
-          type: MappingType.RangeToText,
-          options: {
-            from: 0,
-            to: null,
-            result: { text: 'pos' },
+  it('', () => {
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.RangeToText,
+            options: {
+              from: 0,
+              to: null,
+              result: { text: 'pos' },
+            },
           },
-        },
-      ],
-      100
-    )
-  ).toEqual({ text: 'pos' });
+        ],
+        100
+      )
+    ).toEqual({ text: 'pos' });
 
-  expect(
-    getValueMappingResult(
-      [
-        {
-          type: MappingType.RangeToText,
-          options: {
-            from: null,
-            to: 0,
-            result: { text: 'neg' },
+    expect(
+      getValueMappingResult(
+        [
+          {
+            type: MappingType.RangeToText,
+            options: {
+              from: null,
+              to: 0,
+              result: { text: 'neg' },
+            },
           },
-        },
-      ],
-      -100
-    )
-  ).toEqual({ text: 'neg' });
+        ],
+        -100
+      )
+    ).toEqual({ text: 'neg' });
+  });
 });
 
 describe('Format value with regex mappings', () => {

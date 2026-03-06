@@ -12,19 +12,19 @@ describe('DataLinksActionsTooltip', () => {
     href: 'http://link1.com',
     title: 'Data Link1',
     target: '_blank',
-    onClick: jest.fn(),
+    onClick: vi.fn(),
     origin: { ref: { uid: 'test' } },
   };
 
   const mockAction: ActionModel = {
     title: 'Action1',
-    onClick: jest.fn(),
-    confirmation: jest.fn(),
+    onClick: vi.fn(),
+    confirmation: vi.fn(),
     style: { backgroundColor: '#ff0000' },
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should not render when there is only one link', () => {
@@ -72,7 +72,7 @@ describe('DataLinksActionsTooltip', () => {
   });
 
   it('should call onTooltipClose when tooltip is dismissed', async () => {
-    const onTooltipClose = jest.fn();
+    const onTooltipClose = vi.fn();
     render(
       <DataLinksActionsTooltip
         links={[mockLink, { ...mockLink, title: 'Data Link2', href: 'http://link2.com' }]}

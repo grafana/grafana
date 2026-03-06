@@ -5,10 +5,10 @@ import { faro } from '@grafana/faro-web-sdk';
 
 import { ErrorBoundary } from './ErrorBoundary';
 
-jest.mock('@grafana/faro-web-sdk', () => ({
+vi.mock('@grafana/faro-web-sdk', () => ({
   faro: {
     api: {
-      pushError: jest.fn(),
+      pushError: vi.fn(),
     },
   },
 }));
@@ -19,10 +19,10 @@ const ErrorThrower: FC<{ error: Error }> = ({ error }) => {
 
 // According to this issue https://github.com/facebook/react/issues/15069 componentDidCatch logs errors to console.error unconditionally.
 // Let's make sure we don't output that to console.error in the tests.
-let consoleSpy: jest.SpyInstance;
+let consoleSpy: ReturnType<typeof vi.spyOn>;
 describe('ErrorBoundary', () => {
   beforeEach(() => {
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -45,7 +45,7 @@ describe('ErrorBoundary', () => {
 
     await screen.findByText(problem.message);
     expect(faro.api.pushError).toHaveBeenCalledTimes(1);
-    expect((faro.api.pushError as jest.Mock).mock.calls[0][0]).toBe(problem);
+    expect((faro.api.pushError as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe(problem);
   });
 
   it('should rerender when recover props change', async () => {

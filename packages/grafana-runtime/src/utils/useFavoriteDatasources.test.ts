@@ -4,28 +4,27 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginType, PluginMet
 
 import { useFavoriteDatasources } from './useFavoriteDatasources';
 
-// Mock UserStorage
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
+const { mockGetItem, mockSetItem } = vi.hoisted(() => ({
+  mockGetItem: vi.fn(),
+  mockSetItem: vi.fn(),
+}));
 
-jest.mock('./userStorage', () => {
-  return {
-    UserStorage: jest.fn().mockImplementation(() => ({
+vi.mock('./userStorage', () => ({
+  UserStorage: vi.fn().mockImplementation(function () {
+    return {
       getItem: (key: string) => mockGetItem(key),
       setItem: (key: string, value: string) => mockSetItem(key, value),
-    })),
-  };
-});
+    };
+  }),
+}));
 
-jest.mock('../config', () => {
-  return {
-    config: {
-      featureToggles: {
-        favoriteDatasources: true,
-      },
+vi.mock('../config', () => ({
+  config: {
+    featureToggles: {
+      favoriteDatasources: true,
     },
-  };
-});
+  },
+}));
 
 describe('useFavoriteDatasources', () => {
   // Test data helpers
@@ -72,7 +71,7 @@ describe('useFavoriteDatasources', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('initial loading', () => {

@@ -31,7 +31,7 @@ const mockTabs = [
   },
 ];
 
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 const defaultProps = {
   tabs: mockTabs,
   onClose: mockOnClose,
@@ -46,7 +46,7 @@ const setup = (jsx: JSX.Element) => {
 
 describe('TabbedContainer', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render all tabs with their labels and icons', () => {

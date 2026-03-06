@@ -13,7 +13,7 @@ describe('TimeRangeInput', () => {
     const user = userEvent.setup();
     const from = dateTime('2024-01-01T00:00:00Z');
     const to = dateTime('2024-01-01T00:00:00Z');
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     render(
       <TimeRangeInput

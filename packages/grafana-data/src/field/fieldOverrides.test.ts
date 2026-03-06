@@ -33,8 +33,8 @@ const property1: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: jest.fn(),
-  editor: jest.fn(),
+  override: vi.fn(),
+  editor: vi.fn(),
   name: 'Property 1',
 };
 
@@ -44,8 +44,8 @@ const property2: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: jest.fn(),
-  editor: jest.fn(),
+  override: vi.fn(),
+  editor: vi.fn(),
   name: 'Property 2',
 };
 
@@ -55,8 +55,8 @@ const property3: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: jest.fn(),
-  editor: jest.fn(),
+  override: vi.fn(),
+  editor: vi.fn(),
   name: 'Property 3',
 };
 
@@ -66,8 +66,8 @@ const shouldApplyFalse: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => false,
-  override: jest.fn(),
-  editor: jest.fn(),
+  override: vi.fn(),
+  editor: vi.fn(),
   name: 'Should Apply False',
 };
 
@@ -77,8 +77,8 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as GrafanaConfig,
-  getVariablesUrlParams: jest.fn(),
-  getTimeRangeForUrl: jest.fn(),
+  getVariablesUrlParams: vi.fn(),
+  getTimeRangeForUrl: vi.fn(),
 });
 
 describe('Global MinMax', () => {
@@ -1068,7 +1068,7 @@ describe('getLinksSupplier', () => {
       ],
     });
 
-    const replaceSpy = jest.fn();
+    const replaceSpy = vi.fn();
     const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
     supplier({});
 
@@ -1198,8 +1198,8 @@ describe('getLinksSupplier', () => {
       });
     });
     it('handles link click handlers', () => {
-      const onClickSpy = jest.fn();
-      const replaceSpy = jest.fn().mockImplementation((value, vars, format) => value);
+      const onClickSpy = vi.fn();
+      const replaceSpy = vi.fn().mockImplementation((value, vars, format) => value);
       const f0 = createDataFrame({
         name: 'A',
         fields: [
@@ -1243,8 +1243,8 @@ describe('getLinksSupplier', () => {
     });
 
     it('handles links built dynamically', () => {
-      const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
-      const onBuildUrlSpy = jest.fn();
+      const replaceSpy = vi.fn().mockReturnValue('url interpolated 10');
+      const onBuildUrlSpy = vi.fn();
       const scopedVars = { foo: { text: 'bar', value: 'bar' } };
       const f0 = createDataFrame({
         name: 'A',
@@ -1287,8 +1287,8 @@ describe('getLinksSupplier', () => {
   });
 
   it('handles dynamic links with onclick handler', () => {
-    const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
-    const onClickUrlSpy = jest.fn();
+    const replaceSpy = vi.fn().mockReturnValue('url interpolated 10');
+    const onClickUrlSpy = vi.fn();
     const scopedVars = { foo: { text: 'bar', value: 'bar' } };
     const f0 = createDataFrame({
       name: 'A',

@@ -96,7 +96,7 @@ describe('TableNG hooks', () => {
 
   describe('useManagedSort', () => {
     it('Should not update if sortBy is undefined', () => {
-      const setSortColumns = jest.fn();
+      const setSortColumns = vi.fn();
       renderHook(() =>
         useManagedSort({
           sortBy: undefined,
@@ -109,7 +109,7 @@ describe('TableNG hooks', () => {
     });
 
     it.each([true, false])('Should not update if behavior is managed', (desc) => {
-      const setSortColumns = jest.fn();
+      const setSortColumns = vi.fn();
       renderHook(() =>
         useManagedSort({
           sortBy: [
@@ -133,7 +133,7 @@ describe('TableNG hooks', () => {
     });
 
     it.each([true, false])('Should not update if behavior is initial', (desc) => {
-      const setSortColumns = jest.fn();
+      const setSortColumns = vi.fn();
       renderHook(() =>
         useManagedSort({
           sortBy: [
@@ -479,7 +479,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: vi.fn(() => 44) },
           sortColumns: [],
         });
       });
@@ -488,7 +488,7 @@ describe('TableNG hooks', () => {
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
-      const heightFn = jest.fn(() => 20);
+      const heightFn = vi.fn(() => 20);
 
       const { fields } = setupData();
 
@@ -877,8 +877,8 @@ describe('TableNG hooks', () => {
         const frameToRecords = compileFrameToRecords(frame);
         rows = frameToRecords(frame);
 
-        const measureHeightFn = jest.fn(() => 40);
-        const estimateHeightFn = jest.fn(() => 40);
+        const measureHeightFn = vi.fn(() => 40);
+        const estimateHeightFn = vi.fn(() => 40);
         const { result } = renderHook(() => {
           const rowHeight = useRowHeight({
             fields: fieldsWithWrappedText,
@@ -927,8 +927,8 @@ describe('TableNG hooks', () => {
         const nestedFrameToRecords = compileFrameToRecords(nestedFrame, 'nested');
         const nestedRows = nestedFrameToRecords(nestedFrame, 0);
 
-        const measureHeightFn = jest.fn(() => 40);
-        const estimateHeightFn = jest.fn(() => 40);
+        const measureHeightFn = vi.fn(() => 40);
+        const estimateHeightFn = vi.fn(() => 40);
         const { result } = renderHook(() => {
           const rowHeight = useRowHeight({
             nestedData: [nestedFrame],

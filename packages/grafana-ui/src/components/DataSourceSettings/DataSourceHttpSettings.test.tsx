@@ -4,7 +4,7 @@ import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import { HttpSettingsProps } from './types';
 
 const setup = (propOverrides?: object) => {
-  const onChange = jest.fn();
+  const onChange = vi.fn();
   const props: HttpSettingsProps = {
     dataSourceConfig: {
       id: 4,

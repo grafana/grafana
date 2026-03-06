@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`TableNG hooks useNestedRows should apply sorting and filtering 1`] = `
+exports[`TableNG hooks > useNestedRows > should apply sorting and filtering 1`] = `
 [
   {
     "final": [
@@ -51,7 +51,7 @@ exports[`TableNG hooks useNestedRows should apply sorting and filtering 1`] = `
 ]
 `;
 
-exports[`TableNG hooks useNestedRows should return the nested rows 1`] = `
+exports[`TableNG hooks > useNestedRows > should return the nested rows 1`] = `
 [
   {
     "final": [

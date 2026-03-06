@@ -214,7 +214,7 @@ describe('PanelPlugin', () => {
           },
         });
         expect(() => panel.fieldConfigRegistry).toThrowErrorMatchingInlineSnapshot(
-          `"[undefined] Field config paths do not support arrays: custom.somethingUnique"`
+          `[Error: [undefined] Field config paths do not support arrays: custom.somethingUnique]`
         );
       });
 
@@ -523,7 +523,7 @@ describe('PanelPlugin', () => {
     });
 
     it('should not throw for the old syntax, but also should not register suggestions', () => {
-      jest.spyOn(console, 'warn').mockImplementation();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       class DeprecatedSuggestionsSupplier {
         getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
@@ -557,7 +557,7 @@ describe('PanelPlugin', () => {
     });
 
     it('should support the deprecated pattern of getSuggestionsSupplier with builder', () => {
-      jest.spyOn(console, 'warn').mockImplementation();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const panel = new PanelPlugin(() => <div>Panel</div>).setSuggestionsSupplier((ds) => {
         if (!ds.hasFieldType(FieldType.number)) {

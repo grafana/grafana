@@ -649,87 +649,89 @@ describe('Streaming JSON', () => {
   });
 
   describe('lengths property is accurate', () => {
-    const stream = StreamingDataFrame.fromDataFrameJSON(
-      {
-        schema: {
-          fields: [{ name: 'simple', type: FieldType.number }],
+    it('', () => {
+      const stream = StreamingDataFrame.fromDataFrameJSON(
+        {
+          schema: {
+            fields: [{ name: 'simple', type: FieldType.number }],
+          },
+          data: {
+            values: [[100]],
+          },
         },
-        data: {
-          values: [[100]],
-        },
-      },
-      {
-        maxLength: 5,
-      }
-    );
-    let val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
-    expect(val).toEqual(100);
-    expect(stream.length).toEqual(1);
-    stream.push({
-      data: { values: [[200]] },
-    });
-    val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
-    expect(val).toEqual(200);
-    expect(stream.length).toEqual(2);
+        {
+          maxLength: 5,
+        }
+      );
+      let val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+      expect(val).toEqual(100);
+      expect(stream.length).toEqual(1);
+      stream.push({
+        data: { values: [[200]] },
+      });
+      val = reduceField({ field: stream.fields[0], reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+      expect(val).toEqual(200);
+      expect(stream.length).toEqual(2);
 
-    const copy = { ...stream } as unknown as DataFrame;
-    expect(copy.length).toEqual(2);
+      const copy = { ...stream } as unknown as DataFrame;
+      expect(copy.length).toEqual(2);
+    });
   });
 
   describe('streaming labels column', () => {
-    const stream = StreamingDataFrame.fromDataFrameJSON(
-      {
-        schema: {
-          fields: [
-            { name: 'labels', type: FieldType.string },
-            { name: 'time', type: FieldType.time },
-            { name: 'speed', type: FieldType.number },
-            { name: 'light', type: FieldType.number },
+    it('', () => {
+      const stream = StreamingDataFrame.fromDataFrameJSON(
+        {
+          schema: {
+            fields: [
+              { name: 'labels', type: FieldType.string },
+              { name: 'time', type: FieldType.time },
+              { name: 'speed', type: FieldType.number },
+              { name: 'light', type: FieldType.number },
+            ],
+          },
+        },
+        {
+          maxLength: 4,
+          displayNameFormat: '{{__name__}}: {{sensor}}',
+        }
+      );
+
+      stream.push({
+        data: {
+          values: [
+            // A = influxStyle, B = prometheus style labels
+            // key must be constatnt for join to work
+            ['sensor=A', '{sensor="B"}'],
+            [100, 100],
+            [10, 15],
+            [1, 2],
           ],
         },
-      },
-      {
-        maxLength: 4,
-        displayNameFormat: '{{__name__}}: {{sensor}}',
-      }
-    );
+      });
 
-    stream.push({
-      data: {
-        values: [
-          // A = influxStyle, B = prometheus style labels
-          // key must be constatnt for join to work
-          ['sensor=A', '{sensor="B"}'],
-          [100, 100],
-          [10, 15],
-          [1, 2],
-        ],
-      },
-    });
+      stream.push({
+        data: {
+          values: [
+            ['{sensor="B"}', 'sensor=C'],
+            [200, 200],
+            [20, 25],
+            [3, 4],
+          ],
+        },
+      });
 
-    stream.push({
-      data: {
-        values: [
-          ['{sensor="B"}', 'sensor=C'],
-          [200, 200],
-          [20, 25],
-          [3, 4],
-        ],
-      },
-    });
-
-    stream.push({
-      data: {
-        values: [
-          ['sensor=A', 'sensor=C'],
-          [300, 400],
-          [30, 40],
-          [5, 6],
-        ],
-      },
-    });
-
-    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values }))).toMatchInlineSnapshot(`
+      stream.push({
+        data: {
+          values: [
+            ['sensor=A', 'sensor=C'],
+            [300, 400],
+            [30, 40],
+            [5, 6],
+          ],
+        },
+      });
+      expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values }))).toMatchInlineSnapshot(`
       [
         {
           "labels": undefined,
@@ -816,15 +818,15 @@ describe('Streaming JSON', () => {
       ]
     `);
 
-    // Push value with empty labels
-    stream.push({
-      data: {
-        values: [[''], [500], [50], [7]],
-      },
-    });
+      // Push value with empty labels
+      stream.push({
+        data: {
+          values: [[''], [500], [50], [7]],
+        },
+      });
 
-    // names are based on legend format
-    expect(stream.fields.map((f) => getFieldDisplayName(f, stream, [stream]))).toMatchInlineSnapshot(`
+      // names are based on legend format
+      expect(stream.fields.map((f) => getFieldDisplayName(f, stream, [stream]))).toMatchInlineSnapshot(`
       [
         "time: sensor",
         "speed: A",
@@ -837,37 +839,39 @@ describe('Streaming JSON', () => {
         "light: sensor",
       ]
     `);
+    });
   });
 
   describe('keep track of packets', () => {
-    const json: DataFrameJSON = {
-      schema: {
-        fields: [
-          { name: 'time', type: FieldType.time },
-          { name: 'value', type: FieldType.number },
-        ],
-      },
-      data: {
-        values: [
-          [100, 200, 300],
-          [1, 2, 3],
-        ],
-      },
-    };
-
-    const stream = StreamingDataFrame.fromDataFrameJSON(json, {
-      maxLength: 4,
-      maxDelta: 300,
-    });
-
-    const getSnapshot = (f: StreamingDataFrame) => {
-      return {
-        values: f.fields[1].values,
-        info: f.packetInfo,
+    it('', () => {
+      const json: DataFrameJSON = {
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [
+            [100, 200, 300],
+            [1, 2, 3],
+          ],
+        },
       };
-    };
 
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      const stream = StreamingDataFrame.fromDataFrameJSON(json, {
+        maxLength: 4,
+        maxDelta: 300,
+      });
+
+      const getSnapshot = (f: StreamingDataFrame) => {
+        return {
+          values: f.fields[1].values,
+          info: f.packetInfo,
+        };
+      };
+
+      expect(getSnapshot(stream)).toMatchInlineSnapshot(`
       {
         "info": {
           "action": "replace",
@@ -883,15 +887,15 @@ describe('Streaming JSON', () => {
       }
     `);
 
-    stream.push({
-      data: {
-        values: [
-          [400, 500],
-          [4, 5],
-        ],
-      },
-    });
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      stream.push({
+        data: {
+          values: [
+            [400, 500],
+            [4, 5],
+          ],
+        },
+      });
+      expect(getSnapshot(stream)).toMatchInlineSnapshot(`
       {
         "info": {
           "action": "append",
@@ -908,12 +912,12 @@ describe('Streaming JSON', () => {
       }
     `);
 
-    stream.push({
-      data: {
-        values: [[600], [6]],
-      },
-    });
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      stream.push({
+        data: {
+          values: [[600], [6]],
+        },
+      });
+      expect(getSnapshot(stream)).toMatchInlineSnapshot(`
       {
         "info": {
           "action": "append",
@@ -929,6 +933,7 @@ describe('Streaming JSON', () => {
         ],
       }
     `);
+    });
   });
 
   /*

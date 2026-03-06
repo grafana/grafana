@@ -11,11 +11,11 @@ const setup = (jsx: JSX.Element) => {
   };
 };
 
-const mockOnClick = jest.fn();
+const mockOnClick = vi.fn();
 
 describe('Tag', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should render with icon when provided', () => {

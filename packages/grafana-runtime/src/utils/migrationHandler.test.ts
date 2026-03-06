@@ -8,7 +8,7 @@ import { config } from '../config';
 import { DataSourceWithBackend } from './DataSourceWithBackend';
 import { isMigrationHandler, migrateQuery, migrateRequest, MigrationHandler } from './migrationHandler';
 
-let mockDatasourcePost = jest.fn();
+let mockDatasourcePost = vi.fn();
 
 interface MyQuery extends DataQuery {}
 
@@ -36,8 +36,8 @@ const backendSrv = {
   },
 } as unknown as BackendSrv;
 
-jest.mock('../services', () => ({
-  ...jest.requireActual('../services'),
+vi.mock('../services', async (importOriginal) => ({
+  ...(await importOriginal()),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -77,7 +77,7 @@ describe('query migration', () => {
 
     it('skips migration if the query should not be migrated', async () => {
       const ds = createMockDatasource();
-      ds.shouldMigrate = jest.fn().mockReturnValue(false);
+      ds.shouldMigrate = vi.fn().mockReturnValue(false);
       const query = { refId: 'A', datasource: { type: 'dummy' } };
 
       const result = await migrateQuery(ds, query);
@@ -91,7 +91,7 @@ describe('query migration', () => {
 
       const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
       const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
-      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
+      mockDatasourcePost = vi.fn().mockImplementation((args: { url: string; data: unknown }) => {
         expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
         expect(args.data).toMatchObject({ queries: [originalQuery] });
         return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
@@ -119,7 +119,7 @@ describe('query migration', () => {
 
     it('skips migration if none of the queries should be migrated', async () => {
       const ds = createMockDatasource();
-      ds.shouldMigrate = jest.fn().mockReturnValue(false);
+      ds.shouldMigrate = vi.fn().mockReturnValue(false);
       const request = {
         targets: [{ refId: 'A', datasource: { type: 'dummy' } }],
       } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -145,7 +145,7 @@ describe('query migration', () => {
           { refId: 'A', datasource: { type: 'dummy' }, barfoo: 'barfoo' },
         ],
       };
-      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
+      mockDatasourcePost = vi.fn().mockImplementation((args: { url: string; data: unknown }) => {
         expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
         expect(args.data).toMatchObject({ queries: originalRequest.targets });
         return Promise.resolve({ queries: migratedRequest.targets.map((query) => ({ JSON: query })) });

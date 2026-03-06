@@ -7,29 +7,27 @@ import { UnThemedQueryField } from './QueryField';
 describe('<QueryField />', () => {
   it('should render with null initial value', () => {
     expect(() =>
-      render(
-        <UnThemedQueryField theme={createTheme()} query={null} onTypeahead={jest.fn()} portalOrigin="mock-origin" />
-      )
+      render(<UnThemedQueryField theme={createTheme()} query={null} onTypeahead={vi.fn()} portalOrigin="mock-origin" />)
     ).not.toThrow();
   });
 
   it('should render with empty initial value', () => {
     expect(() =>
-      render(<UnThemedQueryField theme={createTheme()} query="" onTypeahead={jest.fn()} portalOrigin="mock-origin" />)
+      render(<UnThemedQueryField theme={createTheme()} query="" onTypeahead={vi.fn()} portalOrigin="mock-origin" />)
     ).not.toThrow();
   });
 
   it('should render with initial value', () => {
     expect(() =>
       render(
-        <UnThemedQueryField theme={createTheme()} query="my query" onTypeahead={jest.fn()} portalOrigin="mock-origin" />
+        <UnThemedQueryField theme={createTheme()} query="my query" onTypeahead={vi.fn()} portalOrigin="mock-origin" />
       )
     ).not.toThrow();
   });
 
   describe('syntaxLoaded', () => {
     it('should re-render the editor after syntax has fully loaded', async () => {
-      const mockOnRichValueChange = jest.fn();
+      const mockOnRichValueChange = vi.fn();
       const { rerender } = render(
         <UnThemedQueryField
           theme={createTheme()}
@@ -54,7 +52,7 @@ describe('<QueryField />', () => {
     });
 
     it('should not re-render the editor if syntax is already loaded', async () => {
-      const mockOnRichValueChange = jest.fn();
+      const mockOnRichValueChange = vi.fn();
       const { rerender } = render(
         <UnThemedQueryField
           theme={createTheme()}
@@ -80,7 +78,7 @@ describe('<QueryField />', () => {
     });
 
     it('should not re-render the editor twice once syntax is fully loaded', async () => {
-      const mockOnRichValueChange = jest.fn();
+      const mockOnRichValueChange = vi.fn();
       const { rerender } = render(
         <UnThemedQueryField
           theme={createTheme()}

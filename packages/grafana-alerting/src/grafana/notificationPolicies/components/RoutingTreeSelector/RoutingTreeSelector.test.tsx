@@ -20,7 +20,7 @@ beforeEach(() => {
 
 beforeAll(() => {
   // Required for testing combobox
-  const mockGetBoundingClientRect = jest.fn(() => ({
+  const mockGetBoundingClientRect = vi.fn(() => ({
     width: 120,
     height: 120,
     top: 0,
@@ -35,7 +35,7 @@ beforeAll(() => {
 
 describe('listing routing trees', () => {
   it('should show a sorted list of routing trees with default policy first', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
@@ -57,7 +57,7 @@ describe('listing routing trees', () => {
   });
 
   it('should call onChange with the selected routing tree', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
@@ -75,7 +75,7 @@ describe('listing routing trees', () => {
   });
 
   it('should call onChange with the default tree when "Default policy" is selected', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
@@ -98,7 +98,7 @@ describe('with single default tree only', () => {
   });
 
   it('should show only the default policy option', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
@@ -112,7 +112,7 @@ describe('with single default tree only', () => {
 
 describe('pre-selection', () => {
   it('should show the selected value when a value prop is provided', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     render(<RoutingTreeSelector value="team-platform" onChange={onChangeHandler} />);
 
@@ -121,7 +121,7 @@ describe('pre-selection', () => {
   });
 
   it('should show "Default policy" when the default tree name is selected', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     render(<RoutingTreeSelector value={USER_DEFINED_TREE_NAME} onChange={onChangeHandler} />);
 
@@ -132,7 +132,7 @@ describe('pre-selection', () => {
 
 describe('clearable behavior', () => {
   it('should support clearing when isClearable is true', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector value="team-platform" onChange={onChangeHandler} isClearable />);
 
@@ -149,7 +149,7 @@ describe('clearable behavior', () => {
 
 describe('multi select', () => {
   it('should show all options and allow selecting multiple trees', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<RoutingTreeSelector multi value={[]} onChange={onChangeHandler} />);
     await user.click(screen.getByRole('combobox'));
@@ -168,7 +168,7 @@ describe('multi select', () => {
   });
 
   it('should show pre-selected value as a pill', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     render(<RoutingTreeSelector multi value={[USER_DEFINED_TREE_NAME]} onChange={onChangeHandler} />);
 
@@ -183,7 +183,7 @@ describe('error handling', () => {
   });
 
   it('should display an error alert when the API request fails', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     render(<RoutingTreeSelector onChange={onChangeHandler} />);
 
