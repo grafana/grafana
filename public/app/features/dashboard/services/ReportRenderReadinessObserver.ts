@@ -8,7 +8,7 @@ interface MessageEventPayloadMap {
 
 type MessageEventType = keyof MessageEventPayloadMap;
 
-interface MessageEvent<T extends MessageEventType> {
+interface RenderBindingMessage<T extends MessageEventType> {
   type: T;
   data: MessageEventPayloadMap[T];
 }
@@ -44,7 +44,7 @@ export function initializeReportRenderReadinessObserver(): void {
 const createMessageEvent = <T extends MessageEventType>(
   eventType: T,
   data: MessageEventPayloadMap[T]
-): MessageEvent<T> => {
+): RenderBindingMessage<T> => {
   return {
     type: eventType,
     data,
