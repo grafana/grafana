@@ -994,8 +994,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     locationService.replace('/');
   }
 
-  public getDashboardPanels() {
-    return dashboardSceneGraph.getVizPanels(this);
+  public getDashboardPanels(): VizPanel[] {
+    return sceneGraph.findAllObjects(this.state.body, (obj) => obj instanceof VizPanel) as VizPanel[];
   }
 
   public getTransformationCounts(saveModel?: Dashboard | DashboardV2Spec): Record<string, number> | undefined {

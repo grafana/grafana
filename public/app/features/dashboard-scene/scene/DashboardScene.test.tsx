@@ -52,6 +52,10 @@ import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager'
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 const mockRestoreDashboardVersion = jest.fn();
@@ -1718,6 +1722,115 @@ describe('DashboardScene', () => {
       const result = scene.getExpressionCounts(saveModel);
 
       expect(result).toEqual({ sql: 1 });
+    });
+  });
+
+  describe('getDashboardPanels', () => {
+    it('should return all panels including repeated panel clones', () => {
+      const repeatedClone = new VizPanel({
+        title: 'Panel B clone',
+        key: getCloneKey('panel-2', 1),
+        repeatSourceKey: 'panel-2',
+        pluginId: 'table',
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: 'server2' })],
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'test',
+        uid: 'test-uid',
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: 'griditem-1',
+                body: new VizPanel({
+                  title: 'Panel A',
+                  key: 'panel-1',
+                  pluginId: 'table',
+                }),
+              }),
+              new DashboardGridItem({
+                key: 'griditem-2',
+                body: new VizPanel({
+                  title: 'Panel B',
+                  key: 'panel-2',
+                  pluginId: 'table',
+                }),
+                variableName: 'server',
+                repeatedPanels: [repeatedClone],
+              }),
+            ],
+          }),
+        }),
+      });
+
+      const panels = scene.getDashboardPanels();
+      expect(panels.length).toBe(3);
+      expect(panels.map((p) => p.state.key)).toContain('panel-1');
+      expect(panels.map((p) => p.state.key)).toContain('panel-2');
+      expect(panels.map((p) => p.state.key)).toContain(getCloneKey('panel-2', 1));
+    });
+
+    it('should return panels from repeated tabs', () => {
+      const scene = new DashboardScene({
+        title: 'test',
+        uid: 'test-uid',
+        body: new TabsLayoutManager({
+          tabs: [
+            new TabItem({
+              title: 'Tab 1',
+              layout: DefaultGridLayoutManager.fromVizPanels([
+                new VizPanel({ key: 'panel-1', pluginId: 'table' }),
+              ]),
+              repeatedTabs: [
+                new TabItem({
+                  title: 'Tab 1 clone',
+                  layout: DefaultGridLayoutManager.fromVizPanels([
+                    new VizPanel({ key: 'panel-1-clone-1', pluginId: 'table' }),
+                  ]),
+                }),
+              ],
+            }),
+          ],
+        }),
+      });
+
+      const panels = scene.getDashboardPanels();
+      expect(panels.length).toBe(2);
+      expect(panels.map((p) => p.state.key)).toContain('panel-1');
+      expect(panels.map((p) => p.state.key)).toContain('panel-1-clone-1');
+    });
+
+    it('should return panels from repeated rows', () => {
+      const scene = new DashboardScene({
+        title: 'test',
+        uid: 'test-uid',
+        body: new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              title: 'Row 1',
+              layout: DefaultGridLayoutManager.fromVizPanels([
+                new VizPanel({ key: 'panel-1', pluginId: 'table' }),
+              ]),
+              repeatedRows: [
+                new RowItem({
+                  title: 'Row 1 clone',
+                  layout: DefaultGridLayoutManager.fromVizPanels([
+                    new VizPanel({ key: 'panel-1-clone-1', pluginId: 'table' }),
+                  ]),
+                }),
+              ],
+            }),
+          ],
+        }),
+      });
+
+      const panels = scene.getDashboardPanels();
+      expect(panels.length).toBe(2);
+      expect(panels.map((p) => p.state.key)).toContain('panel-1');
+      expect(panels.map((p) => p.state.key)).toContain('panel-1-clone-1');
     });
   });
 });
