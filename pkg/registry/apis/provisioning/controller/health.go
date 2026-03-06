@@ -236,7 +236,7 @@ func (hc *RepositoryHealthChecker) RefreshTimestamp(ctx context.Context, repo *p
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
 func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
-	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
+	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
 	defer func() {

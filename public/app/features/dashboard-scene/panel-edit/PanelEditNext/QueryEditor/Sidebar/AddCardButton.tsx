@@ -10,6 +10,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import {
+  trackAddExpressionInitiated,
+  trackAddQuery,
+  trackAddTransformationInitiated,
+  trackOpenSavedQueryPicker,
+} from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
@@ -70,16 +76,24 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
         <Menu.Item
           label={t('query-editor-next.sidebar.add-query', 'Add query')}
           icon="question-circle"
-          onClick={() => addAndSelectQuery()}
+          onClick={() => {
+            trackAddQuery('new_query', afterId ? 'inline' : 'section_header');
+            addAndSelectQuery();
+          }}
         />
         {queryLibraryEnabled && canReadQueries && (
           <Menu.Item
             label={t('query-editor-next.sidebar.add-saved-query', 'Add saved query')}
             icon="book-open"
             onClick={() => {
+              const cardSource = afterId ? 'inline' : 'section_header';
+              trackOpenSavedQueryPicker(cardSource);
               setPendingSavedQuery({ insertAfter: afterId ?? '' });
               openDrawer({
-                onSelectQuery: (query) => addAndSelectQuery(query),
+                onSelectQuery: (query) => {
+                  trackAddQuery('saved_query', cardSource);
+                  addAndSelectQuery(query);
+                },
                 options: { context: CoreApp.PanelEditor },
               });
             }}
@@ -89,6 +103,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
           label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
           icon="calculator-alt"
           onClick={() => {
+            trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
             setPendingExpression({ insertAfter: afterId ?? '' });
             onAdd?.();
           }}
@@ -108,6 +123,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   );
 
   const handleTransformationClick = useCallback(() => {
+    trackAddTransformationInitiated(afterId ? 'inline' : 'section_header');
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
   }, [afterId, setPendingTransformation, onAdd]);
