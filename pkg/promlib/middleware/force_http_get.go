@@ -20,6 +20,7 @@ func ForceHttpGet(logger log.Logger) sdkhttpclient.Middleware {
 			if req.Method == http.MethodPost {
 				resp := &http.Response{
 					StatusCode: http.StatusMethodNotAllowed,
+					Body:       http.NoBody,
 				}
 				return resp, nil
 			}
