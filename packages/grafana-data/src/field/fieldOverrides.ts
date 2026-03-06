@@ -313,7 +313,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
   let caches: Map<number, DecimalsCache>;
   return (value: unknown, decimals?: DecimalCount) => {
     // pre-allocating these maps is quite expensive, so we do it just-in-time.
-    caches ??= new Map(Array.from({ length: 16 }, (_, i) => [i - 1, new Map()]));
+    caches ??= new Map(Array.from({ length: 17 }, (_, i) => [i - 1, new Map()]));
 
     let cache = caches.get(decimals ?? -1)!;
 
