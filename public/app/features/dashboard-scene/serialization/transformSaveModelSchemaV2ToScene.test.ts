@@ -494,11 +494,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 canEdit: false,
                 canDelete: false,
               },
-              organization: {
-                canAdd: false,
-                canEdit: false,
-                canDelete: false,
-              },
             },
           },
         };
@@ -812,11 +807,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           canShare: true,
           annotationsPermissions: {
             dashboard: {
-              canAdd: true,
-              canEdit: true,
-              canDelete: true,
-            },
-            organization: {
               canAdd: true,
               canEdit: true,
               canDelete: true,
