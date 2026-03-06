@@ -64,26 +64,3 @@ accessRoutes: {
 	// For non-resource requests, this will be the requested URL path
 	path: string
 }
-
-
-
-	// 
-	// // In grafana, this was historically called "UID", but in k8s, it is the name
-	// 
-	// // tenant isolation
-	// namespace: string
-
-
-	// // Optional subresource
-	// 
-
-// #AccessCheckRequest: {
-// 	// The requested access verb.
-// 	// this includes get, list, watch, create, update, patch, delete, deletecollection, and proxy,
-// 	// or the lowercased HTTP verb associated with non-API requests (this includes get, put, post, patch, and delete)
-// 	Verb: string // 
-
-
-// 	// For non-resource requests, this will be the requested URL path
-// 	// Not yet supported: Path: string
-// }
