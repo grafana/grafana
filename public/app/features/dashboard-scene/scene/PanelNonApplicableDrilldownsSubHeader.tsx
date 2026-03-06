@@ -28,6 +28,11 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
   const nonApplicable = useMemo(() => {
+    // queryRunnerState.data is read to re-trigger this memo after each query run
+    if (!queryRunnerState.data) {
+      return [];
+    }
+
     const applicability = queryRunner.getNonApplicableFilters();
     if (!applicability) {
       return [];
@@ -72,7 +77,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     }
 
     return items;
-  }, [filtersState, groupByState, queryRunner, queryRunnerState]);
+  }, [filtersState, groupByState, queryRunner, queryRunnerState.data]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {

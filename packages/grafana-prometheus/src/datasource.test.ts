@@ -10,6 +10,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   LoadingState,
+  Scope,
   ScopeSpecFilter,
   TimeRange,
   VariableHide,
@@ -1612,7 +1613,7 @@ describe('getDrilldownsApplicability', () => {
       );
     mockLanguageProvider({ fetchSuggestions: fetchSuggestionsSpy });
 
-    const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as any[];
+    const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as Scope[];
 
     const results = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'prod', operator: '=' }],
