@@ -82,6 +82,13 @@ func UnsupportedMediaType(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusUnsupportedMediaType, msgID, opts...)
 }
 
+// MethodNotAllowed initializes a new [Base] error with reason StatusMethodNotAllowed
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+func MethodNotAllowed(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusMethodNotAllowed, msgID, opts...)
+}
+
 // Conflict initializes a new [Base] error with reason StatusConflict
 // that is used to construct [Error]. The msgID is passed to the caller
 // to serve as the base for user facing error messages.

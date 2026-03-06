@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -37,6 +39,11 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 		return
 	}
 
+	if err := validateResourceMethod(c.Req.Method); err != nil {
+		handleCallResourceError(err, c)
+		return
+	}
+
 	req, err := hs.pluginResourceRequest(c)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "Failed for create plugin resource request", err)
@@ -65,6 +72,11 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
+	if err := validateResourceMethod(c.Req.Method); err != nil {
+		handleCallResourceError(err, c)
 		return
 	}
 
@@ -115,7 +127,42 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	return hs.pluginClient.CallResource(req.Context(), crReq, httpSender)
 }
 
+// allowedResourceMethods defines the HTTP methods supported for datasource resource calls.
+var allowedResourceMethods = map[string]bool{
+	http.MethodGet:    true,
+	http.MethodPost:   true,
+	http.MethodPut:    true,
+	http.MethodDelete: true,
+	http.MethodPatch:  true,
+}
+
+// allowedResourceMethodsList returns a sorted, comma-separated list of allowed HTTP methods
+// for use in the Allow response header.
+func allowedResourceMethodsList() string {
+	methods := make([]string, 0, len(allowedResourceMethods))
+	for m := range allowedResourceMethods {
+		methods = append(methods, m)
+	}
+	sort.Strings(methods)
+	return strings.Join(methods, ", ")
+}
+
+// validateResourceMethod checks if the HTTP method is allowed for plugin resource calls.
+// Returns nil if the method is allowed, or an error if the method is not supported.
+func validateResourceMethod(method string) error {
+	if !allowedResourceMethods[method] {
+		return plugins.ErrPluginMethodNotAllowed
+	}
+	return nil
+}
+
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
+	if errors.Is(err, plugins.ErrPluginMethodNotAllowed) {
+		reqCtx.Resp.Header().Set("Allow", allowedResourceMethodsList())
+		resp := response.ErrOrFallback(http.StatusMethodNotAllowed, "Method not allowed", err)
+		resp.WriteTo(reqCtx)
+		return
+	}
 	resp := response.ErrOrFallback(http.StatusInternalServerError, "Failed to call resource", err)
 	resp.WriteTo(reqCtx)
 }
