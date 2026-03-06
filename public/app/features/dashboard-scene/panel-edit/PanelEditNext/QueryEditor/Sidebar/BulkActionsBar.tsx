@@ -7,6 +7,13 @@ import { isExpressionReference } from '@grafana/runtime';
 import { Button, ConfirmModal, IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
+
 interface BulkActionButtonsProps {
   onDelete: () => void;
   toggleIcon: IconName;
@@ -16,7 +23,14 @@ interface BulkActionButtonsProps {
   children?: React.ReactNode;
 }
 
-function BulkActionButtons({ onDelete, toggleIcon, toggleLabel, toggleTooltip, onToggle, children }: BulkActionButtonsProps) {
+function BulkActionButtons({
+  onDelete,
+  toggleIcon,
+  toggleLabel,
+  toggleTooltip,
+  onToggle,
+  children,
+}: BulkActionButtonsProps) {
   return (
     <Stack direction="row" gap={0.25}>
       <Button
@@ -25,31 +39,17 @@ function BulkActionButtons({ onDelete, toggleIcon, toggleLabel, toggleTooltip, o
         fill="text"
         icon="trash-alt"
         onClick={onDelete}
-        tooltip={t('query-editor-next.bulk-actions.delete', 'Delete selected')}
+        tooltip={t('query-editor-next.bulk-actions.delete-tooltip', 'Delete selected')}
       >
         {t('query-editor-next.bulk-actions.delete', 'Delete')}
       </Button>
-      <Button
-        size="sm"
-        variant="secondary"
-        fill="text"
-        icon={toggleIcon}
-        onClick={onToggle}
-        tooltip={toggleTooltip}
-      >
+      <Button size="sm" variant="secondary" fill="text" icon={toggleIcon} onClick={onToggle} tooltip={toggleTooltip}>
         {toggleLabel}
       </Button>
       {children}
     </Stack>
   );
 }
-
-import {
-  useActionsContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
 
 export function BulkActionsBar() {
   const styles = useStyles2(getStyles);
@@ -78,13 +78,13 @@ export function BulkActionsBar() {
   }
 
   // Determine hide/show state for selected queries
-  const selectedQueries = queries.filter((q) => selectedQueryRefIds.includes(q.refId));
+  const selectedQueries = hasQueriesSelected ? queries.filter((q) => selectedQueryRefIds.includes(q.refId)) : [];
   const allSelectedQueriesHidden = selectedQueries.length > 0 && selectedQueries.every((q) => q.hide);
 
   // Determine disabled/enabled state for selected transformations
-  const selectedTransformations = transformations.filter((transformation) =>
-    selectedTransformationIds.includes(transformation.transformId)
-  );
+  const selectedTransformations = hasTransformationsSelected
+    ? transformations.filter((transformation) => selectedTransformationIds.includes(transformation.transformId))
+    : [];
   const allSelectedTransformationsDisabled =
     selectedTransformations.length > 0 &&
     selectedTransformations.every((transformation) => transformation.transformConfig.disabled);
@@ -93,7 +93,7 @@ export function BulkActionsBar() {
   const canChangeDatasource = hasQueriesSelected && selectedQueries.every((q) => !isExpressionReference(q.datasource));
 
   const handleConfirmedDeleteQueries = () => {
-    bulkDeleteQueries([...selectedQueryRefIds]);
+    bulkDeleteQueries(selectedQueryRefIds);
     setShowDeleteQueriesConfirm(false);
     // Note: the bulkDeleteQueries action wrapper also calls clearSelection internally,
     // but we call it here explicitly so test mocks (which replace the real action) still
@@ -102,22 +102,22 @@ export function BulkActionsBar() {
   };
 
   const handleBulkToggleHide = () => {
-    bulkToggleQueriesHide([...selectedQueryRefIds], !allSelectedQueriesHidden);
+    bulkToggleQueriesHide(selectedQueryRefIds, !allSelectedQueriesHidden);
   };
 
   const handleConfirmedDeleteTransformations = () => {
-    bulkDeleteTransformations([...selectedTransformationIds]);
+    bulkDeleteTransformations(selectedTransformationIds);
     setShowDeleteTransformationsConfirm(false);
     // Same rationale as handleConfirmedDeleteQueries above.
     clearSelection();
   };
 
   const handleBulkToggleDisabled = () => {
-    bulkToggleTransformationsDisabled([...selectedTransformationIds], !allSelectedTransformationsDisabled);
+    bulkToggleTransformationsDisabled(selectedTransformationIds, !allSelectedTransformationsDisabled);
   };
 
   const handleDatasourceChange = (settings: DataSourceInstanceSettings) => {
-    bulkChangeDataSource([...selectedQueryRefIds], settings);
+    bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
   };
 
@@ -140,8 +140,8 @@ export function BulkActionsBar() {
             }
             toggleTooltip={
               allSelectedQueriesHidden
-                ? t('query-editor-next.bulk-actions.show-all', 'Show all selected')
-                : t('query-editor-next.bulk-actions.hide-all', 'Hide all selected')
+                ? t('query-editor-next.bulk-actions.show-all-tooltip', 'Show all selected')
+                : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide all selected')
             }
             onToggle={handleBulkToggleHide}
           >
@@ -175,8 +175,8 @@ export function BulkActionsBar() {
             }
             toggleTooltip={
               allSelectedTransformationsDisabled
-                ? t('query-editor-next.bulk-actions.enable-all', 'Enable all selected')
-                : t('query-editor-next.bulk-actions.disable-all', 'Disable all selected')
+                ? t('query-editor-next.bulk-actions.enable-all-tooltip', 'Enable all selected')
+                : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable all selected')
             }
             onToggle={handleBulkToggleDisabled}
           />
@@ -206,36 +206,32 @@ export function BulkActionsBar() {
       )}
 
       {/* Delete queries confirmation */}
-      {showDeleteQueriesConfirm && (
-        <ConfirmModal
-          isOpen={showDeleteQueriesConfirm}
-          title={t('query-editor-next.bulk-actions.delete-queries-confirm-title', 'Delete {{count}} queries?', {
-            count: selectedQueryRefIds.length,
-          })}
-          body={null}
-          description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
-          confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
-          onConfirm={handleConfirmedDeleteQueries}
-          onDismiss={() => setShowDeleteQueriesConfirm(false)}
-        />
-      )}
+      <ConfirmModal
+        isOpen={showDeleteQueriesConfirm}
+        title={t('query-editor-next.bulk-actions.delete-queries-confirm-title', 'Delete {{count}} queries?', {
+          count: selectedQueryRefIds.length,
+        })}
+        body={null}
+        description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+        confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
+        onConfirm={handleConfirmedDeleteQueries}
+        onDismiss={() => setShowDeleteQueriesConfirm(false)}
+      />
 
       {/* Delete transformations confirmation */}
-      {showDeleteTransformationsConfirm && (
-        <ConfirmModal
-          isOpen={showDeleteTransformationsConfirm}
-          title={t(
-            'query-editor-next.bulk-actions.delete-transformations-confirm-title',
-            'Delete {{count}} transformations?',
-            { count: selectedTransformationIds.length }
-          )}
-          body={null}
-          description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
-          confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
-          onConfirm={handleConfirmedDeleteTransformations}
-          onDismiss={() => setShowDeleteTransformationsConfirm(false)}
-        />
-      )}
+      <ConfirmModal
+        isOpen={showDeleteTransformationsConfirm}
+        title={t(
+          'query-editor-next.bulk-actions.delete-transformations-confirm-title',
+          'Delete {{count}} transformations?',
+          { count: selectedTransformationIds.length }
+        )}
+        body={null}
+        description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+        confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
+        onConfirm={handleConfirmedDeleteTransformations}
+        onDismiss={() => setShowDeleteTransformationsConfirm(false)}
+      />
     </>
   );
 }

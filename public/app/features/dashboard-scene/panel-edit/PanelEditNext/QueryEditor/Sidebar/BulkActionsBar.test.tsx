@@ -2,8 +2,8 @@ import { screen, within } from '@testing-library/react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 
-import { Transformation } from '../types';
 import { renderWithQueryEditorProvider } from '../testUtils';
+import { Transformation } from '../types';
 
 import { BulkActionsBar } from './BulkActionsBar';
 
@@ -18,9 +18,7 @@ jest.mock('app/features/datasources/components/picker/DataSourceModal', () => ({
   }) => (
     <div data-testid="datasource-modal">
       <button
-        onClick={() =>
-          onChange({ uid: 'new-ds', type: 'testdata', name: 'New DS' } as DataSourceInstanceSettings)
-        }
+        onClick={() => onChange({ uid: 'new-ds', type: 'testdata', name: 'New DS' } as DataSourceInstanceSettings)}
       >
         Select DS
       </button>
@@ -81,7 +79,6 @@ describe('BulkActionsBar', () => {
       renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
     });
-
   });
 
   describe('clear selection', () => {
@@ -156,11 +153,7 @@ describe('BulkActionsBar', () => {
 
       it('calls bulkToggleQueriesHide(refIds, false) when all selected queries are hidden', async () => {
         const bulkToggleQueriesHide = jest.fn();
-        const hiddenQueries = [
-          { refId: 'A', hide: true },
-          { refId: 'B', hide: true },
-          { refId: 'C' },
-        ];
+        const hiddenQueries = [{ refId: 'A', hide: true }, { refId: 'B', hide: true }, { refId: 'C' }];
         const { user } = renderBar({
           queries: hiddenQueries,
           uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
@@ -208,10 +201,7 @@ describe('BulkActionsBar', () => {
         await user.click(screen.getByRole('button', { name: /data source/i }));
         await user.click(screen.getByRole('button', { name: /select ds/i }));
 
-        expect(bulkChangeDataSource).toHaveBeenCalledWith(
-          ['A', 'B'],
-          expect.objectContaining({ uid: 'new-ds' })
-        );
+        expect(bulkChangeDataSource).toHaveBeenCalledWith(['A', 'B'], expect.objectContaining({ uid: 'new-ds' }));
       });
 
       it('closes the DataSourceModal after selecting a datasource', async () => {

@@ -1612,9 +1612,7 @@ describe('PanelDataPaneNext', () => {
 
     it('runs queries after a successful datasource change', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
-      mockQueryRunnerState.queries = [
-        { refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } },
-      ];
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
       mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
 

@@ -35,9 +35,7 @@ describe('useSelectedCard', () => {
 
   describe('query selection', () => {
     it('should select first query by default when nothing is selected', () => {
-      const { result } = renderHook(() =>
-        useSelectedCard([], [], null, mockQueries, mockTransformations, mockAlerts)
-      );
+      const { result } = renderHook(() => useSelectedCard([], [], null, mockQueries, mockTransformations, mockAlerts));
 
       expect(result.current.selectedQuery).toEqual(mockQueries[0]);
       expect(result.current.selectedTransformation).toBeNull();

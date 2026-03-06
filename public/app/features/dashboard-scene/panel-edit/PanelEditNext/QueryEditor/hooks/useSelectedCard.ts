@@ -14,8 +14,8 @@ import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
  *   transformation) is active.
  */
 export function useSelectedCard(
-  selectedQueryRefIds: ReadonlyArray<string>,
-  selectedTransformationIds: ReadonlyArray<string>,
+  selectedQueryRefIds: readonly string[],
+  selectedTransformationIds: readonly string[],
   selectedAlertId: string | null,
   queries: DataQuery[],
   transformations: Transformation[],

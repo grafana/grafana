@@ -5,17 +5,11 @@ import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionQuery } from 'app/features/expressions/types';
-import { QueryGroupOptions } from 'app/types/query';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import {
-  PendingExpression,
-  PendingSavedQuery,
-  PendingTransformation,
-  QueryEditorProvider,
-} from './QueryEditorContext';
+import { PendingExpression, PendingSavedQuery, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { useMultiSelection } from './hooks/useMultiSelection';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -335,16 +329,14 @@ export function QueryEditorContextWrapper({
         trackQueryRename(originalRefId, updatedQuery.refId);
       },
       addQuery: dataPane.addQuery,
-      deleteQuery: (refId: string) => {
-        dataPane.deleteQuery(refId);
-      },
+      deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
-      onQueryOptionsChange: (options: QueryGroupOptions) => dataPane.onQueryOptionsChange(options),
+      onQueryOptionsChange: dataPane.onQueryOptionsChange,
       addTransformation: addTransformationAction,
       deleteTransformation: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -361,23 +353,23 @@ export function QueryEditorContextWrapper({
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
       // Bulk actions
-      bulkDeleteQueries: (refIds: string[]) => {
+      bulkDeleteQueries: (refIds: readonly string[]) => {
         dataPane.bulkDeleteQueries(refIds);
         clearSelection();
       },
-      bulkToggleQueriesHide: (refIds: string[], hide: boolean) => {
+      bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => {
         dataPane.bulkToggleQueriesHide(refIds, hide);
       },
-      bulkDeleteTransformations: (transformIds: string[]) => {
+      bulkDeleteTransformations: (transformIds: readonly string[]) => {
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
         dataPane.bulkDeleteTransformations(indices);
         clearSelection();
       },
-      bulkToggleTransformationsDisabled: (transformIds: string[], disabled: boolean) => {
+      bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => {
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
         dataPane.bulkToggleTransformationsDisabled(indices, disabled);
       },
-      bulkChangeDataSource: (refIds: string[], settings: DataSourceInstanceSettings) => {
+      bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => {
         dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings));
       },
     }),

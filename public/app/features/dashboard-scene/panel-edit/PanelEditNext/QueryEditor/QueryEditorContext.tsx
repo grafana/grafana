@@ -80,9 +80,9 @@ export interface QueryEditorUIState {
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
   /** Ordered array of selected query refIds. Last element is the primary (shown in editor). */
-  selectedQueryRefIds: ReadonlyArray<string>;
+  selectedQueryRefIds: readonly string[];
   /** Ordered array of selected transformation IDs. Last element is the primary. */
-  selectedTransformationIds: ReadonlyArray<string>;
+  selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
@@ -127,11 +127,11 @@ export interface QueryEditorActions {
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
   // Bulk actions
-  bulkDeleteQueries: (refIds: string[]) => void;
-  bulkToggleQueriesHide: (refIds: string[], hide: boolean) => void;
-  bulkDeleteTransformations: (transformIds: string[]) => void;
-  bulkToggleTransformationsDisabled: (transformIds: string[], disabled: boolean) => void;
-  bulkChangeDataSource: (refIds: string[], settings: DataSourceInstanceSettings) => void;
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

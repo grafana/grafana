@@ -360,7 +360,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
-  public bulkDeleteQueries = (refIds: string[]) => {
+  public bulkDeleteQueries = (refIds: readonly string[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
@@ -372,7 +372,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     this.runQueries();
   };
 
-  public bulkToggleQueriesHide = (refIds: string[], hide: boolean) => {
+  public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
@@ -383,7 +383,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     this.runQueries();
   };
 
-  public bulkChangeDataSource = async (refIds: string[], dsRef: DataSourceRef) => {
+  public bulkChangeDataSource = async (refIds: readonly string[], dsRef: DataSourceRef) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
@@ -417,7 +417,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
       updatedQueries = queries.map((query) => {
         if (refIdSet.has(query.refId)) {
-          const previousDataSource = query.datasource ? getDataSourceSrv().getInstanceSettings(query.datasource) : undefined;
+          const previousDataSource = query.datasource
+            ? getDataSourceSrv().getInstanceSettings(query.datasource)
+            : undefined;
           const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
           if (shouldUseDefaultQuery && defaultQuery) {
             return { ...defaultQuery, ...query, datasource: dsRef };
@@ -437,7 +439,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     } else {
       updatedQueries = queries.map((query) => {
         if (refIdSet.has(query.refId)) {
-          const previousDataSource = query.datasource ? getDataSourceSrv().getInstanceSettings(query.datasource) : undefined;
+          const previousDataSource = query.datasource
+            ? getDataSourceSrv().getInstanceSettings(query.datasource)
+            : undefined;
           const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
           if (shouldUseDefaultQuery && defaultQuery) {
             return { ...defaultQuery, ...query, datasource: dsRef };
