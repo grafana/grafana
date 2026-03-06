@@ -65,7 +65,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Run tests
         if: matrix.shard != 'profiled'
         env:
@@ -177,7 +177,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -225,7 +225,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -271,7 +271,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -388,7 +388,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -441,7 +441,7 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
