@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { SceneDataLayerProvider } from '@grafana/scenes';
-import { Box, Button, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
@@ -15,8 +14,8 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
 
+import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';
-import { getDraggableListStyles } from './styles';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -32,7 +31,6 @@ const DROPPABLE_TO_PLACEMENT: Record<
 };
 
 export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
-  const styles = useStyles2(getDraggableListStyles);
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
     () => partitionAnnotationsByDisplay(annotationLayers),
@@ -93,52 +91,39 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
   );
 
   return (
-    <Stack direction="column" gap={1}>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <OptionsPaneCategory
-          id={ID_VISIBLE_LIST}
-          className={styles.sectionContainer}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
-            'Above dashboard ({{count}})',
-            {
-              count: visible.length,
-            }
-          )}
-        >
-          <AnnotationsSection
-            annotations={visible}
-            droppableId={ID_VISIBLE_LIST}
-            onClickAnnotation={onClickAnnotation}
-          />
-        </OptionsPaneCategory>
-        <OptionsPaneCategory
-          id={ID_CONTROLS_MENU_LIST}
-          className={styles.sectionContainer}
-          title={t(
-            'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
-            'Controls menu ({{count}})',
-            {
-              count: controlsMenu.length,
-            }
-          )}
-        >
-          <AnnotationsSection
-            annotations={controlsMenu}
-            droppableId={ID_CONTROLS_MENU_LIST}
-            onClickAnnotation={onClickAnnotation}
-          />
-        </OptionsPaneCategory>
-        <OptionsPaneCategory
-          id={ID_HIDDEN_LIST}
-          className={styles.sectionContainer}
-          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
-            count: hidden.length,
-          })}
-        >
-          <AnnotationsSection annotations={hidden} droppableId={ID_HIDDEN_LIST} onClickAnnotation={onClickAnnotation} />
-        </OptionsPaneCategory>
-      </DragDropContext>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <DraggableList
+        items={visible}
+        droppableId={ID_VISIBLE_LIST}
+        title={t(
+          'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
+          'Above dashboard ({{count}})',
+          { count: visible.length }
+        )}
+        dataTestId={`${ID_VISIBLE_LIST}-annotation-name`}
+        onClickItem={onClickAnnotation}
+        renderItemLabel={(a) => <AnnotationName annotation={a} />}
+      />
+      <DraggableList
+        items={controlsMenu}
+        droppableId={ID_CONTROLS_MENU_LIST}
+        title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu-count', 'Controls menu ({{count}})', {
+          count: controlsMenu.length,
+        })}
+        dataTestId={`${ID_CONTROLS_MENU_LIST}-annotation-name`}
+        onClickItem={onClickAnnotation}
+        renderItemLabel={(a) => <AnnotationName annotation={a} />}
+      />
+      <DraggableList
+        items={hidden}
+        droppableId={ID_HIDDEN_LIST}
+        title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
+          count: hidden.length,
+        })}
+        dataTestId={`${ID_HIDDEN_LIST}-annotation-name`}
+        onClickItem={onClickAnnotation}
+        renderItemLabel={(a) => <AnnotationName annotation={a} />}
+      />
       <Box display="flex" paddingTop={0} paddingBottom={2}>
         <Button
           fullWidth
@@ -151,77 +136,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
           <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
         </Button>
       </Box>
-    </Stack>
-  );
-}
-
-function AnnotationsSection({
-  annotations,
-  droppableId,
-  onClickAnnotation,
-}: {
-  annotations: DashboardAnnotationsDataLayer[];
-  droppableId: string;
-  onClickAnnotation: (a: DashboardAnnotationsDataLayer) => void;
-}) {
-  const styles = useStyles2(getStyles);
-
-  const onClickAnnotationItem = useCallback(
-    (a: DashboardAnnotationsDataLayer) => {
-      onClickAnnotation(a);
-    },
-    [onClickAnnotation]
-  );
-
-  return (
-    <Droppable droppableId={droppableId} direction="vertical">
-      {(provided) => (
-        <ul ref={provided.innerRef} {...provided.droppableProps} className={styles.list} data-testid={droppableId}>
-          {annotations.map((annotation, index) => (
-            <Draggable
-              key={annotation.state.key ?? annotation.state.name}
-              draggableId={annotation.state.key ?? annotation.state.name}
-              index={index}
-            >
-              {(draggableProvided) => (
-                <li ref={draggableProvided.innerRef} {...draggableProvided.draggableProps} className={styles.listItem}>
-                  <div {...draggableProvided.dragHandleProps}>
-                    <Tooltip
-                      content={t('dashboard-scene.annotations-section.content-drag-to-reorder', 'Drag to reorder')}
-                      placement="top"
-                    >
-                      <Icon name="draggabledots" size="md" className={styles.dragHandle} />
-                    </Tooltip>
-                  </div>
-                  <div
-                    className={styles.itemName}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onClickAnnotationItem(annotation)}
-                    onKeyDown={(event: React.KeyboardEvent) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onClickAnnotationItem(annotation);
-                      }
-                    }}
-                  >
-                    <div data-testid={`${droppableId}-annotation-name`}>
-                      <AnnotationName annotation={annotation} />
-                    </div>
-                    <Stack direction="row" gap={1} alignItems="center">
-                      <Button variant="primary" size="sm" fill="outline">
-                        <Trans i18nKey="dashboard-scene.annotations-section.select">Select</Trans>
-                      </Button>
-                    </Stack>
-                  </div>
-                </li>
-              )}
-            </Draggable>
-          ))}
-          {provided.placeholder}
-        </ul>
-      )}
-    </Droppable>
+    </DragDropContext>
   );
 }
 
@@ -287,7 +202,6 @@ export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerPr
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    ...getDraggableListStyles(theme),
     color: css({
       display: 'inline-block',
       width: theme.spacing(1),
