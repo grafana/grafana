@@ -2866,11 +2866,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

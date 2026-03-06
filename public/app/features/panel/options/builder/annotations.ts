@@ -13,13 +13,15 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
   builder.addBooleanSwitch({
     path: 'annotations.multiLane',
     category,
-    name: t('grafana-ui.builder.annotations.multi-lane-name', 'Enable multi-lane annotations'),
+    name: t('grafana-ui.builder.annotations.multi-lane-name', 'Enable multi-row annotations'),
     description: t(
-      'grafana-ui.builder.annotations.multi-lane-desc',
+      'grafana-ui.builder.annotations.multi-row-desc',
       'Breaks each annotation frame into a separate row in the visualization'
     ),
     defaultValue: false,
-    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+    showIf: (_, __, annotations) =>
+      annotations &&
+      annotations?.filter((df) => df.meta?.dataTopic === DataTopic.Annotations && df.length > 0).length > 1,
   });
 
   builder.addBooleanSwitch({
