@@ -6499,10 +6499,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "Drag to reorder",
       "name-builtin": "{{annoName}} (Built-in)",
-      "name-disabled": "(Disabled) {{annoName}}",
-      "select": "Select"
+      "name-disabled": "(Disabled) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
@@ -6661,6 +6659,12 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-item": {
+      "drag-to-reorder": "Drag to reorder"
+    },
+    "draggable-items-list": {
+      "select": "Select"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7306,10 +7310,6 @@
       "title-controls-menu_other": "Controls menu ({{count}})",
       "title-hidden_one": "Hidden ({{count}})",
       "title-hidden_other": "Hidden ({{count}})"
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "Drag to reorder",
-      "select": "Select"
     },
     "version-history": {
       "comparison": {
