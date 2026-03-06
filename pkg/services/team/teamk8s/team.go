@@ -131,6 +131,4 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 	return nil, errors.New("not implemented")
 }
 
-func (s *TeamK8sService) RegisterDelete(query string) {
-	return
-}
+func (s *TeamK8sService) RegisterDelete(query string) {}
