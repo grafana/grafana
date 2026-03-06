@@ -35,12 +35,12 @@ type fakeMigrationStatusReader struct {
 
 var _ unifiedmigrations.MigrationStatusReader = (*fakeMigrationStatusReader)(nil)
 
-func (f *fakeMigrationStatusReader) GetStorageMode(_ context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
+func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
 	mode, ok := f.modes[gr.String()]
 	if !ok {
-		return unifiedmigrations.StorageModeLegacy, nil
+		return unifiedmigrations.StorageModeLegacy
 	}
-	return mode, nil
+	return mode
 }
 
 // NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
@@ -138,12 +138,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 	}
 
 	// Use MigrationStatusReader for non-runtime mode selection.
-	mode, modeErr := m.statusReader.GetStorageMode(context.Background(), gr)
-	if modeErr != nil {
-		return nil, modeErr
-	}
-
-	switch mode {
+	switch m.statusReader.GetStorageMode(context.Background(), gr) {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:

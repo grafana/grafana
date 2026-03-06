@@ -166,6 +166,26 @@ func TestService(t *testing.T) {
 		}
 	})
 
+	t.Run("static getStorageMode resolves from reader exactly once", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "test.grafana.app", Resource: "widgets"}
+		calls := 0
+		reader := &countingStatusReader{
+			delegate: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeDualWrite),
+			calls:    &calls,
+		}
+
+		svc := &staticService{
+			cfg:          NewFakeConfig(),
+			statusReader: reader,
+		}
+
+		for i := 0; i < 10; i++ {
+			mode := svc.getStorageMode(context.Background(), gr)
+			require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode)
+		}
+		require.Equal(t, 1, calls, "should resolve from reader exactly once")
+	})
+
 	t.Run("static", func(t *testing.T) {
 		type testCase struct {
 			name  string
@@ -261,4 +281,15 @@ func TestService(t *testing.T) {
 			})
 		}
 	})
+}
+
+// countingStatusReader wraps a MigrationStatusReader and counts calls to GetStorageMode.
+type countingStatusReader struct {
+	delegate unifiedmigrations.MigrationStatusReader
+	calls    *int
+}
+
+func (c *countingStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+	*c.calls++
+	return c.delegate.GetStorageMode(ctx, gr)
 }
