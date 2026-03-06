@@ -30,6 +30,7 @@ import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 import { useNotificationAlerts } from '../../../hooks/useNotificationAlerts';
 import { matcherToOperator } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
+import { AlertEnrichments } from '../../AlertEnrichments';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
 import { StateTag } from '../../StateTag';
 
@@ -456,6 +457,7 @@ const AlertDetail = ({ alert, groupLabels }: AlertDetailProps) => {
             {dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}
           </Text>
         )}
+        {alert.enrichments && <AlertEnrichments enrichments={alert.enrichments} />}
       </Stack>
     </Box>
   );
