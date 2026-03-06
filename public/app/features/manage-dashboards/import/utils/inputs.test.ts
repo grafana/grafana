@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import {
   AnnotationQueryKind,
   PanelKind,
@@ -95,6 +95,13 @@ interface QueryVariableModel extends VariableModel {
 interface DatasourceVariableModel {
   type: string;
   current?: { value?: string; text?: string; selected?: boolean };
+}
+
+// Extended Dashboard type that includes export-only properties
+interface DashboardWithExportProps extends Dashboard {
+  __elements?: Record<string, unknown>;
+  __inputs?: Array<{ name: string; type: InputType; pluginId?: string }>;
+  __requires?: Array<{ type: string; id: string }>;
 }
 
 // Removed duplicate constants - now defined at top of file
@@ -348,19 +355,60 @@ describe('extractV2Inputs', () => {
 });
 
 describe('buildVariableMap', () => {
+  const createMockDataSourceSettings = (uid: string, type: string, name: string): DataSourceInstanceSettings => ({
+    uid,
+    type,
+    name,
+    id: 1,
+    meta: {
+      id: type,
+      name: type,
+      type: PluginType.datasource,
+      module: '',
+      baseUrl: '',
+      info: {
+        author: { name: '' },
+        description: '',
+        links: [],
+        logos: { large: '', small: '' },
+        screenshots: [],
+        updated: '',
+        version: '',
+      },
+    },
+    jsonData: {},
+    access: 'proxy',
+    readOnly: false,
+  });
+
+  const createImportForm = (dataSources: DataSourceInstanceSettings[]): ImportDashboardDTO => ({
+    title: 'Test Dashboard',
+    uid: 'test-uid',
+    gnetId: '',
+    constants: [],
+    dataSources,
+    elements: [],
+    folder: { uid: 'folder-uid' },
+  });
+
   it('builds a map from datasource inputs and form selections', () => {
     const inputs = {
       dataSources: [
-        { name: 'DS_PROMETHEUS', label: 'Prometheus', info: '', value: '', type: InputType.DataSource, pluginId: 'prometheus' },
+        {
+          name: 'DS_PROMETHEUS',
+          label: 'Prometheus',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
         { name: 'DS_LOKI', label: 'Loki', info: '', value: '', type: InputType.DataSource, pluginId: 'loki' },
       ],
     };
-    const form = {
-      dataSources: [
-        { uid: 'prom-uid-123', type: 'prometheus', name: 'My Prometheus' } as DataSourceInstanceSettings,
-        { uid: 'loki-uid-456', type: 'loki', name: 'My Loki' } as DataSourceInstanceSettings,
-      ],
-    } as ImportDashboardDTO;
+    const form = createImportForm([
+      createMockDataSourceSettings('prom-uid-123', 'prometheus', 'My Prometheus'),
+      createMockDataSourceSettings('loki-uid-456', 'loki', 'My Loki'),
+    ]);
 
     const result = buildVariableMap(inputs, form);
 
@@ -372,7 +420,7 @@ describe('buildVariableMap', () => {
 
   it('handles empty inputs', () => {
     const inputs = { dataSources: [] };
-    const form = { dataSources: [] } as unknown as ImportDashboardDTO;
+    const form = createImportForm([]);
 
     const result = buildVariableMap(inputs, form);
 
@@ -382,10 +430,17 @@ describe('buildVariableMap', () => {
   it('skips inputs without matching form selection', () => {
     const inputs = {
       dataSources: [
-        { name: 'DS_PROMETHEUS', label: 'Prometheus', info: '', value: '', type: InputType.DataSource, pluginId: 'prometheus' },
+        {
+          name: 'DS_PROMETHEUS',
+          label: 'Prometheus',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
       ],
     };
-    const form = { dataSources: [] } as unknown as ImportDashboardDTO;
+    const form = createImportForm([]);
 
     const result = buildVariableMap(inputs, form);
 
@@ -418,17 +473,13 @@ describe('interpolateVariables', () => {
   it('replaces variables in nested objects', () => {
     const input = {
       datasource: { uid: '${DS_PROMETHEUS}', type: 'prometheus' },
-      targets: [
-        { datasource: { uid: '${DS_LOKI}' } },
-      ],
+      targets: [{ datasource: { uid: '${DS_LOKI}' } }],
     };
     const result = interpolateVariables(input, variables);
 
     expect(result).toEqual({
       datasource: { uid: 'prom-uid-123', type: 'prometheus' },
-      targets: [
-        { datasource: { uid: 'loki-uid-456' } },
-      ],
+      targets: [{ datasource: { uid: 'loki-uid-456' } }],
     });
   });
 
@@ -457,14 +508,14 @@ describe('interpolateVariables', () => {
 
 describe('applyV1Inputs', () => {
   it('strips __elements, __inputs, and __requires from dashboard', () => {
-    const dashboard = {
+    const dashboard: DashboardWithExportProps = {
       title: 'Test Dashboard',
       uid: 'test-uid',
       schemaVersion: 39,
       __elements: { 'lib-panel-1': { uid: 'lib-1', name: 'Library Panel' } },
       __inputs: [{ name: 'DS', type: InputType.DataSource, pluginId: 'prometheus' }],
       __requires: [{ type: 'datasource', id: 'prometheus' }],
-    } as unknown as Dashboard;
+    };
 
     const form: ImportDashboardDTO = {
       title: 'New Title',
