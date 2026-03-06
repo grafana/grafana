@@ -343,14 +343,13 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 func DecryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
 	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
-		if r.HasMimirIntegrations() {
-			// Short circuit in case this is a Mimir receiver from ExtraConfig. These do not need to be decrypted and
-			// should not be converted to v0 configs.
-			decrypted[i] = r
-			continue
+		// Remove the Imported Mimir integrations as we don't want to convert them into v0 integrations.
+		grafanaOnlyReceiver := definitions.PostableApiReceiver{
+			Receiver:                 definitions.Receiver{Name: r.Name},
+			PostableGrafanaReceivers: r.PostableGrafanaReceivers,
 		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -364,6 +363,8 @@ func DecryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, dec
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}
+		// Put back the Imported Mimir integrations.
+		postable.Receiver = r.Receiver
 		decrypted[i] = postable
 	}
 	return decrypted, nil
@@ -372,14 +373,13 @@ func DecryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, dec
 func EncryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
 	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
 	for i, r := range receivers {
-		if r.HasMimirIntegrations() {
-			// Short circuit in case this is a Mimir receiver from ExtraConfig. These do not need to be encrypted and
-			// should not be converted to v0 configs.
-			encrypted[i] = r
-			continue
+		// Remove the Imported Mimir integrations as we don't want to convert them into v0 integrations.
+		grafanaOnlyReceiver := definitions.PostableApiReceiver{
+			Receiver:                 definitions.Receiver{Name: r.Name},
+			PostableGrafanaReceivers: r.PostableGrafanaReceivers,
 		}
 		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(&grafanaOnlyReceiver, models.ProvenanceNone, models.ResourceOriginGrafana)
 		if err != nil {
 			return nil, err
 		}
@@ -393,6 +393,8 @@ func EncryptedGrafanaReceivers(receivers []*definitions.PostableApiReceiver, enc
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
 		}
+		// Put back the Imported Mimir integrations.
+		postable.Receiver = r.Receiver
 		encrypted[i] = postable
 	}
 	return encrypted, nil
