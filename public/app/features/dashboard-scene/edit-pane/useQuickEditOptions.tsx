@@ -2,12 +2,14 @@ import { get as lodashGet } from 'lodash';
 import { useMemo } from 'react';
 
 import { PanelOptionsEditorBuilder, PanelPlugin, StandardEditorContext } from '@grafana/data';
-import { isNestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
+import { isNestedPanelOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+
+import { dashboardEditActions } from './shared';
 
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
@@ -49,14 +51,6 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
 
     const allItems = builder.getItems();
 
-    const access: NestedValueAccess = {
-      getValue: (path) => lodashGet(currentOptions, path),
-      onChange: (path, value) => {
-        const newOptions = setOptionImmutably(currentOptions, path, value);
-        panel.onOptionsChange(newOptions);
-      },
-    };
-
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.quick-edit.category-title', 'Quick settings'),
       id: 'quick-edit-options',
@@ -87,6 +81,8 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
 
       const Editor = item.editor;
       const htmlId = `quick-edit-${item.id}`;
+      const optionName = item.name;
+      const optionPath = item.path;
 
       category.addItem(
         new OptionsPaneItemDescriptor({
@@ -94,17 +90,26 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
           id: htmlId,
           description: item.description,
           render: function renderQuickEditOption() {
-            return (
-              <Editor
-                value={access.getValue(item.path)}
-                onChange={(value) => {
-                  access.onChange(item.path, value);
-                }}
-                item={item}
-                context={context}
-                id={htmlId}
-              />
-            );
+            const currentValue = lodashGet(currentOptions, optionPath);
+
+            const handleChange = (newValue: unknown) => {
+              const oldValue = currentValue;
+              const newOptions = setOptionImmutably(currentOptions, optionPath, newValue);
+
+              dashboardEditActions.edit({
+                description: t('dashboard.quick-edit.change-option', 'Change {{optionName}}', { optionName }),
+                source: panel,
+                perform: () => {
+                  panel.onOptionsChange(newOptions);
+                },
+                undo: () => {
+                  const revertedOptions = setOptionImmutably(panel.state.options, optionPath, oldValue);
+                  panel.onOptionsChange(revertedOptions);
+                },
+              });
+            };
+
+            return <Editor value={currentValue} onChange={handleChange} item={item} context={context} id={htmlId} />;
           },
         })
       );
