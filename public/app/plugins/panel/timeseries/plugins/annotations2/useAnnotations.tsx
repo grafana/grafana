@@ -6,7 +6,7 @@ import { maybeSortFrame } from '@grafana/data/internal';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
 
-import { getXAnnotationFrames } from '../utils';
+import { getXAnnotationFrames, getXYAnnotationFrames } from '../utils';
 
 interface Props {
   annotations: DataFrame[];
@@ -15,40 +15,47 @@ interface Props {
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 
+/**
+ * edit mode wip frame
+ * @param newRange
+ */
+const buildWipAnnoFrame = (newRange: TimeRange2) => {
+  let isRegion = newRange.to > newRange.from;
+
+  const wipAnnoFrame = arrayToDataFrame([
+    {
+      time: newRange.from,
+      timeEnd: isRegion ? newRange.to : null,
+      isRegion: isRegion,
+      // #00d3ffff
+      color: DEFAULT_ANNOTATION_COLOR_HEX8,
+    },
+  ]);
+
+  wipAnnoFrame.meta = {
+    dataTopic: DataTopic.Annotations,
+    custom: {
+      isWip: true,
+    },
+  };
+  return wipAnnoFrame;
+};
+
 export const useAnnotations = ({ annotations, newRange }: Props) => {
-  const _annos = useMemo(() => {
+  return useMemo(() => {
     let sortedAnnotations = annotations.map((frame) =>
       maybeSortFrame(
         frame,
         frame.fields.findIndex((field) => field.name === 'time')
       )
     );
-    let annos = getXAnnotationFrames(sortedAnnotations);
+    const xAnnos = getXAnnotationFrames(sortedAnnotations);
+    const xyAnnos = getXYAnnotationFrames(annotations);
 
     if (newRange) {
-      let isRegion = newRange.to > newRange.from;
-
-      const wipAnnoFrame = arrayToDataFrame([
-        {
-          time: newRange.from,
-          timeEnd: isRegion ? newRange.to : null,
-          isRegion: isRegion,
-          color: DEFAULT_ANNOTATION_COLOR_HEX8,
-        },
-      ]);
-
-      wipAnnoFrame.meta = {
-        dataTopic: DataTopic.Annotations,
-        custom: {
-          isWip: true,
-        },
-      };
-
-      annos.push(wipAnnoFrame);
+      xAnnos.push(buildWipAnnoFrame(newRange));
     }
 
-    return annos;
+    return { xAnnos, xyAnnos };
   }, [annotations, newRange]);
-
-  return _annos;
 };

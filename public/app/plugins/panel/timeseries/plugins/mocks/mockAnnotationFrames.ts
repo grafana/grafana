@@ -331,7 +331,7 @@ export const mockIRMAnnotationRegion: DataFrame = {
     {
       name: 'dashboardUID',
       config: {},
-      type: FieldType.number,
+      type: FieldType.string,
       values: ['abc-123', 'def-456', 'jkl-789'],
     },
     {
@@ -394,7 +394,7 @@ export const mockIRMAnnotationRegion: DataFrame = {
 };
 
 export const mockIRMClusteringAnnotation: DataFrame = {
-  length: 3,
+  length: 4,
   meta: {
     dataTopic: DataTopic.Annotations,
   },

@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, InterpolateFunction } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/internal';
+import { colorManipulator, DataFrame, InterpolateFunction } from '@grafana/data';
 import { TimeZone, VizAnnotations } from '@grafana/schema';
 import {
   DEFAULT_ANNOTATION_COLOR,
@@ -18,7 +17,8 @@ import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 import { useAnnotationClustering } from './annotations2/useAnnotationClustering';
-import { ANNOTATION_LANE_SIZE, getXAnnotationFrames, getXYAnnotationFrames } from './utils';
+import { useAnnotations } from './annotations2/useAnnotations';
+import { ANNOTATION_LANE_SIZE } from './utils';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
@@ -94,32 +94,6 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   return vals;
 }
 
-/**
- * edit mode wip frame
- * @param newRange
- */
-const buildWipAnnoFrame = (newRange: TimeRange2) => {
-  let isRegion = newRange.to > newRange.from;
-
-  const wipAnnoFrame = arrayToDataFrame([
-    {
-      time: newRange.from,
-      timeEnd: isRegion ? newRange.to : null,
-      isRegion: isRegion,
-      // #00d3ffff
-      color: DEFAULT_ANNOTATION_COLOR_HEX8,
-    },
-  ]);
-
-  wipAnnoFrame.meta = {
-    dataTopic: DataTopic.Annotations,
-    custom: {
-      isWip: true,
-    },
-  };
-  return wipAnnoFrame;
-};
-
 export const AnnotationsPlugin2 = ({
   annotations,
   timeZone,
@@ -141,26 +115,7 @@ export const AnnotationsPlugin2 = ({
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = canExecuteActions?.() ?? false;
 
-  const { xAnnos, xyAnnos } = useMemo(() => {
-    const xAnnos = getXAnnotationFrames(annotations).map((frame) =>
-      maybeSortFrame(
-        frame,
-        frame.fields.findIndex((field) => field.name === 'time')
-      )
-    );
-
-    const xyAnnos = getXYAnnotationFrames(annotations);
-
-    if (newRange) {
-      const wipAnnoFrame = buildWipAnnoFrame(newRange);
-      xAnnos.push(wipAnnoFrame);
-    }
-
-    return {
-      xAnnos,
-      xyAnnos,
-    };
-  }, [annotations, newRange]);
+  const { xAnnos, xyAnnos } = useAnnotations({ annotations, newRange });
 
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
