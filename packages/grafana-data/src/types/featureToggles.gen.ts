@@ -1148,6 +1148,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthZRolesRedirect?: boolean;
   /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
   */
