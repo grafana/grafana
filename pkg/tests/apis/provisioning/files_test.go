@@ -1085,6 +1085,18 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err, "child Grafana folder should exist with the stable UID")
 	})
 
+	t.Run("duplicate folder creation returns 409 Conflict", func(t *testing.T) {
+		resp := postFolder(t, "duplicate-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "first creation should succeed")
+
+		resp2 := postFolder(t, "duplicate-folder/")
+		// nolint:errcheck
+		defer resp2.Body.Close()
+		require.Equal(t, http.StatusConflict, resp2.StatusCode, "second creation should return 409 Conflict")
+	})
+
 	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
 		resp := postFolder(t, "managed-parent/")
 		// nolint:errcheck

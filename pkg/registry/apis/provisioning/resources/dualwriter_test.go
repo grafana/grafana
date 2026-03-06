@@ -298,6 +298,7 @@ func TestCreateFolder(t *testing.T) {
 		setup       func(t *testing.T) (*DualReadWriter, DualWriteOptions)
 		wantErr     bool
 		errContains string
+		errCheck    func(t *testing.T, err error)
 		check       func(t *testing.T, result *provisioning.ResourceWrapper)
 	}{
 		{
@@ -412,6 +413,38 @@ func TestCreateFolder(t *testing.T) {
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
+		},
+		{
+			name: "error: flag enabled, leaf already has _folder.json returns AlreadyExists",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				existing := NewFolderManifest("existing-uid", "newfolder")
+				existingData, _ := json.Marshal(existing)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(&repository.FileInfo{Data: existingData}, nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.True(t, apierrors.IsAlreadyExists(err), "expected AlreadyExists, got: %v", err)
+			},
+		},
+		{
+			name: "error: flag enabled, read error other than not-found is propagated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, fmt.Errorf("network error"))
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr:     true,
+			errContains: "failed to read folder metadata",
 		},
 		{
 			name: "sync enabled, flag disabled: GetFolder not found → no Upsert",
@@ -586,6 +619,9 @@ func TestCreateFolder(t *testing.T) {
 				require.Error(t, err)
 				if tt.errContains != "" {
 					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				if tt.errCheck != nil {
+					tt.errCheck(t, err)
 				}
 				return
 			}

@@ -2,8 +2,10 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -175,20 +177,33 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	// (ancestor and leaf), skipping any segment that already has one.
 	var stableUID string
 	if r.folderMetadataEnabled {
+		leafPath := strings.TrimSuffix(opts.Path, "/")
 		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
 			folderPath := segPath + "/"
 			existing, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
 			if readErr == nil {
-				// _folder.json already exists; reuse its UID for this segment
+				if segPath == leafPath {
+					return apierrors.NewAlreadyExists(
+						provisioning.RepositoryResourceInfo.GroupResource(),
+						opts.Path,
+					)
+				}
+				// Ancestor already has folder metadata; reuse its UID
 				stableUID = existing.Name
 				return nil
 			}
-			// Not found or unreadable: write a new _folder.json
+			if !errors.Is(readErr, repository.ErrFileNotFound) {
+				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
+			}
+			// Not found: write a new folder metadata file
 			uid := util.GenerateShortUID()
 			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
 			var writeErr error
 			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
-			return writeErr
+			if writeErr != nil {
+				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
+			}
+			return nil
 		})
 		if err != nil {
 			return nil, err
