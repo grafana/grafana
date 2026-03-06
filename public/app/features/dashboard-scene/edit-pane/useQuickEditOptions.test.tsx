@@ -1,10 +1,18 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import React from 'react';
 
 import { EventBusSrv } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
+import { dashboardEditActions } from './shared';
 import { useQuickEditOptions } from './useQuickEditOptions';
+
+jest.mock('./shared', () => ({
+  dashboardEditActions: {
+    edit: jest.fn(),
+  },
+}));
 
 describe('useQuickEditOptions', () => {
   const createMockPanel = (options: Record<string, unknown> = {}) => {
@@ -167,5 +175,78 @@ describe('useQuickEditOptions', () => {
     expect(result.current?.items[0].props.title).toBe('Color mode');
     expect(result.current?.items[1].props.title).toBe('Text mode');
     expect(result.current?.items[2].props.title).toBe('Show graph');
+  });
+
+  describe('undo/redo support', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call dashboardEditActions.edit when changing an option', () => {
+      const panel = createMockPanel({ textMode: 'auto' });
+      const plugin = createMockPlugin(['textMode']);
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+      expect(result.current).not.toBeNull();
+      const item = result.current!.items[0];
+
+      const rendered = item.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+      act(() => {
+        rendered.props.onChange('value');
+      });
+
+      expect(dashboardEditActions.edit).toHaveBeenCalledTimes(1);
+      expect(dashboardEditActions.edit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: panel,
+          perform: expect.any(Function),
+          undo: expect.any(Function),
+        })
+      );
+    });
+
+    it('should apply new value when perform is called', () => {
+      const panel = createMockPanel({ textMode: 'auto' });
+      const plugin = createMockPlugin(['textMode']);
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+      const item = result.current!.items[0];
+
+      const rendered = item.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+      act(() => {
+        rendered.props.onChange('value');
+      });
+
+      const editCall = (dashboardEditActions.edit as jest.Mock).mock.calls[0][0];
+      editCall.perform();
+
+      expect(panel.onOptionsChange).toHaveBeenCalledWith({ textMode: 'value' });
+    });
+
+    it('should restore old value when undo is called', () => {
+      const panel = createMockPanel({ textMode: 'auto' });
+      const plugin = createMockPlugin(['textMode']);
+
+      jest.spyOn(panel, 'state', 'get').mockReturnValue({
+        options: { textMode: 'value' },
+        pluginId: 'stat',
+        title: 'Test Panel',
+        fieldConfig: { defaults: {}, overrides: [] },
+      } as unknown as typeof panel.state);
+
+      const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+      const item = result.current!.items[0];
+
+      const rendered = item.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+      act(() => {
+        rendered.props.onChange('value');
+      });
+
+      const editCall = (dashboardEditActions.edit as jest.Mock).mock.calls[0][0];
+      editCall.undo();
+
+      expect(panel.onOptionsChange).toHaveBeenCalledWith({ textMode: 'auto' });
+    });
   });
 });

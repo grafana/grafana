@@ -5859,7 +5859,8 @@
       "try-again-later": "Try again later"
     },
     "quick-edit": {
-      "category-title": "Quick settings"
+      "category-title": "Quick settings",
+      "change-option": "Change {{optionName}}"
     },
     "remove-panel": {
       "text": {
