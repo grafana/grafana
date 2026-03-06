@@ -55,6 +55,15 @@ function CommandPaletteContents() {
     currentRootActionId: state.currentRootActionId,
     actions: state.actions,
   }));
+
+  // True when drilled into an entity that has a detail panel (action view, not browsing)
+  const isInsideEntity = Boolean(
+    currentRootActionId &&
+    actions[currentRootActionId] &&
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    (actions[currentRootActionId] as ActionImpl & { detailPanel?: React.ReactNode }).detailPanel
+  );
+
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
@@ -170,20 +179,25 @@ function CommandPaletteContents() {
     setActiveFacetsState({});
   }, [resetFacets]);
 
-  // Backspace with empty search clears the selected provider or the last facet
+  // Backspace with empty search: entity view → entity list → clear facets → deselect category
   const handleSearchKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key !== 'Backspace' || searchQuery.length > 0) {
         return;
       }
+      if (isInFacetMode || isInContextActionMode) {
+        return;
+      }
+      if (isInsideEntity) {
+        e.preventDefault();
+        query.setCurrentRootAction(undefined);
+        query.setSearch('');
+        return;
+      }
       if (!selectedCategory) {
         return;
       }
-      if (isInFacetMode || isInContextActionMode) {
-        return; // FacetValueList or context step has its own input focused
-      }
       e.preventDefault();
-      // If facets are applied, clear the last one first; otherwise clear the provider
       if (hasActiveFacets) {
         const lastActiveFacet = [...availableFacets].reverse().find((f) => f.id in activeFacets);
         if (lastActiveFacet) {
@@ -198,6 +212,8 @@ function CommandPaletteContents() {
       selectedCategory,
       isInFacetMode,
       isInContextActionMode,
+      isInsideEntity,
+      query,
       hasActiveFacets,
       availableFacets,
       activeFacets,
@@ -330,7 +346,7 @@ function CommandPaletteContents() {
         <FocusScope contain autoFocus restoreFocus>
           <div {...overlayProps} {...dialogProps}>
             {/* KBarSearch container — visually hidden in facet/context-action mode but stays mounted so kbar keeps its input ref */}
-            <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly)}>
+            <div className={cx(styles.searchContainer, (isInFacetMode || isInContextActionMode) && styles.srOnly, isInsideEntity && styles.searchContainerEntity)}>
               {(currentRootActionId || selectedCategory) && (
                 <IconButton
                   name="arrow-left"
@@ -340,7 +356,10 @@ function CommandPaletteContents() {
                   className={styles.clearButton}
                   tabIndex={-1}
                   onClick={() => {
-                    if (currentRootActionId) {
+                    if (isInsideEntity) {
+                      query.setCurrentRootAction(undefined);
+                      query.setSearch('');
+                    } else if (currentRootActionId) {
                       const parent = actions[currentRootActionId].parent;
                       query.setCurrentRootAction(parent);
                       query.setSearch('');
@@ -359,6 +378,14 @@ function CommandPaletteContents() {
                   activeFacets={activeFacets}
                   activeFacetLabels={activeFacetLabels}
                   selectingFacetId={null}
+                  selectedEntity={
+                    currentRootActionId && isInsideEntity && actions[currentRootActionId]
+                      ? {
+                          name: actions[currentRootActionId].name,
+                          icon: actions[currentRootActionId].icon,
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <AncestorBreadcrumbs />
@@ -370,15 +397,18 @@ function CommandPaletteContents() {
                       ? t('command-palette.search-box.placeholder-scopes', 'Search by {{name}}...', {
                           name: getScopesLevelLabel(currentRootActionId, actions[currentRootActionId].name),
                         })
-                      : t('command-palette.search-box.placeholder-drilldown', 'Search {{name}}...', {
-                          name: getDrilldownPlaceholderName(actions[currentRootActionId].name),
-                        })
+                      : isInsideEntity
+                        ? ''
+                        : t('command-palette.search-box.placeholder-drilldown', 'Search {{name}}...', {
+                            name: getDrilldownPlaceholderName(actions[currentRootActionId].name),
+                          })
                     : selectedCategory
                       ? t('command-palette.search-box.placeholder-filtered', 'Search by entity name...')
                       : t('command-palette.search-box.placeholder', 'Type a command or search...')
                 }
-                className={styles.search}
+                className={cx(styles.search, isInsideEntity && styles.hiddenInput)}
                 onKeyDown={handleSearchKeyDown}
+                readOnly={isInsideEntity}
               />
               {searchQuery && (
                 <IconButton
@@ -460,7 +490,6 @@ function CommandPaletteContents() {
                     activeFacets={activeFacets}
                     activeFacetLabels={activeFacetLabels}
                     onActivateFacet={activateFacet}
-                    onRemoveFacet={removeFacet}
                   />
                 )}
                 {scopesRow ? <div className={styles.searchContainer}>{scopesRow}</div> : null}
@@ -598,7 +627,22 @@ const RenderResults = ({
     return groups;
   }, [searchResults, dashboardsSectionTitle, foldersSectionTitle]);
 
+  const hasDrilldownDetailPanel = useMemo(() => {
+    if (!currentRootActionId) {
+      return false;
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const parent = actions[currentRootActionId] as ActionWithDetailPanel | undefined;
+    return parent?.detailPanel != null;
+  }, [currentRootActionId, actions]);
+
   const items = useMemo(() => {
+    // Entity action view: drilled into an entity with a detail panel — no section header, just actions
+    if (currentRootActionId && hasDrilldownDetailPanel) {
+      const actionItems = kbarResults.filter((r): r is ActionImpl => typeof r !== 'string');
+      return actionItems;
+    }
+
     // When scoped to a category, include only dynamic plugin results from kbar (skip static actions)
     if (selectedCategory) {
       const dynamicItems = kbarResults.filter(
@@ -662,7 +706,7 @@ const RenderResults = ({
     }
 
     return results;
-  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle, facetedSectionCategory, selectedCategory, currentRootActionId, actions]);
+  }, [kbarResults, groupedSearchResults, dashboardsSectionTitle, foldersSectionTitle, facetedSectionCategory, selectedCategory, currentRootActionId, actions, hasDrilldownDetailPanel]);
 
   // Resolve the detail panel for the currently active item.
   // When drilled into children, use the parent action's panel.
@@ -717,7 +761,7 @@ const RenderResults = ({
           typeof item === 'string' ? (
             <div className={styles.sectionHeader}>{item}</div>
           ) : (
-            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
+            <ResultItem action={item} active={active} currentRootActionId={rootActionId!} stacked={activeDetailPanel != null} />
           );
 
         return renderedItem;
@@ -731,7 +775,7 @@ const RenderResults = ({
 
   return (
     <div className={styles.splitPane}>
-      <div className={styles.splitPaneLeft}>{resultsList}</div>
+      <div className={styles.splitPaneLeft} style={hasDrilldownDetailPanel ? { paddingTop: 12 } : undefined}>{resultsList}</div>
       <div className={styles.splitPaneRight}>{activeDetailPanel}</div>
     </div>
   );
@@ -924,6 +968,14 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       clip: 'rect(0, 0, 0, 0)',
       whiteSpace: 'nowrap',
       borderWidth: 0,
+    }),
+    searchContainerEntity: css({
+      justifyContent: 'flex-start',
+    }),
+    hiddenInput: css({
+      width: 0,
+      padding: 0,
+      overflow: 'hidden',
     }),
     clearButton: css({
       color: theme.colors.text.secondary,

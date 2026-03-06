@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { CommandPaletteFacetValue } from './facetTypes';
 
@@ -39,12 +39,10 @@ export function FacetValueList({
     inputRef.current?.focus();
   }, []);
 
-  // Reset active index when values change
   useEffect(() => {
     setActiveIndex(0);
   }, [values]);
 
-  // Scroll active item into view
   useEffect(() => {
     if (listRef.current) {
       const activeEl = listRef.current.children[activeIndex];
@@ -56,8 +54,6 @@ export function FacetValueList({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // Stop propagation to prevent kbar's window-level handlers from
-      // stealing focus (InternalEvents) or executing actions (KBarResults)
       e.stopPropagation();
 
       switch (e.key) {
@@ -93,9 +89,15 @@ export function FacetValueList({
   return (
     <div className={styles.container} onKeyDown={handleKeyDown} role="listbox" aria-label={facetLabel} tabIndex={0}>
       <div className={styles.inputContainer}>
-        <button className={styles.backButton} onClick={onBack} aria-label={t('command-palette.facet-values.back', 'Back')} type="button">
-          <Icon name="arrow-left" size="md" />
-        </button>
+        <IconButton
+          name="arrow-left"
+          size="xl"
+          variant="secondary"
+          aria-label={t('command-palette.facet-values.back', 'Back')}
+          className={styles.backButton}
+          tabIndex={-1}
+          onClick={onBack}
+        />
         {breadcrumbs}
         <input
           ref={inputRef}
@@ -107,6 +109,20 @@ export function FacetValueList({
           autoComplete="off"
           spellCheck={false}
         />
+        {searchQuery && (
+          <IconButton
+            name="times"
+            size="lg"
+            variant="secondary"
+            aria-label={t('command-palette.search-box.clear', 'Clear search')}
+            className={styles.backButton}
+            tabIndex={-1}
+            onClick={() => {
+              onSearchQueryChange('');
+              inputRef.current?.focus();
+            }}
+          />
+        )}
       </div>
       <div className={styles.sectionHeader}>{facetLabel}</div>
       <div className={styles.list} ref={listRef}>
@@ -156,18 +172,11 @@ function getStyles(theme: GrafanaTheme2) {
     inputContainer: css({
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(1, 2),
-      borderBottom: '1px solid rgba(83, 83, 85, 0.5)',
-      gap: theme.spacing(1),
+      padding: theme.spacing(2.5, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      position: 'relative',
     }),
     backButton: css({
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      cursor: 'pointer',
       color: theme.colors.text.secondary,
       flexShrink: 0,
       '&:hover': {
@@ -190,7 +199,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     sectionHeader: css({
-      padding: theme.spacing(1, 2, 0.5),
+      padding: theme.spacing(1.5, 2, 0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
@@ -198,22 +207,21 @@ function getStyles(theme: GrafanaTheme2) {
     list: css({
       maxHeight: '400px',
       overflowY: 'auto',
-      padding: theme.spacing(0.5, 0),
+      paddingBottom: theme.spacing(1.5),
     }),
     item: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(1, 2),
+      margin: theme.spacing(0, 1),
       cursor: 'pointer',
       color: theme.colors.text.primary,
       fontSize: theme.typography.body.fontSize,
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
+      borderRadius: theme.shape.radius.default,
     }),
     itemActive: css({
-      background: theme.colors.action.hover,
+      background: theme.colors.action.selected,
     }),
     itemIcon: css({
       color: theme.colors.text.secondary,

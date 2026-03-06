@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { CommandPaletteDynamicFacet } from './facetTypes';
 
@@ -10,10 +10,9 @@ interface FacetPillBarProps {
   activeFacets: Record<string, string>;
   activeFacetLabels: Record<string, string>;
   onActivateFacet: (facetId: string) => void;
-  onRemoveFacet: (facetId: string) => void;
 }
 
-export function FacetPillBar({ facets, activeFacets, activeFacetLabels, onActivateFacet, onRemoveFacet }: FacetPillBarProps) {
+export function FacetPillBar({ facets, activeFacets, activeFacetLabels, onActivateFacet }: FacetPillBarProps) {
   const styles = useStyles2(getStyles);
 
   if (facets.length === 0) {
@@ -33,31 +32,8 @@ export function FacetPillBar({ facets, activeFacets, activeFacetLabels, onActiva
             onClick={() => onActivateFacet(facet.id)}
             type="button"
           >
-            {shortcutLabel && <span className={styles.shortcut}>{shortcutLabel}</span>}
-            <span>
-              {facet.label}
-              {isActive && `: ${activeFacetLabels[facet.id] ?? activeFacets[facet.id]}`}
-            </span>
-            {isActive && (
-              <span
-                role="button"
-                tabIndex={-1}
-                className={styles.removeButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveFacet(facet.id);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onRemoveFacet(facet.id);
-                  }
-                }}
-              >
-                <Icon name="times" size="sm" />
-              </span>
-            )}
+            {shortcutLabel && <span className={isActive ? styles.shortcutActive : styles.shortcut}>{shortcutLabel}</span>}
+            <span>{facet.label}</span>
           </button>
         );
       })}
@@ -115,16 +91,9 @@ function getStyles(theme: GrafanaTheme2) {
       color: 'rgba(204, 204, 220, 0.4)',
       marginRight: theme.spacing(0.5),
     }),
-    removeButton: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginLeft: theme.spacing(0.25),
-      cursor: 'pointer',
-      color: '#000000',
-      '&:hover': {
-        color: '#333333',
-      },
+    shortcutActive: css({
+      opacity: 0.5,
+      marginRight: theme.spacing(0.5),
     }),
   };
 }

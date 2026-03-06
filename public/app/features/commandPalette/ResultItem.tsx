@@ -9,19 +9,15 @@ interface ActionWithSecondaryActions extends ActionImpl {
   secondaryActions?: React.ReactNode;
 }
 
-export const ResultItem = React.forwardRef(
-  (
-    {
-      action,
-      active,
-      currentRootActionId,
-    }: {
-      action: ActionImpl;
-      active: boolean;
-      currentRootActionId: ActionId;
-    },
-    ref: React.Ref<HTMLDivElement>
-  ) => {
+interface ResultItemProps {
+  action: ActionImpl;
+  active: boolean;
+  currentRootActionId: ActionId;
+  stacked?: boolean;
+}
+
+export const ResultItem = React.forwardRef<HTMLDivElement, ResultItemProps>(
+  ({ action, active, currentRootActionId, stacked = false }, ref) => {
     const ancestors = React.useMemo(() => {
       if (!currentRootActionId) {
         return action.ancestors;
@@ -51,20 +47,30 @@ export const ResultItem = React.forwardRef(
       <div ref={ref} className={cx(styles.row, active && styles.activeRow)}>
         <div className={styles.actionContainer}>
           {action.icon}
-          <div className={styles.textContainer}>
-            {ancestors.map((ancestor) => (
-              <React.Fragment key={ancestor.id}>
-                {!hasCommandOrLink(ancestor) && (
-                  <>
-                    <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                    <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
-                  </>
+          <div className={stacked ? styles.stackedTextWrapper : styles.textContainer}>
+            <div className={styles.textContainer}>
+              {ancestors.map((ancestor) => (
+                <React.Fragment key={ancestor.id}>
+                  {!hasCommandOrLink(ancestor) && (
+                    <>
+                      <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
+                      <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
+                    </>
+                  )}
+                </React.Fragment>
+              ))}
+              <span>{name}</span>
+            </div>
+            {stacked && action.subtitle && (
+              <span className={styles.subtitleText}>
+                {isLocationSubtitle(action.id) && (
+                  <Icon name="folder" size="sm" className={styles.subtitleIcon} />
                 )}
-              </React.Fragment>
-            ))}
-            <span>{name}</span>
+                {action.subtitle}
+              </span>
+            )}
           </div>
-          {action.subtitle && (
+          {!stacked && action.subtitle && (
             <span className={styles.subtitleText}>
               {isLocationSubtitle(action.id) && (
                 <Icon name="folder" size="sm" className={styles.subtitleIcon} />
@@ -130,6 +136,12 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    stackedTextWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     breadcrumbAncestor: css({
       color: theme.colors.text.secondary,

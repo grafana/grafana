@@ -4175,6 +4175,7 @@
       "placeholder-scopes": "Search by {{name}}..."
     },
     "section": {
+      "actions": "Actions",
       "dashboard-search-results": "Dashboards",
       "dashboards": "Dashboards",
       "folder-search-results": "Folders",
