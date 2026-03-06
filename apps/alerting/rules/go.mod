@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/rules
 
-go 1.25.7
+go 1.25.8
 
 require (
 	github.com/grafana/grafana-app-sdk v0.48.1
