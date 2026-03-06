@@ -5,6 +5,7 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { useChromeHeaderHeight } from '../AppChrome/TopBar/useChromeHeaderHeight';
 import NativeScrollbar from '../NativeScrollbar';
 
 import { PageContents } from './PageContents';
@@ -28,9 +29,11 @@ export const Page: PageType = ({
   layout = PageLayoutType.Standard,
   onSetScrollRef,
   background,
+  stickyHeader,
   ...otherProps
 }) => {
-  const styles = useStyles2(getStyles);
+  const chromeHeaderHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, chromeHeaderHeight);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -60,19 +63,21 @@ export const Page: PageType = ({
           divId="page-scrollbar"
           onSetScrollRef={onSetScrollRef}
         >
-          <div className={styles.pageInner}>
-            {pageHeaderNav && (
-              <PageHeader
-                actions={actions}
-                onEditTitle={onEditTitle}
-                navItem={pageHeaderNav}
-                renderTitle={renderTitle}
-                info={info}
-                subTitle={subTitle}
-              />
-            )}
-            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-            <div className={styles.pageContent}>{children}</div>
+          <div className={cx(styles.pageInner, { [styles.pageInnerSticky]: stickyHeader })}>
+            <div className={cx({ [styles.stickyHeader]: stickyHeader })}>
+              {pageHeaderNav && (
+                <PageHeader
+                  actions={actions}
+                  onEditTitle={onEditTitle}
+                  navItem={pageHeaderNav}
+                  renderTitle={renderTitle}
+                  info={info}
+                  subTitle={subTitle}
+                />
+              )}
+              {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+            </div>
+            <div className={cx(styles.pageContent, { [styles.pageContentSticky]: stickyHeader })}>{children}</div>
           </div>
         </NativeScrollbar>
       )}
@@ -94,8 +99,30 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, stickyTopOffset: number) => {
   return {
+    stickyHeader: css({
+      position: 'sticky',
+      top: stickyTopOffset,
+      zIndex: theme.zIndex.navbarFixed - 1,
+      backgroundColor: theme.colors.background.primary,
+      padding: theme.spacing(2, 2, 0, 2),
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(4, 4, 0, 4),
+      },
+    }),
+    pageInnerSticky: css({
+      padding: 0,
+      [theme.breakpoints.up('md')]: {
+        padding: 0,
+      },
+    }),
+    pageContentSticky: css({
+      padding: theme.spacing(0, 2, 2, 2),
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(0, 4, 4, 4),
+      },
+    }),
     wrapper: css({
       label: 'page-wrapper',
       display: 'flex',

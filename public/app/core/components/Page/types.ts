@@ -28,6 +28,8 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   layout?: PageLayoutType;
   /** Can be used to get the scroll container element to access scroll position */
   onSetScrollRef?: (ref: ScrollRefElement) => void;
+  /** When true, keeps the page header and tabs fixed at the top while content scrolls */
+  stickyHeader?: boolean;
 }
 
 export interface PageInfoItem {
