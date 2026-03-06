@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { FeatureState, FieldConfigSource, PanelPlugin, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { FeatureState, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { FeatureBadge, Stack } from '@grafana/ui';
@@ -8,7 +8,6 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
-import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 export interface PanelStylesSectionProps {
   panel: VizPanel;
@@ -16,31 +15,11 @@ export interface PanelStylesSectionProps {
 }
 
 export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
-  const [plugin, setPlugin] = useState<PanelPlugin | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
-  const { pluginId, fieldConfig, options } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
 
-  useEffect(() => {
-    let cancelled = false;
-    setPlugin(null);
-    setSelectedPreset(undefined);
-    importPanelPlugin(pluginId)
-      .then((p) => {
-        if (!cancelled) {
-          setPlugin(p);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [pluginId]);
-
-  const presets = useMemo(
-    () => (plugin ? getPluginPresets(plugin, fieldConfig, options) : null),
-    [plugin, fieldConfig, options]
-  );
+  const plugin = panel.getPlugin();
+  const presets = useMemo(() => (plugin ? getPluginPresets(plugin) : null), [plugin]);
 
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
