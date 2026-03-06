@@ -7,7 +7,7 @@ import {
   UpdateCorrelationApiResponse,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
-import { mockCorrelationsMap } from '../fixtures';
+import { mockCorrelationsMap } from './fixtures';
 
 export const getCorrelationsHandler = (data: ListCorrelationApiResponse) =>
   http.get('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations', ({}) => {

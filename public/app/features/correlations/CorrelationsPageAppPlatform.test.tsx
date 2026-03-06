@@ -15,14 +15,14 @@ import { configureStore } from 'app/store/configureStore';
 import { mockDataSource } from '../alerting/unified/mocks';
 
 import { CorrelationsPageAppPlatform } from './CorrelationsPageWrapper';
-import { prePopulateCorrelations, setupMockCorrelations } from './mocks/fixtures';
-import { setupCorrelationsMswServer } from './mocks/server';
 import {
   createCorrelationsScenario,
   emptyCorrelationsScenario,
   deleteCorrelationsScenario,
   editCorrelationsScenario,
-} from './mocks/server/correlations.scenario';
+} from './mocks/correlations.scenario';
+import { prePopulateCorrelations, setupMockCorrelations } from './mocks/fixtures';
+import { setupCorrelationsMswServer } from './mocks/server';
 import { MockDataSourceSrv } from './mocks/useCorrelations.mocks';
 
 const server = setupCorrelationsMswServer();

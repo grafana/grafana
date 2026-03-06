@@ -2,7 +2,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { resetFixtures } from '../fixtures';
+import { resetFixtures } from './fixtures';
 
 export function setupCorrelationsMswServer() {
   const server = setupMockServer();
