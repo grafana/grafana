@@ -1,5 +1,6 @@
 import { locationService } from '@grafana/runtime';
-import { isDashboardV1Spec, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { Dashboard } from '@grafana/schema';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { DashboardInputs, DashboardSource } from '../../types';
 
@@ -31,18 +32,14 @@ export function ImportOverview({ dashboard, inputs, meta, source, onCancel }: Pr
     );
   }
 
-  if (isDashboardV1Spec(dashboard)) {
-    return (
-      <ImportOverviewV1
-        dashboard={dashboard}
-        inputs={inputs}
-        meta={meta}
-        source={source}
-        folderUid={folderUid}
-        onCancel={onCancel}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <ImportOverviewV1
+      dashboard={dashboard as Dashboard}
+      inputs={inputs}
+      meta={meta}
+      source={source}
+      folderUid={folderUid}
+      onCancel={onCancel}
+    />
+  );
 }
