@@ -17,8 +17,9 @@ const mockDashboardEditActions = jest.mocked(dashboardEditActions);
 
 function buildPanel(fieldConfig: FieldConfigSource = { defaults: { custom: {} }, overrides: [] }) {
   return {
-    state: { fieldConfig },
+    state: { fieldConfig, options: {} },
     onFieldConfigChange: jest.fn(),
+    onOptionsChange: jest.fn(),
   } as unknown as VizPanel;
 }
 
@@ -68,7 +69,7 @@ describe('createPresetApplyHandler', () => {
     });
 
     it('preserves panel custom fields not defined in the preset', () => {
-      const panel = buildPanel({ defaults: { custom: { lineWidth: 3, fillOpacity: 50 } }, overrides: [] });
+      const panel = buildPanel({ defaults: { custom: { lineWidth: 3, axisPlacement: 'right' } }, overrides: [] });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
       mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
 
@@ -76,7 +77,29 @@ describe('createPresetApplyHandler', () => {
 
       expect(panel.onFieldConfigChange).toHaveBeenCalledWith(
         expect.objectContaining({
-          defaults: expect.objectContaining({ custom: expect.objectContaining({ fillOpacity: 50 }) }),
+          defaults: expect.objectContaining({ custom: expect.objectContaining({ axisPlacement: 'right' }) }),
+        }),
+        true
+      );
+    });
+
+    it('clears stacking when the preset explicitly resets it', () => {
+      const panel = buildPanel({
+        defaults: { custom: { lineWidth: 3, stacking: { mode: 'normal', group: 'A' } } },
+        overrides: [],
+      });
+      const preset = buildPreset({
+        fieldConfig: { defaults: { custom: { lineWidth: 1, stacking: { mode: 'none', group: 'A' } } }, overrides: [] },
+      });
+      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+
+      createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
+
+      expect(panel.onFieldConfigChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaults: expect.objectContaining({
+            custom: expect.objectContaining({ stacking: { mode: 'none', group: 'A' } }),
+          }),
         }),
         true
       );
