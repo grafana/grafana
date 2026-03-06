@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +27,16 @@ type mockLokiClient struct {
 func (m *mockLokiClient) RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error) {
 	args := m.Called(ctx, logQL, start, end, limit)
 	return args.Get(0).(lokiclient.QueryRes), args.Error(1)
+}
+
+func (m *mockLokiClient) MetricsQuery(ctx context.Context, logQL string, ts int64, limit int64) (lokiclient.MetricsQueryRes, error) {
+	args := m.Called(ctx, logQL, ts, limit)
+	return args.Get(0).(lokiclient.MetricsQueryRes), args.Error(1)
+}
+
+func (m *mockLokiClient) MetricsRangeQuery(ctx context.Context, logQL string, start, end, limit, step int64) (lokiclient.MetricsRangeQueryRes, error) {
+	args := m.Called(ctx, logQL, start, end, limit, step)
+	return args.Get(0).(lokiclient.MetricsRangeQueryRes), args.Error(1)
 }
 
 func TestLokiReader_Query(t *testing.T) {
@@ -120,6 +131,7 @@ func TestBuildQuery(t *testing.T) {
 	tests := []struct {
 		name     string
 		query    Query
+		uuids    []string
 		expected string
 		experr   error
 	}{
@@ -242,11 +254,36 @@ func TestBuildQuery(t *testing.T) {
 			},
 			experr: ErrInvalidQuery,
 		},
+		{
+			name:  "query with UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1", "uuid-2"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1|uuid-2"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name:  "query with single UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with UUID filter and other filters",
+			query: Query{
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
+				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
+			},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json | status = "firing" | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := buildQuery(tt.query)
+			result, err := buildQuery(tt.query, tt.uuids)
 			if tt.experr != nil {
 				require.ErrorIs(t, err, tt.experr)
 			} else {
@@ -623,6 +660,181 @@ func TestBuildAlertQuery(t *testing.T) {
 	}
 }
 
+func TestBuildAlertLabelQuery(t *testing.T) {
+	tests := []struct {
+		name     string
+		ruleUID  *string
+		labels   Matchers
+		expected string
+		experr   error
+	}{
+		{
+			name:   "single label matcher without rule uid",
+			labels: Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:    "single label matcher with rule uid",
+			ruleUID: stringPtr("test-rule-uid"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "test-rule-uid" | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name: "multiple label matchers",
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+				{Type: "=~", Label: "env", Value: "prod|staging"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU" | labels_severity != "info" | labels_env =~ "prod|staging"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:    "multiple label matchers with rule uid",
+			ruleUID: stringPtr("my-rule"),
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "my-rule" | json | labels_alertname = "HighCPU" | labels_severity != "info"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:   "invalid label key",
+			labels: Matchers{{Type: "=", Label: "bad key", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name:   "invalid matcher type",
+			labels: Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name:    "invalid rule uid",
+			ruleUID: stringPtr("bad uid!"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			experr:  ErrInvalidQuery,
+		},
+		{
+			name:    "empty rule uid is ignored",
+			ruleUID: stringPtr(""),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildAlertLabelQuery(tt.ruleUID, tt.labels)
+			if tt.experr != nil {
+				require.ErrorIs(t, err, tt.experr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestBuildAlertUUIDMetricsQuery(t *testing.T) {
+	now := time.Now().UTC()
+	from := now.Add(-6 * time.Hour)
+	rangeSeconds := int64(now.Sub(from).Seconds())
+
+	inner := fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+		historian.LabelFrom, historian.LabelFromValueAlerts)
+	result := buildAlertUUIDMetricsQuery(inner, from, now)
+	expected := fmt.Sprintf(`sum by (uuid) (count_over_time(%s[%ds]))`, inner, rangeSeconds)
+	assert.Equal(t, expected, result)
+}
+
+func TestLokiReader_QueryWithLabels(t *testing.T) {
+	now := time.Now().UTC()
+	testTimestamp := now.Add(-1 * time.Hour)
+
+	makeMetricSample := func(uuid string) lokiclient.MetricSample {
+		ts, _ := json.Marshal(now.Unix())
+		val, _ := json.Marshal("1")
+		return lokiclient.MetricSample{
+			Metric: map[string]string{"uuid": uuid},
+			Value:  lokiclient.MetricSampleValue{ts, val},
+		}
+	}
+
+	// Metrics response with deduplicated UUIDs from the alerts stream.
+	alertMetricsResponse := lokiclient.MetricsQueryRes{
+		Data: lokiclient.MetricsQueryData{
+			Result: []lokiclient.MetricSample{
+				makeMetricSample("uuid-abc"),
+				makeMetricSample("uuid-def"),
+			},
+		},
+	}
+
+	// Create notification entries matching those UUIDs.
+	notificationResponse := createMockLokiResponse(testTimestamp)
+
+	t.Run("labels filter performs two-phase lookup", func(t *testing.T) {
+		mockClient := &mockLokiClient{}
+		// First call: metrics query against alerts stream for UUIDs.
+		mockClient.On("MetricsQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValueAlerts) && strings.Contains(logql, "sum by (uuid)")
+		}), mock.Anything, mock.Anything).
+			Return(alertMetricsResponse, nil).Once()
+		// Second call: range query for notifications with UUID filter.
+		mockClient.On("RangeQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValue) && strings.Contains(logql, "uuid =~")
+		}), mock.Anything, mock.Anything, mock.Anything).
+			Return(notificationResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Len(t, result.Entries, 1)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("labels filter returns empty when no alerts match", func(t *testing.T) {
+		emptyMetricsResponse := lokiclient.MetricsQueryRes{
+			Data: lokiclient.MetricsQueryData{
+				Result: []lokiclient.MetricSample{},
+			},
+		}
+
+		mockClient := &mockLokiClient{}
+		mockClient.On("MetricsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(emptyMetricsResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "NonExistent"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Empty(t, result.Entries)
+		assert.Empty(t, result.Counts)
+		// Only MetricsQuery should be called (for alert UUIDs), not RangeQuery.
+		mockClient.AssertNumberOfCalls(t, "MetricsQuery", 1)
+		mockClient.AssertNumberOfCalls(t, "RangeQuery", 0)
+	})
+}
+
 func TestParseLokiAlertEntry(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	startsAt := now.Add(-30 * time.Minute)
@@ -739,6 +951,520 @@ func TestParseLokiAlertEntry(t *testing.T) {
 	}
 }
 
+func TestLokiReader_Query_Counts(t *testing.T) {
+	now := time.Now().UTC()
+	queryTypeCounts := v0alpha1.CreateNotificationqueryRequestBodyTypeCounts
+
+	makeMetricSample := func(count string, metric map[string]string) lokiclient.MetricSample {
+		ts, _ := json.Marshal(now.Unix())
+		val, _ := json.Marshal(count)
+		return lokiclient.MetricSample{
+			Metric: metric,
+			Value:  lokiclient.MetricSampleValue{ts, val},
+		}
+	}
+
+	tests := []struct {
+		name          string
+		query         Query
+		lokiResponse  lokiclient.MetricsQueryRes
+		responseError error
+		experr        error
+		validateFn    func(t *testing.T, result QueryResult)
+	}{
+		{
+			name: "successful counts query with results",
+			query: Query{
+				Type:    &queryTypeCounts,
+				RuleUID: stringPtr("test-rule-uid"),
+				GroupBy: &QueryGroupBy{Receiver: true},
+			},
+			lokiResponse: lokiclient.MetricsQueryRes{
+				Data: lokiclient.MetricsQueryData{
+					Result: []lokiclient.MetricSample{
+						makeMetricSample("42", map[string]string{"receiver": "email"}),
+					},
+				},
+			},
+			validateFn: func(t *testing.T, result QueryResult) {
+				require.Len(t, result.Counts, 1)
+				assert.Equal(t, int64(42), result.Counts[0].Count)
+				require.NotNil(t, result.Counts[0].Receiver)
+				assert.Equal(t, "email", *result.Counts[0].Receiver)
+			},
+		},
+		{
+			name: "counts query with over max limit",
+			query: Query{
+				Type:  &queryTypeCounts,
+				Limit: int64Ptr(1001),
+			},
+			lokiResponse: lokiclient.MetricsQueryRes{},
+			experr:       ErrInvalidQuery,
+		},
+		{
+			name: "counts query loki error is propagated",
+			query: Query{
+				Type:    &queryTypeCounts,
+				RuleUID: stringPtr("test-rule-uid"),
+			},
+			lokiResponse:  lokiclient.MetricsQueryRes{},
+			responseError: fmt.Errorf("loki unavailable"),
+			experr:        fmt.Errorf("loki unavailable"),
+		},
+		{
+			name: "counts sorted by count descending",
+			query: Query{
+				Type:    &queryTypeCounts,
+				GroupBy: &QueryGroupBy{Receiver: true},
+			},
+			lokiResponse: lokiclient.MetricsQueryRes{
+				Data: lokiclient.MetricsQueryData{
+					Result: []lokiclient.MetricSample{
+						makeMetricSample("5", map[string]string{"receiver": "slack"}),
+						makeMetricSample("20", map[string]string{"receiver": "email"}),
+						makeMetricSample("10", map[string]string{"receiver": "pagerduty"}),
+					},
+				},
+			},
+			validateFn: func(t *testing.T, result QueryResult) {
+				require.Len(t, result.Counts, 3)
+				assert.Equal(t, int64(20), result.Counts[0].Count)
+				assert.Equal(t, int64(10), result.Counts[1].Count)
+				assert.Equal(t, int64(5), result.Counts[2].Count)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockLokiClient{}
+			mockClient.On("MetricsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.lokiResponse, tt.responseError)
+
+			reader := &LokiReader{
+				client: mockClient,
+				logger: &logging.NoOpLogger{},
+			}
+
+			result, err := reader.Query(context.Background(), tt.query)
+			if tt.experr != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFn != nil {
+				tt.validateFn(t, result)
+			}
+
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBuildMetricsQuery(t *testing.T) {
+	now := time.Now().UTC()
+	from := now.Add(-6 * time.Hour)
+	rangeSeconds := int64(now.Sub(from).Seconds())
+
+	tests := []struct {
+		name       string
+		logqlInner string
+		from       time.Time
+		to         time.Time
+		limit      int64
+		groupBy    QueryGroupBy
+		expected   string
+	}{
+		{
+			name:       "no grouping",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      100,
+			groupBy:    QueryGroupBy{},
+			expected:   fmt.Sprintf(`topk(100, sum(count_over_time({foo="bar"} | json[%ds])))`, rangeSeconds),
+		},
+		{
+			name:       "group by receiver",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      100,
+			groupBy:    QueryGroupBy{Receiver: true},
+			expected:   fmt.Sprintf(`topk(100, sum by (receiver) (count_over_time({foo="bar"} | json[%ds])))`, rangeSeconds),
+		},
+		{
+			name:       "group by receiver and status",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      50,
+			groupBy:    QueryGroupBy{Receiver: true, Status: true},
+			expected:   fmt.Sprintf(`topk(50, sum by (receiver,status) (count_over_time({foo="bar"} | json[%ds])))`, rangeSeconds),
+		},
+		{
+			name:       "group by outcome adds label_format",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      100,
+			groupBy:    QueryGroupBy{Outcome: true},
+			expected: fmt.Sprintf(`topk(100, sum by (outcome) (count_over_time({foo="bar"} | json`+
+				` | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[%ds])))`, rangeSeconds),
+		},
+		{
+			name:       "group by all fields",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      100,
+			groupBy:    QueryGroupBy{Receiver: true, Integration: true, IntegrationIndex: true, Status: true, Outcome: true, Error: true},
+			expected: fmt.Sprintf(`topk(100, sum by (receiver,integration,integrationIdx,status,outcome,error) `+
+				`(count_over_time({foo="bar"} | json`+
+				` | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[%ds])))`, rangeSeconds),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildMetricsQuery(tt.logqlInner, tt.from, tt.to, tt.limit, tt.groupBy)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseCount(t *testing.T) {
+	makeValue := func(count string) lokiclient.MetricSampleValue {
+		ts, _ := json.Marshal(1234567890.0)
+		val, _ := json.Marshal(count)
+		return lokiclient.MetricSampleValue{ts, val}
+	}
+
+	tests := []struct {
+		name    string
+		sample  lokiclient.MetricSample
+		wantErr bool
+		want    Count
+	}{
+		{
+			name: "count only",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{},
+				Value:  makeValue("42"),
+			},
+			want: Count{Count: 42},
+		},
+		{
+			name: "with receiver",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"receiver": "email"},
+				Value:  makeValue("10"),
+			},
+			want: Count{Count: 10, Receiver: stringPtr("email")},
+		},
+		{
+			name: "with integration and integrationIdx",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"integration": "slack", "integrationIdx": "2"},
+				Value:  makeValue("5"),
+			},
+			want: Count{Count: 5, Integration: stringPtr("slack"), IntegrationIndex: int64Ptr(2)},
+		},
+		{
+			name: "with status",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"status": "firing"},
+				Value:  makeValue("7"),
+			},
+			want: Count{Count: 7, Status: countStatusPtr("firing")},
+		},
+		{
+			name: "with outcome",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"outcome": "success"},
+				Value:  makeValue("3"),
+			},
+			want: Count{Count: 3, Outcome: countOutcomePtr("success")},
+		},
+		{
+			name: "with error",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"error": "connection refused"},
+				Value:  makeValue("1"),
+			},
+			want: Count{Count: 1, Error: stringPtr("connection refused")},
+		},
+		{
+			name: "non-integer count",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{},
+				Value:  makeValue("not-a-number"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "non-integer integrationIdx",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"integrationIdx": "bad"},
+				Value:  makeValue("1"),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseCount(tt.sample)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Count, got.Count)
+			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
+			assert.Equal(t, tt.want.Status, got.Status)
+			assert.Equal(t, tt.want.Outcome, got.Outcome)
+			assert.Equal(t, tt.want.Error, got.Error)
+		})
+	}
+}
+
+func TestLokiReader_Query_RangeCounts(t *testing.T) {
+	now := time.Now().UTC()
+	queryTypeRangeCounts := v0alpha1.CreateNotificationqueryRequestBodyTypeRangeCounts
+
+	makeRangeSample := func(metric map[string]string, values [][2]any) lokiclient.MetricRangeSample {
+		svs := make([]lokiclient.MetricSampleValue, 0, len(values))
+		for _, v := range values {
+			ts, _ := json.Marshal(v[0])
+			val, _ := json.Marshal(v[1])
+			svs = append(svs, lokiclient.MetricSampleValue{ts, val})
+		}
+		return lokiclient.MetricRangeSample{Metric: metric, Values: svs}
+	}
+
+	tests := []struct {
+		name          string
+		query         Query
+		lokiResponse  lokiclient.MetricsRangeQueryRes
+		responseError error
+		experr        bool
+		validateFn    func(t *testing.T, result QueryResult)
+	}{
+		{
+			name: "successful range_counts query with results",
+			query: Query{
+				Type:    &queryTypeRangeCounts,
+				GroupBy: &QueryGroupBy{Receiver: true},
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{
+				Data: lokiclient.MetricsRangeQueryData{
+					Result: []lokiclient.MetricRangeSample{
+						makeRangeSample(
+							map[string]string{"receiver": "email"},
+							[][2]any{{1234567890.0, "5"}, {1234567950.0, "10"}},
+						),
+					},
+				},
+			},
+			validateFn: func(t *testing.T, result QueryResult) {
+				require.Len(t, result.Counts, 1)
+				require.NotNil(t, result.Counts[0].Receiver)
+				assert.Equal(t, "email", *result.Counts[0].Receiver)
+				require.Len(t, result.Counts[0].Values, 2)
+				assert.Equal(t, int64(5), result.Counts[0].Values[0].Count)
+				assert.Equal(t, int64(10), result.Counts[0].Values[1].Count)
+			},
+		},
+		{
+			name: "range_counts query with over max limit",
+			query: Query{
+				Type:  &queryTypeRangeCounts,
+				Limit: int64Ptr(1001),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			experr:       true,
+		},
+		{
+			name: "range_counts query loki error is propagated",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+			},
+			lokiResponse:  lokiclient.MetricsRangeQueryRes{},
+			responseError: fmt.Errorf("loki unavailable"),
+			experr:        true,
+		},
+		{
+			name: "range_counts query uses custom step",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+				From: timePtr(now.Add(-time.Hour)),
+				To:   timePtr(now),
+				Step: int64Ptr(300),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			validateFn: func(t *testing.T, result QueryResult) {
+				assert.Empty(t, result.Counts)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockLokiClient{}
+			mockClient.On("MetricsRangeQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.lokiResponse, tt.responseError)
+
+			reader := &LokiReader{
+				client: mockClient,
+				logger: &logging.NoOpLogger{},
+			}
+
+			result, err := reader.Query(context.Background(), tt.query)
+			if tt.experr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFn != nil {
+				tt.validateFn(t, result)
+			}
+		})
+	}
+}
+
+func TestBuildMetricsRangeQuery(t *testing.T) {
+	step := 60 * time.Second
+
+	tests := []struct {
+		name       string
+		logqlInner string
+		step       time.Duration
+		groupBy    QueryGroupBy
+		expected   string
+	}{
+		{
+			name:       "no grouping",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{},
+			expected:   `sum(count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by receiver",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Receiver: true},
+			expected:   `sum by (receiver) (count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by outcome adds label_format",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Outcome: true},
+			expected:   `sum by (outcome) (count_over_time({foo="bar"} | json | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[60s]))`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildMetricsRangeQuery(tt.logqlInner, tt.step, tt.groupBy)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseRangeCount(t *testing.T) {
+	makeValue := func(ts float64, count string) lokiclient.MetricSampleValue {
+		tsRaw, _ := json.Marshal(ts)
+		countRaw, _ := json.Marshal(count)
+		return lokiclient.MetricSampleValue{tsRaw, countRaw}
+	}
+
+	tests := []struct {
+		name    string
+		sample  lokiclient.MetricRangeSample
+		wantErr bool
+		want    Count
+	}{
+		{
+			name: "empty metric labels",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(1234567890.0, "5")},
+			},
+			want: Count{
+				Values: []RangeValue{{Timestamp: 1234567890, Count: 5}},
+			},
+		},
+		{
+			name: "with receiver label",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{"receiver": "email"},
+				Values: []lokiclient.MetricSampleValue{makeValue(1000.0, "3")},
+			},
+			want: Count{
+				Receiver: stringPtr("email"),
+				Values:   []RangeValue{{Timestamp: 1000, Count: 3}},
+			},
+		},
+		{
+			name: "multiple values",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{
+					makeValue(100.0, "1"),
+					makeValue(200.0, "2"),
+					makeValue(300.0, "3"),
+				},
+			},
+			want: Count{
+				Values: []RangeValue{
+					{Timestamp: 100, Count: 1},
+					{Timestamp: 200, Count: 2},
+					{Timestamp: 300, Count: 3},
+				},
+			},
+		},
+		{
+			name: "non-integer count returns error",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(100.0, "not-a-number")},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseRangeCount(tt.sample)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
+			assert.Equal(t, tt.want.Status, got.Status)
+			assert.Equal(t, tt.want.Outcome, got.Outcome)
+			assert.Equal(t, tt.want.Error, got.Error)
+			require.Len(t, got.Values, len(tt.want.Values))
+			for i, v := range tt.want.Values {
+				assert.Equal(t, v.Timestamp, got.Values[i].Timestamp)
+				assert.Equal(t, v.Count, got.Values[i].Count)
+			}
+		})
+	}
+}
+
 // Helper functions
 
 func stringPtr(s string) *string {
@@ -835,6 +1561,14 @@ func createMockAlertLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 			},
 		},
 	}
+}
+
+func countStatusPtr(s v0alpha1.CreateNotificationqueryNotificationStatus) *v0alpha1.CreateNotificationqueryNotificationStatus {
+	return &s
+}
+
+func countOutcomePtr(o v0alpha1.CreateNotificationqueryNotificationOutcome) *v0alpha1.CreateNotificationqueryNotificationOutcome {
+	return &o
 }
 
 func createLokiEntryJSONWithNilLabels(t *testing.T, timestamp time.Time) string {

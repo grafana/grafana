@@ -832,6 +832,9 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				NamespaceUID: converted.NamespaceUID,
 				RuleGroup:    converted.RuleGroup,
 			}
+			if query.SortByFullpath {
+				key.FolderFullpath = converted.FolderFullpath
+			}
 			if key != cursor {
 				// Check if we've reached the group limit
 				if query.Limit > 0 && groupsFetched == query.Limit {
@@ -866,6 +869,15 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+	if c.FolderFullpath != "" {
+		return sess.And(
+			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+			c.FolderFullpath,
+			c.FolderFullpath, c.NamespaceUID,
+			c.FolderFullpath, c.NamespaceUID, c.RuleGroup,
+		)
+	}
+	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
 	return sess.And(
 		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
 		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
@@ -1142,8 +1154,20 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
-	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+	if query.SortByFullpath {
+		q = applyListAlertRulesOrderByFullpath(q)
+	} else {
+		q = applyListAlertRulesOrderByNamespace(q)
+	}
 	return q, groupsSet, nil
+}
+
+func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {
+	return q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+}
+
+func applyListAlertRulesOrderByFullpath(q *xorm.Session) *xorm.Session {
+	return q.Asc("folder_fullpath", "namespace_uid", "rule_group", "rule_group_idx", "id")
 }
 
 func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) (*ngmodels.AlertRule, bool) {

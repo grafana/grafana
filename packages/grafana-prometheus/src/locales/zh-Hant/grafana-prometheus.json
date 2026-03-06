@@ -85,9 +85,9 @@
         "tooltip-classic-query": "Prometheus 變數查詢編輯器的原始實作。輸入一個字串，其中包含如這些文件中所述正確的查詢類型和參數。例如：{{exampleQuery}}。",
         "tooltip-label": "除非有指定指標，否則會回傳所有指標中該標籤名稱的標籤值清單。",
         "tooltip-metric-regex": "回傳標籤名稱清單，選擇性地依據指定指標正規表達式篩選。",
-        "tooltip-query": "回傳此查詢的 Prometheus 查詢結果清單。這可能包括 Prometheus 功能，即 {{exampleQuery}}。",
+        "tooltip-query": "回傳此查詢的 Prometheus 查詢結果清單。這可能包括 Prometheus 功能，即{{exampleQuery}}。",
         "tooltip-query-type": "Prometheus 資料來源外掛程式為範本變數提供以下查詢類型。",
-        "tooltip-series-query": "輸入帶有標籤的指標、僅有指標或僅有標籤，即 {{example1}}、{{example2}} 或 {{example3}}。回傳與輸入資料相關的時間序列清單。"
+        "tooltip-series-query": "輸入帶有標籤的指標、僅有指標或僅標籤，即 {{example1}}、{{example2}} 或 {{example3}}。回傳與輸入資料相關的時間序列清單。"
       },
       "selector-actions": {
         "aria-label-selector": "選擇器",

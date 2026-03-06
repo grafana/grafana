@@ -13,7 +13,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+http://github.com/grafana/grafana.git",
+    "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-openapi"
   },
   "exports": {

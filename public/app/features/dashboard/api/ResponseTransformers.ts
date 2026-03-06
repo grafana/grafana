@@ -989,8 +989,8 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
               ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
               : v.spec.query.spec,
           datasource: {
-            type: v.spec.query?.spec.group,
-            uid: v.spec.query?.spec.datasource?.name,
+            type: v.spec.query?.group,
+            uid: v.spec.query?.datasource?.name,
           },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
@@ -1199,8 +1199,8 @@ function transformV2PanelToV1Panel(
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            uid: q.spec.query.spec.datasource?.uid,
-            type: q.spec.query.spec.group,
+            uid: q.spec.query.datasource?.name,
+            type: q.spec.query.group,
           },
           ...q.spec.query.spec,
         };

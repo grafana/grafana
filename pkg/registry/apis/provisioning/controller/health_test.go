@@ -671,49 +671,31 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
 
 			// Call RefreshHealthWithPatchOps
-			testResults, healthStatus, patchOps, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
+			result, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
 
 			// Verify error
 			if tt.expectError {
 				assert.Error(t, err)
-				assert.Nil(t, testResults)
+				assert.Nil(t, result.TestResults)
 				return
 			}
 			assert.NoError(t, err)
+			testResults := result.TestResults
+			healthStatus := result.HealthStatus
+			patchOps := result.PatchOps
 
 			// Verify health status
 			assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
 
-			// Verify patch operations
+			// Verify patch operations — RefreshHealthWithPatchOps only returns /status/health patches;
+			// condition patches are built separately by the caller.
 			if tt.expectPatchOps {
 				assert.NotEmpty(t, patchOps, "expected patch operations to be returned")
-				// Should have 2 patches: health and condition
-				assert.Len(t, patchOps, 2)
+				assert.Len(t, patchOps, 1, "should have exactly one patch (health)")
 
-				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, tt.expectedPatchPath, patchOps[0]["path"])
 				assert.Equal(t, healthStatus, patchOps[0]["value"])
-
-				// Second patch should be conditions with Ready condition
-				assert.Equal(t, "replace", patchOps[1]["op"])
-				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
-
-				// Verify Ready condition is set correctly
-				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
-				assert.True(t, ok, "conditions should be of type []metav1.Condition")
-				assert.Len(t, conditions, 1, "should have exactly one condition")
-
-				readyCondition := conditions[0]
-				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
-
-				if tt.expectedHealth {
-					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
-				} else {
-					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason)
-				}
 			} else {
 				assert.Empty(t, patchOps, "expected no patch operations to be returned")
 			}
@@ -722,6 +704,80 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			if tt.testResult != nil {
 				assert.Equal(t, tt.testResult, testResults)
 			}
+		})
+	}
+}
+
+func TestBuildReadyConditionWithReasonFromHealth(t *testing.T) {
+	tests := []struct {
+		name            string
+		healthStatus    provisioning.HealthStatus
+		expectedStatus  metav1.ConditionStatus
+		expectedReason  string
+		expectedMessage string
+	}{
+		{
+			name: "healthy status returns ready condition",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().UnixMilli(),
+			},
+			expectedStatus:  metav1.ConditionTrue,
+			expectedReason:  provisioning.ReasonAvailable,
+			expectedMessage: "Resource is available",
+		},
+		{
+			name: "unhealthy status with messages uses first message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection refused", "timeout"},
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "connection refused",
+		},
+		{
+			name: "unhealthy status without messages uses default message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "Resource is unavailable",
+		},
+		{
+			name: "unhealthy status with single message",
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"webhook delivery failed"},
+			},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "webhook delivery failed",
+		},
+		{
+			name:            "zero-value health status returns not ready",
+			healthStatus:    provisioning.HealthStatus{},
+			expectedStatus:  metav1.ConditionFalse,
+			expectedReason:  provisioning.ReasonInvalidSpec,
+			expectedMessage: "Resource is unavailable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := buildReadyConditionWithReason(tt.healthStatus, provisioning.ReasonInvalidSpec)
+
+			assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
+			assert.Equal(t, tt.expectedStatus, condition.Status)
+			assert.Equal(t, tt.expectedReason, condition.Reason)
+			assert.Equal(t, tt.expectedMessage, condition.Message)
 		})
 	}
 }
