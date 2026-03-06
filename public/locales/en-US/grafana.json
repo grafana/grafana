@@ -9819,6 +9819,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
+      "reducer-value-label": "Reducer value",
       "select-field-placeholder": "Select field reducer"
     },
     "file-dropzone": {
