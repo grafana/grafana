@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"sync"
 
@@ -206,8 +207,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 	go func() {
 		defer close(events)
 
+		eventKey := func(e Event) string {
+			return fmt.Sprintf("%s~%s~%s~%s~%d", e.Namespace, e.Group, e.Resource, e.Name, e.ResourceVersion)
+		}
+
 		var buffer []Event
-		seen := make(map[int64]bool)
+		// seen is the set of buffered event keys, used to deduplicate events across polling cycles.
+		seen := make(map[string]bool)
 
 		currentInterval := opts.MinBackoff
 		backoffConfig := backoff.Config{
@@ -232,10 +238,11 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 					if evt.ResourceVersion <= lastEmittedRV {
 						continue
 					}
-					if seen[evt.ResourceVersion] {
+					key := eventKey(evt)
+					if seen[key] {
 						continue
 					}
-					seen[evt.ResourceVersion] = true
+					seen[key] = true
 					buffer = append(buffer, evt)
 				}
 
@@ -257,7 +264,7 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 						return
 					}
 					lastEmittedRV = buffer[emitted].ResourceVersion
-					delete(seen, buffer[emitted].ResourceVersion)
+					delete(seen, eventKey(buffer[emitted]))
 					emitted++
 				}
 
