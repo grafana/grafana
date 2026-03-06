@@ -3,10 +3,8 @@ import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
-import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
 
@@ -30,6 +28,10 @@ interface GrafanaCrashReport extends BaseStateReport {
     totalJSHeapSize: number;
     jsHeapSizeLimit: number;
   };
+}
+
+function sharedWorkersSupported() {
+  return typeof window.SharedWorker !== 'undefined';
 }
 
 export function initializeCrashDetection() {
