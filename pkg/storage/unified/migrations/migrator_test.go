@@ -4,8 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"google.golang.org/grpc"
 
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -351,6 +358,210 @@ func verifyKeyPathPopulated(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Logf("Verified %d rows in resource_history have populated key_path", populatedKeyPathCount)
 	require.Greater(t, populatedKeyPathCount, 0, "expected at least one row in resource_history with populated key_path")
 }
+
+// TestUnifiedMigration_Migrate_CancelsStreamContext tests that
+// when BulkProcess or a migrator function fails, the stream
+// context is canceled so the server-side handler releases its bulk lock.
+func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "tests"}
+
+	tests := []struct {
+		name        string
+		streamErr   error
+		migratorErr error
+	}{
+		{
+			name:      "stream error",
+			streamErr: fmt.Errorf("simulated stream error"),
+		},
+		{
+			name:        "migrator error",
+			migratorErr: fmt.Errorf("simulated migration failure"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := resource.NewMockResourceClient(t)
+
+			var capturedCtx context.Context
+			bulkStream := &noopBulkProcessClient{}
+			var streamResult resourcepb.BulkStore_BulkProcessClient
+			if tt.streamErr == nil {
+				streamResult = bulkStream
+			}
+
+			mockClient.EXPECT().
+				BulkProcess(mock.Anything).
+				Run(func(ctx context.Context, opts ...grpc.CallOption) {
+					capturedCtx = ctx
+				}).
+				Return(streamResult, tt.streamErr)
+
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(migrations.MigrationDefinition{
+				ID:          "test-migration",
+				MigrationID: "test migration",
+				Resources: []migrations.ResourceInfo{
+					{GroupResource: gr},
+				},
+				Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+					gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+						return tt.migratorErr
+					},
+				},
+			})
+
+			migrator := migrations.ProvideUnifiedMigrator(mockClient, registry)
+			_, err := migrator.Migrate(context.Background(), migrations.MigrateOptions{
+				Namespace: "default",
+				Resources: []schema.GroupResource{gr},
+			})
+
+			require.Error(t, err)
+			require.NotNil(t, capturedCtx, "BulkProcess should have been called")
+			require.Error(t, capturedCtx.Err(), "stream context should be canceled after Migrate returns an error")
+		})
+	}
+}
+
+// noopBulkProcessClient is a minimal BulkStore_BulkProcessClient for testing.
+type noopBulkProcessClient struct {
+	grpc.ClientStream
+}
+
+func (n *noopBulkProcessClient) Send(*resourcepb.BulkRequest) error {
+	return nil
+}
+
+func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
+}
+
+type testEnv struct {
+	engine *xorm.Engine
+	store  db.DB
+}
+
+func newTestEnv(t *testing.T) testEnv {
+	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
+	dbstore := db.InitTestDB(t)
+	t.Cleanup(db.CleanupTestDB)
+	ensureOrg(t, dbstore.GetEngine())
+	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
+}
+
+func ensureOrg(t *testing.T, engine *xorm.Engine) {
+	t.Helper()
+	var count int64
+	has, _ := engine.NewSession().SQL("SELECT COUNT(*) FROM org WHERE id = 1").Get(&count)
+	if !has || count == 0 {
+		_, err := engine.Exec("INSERT INTO org (id, name, created, updated, version) VALUES (1, 'test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)")
+		require.NoError(t, err)
+	}
+}
+
+// TestIntegrationRun_SQLiteRetryReleasesLock verifies that MigrationRunner.Run's
+// SQLite retry path (parquet buffer fallback) works correctly when the first
+// migration attempt fails.
+func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("SQLite-only")
+	}
+
+	env := newTestEnv(t)
+
+	// Create a DB provider that shares the Grafana engine (required for SQLite tx sharing).
+	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+	require.NoError(t, err)
+
+	backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
+		DBProvider: eDB,
+		IsHA:       false,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+	require.NoError(t, backend.Init(ctx))
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	require.NoError(t, err)
+
+	client := resource.NewLocalResourceClient(server)
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	var callCount int32
+
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(migrations.MigrationDefinition{
+		ID:          "test-retry",
+		MigrationID: "test retry migration",
+		Resources:   []migrations.ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				n := atomic.AddInt32(&callCount, 1)
+				if n == 1 {
+					// First call: send a request to ensure the server enters its Recv()
+					// loop and holds the bulk lock, then fail to simulate a SQLite cache spill.
+					_ = stream.Send(&resourcepb.BulkRequest{
+						Key: &resourcepb.ResourceKey{
+							Namespace: opts.Namespace,
+							Group:     gr.Group,
+							Resource:  gr.Resource,
+							Name:      "test-item",
+						},
+						Action: resourcepb.BulkRequest_ADDED,
+						Value:  []byte(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"test-item","namespace":"` + opts.Namespace + `"},"spec":{"title":"Test"}}`),
+					})
+					return fmt.Errorf("simulated SQLite cache spill failure")
+				}
+				return nil
+			},
+		},
+	})
+
+	realMigrator := migrations.ProvideUnifiedMigrator(client, registry)
+	wrapped := &retryAwareMigrator{real: realMigrator}
+
+	runnerCfg := setting.NewCfg()
+	runner := migrations.NewMigrationRunner(wrapped, "test retry migration", []schema.GroupResource{gr}, nil, migrations.WithAutoEnableMode5(runnerCfg))
+
+	sess := env.engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+
+	err = runner.Run(context.Background(), sess, migrations.RunOptions{DriverName: migrator.SQLite})
+	require.NoError(t, err)
+
+	// The migrator func should have been called twice: once for the failed first attempt,
+	// once for the successful retry.
+	require.Equal(t, int32(2), atomic.LoadInt32(&callCount))
+}
+
+// retryAwareMigrator delegates Migrate to a real UnifiedMigrator and stubs
+// RebuildIndexes. It waits briefly for the server to release the bulk lock.
+type retryAwareMigrator struct {
+	real      migrations.UnifiedMigrator
+	callCount int32
+}
+
+func (m *retryAwareMigrator) Migrate(ctx context.Context, opts migrations.MigrateOptions) (*resourcepb.BulkResponse, error) {
+	if atomic.AddInt32(&m.callCount, 1) > 1 {
+		// The context cancellation propagates asynchronously to the server goroutine.
+		// Wait briefly for it to release the bulk lock from the previous attempt.
+		time.Sleep(200 * time.Millisecond)
+	}
+	return m.real.Migrate(ctx, opts)
+}
+
+func (m *retryAwareMigrator) RebuildIndexes(ctx context.Context, opts migrations.RebuildIndexOptions) error {
+	return nil
+}
+
 func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 	tests := []struct {
 		name         string
