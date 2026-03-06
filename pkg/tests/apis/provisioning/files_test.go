@@ -1014,11 +1014,11 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
-	helper.CreateRepo(t, TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
