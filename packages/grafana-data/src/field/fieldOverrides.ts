@@ -2,7 +2,7 @@ import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
+import { ThresholdsMode, VariableFormatID, MatcherScope } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
@@ -71,7 +71,8 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
  */
 export function applyFieldOverrides(
   options: ApplyFieldOverrideOptions,
-  data: DataFrame[] | undefined = options.data
+  data: DataFrame[] | undefined = options.data,
+  scope?: MatcherScope
 ): DataFrame[] {
   if (!data) {
     return [];
@@ -91,6 +92,9 @@ export function applyFieldOverrides(
   const override: OverrideProps[] = [];
   if (source.overrides) {
     for (const rule of source.overrides) {
+      if (scope != null && rule.matcher.scope !== scope) {
+        continue;
+      }
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
@@ -243,8 +247,7 @@ export function applyFieldOverrides(
               );
             }
           }
-          // @todo: apply nested field overrides here
-          newValues[idx] = nestedFrames; // applyFieldOverrides(options, nestedFrames);
+          newValues[idx] = applyFieldOverrides(options, nestedFrames, 'nested');
         }
         field.values = newValues;
       } else if (field.type === FieldType.frame) {
@@ -309,8 +312,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
   let caches: Map<number, DecimalsCache>;
   return (value: unknown, decimals?: DecimalCount) => {
     // pre-allocating these maps is quite expensive, so we do it just-in-time.
-    // -1, 0, 1..15 = 17 entries
-    caches ??= new Map(Array.from({ length: 17 }, (_, i) => [i - 1, new Map()]));
+    caches ??= new Map(Array.from({ length: 16 }, (_, i) => [i - 1, new Map()]));
 
     let cache = caches.get(decimals ?? -1)!;
 

@@ -19,7 +19,9 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
       if (!frameHasName(selection.value, names)) {
         return;
       }
-      return onChangeFromProps(selection.value!);
+
+      const scope = names.scopes.get(selection.value!);
+      return onChangeFromProps(selection.value!, scope);
     },
     [names, onChangeFromProps]
   );

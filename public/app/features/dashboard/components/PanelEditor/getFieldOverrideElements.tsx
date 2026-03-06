@@ -15,6 +15,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { MatcherScope } from '@grafana/schema';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -105,8 +106,8 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: unknown) => {
-      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, options } });
+    const onMatcherConfigChange = (options: unknown, scope?: MatcherScope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
