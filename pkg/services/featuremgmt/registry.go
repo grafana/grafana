@@ -714,12 +714,11 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "reportRenderBinding",
-			Description:  "Enables render binding support for report rendering",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "false",
+			Name:        "reportRenderBinding",
+			Description: "Enables render binding support for report rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "canvasPanelPanZoom",
