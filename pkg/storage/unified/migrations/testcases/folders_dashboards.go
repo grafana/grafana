@@ -40,6 +40,10 @@ func (tc *foldersAndDashboardsTestCase) FeatureToggles() []string {
 	return nil
 }
 
+func (tc *foldersAndDashboardsTestCase) RenameTables() []string {
+	return []string{}
+}
+
 func (tc *foldersAndDashboardsTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{

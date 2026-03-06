@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneDataTransformer,
@@ -19,6 +21,7 @@ import { TransformationOperationRows } from 'app/features/dashboard/components/T
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
+import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
@@ -28,6 +31,13 @@ import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
 import { scrollToQueryRow } from './utils';
 
 const SET_TIMEOUT = 750;
+const reportTransformationEditInteraction = throttle((context: string, type: string) => {
+  reportInteraction('grafana_panel_transformations_clicked', {
+    context,
+    type,
+    action: 'edit',
+  });
+}, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -199,6 +209,10 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         )}
         confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
         onConfirm={() => {
+          reportInteraction('grafana_panel_transformations_clicked', {
+            context: 'transformations_list',
+            action: 'delete_all',
+          });
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);
         }}
@@ -242,11 +256,23 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <TransformationOperationRows
                 onChange={(index, transformation) => {
+                  if (transformation?.id) {
+                    reportTransformationEditInteraction('transformations_list', transformation.id);
+                  }
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
                   model.onChangeTransformations(newTransformations);
                 }}
                 onRemove={(index) => {
+                  const removed = transformations[index];
+                  if (removed?.id) {
+                    reportInteraction('grafana_panel_transformations_clicked', {
+                      context: 'transformations_list',
+                      type: removed.id,
+                      action: 'delete',
+                      total_transformations: transformations.length - 1,
+                    });
+                  }
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index, 1);
                   model.onChangeTransformations(newTransformations);

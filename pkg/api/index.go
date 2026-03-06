@@ -214,6 +214,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
+	data.NavTree.RemoveEmptyAdminSections()
 	data.NavTree.Sort()
 
 	return &data, nil

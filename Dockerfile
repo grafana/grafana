@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.23.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.25.7-alpine AS go-builder-base
+FROM golang:1.25.8-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -117,6 +117,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
 COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
+COPY pkg/infra/features pkg/infra/features
 COPY apps/example apps/example
 
 RUN go mod download
