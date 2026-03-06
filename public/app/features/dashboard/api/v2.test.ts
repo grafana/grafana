@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import {
   AnnoKeyFolder,

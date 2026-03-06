@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
-import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, EventLocation } from './interactions';
+import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, EventLocation } from './constants';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface CommunityDashboardMappingFormProps {

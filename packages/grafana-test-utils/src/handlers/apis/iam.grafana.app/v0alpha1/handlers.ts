@@ -43,6 +43,21 @@ const getTeamHandler = () =>
     }
   );
 
+const searchTeamsHandler = () =>
+  http.get<{ namespace: string }>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', ({ request }) => {
+    const url = new URL(request.url);
+    const searchQuery = url.searchParams.get('query') || '';
+
+    const items = Array.from(mockTeamsMap.values()).map(({ team }) => team);
+    const filteredItems = items
+      .filter((item) => item.spec.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map((team) => ({ name: team.metadata.name, title: team.spec.title }));
+    return HttpResponse.json({
+      totalHits: filteredItems.length,
+      hits: filteredItems,
+    });
+  });
+
 const listTeamsHandler = () =>
   http.get<{ namespace: string }, never>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams', () => {
     const items = Array.from(mockTeamsMap.values()).map(({ team }) => team);
@@ -54,4 +69,4 @@ const listTeamsHandler = () =>
     });
   });
 
-export default [getDisplayMapping(), getTeamHandler(), listTeamsHandler()];
+export default [getDisplayMapping(), getTeamHandler(), listTeamsHandler(), searchTeamsHandler()];

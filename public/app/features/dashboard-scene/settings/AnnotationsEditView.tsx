@@ -4,6 +4,7 @@ import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@gra
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
@@ -11,7 +12,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { AnnotationSettingsEdit, newAnnotationName } from './annotations/AnnotationSettingsEdit';
+import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';
 import { AnnotationSettingsList } from './annotations/AnnotationSettingsList';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
@@ -66,7 +67,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
-      name: newAnnotationName,
+      name: NEW_ANNOTATION_NAME,
       enable: true,
       datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',

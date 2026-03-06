@@ -142,7 +142,6 @@ type NewBackendOpts struct {
 	Tags           []string
 	Static         bool
 	WireTag        string
-	CGOEnabled     bool
 	GoBuildCache   *dagger.CacheVolume
 	GoModCache     *dagger.CacheVolume
 }
@@ -170,10 +169,6 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 	// 1. Figure out the options that were provided as part of the artifact string.
 	//    For example, `linux/amd64:grafana`.
 	options, err := pipeline.ParseFlags(artifact, TargzFlags)
-	if err != nil {
-		return nil, err
-	}
-	static, err := options.Bool(flags.Static)
 	if err != nil {
 		return nil, err
 	}
@@ -214,21 +209,13 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		goCacheProg = val
 	}
 
-	cgoDisabled, err := options.Bool(flags.CGODisabled)
-	if err != nil {
-		return nil, err
-	}
-	cgoEnabled := !cgoDisabled
-
 	bopts := &backend.BuildOpts{
 		Version:           p.Version,
 		Enterprise:        p.Enterprise,
 		ExperimentalFlags: experiments,
 		GoCacheProg:       goCacheProg,
-		Static:            static,
 		WireTag:           wireTag,
 		Tags:              tags,
-		CGOEnabled:        cgoEnabled,
 	}
 
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
@@ -259,12 +246,10 @@ func NewBackend(ctx context.Context, log *slog.Logger, artifact string, opts *Ne
 		Enterprise:        opts.Enterprise,
 		ExperimentalFlags: opts.Experiments,
 		Tags:              opts.Tags,
-		Static:            opts.Static,
 		WireTag:           opts.WireTag,
-		CGOEnabled:        opts.CGOEnabled,
 	}
 
-	log.Info("Initializing backend artifact with options", "static", opts.Static, "version", opts.Version, "name", opts.Name, "distro", opts.Distribution, "cgo enabled", opts.CGOEnabled)
+	log.Info("Initializing backend artifact with options", "static", opts.Static, "version", opts.Version, "name", opts.Name, "distro", opts.Distribution)
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,

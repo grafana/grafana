@@ -18,6 +18,7 @@ import (
 	k8testing "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -46,7 +47,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
-	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -65,7 +66,7 @@ func TestFullSync_Error(t *testing.T) {
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.EqualError(t, err, "compare changes: some error")
 }
 
@@ -85,7 +86,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.NoError(t, err)
 }
 
@@ -116,7 +117,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		Path:  "",
 	}, "").Return(nil)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.NoError(t, err)
 }
 
@@ -145,7 +146,7 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 		Path:  "",
 	}, "").Return(fmt.Errorf("folder creation failed"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "create root folder: folder creation failed")
 }
@@ -174,7 +175,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, fmt.Errorf("compare error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "compare changes: compare error")
 }
@@ -745,7 +746,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			})
 
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
@@ -753,4 +754,353 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			}
 		})
 	}
+}
+
+func createdChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionCreated,
+		}
+	}
+	return changes
+}
+
+func deletedChanges(n int) []ResourceFileChange {
+	changes := make([]ResourceFileChange, n)
+	for i := range changes {
+		changes[i] = ResourceFileChange{
+			Path:   fmt.Sprintf("file-%d.json", i),
+			Action: repository.FileActionDeleted,
+		}
+	}
+	return changes
+}
+
+func TestCheckQuotaBeforeSync(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	tests := []struct {
+		name      string
+		changes   []ResourceFileChange
+		config    *provisioning.Repository
+		expectErr bool
+	}{
+		{
+			name:    "no resource quota condition - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "resource quota condition with status True - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionTrue,
+							Reason: "WithinLimit",
+						},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "resource quota exceeded but quota limit is zero (unlimited) - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 0,
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count within quota - proceeds",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50},
+						{Group: "alerting.grafana.app", Resource: "rules", Count: 40},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count exactly at quota limit - proceeds",
+			changes: createdChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "final count exceeds quota - returns QuotaExceededError",
+			changes: createdChanges(20),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 90},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "negative net change brings count below quota - proceeds",
+			changes: deletedChanges(10),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "delete-only pull still over quota - proceeds since all changes are deletions",
+			changes: deletedChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 120},
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name:    "mixed deletions and creations with net negative changes - blocked",
+			changes: append(deletedChanges(10), createdChanges(3)...),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 110},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "multiple resource types - counts summed exceeds quota",
+			changes: createdChanges(5),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: provisioning.ReasonQuotaExceeded,
+						},
+					},
+					Quota: provisioning.QuotaStatus{
+						MaxResourcesPerRepository: 100,
+					},
+					Stats: []provisioning.ResourceCount{
+						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
+						{Group: "folders.grafana.app", Resource: "folders", Count: 56},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name:    "condition reason is not QuotaExceeded - proceeds",
+			changes: createdChanges(1000),
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:   provisioning.ConditionTypeResourceQuota,
+							Status: metav1.ConditionFalse,
+							Reason: "SomeOtherReason",
+						},
+					},
+				},
+			},
+			expectErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockConfigRepository(t)
+			repo.EXPECT().Config().Return(tt.config)
+
+			err := checkQuotaBeforeSync(context.Background(), repo, tt.changes, tracer)
+			if tt.expectErr {
+				var quotaErr *quotas.QuotaExceededError
+				require.ErrorAs(t, err, &quotaErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionCreated, Path: "dashboards/a.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/b.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/c.json"},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 3).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	// First file: allowed, write succeeds
+	progress.On("HasDirPathFailedCreation", "dashboards/a.json").Return(false)
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/a.json", "").
+		Return("dash-a", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/a.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
+	})).Return().Once()
+
+	// Second and third files: quota exceeded, skipped
+	progress.On("HasDirPathFailedCreation", "dashboards/b.json").Return(false).Maybe()
+	progress.On("HasDirPathFailedCreation", "dashboards/c.json").Return(false).Maybe()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return (r.Path() == "dashboards/b.json" || r.Path() == "dashboards/c.json") &&
+			r.Warning() != nil && r.Error() == nil
+	})).Return().Maybe()
+
+	// Tracker: 9 out of 10, so only 1 creation allowed
+	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker)
+	require.NoError(t, err)
+
+	// WriteResourceFromFile should have been called only once (for "a.json")
+	repoResources.AssertNumberOfCalls(t, "WriteResourceFromFile", 1)
+}
+
+func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionUpdated, Path: "dashboards/existing.json"},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
+
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "").
+		Return("dash-existing", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/existing.json" && r.Action() == repository.FileActionUpdated && r.Error() == nil
+	})).Return()
+
+	// Tracker already at limit — but updates should still proceed
+	tracker := quotas.NewInMemoryQuotaTracker(10, 10)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker)
+	require.NoError(t, err)
+
+	repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "")
 }

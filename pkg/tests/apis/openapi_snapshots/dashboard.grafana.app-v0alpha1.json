@@ -1762,6 +1762,14 @@
             }
           },
           {
+            "name": "createdBy",
+            "in": "query",
+            "description": "filter by the user who created the resource (format: user:\u003cuid\u003e)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "explain",
             "in": "query",
             "description": "add debugging info that may help explain why the result matched",
@@ -1814,7 +1822,29 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "fields"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "fields": {
+                      "description": "Sortable fields (depends on backend support)",
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
@@ -2735,7 +2765,7 @@
           }
         }
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse": {
+      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataResponse": {
         "description": "Generic query properties",
         "type": "object",
         "properties": {
@@ -2846,7 +2876,7 @@
         },
         "additionalProperties": true
       },
-      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
+      "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataSourceRef": {
         "description": "The datasource",
         "type": "object",
         "required": [
@@ -3288,7 +3318,7 @@
             "description": "The default datasource type",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef"
+                "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataSourceRef"
               }
             ]
           },
@@ -3340,7 +3370,7 @@
             "description": "The datasource queries",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataResponse"
+              "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.experimental.apis.datasource.v0alpha1.DataResponse"
             },
             "x-kubernetes-list-type": "atomic"
           },

@@ -15,7 +15,7 @@ type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
 export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;
 
-  const fixedValueOption: SelectableValue<string> = useMemo(
+  const fixedValueOption = useMemo(
     () => ({
       label: t('dimensions.scalar-dimension-editor.fixed-value-options.label-fixed-values', 'Fixed value'),
       value: '_____fixed_____',

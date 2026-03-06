@@ -4,20 +4,26 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetSearchUsersUserHit struct {
-	Name          string  `json:"name"`
-	Title         string  `json:"title"`
-	Login         string  `json:"login"`
-	Email         string  `json:"email"`
-	Role          string  `json:"role"`
-	LastSeenAt    int64   `json:"lastSeenAt"`
-	LastSeenAtAge string  `json:"lastSeenAtAge"`
-	Provisioned   bool    `json:"provisioned"`
-	Score         float64 `json:"score"`
+	Name          string          `json:"name"`
+	Title         string          `json:"title"`
+	Login         string          `json:"login"`
+	Email         string          `json:"email"`
+	Role          string          `json:"role"`
+	LastSeenAt    int64           `json:"lastSeenAt"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	Provisioned   bool            `json:"provisioned"`
+	Score         float64         `json:"score"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 // NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.
 func NewGetSearchUsersUserHit() *GetSearchUsersUserHit {
 	return &GetSearchUsersUserHit{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersUserHit.
+func (GetSearchUsersUserHit) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
 }
 
 // +k8s:openapi-gen=true
@@ -35,9 +41,8 @@ func NewGetSearchUsersResponse() *GetSearchUsersResponse {
 		Hits: []GetSearchUsersUserHit{},
 	}
 }
-func (GetSearchUsersUserHit) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersUserHit"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchUsersResponse.
 func (GetSearchUsersResponse) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchUsersResponse"
 }

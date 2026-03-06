@@ -16,8 +16,8 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		ID:          "folders-dashboards",
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: folderGR, LockTable: "folder"},
-			{GroupResource: dashboardGR, LockTable: "dashboard"},
+			{GroupResource: folderGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
+			{GroupResource: dashboardGR, LockTables: []string{"dashboard", "dashboard_version", "dashboard_provisioning"}},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			folderGR:    migrator.MigrateFolders,
@@ -28,5 +28,7 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 			migrations.CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
 			migrations.FolderTreeValidation(folderGR),
 		},
+		// Folder and Dashboard tables are still being used
+		RenameTables: []string{},
 	}
 }

@@ -1,12 +1,12 @@
 import { SceneObject } from '@grafana/scenes';
-import { VariableModel } from '@grafana/schema/dist/esm/index';
+import { VariableModel } from '@grafana/schema';
 import {
   AdhocVariableKind,
   CustomVariableKind,
   DatasourceVariableKind,
   QueryVariableKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

@@ -38,7 +38,7 @@ Currently, Git Sync doesn't offer any built-in functionality to easily export re
 
 {{< admonition type="caution" >}}
 
-Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/) before using Git Sync.
+Refer to [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits/) before using Git Sync.
 
 {{< /admonition >}}
 

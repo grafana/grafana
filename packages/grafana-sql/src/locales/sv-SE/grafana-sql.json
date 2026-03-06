@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "Automatisk max. inaktiv",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "Det maximala antalet anslutningar i den inaktiva anslutningspoolen. Om <i>Max. öppna anslutningar</i> är större än 0 men mindre än <i>Max. inaktiva anslutningar</i> kommer <i>Max. inaktiva anslutningar</i> att reduceras för att matcha gränsen för <i>Max. öppna anslutningar</i>. Om inställningen är 0 behålls inga inaktiva anslutningar.",
         "content-max-lifetime": "Den maximala tiden i sekunder som en anslutning kan återanvändas. Om inställningen är 0 återanvänds anslutningarna för evigt.",
         "content-max-open": "",
         "max-idle": "Max inaktiv",
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Textfält",
+          "valueField": "Värdefält"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatera fråga"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Den här frågan kommer att behandla <strong>{{bytes}}</strong> när den körs.",
         "validating-query": "Validerar frågan …"
       },
       "raw-editor": {

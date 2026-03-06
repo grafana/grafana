@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +10,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -69,7 +70,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			http.Error(w, "functionality not available", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
 			return
 		}
 
@@ -84,7 +86,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 
 		requester, err := identity.GetRequester(ctx)
 		if err != nil {
-			responder.Error(fmt.Errorf("no identity found for request: %w", err))
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
 			return
 		}
 
@@ -138,20 +140,19 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 
 		result, err := s.client.Search(ctx, searchRequest)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
 
 		searchResults, err := parseResults(result, searchRequest.Offset)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(apierrors.NewInternalError(err))
 			return
 		}
 
-		if err := json.NewEncoder(w).Encode(searchResults); err != nil {
-			responder.Error(err)
-			return
-		}
+		responder.Object(http.StatusOK, &iamv0alpha1.GetUserTeamsResponse{
+			GetUserTeamsBody: searchResults,
+		})
 	}), nil
 }
 
@@ -165,15 +166,15 @@ func (s *UserTeamREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetUserTeamsBody, error) {
 	if result == nil {
-		return iamv0alpha1.GetTeamsBody{}, nil
+		return iamv0alpha1.GetUserTeamsBody{}, nil
 	}
 	if result.Error != nil {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	}
 	if result.Results == nil {
-		return iamv0alpha1.GetTeamsBody{}, nil
+		return iamv0alpha1.GetUserTeamsBody{}, nil
 	}
 
 	userIDX := -1
@@ -199,28 +200,28 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	if userIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
 	}
 	if teamIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
 	}
 	if externalIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
+		return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
 	}
 
-	body := iamv0alpha1.GetTeamsBody{
-		Items: make([]iamv0alpha1.GetTeamsUserTeam, len(result.Results.Rows)),
+	body := iamv0alpha1.GetUserTeamsBody{
+		Items: make([]iamv0alpha1.GetUserTeamsUserTeam, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
+			return iamv0alpha1.GetUserTeamsBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.GetTeamsUserTeam{
+		body.Items[i] = iamv0alpha1.GetUserTeamsUserTeam{
 			User:       string(row.Cells[userIDX]),
 			Team:       string(row.Cells[teamIDX]),
 			Permission: string(row.Cells[permissionIDX]),

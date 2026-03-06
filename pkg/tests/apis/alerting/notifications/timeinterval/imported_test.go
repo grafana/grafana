@@ -41,7 +41,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
 	require.NoError(t, err)
 
-	identifier := "-test-imported-time-intervals"
+	identifier := "test-imported-time-intervals"
 	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{

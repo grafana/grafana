@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -602,6 +602,10 @@ describe('alertingMultiplePolicies Feature Flag', () => {
     config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
   });
 
+  afterEach(() => {
+    resetRoutingTreeMap();
+  });
+
   beforeAll(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
@@ -638,5 +642,62 @@ describe('alertingMultiplePolicies Feature Flag', () => {
     await getRootRoute();
 
     expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+  });
+
+  it('Should render tree inline with create button when there is only one policy tree', async () => {
+    config.featureToggles.alertingMultiplePolicies = true;
+
+    resetRoutingTreeMap();
+    deleteRoutingTree('Managed Policy - Empty Provisioned');
+    deleteRoutingTree('Managed Policy - Override + Inherit');
+    deleteRoutingTree('Managed Policy - Many Top-Level');
+    deleteRoutingTree('Managed Policy - Deeply Nested');
+
+    renderNotificationPolicies();
+
+    await getRootRoute();
+    expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+    expect(screen.getByTestId('create-policy-button')).toBeInTheDocument();
+  });
+});
+
+describe('alertingNavigationV2 respects alertingMultiplePolicies', () => {
+  beforeAll(() => {
+    setupDataSources(...Object.values(dataSources));
+    grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
+  });
+
+  describe('when alertingMultiplePolicies is undefined', () => {
+    testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+
+    it('Should render PoliciesTree', async () => {
+      renderNotificationPolicies();
+      await getRootRoute();
+
+      expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when alertingMultiplePolicies is disabled', () => {
+    testWithFeatureToggles({ enable: ['alertingNavigationV2'], disable: ['alertingMultiplePolicies'] });
+
+    it('Should render PoliciesTree', async () => {
+      renderNotificationPolicies();
+      await getRootRoute();
+
+      expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when alertingMultiplePolicies is enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingNavigationV2', 'alertingMultiplePolicies'] });
+
+    it('Should render PoliciesList', async () => {
+      renderNotificationPolicies();
+      await uiMultiRoute.routeContainer('user-defined').find();
+
+      expect(uiMultiRoute.policyFilter.get()).toBeInTheDocument();
+      expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
+    });
   });
 });

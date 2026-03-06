@@ -14,6 +14,7 @@ import { PromRuleGroupDTO, PromRulesResponse, RulerGrafanaRuleDTO } from 'app/ty
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
+  grantUserPermissions,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRuleGroup,
@@ -22,6 +23,7 @@ import {
   mockUnifiedAlertingStore,
 } from '../../../features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
+import { AccessControlAction } from '../../../types/accessControl';
 
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
@@ -226,5 +228,58 @@ describe('UnifiedAlertList', () => {
     renderPanel();
 
     expect(screen.getByRole('alert', { name: 'Permission required' })).toBeInTheDocument();
+  });
+
+  it('should re-subscribe to dashboard refresh after useEffect dependencies change', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
+
+    const unsubscribeMock = jest.fn();
+    const subscribeMock = jest.fn().mockReturnValue({ unsubscribe: unsubscribeMock });
+    const dashboardMock = {
+      id: 1,
+      formatDate: (time: number) => new Date(time).toISOString(),
+      events: { subscribe: subscribeMock },
+    };
+
+    const dashSrv: unknown = { getCurrent: () => dashboardMock };
+    setDashboardSrv(dashSrv as DashboardSrv);
+
+    jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('');
+
+    const store = mockUnifiedAlertingStore(grafanaRuleMock);
+
+    const initialOptions: UnifiedAlertListOptions = {
+      ...defaultOptions,
+      dashboardAlerts: false,
+      alertName: '',
+      stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false, recovering: false },
+    };
+
+    const { rerender } = render(
+      <Provider store={store}>
+        <UnifiedAlertListPanel {...{ ...defaultProps, options: initialOptions }} />
+      </Provider>
+    );
+
+    await waitFor(() => expect(subscribeMock).toHaveBeenCalledTimes(1));
+    expect(subscribeMock.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
+
+    const updatedOptions: UnifiedAlertListOptions = {
+      ...initialOptions,
+      stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true, recovering: true },
+    };
+
+    rerender(
+      <Provider store={store}>
+        <UnifiedAlertListPanel {...{ ...defaultProps, options: updatedOptions }} />
+      </Provider>
+    );
+
+    // The old subscription should be cleaned up
+    await waitFor(() => expect(unsubscribeMock).toHaveBeenCalled());
+
+    // The subscription should be re-created after the useEffect re-runs.
+    await waitFor(() => expect(subscribeMock).toHaveBeenCalledTimes(2));
+    expect(subscribeMock.mock.calls[1][0]).toEqual(TimeRangeUpdatedEvent);
   });
 });

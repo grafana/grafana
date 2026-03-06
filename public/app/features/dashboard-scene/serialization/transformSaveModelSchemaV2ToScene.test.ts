@@ -30,8 +30,8 @@ import {
   QueryVariableKind,
   SwitchVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -494,11 +494,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 canEdit: false,
                 canDelete: false,
               },
-              organization: {
-                canAdd: false,
-                canEdit: false,
-                canDelete: false,
-              },
             },
           },
         };
@@ -812,11 +807,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           canShare: true,
           annotationsPermissions: {
             dashboard: {
-              canAdd: true,
-              canEdit: true,
-              canDelete: true,
-            },
-            organization: {
               canAdd: true,
               canEdit: true,
               canDelete: true,

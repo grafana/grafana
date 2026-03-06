@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -26,14 +27,21 @@ const (
 )
 
 type filesConnector struct {
-	getter  RepoGetter
-	access  auth.AccessChecker
-	parsers resources.ParserFactory
-	clients resources.ClientFactory
+	getter                RepoGetter
+	access                auth.AccessChecker
+	parsers               resources.ParserFactory
+	clients               resources.ClientFactory
+	folderMetadataEnabled bool
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool) *filesConnector {
+	return &filesConnector{
+		getter:                getter,
+		parsers:               parsers,
+		clients:               clients,
+		access:                access,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -121,6 +129,16 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		return
 	}
 
+	// Enforce quota for write operations
+	if r.Method == http.MethodPost || r.Method == http.MethodPut {
+		// Post with Original Path is a move operation
+		isCreate := r.Method == http.MethodPost && opts.OriginalPath == ""
+		if err := checkQuota(repo, isCreate); err != nil {
+			respondWithError(responder, err)
+			return
+		}
+	}
+
 	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter)
 	if err != nil {
 		logger.Debug("got an error after processing request", "error", err)
@@ -154,8 +172,8 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access), nil
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), c.folderMetadataEnabled)
+	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.folderMetadataEnabled), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -313,19 +331,41 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 		return nil, err
 	}
 
-	files := &provisioning.FileList{}
+	items := make([]provisioning.FileItem, 0, len(rsp))
 	for _, v := range rsp {
 		if !v.Blob {
-			continue // folder item
+			continue
 		}
-		files.Items = append(files.Items, provisioning.FileItem{
+		items = append(items, provisioning.FileItem{
 			Path: v.Path,
 			Size: v.Size,
 			Hash: v.Hash,
 		})
 	}
 
-	return files, nil
+	return &provisioning.FileList{Items: items}, nil
+}
+
+// checkQuota verifies that the repository resource quota allows the operation.
+func checkQuota(repo repository.Repository, isCreate bool) error {
+	cfg := repo.Config()
+	conditions := cfg.Status.Conditions
+
+	if quotas.IsQuotaExceeded(conditions) {
+		return apierrors.NewForbidden(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			cfg.Name,
+			quotas.NewQuotaExceededError(fmt.Errorf("quota exceeded")))
+	}
+
+	if quotas.IsQuotaReached(conditions) && isCreate {
+		return apierrors.NewForbidden(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			cfg.Name,
+			quotas.NewQuotaExceededError(fmt.Errorf("would exceced quota")))
+	}
+
+	return nil
 }
 
 var (

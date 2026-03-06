@@ -8,3 +8,4 @@ export * from './grafana/api/notifications/v0alpha1/mocks/fakes/Routes';
 
 // scenarios
 export * from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario';
+export * from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector.test.scenario';
