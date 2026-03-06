@@ -1,4 +1,4 @@
-package auth
+package resources
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,7 +60,7 @@ func TestAuthorizeResource_SecurityFix(t *testing.T) {
 			mockMeta.On("GetFolder").Return(tt.fileFolderID)
 
 			// Create parsed resource with file metadata
-			parsed := &resources.ParsedResource{
+			parsed := &ParsedResource{
 				Obj: &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
@@ -145,8 +144,8 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 			if tt.shouldAllow {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbCreate &&
-						req.Group == resources.FolderResource.Group &&
-						req.Resource == resources.FolderResource.Resource
+						req.Group == FolderResource.Group &&
+						req.Resource == FolderResource.Resource
 				}), mock.Anything).Return(nil).Once()
 			} else {
 				mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -199,13 +198,13 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 				},
 			}
 
-			expectedFolderID := resources.ParseFolder(tt.path, tt.repoName).ID
+			expectedFolderID := ParseFolder(tt.path, tt.repoName).ID
 
 			if tt.shouldAllow {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbDelete &&
-						req.Group == resources.FolderResource.Group &&
-						req.Resource == resources.FolderResource.Resource
+						req.Group == FolderResource.Group &&
+						req.Resource == FolderResource.Resource
 				}), expectedFolderID).Return(nil).Once()
 			} else {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedFolderID).Return(assert.AnError).Once()
@@ -277,14 +276,14 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				},
 			}
 
-			sourceFolderID := resources.ParseFolder(tt.originalPath, tt.repoName).ID
+			sourceFolderID := ParseFolder(tt.originalPath, tt.repoName).ID
 
 			// Set up expectation for source folder update check
 			if tt.allowSourceUpdate {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbUpdate &&
-						req.Group == resources.FolderResource.Group &&
-						req.Resource == resources.FolderResource.Resource
+						req.Group == FolderResource.Group &&
+						req.Resource == FolderResource.Resource
 				}), sourceFolderID).Return(nil).Once()
 			} else {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -297,8 +296,8 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				if tt.allowTargetCreate {
 					mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 						return req.Verb == utils.VerbCreate &&
-							req.Group == resources.FolderResource.Group &&
-							req.Resource == resources.FolderResource.Resource
+							req.Group == FolderResource.Group &&
+							req.Resource == FolderResource.Resource
 					}), mock.Anything).Return(nil).Once()
 				} else {
 					mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {

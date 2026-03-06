@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provauth "github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -32,7 +31,7 @@ type DualReadWriter struct {
 	repo       repository.ReaderWriter
 	parser     Parser
 	folders    *FolderManager
-	authorizer provauth.Authorizer
+	authorizer Authorizer
 }
 
 type DualWriteOptions struct {
@@ -48,7 +47,7 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer provauth.Authorizer) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer}
 }
 
@@ -410,7 +409,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Authorize delete on the original path
-	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
 		return nil, fmt.Errorf("not authorized to delete original file: %w", err)
 	}
 
@@ -453,7 +452,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	if newParsed.Action == provisioning.ResourceActionUpdate {
 		verb = utils.VerbUpdate
 	}
-	if err = r.authorize(ctx, newParsed, verb); err != nil {
+	if err = r.authorizer.AuthorizeResource(ctx, newParsed, verb); err != nil {
 		return nil, fmt.Errorf("not authorized to create new file: %w", err)
 	}
 

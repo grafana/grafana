@@ -1,4 +1,4 @@
-package auth
+package resources
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -155,11 +156,11 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 	// Determine parent folder from path
 	parentFolder := ""
 	if path != "" {
-		parentPath := dirPath(path)
+		parentPath := safepath.Dir(path)
 		if parentPath != "" {
-			parentFolder = parseFolder(parentPath, a.repo.Name)
+			parentFolder = ParseFolder(parentPath, a.repo.Name).ID
 		} else {
-			parentFolder = rootFolder(a.repo)
+			parentFolder = RootFolder(a.repo)
 		}
 	}
 
@@ -185,7 +186,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 //   - Does NOT check: permissions on dashboard A, B, or C
 //   - Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
-	folderID := parseFolder(path, a.repo.Name)
+	folderID := ParseFolder(path, a.repo.Name).ID
 
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
@@ -212,7 +213,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 //   - Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Check update permission on the source folder
-	sourceFolderID := parseFolder(originalPath, a.repo.Name)
+	sourceFolderID := ParseFolder(originalPath, a.repo.Name).ID
 	if err := a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
 		Resource: FolderResource.Resource,
@@ -225,11 +226,11 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 	// Check create permission on the target parent folder
 	parentFolder := ""
 	if targetPath != "" {
-		parentPath := dirPath(targetPath)
+		parentPath := safepath.Dir(targetPath)
 		if parentPath != "" {
-			parentFolder = parseFolder(parentPath, a.repo.Name)
+			parentFolder = ParseFolder(parentPath, a.repo.Name).ID
 		} else {
-			parentFolder = rootFolder(a.repo)
+			parentFolder = RootFolder(a.repo)
 		}
 	}
 
