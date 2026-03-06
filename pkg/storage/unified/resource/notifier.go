@@ -127,7 +127,10 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 		for {
 			// Wait for an event or a tick
 			select {
-			case evt := <-raw:
+			case evt, ok := <-raw:
+				if !ok {
+					return // channel closed, context canceled
+				}
 				buffer = append(buffer, evt)
 				continue
 			case <-nextEmit:
