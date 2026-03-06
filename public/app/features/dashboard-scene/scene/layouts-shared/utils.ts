@@ -78,8 +78,38 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
-  // We don't want to lazy load panels in the case of image renderer
-  return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+  return !(preload || isInRenderingContext());
+}
+
+let _isInRenderingContext: boolean | undefined;
+
+export function isInRenderingContext(): boolean {
+  if (_isInRenderingContext !== undefined) {
+    return _isInRenderingContext;
+  }
+
+  if (contextSrv.user && contextSrv.user.authenticatedBy === 'render') {
+    _isInRenderingContext = true;
+    return true;
+  }
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('render') === '1') {
+      _isInRenderingContext = true;
+      return true;
+    }
+  } catch {
+    // window.location may not be available in some contexts
+  }
+
+  _isInRenderingContext = false;
+  return false;
+}
+
+/** @internal - only for testing */
+export function _resetRenderingContextCache() {
+  _isInRenderingContext = undefined;
 }
 
 export enum GridLayoutType {
