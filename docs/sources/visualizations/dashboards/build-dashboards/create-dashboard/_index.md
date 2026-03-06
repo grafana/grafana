@@ -125,11 +125,12 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. (Optional) Continue building the dashboard by clicking one or more of the following options:
-   - **+ Add panel**: Set panel options in the edit pane or click **Configure** to complete panel setup.
-   - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
-   - **Group panels**: Choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
-   - **Dashboard options** icon: Open the edit pane to access [panel layout options](#panel-layouts).
+1. (Optional) Continue building the dashboard by doing one or more of the following:
+
+   - Select the panel you just created and click **Configure** in the edit pane to continue panel setup.
+   - Click the add button (blue plus button) and click **Panel**, [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
+   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
+   - Click the **Dashboard options** icon to open the edit pane and access [panel layout options](#panel-layouts).
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
