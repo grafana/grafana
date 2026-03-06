@@ -2515,6 +2515,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingRuleViewerTimeline",
+			Description:  "Enables the timeline tab in the rule viewer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "react19",
 			Description:  "Whether to use the new React 19 runtime",
 			Stage:        FeatureStageExperimental,

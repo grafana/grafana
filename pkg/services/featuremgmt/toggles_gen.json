@@ -653,6 +653,20 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleViewerTimeline",
+        "resourceVersion": "1772820105719",
+        "creationTimestamp": "2026-03-06T18:01:45Z"
+      },
+      "spec": {
+        "description": "Enables the timeline tab in the rule viewer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-01-27T17:47:33Z"

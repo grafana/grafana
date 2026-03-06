@@ -76,6 +76,7 @@ import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { History } from './tabs/History';
+import { Timeline } from './tabs/Timeline';
 import { InstancesList } from './tabs/Instances';
 import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
@@ -86,6 +87,7 @@ export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
+  Timeline = 'timeline',
   Notifications = 'notifications',
   Routing = 'routing',
   VersionHistory = 'version-history',
@@ -182,6 +184,9 @@ const RuleViewer = () => {
             {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
             {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
               <History rule={rule.rulerRule} />
+            )}
+            {activeTab === ActiveTab.Timeline && rulerRuleType.grafana.rule(rule.rulerRule) && (
+              <Timeline rule={rule.rulerRule} />
             )}
             {activeTab === ActiveTab.Notifications && rulerRuleType.grafana.rule(rule.rulerRule) && (
               <Notifications rule={rule.rulerRule} />
@@ -495,6 +500,14 @@ function usePageNav(rule: CombinedRule) {
         },
         // alert state history is only available for Grafana managed alert rules
         hideFromTabs: !isGrafanaAlertRule,
+      },
+      {
+        text: 'Timeline',
+        active: activeTab === ActiveTab.Timeline,
+        onClick: () => {
+          setActiveTab(ActiveTab.Timeline);
+        },
+        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingRuleViewerTimeline,
       },
       {
         text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),

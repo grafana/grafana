@@ -254,7 +254,7 @@ interface SearchFieldInputProps extends Omit<React.ComponentProps<typeof Input>,
   onClearFilterClick: () => void;
 }
 
-const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
+export const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
     return (
       <Field

@@ -312,6 +312,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
 2026-03-04,alertingNotificationHistoryTriage,experimental,@grafana/alerting-squad,false,false,false
+2026-03-06,alertingRuleViewerTimeline,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-18,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-22,functionalSharedPreferences,experimental,@grafana/grafana-frontend-platform,false,false,true

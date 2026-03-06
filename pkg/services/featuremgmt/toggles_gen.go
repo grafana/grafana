@@ -854,6 +854,10 @@ const (
 	// Enables the notification history timeline in the triage instance details drawer
 	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
 
+	// FlagAlertingRuleViewerTimeline
+	// Enables the timeline tab in the rule viewer
+	FlagAlertingRuleViewerTimeline = "alertingRuleViewerTimeline"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
