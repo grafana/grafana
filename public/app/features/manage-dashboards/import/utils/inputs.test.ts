@@ -14,9 +14,11 @@ import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from
 import {
   applyV1Inputs,
   applyV2Inputs,
+  buildVariableMap,
   detectExportFormat,
   extractV1Inputs,
   extractV2Inputs,
+  interpolateVariables,
   isVariableRef,
   replaceDatasourcesInDashboard,
   DatasourceMappings,
@@ -345,7 +347,144 @@ describe('extractV2Inputs', () => {
   });
 });
 
+describe('buildVariableMap', () => {
+  it('builds a map from datasource inputs and form selections', () => {
+    const inputs = {
+      dataSources: [
+        { name: 'DS_PROMETHEUS', label: 'Prometheus', info: '', value: '', type: InputType.DataSource, pluginId: 'prometheus' },
+        { name: 'DS_LOKI', label: 'Loki', info: '', value: '', type: InputType.DataSource, pluginId: 'loki' },
+      ],
+    };
+    const form = {
+      dataSources: [
+        { uid: 'prom-uid-123', type: 'prometheus', name: 'My Prometheus' } as DataSourceInstanceSettings,
+        { uid: 'loki-uid-456', type: 'loki', name: 'My Loki' } as DataSourceInstanceSettings,
+      ],
+    } as ImportDashboardDTO;
+
+    const result = buildVariableMap(inputs, form);
+
+    expect(result).toEqual({
+      '${DS_PROMETHEUS}': 'prom-uid-123',
+      '${DS_LOKI}': 'loki-uid-456',
+    });
+  });
+
+  it('handles empty inputs', () => {
+    const inputs = { dataSources: [] };
+    const form = { dataSources: [] } as unknown as ImportDashboardDTO;
+
+    const result = buildVariableMap(inputs, form);
+
+    expect(result).toEqual({});
+  });
+
+  it('skips inputs without matching form selection', () => {
+    const inputs = {
+      dataSources: [
+        { name: 'DS_PROMETHEUS', label: 'Prometheus', info: '', value: '', type: InputType.DataSource, pluginId: 'prometheus' },
+      ],
+    };
+    const form = { dataSources: [] } as unknown as ImportDashboardDTO;
+
+    const result = buildVariableMap(inputs, form);
+
+    expect(result).toEqual({});
+  });
+});
+
+describe('interpolateVariables', () => {
+  const variables = {
+    '${DS_PROMETHEUS}': 'prom-uid-123',
+    '${DS_LOKI}': 'loki-uid-456',
+  };
+
+  it('replaces variables in strings', () => {
+    expect(interpolateVariables('${DS_PROMETHEUS}', variables)).toBe('prom-uid-123');
+    expect(interpolateVariables('prefix-${DS_LOKI}-suffix', variables)).toBe('prefix-loki-uid-456-suffix');
+  });
+
+  it('preserves unmatched variables', () => {
+    expect(interpolateVariables('${UNKNOWN}', variables)).toBe('${UNKNOWN}');
+  });
+
+  it('replaces variables in arrays', () => {
+    const input = ['${DS_PROMETHEUS}', 'static', '${DS_LOKI}'];
+    const result = interpolateVariables(input, variables);
+
+    expect(result).toEqual(['prom-uid-123', 'static', 'loki-uid-456']);
+  });
+
+  it('replaces variables in nested objects', () => {
+    const input = {
+      datasource: { uid: '${DS_PROMETHEUS}', type: 'prometheus' },
+      targets: [
+        { datasource: { uid: '${DS_LOKI}' } },
+      ],
+    };
+    const result = interpolateVariables(input, variables);
+
+    expect(result).toEqual({
+      datasource: { uid: 'prom-uid-123', type: 'prometheus' },
+      targets: [
+        { datasource: { uid: 'loki-uid-456' } },
+      ],
+    });
+  });
+
+  it('preserves non-string primitives', () => {
+    const input = {
+      id: 42,
+      enabled: true,
+      ratio: 0.5,
+      name: '${DS_PROMETHEUS}',
+    };
+    const result = interpolateVariables(input, variables);
+
+    expect(result).toEqual({
+      id: 42,
+      enabled: true,
+      ratio: 0.5,
+      name: 'prom-uid-123',
+    });
+  });
+
+  it('handles null and undefined values', () => {
+    expect(interpolateVariables(null, variables)).toBe(null);
+    expect(interpolateVariables(undefined, variables)).toBe(undefined);
+  });
+});
+
 describe('applyV1Inputs', () => {
+  it('strips __elements, __inputs, and __requires from dashboard', () => {
+    const dashboard = {
+      title: 'Test Dashboard',
+      uid: 'test-uid',
+      schemaVersion: 39,
+      __elements: { 'lib-panel-1': { uid: 'lib-1', name: 'Library Panel' } },
+      __inputs: [{ name: 'DS', type: InputType.DataSource, pluginId: 'prometheus' }],
+      __requires: [{ type: 'datasource', id: 'prometheus' }],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'New Title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, emptyInputs, form);
+
+    expect(result.title).toBe('New Title');
+    expect(result.uid).toBe('new-uid');
+    expect(result).not.toHaveProperty('__elements');
+    expect(result).not.toHaveProperty('__inputs');
+    expect(result).not.toHaveProperty('__requires');
+  });
+
   it('replaces templateized datasources across v1 dashboard elements', () => {
     const dashboard = {
       title: 'old',

@@ -11,7 +11,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { applyV1Inputs } from '../utils/inputs';
+import { applyV1Inputs, buildVariableMap, interpolateVariables } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportForm } from './ImportForm';
@@ -37,10 +37,15 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     try {
       const dashboardWithDataSources = applyV1Inputs(dashboard, inputs, form);
 
+      // Build variable map for interpolating ${DS_*} variables in library panel models
+      const variableMap = buildVariableMap(inputs, form);
+
       // Import new library panels first
       const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
       for (const lp of newLibraryPanels) {
-        const libPanelWithPanelModel = new PanelModel(lp.model.model);
+        // Interpolate datasource variables in the library panel model
+        const interpolatedModel = interpolateVariables(lp.model.model, variableMap);
+        const libPanelWithPanelModel = new PanelModel(interpolatedModel);
         let { scopedVars, ...panelSaveModel } = libPanelWithPanelModel.getSaveModel();
         panelSaveModel = {
           libraryPanel: {

@@ -24,6 +24,55 @@ import {
 /** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
 export type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
 
+/** Regex to match ${VAR_NAME} patterns in strings */
+const VAR_REGEX = /\$\{([^}]+)\}/g;
+
+/**
+ * Build a map of variable names to values from datasource inputs and form selections.
+ * Maps ${DS_NAME} -> actual datasource UID
+ */
+export function buildVariableMap(
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Record<string, string> {
+  const variables: Record<string, string> = {};
+
+  inputs.dataSources.forEach((input, index) => {
+    const selectedDs = form.dataSources?.[index];
+    if (selectedDs) {
+      variables[`\${${input.name}}`] = selectedDs.uid;
+    }
+  });
+
+  return variables;
+}
+
+/**
+ * Recursively interpolate ${VAR} patterns in an object using the provided variable map.
+ * Returns a deep copy with all variables replaced.
+ */
+export function interpolateVariables<T>(obj: T, variables: Record<string, string>): T {
+  if (typeof obj === 'string') {
+    return obj.replace(VAR_REGEX, (match) => {
+      return variables[match] ?? match;
+    }) as T;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => interpolateVariables(item, variables)) as T;
+  }
+
+  if (obj !== null && typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = interpolateVariables(value, variables);
+    }
+    return result as T;
+  }
+
+  return obj;
+}
+
 /**
  * Detect the dashboard format from input.
  * Handles k8s resources (v1/v2), raw specs, and classic dashboards.
@@ -277,8 +326,16 @@ export function applyV1Inputs(
     return processVariable(variable, inputs, form);
   });
 
+  // Strip export-only properties that shouldn't be persisted
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { __elements, __inputs, __requires, ...dashboardWithoutExportProps } = dashboard as Dashboard & {
+    __elements?: unknown;
+    __inputs?: unknown;
+    __requires?: unknown;
+  };
+
   return {
-    ...dashboard,
+    ...dashboardWithoutExportProps,
     title: form.title,
     ...(dashboard.annotations ? { annotations: { ...dashboard.annotations, list: annotations } } : {}),
     ...(dashboard.panels ? { panels } : {}),
