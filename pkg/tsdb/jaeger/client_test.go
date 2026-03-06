@@ -1,7 +1,6 @@
 package jaeger
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -67,7 +66,7 @@ func TestJaegerClient_Services(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			services, err := client.Services()
+			services, err := client.Services(t.Context())
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -159,7 +158,7 @@ func TestJaegerClient_Operations(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			operations, err := client.Operations(tt.service)
+			operations, err := client.Operations(t.Context(), tt.service)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -265,7 +264,7 @@ func TestJaegerClient_Search(t *testing.T) {
 
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
-			traces, err := client.Search(tt.query, tt.start, tt.end)
+			traces, err := client.Search(t.Context(), tt.query, tt.start, tt.end)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -379,7 +378,7 @@ func TestJaegerClient_Trace(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			trace, err := client.Trace(context.Background(), tt.traceId, tt.start, tt.end)
+			trace, err := client.Trace(t.Context(), tt.traceId, tt.start, tt.end)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -491,7 +490,7 @@ func TestJaegerClient_Dependencies(t *testing.T) {
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
 
-			dependencies, err := client.Dependencies(context.Background(), tt.start, tt.end)
+			dependencies, err := client.Dependencies(t.Context(), tt.start, tt.end)
 
 			if tt.expectError {
 				assert.Error(t, err)

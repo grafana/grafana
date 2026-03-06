@@ -86,7 +86,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if _, err = client.JaegerClient.Services(); err != nil {
+	_, servicesErr := client.JaegerClient.Services(ctx)
+
+	if servicesErr != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: err.Error(),
