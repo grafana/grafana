@@ -27,6 +27,7 @@ export function DataSourceTabPage({ uid, pageId }: Props) {
       renderTitle={(title) => <DataSourceTitle title={title} />}
       info={info}
       actions={<EditDataSourceActions uid={uid} />}
+      stickyHeader
     >
       <Page.Contents>
         <EditDataSource uid={uid} pageId={pageId} />
