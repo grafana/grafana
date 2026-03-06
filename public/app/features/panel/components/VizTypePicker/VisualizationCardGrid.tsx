@@ -20,10 +20,22 @@ export interface Props {
   data: PanelData;
   onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
   getItemKey: (item: PanelPluginVisualizationSuggestion) => string;
+  selectedKey?: string;
+  minColumnWidth?: number;
+  maxCardWidth?: number;
 }
 
-export function VisualizationCardGrid({ items, groups, data, onItemClick, getItemKey }: Props) {
-  const styles = useStyles2(getStyles);
+export function VisualizationCardGrid({
+  items,
+  groups,
+  data,
+  onItemClick,
+  getItemKey,
+  selectedKey,
+  minColumnWidth,
+  maxCardWidth,
+}: Props) {
+  const styles = useStyles2(getStyles, minColumnWidth, maxCardWidth);
   const [firstCardRef, { width }] = useMeasure<HTMLDivElement>();
 
   const itemIndexMap = useMemo(() => {
@@ -67,6 +79,7 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
           data={data}
           suggestion={item}
           width={width}
+          isSelected={getItemKey(item) === selectedKey}
           onClick={() => onItemClick(item, itemIndex)}
         />
       </div>
@@ -95,16 +108,18 @@ export function VisualizationCardGrid({ items, groups, data, onItemClick, getIte
   return <div className={styles.grid}>{items?.map((item, index) => renderCard(item, index === 0))}</div>;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE, maxCardWidth?: number) => ({
   grid: css({
     display: 'grid',
     gridGap: theme.spacing(1),
-    gridTemplateColumns: `repeat(auto-fit, minmax(${MIN_MULTI_COLUMN_SIZE}px, 1fr))`,
+    gridTemplateColumns: `repeat(auto-fill, minmax(${minColumnWidth}px, 1fr))`,
     marginBottom: theme.spacing(1),
-    justifyContent: 'space-evenly',
   }),
   cardContainer: css({
     position: 'relative',
+    width: '100%',
+    maxWidth: maxCardWidth ? `${maxCardWidth}px` : undefined,
+    justifySelf: 'start',
   }),
   vizTypeHeader: css({
     gridColumn: '1 / -1',

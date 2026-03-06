@@ -5334,6 +5334,7 @@
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
@@ -6782,6 +6783,7 @@
       "title": {
         "description": "Description",
         "panel-links": "Panel links",
+        "panel-styles": "Panel styles",
         "title": "Title",
         "transparent-background": "Transparent background"
       }
@@ -6965,6 +6967,9 @@
           "metrics-drilldown": "Metrics drilldown"
         }
       }
+    },
+    "panel-styles": {
+      "title": "Panel styles"
     },
     "panel-viz-type-picker": {
       "button": {
@@ -14807,6 +14812,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
+    },
+    "presets": {
+      "area": "Area",
+      "default": "Default",
+      "smooth": "Smooth",
+      "stacked-area": "Stacked area",
+      "stacked-area-gradient": "Stacked area gradient",
+      "stacked-smooth": "Stacked smooth",
+      "stacked-step": "Stacked step",
+      "step": "Step",
+      "step-filled": "Step filled",
+      "step-hue": "Step hue"
     },
     "span-nulls-editor": {
       "gaps-options": {

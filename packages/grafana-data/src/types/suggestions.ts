@@ -122,6 +122,22 @@ export type VisualizationSuggestionsSupplier<TOptions extends unknown, TFieldCon
 ) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
 
 /**
+ * @alpha
+ * Context for VisualizationPresetsSupplier
+ */
+export interface VisualizationPresetsContext {
+  fieldConfig?: FieldConfigSource;
+}
+
+/**
+ * @alpha
+ * Returns presets for a panel plugin
+ */
+export type VisualizationPresetsSupplier<TOptions extends unknown = {}, TFieldConfig extends {} = {}> = (
+  context: VisualizationPresetsContext
+) => Array<VisualizationSuggestion<TOptions, TFieldConfig>> | void;
+
+/**
  * DEPRECATED - the below exports need to remain in the code base to help make the transition for the Polystat plugin, which implements
  * suggestions using the old API. These should be removed for Grafana 13.
  */

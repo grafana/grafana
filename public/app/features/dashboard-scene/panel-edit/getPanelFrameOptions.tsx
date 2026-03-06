@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -20,6 +20,33 @@ import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
+
+import { PanelStylesSection } from './PanelStylesSection';
+
+export function createPresetApplyHandler(panel: VizPanel) {
+  return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
+      source: panel,
+      perform: () => {
+        const { defaults, overrides } = panel.state.fieldConfig;
+        const presetDefaults = preset.fieldConfig?.defaults;
+        panel.onFieldConfigChange(
+          {
+            defaults: {
+              ...defaults,
+              custom: { ...defaults.custom, ...presetDefaults?.custom },
+              ...(presetDefaults?.color && { color: presetDefaults.color }),
+            },
+            overrides,
+          },
+          true
+        );
+      },
+      undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
+    });
+  };
+}
 
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
@@ -76,27 +103,43 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
       })
-    )
-    .addCategory(
-      new OptionsPaneCategoryDescriptor({
-        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-        id: 'Panel links',
-        isOpenDefault: false,
-        itemsCount: links?.length,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-          id: 'panel-frame-options-panel-links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
-        })
-      )
     );
+
+  descriptor.addCategory(
+    new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+      id: 'Panel links',
+      isOpenDefault: false,
+      itemsCount: links?.length,
+    }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+        id: 'panel-frame-options-panel-links',
+        render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+      })
+    )
+  );
 
   if (isDashboardLayoutItem(layoutElement)) {
     layoutElement.getOptions?.().forEach((category) => descriptor.addCategory(category));
   }
 
   return descriptor;
+}
+
+export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescriptor | undefined {
+  if (!config.featureToggles.vizPresets) {
+    return undefined;
+  }
+
+  return new OptionsPaneCategoryDescriptor({
+    title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
+    id: 'panel-styles',
+    isOpenDefault: true,
+    customRender: () => (
+      <PanelStylesSection key="panel-styles" panel={panel} onApplyPreset={createPresetApplyHandler(panel)} />
+    ),
+  });
 }
 
 interface ScenePanelLinksEditorProps {
