@@ -136,6 +136,15 @@ message ResourceSearchRequest {
 
   // Sort values for SearchBefore pagination.
   repeated string search_before = 15;
+
+  // When true, use hybrid text + vector search with reciprocal rank fusion.
+  bool semantic = 16;
+
+  // Number of nearest neighbours for the vector leg (default 10). Only used when semantic=true.
+  int64 k = 17;
+
+  // Vector field name override (default: querier config's vector_field). Only used when semantic=true.
+  string vector_field = 18;
 }
 
 message ResourceSearchResponse {
