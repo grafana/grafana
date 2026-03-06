@@ -87,11 +87,14 @@ export const AnnotationMarker2 = ({
 
   if (isHovering || isPinned) {
     frame.fields.forEach((field) => {
+      // Since field overrides are not yet supported for annotation frames, every value in the field will have the same links... except the clustering index because it's generated on-the-fly and not had getFieldOverrides called on it
+      const annotationIndexForLinks = isClustering ? 0 : annoIdx;
+
       // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
-      links.push(...getDataLinks(field, annoIdx));
+      links.push(...getDataLinks(field, annotationIndexForLinks));
 
       if (canExecuteActions) {
-        actions.push(...getFieldActions(frame, field, replaceVariables, annoIdx));
+        actions.push(...getFieldActions(frame, field, replaceVariables, annotationIndexForLinks));
       }
     });
   }

@@ -589,8 +589,28 @@ describe('AnnotationsPlugin2', () => {
         expect(texts[1]).toHaveTextContent('(>32MB)');
         expect(texts[2]).toHaveTextContent('Declared by Ada');
       });
+
+      it.each([userEvent.hover, userEvent.click])('clusters should render links and actions', async (event) => {
+        mockUsePanelContext.mockReturnValue({
+          canExecuteActions: () => true,
+        } as PanelContext);
+        setUp({
+          annotations: [mockAlertingFrame],
+          annotationsOptions: {
+            clustering: true,
+          },
+        });
+        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
+        expect(markers).toHaveLength(3);
+        // Open tooltip
+        await event(markers[0]);
+        expect(screen.getByTestId(selectors.pages.Dashboard.Annotations.clusterTooltip)).toBeVisible();
+        expect(screen.getByText('Link 1')).toBeVisible();
+        expect(screen.getByText('Link 2')).toBeVisible();
+        expect(screen.queryByText('Action 1')).toBeVisible();
+        expect(screen.queryByText('Action 2')).toBeVisible();
+      });
     });
-    it.todo('multiLane');
   });
 
   describe('annotation fields', () => {
@@ -661,6 +681,9 @@ describe('AnnotationsPlugin2', () => {
     });
 
     it.each([userEvent.hover, userEvent.click])('links', async (event) => {
+      mockUsePanelContext.mockReturnValue({
+        canExecuteActions: () => false,
+      } as PanelContext);
       setUp({
         annotations: [mockAlertingFrame],
       });
@@ -668,6 +691,8 @@ describe('AnnotationsPlugin2', () => {
       await event(firstMarker);
       expect(screen.getByText('Link 1')).toBeVisible();
       expect(screen.getByText('Link 2')).toBeVisible();
+      expect(screen.queryByText('Action 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('Action 2')).not.toBeInTheDocument();
     });
 
     it.each([userEvent.hover, userEvent.click])('actions', async (event) => {
@@ -679,6 +704,8 @@ describe('AnnotationsPlugin2', () => {
       });
       const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
       await event(firstMarker);
+      expect(screen.getByText('Link 1')).toBeVisible();
+      expect(screen.getByText('Link 2')).toBeVisible();
       expect(screen.getByText('Action 1')).toBeVisible();
       expect(screen.getByText('Action 2')).toBeVisible();
     });

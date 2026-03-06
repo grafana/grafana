@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
@@ -32,7 +33,7 @@ export const AnnotationTooltip2Cluster = ({
   const styles = useStyles2(getStyles);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
 
-  let items: React.ReactNode[] = [];
+  let annotationTooltipComponents: React.ReactNode[] = [];
 
   let clusterIdx = annoVals.clusterIdx?.[annoIdx];
 
@@ -57,7 +58,7 @@ export const AnnotationTooltip2Cluster = ({
       }
       const annotationId = annoVals.id?.[i];
 
-      items.push(
+      annotationTooltipComponents.push(
         <>
           <AnnotationTooltipHeader
             avatarImg={avatarImgSrc}
@@ -75,8 +76,6 @@ export const AnnotationTooltip2Cluster = ({
             }}
           />
           <AnnotationTooltipBody text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
-          {/* @todo Currently this will only show links in the clustered annotation, which is impossible since they are generated on the fly */}
-          <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
         </>
       );
     }
@@ -91,10 +90,13 @@ export const AnnotationTooltip2Cluster = ({
     onAnnotationDelete
   );
 
-  const text = items.length.toString() + ' ' + t('timeseries.annotation-tooltip2.cluster-header', 'annotations');
+  const text =
+    annotationTooltipComponents.length.toString() +
+    ' ' +
+    t('timeseries.annotation-tooltip2.cluster-header', 'annotations');
 
   return (
-    <div className={styles.wrapper}>
+    <div data-testid={selectors.pages.Dashboard.Annotations.clusterTooltip} className={styles.wrapper}>
       <ScrollContainer maxHeight="200px">
         <AnnotationTooltipHeader
           text={text}
@@ -109,13 +111,15 @@ export const AnnotationTooltip2Cluster = ({
             onClose();
           }}
         />
-        {items.map((item, key) => (
-          // @todo this is a bad key, but nothing in the annotation is guaranteed to be unique
-          <div key={key}>
+        {annotationTooltipComponents.map((item, clusterIndex) => (
+          <div key={clusterIndex}>
             {item}
             <div className={styles.hr}></div>
           </div>
         ))}
+
+        {/* @todo move to inner cluster loop when annotation field overrides are supported https://github.com/grafana/grafana/issues/112685, https://github.com/grafana/grafana/issues/119619 */}
+        <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
       </ScrollContainer>
     </div>
   );
