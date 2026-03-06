@@ -120,6 +120,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                       sectionName: link.text,
                     })
               }
+              aria-expanded={Boolean(sectionExpanded)}
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}
