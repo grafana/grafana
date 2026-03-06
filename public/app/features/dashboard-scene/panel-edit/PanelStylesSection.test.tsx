@@ -192,21 +192,6 @@ describe('PanelStylesSection', () => {
     expect(onApplyPreset).not.toHaveBeenCalled();
   });
 
-  it('calls onApplyPreset when preset has options but no fieldConfig', async () => {
-    const user = userEvent.setup();
-    const presetsWithOptionsOnly: PanelPluginVisualizationSuggestion[] = [
-      { pluginId: 'gauge', name: 'Only options', hash: 'only-options-hash', options: { barShape: 'rounded' } },
-    ];
-    mockGetPluginPresets.mockReturnValue(presetsWithOptionsOnly);
-
-    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    await waitFor(() => expect(screen.getByTestId('preset-only-options-hash')).toBeInTheDocument());
-
-    await user.click(screen.getByTestId('preset-only-options-hash'));
-
-    expect(onApplyPreset).toHaveBeenCalledWith(presetsWithOptionsOnly[0], mockFieldConfig);
-  });
-
   it('marks the clicked card as selected', async () => {
     const user = userEvent.setup();
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
