@@ -124,6 +124,8 @@ func RegisterAPIService(
 		authorizer:                        authorizer,
 		legacyAccessClient:                legacyAccessClient,
 		accessClient:                      accessClient,
+		ac:                                ac,
+		roleConfigProvider:                restConfig.GetRestConfig,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                           user.NewLegacyDisplayREST(store),
@@ -404,7 +406,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableRoleBindingsApi {
-		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync, enableRolesApi); err != nil {
 			return err
 		}
 	}
@@ -614,6 +616,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	opts builder.APIGroupOptions,
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
+	enableRolesApi bool,
 ) error {
 	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.RoleBindingInfo, opts.OptsGetter)
 	if err != nil {
@@ -648,7 +651,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 		}
 	}
 
-	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
+	var rbAuthorizer storewrapper.ResourceStorageAuthorizer
+	if enableRolesApi && b.ac != nil && b.roleConfigProvider != nil {
+		validator := iamauthorizer.NewRolePermissionValidator(b.accessClient, b.ac)
+		roleRefResolver := iamauthorizer.RoleRefResolverFromConfigProvider(b.roleConfigProvider)
+		rbAuthorizer = iamauthorizer.NewRoleBindingAuthorizer(validator, roleRefResolver)
+	} else {
+		// roles API disabled, then deny bindings
+		rbAuthorizer = iamauthorizer.NewDenyCustomRoleRefsAuthorizer()
+	}
+	storage[iamv0.RoleBindingInfo.StoragePath()] = storewrapper.New(roleBindingStore, rbAuthorizer)
 	return nil
 }
 
