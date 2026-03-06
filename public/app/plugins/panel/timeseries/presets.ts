@@ -25,9 +25,8 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
-const isStacked = (context: Parameters<VisualizationPresetsSupplier<Options, GraphFieldConfig>>[0]): boolean => {
-  const mode = context.fieldConfig?.defaults?.custom?.stacking?.mode;
-  return mode === StackingMode.Normal || mode === StackingMode.Percent;
+const STACKING_OFF: GraphFieldConfig = {
+  stacking: { mode: StackingMode.None, group: 'A' },
 };
 
 // Shared options for (3) step presets
@@ -58,17 +57,14 @@ const STACKED_AREA_BASE_CUSTOM: GraphFieldConfig = {
 };
 
 /**
- * @TODO: geometry support
- */
-
-/**
  * Default preset
  */
 const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   name: t('timeseries.presets.default', 'Default'),
   fieldConfig: {
     defaults: {
-      custom: defaultGraphConfig,
+      custom: { ...defaultGraphConfig },
+      color: { mode: FieldColorModeId.PaletteClassic },
     },
     overrides: [],
   },
@@ -83,6 +79,7 @@ const smoothPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => (
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         lineWidth: 1,
         fillOpacity: 24,
         gradientMode: GraphGradientMode.Opacity,
@@ -107,6 +104,7 @@ const areaPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         lineWidth: 0,
         fillOpacity: 100,
         gradientMode: GraphGradientMode.Opacity,
@@ -131,6 +129,7 @@ const stepPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 0,
         gradientMode: GraphGradientMode.Opacity,
@@ -153,6 +152,7 @@ const stepFilledPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> 
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 45,
         gradientMode: GraphGradientMode.Opacity,
@@ -175,6 +175,7 @@ const stepHuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
   fieldConfig: {
     defaults: {
       custom: {
+        ...STACKING_OFF,
         ...STEP_BASE_CUSTOM,
         fillOpacity: 45,
         gradientMode: GraphGradientMode.Hue,
@@ -290,16 +291,17 @@ const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFiel
   cardOptions: { previewModifier },
 });
 
-export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
-  if (isStacked(context)) {
-    return [
-      defaultPreset(),
-      stackedStepPreset(),
-      smoothStackedPreset(),
-      stackedAreaPercentPointsPreset(),
-      stackedAreaGradientPreset(),
-    ];
-  }
-
-  return [defaultPreset(), smoothPreset(), areaPreset(), stepPreset(), stepFilledPreset(), stepHuePreset()];
+export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
+  return [
+    defaultPreset(),
+    smoothPreset(),
+    areaPreset(),
+    stepPreset(),
+    stepFilledPreset(),
+    stepHuePreset(),
+    stackedStepPreset(),
+    smoothStackedPreset(),
+    stackedAreaPercentPointsPreset(),
+    stackedAreaGradientPreset(),
+  ];
 };

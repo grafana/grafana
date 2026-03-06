@@ -3,9 +3,9 @@ import { screen } from '@testing-library/react';
 import { AlertState } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { QueryEditorType } from '../../constants';
-import { renderWithQueryEditorProvider } from '../testUtils';
-import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
+import { QueryEditorType } from '../../../constants';
+import { renderWithQueryEditorProvider } from '../../testUtils';
+import { AlertRule, EMPTY_ALERT, Transformation } from '../../types';
 
 import { SidebarFooter } from './SidebarFooter';
 
