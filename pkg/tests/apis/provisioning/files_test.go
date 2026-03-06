@@ -1008,5 +1008,135 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			// nolint:errcheck
 			defer deleteResp.Body.Close()
 		})
+
+		t.Run("Viewer cannot delete folders on branch", func(t *testing.T) {
+			// Folder delete/move only allowed on branches, not on configured branch
+			testBranch := "test-delete-viewer"
+
+			// First create a folder as Admin on branch
+			resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+				TargetPath: "delete-test-folder/",
+				Ref:        testBranch,
+			})
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+
+			// Try to delete as Viewer on branch
+			var statusCode int
+			result := helper.ViewerREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "delete-test-folder/").
+				Param("ref", testBranch).
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "Viewer should not be able to delete folders even on branch")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+
+			// Clean up
+			helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "delete-test-folder/").
+				Param("ref", testBranch).
+				Do(ctx)
+		})
+
+		t.Run("Editor can delete folders on branch", func(t *testing.T) {
+			testBranch := "test-delete-editor"
+
+			// First create a folder as Admin on branch
+			resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+				TargetPath: "editor-delete-folder/",
+				Ref:        testBranch,
+			})
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+
+			// Delete as Editor on branch
+			var statusCode int
+			result := helper.EditorREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-delete-folder/").
+				Param("ref", testBranch).
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "Editor should be able to delete folders on branch")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+
+		t.Run("Viewer cannot move folders on branch", func(t *testing.T) {
+			testBranch := "test-move-viewer"
+
+			// First create a folder as Admin on branch
+			resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+				TargetPath: "move-source-folder/",
+				Ref:        testBranch,
+			})
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+
+			// Try to move as Viewer on branch
+			var statusCode int
+			result := helper.ViewerREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "move-target-folder/").
+				Param("ref", testBranch).
+				Param("originalPath", "move-source-folder/").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "Viewer should not be able to move folders even on branch")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+
+			// Clean up
+			helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "move-source-folder/").
+				Param("ref", testBranch).
+				Do(ctx)
+		})
+
+		t.Run("Editor can move folders on branch", func(t *testing.T) {
+			testBranch := "test-move-editor"
+
+			// First create a folder as Admin on branch
+			resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+				TargetPath: "editor-move-source/",
+				Ref:        testBranch,
+			})
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			resp.Body.Close()
+
+			// Move as Editor on branch
+			var statusCode int
+			result := helper.EditorREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-move-target/").
+				Param("ref", testBranch).
+				Param("originalPath", "editor-move-source/").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "Editor should be able to move folders on branch")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Clean up
+			helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-move-target/").
+				Param("ref", testBranch).
+				Do(ctx)
+		})
 	})
 }
