@@ -22,9 +22,7 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
-	filters.AddQueryStringFilter(q.RawQuery, true)
-
-	if q.EditorType != nil && *q.EditorType == "code" {
+	if q.QueryType != nil && *q.QueryType == "dsl" {
 		cfg := backend.GrafanaConfigFromContext(e.ctx)
 		if !cfg.FeatureToggles().IsEnabled("elasticsearchRawDSLQuery") {
 			return backend.DownstreamError(fmt.Errorf("raw DSL query feature is disabled. Enable the elasticsearchRawDSLQuery feature toggle to use this query type"))
@@ -33,6 +31,9 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 		if err := e.processRawDSLQuery(q, b); err != nil {
 			return err
 		}
+	} else {
+		// For non-DSL queries (Lucene), add the query string filter
+		filters.AddQueryStringFilter(q.RawQuery, true)
 	}
 
 	if isLogsQuery(q) {
@@ -197,20 +198,20 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 }
 
 func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchRequestBuilder) error {
-	if q.RawDSLQuery == "" {
+	if q.RawQuery == "" {
 		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
 	}
 
 	// Parse the raw DSL query JSON
 	var queryBody map[string]any
-	if err := json.Unmarshal([]byte(q.RawDSLQuery), &queryBody); err != nil {
+	if err := json.Unmarshal([]byte(q.RawQuery), &queryBody); err != nil {
 		return backend.DownstreamError(fmt.Errorf("invalid raw DSL query JSON: %w", err))
 	}
 
 	if len(q.Metrics) > 0 {
 		firstMetricType := q.Metrics[0].Type
 		if firstMetricType != logsType && firstMetricType != rawDataType && firstMetricType != rawDocumentType {
-			bucketAggs, metricAggs, err := e.aggregationParserDSLRawQuery.Parse(q.RawDSLQuery)
+			bucketAggs, metricAggs, err := e.aggregationParserDSLRawQuery.Parse(q.RawQuery)
 			if err != nil {
 				return backend.DownstreamError(fmt.Errorf("failed to parse aggregations: %w", err))
 			}

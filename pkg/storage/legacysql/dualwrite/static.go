@@ -45,7 +45,7 @@ func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMod
 func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	config := m.cfg.UnifiedStorage[gr.String()]
 
-	m.logStorageModeComparison(gr, config.DualWriterMode)
+	m.LogStorageModeComparison(gr, config.DualWriterMode)
 
 	switch config.DualWriterMode {
 	case rest.Mode1:
@@ -63,29 +63,9 @@ func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage,
 	}
 }
 
-// logStorageModeComparison logs the storage mode from MigrationStatusReader alongside the
-// current config mode for observability.
-func (m *staticService) logStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
-	if m.statusReader == nil {
-		return
-	}
-	newMode, err := m.statusReader.GetStorageMode(context.Background(), gr)
-	if err != nil {
-		logger.Warn("Failed to get storage mode from MigrationStatusReader",
-			"resource", gr.String(), "error", err)
-		return
-	}
-
-	currentMode := storageModeFromConfigMode(configMode)
-	if currentMode != newMode && m.metrics != nil {
-		m.metrics.ModeMismatchCounter.WithLabelValues(gr.String(), currentMode.String(), newMode.String()).Inc()
-	}
-
-	logger.Info("Storage mode comparison",
-		"resource", gr.String(),
-		"newMode", newMode.String(),
-		"currentMode", currentMode.String(),
-	)
+// LogStorageModeComparison implements Service.
+func (m *staticService) LogStorageModeComparison(gr schema.GroupResource, configMode rest.DualWriterMode) {
+	logModeComparison(m.statusReader, m.metrics, gr, storageModeFromConfigMode(configMode))
 }
 
 // storageModeFromConfigMode maps a DualWriterMode config value to a StorageMode.

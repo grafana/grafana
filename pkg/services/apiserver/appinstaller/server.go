@@ -160,7 +160,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
 	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
-		isClusterScoped := statusStore.Store.CreateStrategy != nil && !statusStore.Store.CreateStrategy.NamespaceScoped()
+		isClusterScoped := statusStore.Store.UpdateStrategy != nil && !statusStore.Store.UpdateStrategy.NamespaceScoped()
 
 		statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 		statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
@@ -182,7 +182,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 
 	// if the storage is a subresource store, we need to extract the underlying generic registry store
 	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
-		isClusterScoped := subresourceStore.Store.CreateStrategy != nil && !subresourceStore.Store.CreateStrategy.NamespaceScoped()
+		isClusterScoped := subresourceStore.Store.UpdateStrategy != nil && !subresourceStore.Store.UpdateStrategy.NamespaceScoped()
 
 		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)

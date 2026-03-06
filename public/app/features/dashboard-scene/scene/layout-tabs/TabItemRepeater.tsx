@@ -104,11 +104,11 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
 /**
  * Get previous variable values given the current repeated state
  */
-function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSingle[] {
+function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSingle[] | undefined {
   const values: VariableValueSingle[] = [];
 
   if (!mainTab.state.repeatedTabs) {
-    return [];
+    return undefined;
   }
 
   function collectVariableValue(tab: TabItem) {

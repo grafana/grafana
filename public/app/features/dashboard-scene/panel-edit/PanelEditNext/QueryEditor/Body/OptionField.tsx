@@ -13,6 +13,8 @@ export interface OptionFieldProps {
   focusedField?: QueryOptionField | null;
   defaultValue?: string | number;
   placeholder?: string;
+  hint?: string;
+  disabled?: boolean;
   children?: ReactNode;
 }
 
@@ -22,14 +24,14 @@ export function OptionField({
   focusedField,
   defaultValue = '',
   placeholder,
+  hint,
+  disabled,
   children,
 }: OptionFieldProps) {
   const styles = useStyles2(getStyles);
   const config = QUERY_OPTION_FIELD_CONFIG[field];
   const tooltip = config.getTooltip();
   const label = config.getLabel();
-  const inputType = config.inputType ?? 'text';
-  const resolvedPlaceholder = placeholder ?? config.placeholder;
 
   return (
     <div className={styles.field}>
@@ -37,17 +39,22 @@ export function OptionField({
         <Icon name="info-circle" size="md" className={styles.infoIcon} />
       </Tooltip>
       <span className={styles.fieldLabel}>{label}</span>
-      {children ?? (
-        <Input
-          type={inputType}
-          defaultValue={defaultValue}
-          placeholder={resolvedPlaceholder}
-          onBlur={onBlur ? (e) => onBlur(e, field) : undefined}
-          autoFocus={focusedField != null && focusedField === field}
-          aria-label={label}
-          className={styles.fieldInput}
-        />
-      )}
+      <div className={styles.fieldContent}>
+        {children ?? (
+          <Input
+            type={config.inputType ?? 'text'}
+            value={disabled ? defaultValue : undefined}
+            defaultValue={disabled ? undefined : defaultValue}
+            placeholder={placeholder ?? config.placeholder}
+            onBlur={onBlur ? (e) => onBlur(e, field) : undefined}
+            autoFocus={!disabled && focusedField === field}
+            disabled={disabled}
+            aria-label={label}
+            className={styles.fieldInput}
+          />
+        )}
+        {hint && <span className={styles.hint}>{`= ${hint}`}</span>}
+      </div>
     </div>
   );
 }
@@ -61,11 +68,19 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.5, 0),
     }),
     fieldLabel: css({
-      flex: 1,
+      width: CONTENT_SIDE_BAR.fieldLabelWidth,
+      flexShrink: 0,
       color: theme.colors.text.primary,
       fontSize: theme.typography.bodySmall.fontSize,
       fontFamily: theme.typography.fontFamilyMonospace,
       whiteSpace: 'nowrap',
+    }),
+    fieldContent: css({
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      minWidth: 0,
     }),
     fieldInput: css({
       width: CONTENT_SIDE_BAR.labelWidth,
@@ -74,6 +89,15 @@ function getStyles(theme: GrafanaTheme2) {
     infoIcon: css({
       color: theme.colors.text.secondary,
       flexShrink: 0,
+    }),
+    hint: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
     }),
   };
 }

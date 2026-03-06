@@ -29,6 +29,7 @@ export interface SearchQuery {
   tags?: string[];
   kind?: string[];
   panel_type?: string;
+  createdBy?: string;
   name?: string[];
   uid?: string[];
   facet?: FacetField[];

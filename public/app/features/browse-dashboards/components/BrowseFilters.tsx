@@ -20,6 +20,7 @@ export function BrowseFilters() {
       onDatasourceChange={stateManager.onDatasourceChange}
       onPanelTypeChange={stateManager.onPanelTypeChange}
       onSetIncludePanels={stateManager.onSetIncludePanels}
+      onCreatedByChange={stateManager.onCreatedByChange}
     />
   );
 }

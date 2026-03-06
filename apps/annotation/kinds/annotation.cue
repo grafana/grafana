@@ -11,6 +11,7 @@ annotationv0alpha1: {
       dashboardUID?: string
       panelID?: int64
       tags?: [...string]
+      scopes?: [...string]
 		}
 	}
   selectableFields: [

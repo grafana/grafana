@@ -35,11 +35,12 @@ type ResourceInfo struct {
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
-	ID          string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
-	MigrationID string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources   []ResourceInfo                        // Resources to migrate together, with their lock tables
-	Migrators   map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
-	Validators  []ValidatorFactory                    // Validator factories (validators created lazily)
+	ID           string                                // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
+	MigrationID  string                                // ID for the migration log table entry (e.g., "folders and dashboards migration")
+	Resources    []ResourceInfo                        // Resources to migrate together, with their lock tables
+	Migrators    map[schema.GroupResource]MigratorFunc // Direct migrator functions per resource
+	Validators   []ValidatorFactory                    // Validator factories (validators created lazily)
+	RenameTables []string                              // Legacy tables to rename with _legacy suffix after successful migration
 }
 
 // CreateValidators creates validators from the stored factory functions.
@@ -70,14 +71,20 @@ func (d MigrationDefinition) GetGroupResources() []schema.GroupResource {
 	return result
 }
 
-// GetLockTables returns the lock tables for a given GroupResource.
-func (d MigrationDefinition) GetLockTables(gr schema.GroupResource) []string {
-	for _, ri := range d.Resources {
-		if ri.GroupResource == gr {
-			return ri.LockTables
+// GetLockTables returns all lock tables across all resources in the definition.
+func (d MigrationDefinition) GetLockTables() []string {
+	tables := make([]string, 0, len(d.Resources))
+	seen := make(map[string]struct{})
+	for _, res := range d.Resources {
+		for _, table := range res.LockTables {
+			if _, ok := seen[table]; ok {
+				continue
+			}
+			seen[table] = struct{}{}
+			tables = append(tables, table)
 		}
 	}
-	return nil
+	return tables
 }
 
 // GetMigratorFunc returns the migrator function for a given resource.
@@ -140,18 +147,6 @@ func (r *MigrationRegistry) GetMigratorFunc(gr schema.GroupResource) MigratorFun
 	for _, def := range r.definitions {
 		if fn := def.GetMigratorFunc(gr); fn != nil {
 			return fn
-		}
-	}
-	return nil
-}
-
-// GetLockTables returns the legacy table names for a resource, if registered.
-func (r *MigrationRegistry) GetLockTables(gr schema.GroupResource) []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for _, def := range r.definitions {
-		if tables := def.GetLockTables(gr); len(tables) > 0 {
-			return tables
 		}
 	}
 	return nil

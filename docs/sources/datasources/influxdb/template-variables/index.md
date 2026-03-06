@@ -18,37 +18,6 @@ labels:
 menuTitle: Template variables
 title: InfluxDB template variables
 weight: 600
-refs:
-  add-template-variables-chained-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#chained-variables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#chained-variables
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-  add-template-variables-add-ad-hoc-filters:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-  add-template-variables-add-a-query-variable:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-a-query-variable
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-a-query-variable
-  variable-best-practices:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#variable-best-practices
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#variable-best-practices
 ---
 
 # InfluxDB template variables
@@ -57,16 +26,16 @@ Instead of hard-coding details such as server, application, and sensor names in 
 
 For additional information using variables and templates, refer to the following documentation:
 
-- [Variables](ref:variables)
-- [Templates](ref:variables)
-- [Add and manage variables](ref:add-template-variables)
-- [Variable best practices](ref:variable-best-practices)
+- [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
+- [Templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
+- [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/)
+- [Variable best practices](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#variable-best-practices)
 
 ## Use query variables
 
 By adding a query template variable, you can write an InfluxDB metadata exploration query. These queries return results such as measurement names, key names, and key values.
 
-For more information, refer to [Add a query variable](ref:add-template-variables-add-a-query-variable).
+For more information, refer to [Add a query variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-a-query-variable).
 
 To create a variable containing all values for the `hostname` tag, use the following query format in the **Query** variable:
 
@@ -76,7 +45,7 @@ SHOW TAG VALUES WITH KEY = "hostname"
 
 ## Chain or nest variables
 
-You can also create nested variables, sometimes called [chained variables](ref:add-template-variables-chained-variables).
+You can also create nested variables, sometimes called [chained variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#chained-variables).
 
 For example, if you have a variable named `region`, you can configure the `hosts` variable to display only hosts from the selected region using the following query:
 
@@ -96,7 +65,7 @@ If you have a variable containing key names, you can use it in a **GROUP BY** cl
 
 InfluxDB supports the **Ad hoc filters** variable type. This variable type allows you to define multiple key/value filters, which Grafana then automatically applies to all your InfluxDB queries.
 
-For more information, refer to [Add ad hoc filters](ref:add-template-variables-add-ad-hoc-filters).
+For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Choose a variable syntax
 

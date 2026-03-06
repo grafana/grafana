@@ -1,7 +1,6 @@
 import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
 import { createMonitoringLogger } from '@grafana/runtime';
 
-import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { pluginImporter } from './importer/pluginImporter';
 import { getPluginSettings } from './pluginSettings';
 
@@ -16,7 +15,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await pluginImporter.importDataSource(info);
   }
   if (info.type === PluginType.panel) {
-    const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
+    const panelPlugin = await pluginImporter.importPanel(info as PanelPluginMeta);
     result = panelPlugin as unknown as GrafanaPlugin;
   }
   if (info.type === PluginType.renderer) {
