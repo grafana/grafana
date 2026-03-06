@@ -84,6 +84,7 @@ import {
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
+import { WhatsNewSplash } from './WhatsNewSplash';
 import { DashboardControls } from './DashboardControls';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -244,6 +245,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (isNew) {
       this.onEnterEditMode();
       this.setState({ isDirty: true });
+      this.showModal(new WhatsNewSplash({ dashboardRef: this.getRef() }));
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
