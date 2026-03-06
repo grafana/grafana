@@ -8730,17 +8730,18 @@
     "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "presets": {
-      "blocks": "Blocks",
       "circle": "Circle",
-      "circle-blocks": "Circle Blocks",
-      "circle-glow": "Circle Glow",
-      "circle-segmented": "Circle Segmented",
-      "circle-spotlight": "Circle Spotlight",
-      "default": "Default",
-      "glow": "Glow",
+      "circle_desc": "plain round, from thresholds",
+      "gradient": "Gradient",
+      "gradient_desc": "gradient color scale",
+      "neon": "Neon",
+      "neon_desc": "round, single color endpoint glow",
+      "neonSegmented": "Neon segmented",
+      "neonSegmented_desc": "round, few segments",
       "segmented": "Segmented",
-      "spotlight": "Spotlight",
-      "threshold": "Threshold"
+      "segmented_desc": "segmented thresholds",
+      "standard": "Standard",
+      "standard_desc": "plain, from thresholds"
     },
     "suggestions": {
       "arc": "Gauge",

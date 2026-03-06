@@ -1,28 +1,56 @@
 import {
   FieldColorModeId,
-  VisualizationPresetsContext,
+  ThresholdsMode,
   VisualizationPresetsSupplier,
   VisualizationSuggestion,
+  VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { BarGaugeSizing } from '@grafana/schema';
 import { GraphFieldConfig } from '@grafana/ui';
 
 import { defaultOptions, Options } from '../panelcfg.gen';
 
 /**
- * Default preset - resets visual options to default, preserves the current shape, and restores threshold-based color mode
+ * Standard preset - gauge shape with thresholds
  */
-const defaultPreset = (context: VisualizationPresetsContext): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const currentOptions = context.options as Options | undefined;
+const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
-    name: t('gauge.presets.default', 'Default'),
+    name: t('gauge.presets.standard', 'Standard'),
+    // description: t('gauge.presets.standard_desc', 'plain, from thresholds'),
     options: {
       ...defaultOptions,
-      ...(currentOptions?.shape && { shape: currentOptions.shape }),
+      shape: 'gauge',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.54,
+      segmentCount: 1,
+      segmentSpacing: 0.3,
+      barShape: 'flat',
+      endpointMarker: 'point',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: true,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: false,
+        centerGlow: false,
+        gradient: false,
+      },
     },
     fieldConfig: {
       defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
         color: { mode: FieldColorModeId.Thresholds },
       },
       overrides: [],
@@ -32,323 +60,245 @@ const defaultPreset = (context: VisualizationPresetsContext): VisualizationSugge
 };
 
 /**
- * Glow preset - rounded bar with glow endpoint, bar glow + gradient effects, continuous-magma color scheme
+ * Segmented preset - same as Standard but with 63 segments for a dashed arc appearance
  */
-const glowPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.glow', 'Glow'),
-  options: {
-    shape: 'gauge',
-    barWidthFactor: 0.3,
-    segmentCount: 1,
-    barShape: 'rounded',
-    endpointMarker: 'glow',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: false,
-      gradient: true,
+const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('gauge.presets.segmented', 'Segmented'),
+    // description: t('gauge.presets.segmented_desc', 'segmented thresholds'),
+    options: {
+      ...defaultOptions,
+      shape: 'gauge',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.54,
+      segmentCount: 63,
+      segmentSpacing: 0.3,
+      barShape: 'flat',
+      endpointMarker: 'point',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: true,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: false,
+        centerGlow: false,
+        gradient: false,
+      },
     },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.ContinuousMagma },
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
+        color: { mode: FieldColorModeId.Thresholds },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: {},
-});
+    cardOptions: {},
+  };
+};
 
 /**
- * Segmented preset - 24 thin rounded segments with bar glow + gradient effects, continuous-magma color scheme
+ * Gradient preset - same as Standard but with gradient effect and continuous green-yellow-red color scheme
  */
-const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.segmented', 'Segmented'),
-  options: {
-    shape: 'gauge',
-    barWidthFactor: 0.1,
-    segmentCount: 24,
-    segmentSpacing: 0.1,
-    barShape: 'rounded',
-    endpointMarker: 'point',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: false,
-      gradient: true,
+const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('gauge.presets.gradient', 'Gradient'),
+    // description: t('gauge.presets.gradient_desc', 'gradient color scale'),
+    options: {
+      ...defaultOptions,
+      shape: 'gauge',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.54,
+      segmentCount: 1,
+      segmentSpacing: 0.3,
+      barShape: 'flat',
+      endpointMarker: 'point',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: true,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: false,
+        centerGlow: false,
+        gradient: true,
+      },
     },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.ContinuousMagma },
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
+        color: { mode: FieldColorModeId.ContinuousGrYlRd },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: {},
-});
+    cardOptions: {},
+  };
+};
 
 /**
- * Threshold preset - wide flat bar with gradient and Blue-Yellow-Red continuous color scheme
+ * Circle preset - full-circle shape with percentage-based traffic-light thresholds and no gradient effect
  */
-const thresholdPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.threshold', 'Threshold'),
-  options: {
-    shape: 'gauge',
-    barWidthFactor: 0.54,
-    segmentCount: 1,
-    barShape: 'flat',
-    endpointMarker: 'point',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: false,
-      centerGlow: false,
-      gradient: true,
+const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('gauge.presets.circle', 'Circle'),
+    // description: t('gauge.presets.circle_desc', 'plain round, from thresholds'),
+    options: {
+      ...defaultOptions,
+      shape: 'circle',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.54,
+      segmentCount: 1,
+      segmentSpacing: 0.3,
+      barShape: 'flat',
+      endpointMarker: 'point',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: true,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: false,
+        centerGlow: false,
+        gradient: false,
+      },
     },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: 'continuous-BlYlRd' },
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
+        color: { mode: FieldColorModeId.Thresholds },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: {},
-});
+    cardOptions: {},
+  };
+};
 
 /**
- * Spotlight preset - all effects on, fixed blue color, value+name text mode, no sparkline
+ * Neon preset - circle shape with rounded bar, glow effects, and a fixed red color
  */
-const spotlightPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.spotlight', 'Spotlight'),
-  options: {
-    shape: 'gauge',
-    barWidthFactor: 0.3,
-    segmentCount: 1,
-    barShape: 'rounded',
-    endpointMarker: 'point',
-    textMode: 'value_and_name',
-    sparkline: false,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: true,
-      gradient: true,
+const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('gauge.presets.neon', 'Neon'),
+    // description: t('gauge.presets.neon_desc', 'round, single color endpoint glow'),
+    options: {
+      ...defaultOptions,
+      shape: 'circle',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.25,
+      segmentCount: 1,
+      segmentSpacing: 0.3,
+      barShape: 'rounded',
+      endpointMarker: 'glow',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: false,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: true,
+        centerGlow: true,
+        gradient: true,
+      },
     },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
+        color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: {},
-});
+    cardOptions: {},
+  };
+};
 
 /**
- * Circle Glow preset - full circle shape, rounded bar with glow endpoint, bar glow + gradient effects, continuous-magma color scheme
+ * Neon segmented preset - circle with 10 rounded segments, glow effects, and a fixed blue color
  */
-const circleGlowPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.circle-glow', 'Circle Glow'),
-  options: {
-    shape: 'circle',
-    barWidthFactor: 0.3,
-    segmentCount: 1,
-    barShape: 'rounded',
-    endpointMarker: 'glow',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: false,
-      gradient: true,
+const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('gauge.presets.neonSegmented', 'Neon segmented'),
+    // description: t('gauge.presets.neonSegmented_desc', 'round, few segments'),
+    options: {
+      ...defaultOptions,
+      shape: 'circle',
+      orientation: VizOrientation.Auto,
+      sizing: BarGaugeSizing.Auto,
+      minVizWidth: 75,
+      minVizHeight: 75,
+      barWidthFactor: 0.25,
+      segmentCount: 10,
+      segmentSpacing: 0.15,
+      barShape: 'rounded',
+      endpointMarker: 'glow',
+      textMode: 'auto',
+      sparkline: true,
+      showThresholdMarkers: false,
+      showThresholdLabels: false,
+      effects: {
+        barGlow: true,
+        centerGlow: true,
+        gradient: true,
+      },
     },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.ContinuousMagma },
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Percentage,
+          steps: [
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            { value: null as unknown as number, color: 'green' },
+            { value: 60, color: '#EAB839' },
+            { value: 80, color: 'red' },
+          ],
+        },
+        color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+      },
+      overrides: [],
     },
-    overrides: [],
-  },
-  cardOptions: {},
-});
+    cardOptions: {},
+  };
+};
 
-/**
- * Circle Segmented preset - full circle shape, 24 thin rounded segments with bar glow + gradient effects, continuous-magma color scheme
- */
-const circleSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.circle-segmented', 'Circle Segmented'),
-  options: {
-    shape: 'circle',
-    barWidthFactor: 0.1,
-    segmentCount: 24,
-    segmentSpacing: 0.1,
-    barShape: 'rounded',
-    endpointMarker: 'point',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: false,
-      gradient: true,
-    },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.ContinuousMagma },
-    },
-    overrides: [],
-  },
-  cardOptions: {},
-});
-
-/**
- * Circle Spotlight preset - full circle shape, all effects on, fixed blue color, value+name text mode, no sparkline
- */
-const circleSpotlightPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.circle-spotlight', 'Circle Spotlight'),
-  options: {
-    shape: 'circle',
-    barWidthFactor: 0.3,
-    segmentCount: 1,
-    barShape: 'rounded',
-    endpointMarker: 'point',
-    textMode: 'value_and_name',
-    sparkline: false,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: true,
-      centerGlow: true,
-      gradient: true,
-    },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-    },
-    overrides: [],
-  },
-  cardOptions: {},
-});
-
-/**
- * Circle preset - full circle shape, wide rounded bar with gradient and Blue-Yellow-Red continuous color scheme
- */
-const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.circle', 'Circle'),
-  options: {
-    shape: 'circle',
-    barWidthFactor: 0.54,
-    segmentCount: 1,
-    barShape: 'flat',
-    endpointMarker: 'point',
-    sparkline: true,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: false,
-      centerGlow: false,
-      gradient: true,
-    },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: 'continuous-BlYlRd' },
-    },
-    overrides: [],
-  },
-  cardOptions: {},
-});
-
-/**
- * Circle Blocks preset - full circle shape, 24 flat segments with gradient and Blue-Yellow-Red continuous color scheme, no sparkline or glow
- */
-const circleBlocksPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.circle-blocks', 'Circle Blocks'),
-  options: {
-    shape: 'circle',
-    barWidthFactor: 0.1,
-    segmentCount: 24,
-    segmentSpacing: 0.16,
-    barShape: 'flat',
-    endpointMarker: 'point',
-    sparkline: false,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: false,
-      centerGlow: false,
-      gradient: true,
-    },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: 'continuous-BlYlRd' },
-    },
-    overrides: [],
-  },
-  cardOptions: {},
-});
-
-/**
- * Blocks preset - 24 flat segments with gradient and Blue-Yellow-Red continuous color scheme, no sparkline or glow
- */
-const blocksPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('gauge.presets.blocks', 'Blocks'),
-  options: {
-    shape: 'gauge',
-    barWidthFactor: 0.1,
-    segmentCount: 24,
-    segmentSpacing: 0.16,
-    barShape: 'flat',
-    endpointMarker: 'point',
-    sparkline: false,
-    showThresholdMarkers: false,
-    showThresholdLabels: false,
-    effects: {
-      barGlow: false,
-      centerGlow: false,
-      gradient: true,
-    },
-  },
-  fieldConfig: {
-    defaults: {
-      color: { mode: 'continuous-BlYlRd' },
-    },
-    overrides: [],
-  },
-  cardOptions: {},
-});
-
-export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = (context) => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const currentOptions = context.options as Options | undefined;
-
-  if (currentOptions?.shape === 'circle') {
-    return [
-      defaultPreset(context),
-      circlePreset(),
-      circleGlowPreset(),
-      circleSegmentedPreset(),
-      circleSpotlightPreset(),
-      circleBlocksPreset(),
-    ];
-  }
-
-  // gauge
-  return [
-    defaultPreset(context),
-    glowPreset(),
-    segmentedPreset(),
-    thresholdPreset(),
-    spotlightPreset(),
-    blocksPreset(),
-  ];
+export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
+  return [defaultPreset(), segmentedPreset(), gradientPreset(), circlePreset(), neonPreset(), neonSegmentedPreset()];
 };
