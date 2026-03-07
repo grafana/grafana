@@ -9,7 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { dashboardEditActions } from './shared';
+import { DashboardEditActionEvent } from './editActions';
 
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
@@ -96,17 +96,20 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
               const oldValue = currentValue;
               const newOptions = setOptionImmutably(currentOptions, optionPath, newValue);
 
-              dashboardEditActions.edit({
-                description: t('dashboard.quick-edit.change-option', 'Change {{optionName}}', { optionName }),
-                source: panel,
-                perform: () => {
-                  panel.onOptionsChange(newOptions);
-                },
-                undo: () => {
-                  const revertedOptions = setOptionImmutably(panel.state.options, optionPath, oldValue);
-                  panel.onOptionsChange(revertedOptions);
-                },
-              });
+              panel.publishEvent(
+                new DashboardEditActionEvent({
+                  description: t('dashboard.quick-edit.change-option', 'Change {{optionName}}', { optionName }),
+                  source: panel,
+                  perform: () => {
+                    panel.onOptionsChange(newOptions);
+                  },
+                  undo: () => {
+                    const revertedOptions = setOptionImmutably(panel.state.options, optionPath, oldValue);
+                    panel.onOptionsChange(revertedOptions);
+                  },
+                }),
+                true
+              );
             };
 
             return <Editor value={currentValue} onChange={handleChange} item={item} context={context} id={htmlId} />;

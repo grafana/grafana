@@ -5,14 +5,8 @@ import { EventBusSrv } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from './shared';
+import { DashboardEditActionEvent } from './editActions';
 import { useQuickEditOptions } from './useQuickEditOptions';
-
-jest.mock('./shared', () => ({
-  dashboardEditActions: {
-    edit: jest.fn(),
-  },
-}));
 
 describe('useQuickEditOptions', () => {
   const createMockPanel = (options: Record<string, unknown> = {}) => {
@@ -30,6 +24,7 @@ describe('useQuickEditOptions', () => {
       onOptionsChange: jest.fn(),
     } as ReturnType<typeof panel.getPanelContext>);
     jest.spyOn(panel, 'onOptionsChange').mockImplementation(jest.fn());
+    jest.spyOn(panel, 'publishEvent').mockImplementation(jest.fn());
 
     return panel;
   };
@@ -182,7 +177,7 @@ describe('useQuickEditOptions', () => {
       jest.clearAllMocks();
     });
 
-    it('should call dashboardEditActions.edit when changing an option', () => {
+    it('should publish DashboardEditActionEvent when changing an option', () => {
       const panel = createMockPanel({ textMode: 'auto' });
       const plugin = createMockPlugin(['textMode']);
 
@@ -196,14 +191,8 @@ describe('useQuickEditOptions', () => {
         rendered.props.onChange('value');
       });
 
-      expect(dashboardEditActions.edit).toHaveBeenCalledTimes(1);
-      expect(dashboardEditActions.edit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          source: panel,
-          perform: expect.any(Function),
-          undo: expect.any(Function),
-        })
-      );
+      expect(panel.publishEvent).toHaveBeenCalledTimes(1);
+      expect(panel.publishEvent).toHaveBeenCalledWith(expect.any(DashboardEditActionEvent), true);
     });
 
     it('should apply new value when perform is called', () => {
@@ -218,8 +207,8 @@ describe('useQuickEditOptions', () => {
         rendered.props.onChange('value');
       });
 
-      const editCall = (dashboardEditActions.edit as jest.Mock).mock.calls[0][0];
-      editCall.perform();
+      const event = (panel.publishEvent as jest.Mock).mock.calls[0][0] as DashboardEditActionEvent;
+      event.payload.perform();
 
       expect(panel.onOptionsChange).toHaveBeenCalledWith({ textMode: 'value' });
     });
@@ -243,8 +232,8 @@ describe('useQuickEditOptions', () => {
         rendered.props.onChange('value');
       });
 
-      const editCall = (dashboardEditActions.edit as jest.Mock).mock.calls[0][0];
-      editCall.undo();
+      const event = (panel.publishEvent as jest.Mock).mock.calls[0][0] as DashboardEditActionEvent;
+      event.payload.undo();
 
       expect(panel.onOptionsChange).toHaveBeenCalledWith({ textMode: 'auto' });
     });
