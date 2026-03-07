@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
 import { isEqual } from 'lodash';
-import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { memo, SyntheticEvent, useCallback, useEffect, useState, useRef } from 'react';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -38,10 +38,12 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
 
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
+  const query = getQueryWithDefaults(props.query, app, defaultEditor);
   const [dataIsStale, setDataIsStale] = useState(false);
+  const startedEmptyRef = useRef((query.expr?.trim() ?? '') === '');
+  const showKickStartButton = startedEmptyRef.current;
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
-  const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -118,7 +120,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         onAddQuery={onAddQuery}
       />
       <EditorHeader>
-        {!query.expr && (
+        {showKickStartButton && (
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
