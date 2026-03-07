@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -1701,6 +1702,110 @@ func TestIntegrationService_getConnections(t *testing.T) {
 			]
 		}`, string(jj))
 	})
+}
+
+func TestIntegrationListConnections_PermissionFiltering(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testCases := []struct {
+		name         string
+		permissions  map[string]struct{ read, write bool }
+		expectedUIDs []string
+	}{
+		{
+			name:         "no permissions - datasource excluded",
+			permissions:  map[string]struct{ read, write bool }{"ds1": {false, false}},
+			expectedUIDs: []string{},
+		},
+		{
+			name:         "read only - datasource included",
+			permissions:  map[string]struct{ read, write bool }{"ds1": {true, false}},
+			expectedUIDs: []string{"ds1"},
+		},
+		{
+			name:         "write only - datasource included",
+			permissions:  map[string]struct{ read, write bool }{"ds1": {false, true}},
+			expectedUIDs: []string{"ds1"},
+		},
+		{
+			name:         "both read and write - datasource included",
+			permissions:  map[string]struct{ read, write bool }{"ds1": {true, true}},
+			expectedUIDs: []string{"ds1"},
+		},
+		{
+			name: "mixed permissions across datasources",
+			permissions: map[string]struct{ read, write bool }{
+				"ds1": {false, false}, // excluded
+				"ds2": {true, false},  // included (read)
+				"ds3": {false, true},  // included (write)
+				"ds4": {true, true},   // included (both)
+			},
+			expectedUIDs: []string{"ds2", "ds3", "ds4"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sqlStore := db.InitTestDB(t)
+			secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+			secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+			quotaService := quotatest.New(false, nil)
+
+			pluginStore := &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{
+					{JSONData: plugins.JSONData{ID: "test", Type: plugins.TypeDataSource, Name: "test"}},
+				},
+			}
+			features := featuremgmt.WithFeatures()
+			ac := acimpl.ProvideAccessControl(features)
+			dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+			dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, ac, acmock.NewMockedPermissionsService(), quotaService, pluginStore, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+			require.NoError(t, err)
+
+			provCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+			require.NoError(t, err)
+
+			for uid := range tc.permissions {
+				_, err = dsService.AddDataSource(provCtx, &datasources.AddDataSourceCommand{
+					OrgID: 1,
+					Name:  "DS-" + uid,
+					UID:   uid,
+					Type:  "test",
+				})
+				require.NoError(t, err)
+			}
+
+			permMap := map[string][]string{}
+			for uid, perms := range tc.permissions {
+				if perms.read {
+					permMap[datasources.ActionRead] = append(permMap[datasources.ActionRead], "datasources:uid:"+uid)
+				}
+				if perms.write {
+					permMap[datasources.ActionWrite] = append(permMap[datasources.ActionWrite], "datasources:uid:"+uid)
+				}
+			}
+
+			testIdent := &identity.StaticRequester{
+				Type:        types.TypeUser,
+				UserID:      1,
+				OrgID:       1,
+				Name:        "testuser",
+				Permissions: map[int64]map[string][]string{1: permMap},
+			}
+			testCtx := identity.WithRequester(context.Background(), testIdent)
+
+			result, err := dsService.ListConnections(testCtx, v0alpha1.DataSourceConnectionQuery{
+				Namespace: "default",
+			})
+			require.NoError(t, err)
+
+			resultUIDs := make([]string, 0, len(result.Items))
+			for _, item := range result.Items {
+				resultUIDs = append(resultUIDs, item.Name)
+			}
+			require.ElementsMatch(t, tc.expectedUIDs, resultUIDs)
+		})
+	}
 }
 
 func TestIntegrationService_getProxySettings(t *testing.T) {
