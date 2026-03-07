@@ -61,6 +61,10 @@ type alertmanager struct {
 	crypto               Crypto
 	features             featuremgmt.FeatureToggles
 	dynamicLimits        alertingNotify.DynamicLimits
+
+	// We store the applied hash here instead of relying on Base's ConfigHash() to work around a bug where Base can
+	// modify the configuration during ApplyConfig. This causes the change detection to fail in niche cases.
+	appliedHash alertingNotify.ConfigFingerprint
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -318,7 +322,7 @@ func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConf
 
 	am.ConfigMetrics.ConfigHash.
 		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
-		Set(hashAsMetricValue(am.Base.ConfigHash()))
+		Set(hashAsMetricValue(am.appliedHash))
 
 	am.ConfigMetrics.ConfigSizeBytes.
 		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
@@ -363,7 +367,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.Aler
 	}
 	// If configuration hasn't changed, we've got nothing to do.
 	configHash := alertingNotify.CalculateConfigFingerprint(cfg)
-	if am.Base.ConfigHash() == configHash {
+	if am.appliedHash == configHash {
 		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
@@ -373,6 +377,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.Aler
 	if err != nil {
 		return false, fmt.Errorf("unable to apply configuration: %w", err)
 	}
+	am.appliedHash = configHash
 
 	am.updateConfigMetrics(cfg, len(dbConfig.AlertmanagerConfiguration))
 	return true, nil

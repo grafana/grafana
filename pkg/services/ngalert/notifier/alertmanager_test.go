@@ -430,6 +430,40 @@ receivers:
 				}
 			},
 		},
+		{
+			name:     "extra config with v0mimir email config",
+			features: featuremgmt.WithFeatures(),
+			initialConfig: func() *definitions.PostableUserConfig {
+				cfg := baseConfig("default-receiver", "extra-receiver")
+				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+					{
+						Identifier: "mimir-prod",
+						MergeMatchers: definitions.Matchers{
+							matcher("cluster", "prod"),
+							matcher("source", "external"),
+						},
+						TemplateFiles: map[string]string{
+							"extra-b.tmpl": "{{ define \"extra.b\" }}b{{ end }}",
+							"extra-a.tmpl": "{{ define \"extra.a\" }}a{{ end }}",
+						},
+						AlertmanagerConfig: `route:
+  receiver: extra-receiver
+receivers:
+  - name: extra-receiver
+    email_configs:
+      - to: 'alerts@example.com'
+        from: 'grafana@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'grafana@example.com'
+        auth_password: 'another-secret-password'`,
+					},
+				}
+				return cfg
+			},
+			mutate: func(cfg *definitions.PostableUserConfig, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
+				cfg.ExtraConfigs[0].MergeMatchers[0].Value = "staging"
+			},
+		},
 	}
 
 	for _, tc := range testCases {
