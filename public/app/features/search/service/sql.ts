@@ -115,6 +115,16 @@ export class SQLSearcher implements GrafanaSearcher {
     return this.doAPIQuery(q);
   }
 
+  async teamFolders(_query: SearchQuery): Promise<QueryResponse> {
+    // ownerReference filtering is only supported by the unified search API
+    return {
+      totalRows: 0,
+      view: new DataFrameView({ length: 0, fields: [] }),
+      loadMoreItems: async () => {},
+      isItemLoaded: () => true,
+    };
+  }
+
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
     const opts = await backendSrv.get<SortOptions>('/api/search/sorting');

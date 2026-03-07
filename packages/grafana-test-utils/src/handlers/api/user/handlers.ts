@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import { wellFormedTree } from '../../../fixtures/folders';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';
+import { MOCK_TEAMS } from '../../../fixtures/teams';
 const [_, { dashbdD }] = wellFormedTree();
 
 const getStarsHandler = () =>
@@ -42,12 +43,30 @@ const updatePreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
+const getSignedInUserTeamListHandler = () =>
+  http.get('/api/user/teams', async () => {
+    return HttpResponse.json(
+      MOCK_TEAMS.map((team) => ({
+        id: Number(team.metadata.labels['grafana.app/deprecatedInternalID']),
+        uid: team.metadata.name,
+        name: team.spec.title,
+        email: team.spec.email,
+        orgId: 1,
+        isProvisioned: false,
+        memberCount: 0,
+        permission: 0,
+        avatarUrl: '',
+      }))
+    );
+  });
+
 const handlers = [
   getPreferencesHandler(),
   updatePreferencesHandler(),
   getStarsHandler(),
   deleteDashboardStarHandler(),
   addDashboardStarHandler(),
+  getSignedInUserTeamListHandler(),
 ];
 
 export default handlers;

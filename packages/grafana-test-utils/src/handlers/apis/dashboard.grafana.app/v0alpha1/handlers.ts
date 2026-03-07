@@ -1,6 +1,7 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
+import { getFolderUidsForTeam } from '../../../../fixtures/folder-owner-references';
 import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
@@ -22,6 +23,7 @@ const getSearchHandler = () =>
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
     const typeFilter = new URL(request.url).searchParams.get('type') || null;
     const nameFilter = new URL(request.url).searchParams.getAll('name');
+    const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
     const mappedTypeFilter = typeFilter ? typeFilterMap[typeFilter] || typeFilter : null;
     const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
 
@@ -58,6 +60,14 @@ const getSearchHandler = () =>
         filters.push(
           ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
         );
+      }
+
+      if (ownerReferenceFilter.length > 0) {
+        // ownerReference params are in the format "iam.grafana.app/Team/<teamUid>"
+        // Extract the team UID (last segment) and look up which folders they own
+        const teamUids = ownerReferenceFilter.map((ref) => ref.split('/').pop() ?? '');
+        const ownedFolderUids = teamUids.flatMap((teamUid) => getFolderUidsForTeam(teamUid));
+        filters.push(({ item }) => ownedFolderUids.includes(item.uid));
       }
 
       return filters.every((filterPredicate) => filterPredicate(filterItem));
