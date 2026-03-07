@@ -9,11 +9,14 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
+import { DashboardInteractions } from '../utils/interactions';
+
 import { DashboardEditActionEvent } from './editActions';
 
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
   plugin: PanelPlugin | undefined;
+  dashboardUid?: string;
 }
 
 /**
@@ -24,7 +27,11 @@ interface UseQuickEditOptionsProps {
  *
  * @returns OptionsPaneCategoryDescriptor with the quick edit options, or null if none are defined
  */
-export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps): OptionsPaneCategoryDescriptor | null {
+export function useQuickEditOptions({
+  panel,
+  plugin,
+  dashboardUid,
+}: UseQuickEditOptionsProps): OptionsPaneCategoryDescriptor | null {
   const { options: currentOptions } = panel.useState();
 
   return useMemo((): OptionsPaneCategoryDescriptor | null => {
@@ -99,6 +106,15 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
             const handleChange = (newValue: unknown) => {
               const oldValue = currentValue;
               const newOptions = setOptionImmutably(currentOptions, optionPath, newValue);
+              const panelType = plugin.meta?.id ?? 'unknown';
+
+              DashboardInteractions.quickEditOptionChanged({
+                panelType,
+                optionPath,
+                optionName,
+                source: 'quick_edit',
+                dashboardUid,
+              });
 
               panel.publishEvent(
                 new DashboardEditActionEvent({
@@ -108,6 +124,12 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
                     panel.onOptionsChange(newOptions);
                   },
                   undo: () => {
+                    DashboardInteractions.quickEditOptionUndone({
+                      panelType,
+                      optionPath,
+                      optionName,
+                      dashboardUid,
+                    });
                     const revertedOptions = setOptionImmutably(panel.state.options, optionPath, oldValue);
                     panel.onOptionsChange(revertedOptions);
                   },
@@ -127,5 +149,5 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
     }
 
     return category;
-  }, [panel, plugin, currentOptions]);
+  }, [panel, plugin, currentOptions, dashboardUid]);
 }

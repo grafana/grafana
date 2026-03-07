@@ -37,6 +37,14 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
   const descriptionId = useId();
   const backgroundId = useId();
 
+  const dashboardUid = useMemo(() => {
+    try {
+      return getDashboardSceneFor(panel).state.uid;
+    } catch {
+      return undefined;
+    }
+  }, [panel]);
+
   const panelOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
       .addItem(
@@ -75,7 +83,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
   }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
 
   const isPanelQuickEditEnabled = useBooleanFlagValue('panelQuickEdit', false);
-  const quickEditOptions = useQuickEditOptions({ panel, plugin });
+  const quickEditOptions = useQuickEditOptions({ panel, plugin, dashboardUid });
   const quickEditCategory = isPanelQuickEditEnabled ? quickEditOptions : null;
 
   const layoutCategories = useMemo(

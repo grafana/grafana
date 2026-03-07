@@ -222,6 +222,7 @@ describe('getVisualizationOptions', () => {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
         fieldConfigRegistry: customFieldRegistry,
+        getQuickEditPaths: () => [],
       } as unknown as PanelPlugin;
 
       const vizOptions = getVisualizationOptions2({
@@ -284,6 +285,7 @@ describe('getVisualizationOptions', () => {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
         fieldConfigRegistry: customFieldRegistry,
+        getQuickEditPaths: () => [],
       } as unknown as PanelPlugin;
 
       const vizOptions = getVisualizationOptions2({
@@ -335,6 +337,7 @@ describe('getVisualizationOptions', () => {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
         fieldConfigRegistry: customFieldRegistry,
+        getQuickEditPaths: () => [],
       } as unknown as PanelPlugin;
     };
 
