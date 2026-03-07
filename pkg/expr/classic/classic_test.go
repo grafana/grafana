@@ -560,7 +560,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			// With OR, if one condition fires, the result should fire
+			// even if the other condition is NoData
+			v := newNumber(util.Pointer(1.0))
 			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: util.Pointer(5.0)}})
 			return newResults(v)
 		},
@@ -591,7 +593,9 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := newNumber(nil)
+			// With OR, if one condition fires, the result should fire
+			// even if the other condition is NoData
+			v := newNumber(util.Pointer(1.0))
 			v.SetMeta([]EvalMatch{{Value: util.Pointer(5.0)}, {Metric: "NoData"}})
 			return newResults(v)
 		},
