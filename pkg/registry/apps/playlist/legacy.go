@@ -1,15 +1,5 @@
 package playlist
 
-import (
-	"errors"
-)
-
-// Typed errors
-var (
-	ErrPlaylistNotFound        = errors.New("Playlist not found")
-	ErrCommandValidationFailed = errors.New("command missing required fields")
-)
-
 // Playlist model
 type Playlist struct {
 	Id       int64  `json:"id,omitempty" db:"id"`
