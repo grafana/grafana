@@ -29367,11 +29367,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.62.0
-  resolution: "react-hook-form@npm:7.62.0"
+  version: 7.71.2
+  resolution: "react-hook-form@npm:7.71.2"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10/092dcf0317ed3e314b124ed9df3f3494cf3447326078cd857f6fdc47aad0504e466ab2fb593bbb8e79c247b8772159f83aebe54a7e5799926b00d7e401d127a6
+  checksum: 10/4cc90868016f8463463ea5d1812f9405832e02fdb12f18ff0262c6437e7a9cdfe6443a7f58decf903cb8f20bfd68c0ed419283b0d6be886f3e84dc4d14b0efa6
   languageName: node
   linkType: hard
 
@@ -31129,14 +31129,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sax@npm:>=0.6.0":
-  version: 1.4.1
-  resolution: "sax@npm:1.4.1"
-  checksum: 10/b1c784b545019187b53a0c28edb4f6314951c971e2963a69739c6ce222bfbc767e54d320e689352daba79b7d5e06d22b5d7113b99336219d6e93718e2f99d335
-  languageName: node
-  linkType: hard
-
-"sax@npm:^1.5.0":
+"sax@npm:>=0.6.0, sax@npm:^1.5.0":
   version: 1.5.0
   resolution: "sax@npm:1.5.0"
   checksum: 10/9012ff37dda7a7ac5da45db2143b04036103e8bef8d586c3023afd5df6caf0ebd7f38017eee344ad2e2247eded7d38e9c42cf291d8dd91781352900ac0fd2d9f
