@@ -12,4 +12,10 @@ export interface UserStorage {
    * @returns A promise that resolves when the item is set.
    */
   setItem(key: string, value: string): Promise<void>;
+  /**
+   * Removes an item from the backend user storage or local storage if not enabled.
+   * @param key - The key of the item to remove.
+   * @returns A promise that resolves when the item is removed.
+   */
+  removeItem(key: string): Promise<void>;
 }
