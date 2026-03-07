@@ -2,7 +2,7 @@ package resources
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -24,133 +24,94 @@ func TestRemoveResourceFromFile(t *testing.T) {
 		Kind:    "Dashboard",
 	}
 
-	t.Run("k8s formatted resource is deleted successfully", func(t *testing.T) {
+	t.Run("resource is deleted successfully", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
+		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
-		k8sResource := map[string]any{
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "dashboards/my-dashboard.json"}
+		repo.On("Read", mock.Anything, "dashboards/my-dashboard.json", "abc123").Return(fileInfo, nil)
+
+		parsedObj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "my-dashboard"},
+		}}
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+			Obj:    parsedObj,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+		}, nil)
+
+		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
-				"name": "my-dashboard",
-			},
-			"spec": map[string]any{
-				"title": "My Dashboard",
-			},
-		}
-		data, _ := json.Marshal(k8sResource)
-
-		repo.On("Read", mock.Anything, "dashboards/my-dashboard.json", "abc123").
-			Return(&repository.FileInfo{Data: data, Path: "dashboards/my-dashboard.json"}, nil)
-
-		clients.On("ForKind", mock.Anything, dashboardGVK).
-			Return(mockClient, schema.GroupVersionResource{}, nil)
-
-		grafanaObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":      "my-dashboard",
-					"namespace": "default",
-					"annotations": map[string]any{
-						utils.AnnoKeyFolder: "my-folder",
-					},
+				"name":      "my-dashboard",
+				"namespace": "default",
+				"annotations": map[string]any{
+					utils.AnnoKeyFolder: "my-folder",
 				},
 			},
-		}
-		mockClient.On("Get", mock.Anything, "my-dashboard", metav1.GetOptions{}, mock.Anything).
-			Return(grafanaObj, nil)
-		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).
-			Return(nil)
+		}}
+		mockClient.On("Get", mock.Anything, "my-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		mgr := NewResourcesManager(repo, nil, nil, clients)
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
 		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/my-dashboard.json", "abc123")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-dashboard", name)
 		require.Equal(t, "my-folder", folderName)
-		// NOTE: RemoveResourceFromFile currently returns empty GVK on success (line 395 of resources.go).
-		// This is a pre-existing issue separate from the classic dashboard fallback bug.
-		require.Equal(t, schema.GroupVersionKind{}, gvk)
+		require.Equal(t, dashboardGVK, gvk)
 	})
 
-	t.Run("classic dashboard format is deleted successfully", func(t *testing.T) {
+	t.Run("folder resource file is rejected by parser", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
-		mockClient := &MockDynamicResourceInterface{}
+		mockParser := NewMockParser(t)
 
-		classicDashboard := map[string]any{
-			"uid":           "classic-dash-uid",
-			"title":         "Classic Dashboard",
-			"schemaVersion": 7,
-			"panels":        []any{},
-			"tags":          []any{},
-		}
-		data, _ := json.Marshal(classicDashboard)
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "folders/my-folder.json"}
+		repo.On("Read", mock.Anything, "folders/my-folder.json", "abc123").Return(fileInfo, nil)
 
-		repo.On("Read", mock.Anything, "dashboards/classic.json", "abc123").
-			Return(&repository.FileInfo{Data: data, Path: "dashboards/classic.json"}, nil)
+		mockParser.On("Parse", mock.Anything, fileInfo).
+			Return(nil, NewResourceValidationError(errors.New("cannot declare folders through files")))
 
-		clients.On("ForKind", mock.Anything, dashboardGVK).
-			Return(mockClient, schema.GroupVersionResource{}, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "folders/my-folder.json", "abc123")
 
-		grafanaObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":      "classic-dash-uid",
-					"namespace": "default",
-					"annotations": map[string]any{
-						utils.AnnoKeyFolder: "my-folder",
-					},
-				},
-			},
-		}
-		mockClient.On("Get", mock.Anything, "classic-dash-uid", metav1.GetOptions{}, mock.Anything).
-			Return(grafanaObj, nil)
-		mockClient.On("Delete", mock.Anything, "classic-dash-uid", metav1.DeleteOptions{}, mock.Anything).
-			Return(nil)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot declare folders through files")
 
-		mgr := NewResourcesManager(repo, nil, nil, clients)
-		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/classic.json", "abc123")
-
-		require.NoError(t, err, "classic dashboard format should be handled by RemoveResourceFromFile via ReadClassicResource fallback")
-		require.Equal(t, "classic-dash-uid", name)
-		require.Equal(t, "my-folder", folderName)
-		// Same pre-existing GVK issue: RemoveResourceFromFile always returns empty GVK
-		require.Equal(t, schema.GroupVersionKind{}, gvk)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr)
 	})
 
-	t.Run("non-resource JSON file returns validation error", func(t *testing.T) {
+	t.Run("non-resource file is rejected by parser", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
+		mockParser := NewMockParser(t)
 
-		nonResource := map[string]any{
-			"some_key":    "some_value",
-			"another_key": 42,
-		}
-		data, _ := json.Marshal(nonResource)
+		fileInfo := &repository.FileInfo{Data: []byte(`{"some_key": "some_value"}`), Path: "config/settings.json"}
+		repo.On("Read", mock.Anything, "config/settings.json", "abc123").Return(fileInfo, nil)
 
-		repo.On("Read", mock.Anything, "config/settings.json", "abc123").
-			Return(&repository.FileInfo{Data: data, Path: "config/settings.json"}, nil)
+		mockParser.On("Parse", mock.Anything, fileInfo).
+			Return(nil, NewResourceValidationError(fmt.Errorf("file does not contain a valid resource")))
 
-		mgr := NewResourcesManager(repo, nil, nil, clients)
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "config/settings.json", "abc123")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "file does not contain a valid resource")
 
 		var validationErr *ResourceValidationError
-		require.ErrorAs(t, err, &validationErr, "should be a ResourceValidationError")
+		require.ErrorAs(t, err, &validationErr)
 	})
 
 	t.Run("file read error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
+		mockParser := NewMockParser(t)
 
 		repo.On("Read", mock.Anything, "dashboards/missing.json", "abc123").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 
-		mgr := NewResourcesManager(repo, nil, nil, clients)
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
 		_, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/missing.json", "abc123")
 
 		require.Error(t, err)
@@ -159,32 +120,74 @@ func TestRemoveResourceFromFile(t *testing.T) {
 
 	t.Run("already deleted resource is a no-op", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
+		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
-		k8sResource := map[string]any{
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "dashboards/deleted.json"}
+		repo.On("Read", mock.Anything, "dashboards/deleted.json", "abc123").Return(fileInfo, nil)
+
+		parsedObj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind":       "Dashboard",
-			"metadata": map[string]any{
-				"name": "deleted-dashboard",
-			},
-		}
-		data, _ := json.Marshal(k8sResource)
-
-		repo.On("Read", mock.Anything, "dashboards/deleted.json", "abc123").
-			Return(&repository.FileInfo{Data: data, Path: "dashboards/deleted.json"}, nil)
-
-		clients.On("ForKind", mock.Anything, dashboardGVK).
-			Return(mockClient, schema.GroupVersionResource{}, nil)
+			"metadata":   map[string]any{"name": "deleted-dashboard"},
+		}}
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+			Obj:    parsedObj,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+		}, nil)
 
 		mockClient.On("Get", mock.Anything, "deleted-dashboard", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "deleted-dashboard"))
 
-		mgr := NewResourcesManager(repo, nil, nil, clients)
-		name, _, _, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/deleted.json", "abc123")
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, _, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/deleted.json", "abc123")
 
 		require.NoError(t, err)
 		require.Equal(t, "deleted-dashboard", name)
+		require.Equal(t, dashboardGVK, gvk)
+	})
+
+	t.Run("delete failure preserves name and GVK", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "dashboards/fail.json"}
+		repo.On("Read", mock.Anything, "dashboards/fail.json", "abc123").Return(fileInfo, nil)
+
+		parsedObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "fail-dashboard"},
+		}}
+		mockParser.On("Parse", mock.Anything, fileInfo).Return(&ParsedResource{
+			Obj:    parsedObj,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+		}, nil)
+
+		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      "fail-dashboard",
+				"namespace": "default",
+				"annotations": map[string]any{
+					utils.AnnoKeyFolder: "some-folder",
+				},
+			},
+		}}
+		mockClient.On("Get", mock.Anything, "fail-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		mockClient.On("Delete", mock.Anything, "fail-dashboard", metav1.DeleteOptions{}, mock.Anything).
+			Return(fmt.Errorf("Folder cannot be deleted: folder is not empty"))
+
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		name, folderName, gvk, err := mgr.RemoveResourceFromFile(context.Background(), "dashboards/fail.json", "abc123")
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to delete")
+		require.Equal(t, "fail-dashboard", name, "name should be preserved on error")
+		require.Equal(t, "some-folder", folderName, "folder should be preserved on error")
+		require.Equal(t, dashboardGVK, gvk, "GVK should be preserved on error")
 	})
 }
 
@@ -195,116 +198,50 @@ func TestRenameResourceFile(t *testing.T) {
 		Kind:    "Dashboard",
 	}
 
-	// RenameResourceFile calls RemoveResourceFromFile (old path) then WriteResourceFromFile (new path).
-	// The classic dashboard bug was in the remove step: it failed with "no object found" for classic-format files.
-	// These tests verify the remove step succeeds for classic dashboards during a rename.
-	//
-	// NOTE: integration-level rename tests are not feasible because file renames are only detected
-	// by Git-backed repositories (via CompareFiles), not by local filesystem repositories.
-
-	t.Run("classic dashboard rename succeeds at remove step", func(t *testing.T) {
+	t.Run("rename succeeds at remove step", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
-		classicDashboard := map[string]any{
-			"uid":           "rename-classic-uid",
-			"title":         "Classic Dashboard Being Renamed",
-			"schemaVersion": 39,
-			"panels":        []any{},
-			"tags":          []any{},
-		}
-		data, _ := json.Marshal(classicDashboard)
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
+		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
 
-		repo.On("Read", mock.Anything, "old-path/classic.json", "old-ref").
-			Return(&repository.FileInfo{Data: data, Path: "old-path/classic.json"}, nil)
-
-		clients.On("ForKind", mock.Anything, dashboardGVK).
-			Return(mockClient, schema.GroupVersionResource{}, nil)
-
-		grafanaObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":      "rename-classic-uid",
-					"namespace": "default",
-					"annotations": map[string]any{
-						utils.AnnoKeyFolder: "src-folder",
-					},
-				},
-			},
-		}
-		mockClient.On("Get", mock.Anything, "rename-classic-uid", metav1.GetOptions{}, mock.Anything).
-			Return(grafanaObj, nil)
-		mockClient.On("Delete", mock.Anything, "rename-classic-uid", metav1.DeleteOptions{}, mock.Anything).
-			Return(nil)
-
-		// The write step reads and parses the new file; stub the parser to return an error
-		// so we can isolate the test to the remove step.
-		repo.On("Read", mock.Anything, "new-path/classic.json", "new-ref").
-			Return(&repository.FileInfo{Data: data, Path: "new-path/classic.json"}, nil)
-		mockParser.On("Parse", mock.Anything, mock.Anything).
-			Return(nil, fmt.Errorf("parse not implemented in test"))
-
-		mgr := NewResourcesManager(repo, nil, mockParser, clients)
-		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/classic.json", "old-ref", "new-path/classic.json", "new-ref")
-
-		// The error comes from the write step (stubbed parser), not from the remove step.
-		// Before the fix, this would have failed with "file does not contain a valid resource"
-		// from the remove step because classic dashboards were not recognized.
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to write resource")
-		require.NotContains(t, err.Error(), "file does not contain a valid resource",
-			"remove step should have succeeded for the classic dashboard; error should be from the write step only")
-	})
-
-	t.Run("k8s resource rename succeeds at remove step", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
-		clients := NewMockResourceClients(t)
-		mockParser := NewMockParser(t)
-		mockClient := &MockDynamicResourceInterface{}
-
-		k8sResource := map[string]any{
+		parsedObj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind":       "Dashboard",
-			"metadata":   map[string]any{"name": "rename-k8s-uid"},
-			"spec":       map[string]any{"title": "K8s Dashboard Being Renamed"},
-		}
-		data, _ := json.Marshal(k8sResource)
+			"metadata":   map[string]any{"name": "rename-uid"},
+		}}
+		// First Parse call is for the remove step (RemoveResourceFromFile)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj:    parsedObj,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+		}, nil)
 
-		repo.On("Read", mock.Anything, "old-path/k8s.json", "old-ref").
-			Return(&repository.FileInfo{Data: data, Path: "old-path/k8s.json"}, nil)
-
-		clients.On("ForKind", mock.Anything, dashboardGVK).
-			Return(mockClient, schema.GroupVersionResource{}, nil)
-
-		grafanaObj := &unstructured.Unstructured{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name":      "rename-k8s-uid",
-					"namespace": "default",
-					"annotations": map[string]any{
-						utils.AnnoKeyFolder: "src-folder",
-					},
+		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      "rename-uid",
+				"namespace": "default",
+				"annotations": map[string]any{
+					utils.AnnoKeyFolder: "src-folder",
 				},
 			},
-		}
-		mockClient.On("Get", mock.Anything, "rename-k8s-uid", metav1.GetOptions{}, mock.Anything).
-			Return(grafanaObj, nil)
-		mockClient.On("Delete", mock.Anything, "rename-k8s-uid", metav1.DeleteOptions{}, mock.Anything).
-			Return(nil)
+		}}
+		mockClient.On("Get", mock.Anything, "rename-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		mockClient.On("Delete", mock.Anything, "rename-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
-		repo.On("Read", mock.Anything, "new-path/k8s.json", "new-ref").
-			Return(&repository.FileInfo{Data: data, Path: "new-path/k8s.json"}, nil)
-		mockParser.On("Parse", mock.Anything, mock.Anything).
+		// Second Parse call is for the write step (WriteResourceFromFile) — stub error to isolate remove step
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).
 			Return(nil, fmt.Errorf("parse not implemented in test"))
 
-		mgr := NewResourcesManager(repo, nil, mockParser, clients)
-		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/k8s.json", "old-ref", "new-path/k8s.json", "new-ref")
+		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		_, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to write resource")
 		require.NotContains(t, err.Error(), "file does not contain a valid resource",
-			"remove step should have succeeded for the k8s resource")
+			"remove step should have succeeded; error should be from the write step only")
 	})
 }

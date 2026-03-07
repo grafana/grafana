@@ -342,26 +342,18 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	obj, gvk, _, err := ParseFileResource(ctx, info)
+	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, err
 	}
 
-	objName := obj.GetName()
-	if objName == "" {
-		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
-	}
+	objName := parsed.Obj.GetName()
 
-	client, _, err := r.clients.ForKind(ctx, *gvk)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get client for deleted object: %w", err)
-	}
-
-	// the folder annotation is not stored in the git file, so we need to get it from grafana
-	grafanaObj, err := client.Get(ctx, objName, metav1.GetOptions{})
+	// The folder annotation is not stored in the git file, so we need to get it from grafana
+	grafanaObj, err := parsed.Client.Get(ctx, objName, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return objName, "", schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+			return objName, "", parsed.GVK, nil
 		}
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get grafana object: %w", err)
 	}
@@ -371,14 +363,13 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	}
 	folderName := meta.GetFolder()
 
-	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
+	err = parsed.Client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return objName, folderName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+			return objName, folderName, parsed.GVK, nil
 		}
-
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
+		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, folderName, schema.GroupVersionKind{}, nil
+	return objName, folderName, parsed.GVK, nil
 }
