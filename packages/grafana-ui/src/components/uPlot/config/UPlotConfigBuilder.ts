@@ -184,6 +184,7 @@ export class UPlotConfigBuilder {
     const config: PlotConfig = {
       ...DEFAULT_PLOT_CONFIG,
       mode: this.mode,
+      cache: false,
       series: [
         this.mode === 2
           ? (null as unknown as Series)

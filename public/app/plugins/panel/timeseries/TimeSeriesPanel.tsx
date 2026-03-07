@@ -31,6 +31,7 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
+import { usePrevious } from 'react-use';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -58,6 +59,22 @@ export const TimeSeriesPanel = ({
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
   } = usePanelContext();
+
+  const prevSeries = usePrevious(data.series);
+
+  if (
+    prevSeries != null &&
+    prevSeries !== data.series &&
+    prevSeries[0].fields[0].values !== data.series[0].fields[0].values
+  ) {
+    for (let i = 0; i < prevSeries.length; i++) {
+      let fields = prevSeries[i].fields;
+
+      for (let i = 0; i < fields.length; i++) {
+        fields[i].values.length = 0;
+      }
+    }
+  }
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -141,7 +158,7 @@ export const TimeSeriesPanel = ({
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
     >
-      {(uplotConfig, alignedFrame) => {
+      {/* {(uplotConfig, alignedFrame) => {
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
@@ -247,7 +264,7 @@ export const TimeSeriesPanel = ({
             )}
           </>
         );
-      }}
+      }} */}
     </TimeSeries>
   );
 };

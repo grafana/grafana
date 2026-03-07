@@ -89,7 +89,7 @@
     "string-hash": "^1.1.3",
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
-    "uplot": "1.6.32",
+    "uplot": "leeoniya/uPlot#976b207e0132a6bff685280c6de653867d0e2b17",
     "xss": "^1.0.14",
     "zod": "^4.3.0"
   },

@@ -161,9 +161,10 @@ export function calculateFieldDisplayName(
   let frameNamesDiffer = false;
 
   if (allFrames && allFrames.length > 1) {
+    let name = allFrames[0].name;
+
     for (let i = 1; i < allFrames.length; i++) {
-      const frame = allFrames[i];
-      if (frame.name !== allFrames[i - 1].name) {
+      if (allFrames[i].name !== name) {
         frameNamesDiffer = true;
         break;
       }
@@ -266,11 +267,6 @@ function getSingleLabelName(frames: DataFrame[]): string | null {
     const frame = frames[i];
 
     for (const field of frame.fields) {
-      if (!field.labels) {
-        continue;
-      }
-
-      // yes this should be in!
       for (const labelKey in field.labels) {
         if (singleName === null) {
           singleName = labelKey;
