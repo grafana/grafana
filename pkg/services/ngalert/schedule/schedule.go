@@ -263,6 +263,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
+			sch.metrics.ResetGauges()
 			return waitErr
 		}
 	}
