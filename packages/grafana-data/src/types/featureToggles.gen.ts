@@ -1563,6 +1563,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
+  * Use the new APIs for user sync
+  * @default false
+  */
+  kubernetesUserSync?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

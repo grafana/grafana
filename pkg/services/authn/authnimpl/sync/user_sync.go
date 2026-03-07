@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -98,33 +98,43 @@ type StaticSCIMConfig struct {
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	k8sClient client.K8sHandler,
-) *UserSync {
+	restConfigProvider apiserver.RestConfigProvider) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	staticConfig := &StaticSCIMConfig{
 		IsUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
 		RejectNonProvisionedUsers: scimSection.Key("reject_non_provisioned_users").MustBool(false),
 	}
 
-	userProxy := NewLegacyUserProxy(userService)
+	logger := log.New("user.sync")
 
-	return &UserSync{
+	userSync := &UserSync{
+		cfg:                       cfg,
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
-		userService:               userProxy,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
 		quotaService:              quotaService,
-		log:                       log.New("user.sync"),
+		log:                       logger,
 		tracer:                    tracer,
 		features:                  features,
 		lastSeenSF:                &singleflight.Group{},
-		scimUtil:                  scimutil.NewSCIMUtil(k8sClient),
+		scimUtil:                  scimutil.NewSCIMUtil(nil),
 		staticConfig:              staticConfig,
+		openFeatureClient:         openfeature.NewDefaultClient(),
 	}
+
+	ctx := context.Background()
+	if userSync.isKubernetesUserSyncEnabled(ctx) {
+		userSync.userService = NewK8sUserService(logger, cfg, restConfigProvider)
+	} else {
+		userSync.userService = NewLegacyUserProxy(userService)
+	}
+
+	return userSync
 }
 
 type UserSync struct {
+	cfg                       *setting.Cfg
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
 	userService               UserProxy
@@ -139,6 +149,7 @@ type UserSync struct {
 	staticConfig              *StaticSCIMConfig
 	scimSuccessfulLogin       atomic.Bool
 	samlCatalogStats          sync.Map
+	openFeatureClient         *openfeature.Client
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
@@ -345,6 +356,14 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	syncUserToIdentity(ctx, usr, id)
+
+	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions because
+	// those haven't been migrated to Kubernetes yet.
+	if s.isKubernetesUserSyncEnabled(ctx) {
+		id.ClientParams.SyncOrgRoles = false
+		id.ClientParams.SyncPermissions = false
+	}
+
 	return nil
 }
 
@@ -360,13 +379,17 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
+	var userID int64
+	if !s.isKubernetesUserSyncEnabled(ctx) {
+		var err error
+		userID, err = id.GetInternalID()
+		if err != nil {
+			s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
+			return nil
+		}
 	}
 
-	usr, err := s.userService.GetSignedInUser(ctx, userID, r.OrgID)
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserID: userID, OrgID: s.getOrgID(r.OrgID), UserUID: id.UID})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
@@ -398,16 +421,20 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
+	var userID int64
+	if !s.isKubernetesUserSyncEnabled(ctx) {
+		var err error
+		userID, err = id.GetInternalID()
+		if err != nil {
+			s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
+			return nil
+		}
 	}
 
 	goCtx := context.WithoutCancel(ctx)
 	// nolint:dogsled
 	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
-		err := s.userService.UpdateLastSeenAt(goCtx, userID, id.GetOrgID())
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, UserUID: id.UID, OrgID: s.getOrgID(id.GetOrgID())})
 		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
@@ -467,6 +494,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, usr *user.User, ide
 
 	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
 		UserId:     usr.ID,
+		UserUID:    usr.UID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
 	}
@@ -493,7 +521,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
-		UserID: usr.ID,
+		UserID:  usr.ID,
+		UserUID: usr.UID,
 	}
 
 	needsUpdate := false
@@ -560,7 +589,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID}
+		finalCmdToExecute := &user.UpdateUserCommand{UserID: usr.ID, UserUID: usr.UID}
 		shouldExecuteUpdate := false
 
 		if !usr.IsProvisioned {
@@ -653,7 +682,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 		}
 
 		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			usr, errGetByID := s.userService.GetByUserAuth(ctx, authInfo)
+			usr, errGetByID := s.userService.GetByUserAuth(ctx, authInfo, s.getOrgID(identity.OrgID))
 			if errGetByID == nil {
 				return usr, authInfo, nil
 			}
@@ -672,7 +701,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	// Check user table to grab existing user
-	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
+	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams, s.getOrgID(identity.OrgID))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -691,7 +720,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	return usr, userAuth, nil
 }
 
-func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams, orgID int64) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.sync.lookupByOneOf")
 	defer span.End()
 
@@ -700,7 +729,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by email address
 	if params.Email != nil && *params.Email != "" {
-		usr, err = s.userService.GetByEmail(ctx, *params.Email)
+		usr, err = s.userService.GetByEmail(ctx, *params.Email, orgID)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
@@ -708,13 +737,13 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by login
 	if usr == nil && params.Login != nil && *params.Login != "" {
-		usr, err = s.userService.GetByLogin(ctx, *params.Login)
+		usr, err = s.userService.GetByLogin(ctx, *params.Login, orgID)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
-	if usr == nil || usr.ID == 0 { // id check as safeguard against returning empty user
+	if usr == nil || (usr.ID == 0 && usr.UID == "") { // id check as safeguard against returning empty user
 		return nil, user.ErrUserNotFound
 	}
 
@@ -756,4 +785,18 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.IsDisabled = usr.IsDisabled
 	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin
 	id.EmailVerified = usr.EmailVerified
+}
+
+func (s *UserSync) getOrgID(orgID int64) int64 {
+	if orgID > 0 || !s.isKubernetesUserSyncEnabled(context.Background()) {
+		return orgID
+	}
+	return s.cfg.DefaultOrgID()
+}
+
+func (s *UserSync) isKubernetesUserSyncEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx))
 }
