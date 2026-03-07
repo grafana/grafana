@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Prometheus",
   "id": "prometheus",
+  "executable": "gpx_prometheus",
   "category": "tsdb",
   "routes": [
     {
@@ -100,6 +101,7 @@
       "small": "img/prometheus_logo.svg",
       "large": "img/prometheus_logo.svg"
     },
+    "version": "%VERSION%",
     "links": [
       {
         "name": "Learn more",
@@ -114,5 +116,9 @@
         "url": "https://grafana.com/docs/grafana/latest/datasources/prometheus/"
       }
     ]
+  },
+  "dependencies": {
+    "grafanaDependency": ">=12.3.0",
+    "plugins": []
   }
 }

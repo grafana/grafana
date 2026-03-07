@@ -3181,6 +3181,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/prometheus@workspace:public/app/plugins/datasource/prometheus":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/prometheus@workspace:public/app/plugins/datasource/prometheus"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/aws-sdk": "npm:^0.10.1"
+    "@grafana/azure-sdk": "npm:0.0.8"
+    "@grafana/data": "npm:13.0.0-pre"
+    "@grafana/plugin-configs": "npm:13.0.0-pre"
+    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/prometheus": "npm:13.0.0-pre"
+    "@grafana/runtime": "npm:13.0.0-pre"
+    "@grafana/ui": "npm:13.0.0-pre"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/react": "npm:16.3.0"
+    "@types/jest": "npm:29.5.14"
+    "@types/node": "npm:24.10.1"
+    "@types/react": "npm:18.3.18"
+    jest: "npm:29.7.0"
+    react: "npm:18.3.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.8.1"
+    typescript: "npm:5.9.2"
+    webpack: "npm:^5.105.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring"
@@ -3841,7 +3870,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@workspace:*, @grafana/prometheus@workspace:packages/grafana-prometheus":
+"@grafana/prometheus@npm:13.0.0-pre, @grafana/prometheus@workspace:*, @grafana/prometheus@workspace:packages/grafana-prometheus":
   version: 0.0.0-use.local
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
