@@ -107,6 +107,12 @@ type MapperRegistry interface {
 	GetGroups() []string
 }
 
+// wildcardResourceKey is the key used for a catch-all resource entry within a group.
+// When mapper.Get can't find an exact resource match, it falls back to this entry
+// and creates a dynamic translation using the actual K8s resource name.
+// This enables authorization for dynamic resources like CRDs without pre-registration.
+const wildcardResourceKey = "*"
+
 type mapper map[string]map[string]translation
 
 func newResourceTranslation(resource string, attribute string, folderSupport bool, skipScopeOnVerb map[string]bool) translation {
@@ -326,6 +332,12 @@ func NewMapperRegistry() MapperRegistry {
 			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
 			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
+		"*.ext.grafana.app": {
+			// For Grafana Apiextensions, we use a wildcard resource key to match all resources as we cannot know before hand what resources will be created.
+			// Enabled folder support based on:
+			// pkg/extensions/apiserver/apiextensions/storage.go:120
+			wildcardResourceKey: translation{attribute: "uid", folderSupport: true},
+		},
 	})
 
 	return mapper
@@ -371,7 +383,12 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	resources := m[groupKey]
 	t, ok := resources[resource]
 	if !ok {
-		return nil, false
+		tmpl, ok := resources[wildcardResourceKey]
+		if !ok {
+			return nil, false
+		}
+		dynamic := newResourceTranslation(resource, tmpl.attribute, tmpl.folderSupport, tmpl.skipScopeOnVerb)
+		return &dynamic, true
 	}
 
 	return &t, true
@@ -403,7 +420,10 @@ func (m mapper) GetAll(group string) []Mapping {
 	resources := m[groupKey]
 
 	translations := make([]Mapping, 0, len(resources))
-	for _, t := range resources {
+	for key, t := range resources {
+		if key == wildcardResourceKey {
+			continue
+		}
 		translations = append(translations, &t)
 	}
 
