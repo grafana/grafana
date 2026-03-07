@@ -1,6 +1,13 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import {
+  PluginSignatureStatus,
+  dateTimeParse,
+  PluginError,
+  PluginType,
+  PluginErrorCode,
+  PluginSignatureType,
+} from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -134,7 +141,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
-    isManaged: isManagedPlugin(id),
+    isManaged: isManagedPlugin(id) || isCloudManagedPlugin(plugin),
     isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
@@ -237,7 +244,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
-    isManaged: isManagedPlugin(id),
+    isManaged: isManagedPlugin(id) || isCloudManagedPlugin(remote),
     isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
@@ -373,6 +380,19 @@ export function isManagedPlugin(id: string) {
   return pluginCatalogManagedPlugins?.includes(id);
 }
 
+/**
+ * isCloudManagedPlugin considers the info returned by grafana-com to determine if a plugin is managed in cloud.
+ * Since it also affects plugins not owned by grafana it's valid only in cloud.
+ * @param plugin - The plugin to check.
+ * @returns True if the plugin is managed by grafana in cloud environment.
+ */
+export function isCloudManagedPlugin(plugin?: RemotePlugin) {
+  if (!plugin) {
+    return false;
+  }
+  return Boolean(plugin.managed.enabled) && config.pluginAdminExternalManageEnabled;
+}
+
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
   const { pluginCatalogPreinstalledPlugins } = config;
 
@@ -413,7 +433,8 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
     plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    plugin.isManaged // Managed plugins cannot be modified
+    (plugin.isManaged &&
+      (plugin.signatureType === PluginSignatureType.grafana || plugin.signatureType === PluginSignatureType.core)) // Managed plugins cannot be modified
   ) {
     return false;
   }

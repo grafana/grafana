@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType, PluginSignatureType } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
@@ -70,6 +70,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
           versions={plugin.details?.versions}
           installedVersion={plugin.installedVersion}
           disableInstallation={shouldDisablePluginInstall(plugin)}
+          communityManaged={isCommunityManaged(plugin)}
         />
       </div>
     );
@@ -219,3 +220,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+function isCommunityManaged(plugin: CatalogPlugin) {
+  return (
+    plugin.isManaged &&
+    plugin.signatureType !== PluginSignatureType.grafana &&
+    plugin.signatureType !== PluginSignatureType.core
+  );
+}

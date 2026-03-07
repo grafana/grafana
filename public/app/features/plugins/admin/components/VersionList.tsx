@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
+import { major, compare, gt } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -15,11 +16,19 @@ interface Props {
   versions?: Version[];
   installedVersion?: string;
   disableInstallation: boolean;
+  communityManaged?: boolean;
 }
 
-export const VersionList = ({ pluginId, versions = [], installedVersion, disableInstallation }: Props) => {
+export const VersionList = ({
+  pluginId,
+  versions = [],
+  installedVersion,
+  disableInstallation,
+  communityManaged = false,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
+  const latestMajorVersions = getLatestMajorVersions(versions);
 
   const [isInstalling, setIsInstalling] = useState(false);
 
@@ -118,7 +127,13 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                       isInstalling ||
                       version.angularDetected ||
                       !version.isCompatible ||
-                      disableInstallation
+                      disableInstallation ||
+                      shouldDisableVersionInstallation({
+                        version,
+                        latestMajorVersions,
+                        installedVersion,
+                        communityManaged,
+                      })
                     }
                     tooltip={tooltip}
                   />
@@ -189,3 +204,56 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+interface ShouldDisableVersionInstallationArgs {
+  version: Version;
+  latestMajorVersions: Set<string>;
+  installedVersion: string | undefined;
+  communityManaged: boolean;
+}
+
+function shouldDisableVersionInstallation({
+  version,
+  latestMajorVersions,
+  installedVersion,
+  communityManaged,
+}: ShouldDisableVersionInstallationArgs) {
+  if (!installedVersion) {
+    return false;
+  }
+
+  if (communityManaged) {
+    if (latestMajorVersions.has(version.version) && gt(version.version, installedVersion)) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * getLatestMajorVersions gets the latest versions for a given array of versions.
+ * It will return a set of versions where each version is the latest version for its major version.
+ * @param versions - array containing multiple versions with the same major and multiple major
+ * @returns set of latest versions
+ */
+export function getLatestMajorVersions(versions: Version[]) {
+  const latestVersions: string[] = [];
+  const pureVersions = versions.map((v) => v.version);
+  const sortedVersions = pureVersions.sort((a, b) => compare(a, b));
+
+  let currentLatest = sortedVersions[0];
+  let index = 1;
+
+  do {
+    while (index < sortedVersions.length && major(sortedVersions[index]) === major(currentLatest)) {
+      currentLatest = sortedVersions[index];
+      index++;
+    }
+    latestVersions.push(currentLatest);
+    currentLatest = sortedVersions[index];
+  } while (index < sortedVersions.length);
+
+  return new Set(latestVersions);
+}

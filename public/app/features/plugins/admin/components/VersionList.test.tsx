@@ -153,10 +153,43 @@ describe('VersionList', () => {
     expect(versionTexts[1]).toContain('(installed version)');
     expect(versionTexts[2]).toContain('1.0.0');
   });
+
+  it('should enable only the install button for the latest compatible version, when it is community managed and there is a version installed', () => {
+    const versions = [
+      ...generateVersionsForMajor('1', 3),
+      ...generateVersionsForMajor('2', 3),
+      ...generateVersionsForMajor('3', 3),
+    ];
+
+    const installedVersion = '2.0.0';
+
+    renderWithStore(
+      <VersionList
+        pluginId={''}
+        versions={versions}
+        installedVersion={installedVersion}
+        disableInstallation={false}
+        communityManaged={true}
+      />
+    );
+
+    const buttons = screen.getAllByRole('button');
+    const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
+    expect(enabledButtons).toHaveLength(2);
+  });
 });
 
 function renderWithStore(component: JSX.Element) {
   const store = configureStore();
 
   return render(<Provider store={store}>{component}</Provider>);
+}
+
+function generateVersionsForMajor(major: string, numberOfVersions: number) {
+  return Array.from({ length: numberOfVersions }, (_, index) => ({
+    version: `${major}.${index}.0`,
+    createdAt: '2026-03-05',
+    isCompatible: true,
+    grafanaDependency: '>=8.0.0',
+  }));
 }
