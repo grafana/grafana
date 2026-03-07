@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -54,13 +56,50 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 			})
 		}
 
+		// Cap total results when listing all to avoid unbounded memory and time
+		if int32(len(result)) >= resources.MaxLogGroupsResults {
+			result = result[:resources.MaxLogGroupsResults]
+			break
+		}
+
 		if !req.ListAllLogGroups || response.NextToken == nil {
 			break
 		}
 		input.NextToken = response.NextToken
 	}
 
+	if len(result) > int(resources.MaxLogGroupsResults) {
+		result = result[:resources.MaxLogGroupsResults]
+	}
+
+	sortLogGroupsBy(result, req.OrderBy)
 	return result, nil
+}
+
+// sortLogGroupsBy sorts result in place by name or accountId, asc or desc.
+// Uses case-insensitive comparison for true alphabetical order.
+func sortLogGroupsBy(result []resources.ResourceResponse[resources.LogGroup], orderBy string) {
+	if orderBy == "" {
+		return
+	}
+	accountId := func(r resources.ResourceResponse[resources.LogGroup]) string {
+		if r.AccountId != nil {
+			return *r.AccountId
+		}
+		return ""
+	}
+	lessName := func(a, b string) bool { return strings.ToLower(a) < strings.ToLower(b) }
+	lessAccountId := func(a, b string) bool { return strings.ToLower(a) < strings.ToLower(b) }
+	switch orderBy {
+	case resources.OrderByNameDesc:
+		sort.Slice(result, func(i, j int) bool { return lessName(result[j].Value.Name, result[i].Value.Name) })
+	case resources.OrderByNameAsc:
+		sort.Slice(result, func(i, j int) bool { return lessName(result[i].Value.Name, result[j].Value.Name) })
+	case resources.OrderByAccountIDAsc:
+		sort.Slice(result, func(i, j int) bool { return lessAccountId(accountId(result[i]), accountId(result[j])) })
+	case resources.OrderByAccountIDDesc:
+		sort.Slice(result, func(i, j int) bool { return lessAccountId(accountId(result[j]), accountId(result[i])) })
+	}
 }
 
 func (s *LogGroupsService) GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {
