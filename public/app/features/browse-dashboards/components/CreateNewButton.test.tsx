@@ -46,11 +46,11 @@ describe('NewActionsButton', () => {
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toHaveAttribute(
       'href',
       `/dashboard/new?folderUid=${mockParentFolder.uid}`
     );
-    expect(screen.getByRole('link', { name: 'Import' })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: 'Import' })).toHaveAttribute(
       'href',
       `/dashboard/import?folderUid=${mockParentFolder.uid}`
     );
@@ -59,8 +59,8 @@ describe('NewActionsButton', () => {
   it('should display urls without params when there is no parent folder', async () => {
     await renderAndOpen();
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toHaveAttribute('href', '/dashboard/new');
-    expect(screen.getByRole('link', { name: 'Import' })).toHaveAttribute('href', '/dashboard/import');
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toHaveAttribute('href', '/dashboard/new');
+    expect(screen.getByRole('menuitem', { name: 'Import' })).toHaveAttribute('href', '/dashboard/import');
   });
 
   it('clicking the "New folder" button opens the drawer', async () => {
@@ -83,7 +83,7 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await user.click(newButton);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Import')).toBeInTheDocument();
     expect(screen.queryByText('New folder')).not.toBeInTheDocument();
   });
@@ -102,7 +102,7 @@ describe('NewActionsButton', () => {
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
   });
@@ -111,9 +111,9 @@ describe('NewActionsButton', () => {
     const regularFolder = mockFolderDTO(1, { managedBy: undefined });
     await renderAndOpen(regularFolder);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import' })).toBeInTheDocument();
   });
 
   it('should hide Import button when entire instance is provisioned', async () => {
@@ -121,7 +121,7 @@ describe('NewActionsButton', () => {
     const regularFolder = mockFolderDTO(1, { managedBy: undefined });
     await renderAndOpen(regularFolder);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
   });
@@ -131,7 +131,7 @@ describe('NewActionsButton', () => {
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
-    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
   });
@@ -143,18 +143,18 @@ describe('NewActionsButton', () => {
 
     it('should show a `Dashboard from template` button when the feature flag is enabled', async () => {
       await renderAndOpen();
-      expect(screen.getByRole('link', { name: 'Dashboard from template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
     });
 
     it('should not show a `Dashboard from template` button when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       await renderAndOpen();
-      expect(screen.queryByRole('link', { name: 'Dashboard from template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Dashboard from template' })).not.toBeInTheDocument();
     });
 
     it('should redirect the user to the dashboard from template page when the button is clicked', async () => {
       await renderAndOpen();
-      const link = screen.getByRole('link', { name: 'Dashboard from template' });
+      const link = screen.getByRole('menuitem', { name: 'Dashboard from template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=createNewButton');
     });
   });
