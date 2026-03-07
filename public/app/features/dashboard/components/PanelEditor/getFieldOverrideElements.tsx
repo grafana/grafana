@@ -127,6 +127,7 @@ export function getFieldOverrideCategories(
       new OptionsPaneItemDescriptor({
         id: htmlId,
         title: matcherUi.name,
+        value: override.matcher.options,
         render: function renderMatcherUI() {
           return (
             <matcherUi.component
@@ -178,6 +179,7 @@ export function getFieldOverrideCategories(
         new OptionsPaneItemDescriptor({
           skipField: true,
           id: htmlId,
+          value: property.value,
           render: function renderPropertyEditor() {
             return (
               <DynamicConfigValueEditor
