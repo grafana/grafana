@@ -654,21 +654,126 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:   1,
 			wantErr: errExtJWTInvalidSubject,
 		},
+		{
+			name: "should return error when OBO access token has disallowed namespace",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "org-99",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTDisallowedNamespaceClaim,
+		},
+		{
+			name: "should return error when OBO access token subject is unparseable",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "garbage",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalidSubject,
+		},
+		{
+			name: "should return error when OBO access token subject is not access-policy",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "user:99",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "user:2",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
+		{
+			name: "should return error when OBO actor has empty subject",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
+		{
+			name: "should return error when OBO actor subject is unparseable",
+			accessToken: &accessTokenClaims{
+				Claims: jwt.Claims{
+					Subject:  "access-policy:this-uid",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "default",
+					Actor: &authnlib.ActorClaims{
+						Subject: "not-a-valid-type-id",
+						IDTokenClaims: authnlib.IDTokenClaims{
+							Type: claims.TypeUser,
+						},
+					},
+				},
+			},
+			orgID:   1,
+			wantErr: errExtJWTInvalid,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			env := setupTestCtx(tc.cfg)
 
+			signedAccessToken := generateToken(t, *tc.accessToken, pk, jose.ES256)
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"X-Access-Token": {generateToken(t, *tc.accessToken, pk, jose.ES256)},
+					"X-Access-Token": {signedAccessToken},
 				},
 			}
 
 			env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 			if tc.idToken != nil {
-				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idToken}
 				validHTTPReq.Header.Add(ExtJWTAuthorizationHeaderName, generateIDToken(t, *tc.idToken, pk, jose.ES256))
 			}
@@ -682,11 +787,44 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				assert.Nil(t, id)
 			} else {
 				require.NoError(t, err)
-				tc.want.AccessToken = id.AccessToken
+				tc.want.AccessToken = signedAccessToken
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
 			}
 		})
 	}
+}
+
+// TestExtendedJWT_authenticateAsUserViaOBO_defensive calls authenticateAsUserViaOBO
+// directly to exercise error branches that are unreachable through Authenticate.
+// When IsOnBehalfOfUser (authlib) is working correctly these scenarios are impossible:
+// getIdentityActor only returns non-nil for TypeUser/TypeServiceAccount actors, so
+// an actor with a disallowed type (e.g. TypeAPIKey) never enters the OBO path.
+// These tests exist purely as a safety net against future changes in the authlib contract.
+func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
+	env := setupTestCtx(nil)
+
+	t.Run("should return error when OBO actor identity type is disallowed", func(t *testing.T) {
+		token := accessTokenClaims{
+			Claims: jwt.Claims{
+				Subject:  "access-policy:this-uid",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+			},
+			Rest: authnlib.AccessTokenClaims{
+				Namespace: "default",
+				Actor: &authnlib.ActorClaims{
+					Subject: "api-key:42",
+					IDTokenClaims: authnlib.IDTokenClaims{
+						Type: claims.TypeAPIKey,
+					},
+				},
+			},
+		}
+
+		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token")
+		assert.ErrorIs(t, err, errExtJWTInvalidSubject)
+		assert.Nil(t, id)
+	})
 }
 
 // https://datatracker.ietf.org/doc/html/rfc9068#name-data-structure
