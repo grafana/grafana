@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"strconv"
 	"time"
 
@@ -19,7 +18,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,6 +61,10 @@ type alertmanager struct {
 	crypto               Crypto
 	features             featuremgmt.FeatureToggles
 	dynamicLimits        alertingNotify.DynamicLimits
+
+	// We store the applied hash here instead of relying on Base's ConfigHash() to work around a bug where Base can
+	// modify the configuration during ApplyConfig. This causes the change detection to fail in niche cases.
+	appliedHash alertingNotify.ConfigFingerprint
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -224,14 +226,8 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
-		cfg, err := Load([]byte(am.DefaultConfiguration))
-		if err != nil {
-			outerErr = err
-			return
-		}
-
-		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err = am.applyConfig(ctx, cfg, LogInvalidReceivers)
+		err := am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig ngmodels.AlertConfiguration) error {
+			_, err := am.applyConfig(ctx, &dbConfig, LogInvalidReceivers)
 			return err
 		})
 		if err != nil {
@@ -269,8 +265,8 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
-		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err = am.applyConfig(ctx, cfg, ErrorOnInvalidReceivers) // fail if the autogen config is invalid
+		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig ngmodels.AlertConfiguration) error {
+			_, err = am.applyConfig(ctx, &dbConfig, ErrorOnInvalidReceivers) // fail if the autogen config is invalid
 			return err
 		})
 		if err != nil {
@@ -284,19 +280,9 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 
 // ApplyConfig applies the configuration to the Alertmanager.
 func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
-	var err error
-	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
-	if err != nil {
-		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
-	}
-
 	var outerErr error
 	am.Base.WithLock(func() {
-		// Note: Adding the autogen config here causes alert_configuration_history to update last_applied more often.
-		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
-		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
-		// autogen config, which may introduce cross-cutting complexity.
-		configChanged, err := am.applyConfig(ctx, cfg, LogInvalidReceivers)
+		configChanged, err := am.applyConfig(ctx, dbCfg, LogInvalidReceivers)
 		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
@@ -325,10 +311,10 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, cfgSize int) {
+func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConfiguration, cfgSize int) {
 	var amu AggregateMatchersUsage
-	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
-	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
+	am.aggregateRouteMatchers(cfg.RoutingTree, &amu)
+	am.aggregateInhibitMatchers(cfg.InhibitRules, &amu)
 	am.ConfigMetrics.Matchers.Set(float64(amu.Matchers))
 	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
 	am.ConfigMetrics.Match.Set(float64(amu.Match))
@@ -336,7 +322,7 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, c
 
 	am.ConfigMetrics.ConfigHash.
 		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
-		Set(hashAsMetricValue(am.Base.ConfigHash()))
+		Set(hashAsMetricValue(am.appliedHash))
 
 	am.ConfigMetrics.ConfigSizeBytes.
 		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
@@ -367,96 +353,33 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []apimodels.InhibitRule, 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, onInvalid InvalidReceiversAction) (bool, error) {
-	err := am.crypto.DecryptExtraConfigs(ctx, cfg)
+func (am *alertmanager) applyConfig(ctx context.Context, dbConfig *ngmodels.AlertConfiguration, onInvalid InvalidReceiversAction) (bool, error) {
+	cfg, err := PrepareConfig(ctx, am.Base.TenantID(), dbConfig, PrepareConfigOptions{
+		OnInvalid:        onInvalid,
+		Crypto:           am.crypto,
+		AutogenRuleStore: am.Store,
+		Logger:           am.logger,
+		Features:         am.features,
+		Limits:           am.dynamicLimits,
+	})
 	if err != nil {
-		return false, fmt.Errorf("failed to decrypt external configurations: %w", err)
+		return false, fmt.Errorf("unable to prepare configuration: %w", err)
 	}
-
-	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return false, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
-	}
-	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
-		am.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
-	}
-	amConfig := mergeResult.Config
-
-	// Add extra route as managed route to the configuration.
-	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
-	// route
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		managedRoutes := maps.Clone(cfg.ManagedRoutes)
-		if managedRoutes == nil {
-			managedRoutes = make(map[string]*apimodels.Route)
-		}
-
-		managedInhibitionRules := maps.Clone(cfg.ManagedInhibitionRules)
-		if managedInhibitionRules == nil {
-			managedInhibitionRules = make(apimodels.ManagedInhibitionRules)
-		}
-
-		if mergeResult.ExtraRoute != nil {
-			if _, ok := managedRoutes[mergeResult.Identifier]; ok {
-				am.logger.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
-			} else {
-				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
-
-				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
-				if err != nil {
-					am.logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
-				} else {
-					maps.Copy(managedInhibitionRules, importedRules)
-				}
-			}
-		}
-
-		amConfig.Route = legacy_storage.WithManagedRoutes(amConfig.Route, managedRoutes)
-
-		amConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(
-			amConfig.InhibitRules,
-			managedInhibitionRules,
-		)
-	}
-
-	// Now add autogenerated config to the route.
-	err = AddAutogenConfig(ctx, am.logger, am.Store, am.Base.TenantID(), &amConfig, onInvalid, am.features)
-	if err != nil {
-		return false, err
-	}
-
-	// First, let's make sure this config is not already loaded
-	rawConfig, err := json.Marshal(cfg)
-	if err != nil {
-		// In theory, this should never happen.
-		return false, err
-	}
-
-	config := alertingNotify.NotificationsConfiguration{
-		RoutingTree:       amConfig.Route,
-		InhibitRules:      amConfig.InhibitRules,
-		MuteTimeIntervals: amConfig.MuteTimeIntervals,
-		TimeIntervals:     amConfig.TimeIntervals,
-		Templates:         alertingNotify.PostableAPITemplatesToTemplateDefinitions(cfg.GetMergedTemplateDefinitions()),
-		Receivers:         alertingNotify.PostableAPIReceiversToAPIReceivers(amConfig.Receivers),
-		Limits:            am.dynamicLimits,
-	}
-
 	// If configuration hasn't changed, we've got nothing to do.
-	configHash := alertingNotify.CalculateConfigFingerprint(config)
-	if am.Base.ConfigHash() == configHash {
+	configHash := alertingNotify.CalculateConfigFingerprint(cfg)
+	if am.appliedHash == configHash {
 		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
-	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%d", configHash))
-	err = am.Base.ApplyConfig(config)
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%d", configHash), "dbHash", dbConfig.ConfigurationHash)
+	err = am.Base.ApplyConfig(cfg)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("unable to apply configuration: %w", err)
 	}
+	am.appliedHash = configHash
 
-	am.updateConfigMetrics(cfg, len(rawConfig))
+	am.updateConfigMetrics(cfg, len(dbConfig.AlertmanagerConfiguration))
 	return true, nil
 }
 
