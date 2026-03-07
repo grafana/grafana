@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.25.7
+go 1.25.8
 
 replace github.com/grafana/grafana => ../..
 
@@ -105,7 +105,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260304185607-3b455cb55a82 // indirect
+  github.com/grafana/alerting v0.0.0-20260306155606-142355827498 // indirect
 	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect

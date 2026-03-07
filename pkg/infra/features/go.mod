@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/features
 
-go 1.25.7
+go 1.25.8
 
 require (
 	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22

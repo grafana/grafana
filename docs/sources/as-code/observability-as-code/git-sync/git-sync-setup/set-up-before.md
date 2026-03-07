@@ -49,7 +49,7 @@ In Grafana Cloud, Git Sync is being rolled out gradually. For more details refer
 To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature toggle to `true`:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
-1. Add this value:
+1. Enable the provisioning toggle:
 
    ```ini
    [feature_toggles]
@@ -59,6 +59,20 @@ To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature t
 1. Save the changes to the file and restart Grafana.
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+
+### Enable Git providers
+
+If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure Git, GitLab or Bitbucket, or if you're using Grafana OSS v12.4.0 and want to set up Git Sync with pure Git, add them to your configuration file:
+
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
+1. Add the available providers:
+
+   ```ini
+   [provisioning]
+   repository_types = "git|github|bitbucket|gitlab|local"
+   ```
+
+1. Save the changes to the file and restart Grafana.
 
 ## Create a GitHub App
 
