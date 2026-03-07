@@ -170,10 +170,7 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Response {
-	var (
-		ctx                   = c.Req.Context()
-		defaultShouldRedirect = false
-	)
+	ctx := c.Req.Context()
 
 	cmd := team.SetTeamMembershipsCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -191,14 +188,7 @@ func (tapi *TeamAPI) setTeamMemberships(c *contextmodel.ReqContext) response.Res
 		return resp
 	}
 
-	shouldRedirect := openfeature.NewDefaultClient().Boolean(
-		ctx,
-		featuremgmt.FlagKubernetesTeamsHandlerRedirect,
-		defaultShouldRedirect,
-		openfeature.TransactionContext(ctx),
-	)
-
-	if shouldRedirect {
+	if checkK8sFeatureFlags(ctx) {
 		return tapi.setTeamMembershipsViaK8s(c, teamID, cmd)
 	}
 
@@ -336,6 +326,31 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to remove Member from Team", err)
 	}
 	return response.Success("Team Member removed")
+}
+
+// checkK8sFeatureFlags checks if both the Kubernetes teams handler redirect and authentication mutation feature flags are enabled.
+// Returns true only when both flags are enabled, indicating that the request should be redirected to Kubernetes.
+func checkK8sFeatureFlags(ctx context.Context) bool {
+	const (
+		defaultMutationEnabled = false
+		defaultShouldRedirect  = false
+	)
+
+	shouldRedirect := openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesTeamsHandlerRedirect,
+		defaultShouldRedirect,
+		openfeature.TransactionContext(ctx),
+	)
+
+	mutationEnabled := openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesAuthnMutation,
+		defaultMutationEnabled,
+		openfeature.TransactionContext(ctx),
+	)
+
+	return shouldRedirect && mutationEnabled
 }
 
 // addOrUpdateTeamMember adds or updates a team member.
