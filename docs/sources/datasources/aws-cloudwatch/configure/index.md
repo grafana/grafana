@@ -300,7 +300,7 @@ For more information about provisioning and available configuration options, ref
 apiVersion: 1
 datasources:
   - name: CloudWatch
-    type: CloudWatch
+    type: cloudwatch
     jsonData:
       authType: default
       defaultRegion: eu-west-2
@@ -313,7 +313,7 @@ apiVersion: 1
 
 datasources:
   - name: CloudWatch
-    type: CloudWatch
+    type: cloudwatch
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
@@ -328,7 +328,7 @@ apiVersion: 1
 
 datasources:
   - name: CloudWatch
-    type: CloudWatch
+    type: cloudwatch
     jsonData:
       authType: keys
       defaultRegion: eu-west-2
@@ -343,7 +343,7 @@ datasources:
 apiVersion: 1
 datasources:
   - name: CloudWatch
-    type: CloudWatch
+    type: cloudwatch
     jsonData:
       authType: default
       assumeRoleArn: arn:aws:iam::123456789012:root
