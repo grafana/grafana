@@ -15,6 +15,7 @@ export interface ColorValueEditorSettings {
 
 interface Props {
   id?: string;
+  'aria-describedby'?: string;
   value?: string;
   onChange: (value: string | undefined) => void;
   settings?: ColorValueEditorSettings;
@@ -26,7 +27,14 @@ interface Props {
 /**
  * @alpha
  * */
-export const ColorValueEditor = ({ value, settings, onChange, details, id }: Props) => {
+export const ColorValueEditor = ({
+  value,
+  settings,
+  onChange,
+  details,
+  id,
+  'aria-describedby': ariaDescribedBy,
+}: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -39,6 +47,7 @@ export const ColorValueEditor = ({ value, settings, onChange, details, id }: Pro
               <ColorSwatch
                 ref={ref}
                 id={id}
+                aria-describedby={ariaDescribedBy}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
