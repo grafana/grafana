@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -97,7 +98,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	// we can simply return the fallback for validation.
 	err := provisioning.ValidateContactPoint(context.Background(), &cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
-	})
+	}, map[schema.IntegrationType]struct{}{})
 	if err != nil {
 		return definitions.EmbeddedContactPoint{}, err
 	}

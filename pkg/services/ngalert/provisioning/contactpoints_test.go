@@ -583,6 +583,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		log.NewNopLogger(),
 		nil,
 		fakes.NewFakeReceiverPermissionsService(),
+		make(map[schema.IntegrationType]struct{}),
 	)
 }
 

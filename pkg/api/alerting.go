@@ -10,9 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifiers(cfg *setting.Cfg) func(*contextmodel.ReqContext) response.Response {
 	return func(r *contextmodel.ReqContext) response.Response {
 		v2 := notify.GetSchemaForAllIntegrations()
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
@@ -36,6 +37,9 @@ func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) respons
 		for _, s := range v2 {
 			v1, ok := s.GetVersion(schema.V1)
 			if !ok {
+				continue
+			}
+			if _, exists := cfg.UnifiedAlerting.DisabledNotifiers[s.Type]; exists {
 				continue
 			}
 			result = append(result, &NotifierPlugin{
