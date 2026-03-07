@@ -25,7 +25,7 @@ import { DashboardSrv, getDashboardSrv, setDashboardSrv } from '../services/Dash
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 import { initDashboard, InitDashboardArgs } from './initDashboard';
-import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
+import { cleanUpDashboard, dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -296,6 +296,11 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
   it('Should redirect to custom home dashboard', () => {
     const location = locationService.getLocation();
     expect(location.pathname).toBe('/u/123/my-home');
+  });
+
+  it('Should clean up fetching state before redirecting', () => {
+    expect(ctx.actions[0].type).toBe(dashboardInitFetching.type);
+    expect(ctx.actions[1].type).toBe(cleanUpDashboard.type);
   });
 });
 
