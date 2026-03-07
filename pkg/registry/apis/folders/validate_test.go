@@ -198,6 +198,116 @@ func TestValidateCreate(t *testing.T) {
 			maxDepth: setting.NewCfg().MaxNestedFolderDepth,
 		},
 		{
+			name: "cannot create folder in repo-managed parent without manager annotation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "child1",
+					Annotations: map[string]string{"grafana.app/folder": "managed1"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "child folder",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"managed1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "managed1",
+						Annotations: map[string]string{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+					Spec: folders.FolderSpec{
+						Title: "managed folder",
+					},
+				},
+			},
+			expectedErr: "folder is managed by a repository, but the child folder is not managed",
+		},
+		{
+			name: "cannot create folder in repo-managed parent with different repo",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "child2",
+					Annotations: map[string]string{
+						"grafana.app/folder":         "managed2",
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "other-repo",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "child folder",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"managed2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "managed2",
+						Annotations: map[string]string{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+					Spec: folders.FolderSpec{
+						Title: "managed folder",
+					},
+				},
+			},
+			expectedErr: "folder is managed by a repository, but the child folder is not managed by the same manager",
+		},
+		{
+			name: "can create folder in repo-managed parent with same repo",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "child3",
+					Annotations: map[string]string{
+						"grafana.app/folder":         "managed3",
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "child folder",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"managed3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "managed3",
+						Annotations: map[string]string{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+					Spec: folders.FolderSpec{
+						Title: "managed folder",
+					},
+				},
+			},
+		},
+		{
+			name: "can create folder in unmanaged parent",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "child4",
+					Annotations: map[string]string{"grafana.app/folder": "unmanaged1"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "child folder",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"unmanaged1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "unmanaged1",
+					},
+					Spec: folders.FolderSpec{
+						Title: "unmanaged folder",
+					},
+				},
+			},
+		},
+		{
 			name: "cannot create a circular reference",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -264,7 +374,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(context.Background(), tt.folder, getter, mockStorage, maxDepth)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -524,6 +634,116 @@ func TestValidateUpdate(t *testing.T) {
 			},
 			maxDepth: 4,
 		},
+		{
+			name: "error when moving unmanaged folder into a repo-managed folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "unmanaged-folder",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "managed-parent",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "unmanaged folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "unmanaged-folder",
+				},
+				Spec: folders.FolderSpec{
+					Title: "unmanaged folder",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "managed-parent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{
+					Name: "managed-parent",
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-A",
+					},
+				}},
+			},
+			expectedErr: "managed by a repository",
+		},
+		{
+			name: "error when moving folder managed by different repo into a repo-managed folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "other-repo-folder",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder:          "managed-parent",
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-B",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "other repo folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "other-repo-folder",
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-B",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "other repo folder",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "managed-parent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{
+					Name: "managed-parent",
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-A",
+					},
+				}},
+			},
+			expectedErr: "managed by a repository",
+		},
+		{
+			name: "can move folder into unmanaged parent",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "any-folder",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "unmanaged-parent",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "any folder",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "any-folder",
+				},
+				Spec: folders.FolderSpec{
+					Title: "any folder",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "unmanaged-parent", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -533,8 +753,17 @@ func TestValidateUpdate(t *testing.T) {
 				maxDepth = 5
 			}
 			m := grafanarest.NewMockStorage(t)
+			overridden := make(map[string]bool)
+			for i := range tt.allFolders {
+				f := tt.allFolders[i]
+				overridden[f.Name] = true
+				m.On("Get", context.Background(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
+			}
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
+					if overridden[v.Name] {
+						continue
+					}
 					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: v.Name,
@@ -543,10 +772,6 @@ func TestValidateUpdate(t *testing.T) {
 						},
 					}, nil).Maybe()
 				}
-			}
-			for i := range tt.allFolders {
-				f := tt.allFolders[i]
-				m.On("Get", context.Background(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
 			}
 
 			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
