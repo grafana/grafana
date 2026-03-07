@@ -10,7 +10,7 @@ export { LogLevel };
  */
 export function logInfo(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([message], {
+    faro.api?.pushLog([message], {
       level: LogLevel.INFO,
       context: contexts,
     });
@@ -24,7 +24,7 @@ export function logInfo(message: string, contexts?: LogContext) {
  */
 export function logWarning(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([message], {
+    faro.api?.pushLog([message], {
       level: LogLevel.WARN,
       context: contexts,
     });
@@ -38,7 +38,7 @@ export function logWarning(message: string, contexts?: LogContext) {
  */
 export function logDebug(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([message], {
+    faro.api?.pushLog([message], {
       level: LogLevel.DEBUG,
       context: contexts,
     });
@@ -52,7 +52,7 @@ export function logDebug(message: string, contexts?: LogContext) {
  */
 export function logError(err: Error, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushError(err, {
+    faro.api?.pushError(err, {
       context: contexts,
     });
   }
@@ -66,7 +66,7 @@ export function logError(err: Error, contexts?: LogContext) {
 export type MeasurementValues = Record<string, number>;
 export function logMeasurement(type: string, values: MeasurementValues, context?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushMeasurement(
+    faro.api?.pushMeasurement(
       {
         type,
         values,

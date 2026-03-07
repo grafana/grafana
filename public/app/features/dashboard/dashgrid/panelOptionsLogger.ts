@@ -42,7 +42,7 @@ export class PanelOptionsLogger {
       panelType: this.panelLogInfo.panelType,
     };
 
-    faro.api.pushEvent(eventName, logObj);
+    faro.api?.pushEvent(eventName, logObj);
   };
 
   logPanelOptionChanges = (panelOptions: unknown, oldPanelOptions: unknown) => {
