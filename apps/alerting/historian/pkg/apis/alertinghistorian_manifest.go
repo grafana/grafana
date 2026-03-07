@@ -44,6 +44,177 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/_tool": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "create_tool",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Required: true,
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"from": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "From is the starting timestamp for the query.",
+																	},
+																},
+																"get_alert_state_history": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"object"},
+																		Description: "GetAlertStateHistory holds get_alert_state_history operation specific options.",
+																		Properties: map[string]spec.Schema{
+																			"type": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "State optionally filters alert state transition",
+																					Enum: []interface{}{
+																						"normal",
+																						"pending",
+																						"alerting",
+																						"nodata",
+																						"error",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+																"get_notification_history": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"object"},
+																		Description: "GetNotificationHistory holds get_notification_history operation specific options",
+																		Properties: map[string]spec.Schema{
+																			"groupLabels": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Description: "GroupLabels optionally filters the entries by matching group labels.",
+																					Ref:         spec.MustCreateRef("#/components/schemas/create_toolMatchers"),
+																				},
+																			},
+																			"labels": {
+																				SchemaProps: spec.SchemaProps{
+
+																					Description: "Labels optionally filters the entries by matching alert labels.",
+																					Ref:         spec.MustCreateRef("#/components/schemas/create_toolMatchers"),
+																				},
+																			},
+																			"outcome": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Outcome optionally filters the entries to only either successful or failed attempts.",
+																					Enum: []interface{}{
+																						"success",
+																						"failure",
+																					},
+																				},
+																			},
+																			"receiver": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Receiver optionally filters the entries by receiver title (contact point).",
+																				},
+																			},
+																			"status": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Status optionally filters the entries to only either firing or resolved.",
+																					Enum: []interface{}{
+																						"firing",
+																						"resolved",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Limit is the maximum number of entries to return.",
+																	},
+																},
+																"operation": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Operation specifies the the sub-tool to invoke.",
+																		Enum: []interface{}{
+																			"get_alert_state_history",
+																			"get_notification_history",
+																		},
+																	},
+																},
+																"ruleUID": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "RuleUID specifies a specific alert rule UID to get history for.",
+																	},
+																},
+																"to": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "To is the starting timestamp for the query.",
+																	},
+																},
+																"type": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Type of query to perform (default: entries)",
+																		Enum: []interface{}{
+																			"entries",
+																			"counts",
+																		},
+																	},
+																},
+															},
+															Required: []string{
+																"operation",
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"summary": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Summary is a natural language summary of the operation result.",
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"summary",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/alertstate/history": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -787,6 +958,51 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"create_toolMatcher": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"label": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"=",
+											"!=",
+											"=~",
+											"!~",
+										},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"label",
+								"value",
+							},
+						},
+					},
+					"create_toolMatchers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/create_toolMatcher"),
+									}},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -813,6 +1029,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
+	"v0alpha1||<namespace>/_tool|POST":                     v0alpha1.Create_toolResponse{},
 	"v0alpha1||<namespace>/alertstate/history|GET":         v0alpha1.GetAlertstatehistoryResponse{},
 	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryResponse{},
 	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsResponse{},
@@ -841,6 +1058,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1||<namespace>/_tool|POST":                     v0alpha1.Create_toolRequestBody{},
 	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryRequestBody{},
 	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsRequestBody{},
 }
