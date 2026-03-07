@@ -412,6 +412,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
+		DisableForgotPassword:         hs.Cfg.DisableForgotPassword,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
 	}

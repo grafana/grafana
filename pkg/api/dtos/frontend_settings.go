@@ -32,6 +32,7 @@ type FrontendSettingsAuthDTO struct {
 	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
 
 	DisableLogin                  bool `json:"disableLogin"`
+	DisableForgotPassword         bool `json:"disableForgotPassword"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
