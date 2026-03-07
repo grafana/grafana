@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 )
@@ -150,7 +149,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		logger.Error("mssql proxy creation failed", "error", err)
+		log.Error("mssql proxy creation failed", "error", err)
 		return nil, fmt.Errorf("mssql proxy creation failed")
 	}
 
@@ -186,7 +185,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 
 		db, err := newMSSQL(driverName, config.RowLimit, config.DSInfo, cnnstr, log, proxyClient)
 		if err != nil {
-			logger.Error("Failed connecting to MSSQL", "err", err)
+			log.Error("Failed connecting to MSSQL", "err", err)
 			return nil, err
 		}
 
@@ -246,7 +245,7 @@ func (e *DataSourceHandler) getDB(ctx context.Context) (*sql.DB, error) {
 
 	db, err := newMSSQL(e.driverName, e.rowLimit, e.dsInfo, cnnstr, e.log, e.proxyClient)
 	if err != nil {
-		logger.Error("Failed connecting to MSSQL", "err", err)
+		e.log.Error("Failed connecting to MSSQL", "err", err)
 		return nil, err
 	}
 	e.dbConnections.Store(cacheKey, db)
@@ -471,7 +470,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 			var err error
 			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
 			if err != nil {
-				logger.Error("Failed to resample dataframe", "err", err)
+				e.log.Error("Failed to resample dataframe", "err", err)
 				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 			}
 		}

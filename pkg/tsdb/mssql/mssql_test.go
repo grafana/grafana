@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 )
@@ -35,7 +34,7 @@ func TestMSSQL(t *testing.T) {
 	// change to true to run the MSSQL tests
 	const runMssqlTests = false
 
-	if !db.IsTestDBMSSQL() && !runMssqlTests {
+	if os.Getenv("GRAFANA_TEST_DB") != "mssql" && !runMssqlTests {
 		t.Skip()
 	}
 
