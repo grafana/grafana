@@ -1,5 +1,5 @@
 // @ts-check
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
+import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
@@ -27,7 +27,7 @@ const isValidStorybookTitle = (title) => {
 
 /**
  * @param {import('@typescript-eslint/utils').TSESTree.ObjectExpression} objectNode
- * @param {import('@typescript-eslint/utils/ts-eslint').RuleContext<'invalidTitle', []>} context
+ * @param {import('@typescript-eslint/utils').TSESLint.RuleContext<'invalidTitle', []>} context
  */
 const checkObjectForTitle = (objectNode, context) => {
   const titleProperty = objectNode.properties.find(
@@ -103,4 +103,4 @@ const consistentStoryTitlesRule = createRule({
   defaultOptions: [],
 });
 
-module.exports = consistentStoryTitlesRule;
+export default consistentStoryTitlesRule;

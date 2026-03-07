@@ -1,5 +1,5 @@
 // @ts-check
-const { ESLintUtils } = require('@typescript-eslint/utils');
+import { ESLintUtils } from '@typescript-eslint/utils';
 
 /**
  * @typedef {import("@typescript-eslint/utils").TSESTree.Expression} Expression
@@ -78,7 +78,7 @@ const rule = createRule({
   defaultOptions: [],
 });
 
-module.exports = rule;
+export default rule;
 
 /**
  * Finds identifiers (variables) mentioned in various types of expressions:

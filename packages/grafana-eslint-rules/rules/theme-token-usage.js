@@ -1,5 +1,5 @@
 // @ts-check
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
+import { ESLintUtils, AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
@@ -52,4 +52,4 @@ const themeTokenUsage = createRule({
   defaultOptions: [],
 });
 
-module.exports = themeTokenUsage;
+export default themeTokenUsage;
