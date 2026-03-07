@@ -1,7 +1,8 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
+import { isAssistantAvailable } from '@grafana/assistant';
 import { llm } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -173,4 +174,39 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
     error,
     value,
   };
+}
+
+/**
+ * Check if the Assistant is available.
+ * @returns true if the Assistant is available.
+ */
+export function useIsAssistantAvailable(): boolean {
+  const [available, setAvailable] = useState(false);
+
+  useEffect(() => {
+    try {
+      const subscription = isAssistantAvailable().subscribe((value) => {
+        setAvailable(value);
+      });
+      return () => subscription.unsubscribe();
+    } catch {
+      setAvailable(false);
+      return undefined;
+    }
+  }, []);
+
+  return available;
+}
+
+/**
+ * Wrapper that renders children only when the Assistant is NOT active.
+ * Used to gate LLM-plugin addon buttons so they don't appear alongside
+ * Assistant-powered inputs.
+ */
+export function LLMFallbackAddon({ children }: { children: React.ReactNode }): React.ReactNode {
+  const isAssistant = useIsAssistantAvailable();
+  if (isAssistant) {
+    return null;
+  }
+  return children;
 }
