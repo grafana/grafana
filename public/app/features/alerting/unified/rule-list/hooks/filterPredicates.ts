@@ -2,7 +2,7 @@ import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleCompact, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
@@ -13,9 +13,12 @@ import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
-export type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
+// PromRuleGroupLike is still needed as groups have different structures
+export type PromRuleGroupLike = PromRuleGroupDTO | GrafanaPromRuleGroupDTO;
+
+export type RuleFilterHandler = (rule: PromRuleCompact, filterState: RulesFilter) => boolean;
 export type GroupFilterHandler = (
-  group: PromRuleGroupDTO,
+  group: PromRuleGroupLike,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
 ) => boolean;
 
@@ -30,7 +33,7 @@ export type GroupFilterConfig = Record<keyof Pick<RulesFilter, 'namespace' | 'gr
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
  */
 export function groupMatches(
-  group: PromRuleGroupDTO,
+  group: PromRuleGroupLike,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>,
   filterConfig: GroupFilterConfig
 ): boolean {
@@ -48,7 +51,7 @@ export function groupMatches(
 /**
  * @returns True if the rule matches the filter, false otherwise
  */
-export function ruleMatches(rule: PromRuleDTO, filterState: RulesFilter, filterConfig: RuleFilterConfig) {
+export function ruleMatches(rule: PromRuleCompact, filterState: RulesFilter, filterConfig: RuleFilterConfig) {
   if (filterConfig.freeFormWords && filterConfig.freeFormWords(rule, filterState) === false) {
     return false;
   }
@@ -93,7 +96,7 @@ export function ruleMatches(rule: PromRuleDTO, filterState: RulesFilter, filterC
 }
 
 export function namespaceFilter(
-  group: PromRuleGroupDTO,
+  group: PromRuleGroupLike,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
 ): boolean {
   if (filterState.namespace && !fuzzyMatches(group.file, filterState.namespace)) {
@@ -104,7 +107,7 @@ export function namespaceFilter(
 }
 
 export function groupNameFilter(
-  group: PromRuleGroupDTO,
+  group: PromRuleGroupLike,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
 ): boolean {
   if (filterState.groupName && !fuzzyMatches(group.name, filterState.groupName)) {
@@ -114,7 +117,7 @@ export function groupNameFilter(
   return true;
 }
 
-export function freeFormFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function freeFormFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.freeFormWords.length > 0) {
     const nameMatches = fuzzyMatches(rule.name, filterState.freeFormWords.join(' '));
     if (!nameMatches) {
@@ -125,7 +128,7 @@ export function freeFormFilter(rule: PromRuleDTO, filterState: RulesFilter): boo
   return true;
 }
 
-export function ruleNameFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function ruleNameFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.ruleName && !fuzzyMatches(rule.name, filterState.ruleName)) {
     return false;
   }
@@ -133,7 +136,7 @@ export function ruleNameFilter(rule: PromRuleDTO, filterState: RulesFilter): boo
   return true;
 }
 
-export function labelsFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function labelsFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.labels.length > 0) {
     const matchers = compact(filterState.labels.map(looseParseMatcher));
     const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels || {}, matchers);
@@ -153,7 +156,7 @@ export function labelsFilter(rule: PromRuleDTO, filterState: RulesFilter): boole
   return true;
 }
 
-export function ruleTypeFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function ruleTypeFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.ruleType && rule.type !== filterState.ruleType) {
     return false;
   }
@@ -161,7 +164,7 @@ export function ruleTypeFilter(rule: PromRuleDTO, filterState: RulesFilter): boo
   return true;
 }
 
-export function ruleStateFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function ruleStateFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.ruleState) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -174,7 +177,7 @@ export function ruleStateFilter(rule: PromRuleDTO, filterState: RulesFilter): bo
   return true;
 }
 
-export function ruleHealthFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function ruleHealthFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.ruleHealth && normalizeHealth(rule.health) !== filterState.ruleHealth) {
     return false;
   }
@@ -182,7 +185,7 @@ export function ruleHealthFilter(rule: PromRuleDTO, filterState: RulesFilter): b
   return true;
 }
 
-export function contactPointFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function contactPointFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.contactPoint) {
     if (!prometheusRuleType.grafana.alertingRule(rule)) {
       return false;
@@ -200,7 +203,7 @@ export function contactPointFilter(rule: PromRuleDTO, filterState: RulesFilter):
   return true;
 }
 
-export function dashboardUidFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function dashboardUidFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   if (filterState.dashboardUid) {
     if (!prometheusRuleType.alertingRule(rule)) {
       return false;
@@ -215,7 +218,7 @@ export function dashboardUidFilter(rule: PromRuleDTO, filterState: RulesFilter):
   return true;
 }
 
-export function pluginsFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function pluginsFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   // Plugins filter - hide plugin-provided rules when set to 'hide'
   if (filterState.plugins === 'hide' && isPluginProvidedRule(rule)) {
     return false;
@@ -224,7 +227,7 @@ export function pluginsFilter(rule: PromRuleDTO, filterState: RulesFilter): bool
   return true;
 }
 
-export function dataSourceNamesFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+export function dataSourceNamesFilter(rule: PromRuleCompact, filterState: RulesFilter): boolean {
   // Note: We can't implement these filters from reduceGroups because they rely on rulerRule property
   // which is not available in PromRuleDTO:
   // - contactPoint filter

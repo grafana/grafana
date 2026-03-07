@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import MoreButton from '../components/MoreButton';
 import { WithReturnButton } from '../components/WithReturnButton';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
+import { shouldUseCompactRulesResponse } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';
@@ -64,6 +65,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
     populateCache: needsClientSideFiltering ? false : true,
     limitAlerts: 0,
+    compact: shouldUseCompactRulesResponse(),
   });
 
   // If there are no filters we can match one frontend page to one API page.
@@ -97,14 +99,11 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
       contactPoint: undefined,
       ruleSource: undefined,
     });
-    return (group: PromRuleGroupDTO) => frontendFilter.groupMatches(group);
+    return (group: GrafanaPromRuleGroupDTO) => frontendFilter.groupMatches(group);
   }, [namespaceFilter, groupFilter]);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
-    FRONTED_GROUPED_PAGE_SIZE,
-    filterFn
-  );
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } =
+    useLazyLoadPrometheusGroups<GrafanaPromRuleGroupDTO>(groupsGenerator.current, FRONTED_GROUPED_PAGE_SIZE, filterFn);
 
   // Report state changes to parent using custom hook
   useDataSourceLoadingReporter(
