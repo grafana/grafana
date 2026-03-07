@@ -78,6 +78,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
+            applicabilityEnabled: config.featureToggles.perPanelNonApplicableDrilldowns || undefined,
             layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
@@ -176,6 +177,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
+      applicabilityEnabled: config.featureToggles.perPanelNonApplicableDrilldowns || undefined,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: 'combobox',
       collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
@@ -310,6 +312,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+      applicabilityEnabled: config.featureToggles.perPanelNonApplicableDrilldowns || undefined,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
     });
     // Switch variable

@@ -11,12 +11,14 @@ import {
   CustomVariableModel,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetDrilldownsApplicabilityOptions,
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateTime,
+  DrilldownsApplicability,
   getDefaultTimeRange,
   LegacyMetricFindQueryOptions,
   MetricFindValue,
@@ -569,6 +571,166 @@ export class PrometheusDatasource
   // It delegates to getTagKeys
   async getGroupByKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     return this.getTagKeys(options);
+  }
+
+  async getDrilldownsApplicability(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>
+  ): Promise<DrilldownsApplicability[]> {
+    const filters = options?.filters ?? [];
+    const groupByKeys = options?.groupByKeys ?? [];
+    const queries = options?.queries ?? [];
+    const timeRange = options?.timeRange ?? getDefaultTimeRange();
+    const hasScopes = (options?.scopes?.length ?? 0) > 0;
+
+    const results: DrilldownsApplicability[] = [];
+
+    // Query available label keys without filters to avoid a bad filter narrowing results to zero.
+    let availableLabelKeys: string[] = [];
+    try {
+      if (hasScopes) {
+        availableLabelKeys = await this.languageProvider.fetchSuggestions(timeRange, queries, options?.scopes);
+      } else {
+        const match = extractResourceMatcher(queries, []);
+        availableLabelKeys = await this.languageProvider.queryLabelKeys(timeRange, match);
+      }
+    } catch {
+      return [
+        ...filters.map((f) => ({ key: f.key, applicable: true, origin: f.origin })),
+        ...groupByKeys.map((k) => ({ key: k, applicable: true })),
+      ];
+    }
+
+    const availableLabelKeysSet = new Set(availableLabelKeys);
+
+    // Build precedence maps: user filters override origin filters with the same key,
+    // and for duplicate keys only the last occurrence wins.
+    const userFilterKeys = new Set<string>();
+    filters.forEach((f) => {
+      if (!f.origin) {
+        userFilterKeys.add(f.key);
+      }
+    });
+
+    const filterLastIndex = new Map<string, number>();
+    filters.forEach((f, i) => {
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
+      filterLastIndex.set(compositeKey, i);
+    });
+
+    // Only equality operators ('=', '=|') need value validation — negation operators
+    // are no-ops for non-existent values, and regex is too complex to validate here.
+    const VALUE_CHECK_OPERATORS = new Set(['=', '=|']);
+    const keysNeedingValueCheck = new Set<string>();
+
+    filters.forEach((f, i) => {
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
+      const isLastWithCompositeKey = filterLastIndex.get(compositeKey) === i;
+      const overriddenByUserFilter = !!f.origin && userFilterKeys.has(f.key);
+
+      if (
+        isLastWithCompositeKey &&
+        !overriddenByUserFilter &&
+        availableLabelKeysSet.has(f.key) &&
+        VALUE_CHECK_OPERATORS.has(f.operator)
+      ) {
+        keysNeedingValueCheck.add(f.key);
+      }
+    });
+
+    // Query values in parallel for keys that need value validation.
+    const valuesByKey = new Map<string, Set<string>>();
+    const metricMatch = extractResourceMatcher(queries, []);
+
+    await Promise.all(
+      Array.from(keysNeedingValueCheck).map(async (key) => {
+        try {
+          let values: string[];
+          if (hasScopes) {
+            values = await this.languageProvider.fetchSuggestions(timeRange, queries, options?.scopes, undefined, key);
+          } else {
+            values = await this.languageProvider.queryLabelValues(timeRange, key, metricMatch);
+          }
+          valuesByKey.set(key, new Set(values));
+        } catch {
+          // Skip value validation for this key on failure
+        }
+      })
+    );
+
+    // Build filter results: check key existence, precedence, and value validity.
+    filters.forEach((f, i) => {
+      const compositeKey = f.origin ? `${f.key}|${f.origin}` : f.key;
+      const isLastWithCompositeKey = filterLastIndex.get(compositeKey) === i;
+      const overriddenByUserFilter = !!f.origin && userFilterKeys.has(f.key);
+
+      if (!isLastWithCompositeKey || overriddenByUserFilter) {
+        results.push({
+          key: f.key,
+          applicable: false,
+          reason: 'Overridden by another filter with the same key',
+          origin: f.origin,
+        });
+        return;
+      }
+
+      if (!availableLabelKeysSet.has(f.key)) {
+        results.push({
+          key: f.key,
+          applicable: false,
+          reason: `Label "${f.key}" not found in the queried metrics`,
+          origin: f.origin,
+        });
+        return;
+      }
+
+      const availableValues = valuesByKey.get(f.key);
+      if (availableValues && VALUE_CHECK_OPERATORS.has(f.operator)) {
+        if (f.operator === '=' && !availableValues.has(f.value)) {
+          results.push({
+            key: f.key,
+            applicable: false,
+            reason: `Value "${f.value}" not found for label "${f.key}"`,
+            origin: f.origin,
+          });
+          return;
+        }
+
+        if (f.operator === '=|' && f.values) {
+          const hasAnyValidValue = f.values.some((v) => availableValues.has(v));
+          if (!hasAnyValidValue) {
+            results.push({
+              key: f.key,
+              applicable: false,
+              reason: `None of the selected values exist for label "${f.key}"`,
+              origin: f.origin,
+            });
+            return;
+          }
+        }
+      }
+
+      results.push({ key: f.key, applicable: true, origin: f.origin });
+    });
+
+    // GroupBy keys: only key existence matters, last occurrence wins for duplicates.
+    const groupByLastIndex = new Map<string, number>();
+    groupByKeys.forEach((k, i) => groupByLastIndex.set(k, i));
+
+    groupByKeys.forEach((k, i) => {
+      if (groupByLastIndex.get(k) !== i) {
+        results.push({ key: k, applicable: false, reason: 'Overridden by another group-by with the same key' });
+        return;
+      }
+
+      if (!availableLabelKeysSet.has(k)) {
+        results.push({ key: k, applicable: false, reason: `Label "${k}" not found in the queried metrics` });
+        return;
+      }
+
+      results.push({ key: k, applicable: true });
+    });
+
+    return results;
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
