@@ -1,4 +1,4 @@
-import { FormEvent, PureComponent } from 'react';
+import { FormEvent, memo, useCallback } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
 import { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data';
@@ -19,42 +19,50 @@ interface DispatchProps {
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
-class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
-    this.props.onPropChange({ propName, propValue, updateOptions: true });
-  };
+export const CustomVariableEditorUnconnected = memo(function CustomVariableEditorUnconnected({
+  onPropChange,
+  variable,
+}: Props) {
+  const handleSelectionOptionsChange = useCallback(
+    async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
+      onPropChange({ propName, propValue, updateOptions: true });
+    },
+    [onPropChange]
+  );
 
-  onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.props.onPropChange({
-      propName: 'query',
-      propValue: event.currentTarget.value,
-      updateOptions: true,
-    });
-  };
+  const handleQueryChange = useCallback(
+    (event: FormEvent<HTMLTextAreaElement>) => {
+      onPropChange({
+        propName: 'query',
+        propValue: event.currentTarget.value,
+        updateOptions: true,
+      });
+    },
+    [onPropChange]
+  );
 
-  render() {
-    return (
-      <CustomVariableForm
-        query={this.props.variable.query}
-        multi={this.props.variable.multi}
-        allValue={this.props.variable.allValue}
-        includeAll={this.props.variable.includeAll}
-        onQueryChange={this.onQueryChange}
-        onMultiChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
-        }
-        onIncludeAllChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
-        }
-        onAllValueChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
-        }
-      />
-    );
-  }
-}
+  return (
+    <CustomVariableForm
+      query={variable.query}
+      multi={variable.multi}
+      allValue={variable.allValue}
+      includeAll={variable.includeAll}
+      onQueryChange={handleQueryChange}
+      onMultiChange={(event) =>
+        handleSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
+      }
+      onIncludeAllChange={(event) =>
+        handleSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
+      }
+      onAllValueChange={(event) =>
+        handleSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
+      }
+    />
+  );
+});
+CustomVariableEditorUnconnected.displayName = 'CustomVariableEditorUnconnected';
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (_state, _ownProps) => ({});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeVariableMultiValue,
