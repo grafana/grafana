@@ -3,6 +3,7 @@ import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
@@ -91,3 +92,6 @@ if (window.performance) {
     window.performance.clearMeasures = jest.mocked<typeof window.performance.clearMeasures>(() => {});
   }
 }
+
+// Every userEvent interaction checks CSS `pointer-events` on each DOM target. This is a jsdom style computation per interaction.
+userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
