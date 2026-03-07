@@ -10758,24 +10758,14 @@
     },
     "forgot-password": "Забыли пароль?",
     "form": {
-      "confirmation-code": "Введите код подтверждения",
-      "confirmation-code-label": "Код подтверждения",
-      "confirmation-code-placeholder": "код подтверждения",
-      "email-label": "Адрес электронной почты",
-      "email-placeholder": "адрес электронной почты",
-      "email-required": "Введите адрес электронной почты",
-      "name-label": "Имя",
       "password-label": "Пароль",
       "password-placeholder": "пароль",
       "password-required": "Введите пароль",
-      "passwordless-username-label": "Имя пользователя",
       "submit-label": "Войти",
       "submit-loading-label": "Вход...",
       "username-label": "Адрес электронной почты или имя пользователя",
       "username-placeholder": "адрес электронной почты или имя пользователя",
-      "username-required": "Введите адрес электронной почты или имя пользователя",
-      "verify-email-label": "Отправить письмо с подтверждением",
-      "verify-email-loading-label": "Отправка письма…"
+      "username-required": "Введите адрес электронной почты или имя пользователя"
     },
     "layout": {
       "update-password": "Обновите пароль"

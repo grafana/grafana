@@ -10599,24 +10599,14 @@
     },
     "forgot-password": "忘记密码？",
     "form": {
-      "confirmation-code": "需要确认码",
-      "confirmation-code-label": "确认码",
-      "confirmation-code-placeholder": "确认码",
-      "email-label": "电子邮箱",
-      "email-placeholder": "电子邮件",
-      "email-required": "电子邮箱是必填项",
-      "name-label": "名称",
       "password-label": "密码",
       "password-placeholder": "密码",
       "password-required": "必须输入密码",
-      "passwordless-username-label": "用户名",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
       "username-placeholder": "电子邮件或用户名",
-      "username-required": "电子邮箱或用户名是必填项",
-      "verify-email-label": "发送验证电子邮件",
-      "verify-email-loading-label": "正在发送电子邮件…"
+      "username-required": "电子邮箱或用户名是必填项"
     },
     "layout": {
       "update-password": "更新密码"

@@ -10652,24 +10652,14 @@
     },
     "forgot-password": "Hai dimenticato la password?",
     "form": {
-      "confirmation-code": "Il codice di conferma è obbligatorio",
-      "confirmation-code-label": "Codice di conferma",
-      "confirmation-code-placeholder": "codice di conferma",
-      "email-label": "Email",
-      "email-placeholder": "email",
-      "email-required": "Email è un campo obbligatorio",
-      "name-label": "Nome",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password richiesta",
-      "passwordless-username-label": "Nome utente",
       "submit-label": "Accedi",
       "submit-loading-label": "Accesso in corso…",
       "username-label": "E-mail o nome utente",
       "username-placeholder": "email o nome utente",
-      "username-required": "Email o nome utente richiesti",
-      "verify-email-label": "Invia un'email di verifica",
-      "verify-email-loading-label": "Invio email in corso..."
+      "username-required": "Email o nome utente richiesti"
     },
     "layout": {
       "update-password": "Aggiorna la password"

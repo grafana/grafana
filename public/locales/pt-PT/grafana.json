@@ -10652,24 +10652,14 @@
     },
     "forgot-password": "Esqueceu-se da sua palavra-passe?",
     "form": {
-      "confirmation-code": "O código de confirmação é obrigatório",
-      "confirmation-code-label": "Código de confirmação",
-      "confirmation-code-placeholder": "Código de confirmação",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "O e-mail é obrigatório",
-      "name-label": "Nome",
       "password-label": "Palavra-passe",
       "password-placeholder": "palavra-passe",
       "password-required": "A palavra-passe é obrigatória",
-      "passwordless-username-label": "Nome de utilizador",
       "submit-label": "Iniciar sessão",
       "submit-loading-label": "A iniciar sessão...",
       "username-label": "E-mail ou nome de utilizador",
       "username-placeholder": "e-mail ou nome de utilizador",
-      "username-required": "É obrigatório o e-mail ou o nome de utilizador",
-      "verify-email-label": "Enviar um e-mail de verificação",
-      "verify-email-loading-label": "A enviar e-mail..."
+      "username-required": "É obrigatório o e-mail ou o nome de utilizador"
     },
     "layout": {
       "update-password": "Atualize a sua palavra-passe"
