@@ -83,7 +83,12 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
           ref={refCallback}
           {...getReferenceProps()}
           {...getFloatingProps()}
-          style={floatingStyles}
+          style={{
+            ...floatingStyles,
+            maxHeight: 'calc(100vh - 32px)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
           className={styles.tooltipWrapper}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
