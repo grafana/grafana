@@ -4,7 +4,12 @@ import { Trans } from '@grafana/i18n';
 import { LazyLoader, VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
+import { RepeatsUpdatedEvent } from '../edit-pane/shared';
+
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
@@ -109,13 +114,28 @@ export function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundP
   const [state, setState] = useState({ matchFound: false, isLoading: true });
 
   useEffect(() => {
-    // This effect fires before any child layout starts rendering and checking if their panels match the solo panel filter
-    // We need this polling here to check if any solo panel has matched or if any layout has marked the context as loading (for repeated panels)
-    const cancelTimeout = setInterval(() => {
-      setState({ matchFound: context.matchFound, isLoading: isAnyVariableLoading(dashboard) });
-    }, 500);
+    const checkState = () => {
+      setState({ matchFound: context.matchFound, isLoading: isStillLoading(dashboard) });
+    };
 
-    return () => clearInterval(cancelTimeout);
+    // Ensure all repeaters are activated so performRepeat() can run.
+    dashboard.state.body.activateRepeaters?.();
+
+    // Activate body panels that have LibraryPanelBehavior so the async
+    // library panel fetch can run. Without this, library panels in solo
+    // panel mode are never rendered (because they don't match yet), so
+    // their behavior never activates and the repeat migration never runs.
+    activateLibraryPanelBodies(dashboard);
+
+    const cancelTimeout = setInterval(checkState, 500);
+
+    // Re-check immediately when any repeat finishes processing.
+    const sub = dashboard.subscribeToEvent(RepeatsUpdatedEvent, checkState);
+
+    return () => {
+      clearInterval(cancelTimeout);
+      sub.unsubscribe();
+    };
   }, [context, dashboard]);
 
   if (state.matchFound || context.matchFound) {
@@ -143,6 +163,22 @@ export function SoloPanelNotFound({ singleMatch, dashboard }: SoloPanelNotFoundP
   );
 }
 
+export function isStillLoading(scene: DashboardScene): boolean {
+  if (isAnyVariableLoading(scene)) {
+    return true;
+  }
+
+  if (hasAnyPendingRepeats(scene)) {
+    return true;
+  }
+
+  if (hasAnyLibraryPanelLoading(scene)) {
+    return true;
+  }
+
+  return false;
+}
+
 function isAnyVariableLoading(scene: DashboardScene) {
   const variables = scene.state.$variables;
   if (!variables || !variables.isActive) {
@@ -150,4 +186,49 @@ function isAnyVariableLoading(scene: DashboardScene) {
   }
 
   return variables.state.variables.some((variable) => variable.state.loading);
+}
+
+/**
+ * Checks whether any repeating grid item still has an unprocessed repeat.
+ * A grid item with `variableName` set but `repeatedPanels` still undefined
+ * means `performRepeat()` hasn't completed yet.
+ */
+export function hasAnyPendingRepeats(scene: DashboardScene): boolean {
+  return scene.state.body.getVizPanels().some((panel) => {
+    const parent = panel.parent;
+    if (parent instanceof DashboardGridItem || parent instanceof AutoGridItem) {
+      return !!parent.state.variableName && parent.state.repeatedPanels === undefined;
+    }
+    return false;
+  });
+}
+
+/**
+ * Checks whether any grid item contains a library panel whose content
+ * hasn't loaded yet. The library panel may carry repeat configuration
+ * that only gets migrated to the grid item after loading completes.
+ */
+export function hasAnyLibraryPanelLoading(scene: DashboardScene): boolean {
+  return scene.state.body.getVizPanels().some(hasUnloadedLibraryPanelBehavior);
+}
+
+/**
+ * In solo panel mode the renderer only mounts panels that already match
+ * the filter, which means library panels whose repeat config hasn't been
+ * fetched yet are never activated. Force-activate each body VizPanel
+ * that carries a LibraryPanelBehavior so the async fetch + repeat
+ * migration can proceed.
+ */
+function activateLibraryPanelBodies(scene: DashboardScene): void {
+  for (const panel of scene.state.body.getVizPanels()) {
+    if (hasUnloadedLibraryPanelBehavior(panel) && !panel.isActive) {
+      panel.activate();
+    }
+  }
+}
+
+function hasUnloadedLibraryPanelBehavior(panel: VizPanel): boolean {
+  return !!panel.state.$behaviors?.some(
+    (b) => b instanceof LibraryPanelBehavior && !b.state.isLoaded
+  );
 }
