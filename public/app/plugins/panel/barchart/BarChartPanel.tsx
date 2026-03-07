@@ -19,7 +19,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
-import { prepConfig, prepSeries } from './utils';
+import { getFieldKeyLabel, prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
@@ -175,10 +175,12 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
                 if (xField.config.filterable && onAddAdHocFilter != null) {
+                  const value = String(xField.values[dataIdx]);
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,
                     operator: FILTER_FOR_OPERATOR,
-                    value: String(xField.values[dataIdx]),
+                    value,
+                    keyLabel: getFieldKeyLabel(xField),
                   };
 
                   const adHocFilters: AdHocFilterModel[] = [
