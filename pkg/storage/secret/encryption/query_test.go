@@ -56,6 +56,19 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlEncryptedValueUpdateBulk: {
+				{
+					Name: "update_bulk_two_rows_for_same_namespace",
+					Data: &updateBulkEncryptedValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Rows: []bulkUpdateRow{
+							{Name: "value_1", Version: 1, EncryptedData: []byte("secret_1"), DataKeyID: "key_1", Updated: 5679},
+							{Name: "value_2", Version: 2, EncryptedData: []byte("secret_2"), DataKeyID: "key_2", Updated: 5680},
+						},
+					},
+				},
+			},
 			sqlEncryptedValueDelete: {
 				{
 					Name: "delete",
