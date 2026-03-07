@@ -30,6 +30,7 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
         name: t('stat.name-text-mode', 'Text mode'),
         description: t('stat.description-text-mode', 'Control if name and value is displayed or just name'),
         category: mainCategory,
+        quickEdit: true,
         settings: {
           options: [
             { value: BigValueTextMode.Auto, label: t('stat.text-mode-options.label-auto', 'Auto') },
@@ -64,6 +65,7 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
         name: t('stat.name-color-modcolor-mode-options.label', 'Color mode'),
         defaultValue: BigValueColorMode.Value,
         category: mainCategory,
+        quickEdit: true,
         settings: {
           options: [
             { value: BigValueColorMode.None, label: t('stat.color-mode-options.label-none', 'None') },
@@ -84,6 +86,7 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
         name: t('stat.name-graph-mode', 'Graph mode'),
         description: t('stat.description-graph-mode', 'Stat panel graph / sparkline mode'),
         category: mainCategory,
+        quickEdit: true,
         defaultValue: defaultOptions.graphMode,
         settings: {
           options: [

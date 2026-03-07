@@ -16,6 +16,7 @@ export const plugin = new PanelPlugin<Options>(TextPanel)
         path: 'mode',
         name: t('text.name-mode', 'Mode'),
         category,
+        quickEdit: true,
         settings: {
           options: [
             { value: TextMode.Markdown, label: t('text.mode-options.label-markdown', 'Markdown') },
@@ -57,6 +58,7 @@ export const plugin = new PanelPlugin<Options>(TextPanel)
         path: 'content',
         name: t('text.name-content', 'Content'),
         category,
+        quickEdit: true,
         editor: TextPanelEditor,
         defaultValue: defaultOptions.content,
       });
