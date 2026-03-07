@@ -1,8 +1,7 @@
 import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
-import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { AppEvents, dateMath, dateTime, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -78,7 +77,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       'kbn',
       'dateMath',
       '_',
-      'moment',
+      'dateTime',
       'window',
       'document',
       '$',
@@ -91,7 +90,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       kbn,
       dateMath,
       _,
-      moment,
+      dateTime,
       window,
       document,
       $,

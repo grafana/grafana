@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import moment, { Moment } from 'moment/moment';
 import { ChangeEvent, useState } from 'react';
 
-import { dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, isDateTime, SelectableValue } from '@grafana/data';
+import { dateTime, DateTime, getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   Button,
@@ -45,20 +44,19 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     setEditing(!isEditing);
   };
 
-  const getTime = (time: string | undefined): Moment | undefined => {
+  const getTime = (time: string | undefined): DateTime | undefined => {
     if (!time) {
       return undefined;
     }
 
-    const date = moment();
+    const match = time.split(':');
+    const hour = parseInt(match[0], 10);
+    const minute = parseInt(match[1], 10);
 
-    if (time) {
-      const match = time.split(':');
-      date.set('hour', parseInt(match[0], 10));
-      date.set('minute', parseInt(match[1], 10));
-    }
-
-    return date;
+    const dt = dateTime();
+    dt.set('hour', hour);
+    dt.set('minute', minute);
+    return dt;
   };
 
   const getToPlaceholder = () => {
@@ -85,7 +83,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     return timezone;
   };
 
-  const onTimeChange = (v: Moment | undefined, field: string) => {
+  const onTimeChange = (v: DateTime | undefined, field: string) => {
     const time = v ? v.format('HH:mm') : undefined;
     if (field === 'from') {
       onChange({ ...value, from: time });
@@ -185,8 +183,8 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 width={20}
               />
               <TimeOfDayPicker
-                value={isDateTime(from) ? from : undefined}
-                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
+                value={from}
+                onChange={(v) => onTimeChange(v, 'from')}
                 allowEmpty={true}
                 placeholder="HH:mm"
                 size="sm"
@@ -206,8 +204,8 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 />
               )}
               <TimeOfDayPicker
-                value={isDateTime(to) ? to : undefined}
-                onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'to')}
+                value={to}
+                onChange={(v) => onTimeChange(v, 'to')}
                 allowEmpty={true}
                 placeholder="HH:mm"
                 size="sm"

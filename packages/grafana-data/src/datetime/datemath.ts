@@ -152,7 +152,7 @@ export function parseDateMath(
   fiscalYearStartMonth = 0
 ): DateTime | undefined {
   const strippedMathString = mathString.replace(/\s/g, '');
-  const result = dateTime(time);
+  let result = dateTime(time);
   let i = 0;
   const len = strippedMathString.length;
 
@@ -207,18 +207,18 @@ export function parseDateMath(
     if (isDurationUnit(unit)) {
       if (type === 0) {
         if (isFiscal) {
-          roundToFiscal(fiscalYearStartMonth, result, unit, roundUp);
+          result = roundToFiscal(fiscalYearStartMonth, result, unit, roundUp) ?? result;
         } else {
           if (roundUp) {
-            result.endOf(unit);
+            result = result.endOf(unit);
           } else {
-            result.startOf(unit);
+            result = result.startOf(unit);
           }
         }
       } else if (type === 1) {
-        result.add(num, unit);
+        result = result.add(num, unit);
       } else if (type === 2) {
-        result.subtract(num, unit);
+        result = result.subtract(num, unit);
       }
     } else {
       return undefined;
@@ -231,19 +231,17 @@ export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: st
   switch (unit) {
     case 'y':
       if (roundUp) {
-        roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(11, 'M').endOf('M');
+        return roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(11, 'M').endOf('M');
       } else {
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 12, 'M').startOf('M');
+        return dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 12, 'M').startOf('M');
       }
-      return dateTime;
     case 'Q':
       if (roundUp) {
-        roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(2, 'M').endOf('M');
+        return roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(2, 'M').endOf('M');
       } else {
         // why + 12? to ensure this number is always a positive offset from fyStartMonth
-        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 3, 'M').startOf('M');
+        return dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 3, 'M').startOf('M');
       }
-      return dateTime;
     default:
       return undefined;
   }

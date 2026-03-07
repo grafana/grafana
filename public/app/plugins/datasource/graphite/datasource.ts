@@ -1,5 +1,4 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
-import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { coerce, gte, SemVer, valid } from 'semver';
@@ -629,9 +628,9 @@ export class GraphiteDatasource
           return date;
         }
 
-        return moment(parsedDate.toDate());
+        return dateTime(parsedDate.toDate());
       } else {
-        return moment(date.toDate());
+        return dateTime(date.toDate());
       }
     };
 
@@ -646,11 +645,11 @@ export class GraphiteDatasource
     // to guarantee that we get all the data that
     // exists for the specified range
     if (roundUp) {
-      if (parsedDate.get('s')) {
+      if (parsedDate.format('s') !== '0') {
         parsedDate.add(1, 's');
       }
     } else if (roundUp === false) {
-      if (parsedDate.get('s')) {
+      if (parsedDate.format('s') !== '0') {
         parsedDate.subtract(1, 's');
       }
     }

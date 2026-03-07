@@ -48,8 +48,8 @@ describe('TimeRangeInput', () => {
     await user.click(await screen.findByText(/apply time range/i));
 
     expect(onChange).toHaveBeenCalledWith({
-      from: 'Mon Jan 01 2024 00:00:00 GMT+0000',
-      to: 'Wed Feb 28 2024 23:59:59 GMT+0000',
+      from: 'Mon, 01 Jan 2024 00:00:00 GMT',
+      to: 'Wed, 28 Feb 2024 11:59:59 GMT',
     });
   });
 });

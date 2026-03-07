@@ -1,6 +1,4 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { Moment } from 'moment-timezone';
-
 import { formatDate } from '@grafana/i18n';
 
 import { TimeZone } from '../types/time';
@@ -8,7 +6,9 @@ import { getFeatureToggle } from '../utils/featureToggles';
 
 import { DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { DateTime, DateTimeInput, toUtc, dateTimeAsMoment, dateTimeForTimeZone, dateTime } from './moment_wrapper';
+import { getZone } from './timezones';
+import dayjs from 'dayjs';
 
 /**
  * Converts a Grafana DateTimeInput to a plain Javascript Date object.
@@ -34,7 +34,7 @@ export function toIANATimezone(grafanaTimezone: string) {
     return undefined;
   }
 
-  const zone = moment.tz.zone(grafanaTimezone);
+  const zone = getZone(grafanaTimezone);
   if (!zone) {
     // If the timezone is invalid, we default to the browser's timezone
     return undefined;
@@ -136,7 +136,10 @@ export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc, options?) =>
  * @public
  */
 export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).fromNow();
+  {
+    const date = toTz(dateInUtc, getTimeZone(options));
+    return date.isValid() ? date.fromNow() : 'Invalid date';
+  };
 
 /**
  * Helper function to format date and time according to the Grafana default formatting, but it
@@ -180,18 +183,22 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
   return options?.format ?? systemDateFormats.fullDate;
 };
 
-const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
+const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): DateTime => {
+  if (dayjs.isDayjs(dateInUtc) && !dateInUtc.isValid()) {
+    return dateInUtc;
+  }
+
   const date = dateInUtc;
-  const zone = moment.tz.zone(timeZone);
+  const zone = getZone(timeZone);
 
   if (zone && zone.name) {
-    return dateTimeAsMoment(toUtc(date)).tz(zone.name);
+    return dateTimeForTimeZone(zone.name, toUtc(date).toDate());
   }
 
   switch (timeZone) {
     case 'utc':
-      return dateTimeAsMoment(toUtc(date));
+      return toUtc(date);
     default:
-      return dateTimeAsMoment(toUtc(date)).local();
+      return dateTime(toUtc(date).toDate());
   }
 };

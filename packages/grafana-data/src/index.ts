@@ -360,7 +360,6 @@ export * as rangeUtil from './datetime/rangeutil';
 export { type DateTimeOptions, setTimeZoneResolver, type TimeZoneResolver, getTimeZone } from './datetime/common';
 export {
   ISO_8601,
-  type DateTimeBuiltinFormat,
   type DateTimeInput,
   type FormatInput,
   type DurationInput,
@@ -381,6 +380,7 @@ export {
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,
+  guessTimeZone,
 } from './datetime/moment_wrapper';
 export {
   InternalTimeZones,
