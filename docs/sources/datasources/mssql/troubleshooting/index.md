@@ -15,22 +15,6 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Microsoft SQL Server data source issues
 weight: 400
-refs:
-  configure-mssql-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure/
-  mssql-query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
 ---
 
 # Troubleshoot Microsoft SQL Server data source issues
@@ -53,7 +37,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 1. Check that the host and port are correct in the data source configuration. The default SQL Server port is `1433`.
 1. Ensure there are no firewall rules blocking the connection between Grafana and SQL Server.
 1. Verify that SQL Server is configured to allow remote connections.
-1. For Grafana Cloud, ensure you have configured [Private data source connect](ref:private-data-source-connect) if your SQL Server instance is not publicly accessible.
+1. For Grafana Cloud, ensure you have configured [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if your SQL Server instance is not publicly accessible.
 
 ### Connection timeout
 
@@ -172,7 +156,7 @@ Kerberos authentication is not supported in Grafana Cloud.
    - Verify the app registration is configured to issue both Access Tokens and ID Tokens.
    - Check that the required API permissions are configured (`user_impersonation` for Azure SQL).
 
-For detailed Azure authentication configuration, refer to [Configure the Microsoft SQL Server data source](ref:configure-mssql-data-source).
+For detailed Azure authentication configuration, refer to [Configure the Microsoft SQL Server data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure/).
 
 ## Query errors
 
@@ -247,7 +231,7 @@ These errors occur when there are issues with query syntax or configuration.
 1. Verify the stored procedure parameters are being passed correctly.
 1. Test the stored procedure directly in SQL Server Management Studio with the same parameters.
 
-For more information on using stored procedures, refer to the [query editor documentation](ref:mssql-query-editor).
+For more information on using stored procedures, refer to the [query editor documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/).
 
 ## Performance issues
 
@@ -322,7 +306,7 @@ If you continue to experience issues after following this troubleshooting guide:
 1. Review the [Grafana GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
 1. Enable debug logging in Grafana to capture detailed error information.
 1. Check SQL Server logs for additional error details.
-1. Contact Grafana Support if you're an Enterprise or Cloud customer.
+1. Contact [Grafana Support](https://grafana.com/contact/) if you're an Enterprise or Cloud customer.
 
 When reporting issues, include:
 

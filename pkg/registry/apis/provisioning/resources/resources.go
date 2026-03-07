@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 var (
@@ -26,6 +26,50 @@ var (
 	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
+
+// wrapAsValidationErrorIfNeeded wraps certain errors as ResourceValidationError
+// to treat them as warnings rather than hard errors. This includes:
+// - Kubernetes field validation errors
+// - Kubernetes API BadRequest errors (which often wrap dashboard/resource validation errors)
+// - Dashboard validation errors (all DashboardErr types)
+// - Duplicate resource errors
+// - Resource already in repository errors
+func wrapAsValidationErrorIfNeeded(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// Check if it's already a validation error
+	var validationErr *ResourceValidationError
+	if errors.As(err, &validationErr) {
+		return err
+	}
+
+	// Check if it's a field validation error (e.g., missing name)
+	var fieldErr *field.Error
+	if errors.As(err, &fieldErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a Kubernetes API BadRequest error (these are usually validation errors)
+	// Dashboard validation errors are wrapped as BadRequest by the dashboard API
+	if apierrors.IsBadRequest(err) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
+	var dashboardErr dashboardaccess.DashboardErr
+	if errors.As(err, &dashboardErr) {
+		return NewResourceValidationError(err)
+	}
+
+	// Check if it's a duplicate name error or already in repository error
+	if errors.Is(err, ErrDuplicateName) || errors.Is(err, ErrAlreadyInRepository) {
+		return NewResourceValidationError(err)
+	}
+
+	return err
+}
 
 type WriteOptions struct {
 	Path string
@@ -226,7 +270,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parseSpan.End()
 
 	if parsed.Obj.GetName() == "" {
-		return "", schema.GroupVersionKind{}, ErrMissingName
+		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	// Check if the resource already exists
@@ -237,15 +281,22 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 
 	if existing, found := r.findResource(id); found {
-		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
+		return "", parsed.GVK, NewResourceValidationError(
+			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName),
+		)
 	}
 	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
-		// Make sure the parent folders exist
+		// Make sure the parent folders exist.
+		// For _folder.json the resource IS the folder, so its parent is one level above.
+		folderPath := path
+		if IsFolderMetadataFile(path) {
+			folderPath = safepath.Dir(safepath.Dir(path))
+		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, path)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()
@@ -263,6 +314,8 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	err = parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
+		// Wrap resource validation errors (like dashboard refresh interval) as warnings
+		err = wrapAsValidationErrorIfNeeded(err)
 	}
 	runSpan.End()
 
@@ -289,14 +342,14 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if obj == nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+	obj, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, err
 	}
 
 	objName := obj.GetName()
 	if objName == "" {
-		return "", "", schema.GroupVersionKind{}, ErrMissingName
+		return "", "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
 	client, _, err := r.clients.ForKind(ctx, *gvk)

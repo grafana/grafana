@@ -1,15 +1,16 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, TextLink } from '@grafana/ui';
+import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { commonAlertProps } from '../Dashboards/DashboardPreviewBanner';
+import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
 interface Props {
-  prParam?: string;
+  /* PR url either from url param or BE response. It is used to open the pull request in a new tab. */
+  prURL?: string;
   isNewPr?: boolean;
   behindBranch?: boolean;
   repoUrl?: string;
@@ -22,14 +23,33 @@ export type PreviewBranchInfo = {
   repoBaseUrl?: string;
 };
 
+const commonAlertProps = {
+  severity: 'info' as const,
+  style: { flex: 0 } as const,
+};
+
+function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch: string; repoType?: string }) {
+  const link = getBranchUrl(baseUrl, branch, repoType);
+
+  if (link.length) {
+    return (
+      <TextLink href={link} external>
+        {branch}
+      </TextLink>
+    );
+  }
+
+  return <Text color="info">{branch}</Text>;
+}
+
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
   const { repoType } = usePullRequestParam();
-  const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
+  const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
 
   const titleText = isNewPr
     ? t(
@@ -98,31 +118,36 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl, b
           <Icon name="external-link-alt" />
         </Stack>
       }
-      onRemove={prParam ? () => window.open(textUtil.sanitizeUrl(prParam), '_blank') : undefined}
+      onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
       <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
         The rest of Grafana users in your organization will still see the current version saved to configured default
         branch until this branch is merged
       </Trans>
 
-      {/* when repo type is not local, we show branch information */}
+      {/* when the repo type is a valid provider, we show branch information */}
       {showBranchInfo(repoType, branchInfo) && (
         <Box marginTop={1}>
           <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>{' '}
-          <TextLink href={getBranchUrl(repoBaseUrl!, targetBranch!, repoType)} external>
-            {targetBranch}
-          </TextLink>{' '}
-          {'\u2192'}{' '}
-          <TextLink href={getBranchUrl(repoBaseUrl!, configuredBranch!, repoType)} external>
-            {configuredBranch}
-          </TextLink>
+          {/* branch that changes pushed to */}
+          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
+          {'\u2192'} {/* Target branch (configured branch) */}
+          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
         </Box>
       )}
     </Alert>
   );
 }
 
-function showBranchInfo(repoType: string | undefined, branchInfo?: PreviewBranchInfo): boolean {
+function showBranchInfo(
+  repoType: string | undefined,
+  branchInfo?: PreviewBranchInfo
+): branchInfo is Required<PreviewBranchInfo> {
   const { targetBranch, configuredBranch, repoBaseUrl } = branchInfo || {};
-  return repoType !== 'local' && !!targetBranch && !!configuredBranch && !!repoBaseUrl;
+
+  if (isValidRepoType(repoType) && isGitProvider(repoType)) {
+    return !!targetBranch && !!configuredBranch && !!repoBaseUrl;
+  }
+
+  return false;
 }

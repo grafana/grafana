@@ -1,6 +1,7 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -58,8 +59,7 @@ import {
   useUpdateFolderMutation,
   Folder,
   CreateFolderApiArg,
-  useReplaceFolderMutation,
-  ReplaceFolderApiArg,
+  UpdateFolderApiArg,
   useGetAffectedItemsQuery,
   FolderInfo,
   ObjectMeta,
@@ -79,7 +79,7 @@ function getFolderUrl(uid: string, title: string): string {
  *
  * (owner references will only be populated with app platform API + team folders functionality)
  */
-type CombinedFolder = FolderDTO & {
+export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
 
@@ -150,7 +150,14 @@ export async function getFolderByUidFacade(uid: string) {
     const [legacyFolderResponse, folderResponse, parentsResponse] = responses;
 
     if (!folderResponse?.data || !legacyFolderResponse?.data || !parentsResponse?.data) {
-      throw new Error('One of the folder responses is undefined');
+      // Throw the original error (with HTTP status) so callers can detect e.g. 403 and
+      // gracefully continue — this handles the case when a user has access to a dashboard
+      // but not to the containing folder.
+      const error =
+        ('error' in folderResponse ? folderResponse.error : undefined) ||
+        legacyFolderResponse?.error ||
+        ('error' in parentsResponse ? parentsResponse.error : undefined);
+      throw error || new Error('One of the folder responses is undefined');
     }
 
     const userKeys = getUserKeys(folderResponse.data);
@@ -281,6 +288,7 @@ export function useDeleteFolderMutationFacade() {
       // Before this was done in backend srv automatically because the old API sent a message wiht 200 request. see
       // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
       notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
+      invalidateQuotaUsage(dispatch);
     }
     return result;
   };
@@ -321,6 +329,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
     }
 
     refresh({ parentsOf: folderUIDs });
+    invalidateQuotaUsage(dispatch);
     return { data: undefined };
   };
 }
@@ -426,6 +435,7 @@ export function useCreateFolder() {
     const result = await createFolder(apiPayload);
     refresh({ childrenOf: folder.parentUid });
     deletedDashboardsCache.clear();
+    invalidateQuotaUsage(dispatch);
 
     return {
       ...result,
@@ -437,7 +447,7 @@ export function useCreateFolder() {
 }
 
 export function useUpdateFolder() {
-  const [updateFolder, result] = useReplaceFolderMutation();
+  const [updateFolder, result] = useUpdateFolderMutation();
   const legacyHook = useLegacySaveFolderMutation();
   const refresh = useRefreshFolders();
 
@@ -446,9 +456,9 @@ export function useUpdateFolder() {
   }
 
   const updateFolderAppPlatform = async (folder: Pick<FolderDTO, 'uid' | 'title' | 'version' | 'parentUid'>) => {
-    const payload: ReplaceFolderApiArg = {
+    const payload: UpdateFolderApiArg = {
       name: folder.uid,
-      folder: {
+      patch: {
         spec: { title: folder.title },
         metadata: {
           name: folder.uid,

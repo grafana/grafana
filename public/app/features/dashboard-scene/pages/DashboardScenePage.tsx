@@ -32,7 +32,8 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  // User by /admin/provisioning/:slug/dashboard/preview/* to load dashboards based on their file path in a remote repository
+  // Used by /admin/provisioning/:slug/dashboard/preview/* to load dashboards based on their file path in a remote repository
+  // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
   const prevMatch = usePrevious({ params });
   const stateManager = getDashboardScenePageStateManager();
@@ -46,7 +47,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
-        uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
+        uid:
+          (route.routeName === DashboardRoutes.Provisioning || route.routeName === DashboardRoutes.AssistantPreview
+            ? path
+            : uid) ?? '',
         type,
         slug,
         route: route.routeName as DashboardRoutes,

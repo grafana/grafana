@@ -33,7 +33,7 @@ lineage: schemas: [{
 			revision?: int64
 
 			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-			gnetId?: string
+			gnetId?: int64
 
 			// Tags associated with dashboard.
 			tags?: [...string]
@@ -237,6 +237,8 @@ lineage: schemas: [{
 			text: string | [...string]
 			// Value of the option
 			value: string | [...string]
+			// Additional properties for multi-props variables
+			properties?: {[string]: string}
 		} @cuetsy(kind="interface")
 
 		// Options to config when to refresh a variable
@@ -299,6 +301,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			origin?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 
@@ -775,7 +779,7 @@ lineage: schemas: [{
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// Unit a field should use. The unit you select is applied to all fields except time.
-			// You can use the units ID availables in Grafana or a custom unit.
+			// You can use the units ID available in Grafana or a custom unit.
 			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 			// As custom unit, you can use the following formats:
 			// `suffix:<suffix>` for custom unit that should go after value.
@@ -846,6 +850,14 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			// The plugin type-id
+			group: string
+		} 
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

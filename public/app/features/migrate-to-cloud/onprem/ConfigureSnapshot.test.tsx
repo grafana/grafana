@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ResourceDependencyDto } from '../api';
+import { ResourceDependencyDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
 
 import { ConfigureSnapshot } from './ConfigureSnapshot';
 import { ResourceTypeId } from './resourceDependency';

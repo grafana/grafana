@@ -21,6 +21,7 @@ teamv0alpha1: teamKind & {
 	routes: {
 		"/groups": {
 			"GET": {
+				name: "getTeamGroups",
 				response: {
 					#ExternalGroupMapping: {
 						name: string
@@ -29,6 +30,20 @@ teamv0alpha1: teamKind & {
 					items: [...#ExternalGroupMapping]
 				}
 				responseMetadata: objectMeta: false
+			}
+		}
+		"/members": {
+			"GET": {
+				name: "getTeamMembers",
+				response: {
+					#TeamUser: {
+						team: string
+						user: string
+						permission: string
+						external: bool
+					}
+					items: [...#TeamUser]
+				}
 			}
 		}
 	}

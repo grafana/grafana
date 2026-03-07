@@ -42,6 +42,7 @@ import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STAT
 import { SpanLinkFunc } from '../../types/links';
 import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
@@ -57,12 +58,18 @@ const useResourceAttributesExtensionLinks = ({
   datasourceType,
   datasourceUid,
   timeRange,
+  traceID,
+  spanID,
+  spanStartTime,
 }: {
   process: TraceProcess;
   spanTags: TraceKeyValuePair[];
   datasourceType: string;
   datasourceUid: string;
   timeRange: TimeRange;
+  traceID: string;
+  spanID: string;
+  spanStartTime: number;
 }) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
@@ -92,8 +99,11 @@ const useResourceAttributesExtensionLinks = ({
         type: datasourceType,
         uid: datasourceUid,
       },
+      traceID,
+      spanID,
+      spanStartTime,
     };
-  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID, spanStartTime]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -314,7 +324,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'svc',
       label: t('explore.span-detail.overview-items.label.service', 'Service:'),
-      value: process.serviceName,
+      value: getServiceDisplayName(process),
     },
     {
       key: 'duration',
@@ -392,6 +402,9 @@ export default function SpanDetail(props: SpanDetailProps) {
     datasourceType,
     datasourceUid,
     timeRange,
+    traceID,
+    spanID,
+    spanStartTime: startTime,
   });
 
   const linksComponent = getSpanDetailLinkButtons({
@@ -561,7 +574,7 @@ const CardsContainer = ({
   mainContainerRef,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement>;
+  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
   const styles = useStyles2(getStyles);
 

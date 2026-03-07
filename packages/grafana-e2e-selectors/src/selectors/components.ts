@@ -56,8 +56,14 @@ export const versionedComponents = {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
+    bodyContainer: {
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
   },
   Sidebar: {
+    container: {
+      '12.4.0': 'data-testid Sidebar container',
+    },
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
@@ -86,6 +92,15 @@ export const versionedComponents = {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
   TimePicker: {
+    moveBackwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-backward-button',
+    },
+    moveForwardButton: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-move-forward-button',
+    },
+    zoomOut: {
+      '12.4.0': 'data-testid explore-toolbar-timepicker-zoom-out-button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },
@@ -545,6 +560,12 @@ export const versionedComponents = {
         Container: {
           '12.4.0': 'data-testid gauge container',
         },
+        Track: {
+          '13.0.0': 'data-testid gauge track',
+        },
+        Bar: {
+          '13.0.0': 'data-testid gauge bar',
+        },
       },
     },
   },
@@ -673,6 +694,9 @@ export const versionedComponents = {
       },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
+      },
+      addAnnotationButton: {
+        '12.6.0': 'data-testid add annotation button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
@@ -1288,6 +1312,9 @@ export const versionedComponents = {
     submit: {
       [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-submit',
     },
+    floatGridItemsWarning: {
+      [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-float-grid-items-warning',
+    },
   },
   PanelAlertTabContent: {
     content: {
@@ -1311,6 +1338,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    toggle: {
+      [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-toggle-for-${title}`,
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,

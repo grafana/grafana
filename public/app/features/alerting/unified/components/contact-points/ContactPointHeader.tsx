@@ -172,11 +172,11 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{ count }} notification policy', {
+  const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{count}} notification policies', {
     count: numberOfPolicies,
   });
 
-  const referencedByRulesText = t('alerting.contact-points.used-by-rules', 'Used by {{ count }} alert rule', {
+  const referencedByRulesText = t('alerting.contact-points.used-by-rules', 'Used by {{count}} alert rules', {
     count: numberOfRules,
   });
 

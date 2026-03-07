@@ -1,4 +1,4 @@
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph } from '@grafana/scenes';
+import { SceneObject, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
@@ -6,7 +6,7 @@ import {
 } from '@grafana/ui';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { getRepeatCloneSourceKey } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementSelection } from './ElementSelection';
@@ -53,6 +53,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
     this.panelEditAction = editAction;
+  }
+
+  public clone(withState: Partial<DashboardEditPaneState>): this {
+    // Clone without any undo/redo history
+    return super.clone({ ...withState, redoStack: [], undoStack: [] });
   }
 
   private onActivate() {
@@ -209,14 +214,21 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
     let obj = sceneGraph.findByKey(this, element.id);
-    if (obj) {
-      // Do not select repeat clones or their children
-      if (isRepeatCloneOrChildOf(obj)) {
+    if (!obj) {
+      console.warn('Cannot find element by key="%s"!', element.id);
+      return;
+    }
+
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    if (sourceKey) {
+      obj = sceneGraph.findByKey(this, sourceKey);
+      if (!obj) {
+        console.warn('Cannot find element by source key="%s"!', sourceKey);
         return;
       }
-
-      this.selectObject(obj, element.id, options);
     }
+
+    this.selectObject(obj, obj.state.key!, options);
   }
 
   public getSelection(): SceneObject | SceneObject[] | undefined {

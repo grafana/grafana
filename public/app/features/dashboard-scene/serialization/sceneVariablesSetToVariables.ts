@@ -28,7 +28,7 @@ import {
   AdHocFilterWithLabels,
   SwitchVariableKind,
   defaultIntervalVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -55,6 +55,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
   const variables: VariableModel[] = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -93,6 +99,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         staticOptions: variable.state.staticOptions?.map((option) => ({
           text: option.label,
           value: String(option.value),
+          ...(option.properties && { properties: option.properties }),
         })),
         staticOptionsOrder: variable.state.staticOptionsOrder,
       };
@@ -284,6 +291,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
     value: String(o.value),
     text: o.label,
     selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+    ...(o.properties && { properties: o.properties }),
   }));
 }
 
@@ -315,6 +323,12 @@ export function sceneVariablesSetToSchemaV2Variables(
   > = [];
 
   for (const variable of set.state.variables) {
+    // Skipping default variables
+    // (Default variables don't get persisted to the JSON schema.)
+    if (variable.state.origin !== undefined) {
+      continue;
+    }
+
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
@@ -392,6 +406,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           staticOptions: variable.state.staticOptions?.map((option) => ({
             text: option.label,
             value: String(option.value),
+            ...(option.properties && { properties: option.properties }),
           })),
           staticOptionsOrder: variable.state.staticOptionsOrder,
         },
@@ -592,5 +607,5 @@ export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): A
 }
 
 export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system';
+  return variable.state.type !== 'system' && variable.state.origin === undefined;
 }

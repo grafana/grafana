@@ -426,7 +426,7 @@ func TestPrometheus_executedQueryString(t *testing.T) {
 
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0].Meta)
-		require.Equal(t, "Expr: test_metric\nStep: 2m0s", res[0].Meta.ExecutedQueryString)
+		require.Equal(t, "Expr: test_metric\nStep: 5m0s", res[0].Meta.ExecutedQueryString)
 	})
 
 	t.Run("executedQueryString should match expected format with intervalMs 900_000", func(t *testing.T) {
@@ -473,7 +473,7 @@ func TestPrometheus_executedQueryString(t *testing.T) {
 
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0].Meta)
-		require.Equal(t, "Expr: test_metric\nStep: 2m0s", res[0].Meta.ExecutedQueryString)
+		require.Equal(t, "Expr: test_metric\nStep: 15m0s", res[0].Meta.ExecutedQueryString)
 	})
 }
 

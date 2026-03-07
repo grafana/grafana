@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -159,7 +161,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -217,7 +219,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -273,7 +275,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -310,6 +312,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	search := &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
 	}
+
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -322,7 +325,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -335,8 +338,12 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Wait until indexing is finished.
-	search.wg.Wait()
+	// Wait until indexing is finished. We need to wait 2 seconds here,
+	// because BuildIndex simulates a 1 second build time, and we want
+	// to be sure it has started before we check the calls.
+	require.Eventually(t, func() bool {
+		return search.slowBuildCalls.Load() > 0
+	}, 2*time.Second, 100*time.Millisecond, "BuildIndex never started")
 
 	require.NotEmpty(t, search.buildIndexCalls)
 
@@ -353,7 +360,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg sync.WaitGroup
+	slowBuildCalls atomic.Int64
 }
 
 func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
@@ -362,9 +369,8 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 	return m.cache[key]
 }
 
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool) (ResourceIndex, error) {
-	m.wg.Add(1)
-	defer m.wg.Done()
+func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
+	defer m.slowBuildCalls.Add(1)
 
 	time.Sleep(1 * time.Second)
 
@@ -372,7 +378,7 @@ func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key Namespa
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild)
+	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +606,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		MinBuildVersion:      semver.MustParse("5.5.5"),
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -674,7 +680,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -731,9 +737,103 @@ func TestRebuildIndexes(t *testing.T) {
 		_, ok = support.builders.ns.Get(dashKey)
 		require.False(t, ok)
 	})
+
+	t.Run("BuildTimes collection from open indexes", func(t *testing.T) {
+		key1 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource1"}
+		key2 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource2"}
+		key3 := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource3"}
+
+		buildTime1 := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
+		buildTime2 := time.Date(2026, 1, 16, 11, 0, 0, 0, time.UTC)
+
+		storage := &mockStorageBackend{
+			resourceStats: []ResourceStats{
+				{NamespacedResource: key1, Count: 50, ResourceVersion: 11111111},
+				{NamespacedResource: key2, Count: 50, ResourceVersion: 11111112},
+				{NamespacedResource: key3, Count: 50, ResourceVersion: 11111113},
+			},
+			// No recent import times - so no rebuilds will be triggered
+			lastImportTimes: []ResourceLastImportTime{},
+		}
+
+		search := &mockSearchBackend{
+			cache: make(map[NamespacedResource]ResourceIndex),
+		}
+
+		supplier := &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		}
+
+		opts := SearchOptions{
+			Backend:      search,
+			Resources:    supplier,
+			InitMinCount: 1,
+		}
+
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, support)
+
+		err = support.init(context.Background())
+		require.NoError(t, err)
+		defer support.stop()
+
+		// Set up indexes with build times in cache after init() completes
+		idx1 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: buildTime1, BuildVersion: semver.MustParse("6.0.0")},
+		}
+		idx2 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: buildTime2, BuildVersion: semver.MustParse("6.0.0")},
+		}
+		idx3 := &MockResourceIndex{
+			buildInfo: IndexBuildInfo{BuildTime: time.Time{}, BuildVersion: semver.MustParse("6.0.0")},
+		}
+
+		search.mu.Lock()
+		search.cache[key1] = idx1
+		search.cache[key2] = idx2
+		search.cache[key3] = idx3
+		search.openIndexes = []NamespacedResource{key1, key2, key3}
+		search.mu.Unlock()
+
+		rebuildReq := &resourcepb.RebuildIndexesRequest{
+			Namespace: "ns",
+			// Explicitly specify keys to check - no rebuild conditions, so nothing will be rebuilt
+			Keys: []*resourcepb.ResourceKey{
+				{Namespace: key1.Namespace, Group: key1.Group, Resource: key1.Resource},
+				{Namespace: key2.Namespace, Group: key2.Group, Resource: key2.Resource},
+				{Namespace: key3.Namespace, Group: key3.Group, Resource: key3.Resource},
+			},
+		}
+
+		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+
+		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
+		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
+
+		// Find the build times in the response
+		var found1, found2 bool
+		for _, bt := range rsp.BuildTimes {
+			if bt.Group == key1.Group && bt.Resource == key1.Resource {
+				require.Equal(t, buildTime1.Unix(), bt.BuildTimeUnix)
+				found1 = true
+			}
+			if bt.Group == key2.Group && bt.Resource == key2.Resource {
+				require.Equal(t, buildTime2.Unix(), bt.BuildTimeUnix)
+				found2 = true
+			}
+		}
+		require.True(t, found1, "should have build time for key1")
+		require.True(t, found2, "should have build time for key2")
+	})
 }
 
-func checkRebuildIndex(t *testing.T, support *searchSupport, req rebuildRequest, indexExists, expectedRebuild bool) {
+func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, indexExists, expectedRebuild bool) {
 	ctx := context.Background()
 
 	idxBefore := support.search.GetIndex(req.NamespacedResource)
@@ -785,7 +885,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -835,4 +935,75 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestMaybeInjectFailure(t *testing.T) {
+	t.Run("disabled when percent is 0", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 0}
+		for i := 0; i < 1000; i++ {
+			require.NoError(t, s.maybeInjectFailure())
+		}
+	})
+
+	t.Run("always fails when percent is 100", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 100}
+		for i := 0; i < 100; i++ {
+			err := s.maybeInjectFailure()
+			require.Error(t, err)
+			require.Equal(t, "injected search failure", err.Error())
+		}
+	})
+}
+
+func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
+	opts := SearchOptions{
+		Backend: &mockSearchBackend{},
+		Resources: &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		},
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	t.Run("negative limit returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit: -100,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+	})
+
+	t.Run("negative offset returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit:  10,
+			Offset: -50,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+	})
 }

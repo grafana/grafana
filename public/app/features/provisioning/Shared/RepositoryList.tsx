@@ -18,9 +18,19 @@ interface Props {
 export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const isProvisionedInstance = useIsProvisionedInstance();
-  const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0].metadata?.name);
+  const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0]?.metadata?.name);
 
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
+  const isEmpty = items.length === 0;
+
+  if (isEmpty) {
+    return (
+      <EmptyState
+        variant="not-found"
+        message={t('provisioning.repository-list.no-repositories', 'No repositories configured')}
+      />
+    );
+  }
   const { instanceConnected } = checkSyncSettings(items);
   const hasInstanceSyncRepo = items.some((item) => item.spec?.sync?.target === 'instance');
 
@@ -59,7 +69,7 @@ export function RepositoryList({ items }: Props) {
             {isFreeTierLicense() && (
               <>
                 <br />
-                <Trans i18nKey="provisioning.free-tier-limit.message-connection">
+                <Trans i18nKey="provisioning.folder-repository-list.free-tier-limit.message-connection">
                   Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
                 </Trans>{' '}
                 <TextLink href={UPGRADE_URL} external>

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
+	gsmEncryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
@@ -73,6 +74,7 @@ import (
 var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
 	extras.ProvideProvisioningOSSConnectionExtras,
+	extras.ProvideFactoryFromConfig,
 )
 
 var configProviderExtras = wire.NewSet(
@@ -152,6 +154,7 @@ var wireExtsBasicSet = wire.NewSet(
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
+	gsmEncryptionManager.ProvideOSSDataKeyCache,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
@@ -199,7 +202,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
-	// Overriden by enterprise
+	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
 )

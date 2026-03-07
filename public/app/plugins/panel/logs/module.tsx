@@ -24,6 +24,16 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         description: '',
       });
 
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showLevel',
+        name: t('logs.name-show-level', 'Display log level'),
+        category,
+        defaultValue: true,
+        description: '',
+      });
+    }
+
     if (!config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'showCommonLabels',
@@ -57,6 +67,15 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       category,
       description: '',
       defaultValue: false,
+    });
+
+    builder.addBooleanSwitch({
+      path: 'unwrappedColumns',
+      name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
+      category,
+      description: 'Align values using columns when using displayed fields',
+      defaultValue: false,
+      showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
     });
 
     // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
@@ -105,6 +124,19 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
             },
           ],
         },
+      });
+    }
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'showFieldSelector',
+        name: t('logs.name-enable-field-selector', 'Enable field selector'),
+        category,
+        description: t(
+          'logs.description-enable-field-selector',
+          'Experimental. Show a component to manage the displayed fields from the logs.'
+        ),
+        defaultValue: false,
       });
     }
 

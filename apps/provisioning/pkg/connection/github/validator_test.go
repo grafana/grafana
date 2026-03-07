@@ -212,6 +212,72 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"installationID"},
 		},
 		{
+			name: "non-numeric app ID",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-conn",
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "abc123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(privateKeyBase64),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"appID must be a numeric value"},
+		},
+		{
+			name: "non-numeric installation ID",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-conn",
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "xyz789",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(privateKeyBase64),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"installationID must be a numeric value"},
+		},
+		{
+			name: "both app ID and installation ID non-numeric",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-conn",
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "app-id",
+						InstallationID: "install-id",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(privateKeyBase64),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"appID must be a numeric value", "installationID must be a numeric value"},
+		},
+		{
 			name: "valid github connection",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{

@@ -21,7 +21,7 @@ export const usePanelLatestData = (
   options: GetDataOptions,
   checkSchema?: boolean
 ): UsePanelLatestData => {
-  const querySubscription = useRef<Unsubscribable>();
+  const querySubscription = useRef<Unsubscribable>(undefined);
   const [latestData, setLatestData] = useState<PanelData>();
 
   useEffect(() => {

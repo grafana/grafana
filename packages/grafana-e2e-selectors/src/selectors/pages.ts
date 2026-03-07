@@ -579,6 +579,9 @@ export const versionedPages = {
             applyButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
+            previewTable: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-preview-table',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
@@ -603,6 +606,9 @@ export const versionedPages = {
             },
             modeToggle: {
               '10.4.0': 'data-testid group by variable mode toggle',
+            },
+            defaultValueSection: {
+              '13.0.0': 'data-testid group by variable default value',
             },
           },
           AdHocFiltersVariable: {
@@ -651,6 +657,9 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
       },
@@ -978,6 +987,38 @@ export const versionedPages = {
       },
       addFromQueryLibrary: {
         '11.5.0': 'data-testid explore add from query library button',
+      },
+    },
+    toolbar: {
+      bar: {
+        '12.4.0': 'data-testid explore-toolbar',
+      },
+      contentOutline: {
+        '12.4.0': 'data-testid explore-toolbar-content-outline-button',
+      },
+      goQueryless: {
+        '12.4.0': 'data-testid explore-toolbar-go-queryless-button',
+      },
+      split: {
+        '12.4.0': 'data-testid explore-toolbar-split-button',
+      },
+      addTo: {
+        '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
+      },
+      share: {
+        '12.4.0': 'data-testid explore-toolbar-share-button',
+      },
+      copyLink: {
+        '12.4.0': 'data-testid explore-toolbar-copy-link-button',
+      },
+      live: {
+        '12.4.0': 'data-testid explore-toolbar-live-button',
+      },
+      refreshPicker: {
+        '12.4.0': 'data-testid explore-toolbar-refresh-picker',
+      },
+      add: {
+        '12.4.0': (key: string) => `data-testid explore-toolbar-add-button ${key}`,
       },
     },
     QueryHistory: {

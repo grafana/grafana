@@ -81,7 +81,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}
 	}()
 
-	_, err = s.toDataFrames(res, healthCheckQuery.RefID, false, targetStr)
+	_, err = s.toDataFrames(res, healthCheckQuery.RefID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

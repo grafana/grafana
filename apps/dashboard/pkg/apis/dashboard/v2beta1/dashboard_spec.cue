@@ -131,6 +131,8 @@ DashboardLink: {
 	keepTime: bool | *false
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: DashboardLinkPlacement
+	// The source that registered the link (if any)
+	origin?: ControlSourceRef
 }
 
 // Dashboard Link placement. Defines where the link should be displayed.
@@ -211,7 +213,7 @@ FieldConfig: {
 	filterable?: bool
 
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -506,6 +508,7 @@ DataQueryKind: {
 	kind: "DataQuery"
 	group: string
 	version: string | *"v0"
+	labels?: [string]: string
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	datasource?: {
@@ -644,6 +647,7 @@ RowsLayoutRowSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
+	variables?:            [...VariableKind]
 }
 
 AutoGridLayoutKind: {
@@ -691,6 +695,7 @@ TabsLayoutTabSpec: {
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
+	variables?:            [...VariableKind]
 }
 
 PanelSpec: {
@@ -808,7 +813,19 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+	// Additional properties for multi-props variables
+	properties?: [string]: string
 }
+
+// Source information for controls (e.g. variables or links)
+DatasourceControlSourceRef: {
+  type: "datasource"
+  // The plugin type-id
+  group: string
+}
+
+ControlSourceRef: DatasourceControlSourceRef
+
 
 // Query variable specification
 QueryVariableSpec: {
@@ -835,6 +852,7 @@ QueryVariableSpec: {
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
+	origin?: ControlSourceRef
 }
 
 // Query variable kind
@@ -855,6 +873,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Text variable kind
@@ -875,6 +894,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Constant variable kind
@@ -902,6 +922,7 @@ DatasourceVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	origin?: ControlSourceRef
 }
 
 // Datasource variable kind
@@ -927,6 +948,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Interval variable kind
@@ -950,6 +972,7 @@ CustomVariableSpec: {
 	description?: string
 	allowCustomValue: bool | *true
 	valuesFormat?: "csv" | "json"
+	origin?: ControlSourceRef
 }
 
 // Custom variable kind
@@ -967,6 +990,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
+	origin?: ControlSourceRef
 }
 
 SwitchVariableKind: {
@@ -988,12 +1012,14 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	origin?: ControlSourceRef
 }
 
 // Group variable kind
 GroupByVariableKind: {
 	kind: "GroupByVariable"
 	group: string
+	labels?: [string]: string
 	datasource?: {
 		name?: string
 	}
@@ -1011,6 +1037,7 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	origin?: ControlSourceRef
 }
 
 // Define the MetricFindValue type
@@ -1039,6 +1066,7 @@ AdHocFilterWithLabels: {
 AdhocVariableKind: {
 	kind: "AdhocVariable"
 	group: string
+	labels?: [string]: string
 	datasource?: {
 		name?: string
 	}

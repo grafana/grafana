@@ -8,26 +8,24 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
-	//lint:ignore ST1005 this is not punctuation
-	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
-	//lint:ignore ST1005 this is not punctuation
+	ErrAuthentication     = apierrors.NewUnauthorized("authentication failed")
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
-	//lint:ignore ST1005 this is not punctuation
-	ErrNotFound = apierrors.NewNotFound(schema.GroupResource{Resource: "github"}, "resource not found")
+
+	ErrNotFound            = errors.New("not found")
+	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
-	ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error)
+	ListInstallationRepositories(ctx context.Context) ([]Repository, error)
 	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
 }
 
@@ -49,6 +47,23 @@ type App struct {
 	Slug string
 	// Owner represents the GH account/org owning the app
 	Owner string
+	// Permissions granted to the GitHub App
+	Permissions Permissions
+}
+type Permission int
+
+const (
+	PermissionNone Permission = iota
+	PermissionRead
+	PermissionWrite
+)
+
+// Permissions represents the permissions granted to a GitHub Apps and their installations.
+type Permissions struct {
+	Contents     Permission
+	Metadata     Permission
+	PullRequests Permission
+	Webhooks     Permission
 }
 
 // AppInstallation represents a Github App Installation.
@@ -57,6 +72,10 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
+	// Permissions granted to this installation.
+	// These may differ from App permissions if the installation owner has not yet accepted
+	// the App's updated permissions on GitHub.
+	Permissions Permissions
 }
 
 // InstallationToken represents a Github App Installation Access Token.
@@ -85,7 +104,7 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return App{}, ErrAuthentication
 			case http.StatusNotFound:
-				return App{}, ErrNotFound
+				return App{}, fmt.Errorf("app: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
 				return App{}, ErrServiceUnavailable
 			}
@@ -97,6 +116,12 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
 		Owner: app.GetOwner().GetLogin(),
+		Permissions: Permissions{
+			Contents:     toPermission(app.GetPermissions().GetContents()),
+			Metadata:     toPermission(app.GetPermissions().GetMetadata()),
+			PullRequests: toPermission(app.GetPermissions().GetPullRequests()),
+			Webhooks:     toPermission(app.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
 }
 
@@ -115,7 +140,7 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return AppInstallation{}, ErrAuthentication
 			case http.StatusNotFound:
-				return AppInstallation{}, ErrNotFound
+				return AppInstallation{}, fmt.Errorf("installation: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
 				return AppInstallation{}, ErrServiceUnavailable
 			}
@@ -126,7 +151,24 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
+		Permissions: Permissions{
+			Contents:     toPermission(installation.GetPermissions().GetContents()),
+			Metadata:     toPermission(installation.GetPermissions().GetMetadata()),
+			PullRequests: toPermission(installation.GetPermissions().GetPullRequests()),
+			Webhooks:     toPermission(installation.GetPermissions().GetRepositoryHooks()),
+		},
 	}, nil
+}
+
+func toPermission(permissions string) Permission {
+	switch permissions {
+	case "read":
+		return PermissionRead
+	case "write":
+		return PermissionWrite
+	default:
+		return PermissionNone
+	}
 }
 
 const (
@@ -134,27 +176,7 @@ const (
 )
 
 // ListInstallationRepositories lists all repositories accessible by the specified GitHub App installation.
-// It first creates an installation access token using the JWT, then uses that token to list repositories.
-func (r *githubClient) ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error) {
-	id, err := strconv.ParseInt(installationID, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid installation ID: %s", installationID)
-	}
-
-	// Create an installation access token
-	installationToken, _, err := r.gh.Apps.CreateInstallationToken(ctx, id, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-		return nil, fmt.Errorf("create installation token: %w", err)
-	}
-
-	// Create a new client with the installation token
-	// WithAuthToken creates a copy of the client with the new auth token while preserving the HTTP transport
-	tokenClient := r.gh.WithAuthToken(installationToken.GetToken())
-
+func (r *githubClient) ListInstallationRepositories(ctx context.Context) ([]Repository, error) {
 	var allRepos []Repository
 	opts := &github.ListOptions{
 		Page:    1,
@@ -162,7 +184,7 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	for {
-		result, resp, err := tokenClient.Apps.ListRepos(ctx, opts)
+		result, resp, err := r.gh.Apps.ListRepos(ctx, opts)
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
@@ -204,16 +226,30 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 		return InstallationToken{}, fmt.Errorf("invalid installation ID: %s", installationID)
 	}
 
-	opts := &github.InstallationTokenOptions{
-		Repositories: []string{repo},
+	var opts *github.InstallationTokenOptions
+	if repo != "" {
+		opts = &github.InstallationTokenOptions{
+			Repositories: []string{repo},
+		}
 	}
 
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return InstallationToken{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) {
+			switch ghErr.Response.StatusCode {
+			case http.StatusServiceUnavailable:
+				return InstallationToken{}, ErrServiceUnavailable
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return InstallationToken{}, ErrAuthentication
+			case http.StatusNotFound:
+				// Not Found is returned by this API when the given installation is not present.
+				return InstallationToken{}, fmt.Errorf("installation: %w", ErrNotFound)
+			case http.StatusUnprocessableEntity:
+				return InstallationToken{}, fmt.Errorf("%s: %w", ghErr.Message, ErrUnprocessableEntity)
+			}
 		}
+
 		return InstallationToken{}, err
 	}
 

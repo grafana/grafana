@@ -192,6 +192,52 @@ func (_c *MockTokenConnection_TokenExpiration_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// TokenValid provides a mock function with given fields: ctx
+func (_m *MockTokenConnection) TokenValid(ctx context.Context) bool {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TokenValid")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context) bool); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockTokenConnection_TokenValid_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TokenValid'
+type MockTokenConnection_TokenValid_Call struct {
+	*mock.Call
+}
+
+// TokenValid is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockTokenConnection_Expecter) TokenValid(ctx interface{}) *MockTokenConnection_TokenValid_Call {
+	return &MockTokenConnection_TokenValid_Call{Call: _e.mock.On("TokenValid", ctx)}
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) Run(run func(ctx context.Context)) *MockTokenConnection_TokenValid_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) Return(_a0 bool) *MockTokenConnection_TokenValid_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) RunAndReturn(run func(context.Context) bool) *MockTokenConnection_TokenValid_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockTokenConnection creates a new instance of MockTokenConnection. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockTokenConnection(t interface {

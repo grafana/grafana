@@ -258,7 +258,7 @@ func Test_StartSnapshot(t *testing.T) {
 		logger := &logtest.Fake{}
 		client := gmsClientImpl{cfg: cfg, log: logger, httpClient: http.DefaultClient}
 
-		resp, err := client.StartSnapshot(ctx, session)
+		resp, err := client.StartSnapshot(ctx, session, cloudmigration.EncryptionAlgoNacl)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.EqualValues(t, expectedSnapshot, resp)
@@ -295,7 +295,7 @@ func Test_StartSnapshot(t *testing.T) {
 		logger := &logtest.Fake{}
 		client := gmsClientImpl{cfg: cfg, log: logger, httpClient: http.DefaultClient}
 
-		resp, err := client.StartSnapshot(ctx, session)
+		resp, err := client.StartSnapshot(ctx, session, cloudmigration.EncryptionAlgoNacl)
 		require.Error(t, err)
 		require.Nil(t, resp)
 

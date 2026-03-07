@@ -10,6 +10,7 @@ import {
   DataQueryResponse,
   dateMath,
   dateTime,
+  FieldType,
   getFrameDisplayName,
   MetricFindValue,
   PluginType,
@@ -995,6 +996,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,series2)');
+      expect(results[2].targetFull).toBe('asPercent(series1,series2)');
     });
 
     it('should replace target placeholder for hidden series', () => {
@@ -1015,6 +1017,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[0].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references', () => {
@@ -1035,6 +1038,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[2].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references with template variables', () => {
@@ -1071,6 +1075,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
+      expect(results[2].targetFull).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
     });
 
     it('should use scoped variables when nesting query references', () => {
@@ -1113,6 +1118,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[1].target).toBe('sumSeries(scopedValue)');
+      expect(results[1].targetFull).toBe('sumSeries(scopedValue)');
     });
 
     it('should apply scoped variables to nested references with hidden targets', () => {
@@ -1155,6 +1161,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[0].target).toBe('avg(web01.cpu)');
+      expect(results[0].targetFull).toBe('avg(web01.cpu)');
     });
 
     it('should not recursively replace queries that reference themselves', () => {
@@ -1169,6 +1176,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
       );
     });
@@ -1195,6 +1205,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
       );
     });
@@ -1244,6 +1257,7 @@ describe('graphiteDatasource', () => {
           originalTargetMap
         );
         expect(results[0].target).toEqual('my.b.*');
+        expect(results[0].targetFull).toEqual('my.b.*');
       });
 
       it('globs for more than one variable', () => {
@@ -1274,6 +1288,7 @@ describe('graphiteDatasource', () => {
         );
 
         expect(results[0].target).toEqual('my.{a,b}.*');
+        expect(results[0].targetFull).toEqual('my.{a,b}.*');
       });
     });
   });
@@ -1563,6 +1578,52 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
       expect(data[0].text).toBe('apps.backend.backend_01');
       expect(data[1].text).toBe('apps.backend.backend_02');
+    });
+
+    it('should return metric names when queryType is GraphiteQueryType.MetricName in backend mode', async () => {
+      config.featureToggles.graphiteBackendMode = true;
+
+      const backendResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_01' },
+              },
+            ],
+            length: 2,
+          },
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_02' },
+              },
+            ],
+            length: 2,
+          },
+        ],
+      };
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of(backendResponse));
+
+      const variableQuery: GraphiteQuery = {
+        queryType: GraphiteQueryType.MetricName,
+        target: 'apps.backend.*',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(variableQuery);
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+
+      config.featureToggles.graphiteBackendMode = false;
     });
   });
 

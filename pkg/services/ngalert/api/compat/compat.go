@@ -458,29 +458,39 @@ func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definition
 	}
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
-func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettings
+func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
-	return &definitions.AlertRuleNotificationSettings{
-		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
-		GroupWait:           m.GroupWait,
-		GroupInterval:       m.GroupInterval,
-		RepeatInterval:      m.RepeatInterval,
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+	// Should convert faithfully and not worry about validity.
+	res := definitions.AlertRuleNotificationSettings{}
+	if m := ns.ContactPointRouting; m != nil {
+		res = definitions.AlertRuleNotificationSettings{
+			Receiver:            m.Receiver,
+			GroupBy:             m.GroupBy,
+			GroupWait:           m.GroupWait,
+			GroupInterval:       m.GroupInterval,
+			RepeatInterval:      m.RepeatInterval,
+			MuteTimeIntervals:   m.MuteTimeIntervals,
+			ActiveTimeIntervals: m.ActiveTimeIntervals,
+		}
 	}
+	if m := ns.PolicyRouting; m != nil {
+		res.Policy = &m.Policy
+	}
+	return &res
 }
 
-// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
-func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
-	if len(ns) == 0 {
+// AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
+func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
+	if ns == nil {
 		return nil
 	}
-	m := ns[0]
+	m := ns.ContactPointRouting
+	if m == nil {
+		return nil
+	}
 
 	toStringIfNotNil := func(d *model.Duration) *string {
 		if d == nil {
@@ -501,22 +511,39 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 	}
 }
 
-// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
-func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) []models.NotificationSettings {
+// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to models.NotificationSettings
+func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	return []models.NotificationSettings{
-		{
-			Receiver:            ns.Receiver,
-			GroupBy:             ns.GroupBy,
-			GroupWait:           ns.GroupWait,
-			GroupInterval:       ns.GroupInterval,
-			RepeatInterval:      ns.RepeatInterval,
-			MuteTimeIntervals:   ns.MuteTimeIntervals,
-			ActiveTimeIntervals: ns.ActiveTimeIntervals,
-		},
+
+	// Validation is defined on the model and is not currently the responsibility of this method to enforce. That means
+	// the output of this compat can be an invalid NotificationSettings. Specifically, two such cases are important to
+	// consider here:
+	// 1. Both ContactPoint and Policy routing are specified: should return a NotificationSettings with both routing strategies.
+	// 2. Neither ContactPoint nor Policy routing are specified: should return an empty NotificationSettings, not nil.
+	res := models.NotificationSettings{}
+
+	cpr := models.ContactPointRouting{
+		Receiver:            ns.Receiver,
+		GroupBy:             ns.GroupBy,
+		GroupWait:           ns.GroupWait,
+		GroupInterval:       ns.GroupInterval,
+		RepeatInterval:      ns.RepeatInterval,
+		MuteTimeIntervals:   ns.MuteTimeIntervals,
+		ActiveTimeIntervals: ns.ActiveTimeIntervals,
 	}
+	if !cpr.IsEmpty() {
+		// If any field related to contact point routing is specified, we create an instance of ContactPointRouting so
+		// that it is eventually validated.
+		res.ContactPointRouting = &cpr
+	}
+
+	if ns.Policy != nil {
+		res.PolicyRouting = &models.PolicyRouting{Policy: *ns.Policy}
+	}
+
+	return &res
 }
 
 func pointerOmitEmpty(s string) *string {

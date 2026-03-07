@@ -33,13 +33,17 @@ import (
 
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
+	SearchClient
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
-	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+}
+
+type SearchClient interface {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient
 }
 
 // Internal implementation

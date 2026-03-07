@@ -32,7 +32,7 @@ type Spec struct {
 	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`
 	// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-	GnetId *string `json:"gnetId,omitempty"`
+	GnetId *int64 `json:"gnetId,omitempty"`
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
@@ -287,6 +287,8 @@ type DashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// The source that registered the link (if any)
+	Origin *ControlSourceRef `json:"origin,omitempty"`
 }
 
 // NewDashboardLink creates a new DashboardLink object.
@@ -312,6 +314,26 @@ const (
 // Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 const DashboardLinkPlacement = "inControlsMenu"
+
+type ControlSourceRef = DatasourceControlSourceRef
+
+// NewControlSourceRef creates a new ControlSourceRef object.
+func NewControlSourceRef() *ControlSourceRef {
+	return NewDatasourceControlSourceRef()
+}
+
+type DatasourceControlSourceRef struct {
+	Type string `json:"type"`
+	// The plugin type-id
+	Group string `json:"group"`
+}
+
+// NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
+func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
+	return &DatasourceControlSourceRef{
+		Type: "datasource",
+	}
+}
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -407,7 +429,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -903,6 +925,8 @@ type VariableOption struct {
 	Text StringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value StringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewVariableOption creates a new VariableOption object.

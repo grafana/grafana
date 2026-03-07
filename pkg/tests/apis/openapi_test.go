@@ -34,10 +34,14 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
+			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
+			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagKubernetesExternalGroupMappingsApi,
 		},
 		// Explicitly configure with mode 5 the resources supported by provisioning.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -54,7 +58,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "34", info.Minor)
+		require.Equal(t, "35", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -98,11 +102,17 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "query.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "advisor.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "playlist.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "playlist.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
@@ -130,6 +140,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "logsdrilldown.grafana.app",
 		Version: "v1beta1",
+	}, {
+		Group:   "quotas.grafana.app",
+		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

@@ -139,12 +139,6 @@ func (m *ModelGsm) CreateKeeper(keeper *secretv1beta1.Keeper) (*secretv1beta1.Ke
 	switch {
 	case keeper.Spec.Aws != nil:
 		keeperType = secretv1beta1.AWSKeeperType
-	case keeper.Spec.Gcp != nil:
-		keeperType = secretv1beta1.GCPKeeperType
-	case keeper.Spec.Azure != nil:
-		keeperType = secretv1beta1.AzureKeeperType
-	case keeper.Spec.HashiCorpVault != nil:
-		keeperType = secretv1beta1.HashiCorpKeeperType
 	default:
 		keeperType = secretv1beta1.SystemKeeperType
 	}

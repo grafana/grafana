@@ -2,9 +2,14 @@ package user
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -46,7 +51,7 @@ func TestSearchFallback(t *testing.T) {
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
 
 			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient, featuremgmt.WithFeatures())
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -147,6 +152,219 @@ func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 
 func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
 	return nil, nil
+}
+
+func mockClientWithHits() *MockClient {
+	return &MockClient{
+		MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "title"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "user-1"}, Cells: [][]byte{[]byte("User One")}},
+						{Key: &resourcepb.ResourceKey{Name: "user-2"}, Cells: [][]byte{[]byte("User Two")}},
+					},
+				},
+				TotalHits: 2,
+			},
+		},
+	}
+}
+
+func TestAccessControl(t *testing.T) {
+	partialClient := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			allowed := map[string]bool{
+				"org.users:read":         true,
+				"users.permissions:read": true,
+				"users.roles:read":       true,
+			}
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				for _, c := range userAccessControlChecks {
+					if c.group == check.Group && c.resource == check.Resource && c.verb == check.Verb {
+						results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed[c.action]}
+						break
+					}
+				}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	perUserClient := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				allowed := false
+				for _, c := range userAccessControlChecks {
+					if c.group == check.Group && c.resource == check.Resource && c.verb == check.Verb {
+						if check.Name == "user-1" {
+							allowed = c.action == "org.users:read" || c.action == "org.users:write"
+						}
+						break
+					}
+				}
+				results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: allowed}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	errorClient := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			return authlib.BatchCheckResponse{}, fmt.Errorf("access service unavailable")
+		},
+	}
+
+	tests := []struct {
+		name      string
+		url       string
+		client    authlib.AccessClient
+		checkHits func(t *testing.T, hits []iamv0.GetSearchUsersUserHit)
+	}{
+		{
+			name:   "param absent - no access control on hits",
+			url:    "/searchUsers",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Nil(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "param false - no access control on hits",
+			url:    "/searchUsers?accesscontrol=false",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Nil(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "all allowed",
+			url:    "/searchUsers?accesscontrol=true",
+			client: authlib.FixedAccessClient(true),
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					require.NotNil(t, hit.AccessControl)
+					for _, c := range userAccessControlChecks {
+						assert.True(t, hit.AccessControl[c.action], "expected %s to be allowed", c.action)
+					}
+				}
+			},
+		},
+		{
+			name:   "all denied - empty map on hits",
+			url:    "/searchUsers?accesscontrol=true",
+			client: authlib.FixedAccessClient(false),
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Empty(t, hit.AccessControl)
+				}
+			},
+		},
+		{
+			name:   "partial permissions",
+			url:    "/searchUsers?accesscontrol=true",
+			client: partialClient,
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					require.NotNil(t, hit.AccessControl)
+					assert.True(t, hit.AccessControl["org.users:read"])
+					assert.True(t, hit.AccessControl["users.permissions:read"])
+					assert.True(t, hit.AccessControl["users.roles:read"])
+					assert.False(t, hit.AccessControl["org.users:add"])
+					assert.False(t, hit.AccessControl["org.users:remove"])
+					assert.False(t, hit.AccessControl["org.users:write"])
+				}
+			},
+		},
+		{
+			name:   "per-user scoped permissions",
+			url:    "/searchUsers?accesscontrol=true",
+			client: perUserClient,
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					if hit.Name == "user-1" {
+						require.NotNil(t, hit.AccessControl)
+						assert.True(t, hit.AccessControl["org.users:read"])
+						assert.True(t, hit.AccessControl["org.users:write"])
+						assert.False(t, hit.AccessControl["org.users:add"])
+						assert.False(t, hit.AccessControl["org.users:remove"])
+					} else {
+						assert.Empty(t, hit.AccessControl, "user-2 should have no permissions")
+					}
+				}
+			},
+		},
+		{
+			name:   "access service error - graceful degradation, empty map on hits",
+			url:    "/searchUsers?accesscontrol=true",
+			client: errorClient,
+			checkHits: func(t *testing.T, hits []iamv0.GetSearchUsersUserHit) {
+				t.Helper()
+				for _, hit := range hits {
+					assert.Empty(t, hit.AccessControl)
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			searchHandler := NewSearchHandler(
+				tracing.NewNoopTracerService(),
+				mockClientWithHits(),
+				featuremgmt.WithFeatures(),
+				&setting.Cfg{},
+				tc.client,
+			)
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+
+			var resp iamv0.GetSearchUsersResponse
+			require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+			require.Len(t, resp.Hits, 2)
+			tc.checkHits(t, resp.Hits)
+		})
+	}
+}
+
+type mockAccessClient struct {
+	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
+}
+
+func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, nil
+}
+
+func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, nil, nil
+}
+
+func (m *mockAccessClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if m.batchCheckFunc != nil {
+		return m.batchCheckFunc(ctx, info, req)
+	}
+	return authlib.BatchCheckResponse{}, nil
 }
 
 func TestEscapeBleveQuery(t *testing.T) {

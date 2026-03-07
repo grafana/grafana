@@ -59,8 +59,9 @@ func (l *loggerImpl) Middleware() web.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			// we have to init the context with the counter here to update the request
+			// we have to init the context with the counter and timer here to update the request
 			r = r.WithContext(log.InitCounter(r.Context()))
+			r = r.WithContext(log.InitDBQueryTimer(r.Context()))
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 

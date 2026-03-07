@@ -4,7 +4,6 @@ import { addNewPanelFromSidebar } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -50,7 +49,7 @@ test.describe(
     test('can add a panel from the sidebar on a new dashboard', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({});
       // check that the sidebar is open on Add section
-      expect(await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton)).toBeVisible();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton)).toBeVisible();
       await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
       // check that new panel has been added
       await expect(

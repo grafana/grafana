@@ -46,7 +46,7 @@ export function doTempoSearchStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `search/${getLiveStreamKey()}`,
       data: {
         ...query,
@@ -123,7 +123,7 @@ export function doTempoMetricsStreaming(
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
-      namespace: ds.uid,
+      stream: ds.uid,
       path: `metrics/${key}`,
       data: {
         ...query,

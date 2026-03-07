@@ -3302,6 +3302,7 @@
                   "summary": "Pull (incremental)",
                   "description": "look for changes since the last sync",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": true
                     }
@@ -3311,6 +3312,7 @@
                   "summary": "Pull from repository",
                   "description": "pull all files",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": false
                     }
@@ -4284,6 +4286,7 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSpec": {
         "type": "object",
         "required": [
+          "title",
           "type"
         ],
         "properties": {
@@ -4294,6 +4297,10 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
               }
             ]
+          },
+          "description": {
+            "description": "The connection description",
+            "type": "string"
           },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
@@ -4310,6 +4317,11 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
               }
             ]
+          },
+          "title": {
+            "description": "The connection display name (shown in the UI)",
+            "type": "string",
+            "default": ""
           },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -4332,7 +4344,6 @@
         "type": "object",
         "required": [
           "observedGeneration",
-          "state",
           "health"
         ],
         "properties": {
@@ -4381,15 +4392,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
           }
         }
       },
@@ -4429,6 +4431,9 @@
           "type"
         ],
         "properties": {
+          "badValue": {
+            "description": "BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant."
+          },
           "detail": {
             "description": "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
             "type": "string"
@@ -4586,6 +4591,15 @@
           },
           "metadata": {
             "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FixFolderMetadataJobOptions": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "description": "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+            "type": "string"
           }
         }
       },
@@ -5019,12 +5033,17 @@
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
+        "required": [
+          "action"
+        ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
+            "default": "",
             "enum": [
               "delete",
+              "fixFolderMetadata",
               "migrate",
               "move",
               "pr",
@@ -5037,6 +5056,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.DeleteJobOptions"
+              }
+            ]
+          },
+          "fixFolderMetadata": {
+            "description": "Options when the action is `fix-folder-metadata`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FixFolderMetadataJobOptions"
               }
             ]
           },
@@ -5247,6 +5274,22 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus": {
+        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "type": "object",
+        "properties": {
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxResourcesPerRepository": {
+            "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem": {
         "type": "object",
         "required": [
@@ -5261,6 +5304,10 @@
             "description": "The name of the reference (branch or tag)",
             "type": "string",
             "default": ""
+          },
+          "protected": {
+            "description": "Whether this ref is protected (e.g. branch protection rules)",
+            "type": "boolean"
           },
           "refURL": {
             "description": "The URL to the reference (branch or tag)",
@@ -5494,6 +5541,14 @@
               "local"
             ]
           },
+          "webhook": {
+            "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig"
+              }
+            ]
+          },
           "workflows": {
             "description": "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
             "type": "array",
@@ -5567,6 +5622,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "quota": {
+            "description": "Quota contains the configured quota limits for this repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus"
+              }
+            ]
           },
           "stats": {
             "description": "The object count when sync last ran",
@@ -6198,7 +6262,7 @@
             "default": false
           },
           "intervalSeconds": {
-            "description": "When non-zero, the sync will run periodically",
+            "description": "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
             "type": "integer",
             "format": "int64"
           },
@@ -6328,6 +6392,15 @@
           "lastUpdated": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "description": "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+            "type": "string"
           }
         }
       },
@@ -6896,8 +6969,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

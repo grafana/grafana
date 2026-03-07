@@ -2,11 +2,7 @@ include ../sdk.mk
 
 .PHONY: internal-generate # Run Grafana App SDK code generation
 internal-generate: install-app-sdk update-app-sdk
-	@$(APP_SDK_BIN) generate \
-		--source=./kinds/ \
-		--gogenpath=./pkg/apis \
-		--grouping=group \
-		--defencoding=none
+	@$(APP_SDK_BIN) generate --source=./kinds/
 
 .PHONY: generate
 generate: internal-generate # copy files to packages/grafana-runtime/src/services/pluginMeta/types

@@ -19,12 +19,6 @@ labels:
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
-refs:
-  query-and-transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Elasticsearch query editor
@@ -38,7 +32,7 @@ When composing Lucene queries, ensure that you use uppercase boolean operators: 
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](ref:query-and-transform-data).
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Aggregation types
 
@@ -145,6 +139,64 @@ Run a raw data query to retrieve a table of all fields that are associated with 
 {{< admonition type="note" >}}
 The option to run a **raw document query** is deprecated as of Grafana v10.1.
 {{< /admonition >}}
+
+## Raw query editor
+
+{{< admonition type="note" >}}
+The raw query editor is an experimental feature that must be enabled using the `elasticsearchRawDSLQuery` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+{{< /admonition >}}
+
+The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
+
+### Switch between Builder and Code modes
+
+To access the raw query editor, click the **Code** toggle in the top-right corner of the query editor. You can switch between **Builder** and **Code** modes:
+
+- **Builder** - Visual query builder with dropdown menus and forms
+- **Code** - JSON editor for writing raw Elasticsearch DSL queries
+
+### Write raw DSL queries
+
+When in Code mode, you can write complete Elasticsearch query DSL in JSON format. The editor provides:
+
+- **Syntax highlighting** for JSON
+- **Auto-formatting** - Click the **Format** button or press `Shift+Alt+F` to format your query
+- **Keyboard shortcuts** - Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run the query
+- **Real-time validation** - Invalid JSON will be highlighted with error messages
+
+### Time range handling
+
+If you want to filter by time range in a dashboard, you need to use the `$__from` and `$__to` macros in your raw DSL.
+
+An example query applying dashboard time range using the `@timestamp` field:
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "$__from",
+              "lte": "$__to",
+              "format": "epoch_millis"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Supported query types
+
+The raw query editor supports all query types:
+
+- **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
+- **Logs queries** are used to query log data.
+- **Raw data queries** are used for document-level data retrieval.
 
 ## Use template variables
 

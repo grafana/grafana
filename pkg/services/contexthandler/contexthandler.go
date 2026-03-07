@@ -3,6 +3,7 @@ package contexthandler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -129,10 +130,16 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
 
+	var userId int64
 	id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
 	if err != nil {
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
+
+		var tokenRotationErr authn.TokenNeedsRotationError
+		if errors.As(err, &tokenRotationErr) {
+			userId = tokenRotationErr.UserID
+		}
 	} else {
 		reqContext.SignedInUser = id.SignedInUser()
 		reqContext.UserToken = id.SessionToken
@@ -140,15 +147,16 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		reqContext.AllowAnonymous = reqContext.IsAnonymous
 		reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		ctx = identity.WithRequester(ctx, id)
+		userId = reqContext.UserID
 	}
 
 	h.excludeSensitiveHeadersFromRequest(reqContext.Req)
 
-	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", userId, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 	span.AddEvent("user", trace.WithAttributes(
 		attribute.String("uname", reqContext.Login),
 		attribute.Int64("orgId", reqContext.OrgID),
-		attribute.Int64("userId", reqContext.UserID),
+		attribute.Int64("userId", userId),
 	))
 
 	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {

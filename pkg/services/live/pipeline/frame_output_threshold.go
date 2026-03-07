@@ -16,8 +16,8 @@ type ThresholdOutputConfig struct {
 //go:generate mockgen -destination=frame_output_threshold_mock.go -package=pipeline github.com/grafana/grafana/pkg/services/live/pipeline FrameGetSetter
 
 type FrameGetSetter interface {
-	Get(orgID int64, channel string) (*data.Frame, bool, error)
-	Set(orgID int64, channel string, frame *data.Frame) error
+	Get(ns string, channel string) (*data.Frame, bool, error)
+	Set(ns string, channel string, frame *data.Frame) error
 }
 
 // ThresholdOutput can monitor threshold transitions of the specified field and output
@@ -41,7 +41,7 @@ func (out *ThresholdOutput) OutputFrame(_ context.Context, vars Vars, frame *dat
 	if frame == nil {
 		return nil, nil
 	}
-	previousFrame, previousFrameOk, err := out.frameStorage.Get(vars.OrgID, out.config.Channel)
+	previousFrame, previousFrameOk, err := out.frameStorage.Get(vars.NS, out.config.Channel)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func (out *ThresholdOutput) OutputFrame(_ context.Context, vars Vars, frame *dat
 
 	if fTime.Len() > 0 {
 		stateFrame := data.NewFrame("state", fTime, f1, f2, f3)
-		err := out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
+		err := out.frameStorage.Set(vars.NS, out.config.Channel, frame)
 		if err != nil {
 			return nil, err
 		}
@@ -152,5 +152,5 @@ func (out *ThresholdOutput) OutputFrame(_ context.Context, vars Vars, frame *dat
 		}}, nil
 	}
 
-	return nil, out.frameStorage.Set(vars.OrgID, out.config.Channel, frame)
+	return nil, out.frameStorage.Set(vars.NS, out.config.Channel, frame)
 }
