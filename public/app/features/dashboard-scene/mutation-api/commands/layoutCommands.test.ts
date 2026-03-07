@@ -226,7 +226,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/rows/1' });
+      expect(result.data).toMatchObject({ path: '/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows).toHaveLength(2);
@@ -378,7 +378,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/1', tab: { kind: 'TabsLayoutTab' } });
 
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs).toHaveLength(2);
@@ -573,7 +573,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: '/rows/1' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
 
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
@@ -592,7 +593,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.warnings).toBeUndefined();
     });
 
@@ -609,7 +611,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.changes).toHaveLength(1);
 
       // Verify the grid item was repositioned
@@ -814,7 +817,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/0/rows/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/0/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const tabBody = body.state.tabs[0].state.layout as RowsLayoutManager;
       expect(tabBody.state.rows).toHaveLength(2);
@@ -862,7 +865,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1/rows/0' });
+      expect(result.data).toMatchObject({ path: '/tabs/1/rows/0', row: { kind: 'RowsLayoutRow' } });
 
       const t0Rows = (body.state.tabs[0].state.layout as RowsLayoutManager).state.rows;
       const t1Rows = (body.state.tabs[1].state.layout as RowsLayoutManager).state.rows;

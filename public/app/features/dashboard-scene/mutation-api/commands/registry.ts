@@ -5,20 +5,24 @@
  * The DashboardMutationClient iterates over ALL_COMMANDS generically.
  */
 
+import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
 import { getLayoutCommand } from './getLayout';
+import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
 import { updateLayoutCommand } from './updateLayout';
+import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
 import { updateVariableCommand } from './updateVariable';
@@ -41,6 +45,10 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   moveTabCommand,
   movePanelCommand,
   updateLayoutCommand,
+  addPanelCommand,
+  updatePanelCommand,
+  removePanelCommand,
+  listPanelsCommand,
 ];
 
 /** All valid command names. */

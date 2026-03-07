@@ -1,13 +1,17 @@
 /**
  * Dashboard Mutation API - Core Types
  *
- * Shared framework types used across the mutation system.
+ * Response types use v2beta1 schema types directly to stay in sync.
  * Command-specific payload types are defined in their respective command files
  * and inferred from Zod schemas.
- *
- * These types are internal to grafana core. Plugin consumers get minimal
- * interfaces via RestrictedGrafanaApis in @grafana/data.
  */
+
+import type {
+  AutoGridLayoutItemKind,
+  Element,
+  GridLayoutItemKind,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 export interface MutationRequest {
   type: string;
@@ -32,6 +36,17 @@ export interface MutationClient {
   execute(mutation: MutationRequest): Promise<MutationResult>;
 }
 
+export type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
+
+export interface PanelElementEntry {
+  element: Element;
+  layoutItem: LayoutItemKind;
+}
+
+export interface PanelElementsData {
+  elements: PanelElementEntry[];
+}
+
 export interface ListVariablesData {
-  variables: Array<{ kind: string; spec: { name: string; [key: string]: unknown } }>;
+  variables: VariableKind[];
 }

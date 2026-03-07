@@ -188,7 +188,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
 }
 
 function updatePanelTitleState(panel: VizPanel, title: string) {
-  panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  getDashboardSceneFor(panel).updatePanelTitle(panel, title);
 }
 
 export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
