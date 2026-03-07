@@ -1,8 +1,9 @@
 import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
+import { DataSourceSettings } from '@grafana/data';
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/plugin-ui';
-import { docsTip, overhaulStyles } from '@grafana/prometheus';
+import { docsTip, OAuth2ClientCredentialsSettings, overhaulStyles, PromOptions } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
 import { AzureAuthSettings } from '@grafana/ui/internal';
@@ -89,6 +90,25 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
     customMethods.push(azureAuthOption);
   }
 
+  // OAuth2 Client Credentials auth
+  const [oauth2Selected, setOAuth2Selected] = useState<boolean>(options.jsonData.oauth2ClientCredentials || false);
+
+  const oauth2Id = 'custom-oauth2ClientCredentials';
+
+  const oauth2Option: CustomMethod = {
+    id: oauth2Id,
+    label: 'OAuth2 Client Credentials',
+    description: 'Authenticate using OAuth2 client credentials flow',
+    component: (
+      <OAuth2ClientCredentialsSettings
+        options={options as DataSourceSettings<PromOptions>}
+        onOptionsChange={onOptionsChange as (options: DataSourceSettings<PromOptions>) => void}
+      />
+    ),
+  };
+
+  customMethods.push(oauth2Option);
+
   function returnSelectedMethod() {
     if (sigV4Selected) {
       return sigV4Id;
@@ -96,6 +116,10 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
 
     if (azureAuthSelected) {
       return azureAuthId;
+    }
+
+    if (oauth2Selected) {
+      return oauth2Id;
     }
 
     return newAuthProps.selectedMethod;
@@ -162,6 +186,9 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
             azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
           }
 
+          // OAuth2 Client Credentials
+          setOAuth2Selected(method === oauth2Id);
+
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
@@ -171,6 +198,7 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
               azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
               sigV4Auth: method === sigV4Id,
               oauthPassThru: method === AuthMethod.OAuthForward,
+              oauth2ClientCredentials: method === oauth2Id,
             },
           });
         }}

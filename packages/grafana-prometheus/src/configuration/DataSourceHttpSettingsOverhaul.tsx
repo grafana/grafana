@@ -1,4 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/DataSourceHttpSettingsOverhaul.tsx
+import { ReactElement, useState } from 'react';
+
 import { DataSourceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/plugin-ui';
@@ -6,7 +8,18 @@ import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
+import { OAuth2ClientCredentialsSettings } from './OAuth2ClientCredentialsSettings';
 import { docsTip, overhaulStyles } from './shared/utils';
+
+// Custom auth method types for external datasource use
+type CustomMethodId = `custom-${string}`;
+
+type CustomMethod = {
+  id: CustomMethodId;
+  label: string;
+  description: string;
+  component: ReactElement;
+};
 
 type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;
@@ -25,7 +38,24 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
+  // OAuth2 Client Credentials auth
+  const [oauth2Selected, setOAuth2Selected] = useState<boolean>(options.jsonData.oauth2ClientCredentials || false);
+
+  const oauth2Id: CustomMethodId = 'custom-oauth2ClientCredentials';
+
+  const customMethods: CustomMethod[] = [
+    {
+      id: oauth2Id,
+      label: 'OAuth2 Client Credentials',
+      description: 'Authenticate using OAuth2 client credentials flow',
+      component: <OAuth2ClientCredentialsSettings options={options} onOptionsChange={onOptionsChange} />,
+    },
+  ];
+
   function returnSelectedMethod() {
+    if (oauth2Selected) {
+      return oauth2Id;
+    }
     return newAuthProps.selectedMethod;
   }
 
@@ -80,11 +110,15 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
       <Auth
         // Reshaped legacy props
         {...newAuthProps}
+        customMethods={customMethods}
         // Still need to call `onAuthMethodSelect` function from
         // `newAuthProps` to store the legacy data correctly.
         // Also make sure to store the data about your component
         // being selected/unselected.
         onAuthMethodSelect={(method) => {
+          // OAuth2 Client Credentials
+          setOAuth2Selected(method === oauth2Id);
+
           onOptionsChange({
             ...options,
             basicAuth: method === AuthMethod.BasicAuth,
@@ -92,6 +126,7 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
             jsonData: {
               ...options.jsonData,
               oauthPassThru: method === AuthMethod.OAuthForward,
+              oauth2ClientCredentials: method === oauth2Id,
             },
           });
         }}
