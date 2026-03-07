@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
 import { Route } from 'app/plugins/datasource/alertmanager/types';
 
+import { trackNotificationPolicySelectorChanged } from '../../../Analytics';
 import { RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
 import {
@@ -150,15 +151,24 @@ export function PolicyTreeSelector() {
 
   const handlePolicyChange = (option: SelectableValue<string>) => {
     const newValue = option.value ?? '';
+
+    trackNotificationPolicySelectorChanged({
+      fromDefault: isUsingDefaultPolicy,
+      toDefault: newValue === '',
+    });
+
     updatePolicyLabel(newValue);
 
-    // If user selects default, collapse back
     if (newValue === '') {
       setIsExpanded(false);
     }
   };
 
   const handleResetToDefault = () => {
+    trackNotificationPolicySelectorChanged({
+      fromDefault: false,
+      toDefault: true,
+    });
     updatePolicyLabel('');
     setIsExpanded(false);
   };

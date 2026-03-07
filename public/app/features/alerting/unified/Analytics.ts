@@ -471,3 +471,39 @@ export function trackViewExperienceToggleConfirmed(
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }
+
+// ============================================================================
+// Multiple Notification Policies Telemetry
+// ============================================================================
+
+export function trackNotificationPolicyCreated(payload: { hasCustomTimings: boolean; hasCustomGrouping: boolean }) {
+  reportInteraction('grafana_alerting_notification_policy_created', payload);
+}
+
+export function trackNotificationPolicyCreateError(payload: { error: string }) {
+  reportInteraction('grafana_alerting_notification_policy_create_error', payload);
+}
+
+export function trackNotificationPolicyDeleted() {
+  reportInteraction('grafana_alerting_notification_policy_deleted');
+}
+
+export function trackNotificationPolicyDeleteError(payload: { error: string }) {
+  reportInteraction('grafana_alerting_notification_policy_delete_error', payload);
+}
+
+export function trackNotificationPolicyReset() {
+  reportInteraction('grafana_alerting_notification_policy_reset');
+}
+
+export function trackNotificationPolicyResetError(payload: { error: string }) {
+  reportInteraction('grafana_alerting_notification_policy_reset_error', payload);
+}
+
+export function trackNotificationPolicyExported(payload: { isDefaultPolicy: boolean }) {
+  reportInteraction('grafana_alerting_notification_policy_exported', payload);
+}
+
+export function trackNotificationPolicySelectorChanged(payload: { fromDefault: boolean; toDefault: boolean }) {
+  reportInteraction('grafana_alerting_notification_policy_selector_changed', payload);
+}

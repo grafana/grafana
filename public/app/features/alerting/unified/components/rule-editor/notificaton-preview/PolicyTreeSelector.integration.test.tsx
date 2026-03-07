@@ -27,6 +27,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import * as analytics from '../../../Analytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -271,6 +272,52 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 
       // The request should contain __grafana_managed_route__ label with the policy name
       expect(serializedRequests).toMatchSnapshot();
+    });
+
+    it('tracks analytics when policy selection changes', async () => {
+      jest.spyOn(analytics, 'trackNotificationPolicySelectorChanged');
+
+      const { user } = renderRuleEditor();
+
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await selectFolderAndGroup(user);
+
+      // Expand the dropdown
+      await waitFor(() => {
+        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.changeButton.get());
+
+      // Wait for dropdown
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
+      });
+
+      // Select a custom policy
+      await user.click(policyTreeUi.policySelector.get());
+      await waitFor(() => {
+        const options = screen.getAllByRole('option');
+        expect(options.length).toBeGreaterThan(1);
+      });
+      const customPolicyName = 'Managed Policy - Empty Provisioned';
+      const customPolicyOption = screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') });
+      await user.click(customPolicyOption);
+
+      expect(analytics.trackNotificationPolicySelectorChanged).toHaveBeenCalledWith({
+        fromDefault: true,
+        toDefault: false,
+      });
+
+      // Now reset to default and verify tracking
+      await waitFor(() => {
+        expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      });
+      await user.click(policyTreeUi.resetButton.get());
+
+      expect(analytics.trackNotificationPolicySelectorChanged).toHaveBeenCalledWith({
+        fromDefault: false,
+        toDefault: true,
+      });
     });
 
     it('resets to default and collapses when Reset to default is clicked', async () => {

@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { AccessControlAction } from '../../../../../types/accessControl';
+import * as analytics from '../../Analytics';
 import NotificationPolicies from '../../NotificationPoliciesPage';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
@@ -19,6 +20,10 @@ import { countPolicies } from './PoliciesList';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 jest.mock('../../useRouteGroupsMatcher');
+
+jest.mock('./useExportRoutingTree', () => ({
+  useExportRoutingTree: () => [null, jest.fn()],
+}));
 
 jest.mock('../../hooks/useAbilities', () => ({
   ...jest.requireActual('../../hooks/useAbilities'),
@@ -327,6 +332,76 @@ describe('PoliciesList', () => {
         expect(btn).toBeInTheDocument();
         expect(btn).toHaveAttribute('aria-disabled', 'true');
       });
+    });
+  });
+
+  describe('Analytics', () => {
+    beforeEach(() => {
+      jest.spyOn(analytics, 'trackNotificationPolicyExported');
+      jest.spyOn(analytics, 'trackNotificationPolicyDeleted');
+      jest.spyOn(analytics, 'trackNotificationPolicyReset');
+    });
+
+    it('tracks export click for default policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
+      const btn = await ui.exportButton.find(defaultPolicyEl);
+      await user.click(btn);
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({
+        isDefaultPolicy: true,
+      });
+    });
+
+    it('tracks export click for custom policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      const customPolicyEl = await getRoute('Managed Policy - Override + Inherit');
+      const btn = await ui.exportButton.find(customPolicyEl);
+      await user.click(btn);
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({
+        isDefaultPolicy: false,
+      });
+    });
+
+    it('tracks delete success for custom policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      const customPolicyEl = await getRoute('Managed Policy - Override + Inherit');
+      const deleteBtn = await ui.deleteButton.find(customPolicyEl);
+      await user.click(deleteBtn);
+
+      const confirmInput = await screen.findByPlaceholderText(/delete/i);
+      await user.type(confirmInput, 'Delete');
+      const confirmBtn = screen.getByRole('button', { name: 'Delete' });
+      await user.click(confirmBtn);
+
+      expect(analytics.trackNotificationPolicyDeleted).toHaveBeenCalledTimes(1);
+    });
+
+    it('tracks reset success for default policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
+      const resetBtn = await ui.resetButton.find(defaultPolicyEl);
+      await user.click(resetBtn);
+
+      const confirmInput = await screen.findByPlaceholderText(/reset/i);
+      await user.type(confirmInput, 'Reset');
+      const confirmBtn = screen.getByRole('button', { name: 'Reset' });
+      await user.click(confirmBtn);
+
+      expect(analytics.trackNotificationPolicyReset).toHaveBeenCalledTimes(1);
     });
   });
 });
