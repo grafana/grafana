@@ -21,6 +21,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -171,6 +172,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	previous, err := utils.MetaAccessor(previousObject)
 	if err != nil {
 		return v, err
+	}
+
+	requester, err := identity.GetRequester(ctx)
+
+	ownerReferencesChanged := !apiequality.Semantic.DeepEqual(previous.GetOwnerReferences(), obj.GetOwnerReferences())
+	if ownerReferencesChanged && !requester.GetIsGrafanaAdmin() {
+		return v, apierrors.NewForbidden(s.gr, obj.GetName(), fmt.Errorf("must be admin to change owner references"))
 	}
 
 	if previous.GetUID() == "" {
