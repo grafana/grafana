@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"strings"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -33,14 +35,14 @@ type PluginProxy struct {
 	matchedRoute   *plugins.Route
 	cfg            *setting.Cfg
 	secretsService secrets.Service
-	tracer         tracing.Tracer
+	tracer         trace.Tracer
 	transport      *http.Transport
 	features       featuremgmt.FeatureToggles
 }
 
 // NewPluginProxy creates a plugin proxy.
 func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route, ctx *contextmodel.ReqContext,
-	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer tracing.Tracer,
+	proxyPath string, cfg *setting.Cfg, secretsService secrets.Service, tracer trace.Tracer,
 	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:  accessControl,
@@ -124,7 +126,7 @@ func (proxy *PluginProxy) HandleRequest() {
 		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
-	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(proxy.ctx.Req.Header))
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req)
 }

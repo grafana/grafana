@@ -7,21 +7,18 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func TestTracingMiddleware(t *testing.T) {
-	tracer := tracing.InitializeTracerForTest()
-
+func TestNewTracingMiddleware(t *testing.T) {
 	t.Run("GET request that returns 200 OK should start and capture span", func(t *testing.T) {
 		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"), tracer)
+		mw := NewTracingMiddleware()
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
@@ -59,12 +56,12 @@ func TestTracingMiddleware(t *testing.T) {
 			defer span.End()
 
 			// child span should have the same trace ID as the parent span
-			require.Equal(t, expectedTraceID, tracing.TraceIDFromContext(ctx, false))
+			require.Equal(t, expectedTraceID, trace.SpanContextFromContext(ctx).TraceID().String())
 
 			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"), tracer)
+		mw := NewTracingMiddleware()
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
@@ -79,7 +76,7 @@ func TestTracingMiddleware(t *testing.T) {
 		ctx, span := tracer.Start(context.Background(), "testspan")
 		defer span.End()
 
-		expectedTraceID = tracing.TraceIDFromContext(ctx, false)
+		expectedTraceID = trace.SpanContextFromContext(ctx).TraceID().String()
 		assert.NotEmpty(t, expectedTraceID)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://test.com/query", nil)
@@ -97,7 +94,7 @@ func TestTracingMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusBadRequest, Request: req}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"), tracer)
+		mw := NewTracingMiddleware()
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
@@ -128,7 +125,7 @@ func TestTracingMiddleware(t *testing.T) {
 			return &http.Response{StatusCode: http.StatusOK, Request: req, ContentLength: 10}, nil
 		})
 
-		mw := TracingMiddleware(log.New("test"), tracer)
+		mw := NewTracingMiddleware()
 		rt := mw.CreateMiddleware(httpclient.Options{
 			Labels: map[string]string{
 				"l1": "v1",
