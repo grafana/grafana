@@ -54,7 +54,6 @@ replace (
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
-	github.com/grafana/grafana/pkg/promlib => ../../pkg/promlib
 	github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
 
