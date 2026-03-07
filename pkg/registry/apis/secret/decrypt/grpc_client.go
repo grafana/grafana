@@ -26,6 +26,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 )
 
 type GRPCDecryptClient struct {
@@ -82,7 +83,11 @@ func NewGRPCDecryptClientWithTLS(
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
-	opts = append(opts, grpc.WithUnaryInterceptor(retryInterceptor))
+	opts = append(opts, grpc.WithChainUnaryInterceptor(
+		// Set the original service identity requester in the metadata, if present.
+		interceptors.CallerUnaryClientInterceptor(),
+		retryInterceptor,
+	))
 
 	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {

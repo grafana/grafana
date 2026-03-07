@@ -80,11 +80,13 @@ func provideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+		interceptors.CallerUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+		interceptors.CallerStreamServerInterceptor(),
 	}
 
 	if authenticator != nil {
