@@ -11,7 +11,7 @@ type AddButtonProps = {
 };
 
 export function AddButton({ icon, label, tooltip, onClick }: AddButtonProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getNewButtonStyles);
   return (
     <Button
       className={styles.iconButton}
@@ -27,7 +27,7 @@ export function AddButton({ icon, label, tooltip, onClick }: AddButtonProps) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+export function getNewButtonStyles(theme: GrafanaTheme2) {
   return {
     iconButton: css({
       display: 'flex',
