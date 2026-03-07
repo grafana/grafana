@@ -7,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   MultiValueVariable,
+  QueryVariable,
   SceneVariable,
   SceneVariableSet,
   useSceneObjectState,
@@ -23,6 +24,7 @@ import { VariableDisplaySelect } from '../../settings/variables/components/Varia
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
+import { useVariableRefreshCategory } from './editors/QueryVariableEditor/useVariableRefreshCategory';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
@@ -84,6 +86,10 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
 
   if (variable instanceof MultiValueVariable) {
     categories.push(useVariableSelectionOptionsCategory(variable));
+  }
+
+  if (variable instanceof QueryVariable) {
+    categories.push(useVariableRefreshCategory(variable));
   }
 
   return categories;

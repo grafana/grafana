@@ -2,14 +2,10 @@ import { isObject } from 'lodash';
 import { FormEvent, useCallback, useState } from 'react';
 
 import { CustomVariableModel, shallowCompare } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableForm } from '../../components/CustomVariableForm';
-
-import { PaneItem } from './PaneItem';
 
 interface CustomVariableEditorProps {
   variable: CustomVariable;
@@ -105,20 +101,6 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
       onValuesFormatChange={onValuesFormatChange}
     />
   );
-}
-
-export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  if (!(variable instanceof CustomVariable)) {
-    return [];
-  }
-
-  return [
-    new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.custom-options.values', 'Values separated by comma'),
-      id: 'custom-variable-values',
-      render: ({ props }) => <PaneItem id={props.id} variable={variable} />,
-    }),
-  ];
 }
 
 export const validateJsonQuery = (query: string): Error | undefined => {

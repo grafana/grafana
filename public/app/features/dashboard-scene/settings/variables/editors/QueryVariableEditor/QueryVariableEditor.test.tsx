@@ -19,7 +19,8 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { QueryVariableEditor, getQueryVariableOptions, Editor } from './QueryVariableEditor';
+import { QueryVariableEditor, Editor } from './QueryVariableEditor';
+import { getQueryVariableOptions } from './getQueryVariableOptions';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -456,7 +457,6 @@ describe('QueryVariableEditor', () => {
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
       query: 'initial query',
     });
-    const refreshOptionsSpy = jest.spyOn(variable, 'refreshOptions');
 
     const result = getQueryVariableOptions(variable);
 
@@ -481,7 +481,7 @@ describe('QueryVariableEditor', () => {
     await user.click(openEditorButton);
     const modal = await screen.findByRole('dialog'); // wait for modal to appear
     expect(modal).toBeInTheDocument();
-    expect(within(modal).getByText('Query Variable')).toBeInTheDocument(); // Modal title
+    expect(within(modal).getByText(/Query Variable/)).toBeInTheDocument(); // Modal title
 
     // 3. Assert Editor's key elements are rendered
     // DataSourcePicker's Field
@@ -490,28 +490,20 @@ describe('QueryVariableEditor', () => {
     expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
     // Sort select (check for its current value display)
     expect(within(modal).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
-    // Refresh select (check for its current value display)
-    expect(within(modal).getByRole('radio', { name: /on dashboard load/i })).toBeChecked(); // Default refresh
 
     // 4. Assert Preview and Close buttons are visible
-    const previewButton = within(modal).getByRole('button', { name: 'Preview' });
-    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
-    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
-    const closeButton = closeButtonTextSpan.closest('button')!;
+    const previewButton = within(modal).getByRole('button', { name: 'Run query' });
+    const applyButton = within(modal).getByRole('button', { name: 'Apply' });
+    const discardButton = within(modal).getByRole('button', { name: 'Discard' });
     expect(previewButton).toBeInTheDocument();
-    expect(closeButton).toBeInTheDocument();
+    expect(discardButton).toBeInTheDocument();
+    expect(applyButton).toBeInTheDocument();
 
-    // 5. Preview button calls variable.refreshOptions()
-    await user.click(previewButton);
-    expect(refreshOptionsSpy).toHaveBeenCalledTimes(1);
-
-    // 6. Closing Modal
-    await user.click(closeButton);
+    // 5. Closing Modal
+    await user.click(discardButton);
     await waitFor(() => {
       expect(queryByRole('dialog')).not.toBeInTheDocument();
     });
-
-    refreshOptionsSpy.mockRestore();
   });
 });
 
