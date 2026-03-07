@@ -82,13 +82,13 @@ The following variables are available when templating annotations and labels:
 
 | Variables          | Description                                                                                                                                                                                                                                                                      |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [$labels](#labels) | Contains all labels from the query, only query labels.                                                                                                                                                                                                                           |
+| [$labels](#labels) | Contains labels from the query and user-configured static rule labels.                                                                                                                                                                                                           |
 | [$values](#values) | Contains the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.                                                                                                                                                                  |
 | [$value](#value)   | A string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. When a single data source is used, it returns the value of the query. It is generally recommended to use [$values](#values). |
 
 ### $labels
 
-The `$labels` variable contains all labels from the query. It excludes [user-configured and reserved labels](ref:label-types), containing only query labels.
+The `$labels` variable contains labels from the query as well as user-configured static rule labels. It excludes [reserved labels](ref:label-types).
 
 {{< figure src="/media/docs/alerting/query-labels-and-values.png" max-width="1200px" caption="An alert rule displaying labels and value from a query." >}}
 
