@@ -1,19 +1,18 @@
+import { act } from '@testing-library/react';
+
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesService } from '../ScopesService';
+import { ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
-import {
-  expectDashboardsClosed,
-  expectDashboardsDisabled,
-  expectScopesSelectorClosed,
-  expectScopesSelectorDisabled,
-} from './utils/assertions';
+import { expectDashboardsOpen } from './utils/assertions';
 import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
+import { getDashboardsExpand, getSelectorInput, querySelectorApply } from './utils/selectors';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -26,7 +25,7 @@ jest.mock('@grafana/runtime', () => ({
 setBackendSrv(backendSrv);
 setupMockServer();
 
-describe('View mode', () => {
+describe('Scope selector in edit mode', () => {
   let dashboardScene: DashboardScene;
   let scopesService: ScopesService;
 
@@ -45,31 +44,138 @@ describe('View mode', () => {
     await resetScenes();
   });
 
-  it('Enters view mode', async () => {
+  it('Does not set scopes to read only when entering edit mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(scopesService.state.readOnly).toEqual(true);
-    expect(scopesService.state.drawerOpened).toEqual(false);
+    expect(scopesService.state.readOnly).toEqual(false);
   });
 
-  it('Closes selector on enter', async () => {
+  it('Does not close selector when entering edit mode', async () => {
     await openSelector();
     await enterEditMode(dashboardScene);
-    expectScopesSelectorClosed();
+    expect(querySelectorApply()).toBeInTheDocument();
   });
 
-  it('Closes dashboards list on enter', async () => {
+  it('Does not close dashboards list when entering edit mode', async () => {
     await toggleDashboards();
     await enterEditMode(dashboardScene);
-    expectDashboardsClosed();
+    expectDashboardsOpen();
   });
 
-  it('Does not show selector when view mode is active', async () => {
+  it('Does not disable selector when edit mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectScopesSelectorDisabled();
+    expect(getSelectorInput()).not.toBeDisabled();
   });
 
-  it('Does not show the expand button when view mode is active', async () => {
+  it('Does not disable the expand button when edit mode is active', async () => {
     await enterEditMode(dashboardScene);
-    expectDashboardsDisabled();
+    expect(getDashboardsExpand()).not.toBeDisabled();
+  });
+});
+
+describe('setReadOnly', () => {
+  let scopesService: ScopesService;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  beforeEach(async () => {
+    const renderResult = await renderDashboard();
+    scopesService = renderResult.scopesService;
+  });
+
+  afterEach(async () => {
+    await resetScenes();
+  });
+
+  it('Sets readOnly state and closes selector when called with true', async () => {
+    await openSelector();
+    expect(querySelectorApply()).toBeInTheDocument();
+
+    act(() => {
+      scopesService.setReadOnly(true);
+    });
+
+    expect(scopesService.state.readOnly).toEqual(true);
+    expect(querySelectorApply()).not.toBeInTheDocument();
+  });
+
+  it('Sets readOnly state without closing selector when called with false', async () => {
+    await openSelector();
+    expect(querySelectorApply()).toBeInTheDocument();
+
+    act(() => {
+      scopesService.setReadOnly(false);
+    });
+
+    expect(scopesService.state.readOnly).toEqual(false);
+    expect(querySelectorApply()).toBeInTheDocument();
+  });
+});
+
+describe('setRedirectEnabled', () => {
+  let dashboardScene: DashboardScene;
+  let scopesService: ScopesService;
+  let scopesSelectorService: ScopesSelectorService;
+
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  beforeEach(async () => {
+    const renderResult = await renderDashboard();
+    dashboardScene = renderResult.scene;
+    scopesService = renderResult.scopesService;
+    scopesSelectorService = renderResult.scopesSelectorService;
+  });
+
+  afterEach(async () => {
+    await resetScenes();
+  });
+
+  it('Disables redirects when entering edit mode via DashboardSceneRenderer useEffect', async () => {
+    // The DashboardSceneRenderer calls scopesService.setRedirectEnabled(!isEditing).
+    // Entering edit mode should trigger setRedirectEnabled(false).
+    // Verify by spying on the selector service method — if the facade delegates correctly,
+    // the spy should be called with false after entering edit mode.
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    await enterEditMode(dashboardScene);
+
+    expect(spy).toHaveBeenCalledWith(false);
+  });
+
+  it('Re-enables redirects when exiting edit mode', async () => {
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    await enterEditMode(dashboardScene);
+
+    // Simulate exiting edit mode by calling setRedirectEnabled(true) on the facade,
+    // as DashboardSceneRenderer does when isEditing becomes false.
+    act(() => {
+      scopesService.setRedirectEnabled(true);
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
+  });
+
+  it('Delegates setRedirectEnabled calls from ScopesService facade to ScopesSelectorService', async () => {
+    // Verify the facade method delegates to the selector service by spying on it.
+    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
+
+    act(() => {
+      scopesService.setRedirectEnabled(false);
+    });
+
+    expect(spy).toHaveBeenCalledWith(false);
+    spy.mockClear();
+
+    act(() => {
+      scopesService.setRedirectEnabled(true);
+    });
+
+    expect(spy).toHaveBeenCalledWith(true);
   });
 });

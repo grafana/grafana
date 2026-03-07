@@ -230,6 +230,18 @@ export class ScopesService implements ScopesContextValue {
     // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
     this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
 
+  /**
+   * Sets the readOnly state of the scopes selector.
+   * When readOnly is true, the scopes selector is disabled and any open selector is closed.
+   *
+   * Note: This method is currently not used internally by dashboard edit mode (as of the
+   * edit mode scopes changes). It remains available for programmatic control by external
+   * consumers or plugins that may need to temporarily disable scopes selection.
+   */
+  public setRedirectEnabled = (enabled: boolean) => {
+    this.selectorService.setRedirectEnabled(enabled);
+  };
+
   public setReadOnly = (readOnly: boolean) => {
     if (this.state.readOnly !== readOnly) {
       this.updateState({ readOnly });
