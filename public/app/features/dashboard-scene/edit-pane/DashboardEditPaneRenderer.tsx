@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { PluginExtensionPoints } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, usePluginComponents } from '@grafana/runtime';
 import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -17,11 +18,15 @@ import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { getDefaultVizPanel } from '../utils/utils';
 
+import { AssistantEditPaneContent } from './AssistantEditPane';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
+
+const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
+const ASSISTANT_PLUGIN_TITLE = 'Grafana Assistant';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -42,6 +47,14 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   // used when adding new panel from the sidebar
   const [selectedLayoutElement, setSelectedLayoutElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
     dashboard
+  );
+
+  const { components: assistantComponents } = usePluginComponents<Record<string, unknown>>({
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
+  });
+
+  const isAssistantAvailable = assistantComponents.some(
+    (c) => c.meta.pluginId === ASSISTANT_PLUGIN_ID && c.meta.title === ASSISTANT_PLUGIN_TITLE
   );
 
   const editableElement = useMemo(() => {
@@ -88,7 +101,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {editableElement && (
+      {openPane === 'element' && editableElement && (
         <Sidebar.OpenPane>
           <ElementEditPane
             key={selectedObject?.state.key}
@@ -96,6 +109,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             element={editableElement}
             isNewElement={isNewElement}
           />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'assistant' && isAssistantAvailable && (
+        <Sidebar.OpenPane>
+          <AssistantEditPaneContent editPane={editPane} dashboard={dashboard} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'add' && (
@@ -118,6 +136,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
+        {isAssistantAvailable && (
+          <Sidebar.Button
+            icon="ai-sparkle"
+            onClick={() => editPane.openPane('assistant')}
+            title={t('dashboard.sidebar.assistant.title', 'Assistant')}
+            tooltip={t('dashboard.sidebar.assistant.tooltip', 'AI assistant')}
+            active={openPane === 'assistant'}
+          />
+        )}
         {isEditing && (
           <>
             <Sidebar.Button
@@ -135,11 +162,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
             <Sidebar.Button
               icon="cog"
-              onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
+              onClick={() => {
+                editPane.selectObject(dashboard, dashboard.state.key!);
+              }}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
-              active={selectedObject === dashboard ? true : false}
+              active={selectedObject === dashboard}
             />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
@@ -170,6 +199,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           </>
         )}
         {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
+
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}

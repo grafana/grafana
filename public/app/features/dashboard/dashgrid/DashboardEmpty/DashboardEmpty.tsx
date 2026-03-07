@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
+import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -13,6 +14,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
 import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
+import { DashboardBuilderPrompt } from './DashboardBuilderPrompt';
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
   useRepositoryStatus,
@@ -53,6 +55,8 @@ const InternalDashboardEmpty = ({
               dashboard={dashboard}
               styles={styles}
               dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
+              onAddVisualization={onAddVisualization}
+              onImportDashboard={onImportDashboard}
             />
           ) : (
             <OldLayoutEmpty
@@ -95,19 +99,59 @@ interface NewLayoutEmptyProps {
     appsIcon: string;
   };
   dashboardLibraryDatasourceUid: string | null;
+  onAddVisualization?: () => void;
+  onImportDashboard?: () => void;
 }
 
-const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
+const NewLayoutEmpty = ({
+  dashboard,
+  styles,
+  dashboardLibraryDatasourceUid,
+  onAddVisualization,
+  onImportDashboard,
+}: NewLayoutEmptyProps) => {
   const { uid, isEditing, editPane } = dashboard.state;
-  const isEditingNewDashboard = isEditing && !uid;
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  const isNewDashboard = isEditing && !uid;
+  const [assistantChecked, setAssistantChecked] = useState(false);
 
-  // open the edit pane when the dashboard is new and in editing mode
-  // will only happen when the default empty state is shown (not overridden by extension point)
   useEffect(() => {
-    if (isEditingNewDashboard) {
+    const timer = setTimeout(() => setAssistantChecked(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Only auto-open the edit pane when the assistant is not available.
+  // When the assistant is available, the AI prompt replaces this flow.
+  useEffect(() => {
+    if (!assistantChecked) {
+      return;
+    }
+    if (isNewDashboard && !isAssistantAvailable) {
       editPane.openPane('add');
     }
-  }, [isEditingNewDashboard, editPane]);
+    if (isNewDashboard && isAssistantAvailable) {
+      editPane.closePane();
+    }
+  }, [isNewDashboard, isAssistantAvailable, editPane, assistantChecked]);
+
+  // Don't flash the fallback UI while the assistant availability is resolving
+  if (isNewDashboard && !assistantChecked) {
+    return null;
+  }
+
+  if (isAssistantAvailable && isNewDashboard) {
+    return (
+      <DashboardBuilderPrompt
+        editPane={editPane}
+        onAddPanel={() => {
+          editPane.openPane('add');
+        }}
+        onPreviewTemplates={() => locationService.push('/dashboards?templateDashboards=true')}
+        onImportDashboard={onImportDashboard}
+        datasourceUid={dashboardLibraryDatasourceUid}
+      />
+    );
+  }
 
   return (
     <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">

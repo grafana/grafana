@@ -31,7 +31,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
   return (
     <Sidebar.PaneHeader title={elementInfo.typeName}>
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={1} alignItems="center">
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (
           <Dropdown
