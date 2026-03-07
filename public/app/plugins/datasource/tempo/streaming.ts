@@ -97,7 +97,10 @@ export function doTempoSearchStreaming(
           // This is because the metrics frame is used to display the progress of the streaming query
           // and we would like to display the results first.
           frames = [
-            ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
+            ...formatTraceQLResponse(traces, instanceSettings, query.tableType).map((frame) => ({
+              ...frame,
+              refId: query.refId, // Ensure refId is preserved
+            })),
             metricsDataFrame(metrics, frameState, elapsedTime),
           ];
         }
