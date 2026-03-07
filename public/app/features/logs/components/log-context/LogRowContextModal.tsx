@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as React from 'react';
@@ -19,7 +20,7 @@ import {
   store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
@@ -220,6 +221,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const logsContextDatasourceUi = useBooleanFlagValue('logsContextDatasourceUi', false);
 
   const [sticky, setSticky] = useState(true);
 
@@ -499,7 +501,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       className={styles.modal}
       onDismiss={onClose}
     >
-      {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
+      {logsContextDatasourceUi && getLogRowContextUi && (
         <div className={styles.datasourceUi}>{getLogRowContextUi(row, updateResults)}</div>
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
