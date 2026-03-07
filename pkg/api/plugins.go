@@ -232,6 +232,9 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		dto.Enabled = ps.Enabled
 		dto.Pinned = ps.Pinned
 		dto.JsonData = ps.JSONData
+		if dto.JsonData == nil {
+			dto.JsonData = make(map[string]any)
+		}
 
 		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
 			if len(v) > 0 {
