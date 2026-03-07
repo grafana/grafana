@@ -236,6 +236,14 @@ gen-feature-toggles:
 	else \
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
+	@echo "generate openfeature react hooks"
+	$(openfeature) generate react \
+		--manifest ./pkg/services/featuremgmt/openfeature-manifest.gen.json \
+		--output ./packages/grafana-runtime/src/internal/openFeature/ \
+		--no-input
+	@# Remove unused JsonValue import from generated file (only used for object-type flags)
+	sed -i '' -e '/^  JsonValue$$/d' -e 's/useSuspenseFlag,$$/useSuspenseFlag/' \
+		./packages/grafana-runtime/src/internal/openFeature/openfeature.ts
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled

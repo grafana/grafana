@@ -61,6 +61,13 @@ func TestFeatureToggleFiles(t *testing.T) {
 				generateCSV(lookup),
 			)
 		})
+
+		t.Run("openfeature manifest", func(t *testing.T) {
+			generateFile(t,
+				"openfeature-manifest.gen.json",
+				generateOpenFeatureManifest(),
+			)
+		})
 	})
 }
 
@@ -515,4 +522,32 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
 	return strings.ReplaceAll(v, "--|", "- |")
+}
+
+func generateOpenFeatureManifest() string {
+	type flagDef struct {
+		FlagType     string `json:"flagType"`
+		DefaultValue bool   `json:"defaultValue"`
+		Description  string `json:"description,omitempty"`
+	}
+	type manifest struct {
+		Schema string             `json:"$schema"`
+		Flags  map[string]flagDef `json:"flags"`
+	}
+
+	m := manifest{
+		Schema: "https://raw.githubusercontent.com/open-feature/cli/refs/heads/main/schema/v0/flag-manifest.json",
+		Flags:  make(map[string]flagDef),
+	}
+
+	for _, flag := range standardFeatureFlags {
+		m.Flags[flag.Name] = flagDef{
+			FlagType:     "boolean",
+			DefaultValue: flag.Expression == "true",
+			Description:  flag.Description,
+		}
+	}
+
+	out, _ := json.MarshalIndent(m, "", "  ")
+	return string(out) + "\n"
 }

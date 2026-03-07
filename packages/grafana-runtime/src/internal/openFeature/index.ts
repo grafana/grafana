@@ -62,3 +62,5 @@ export async function initOpenFeature() {
 export function getFeatureFlagClient() {
   return OpenFeature.getClient(GRAFANA_CORE_OPEN_FEATURE_DOMAIN);
 }
+
+export * from './openfeature';

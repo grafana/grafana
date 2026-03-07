@@ -82,9 +82,29 @@ func TestFoo(t *testing.T) {
 
 Use the OpenFeature React hooks for all new feature flags. The React hooks automatically stay up to date with the latest flag values and integrate seamlessly with React components.
 
-#### Using React hooks (recommended)
+#### Using generated hooks (recommended)
 
-For React components, use the `useBooleanFlagValue` hook from `@openfeature/react-sdk`:
+After defining your flag in `registry.go` and running `make gen-feature-toggles`, typed hooks are generated automatically using the [OpenFeature CLI](https://github.com/open-feature/cli). Import them from `@grafana/runtime/internal`:
+
+```tsx
+import { useNewPreferences } from '@grafana/runtime/internal';
+
+function MyComponent() {
+  const isNewPreferencesEnabled = useNewPreferences();
+
+  if (isNewPreferencesEnabled) {
+    return <NewPreferencesUI />;
+  }
+
+  return <LegacyPreferencesUI />;
+}
+```
+
+The generated hooks are located at `packages/grafana-runtime/src/internal/openFeature/openfeature.ts` and provide full type safety and IDE autocomplete for all defined feature flags.
+
+#### Using `useBooleanFlagValue` directly
+
+You can also use the `useBooleanFlagValue` hook from `@openfeature/react-sdk` directly:
 
 ```tsx
 import { useBooleanFlagValue } from '@openfeature/react-sdk';

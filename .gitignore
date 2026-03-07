@@ -261,6 +261,9 @@ public/mockServiceWorker.js
 
 /codeowners-manifest/
 
+# OpenFeature flag manifest (intermediary generated artifact)
+pkg/services/featuremgmt/openfeature-manifest.gen.json
+
 # Ignore grafana/hippocampus local cache folder
 .hippo
 
