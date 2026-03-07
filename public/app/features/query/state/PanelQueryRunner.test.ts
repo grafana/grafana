@@ -530,3 +530,98 @@ describe('PanelQueryRunner', () => {
     }
   );
 });
+
+describe('PanelQueryRunner cancelQuery with LoadingState.PartialResult', () => {
+  it('should set state to Done when cancelling a query with PartialResult state', () => {
+    const runner = new PanelQueryRunner();
+    const events: grafanaData.PanelData[] = [];
+
+    // Subscribe to results
+    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+      events.push(data);
+    });
+
+    // Simulate a query response with PartialResult state
+    runner['lastResult'] = {
+      state: grafanaData.LoadingState.PartialResult,
+      series: [],
+      timeRange: {} as any,
+    };
+
+    // Cancel the query
+    runner.cancelQuery();
+
+    // Should emit Done state
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
+
+    subscription.unsubscribe();
+  });
+
+  it('should set state to Done when cancelling a query with Loading state', () => {
+    const runner = new PanelQueryRunner();
+    const events: grafanaData.PanelData[] = [];
+
+    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+      events.push(data);
+    });
+
+    runner['lastResult'] = {
+      state: grafanaData.LoadingState.Loading,
+      series: [],
+      timeRange: {} as any,
+    };
+
+    runner.cancelQuery();
+
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
+
+    subscription.unsubscribe();
+  });
+
+  it('should set state to Done when cancelling a query with Streaming state', () => {
+    const runner = new PanelQueryRunner();
+    const events: grafanaData.PanelData[] = [];
+
+    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+      events.push(data);
+    });
+
+    runner['lastResult'] = {
+      state: grafanaData.LoadingState.Streaming,
+      series: [],
+      timeRange: {} as any,
+    };
+
+    runner.cancelQuery();
+
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[events.length - 1].state).toBe(grafanaData.LoadingState.Done);
+
+    subscription.unsubscribe();
+  });
+
+  it('should not emit when cancelling a query that is already Done', () => {
+    const runner = new PanelQueryRunner();
+    const events: grafanaData.PanelData[] = [];
+
+    const subscription = runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe((data) => {
+      events.push(data);
+    });
+
+    runner['lastResult'] = {
+      state: grafanaData.LoadingState.Done,
+      series: [],
+      timeRange: {} as any,
+    };
+
+    const eventsBefore = events.length;
+    runner.cancelQuery();
+
+    // Should not emit new event since already Done
+    expect(events.length).toBe(eventsBefore);
+
+    subscription.unsubscribe();
+  });
+});
