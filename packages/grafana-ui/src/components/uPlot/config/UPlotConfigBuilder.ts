@@ -210,11 +210,16 @@ export class UPlotConfigBuilder {
 
         // interpolate for gradients/thresholds
         if (typeof s !== 'string') {
-          let field = this.frames![0].fields[seriesIdx];
-          s = field.display!(field.values[u.cursor.idxs![seriesIdx]!]).color!;
+          const frame = this.frames?.[0];
+          const field = frame?.fields[seriesIdx];
+          const dataIdx = u.cursor.idxs?.[seriesIdx];
+
+          if (field?.display != null && field.values != null && dataIdx != null) {
+            s = field.display(field.values[dataIdx])?.color ?? s;
+          }
         }
 
-        return s + alphaHex;
+        return (typeof s === 'string' ? s : '') + alphaHex;
       };
 
     config.cursor = merge(

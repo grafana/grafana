@@ -5,10 +5,13 @@ import { FieldType, DataFrame } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import {
   closestIdx,
+  getLastStreamingDataFramePacket,
   getStreamingFrameOptions,
+  parseLabelsFromField,
   StreamingDataFrame,
   StreamingFrameAction,
   StreamingFrameOptions,
+  transpose,
 } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
@@ -1000,4 +1003,160 @@ describe('Streaming JSON', () => {
     `);
   });
 */
+
+  describe('parseLabelsFromField()', () => {
+    it('empty string returns empty object', () => {
+      expect(parseLabelsFromField('')).toEqual({});
+    });
+
+    it('prometheus-style labels are parsed', () => {
+      expect(parseLabelsFromField('{sensor="A", job="test"}')).toEqual({ sensor: 'A', job: 'test' });
+    });
+
+    it('influx-style labels are parsed', () => {
+      expect(parseLabelsFromField('sensor=A,job=test')).toEqual({ sensor: 'A', job: 'test' });
+    });
+  });
+
+  describe('getLastStreamingDataFramePacket()', () => {
+    it('returns the packet action from a StreamingDataFrame', () => {
+      const frame = StreamingDataFrame.fromDataFrameJSON({
+        schema: { fields: [{ name: 'time', type: FieldType.time }] },
+        data: { values: [[100]] },
+      });
+      expect(getLastStreamingDataFramePacket(frame)).toBe(StreamingFrameAction.Replace);
+    });
+
+    it('returns undefined for a plain DataFrame', () => {
+      const plain: DataFrame = {
+        fields: [],
+        length: 0,
+      };
+      expect(getLastStreamingDataFramePacket(plain)).toBeUndefined();
+    });
+  });
+
+  describe('transpose()', () => {
+    it('transposes 2 labels across time+value columns', () => {
+      const vrecs = [
+        ['sensor=A', 'sensor=B'],
+        [100, 200],
+        [10, 20],
+      ];
+      const result = transpose(vrecs);
+      expect(result).toBeInstanceOf(Map);
+      expect(result.get('sensor=A')).toEqual([[100], [10]]);
+      expect(result.get('sensor=B')).toEqual([[200], [20]]);
+    });
+  });
+
+  describe('closestIdx() with explicit lo/hi bounds', () => {
+    it('constrains search to bounded range', () => {
+      const arr = [1, 2, 3, 10, 11, 12, 13];
+      // Without bounds, 4 is closest to index 2 (value 3)
+      // With lo=3, hi=6 the search is bounded to [10,11,12,13] -> closest to 4 is index 3
+      expect(closestIdx(4, arr, 3, 6)).toBe(3);
+    });
+  });
+
+  describe('resetStateCalculations()', () => {
+    it('clears calcs and range from field state', () => {
+      const frame = StreamingDataFrame.fromDataFrameJSON({
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: { values: [[100], [1]] },
+      });
+      frame.fields[1].state = { calcs: { sum: 10 }, range: { min: 0, max: 10, delta: 10 } };
+      frame.resetStateCalculations();
+      expect(frame.fields[1].state?.calcs).toBeUndefined();
+      expect(frame.fields[1].state?.range).toBeUndefined();
+    });
+  });
+
+  describe('getMatchingFieldIndexes()', () => {
+    it('returns indexes of fields matching predicate', () => {
+      const frame = StreamingDataFrame.fromDataFrameJSON({
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+            { name: 'label', type: FieldType.string },
+          ],
+        },
+        data: { values: [[100], [1], ['a']] },
+      });
+      const indexes = frame.getMatchingFieldIndexes((f) => f.type === FieldType.number);
+      expect(indexes).toEqual([1]);
+    });
+  });
+
+  describe('needsResizing()', () => {
+    it('returns false when maxLength is unchanged', () => {
+      const frame = StreamingDataFrame.empty({ maxLength: 100, maxDelta: 50 });
+      expect(frame.needsResizing({ maxLength: 100, maxDelta: 50, action: StreamingFrameAction.Append })).toBe(false);
+    });
+
+    it('returns true when maxLength is larger', () => {
+      const frame = StreamingDataFrame.empty({ maxLength: 100, maxDelta: 50 });
+      expect(frame.needsResizing({ maxLength: 200, maxDelta: 50, action: StreamingFrameAction.Append })).toBe(true);
+    });
+
+    it('returns true when maxDelta is larger', () => {
+      const frame = StreamingDataFrame.empty({ maxLength: 100, maxDelta: 50 });
+      expect(frame.needsResizing({ maxLength: 100, maxDelta: 100, action: StreamingFrameAction.Append })).toBe(true);
+    });
+
+    it('returns true when existing maxDelta is Infinity', () => {
+      const frame = StreamingDataFrame.empty({ maxLength: 100 }); // maxDelta defaults to Infinity
+      expect(frame.needsResizing({ maxLength: 100, maxDelta: 60, action: StreamingFrameAction.Append })).toBe(true);
+    });
+  });
+
+  describe('pushNewValues() edge case', () => {
+    it('calling with empty array does not change frame length', () => {
+      const frame = StreamingDataFrame.fromDataFrameJSON({
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [
+            [100, 200],
+            [1, 2],
+          ],
+        },
+      });
+      const lengthBefore = frame.length;
+      frame.pushNewValues([]);
+      expect(frame.length).toBe(lengthBefore);
+    });
+  });
+
+  describe('push() with entities', () => {
+    it('decodes NaN and Undef entities into field values', () => {
+      const frame = StreamingDataFrame.fromDataFrameJSON({
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [
+            [100, 200, 300],
+            [1, 2, 3],
+          ],
+          entities: [null, { NaN: [1], Undef: [2] }],
+        },
+      });
+      expect(frame.fields[1].values[1]).toBeNaN();
+      expect(frame.fields[1].values[2]).toBeUndefined();
+    });
+  });
 });

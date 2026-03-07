@@ -1,19 +1,33 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { TimeSeries, TableData } from '../types/data';
-import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
+import { TimeSeries, TableData, LoadingState } from '../types/data';
+import {
+  FieldType,
+  DataFrameDTO,
+  Field,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
+import { PanelData } from '../types/panel';
+import { getDefaultTimeRange } from '../types/time';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
   createDataFrame,
+  getDataFrameRow,
   getFieldTypeFromValue,
+  getProcessedDataFrames,
+  getTimeField,
   guessFieldTypeForField,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
   isTableData,
+  preProcessPanelData,
   reverseDataFrame,
   sortDataFrame,
   toDataFrame,
+  toDataFrameDTO,
+  toFilteredDataFrameDTO,
   toLegacyResponseData,
 } from './processDataFrame';
 
@@ -514,5 +528,140 @@ describe('guessFieldTypeForField', () => {
     field.values = [];
 
     expect(guessFieldTypeForField(field)).toBe(undefined);
+  });
+});
+
+describe('getDataFrameRow', () => {
+  it('returns array of values for the given row index', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    expect(getDataFrameRow(frame, 0)).toEqual([1000, 10]);
+    expect(getDataFrameRow(frame, 1)).toEqual([2000, 20]);
+  });
+});
+
+describe('toDataFrameDTO', () => {
+  it('converts a DataFrame to a DTO', () => {
+    const frame = createDataFrame({
+      name: 'test',
+      refId: 'A',
+      fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+    });
+    const dto = toDataFrameDTO(frame);
+    expect(dto.name).toBe('test');
+    expect(dto.refId).toBe('A');
+    expect(dto.fields[0].values).toEqual([1, 2, 3]);
+  });
+});
+
+describe('toFilteredDataFrameDTO', () => {
+  it('filters fields using the predicate', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000] },
+        { name: 'value', type: FieldType.number, values: [42] },
+      ],
+    });
+    const dto = toFilteredDataFrameDTO(frame, (f) => f.type === FieldType.number);
+    expect(dto.fields).toHaveLength(1);
+    expect(dto.fields[0].name).toBe('value');
+  });
+});
+
+describe('getTimeField', () => {
+  it('returns the time field and its index', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.number, values: [1] },
+        { name: 'time', type: FieldType.time, values: [1000] },
+      ],
+    });
+    const { timeField, timeIndex } = getTimeField(frame);
+    expect(timeField?.name).toBe('time');
+    expect(timeIndex).toBe(1);
+  });
+
+  it('returns empty object when no time field exists', () => {
+    const frame = createDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+    });
+    expect(getTimeField(frame)).toEqual({});
+  });
+});
+
+describe('getProcessedDataFrames', () => {
+  it('returns empty array when results is undefined', () => {
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+  });
+
+  it('returns empty array when results is not an array', () => {
+    // @ts-expect-error - intentionally testing runtime guard with invalid input
+    expect(getProcessedDataFrames('bad')).toEqual([]);
+  });
+});
+
+describe('guessFieldTypes with guessDefined', () => {
+  it('re-guesses all field types when guessDefined is true', () => {
+    const frame = createDataFrame({
+      fields: [{ name: 'value', type: FieldType.string, values: ['42'] }],
+    });
+    const result = guessFieldTypes(frame, true);
+    expect(result.fields[0].type).toBe(FieldType.number);
+  });
+});
+
+describe('toLegacyResponseData additional paths', () => {
+  it('converts 2-field DataFrame with time to TimeSeries', () => {
+    const frame = createDataFrame({
+      name: 'test',
+      fields: [
+        { name: TIME_SERIES_VALUE_FIELD_NAME, type: FieldType.number, values: [1, 2] },
+        { name: TIME_SERIES_TIME_FIELD_NAME, type: FieldType.time, values: [1000, 2000] },
+      ],
+    });
+    const result = toLegacyResponseData(frame) as TimeSeries;
+    expect(result.datapoints).toEqual([
+      [1, 1000],
+      [2, 2000],
+    ]);
+  });
+
+  it('converts JSON doc frame to legacy docs TimeSeries', () => {
+    const frame = createDataFrame({
+      meta: { json: true },
+      fields: [{ name: 'target', type: FieldType.other, values: [{ a: 1 }] }],
+    });
+    const result = toLegacyResponseData(frame) as TimeSeries;
+    expect((result as TimeSeries & { type?: string }).type).toBe('docs');
+  });
+});
+
+describe('toDataFrame GraphSeries path', () => {
+  it('converts GraphSeries (data property, no schema) to DataFrame', () => {
+    const graphSeries = {
+      data: [
+        [10, 1000],
+        [20, 2000],
+      ],
+      label: 'series1',
+    };
+    const frame = toDataFrame(graphSeries);
+    expect(frame.fields).toHaveLength(2);
+  });
+});
+
+describe('preProcessPanelData', () => {
+  it('uses current data as lastResult when loading with no prior result', () => {
+    const data: PanelData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    };
+    const result = preProcessPanelData(data, undefined);
+    expect(result.state).toBe(LoadingState.Loading);
   });
 });

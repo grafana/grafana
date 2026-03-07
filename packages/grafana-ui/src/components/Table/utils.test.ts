@@ -1,15 +1,32 @@
 import { faker } from '@faker-js/faker';
 import { Row } from 'react-table';
 
-import { Field, FieldConfigSource, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
+import {
+  ActionModel,
+  createTheme,
+  Field,
+  FieldConfigSource,
+  FieldType,
+  LinkModel,
+  MutableDataFrame,
+  SelectableValue,
+} from '@grafana/data';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import {
+  calculateAroundPointThreshold,
   calculateUniqueFieldValues,
   filterByValue,
+  getCellColors,
+  getCellOptions,
   getColumns,
+  getDataLinksActionsTooltipUtils,
   getFilteredOptions,
   getTextAlign,
+  isPointTimeValAroundTableTimeVal,
+  migrateTableDisplayModeToCellOptions,
   rowToFieldValue,
+  sortCaseInsensitive,
   sortNumber,
   sortOptions,
   valuesToOptions,
@@ -615,5 +632,147 @@ describe('Table utils', () => {
       const longestField = guessLongestField(config, data);
       expect(longestField?.name).toBe('Lorem 10');
     });
+  });
+});
+
+describe('isPointTimeValAroundTableTimeVal', () => {
+  it('returns true when point time is within threshold of row time', () => {
+    expect(isPointTimeValAroundTableTimeVal(1000.7, 1000, 5)).toBe(true);
+  });
+
+  it('returns false when point time exceeds threshold', () => {
+    expect(isPointTimeValAroundTableTimeVal(1010, 1000, 5)).toBe(false);
+  });
+});
+
+describe('calculateAroundPointThreshold', () => {
+  it('returns 0 when fewer than 2 values', () => {
+    const field = { values: [1000] } as unknown as Field;
+    expect(calculateAroundPointThreshold(field)).toBe(0);
+  });
+
+  it('calculates (max - min) / length', () => {
+    const field = { values: [1000, 2000, 3000] } as unknown as Field;
+    expect(calculateAroundPointThreshold(field)).toBeCloseTo((3000 - 1000) / 3);
+  });
+});
+
+describe('sortCaseInsensitive', () => {
+  it('sorts rows case-insensitively', () => {
+    const rowA = { values: { name: 'banana' } } as unknown as Row;
+    const rowB = { values: { name: 'Apple' } } as unknown as Row;
+    expect(sortCaseInsensitive(rowA, rowB, 'name')).toBeGreaterThan(0);
+    expect(sortCaseInsensitive(rowB, rowA, 'name')).toBeLessThan(0);
+  });
+});
+
+describe('getDataLinksActionsTooltipUtils', () => {
+  it('shouldShowLink true when exactly 1 link and no actions', () => {
+    const result = getDataLinksActionsTooltipUtils([{ href: '#' } as unknown as LinkModel]);
+    expect(result.shouldShowLink).toBe(true);
+    expect(result.hasMultipleLinksOrActions).toBe(false);
+  });
+
+  it('hasMultipleLinksOrActions true when multiple links', () => {
+    const result = getDataLinksActionsTooltipUtils([
+      { href: '#' } as unknown as LinkModel,
+      { href: '#2' } as unknown as LinkModel,
+    ]);
+    expect(result.shouldShowLink).toBe(false);
+    expect(result.hasMultipleLinksOrActions).toBe(true);
+  });
+
+  it('hasMultipleLinksOrActions true when actions present', () => {
+    const result = getDataLinksActionsTooltipUtils(
+      [{ href: '#' } as unknown as LinkModel],
+      [{ title: 'Delete' } as unknown as ActionModel]
+    );
+    expect(result.hasMultipleLinksOrActions).toBe(true);
+    expect(result.shouldShowLink).toBe(false);
+  });
+});
+
+describe('migrateTableDisplayModeToCellOptions', () => {
+  it.each([
+    ['basic', BarGaugeDisplayMode.Basic],
+    ['gradient-gauge', BarGaugeDisplayMode.Gradient],
+    ['lcd-gauge', BarGaugeDisplayMode.Lcd],
+  ])('migrates %s to Gauge cell with correct mode', (displayMode, expectedMode) => {
+    const result = migrateTableDisplayModeToCellOptions(displayMode as TableCellDisplayMode);
+    expect(result.type).toBe(TableCellDisplayMode.Gauge);
+    expect((result as { mode?: BarGaugeDisplayMode }).mode).toBe(expectedMode);
+  });
+
+  it.each([
+    ['color-background', TableCellBackgroundDisplayMode.Gradient],
+    ['color-background-solid', TableCellBackgroundDisplayMode.Basic],
+  ])('migrates %s to ColorBackground cell with correct mode', (displayMode, expectedMode) => {
+    const result = migrateTableDisplayModeToCellOptions(displayMode as TableCellDisplayMode);
+    expect(result.type).toBe(TableCellDisplayMode.ColorBackground);
+    expect((result as { mode?: TableCellBackgroundDisplayMode }).mode).toBe(expectedMode);
+  });
+
+  it('falls through to default for other display modes', () => {
+    const result = migrateTableDisplayModeToCellOptions('json-view' as TableCellDisplayMode);
+    expect(result.type).toBe('json-view');
+  });
+});
+
+describe('getCellColors', () => {
+  const theme = createTheme();
+
+  it('returns textColor for ColorText mode', () => {
+    const result = getCellColors(
+      theme,
+      { type: TableCellDisplayMode.ColorText },
+      { color: 'red', text: '1', numeric: 1 }
+    );
+    expect(result.textColor).toBe('red');
+    expect(result.bgColor).toBeUndefined();
+  });
+
+  it('returns bgColor for ColorBackground Basic mode', () => {
+    const result = getCellColors(
+      theme,
+      { type: TableCellDisplayMode.ColorBackground, mode: TableCellBackgroundDisplayMode.Basic },
+      { color: '#ff0000', text: '1', numeric: 1 }
+    );
+    expect(result.bgColor).toBeDefined();
+    expect(result.textColor).toBeDefined();
+  });
+
+  it('returns gradient bgColor for ColorBackground Gradient mode', () => {
+    const result = getCellColors(
+      theme,
+      { type: TableCellDisplayMode.ColorBackground, mode: TableCellBackgroundDisplayMode.Gradient },
+      { color: '#ff0000', text: '1', numeric: 1 }
+    );
+    expect(result.bgColor).toContain('linear-gradient');
+  });
+
+  it('returns no colors for non-color modes', () => {
+    const result = getCellColors(theme, { type: TableCellDisplayMode.Auto }, { color: 'red', text: '1', numeric: 1 });
+    expect(result.textColor).toBeUndefined();
+    expect(result.bgColor).toBeUndefined();
+  });
+});
+
+describe('getCellOptions', () => {
+  it('migrates legacy displayMode when present', () => {
+    const field = { config: { custom: { displayMode: 'basic' } } } as unknown as Field;
+    const result = getCellOptions(field);
+    expect(result.type).toBe(TableCellDisplayMode.Gauge);
+  });
+
+  it('returns default Auto options when no cellOptions configured', () => {
+    const field = { config: { custom: {} } } as unknown as Field;
+    const result = getCellOptions(field);
+    expect(result.type).toBe(TableCellDisplayMode.Auto);
+  });
+
+  it('returns existing cellOptions when set', () => {
+    const cellOptions = { type: TableCellDisplayMode.JSONView };
+    const field = { config: { custom: { cellOptions } } } as unknown as Field;
+    expect(getCellOptions(field)).toBe(cellOptions);
   });
 });

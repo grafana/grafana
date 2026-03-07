@@ -1,23 +1,16 @@
-import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
-import { getTheme } from '@grafana/ui';
+import uPlot from 'uplot';
+
+import { createDataFrame, createTheme, dateTime, DateTimeInput, DataFrame, FieldType } from '@grafana/data';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 
 describe('when fill below to option is used', () => {
-  let eventBus: EventBus;
   // eslint-disable-next-line
   let renderers: any[];
   // eslint-disable-next-line
   let tests: any;
 
   beforeEach(() => {
-    eventBus = {
-      publish: jest.fn(),
-      getStream: jest.fn(),
-      subscribe: jest.fn(),
-      removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
-    };
     renderers = [];
 
     tests = [
@@ -200,12 +193,9 @@ describe('when fill below to option is used', () => {
     for (const test of tests) {
       const builder = preparePlotConfigBuilder({
         frame: test.alignedFrame,
-        //@ts-ignore
-        theme: getTheme(),
+        theme: createTheme(),
         timeZones: ['browser'],
         getTimeRange: jest.fn(),
-        eventBus,
-        sync: jest.fn(),
         allFrames: test.allFrames,
         renderers,
       });
@@ -228,12 +218,9 @@ describe('when fill below to option is used', () => {
     for (const test of tests) {
       const builder = preparePlotConfigBuilder({
         frame: test.alignedFrame,
-        //@ts-ignore
-        theme: getTheme(),
+        theme: createTheme(),
         timeZones: ['browser'],
         getTimeRange: jest.fn(),
-        eventBus,
-        sync: jest.fn(),
         allFrames: test.allFrames,
         renderers,
       });
@@ -257,12 +244,9 @@ describe('when fill below to option is used', () => {
     for (const test of tests) {
       const builder = preparePlotConfigBuilder({
         frame: test.alignedFrame,
-        //@ts-ignore
-        theme: getTheme(),
+        theme: createTheme(),
         timeZones: ['browser'],
         getTimeRange: jest.fn(),
-        eventBus,
-        sync: jest.fn(),
         allFrames: test.allFrames,
         renderers,
       });
@@ -297,21 +281,11 @@ describe('time axis units', () => {
         },
       ],
     });
-    const eventBus = {
-      publish: jest.fn(),
-      getStream: jest.fn(),
-      subscribe: jest.fn(),
-      removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
-    };
     const builder = preparePlotConfigBuilder({
       frame,
-      //@ts-ignore
-      theme: getTheme(),
+      theme: createTheme(),
       timeZones: ['browser'],
       getTimeRange: jest.fn(),
-      eventBus,
-      sync: jest.fn(),
       allFrames: [frame],
       renderers: [],
     });
@@ -351,21 +325,11 @@ describe('time axis units', () => {
         },
       ],
     });
-    const eventBus = {
-      publish: jest.fn(),
-      getStream: jest.fn(),
-      subscribe: jest.fn(),
-      removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
-    };
     const builder = preparePlotConfigBuilder({
       frame,
-      //@ts-ignore
-      theme: getTheme(),
+      theme: createTheme(),
       timeZones: ['browser'],
       getTimeRange: jest.fn(),
-      eventBus,
-      sync: jest.fn(),
       allFrames: [frame],
       renderers: [],
     });
@@ -396,5 +360,162 @@ describe('calculateAnnotationLaneSizes', () => {
         size: 26,
       },
     });
+  });
+});
+
+describe('preparePlotConfigBuilder crash guards', () => {
+  it('does not throw when a renderer references a field not present in the aligned frame', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          type: FieldType.time,
+          name: 'Time',
+          values: [1000, 2000, 3000],
+          state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+        },
+        {
+          type: FieldType.number,
+          name: 'Value',
+          values: [1, 2, 3],
+          state: { multipleFrames: false, displayName: 'Value', origin: { fieldIndex: 1, frameIndex: 0 } },
+        },
+      ],
+    });
+
+    expect(() => {
+      preparePlotConfigBuilder({
+        frame,
+        theme: createTheme(),
+        timeZones: ['browser'],
+        getTimeRange: jest.fn(),
+        allFrames: [frame],
+        renderers: [
+          {
+            fieldMap: { main: 'NonExistentField' },
+            indicesOnly: [],
+            init: jest.fn(),
+          },
+        ],
+      });
+    }).not.toThrow();
+  });
+
+  it('maps fieldIndices correctly when renderer field exists in aligned frame', () => {
+    // Use a raw frame object rather than createDataFrame because createDataFrame
+    // strips field.state (needed by getNamesToFieldIndex to build the name→index map).
+    const frame = {
+      fields: [
+        {
+          config: {},
+          values: [1000, 2000, 3000],
+          name: 'Time',
+          state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+          type: FieldType.time,
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          state: { multipleFrames: false, displayName: 'Value', origin: { fieldIndex: 1, frameIndex: 0 } },
+          type: FieldType.number,
+        },
+      ],
+      length: 3,
+    } as unknown as DataFrame;
+
+    const mockInit = jest.fn();
+
+    preparePlotConfigBuilder({
+      frame,
+      theme: createTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      allFrames: [frame],
+      renderers: [
+        {
+          fieldMap: { main: 'Value' },
+          indicesOnly: [],
+          init: mockInit,
+        },
+      ],
+    });
+
+    expect(mockInit).toHaveBeenCalledWith(expect.anything(), { main: 1 });
+  });
+
+  it('reuses the same index map for multiple renderers without re-computing it', () => {
+    const frame = {
+      fields: [
+        {
+          config: {},
+          values: [1000, 2000, 3000],
+          name: 'Time',
+          state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+          type: FieldType.time,
+        },
+        {
+          config: {},
+          values: [1, 2, 3],
+          name: 'Value',
+          state: { multipleFrames: false, displayName: 'Value', origin: { fieldIndex: 1, frameIndex: 0 } },
+          type: FieldType.number,
+        },
+      ],
+      length: 3,
+    } as unknown as DataFrame;
+
+    const mockInit1 = jest.fn();
+    const mockInit2 = jest.fn();
+
+    preparePlotConfigBuilder({
+      frame,
+      theme: createTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      allFrames: [frame],
+      renderers: [
+        { fieldMap: { main: 'Value' }, indicesOnly: [], init: mockInit1 },
+        { fieldMap: { secondary: 'Value' }, indicesOnly: [], init: mockInit2 },
+      ],
+    });
+
+    expect(mockInit1).toHaveBeenCalledWith(expect.anything(), { main: 1 });
+    expect(mockInit2).toHaveBeenCalledWith(expect.anything(), { secondary: 1 });
+  });
+
+  it('pointColorFn does not throw when invoked before prepData (panel type change scenario)', () => {
+    const frame = createDataFrame({
+      fields: [
+        { type: FieldType.time, name: 'Time', values: [1000, 2000] },
+        {
+          type: FieldType.number,
+          name: 'Value',
+          config: { color: { mode: 'thresholds' } },
+          values: [1, 2],
+        },
+      ],
+    });
+
+    const builder = preparePlotConfigBuilder({
+      frame,
+      theme: createTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+
+    // Simulate getConfig() being called before prepData (reinitPlot ordering)
+    const config = builder.getConfig();
+
+    const mockPlot = {
+      series: [null, { points: { _stroke: () => 'fn' } }],
+      cursor: { idxs: [null, 0] },
+    } as unknown as uPlot;
+
+    expect(() => {
+      // @ts-ignore
+      config.cursor!.points!.stroke!(mockPlot, 1);
+    }).not.toThrow();
   });
 });

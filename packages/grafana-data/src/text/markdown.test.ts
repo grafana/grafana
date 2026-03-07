@@ -43,4 +43,19 @@ describe('Markdown wrapper', () => {
     const str = renderTextPanelMarkdown('<script>alert()</script>');
     expect(str).toBe('&lt;script&gt;alert()&lt;/script&gt;');
   });
+
+  it('renderMarkdown with noSanitize: true passes through script tags', () => {
+    const str = renderMarkdown('<script>alert()</script>', { noSanitize: true });
+    expect(str).toContain('<script>');
+  });
+
+  it('renderMarkdown with breaks: true renders newlines as <br>', () => {
+    const str = renderMarkdown('line one\nline two', { breaks: true });
+    expect(str).toContain('<br');
+  });
+
+  it('renderTextPanelMarkdown with noSanitize: true passes through script tags', () => {
+    const str = renderTextPanelMarkdown('<script>alert()</script>', { noSanitize: true });
+    expect(str).toContain('<script>');
+  });
 });

@@ -684,7 +684,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
     for (let key in r.fieldMap) {
       let dispName = r.fieldMap[key];
-      fieldIndices[key] = indexByName.get(dispName)!;
+      const fieldIndex = indexByName.get(dispName);
+      if (fieldIndex != null) {
+        fieldIndices[key] = fieldIndex;
+      }
     }
 
     r.init(builder, fieldIndices);
