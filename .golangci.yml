@@ -95,6 +95,8 @@ linters:
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
+            - '**/pkg/tsdb/grafana-postgresql-datasource/*'
+            - '**/pkg/tsdb/grafana-postgresql-datasource/**/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
             - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
@@ -105,6 +107,8 @@ linters:
             - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
+            - '**/pkg/tsdb/mssql/*'
+            - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/opentsdb/*'
@@ -123,6 +127,8 @@ linters:
             - '**/pkg/tsdb/jaeger/**/*'
             - '**/pkg/tsdb/elasticsearch/*'
             - '**/pkg/tsdb/elasticsearch/**/*'
+            - '**/pkg/tsdb/influxdb/*'
+            - '**/pkg/tsdb/influxdb/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
