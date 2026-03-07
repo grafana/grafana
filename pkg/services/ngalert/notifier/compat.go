@@ -3,9 +3,11 @@ package notifier
 import (
 	"encoding/json"
 
+	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -48,4 +50,51 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 		Settings:              raw,
 		SecureSettings:        i.SecureSettings,
 	}, nil
+}
+
+func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
+	return apimodels.PostableApiAlertingConfig{
+		Config: apimodels.Config{
+			Global:            nil, // Grafana does not have global.
+			Route:             config.RoutingTree,
+			InhibitRules:      config.InhibitRules,
+			TimeIntervals:     config.TimeIntervals,
+			MuteTimeIntervals: config.MuteTimeIntervals,
+			Templates:         nil, // we do not use this.
+		},
+		Receivers: APIReceiversToPostableAPIReceivers(config.Receivers),
+	}
+}
+
+func APIReceiversToPostableAPIReceivers(r []*alertingNotify.APIReceiver) []*definition.PostableApiReceiver {
+	result := make([]*definition.PostableApiReceiver, 0, len(r))
+	for _, receiver := range r {
+		result = append(result, APIReceiverToPostableAPIReceiver(receiver))
+	}
+	return result
+}
+
+func APIReceiverToPostableAPIReceiver(r *alertingNotify.APIReceiver) *definition.PostableApiReceiver {
+	receivers := make([]*definition.PostableGrafanaReceiver, 0, len(r.Integrations))
+	for _, p := range r.Integrations {
+		receivers = append(receivers, IntegrationConfigToPostableGrafanaReceiver(p))
+	}
+
+	return &definition.PostableApiReceiver{
+		Receiver: r.ConfigReceiver,
+		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: receivers,
+		},
+	}
+}
+
+func IntegrationConfigToPostableGrafanaReceiver(r *alertingModels.IntegrationConfig) *definition.PostableGrafanaReceiver {
+	return &definition.PostableGrafanaReceiver{
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		DisableResolveMessage: r.DisableResolveMessage,
+		Settings:              definition.RawMessage(r.Settings),
+		SecureSettings:        r.SecureSettings,
+	}
 }
