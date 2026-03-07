@@ -66,8 +66,8 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 		return "", fmt.Errorf("marshal folder metadata: %w", err)
 	}
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
-	if err := repo.Create(ctx, metadataPath, ref, data, message); err != nil {
-		return "", fmt.Errorf("failed to create folder metadata: %w", err)
+	if err := repo.Write(ctx, metadataPath, ref, data, message); err != nil {
+		return "", fmt.Errorf("failed to write folder metadata: %w", err)
 	}
 	return folder.Name, nil
 }
