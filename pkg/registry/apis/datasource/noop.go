@@ -10,7 +10,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
-// Temporary noop storage that lets us map /connections/{name}/query
+// Temporary noop storage that forces k8s to include the group/version
 type noopREST struct{}
 
 var (

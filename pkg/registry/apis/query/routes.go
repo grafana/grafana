@@ -16,10 +16,42 @@ import (
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
+	sqlSchema := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
-			{
+			{Path: "query",
+				Spec: &spec3.PathProps{
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"Query"},
+							OperationId: "queryDatasources",
+							Parameters:  []*spec3.Parameter{},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"),
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.QueryDatasources,
+			}, {
 				Path: "query/sqlschemas",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
@@ -47,7 +79,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &sqlSchemas,
+															Schema: &sqlSchema,
 														},
 													},
 												},
