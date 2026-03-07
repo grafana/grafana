@@ -147,7 +147,7 @@
       "pluginVersion": "8.1.0-pre",
       "targets": [
         {
-          "expr": "sum(irate(prometheus_tsdb_head_samples_appended_total{job=\"${job}\"}[$__rate_interval]))",
+          "expr": "sum(rate(prometheus_tsdb_head_samples_appended_total{job=\"${job}\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "samples",
@@ -778,7 +778,7 @@
           "refId": "A"
         },
         {
-          "expr": "irate(prometheus_tsdb_head_gc_duration_seconds_count{job=\"${job}\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_head_gc_duration_seconds_count{job=\"${job}\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "collections",
           "refId": "B"
@@ -886,19 +886,19 @@
           "refId": "A"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_total{job=\"${job}\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_compactions_total{job=\"${job}\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "compactions",
           "refId": "B"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_failed_total{job=\"${job}\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_compactions_failed_total{job=\"${job}\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "failed",
           "refId": "C"
         },
         {
-          "expr": "irate(prometheus_tsdb_compactions_triggered_total{job=\"${job}\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_compactions_triggered_total{job=\"${job}\"}[$__rate_interval])",
           "format": "time_series",
           "legendFormat": "triggered",
           "refId": "D"
