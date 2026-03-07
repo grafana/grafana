@@ -9952,7 +9952,9 @@
     "sidebar": {
       "close": "Close",
       "dock": "Dock",
-      "undock": "Undock"
+      "hide": "Hide",
+      "undock": "Undock",
+      "unhide": "Unhide"
     },
     "slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"

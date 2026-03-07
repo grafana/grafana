@@ -1,12 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext } from 'react';
+import { ReactNode, useContext, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Icon } from '../Icon/Icon';
 import { getPortalContainer } from '../Portal/Portal';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { SidebarButton } from './SidebarButton';
 import { SidebarPaneHeader } from './SidebarPaneHeader';
@@ -26,13 +28,17 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   const className = cx({
     [styles.container]: true,
-    [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
+    [styles.containerVisible]: !contextValue.isHidden,
+    [styles.containerHidden]: contextValue.isHidden,
+    [styles.undockedPaneOpen]: !contextValue.isHidden && hasOpenPane && !isDocked,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
-    [styles.containerHidden]: !!contextValue.isHidden,
   });
 
-  const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
+  const style = {
+    [position]: contextValue.isHidden ? 0 : theme.spacing(edgeMargin),
+    bottom: contextValue.isHidden ? 0 : theme.spacing(bottomMargin),
+  };
 
   const ref = useCustomClickAway((evt) => {
     const portalContainer = getPortalContainer();
@@ -45,6 +51,28 @@ export function SidebarComp({ children, contextValue }: Props) {
     }
   });
 
+  const body = useMemo(() => {
+    if (contextValue.isHidden) {
+      return (
+        <Tooltip
+          content={<Trans i18nKey="grafana-ui.sidebar.unhide">Unhide</Trans>}
+          placement={position === 'right' ? 'left' : 'right'}
+        >
+          <button className={styles.unhideButton} onClick={() => contextValue.onToggleIsHidden()}>
+            <Icon name="arrow-to-right" size="sm" className={styles.unhideButtonIcon} />
+          </button>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <>
+        {!tabsMode && <SidebarResizer />}
+        {children}
+      </>
+    );
+  }, [contextValue, children, tabsMode, position, styles.unhideButton, styles.unhideButtonIcon]);
+
   return (
     <SidebarContext.Provider value={contextValue}>
       <div
@@ -55,8 +83,7 @@ export function SidebarComp({ children, contextValue }: Props) {
         data-testid={selectors.components.Sidebar.container}
         aria-hidden={contextValue.isHidden}
       >
-        {!tabsMode && <SidebarResizer />}
-        {children}
+        {body}
       </div>
     </SidebarContext.Provider>
   );
@@ -86,6 +113,12 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
           data-testid={selectors.components.Sidebar.dockToggle}
         />
       )}
+      <SidebarButton
+        icon={'arrow-to-right'}
+        onClick={context.onToggleIsHidden}
+        title={t('grafana-ui.sidebar.hide', 'Hide')}
+        data-testid={selectors.components.Sidebar.dockHide}
+      />
     </div>
   );
 }
@@ -124,25 +157,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       flexDirection: 'row',
       flex: '1 1 0',
-      border: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-      borderRadius: theme.shape.radius.default,
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,
       top: 0,
       right: 0,
-      width: 'calc-size(auto, size)',
-
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: theme.transitions.create('width', {
-          duration: theme.transitions.duration.standard,
-        }),
-      },
+    }),
+    containerVisible: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
     }),
     containerHidden: css({
-      width: 0,
-      border: 0,
-      overflow: 'hidden',
+      alignItems: 'flex-end',
     }),
     containerTabsMode: css({
       position: 'relative',
@@ -187,6 +213,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     openPaneLeft: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
+    }),
+    unhideButton: css({
+      padding: theme.spacing(1),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRight: 0,
+      background: theme.colors.background.primary,
+      borderRadius: `${theme.shape.radius.default} 0 0 ${theme.shape.radius.default}`,
+      opacity: 1,
+      margin: 0,
+    }),
+    unhideButtonIcon: css({
+      transform: 'scaleX(-1)',
     }),
   };
 };
