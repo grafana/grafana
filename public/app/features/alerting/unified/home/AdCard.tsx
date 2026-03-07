@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -7,39 +6,32 @@ import { Button, Divider, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { CloudBadge } from 'app/core/components/Branding/CloudBadge';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
-type AdCardProps = {
+export type AdCardProps = {
   title: string;
   description: string;
   href: string;
   logoUrl: string;
   items: string[];
   helpFlag: number;
+  onDismiss?: () => void;
 };
 
-export default function AdCard({ title, description, href, logoUrl, items, helpFlag }: AdCardProps) {
+export default function AdCard({ title, description, href, logoUrl, items, helpFlag, onDismiss }: AdCardProps) {
   const styles = useStyles2(getAddCardStyles);
 
-  const helpFlags = contextSrv.user.helpFlags1;
-  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & helpFlag));
-
-  const onDismiss = () => {
+  const handleDismiss = () => {
     backendSrv.put(`/api/user/helpflags/${helpFlag}`, undefined, { showSuccessAlert: false }).then((res) => {
       contextSrv.user.helpFlags1 = res.helpFlags1;
-      setDismissed(true);
+      onDismiss?.();
     });
   };
-
-  if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
-    return null;
-  }
 
   return (
     <div className={styles.cardBody} title={title}>
       <div className={styles.preHeader}>
         <CloudBadge />
-        <IconButton name="times" size="sm" onClick={onDismiss} aria-label={t('alerting.ad.close', 'Close')} />
+        <IconButton name="times" size="sm" onClick={handleDismiss} aria-label={t('alerting.ad.close', 'Close')} />
       </div>
       <header className={styles.header}>
         <img src={logoUrl} alt={title.concat(' logo')} className={styles.logo} />
