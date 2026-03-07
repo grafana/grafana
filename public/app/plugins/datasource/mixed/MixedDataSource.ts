@@ -10,6 +10,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
+  rangeUtil,
   ScopedVars,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
@@ -129,6 +130,19 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           dsRequest.requestId = mixedRequestId(i, dsRequest.requestId);
           dsRequest.targets = query.queries;
           dsRequest.scopedVars = query.scopedVars;
+
+          if (api.interval) {
+            const norm = rangeUtil.calculateInterval(dsRequest.range, dsRequest.maxDataPoints ?? 100, api.interval);
+            if (norm.intervalMs > dsRequest.intervalMs) {
+              dsRequest.interval = norm.interval;
+              dsRequest.intervalMs = norm.intervalMs;
+              dsRequest.scopedVars = {
+                ...dsRequest.scopedVars,
+                __interval: { text: norm.interval, value: norm.interval },
+                __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
+              };
+            }
+          }
 
           return from(api.query(dsRequest)).pipe(
             map((response) => {
