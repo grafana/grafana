@@ -138,15 +138,6 @@ const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: '#EAB839' },
-            { value: 80, color: 'red' },
-          ],
-        },
         color: { mode: FieldColorModeId.ContinuousGrYlRd },
       },
       overrides: [],
@@ -234,15 +225,6 @@ const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: '#EAB839' },
-            { value: 80, color: 'red' },
-          ],
-        },
         color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' },
       },
       overrides: [],
@@ -282,15 +264,6 @@ const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfi
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: '#EAB839' },
-            { value: 80, color: 'red' },
-          ],
-        },
         color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
       },
       overrides: [],
