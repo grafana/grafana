@@ -75,25 +75,33 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
+    let result: string | number;
+
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return this.getQueryModel().quoteLiteral(value);
+        result = this.getQueryModel().quoteLiteral(value);
       } else {
-        return String(value).replace(/'/g, "''");
+        result = String(value).replace(/'/g, "''");
       }
+    } else if (typeof value === 'number') {
+      result = value;
+    } else if (Array.isArray(value)) {
+      result = value.map((v) => this.getQueryModel().quoteLiteral(v)).join(',');
+    } else {
+      result = value;
     }
 
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    if (Array.isArray(value)) {
-      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
-      return quotedValues.join(',');
-    }
-
-    return value;
+    return this.migrateInterpolatedVariable(result, variable);
   };
+
+  /**
+   * Hook for child classes to apply post-interpolation migration logic.
+   * Called at the end of interpolateVariable with the already-interpolated result.
+   * Override in subclasses to handle cases like repeated panel quote stripping.
+   */
+  protected migrateInterpolatedVariable(result: string | number, _variable: VariableWithMultiSupport): string | number {
+    return result;
+  }
 
   interpolateVariablesInQueries(queries: SQLQuery[], scopedVars: ScopedVars): SQLQuery[] {
     let expandedQueries = queries;
