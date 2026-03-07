@@ -1,12 +1,20 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import {
+  ConstantVariable,
+  ControlsLabel,
+  SceneVariable,
+  SceneVariableState,
+  SceneVariableValueChangedEvent,
+  useSceneObjectState,
+} from '@grafana/scenes';
 import {
   defaultIntervals,
   PageToolbar,
@@ -27,6 +35,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
+import { ExploreVariableEditor } from './Variables/ExploreVariableEditor';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
@@ -54,6 +63,16 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
   }),
+  toolbarOverrides: css({
+    '& > div:first-child': {
+      flexWrap: 'wrap',
+      maxWidth: '100%',
+    },
+    '& > div:first-child > nav > div': {
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+    },
+  }),
 });
 
 interface Props {
@@ -62,6 +81,37 @@ interface Props {
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
 }
+
+function ExploreVariableSelector({ variable }: { variable: SceneVariable }) {
+  const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
+  const styles = useStyles2(getVariableStyles);
+  const labelOrName = state.label || state.name;
+  const elementId = `var-${state.key}`;
+
+  return (
+    <div className={styles.container}>
+      <ControlsLabel
+        htmlFor={elementId}
+        isLoading={state.loading}
+        label={labelOrName}
+        description={state.description ?? undefined}
+      />
+      <variable.Component model={variable} />
+    </div>
+  );
+}
+
+const getVariableStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
+    '> :nth-child(2)': {
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
+    },
+  }),
+});
 
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
@@ -77,6 +127,26 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     }),
     shallowEqual
   );
+  const variableSet = useSelector((state: StoreState) => state.explore.panes[exploreId]?.variableSet);
+  const variables = useMemo(
+    () => (variableSet?.state.variables ?? []).filter((v) => !(v instanceof ConstantVariable)),
+    [variableSet]
+  );
+
+  useEffect(() => {
+    if (!variableSet) {
+      return;
+    }
+    const deactivate = variableSet.activate();
+    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      dispatch(runQueries({ exploreId }));
+    });
+    return () => {
+      sub.unsubscribe();
+      deactivate();
+    };
+  }, [variableSet, dispatch, exploreId]);
+
   const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
@@ -93,6 +163,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
     [isLeftPane, isLargerPane]
   );
+
+  const [isVariableEditorOpen, setIsVariableEditorOpen] = useState(false);
+  const [variableEditorInitialView, setVariableEditorInitialView] = useState<'list' | 'editor'>('editor');
 
   const refreshPickerLabel = loading
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
@@ -204,6 +277,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <PageToolbar
+        className={styles.toolbarOverrides}
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         data-testid={selectors.pages.Explore.toolbar.bar}
         leftItems={[
@@ -235,6 +309,34 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             timeZone={timeZone}
             extensionsToShow="queryless"
           />,
+          variables.length > 0 ? (
+            <ToolbarButton
+              key="manage-variables"
+              icon="cog"
+              variant="canvas"
+              onClick={() => {
+                setVariableEditorInitialView('list');
+                setIsVariableEditorOpen(true);
+              }}
+            >
+              <Trans i18nKey="explore.toolbar.manage-variables">Manage variables</Trans>
+            </ToolbarButton>
+          ) : (
+            <ToolbarButton
+              key="add-variable"
+              icon="plus"
+              variant="canvas"
+              onClick={() => {
+                setVariableEditorInitialView('editor');
+                setIsVariableEditorOpen(true);
+              }}
+            >
+              <Trans i18nKey="explore.toolbar.add-variable">Add variable</Trans>
+            </ToolbarButton>
+          ),
+          ...variables.map((variable) => (
+            <ExploreVariableSelector key={`var-${variable.state.name}`} variable={variable} />
+          )),
         ].filter(Boolean)}
         forceShowLeftItems
       >
@@ -341,6 +443,16 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           ),
         ].filter(Boolean)}
       </PageToolbar>
+      {isVariableEditorOpen && variableSet && (
+        <ExploreVariableEditor
+          exploreId={exploreId}
+          variableSet={variableSet}
+          initialView={variableEditorInitialView}
+          onClose={() => {
+            setIsVariableEditorOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

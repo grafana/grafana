@@ -12,6 +12,7 @@ import {
   EventBusExtended,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
+import { SceneVariable } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
@@ -23,6 +24,7 @@ import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
+import { setVariablesAction, variablesReducer } from './variables';
 //
 // Actions and Payloads
 //
@@ -149,6 +151,7 @@ export interface InitializeExploreOptions {
   eventBridge: EventBusExtended;
   queryLibraryRef?: string;
   compact: boolean;
+  variables?: SceneVariable[];
 }
 
 /**
@@ -172,6 +175,7 @@ export const initializeExplore = createAsyncThunk(
       correlationHelperData,
       eventBridge,
       queryLibraryRef,
+      variables,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
@@ -202,6 +206,10 @@ export const initializeExplore = createAsyncThunk(
     }
 
     dispatch(updateTime({ exploreId }));
+
+    if (variables && variables.length > 0) {
+      dispatch(setVariablesAction({ exploreId, variables }));
+    }
 
     if (instance) {
       const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);
@@ -236,6 +244,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
+  state = variablesReducer(state, action);
 
   if (changeSizeAction.match(action)) {
     const containerWidth = Math.floor(action.payload.width);
