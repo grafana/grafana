@@ -53,6 +53,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
+  multi-notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
+    - pattern: /docs/grafana-cloud/## Manage-multiple-notification-policies
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy## Manage-multiple-notification-policies
 ---
 
 # Notification policies
@@ -93,6 +98,8 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 {{< admonition type="note" >}}
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
 {{< /admonition >}}
+
+By default, Grafana uses a single notification policy tree for all alert routing. There is also the option to set up and configure multiple notification policies with the [multiple policy feature](ref:multi-notification-policies), which allows you to split routing logic into separate, independently managed routing trees.
 
 **Label matching example**
 
