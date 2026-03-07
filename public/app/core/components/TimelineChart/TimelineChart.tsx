@@ -18,6 +18,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  namePosition?: 'left' | 'top';
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
   // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
@@ -31,6 +32,7 @@ const propsToDiff = [
   'mergeValues',
   'alignValue',
   'tooltip',
+  'namePosition',
   'paginationRev',
   'annotationLanes',
 ];
