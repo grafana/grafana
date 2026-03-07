@@ -5398,6 +5398,7 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
+        "section-variable": "Section Variables",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -5935,6 +5936,10 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-variables": {
+          "add-tooltip": "Add variable",
+          "title": "Variables"
+        },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"
       },
@@ -6077,6 +6082,10 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-variables": {
+          "add-tooltip": "Add variable",
+          "title": "Variables"
         },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"

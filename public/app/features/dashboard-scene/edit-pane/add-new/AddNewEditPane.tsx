@@ -80,7 +80,7 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
         </DragDropContext>
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
-        <AddVariable dashboardScene={dashboardScene} />
+        <AddVariable dashboardScene={dashboardScene} selectedElement={selectedElement} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
       </AddNewSection>
     </>

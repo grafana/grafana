@@ -102,8 +102,12 @@ export class RowItem
     };
   }
 
-  public getOutlineChildren(): SceneObject[] {
-    return this.state.layout.getOutlineChildren();
+  public getOutlineChildren(isEditing?: boolean): SceneObject[] {
+    const layoutChildren = this.state.layout.getOutlineChildren();
+    if (isEditing && this.state.$variables) {
+      return [this.state.$variables, ...layoutChildren];
+    }
+    return layoutChildren;
   }
 
   public getLayout(): DashboardLayoutManager {

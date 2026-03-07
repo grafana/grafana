@@ -5,7 +5,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { SceneObject, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -13,7 +13,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  EditableDashboardElement,
+  EditableDashboardElementInfo,
+  isEditableDashboardElement,
+} from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -57,6 +61,17 @@ export class VariableSetEditableElement implements EditableDashboardElement {
         .filter((variable) => isEditableVariableType(variable.state.type))
     );
     return [...visible, ...controlsMenu, ...hidden];
+  }
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.set.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);

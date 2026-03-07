@@ -1,8 +1,10 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
+import { SceneVariableSet } from '@grafana/scenes';
+import { Alert, Button, Field, Input, Stack, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -11,7 +13,8 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { openAddSectionVariablePane } from '../../settings/variables/VariableAddEditableElement';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
@@ -71,7 +74,30 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
+      id: 'dash-row-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => <SectionVariablesCategoryTitle row={model} isExpanded={isExpanded} />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-variables-list',
+        skipField: true,
+        render: () => <RowSectionVariablesList row={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [rowCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory]
+    : [rowCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -193,4 +219,61 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
     perform: () => row.onChangeTitle(title),
     undo: () => row.onChangeTitle(prevTitle),
   });
+}
+
+function SectionVariablesCategoryTitle({ row, isExpanded }: { row: RowItem; isExpanded: boolean }) {
+  const dashboard = getDashboardSceneFor(row);
+  const variableSet = row.state.$variables;
+  const variableCount = variableSet instanceof SceneVariableSet ? variableSet.state.variables.length : 0;
+
+  return (
+    <Stack direction="row" alignItems="center" gap={1} flex={1}>
+      <span style={{ flexGrow: 1 }}>
+        {isExpanded || variableCount === 0
+          ? t('dashboard.rows-layout.row-options.section-variables.title', 'Variables')
+          : `${t('dashboard.rows-layout.row-options.section-variables.title', 'Variables')} (${variableCount})`}
+      </span>
+      <Button
+        icon="plus"
+        variant="secondary"
+        size="sm"
+        fill="text"
+        onClick={(e) => {
+          e.stopPropagation();
+          openAddSectionVariablePane(dashboard, row);
+        }}
+        tooltip={t('dashboard.rows-layout.row-options.section-variables.add-tooltip', 'Add variable')}
+      />
+    </Stack>
+  );
+}
+
+function RowSectionVariablesList({ row }: { row: RowItem }) {
+  const variableSet = row.state.$variables;
+  const variables = variableSet instanceof SceneVariableSet ? variableSet.useState().variables : [];
+  const dashboard = getDashboardSceneFor(row);
+
+  if (variables.length === 0) {
+    return null;
+  }
+
+  return (
+    <Stack direction="column" gap={0}>
+      {variables.map((variable) => (
+        <Button
+          key={variable.state.key ?? variable.state.name}
+          variant="secondary"
+          size="sm"
+          fill="text"
+          onClick={() =>
+            dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
+              force: true,
+            })
+          }
+        >
+          {variable.state.name}
+        </Button>
+      ))}
+    </Stack>
+  );
 }

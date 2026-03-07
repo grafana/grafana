@@ -7,6 +7,7 @@ import {
   sceneGraph,
   useSceneObjectState,
   SceneVariable,
+  SceneVariables,
   SceneVariableState,
   ControlsLabel,
   ControlsLayout,
@@ -187,6 +188,35 @@ function VariableLabel({
     />
   );
 }
+
+export function SectionVariableControls({ variableSet }: { variableSet: SceneVariables }) {
+  const { variables } = variableSet.useState();
+  const styles = useStyles2(getSectionVariableStyles);
+
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
+
+  if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.sectionVariables}>
+      {visibleVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}
+
+const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+  sectionVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

@@ -7,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   MultiValueVariable,
+  SceneObject,
   SceneVariable,
   SceneVariableSet,
   useSceneObjectState,
@@ -18,7 +19,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  EditableDashboardElement,
+  EditableDashboardElementInfo,
+  isEditableDashboardElement,
+} from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -116,6 +121,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
+
+  public scrollIntoView() {
+    let current: SceneObject | undefined = this.variable.parent;
+    while (current) {
+      if (isEditableDashboardElement(current) && current.scrollIntoView) {
+        current.scrollIntoView();
+        return;
+      }
+      current = current.parent;
+    }
+  }
 
   public onDelete() {
     const set = this.variable.parent!;
