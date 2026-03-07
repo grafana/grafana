@@ -78,6 +78,8 @@ type Identity struct {
 	IDToken string
 	// ExternalUID is the unique identifier for the entity in the external system.
 	ExternalUID string
+	// SessionID is the OIDC session ID (sid claim) for back-channel logout support
+	SessionID string
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
