@@ -102,9 +102,38 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
 
-	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
-	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
+	// Use the datasource's configured HTTP method rather than the incoming request method.
+	// External API clients (e.g. mcp-grafana's prometheus/client_golang) always send POST,
+	// which fails for GET-configured datasources. Using c.method ensures the request matches
+	// what the upstream Prometheus server expects.
+	// If the incoming request is GET (e.g. frontend fallback), always respect that regardless
+	// of the configured method, since GET is universally accepted by Prometheus.
+	method := c.method
+	if req.Method == http.MethodGet {
+		method = http.MethodGet
+	}
+
+	var body io.Reader
+	if strings.ToUpper(method) == http.MethodGet {
+		// For GET requests, move any body params to query string
+		if len(req.Body) > 0 {
+			bodyParams, parseErr := url.ParseQuery(string(req.Body))
+			if parseErr == nil {
+				existingQuery := u.Query()
+				for k, vs := range bodyParams {
+					for _, v := range vs {
+						existingQuery.Add(k, v)
+					}
+				}
+				u.RawQuery = existingQuery.Encode()
+			}
+		}
+		body = http.NoBody
+	} else {
+		body = bytes.NewReader(req.Body)
+	}
+
+	httpRequest, err := createRequest(ctx, method, u, body)
 	if err != nil {
 		return nil, err
 	}
