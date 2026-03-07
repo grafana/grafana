@@ -728,6 +728,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui
 /packages/grafana-ui/ @grafana/grafana-frontend-platform
+/packages/grafana-ui/src/components/MatchersUI/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
