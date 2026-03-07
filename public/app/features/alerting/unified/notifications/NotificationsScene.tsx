@@ -56,6 +56,9 @@ interface NotificationsSceneProps {
     to: string;
   };
   hideFilters?: boolean;
+  defaultReceiver?: string;
+  hideReceiverFilter?: boolean;
+  hideReceiverColumn?: boolean;
 }
 
 /**
@@ -69,6 +72,9 @@ export const NotificationsScene = ({
     to: 'now',
   },
   hideFilters,
+  defaultReceiver,
+  hideReceiverFilter = false,
+  hideReceiverColumn = false,
 }: NotificationsSceneProps = {}) => {
   const [isReady, setIsReady] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<Array<{ text: string; value: string }>>(() => {
@@ -174,13 +180,21 @@ export const NotificationsScene = ({
     const receiverFilterVariable = new CustomVariable({
       name: RECEIVER_FILTER,
       label: t('alerting.notifications-scene.receiver-filter-variable.label.receiver', 'Contact point:'),
-      value: 'all',
+      value: defaultReceiver ?? 'all',
       hide: VariableHide.dontHide,
       query:
         availableReceivers.length > 0
           ? `All : all, ${availableReceivers.map((receiver) => `${receiver} : ${receiver}`).join(', ')}`
-          : 'All : all',
+          : defaultReceiver
+            ? `All : all, ${defaultReceiver} : ${defaultReceiver}`
+            : 'All : all',
     });
+
+    // Build variables array conditionally
+    const variables = [labelsFilterVariable, statusFilterVariable, outcomeFilterVariable];
+    if (!hideReceiverFilter) {
+      variables.push(receiverFilterVariable);
+    }
 
     return new EmbeddedScene({
       controls: hideFilters
@@ -197,19 +211,28 @@ export const NotificationsScene = ({
           ],
       $timeRange: new SceneTimeRange(defaultTimeRange),
       $variables: new SceneVariableSet({
-        variables: [labelsFilterVariable, statusFilterVariable, outcomeFilterVariable, receiverFilterVariable],
+        variables,
       }),
       body: new SceneFlexLayout({
         direction: 'column',
         children: [
-          getNotificationsGraphSceneFlexItem(),
+          getNotificationsGraphSceneFlexItem(defaultReceiver, hideReceiverFilter),
           new SceneFlexItem({
-            body: new NotificationsListObject({}),
+            body: new NotificationsListObject({ hideReceiverColumn }),
           }),
         ],
       }),
     });
-  }, [defaultTimeRange, hideFilters, isReady, availableKeys, availableReceivers]);
+  }, [
+    defaultTimeRange,
+    hideFilters,
+    isReady,
+    availableKeys,
+    availableReceivers,
+    defaultReceiver,
+    hideReceiverFilter,
+    hideReceiverColumn,
+  ]);
 
   const isUrlSyncInitialized = useUrlSync(scene);
 
@@ -222,9 +245,11 @@ export const NotificationsScene = ({
 
 /**
  * Creates a SceneQueryRunner with the datasource information for the runtime datasource.
+ * @param defaultReceiver - Optional default receiver to use when receiver filter is hidden
+ * @param hideReceiverFilter - Whether the receiver filter is hidden
  * @returns the SceneQueryRunner
  */
-function getQueryRunnerForNotificationsDataSource() {
+function getQueryRunnerForNotificationsDataSource(defaultReceiver?: string, hideReceiverFilter?: boolean) {
   const query = new SceneQueryRunner({
     datasource: notificationsDatasource,
     queries: [
@@ -232,7 +257,7 @@ function getQueryRunnerForNotificationsDataSource() {
         refId: 'A',
         statusFilter: '${STATUS_FILTER}',
         outcomeFilter: '${OUTCOME_FILTER}',
-        receiverFilter: '${RECEIVER_FILTER}',
+        receiverFilter: hideReceiverFilter && defaultReceiver ? defaultReceiver : '${RECEIVER_FILTER}',
         labelFilter: '${LABELS_FILTER}',
       },
     ],
@@ -243,8 +268,10 @@ function getQueryRunnerForNotificationsDataSource() {
 /**
  * This function creates a SceneFlexItem with a timeseries panel that shows the notification events.
  * The query uses a runtime datasource that fetches the events from the notifications api.
+ * @param defaultReceiver - Optional default receiver to use when receiver filter is hidden
+ * @param hideReceiverFilter - Whether the receiver filter is hidden
  */
-export function getNotificationsGraphSceneFlexItem() {
+export function getNotificationsGraphSceneFlexItem(defaultReceiver?: string, hideReceiverFilter?: boolean) {
   return new SceneFlexItem({
     minHeight: 300,
     ySizing: 'content',
@@ -253,7 +280,7 @@ export function getNotificationsGraphSceneFlexItem() {
       .setDescription(
         'Each notification event represents when an alert notification was sent to a contact point. The history of the data is displayed over a period of time.'
       )
-      .setData(getQueryRunnerForNotificationsDataSource())
+      .setData(getQueryRunnerForNotificationsDataSource(defaultReceiver, hideReceiverFilter))
       .setColor({ mode: 'continuous-BlPu' })
       .setCustomFieldConfig('fillOpacity', 100)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)

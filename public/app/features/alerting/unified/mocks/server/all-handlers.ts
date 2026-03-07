@@ -17,6 +17,7 @@ import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/han
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import receiverTestK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8sReceiverTest';
 import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/mimirRuler';
+import notificationHistoryHandlers from 'app/features/alerting/unified/mocks/server/handlers/notificationHistory';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
@@ -35,6 +36,7 @@ export const alertingHandlers = [
   ...alertmanagerHandlers,
   ...silenceHandlers,
   ...provisioningHandlers,
+  ...notificationHistoryHandlers,
 
   // Kubernetes-style handlers
   ...inhibitionRulesK8sHandlers,

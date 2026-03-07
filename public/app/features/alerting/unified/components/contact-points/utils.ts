@@ -162,21 +162,39 @@ export function enhanceContactPointsWithMetadata({
       provenance: contactPointProvenance,
       policies:
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? []),
-      grafana_managed_receiver_configs: receivers.map((receiver, index) => {
-        const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
-        // if we don't have alertmanagerConfiguration we can't get the metadata for oncall receivers,
-        // because we don't have the url, as we are not using the alertmanager configuration
-        // but the contact points returned by the read only permissions contact points endpoint (/api/v1/notifications/receivers)
-        return {
-          ...receiver,
-          [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
-          [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
-          // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
-          [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
-            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration), onCallPluginId)
-            : undefined,
-        };
-      }),
+      grafana_managed_receiver_configs: (() => {
+        // Track how many times each integration type has been seen so far,
+        // to compute the per-type occurrence index that the history API uses as integrationIndex.
+        const typeOccurrenceCount = new Map<string, number>();
+        const integrations = statusForReceiver?.integrations ?? [];
+
+        return receivers.map((receiver, index) => {
+          const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
+          // if we don't have alertmanagerConfiguration we can't get the metadata for oncall receivers,
+          // because we don't have the url, as we are not using the alertmanager configuration
+          // but the contact points returned by the read only permissions contact points endpoint (/api/v1/notifications/receivers)
+
+          // The history API's integrationIndex is the 0-based occurrence of that type within the receiver,
+          // not the overall position in the integrations array. Track occurrences as we iterate.
+          const typeOccurrence = typeOccurrenceCount.get(receiver.type) ?? 0;
+          typeOccurrenceCount.set(receiver.type, typeOccurrence + 1);
+
+          // Match by type + per-type occurrence index; fall back to overall array position for legacy status data
+          const integrationStatus =
+            integrations.find((s) => s.integrationType === receiver.type && s.integrationIndex === typeOccurrence) ??
+            integrations[index];
+
+          return {
+            ...receiver,
+            [RECEIVER_STATUS_KEY]: integrationStatus,
+            [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
+            // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
+            [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
+              ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration), onCallPluginId)
+              : undefined,
+          };
+        });
+      })(),
     };
   });
 

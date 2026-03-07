@@ -59,6 +59,7 @@ interface NotificationsListProps {
   outcomeFilter: string;
   receiverFilter: string;
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
+  hideReceiverColumn?: boolean;
 }
 
 export const NotificationsList = React.memo(function NotificationsList({
@@ -68,6 +69,7 @@ export const NotificationsList = React.memo(function NotificationsList({
   outcomeFilter,
   receiverFilter,
   onLabelClick,
+  hideReceiverColumn = false,
 }: NotificationsListProps) {
   const [createNotificationQuery, { data, isLoading, isError, error }] = useCreateNotificationqueryMutation();
 
@@ -133,7 +135,11 @@ export const NotificationsList = React.memo(function NotificationsList({
   return (
     <Stack direction="column" gap={0.5}>
       <LoadingIndicator visible={isLoading} />
-      <NotificationsLogEvents logRecords={entriesArray} onLabelClick={onLabelClick} />
+      <NotificationsLogEvents
+        logRecords={entriesArray}
+        onLabelClick={onLabelClick}
+        hideReceiverColumn={hideReceiverColumn}
+      />
     </Stack>
   );
 });
@@ -146,9 +152,10 @@ const LoadingIndicator = ({ visible = false }) => {
 interface NotificationsLogEventsProps {
   logRecords: NotificationEntry[];
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
+  hideReceiverColumn?: boolean;
 }
 
-function NotificationsLogEvents({ logRecords, onLabelClick }: NotificationsLogEventsProps) {
+function NotificationsLogEvents({ logRecords, onLabelClick, hideReceiverColumn = false }: NotificationsLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
@@ -166,10 +173,17 @@ function NotificationsLogEvents({ logRecords, onLabelClick }: NotificationsLogEv
 
   return (
     <Stack direction="column" gap={0}>
-      <ListHeader />
+      <ListHeader hideReceiverColumn={hideReceiverColumn} />
       <ul className={styles.list}>
         {pageItems.map((record, index) => {
-          return <NotificationRow key={`${record.timestamp}-${index}`} record={record} onLabelClick={onLabelClick} />;
+          return (
+            <NotificationRow
+              key={`${record.timestamp}-${index}`}
+              record={record}
+              onLabelClick={onLabelClick}
+              hideReceiverColumn={hideReceiverColumn}
+            />
+          );
         })}
       </ul>
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
@@ -177,7 +191,11 @@ function NotificationsLogEvents({ logRecords, onLabelClick }: NotificationsLogEv
   );
 }
 
-function ListHeader() {
+interface ListHeaderProps {
+  hideReceiverColumn?: boolean;
+}
+
+function ListHeader({ hideReceiverColumn = false }: ListHeaderProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.mainHeader}>
@@ -197,11 +215,13 @@ function ListHeader() {
         </Text>
       </div>
       <div className={styles.statusCol}>{/* Status badge column */}</div>
-      <div className={styles.receiverCol}>
-        <Text variant="body">
-          <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
-        </Text>
-      </div>
+      {!hideReceiverColumn && (
+        <div className={styles.receiverCol}>
+          <Text variant="body">
+            <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
+          </Text>
+        </div>
+      )}
     </div>
   );
 }
@@ -209,9 +229,10 @@ function ListHeader() {
 interface NotificationRowProps {
   record: NotificationEntry;
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
+  hideReceiverColumn?: boolean;
 }
 
-function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
+function NotificationRow({ record, onLabelClick, hideReceiverColumn = false }: NotificationRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -255,9 +276,11 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
             </Tooltip>
           )}
         </div>
-        <div className={styles.receiverCol}>
-          <Text>{record.receiver || '-'}</Text>
-        </div>
+        {!hideReceiverColumn && (
+          <div className={styles.receiverCol}>
+            <Text>{record.receiver || '-'}</Text>
+          </div>
+        )}
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
@@ -536,18 +559,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
 /**
  * This is a scene object that displays a list of notification events.
  */
-interface NotificationsListObjectState extends SceneObjectState {}
+interface NotificationsListObjectState extends SceneObjectState {
+  hideReceiverColumn?: boolean;
+}
 
 export class NotificationsListObject extends SceneObjectBase<NotificationsListObjectState> {
   public static Component = NotificationsListObjectRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [LABELS_FILTER, STATUS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER],
+    statePaths: ['hideReceiverColumn'],
   });
 }
 
 export function NotificationsListObjectRenderer({ model }: SceneComponentProps<NotificationsListObject>) {
-  model.useState();
+  const { hideReceiverColumn } = model.useState();
 
   const timeRangeObj = sceneGraph.getTimeRange(model);
   const { value: timeRange } = timeRangeObj.useState();
@@ -562,12 +588,12 @@ export function NotificationsListObjectRenderer({ model }: SceneComponentProps<N
     return null;
   }
 
-  if (
-    labelsFilterVariable instanceof AdHocFiltersVariable &&
-    statusFilterVariable instanceof CustomVariable &&
-    outcomeFilterVariable instanceof CustomVariable &&
-    receiverFilterVariable instanceof CustomVariable
-  ) {
+  const isLabelsFilterValid = labelsFilterVariable instanceof AdHocFiltersVariable;
+  const isStatusFilterValid = statusFilterVariable instanceof CustomVariable;
+  const isOutcomeFilterValid = outcomeFilterVariable instanceof CustomVariable;
+  const isReceiverFilterValid = receiverFilterVariable instanceof CustomVariable;
+
+  if (isLabelsFilterValid && isStatusFilterValid && isOutcomeFilterValid) {
     const onLabelClick = ([value, key]: [string | undefined, string | undefined]) => {
       if (!key || !value) {
         return;
@@ -603,8 +629,9 @@ export function NotificationsListObjectRenderer({ model }: SceneComponentProps<N
         labelFilter={labelFilter}
         statusFilter={statusFilterVariable.state.value.toString()}
         outcomeFilter={outcomeFilterVariable.state.value.toString()}
-        receiverFilter={receiverFilterVariable.state.value.toString()}
+        receiverFilter={isReceiverFilterValid ? receiverFilterVariable.state.value.toString() : 'all'}
         onLabelClick={onLabelClick}
+        hideReceiverColumn={hideReceiverColumn}
       />
     );
   } else {
