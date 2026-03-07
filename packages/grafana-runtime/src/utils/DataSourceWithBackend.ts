@@ -357,10 +357,17 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
+    let healthCheckURL = `/api/datasources/uid/${this.uid}/health`;
+
+    if (config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend) {
+      const apiVersion = 'v0alpha1';
+      healthCheckURL = `/apis/${this.type}.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/health`;
+    }
+
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/uid/${this.uid}/health`,
+        url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
