@@ -84,6 +84,7 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/cloud-monitoring',
     '<rootDir>/public/app/plugins/datasource/elasticsearch',
+    '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',

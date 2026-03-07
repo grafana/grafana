@@ -4,8 +4,6 @@ const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
 const grafanaPlugin = async () =>
   await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
-const influxdbPlugin = async () =>
-  await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const prometheusPlugin = async () =>
@@ -71,7 +69,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
   'core:plugin/grafana': grafanaPlugin,
-  'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
