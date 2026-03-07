@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Badge, Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
@@ -14,9 +14,10 @@ export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  isUnhealthy?: boolean;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, isUnhealthy }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -31,6 +32,15 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          isUnhealthy && (
+            <Badge
+              key="health-badge"
+              text={t('datasources.health-badge.unhealthy', 'Unhealthy')}
+              color="red"
+              icon="exclamation-triangle"
+              className={styles.healthBadge}
+            />
+          ),
         ]}
       </Card.Meta>
       <Card.Tags>
@@ -122,6 +132,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     button: css({
       marginLeft: theme.spacing(2),
+    }),
+    healthBadge: css({
+      whiteSpace: 'nowrap',
+      marginRight: theme.spacing(1),
     }),
   };
 };

@@ -7698,13 +7698,30 @@
         "hosted-graphite-prometheus-and-loki": "Hosted Graphite, Prometheus, and Loki"
       }
     },
+    "health-badge": {
+      "unhealthy": "Unhealthy"
+    },
+    "health-checks": {
+      "last-run": "Last health check run: {{timeAgo}}",
+      "run": "Run health checks",
+      "running": "Running health checks…"
+    },
+    "health-filter": {
+      "all": "All",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy"
+    },
     "list": {
       "starred": "Starred"
+    },
+    "list-header": {
+      "search-placeholder": "Search by name or type"
     },
     "new-data-source-view": {
       "cancel": "Cancel",
       "placeholder-filter-by-name-or-type": "Filter by name or type"
     },
+    "subtitle": "View and manage your connected data connections",
     "update-data-source": {
       "error-info": {
         "message": {
