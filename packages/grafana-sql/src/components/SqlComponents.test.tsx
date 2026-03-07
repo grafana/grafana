@@ -18,12 +18,21 @@ describe('DatasetSelector', () => {
     });
   });
 
-  it('should not query the database if Postgres instance, and no preconfigured database', async () => {
+  it('should query the database for schemas when Postgres instance has no preconfigured database', async () => {
     const mockProps = buildMockDatasetSelectorProps({ dialect: 'postgres' });
     render(<DatasetSelector {...mockProps} />);
 
     await waitFor(() => {
-      expect(mockProps.db.datasets).not.toHaveBeenCalled();
+      expect(mockProps.db.datasets).toHaveBeenCalled();
+    });
+  });
+
+  it('should query the database for schemas when Postgres instance has a preconfigured database', async () => {
+    const mockProps = buildMockDatasetSelectorProps({ dialect: 'postgres', preconfiguredDataset: 'grafana' });
+    render(<DatasetSelector {...mockProps} />);
+
+    await waitFor(() => {
+      expect(mockProps.db.datasets).toHaveBeenCalled();
     });
   });
 

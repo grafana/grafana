@@ -16,7 +16,7 @@ import {
 } from '@grafana/sql';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
-import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
+import { getSchema, getTimescaleDBVersion, getVersion, showSchemas, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
@@ -78,8 +78,13 @@ export class PostgresDatasource extends SqlDatasource {
     return results[0];
   }
 
-  async fetchTables(): Promise<string[]> {
-    const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
+  async fetchDatasets(): Promise<string[]> {
+    const datasets = await this.runSql<{ name: string[] }>(showSchemas(), { refId: 'datasets' });
+    return datasets.fields.name?.values.flat() ?? [];
+  }
+
+  async fetchTables(schema?: string): Promise<string[]> {
+    const tables = await this.runSql<{ table: string[] }>(showTables(schema), { refId: 'tables' });
     return tables.fields.table?.values.flat() ?? [];
   }
 
@@ -135,8 +140,8 @@ export class PostgresDatasource extends SqlDatasource {
 
     return {
       init: () => Promise.resolve(true),
-      datasets: () => Promise.resolve([]),
-      tables: () => this.fetchTables(),
+      datasets: () => this.fetchDatasets(),
+      tables: (schema?: string) => this.fetchTables(schema),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(this.db),
       fields: async (query: SQLQuery) => {
         if (!query?.table) {
@@ -148,9 +153,22 @@ export class PostgresDatasource extends SqlDatasource {
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
       toRawSql,
       functions: () => this.getFunctions(),
-      lookup: async () => {
-        const tables = await this.fetchTables();
-        return tables.map((t) => ({ name: t, completion: t }));
+      lookup: async (path?: string) => {
+        if (!path) {
+          const datasets = await this.fetchDatasets();
+          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
+        } else {
+          const parts = path.split('.').filter((s: string) => s);
+          if (parts.length > 2) {
+            return [];
+          }
+          if (parts.length === 1) {
+            const tables = await this.fetchTables(parts[0]);
+            return tables.map((t) => ({ name: t, completion: t }));
+          } else {
+            return [];
+          }
+        }
       },
     };
   }

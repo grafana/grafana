@@ -6,7 +6,29 @@ export function getTimescaleDBVersion() {
   return "SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'";
 }
 
-export function showTables() {
+export function showSchemas() {
+  return `SELECT schema_name AS "name"
+    FROM information_schema.schemata
+    WHERE schema_name NOT IN ('information_schema',
+                              'pg_catalog',
+                              'pg_toast',
+                              '_timescaledb_cache',
+                              '_timescaledb_catalog',
+                              '_timescaledb_internal',
+                              '_timescaledb_config',
+                              'timescaledb_information',
+                              'timescaledb_experimental')
+    ORDER BY schema_name`;
+}
+
+export function showTables(schema?: string) {
+  if (schema) {
+    const schemaPart = "'" + schema.replace(/'/g, "''") + "'";
+    return `SELECT quote_ident(table_name) AS "table"
+      FROM information_schema.tables
+      WHERE quote_ident(table_schema) = ${schemaPart}
+      ORDER BY 1`;
+  }
   return `SELECT
     CASE WHEN ${buildSchemaConstraint()}
       THEN quote_ident(table_name)
