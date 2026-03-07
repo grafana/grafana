@@ -131,6 +131,14 @@ describe('useWizardButtons', () => {
       expect(result.current.isNextDisabled).toBe(false);
     });
 
+    it('should not disable next on finish step when hasStepError', () => {
+      const { result } = setup({
+        activeStep: 'finish',
+        hasStepError: true,
+      });
+      expect(result.current.isNextDisabled).toBe(false);
+    });
+
     it('should disable next on synchronize step unless success or warning', () => {
       const { result } = setup({
         activeStep: 'synchronize',
