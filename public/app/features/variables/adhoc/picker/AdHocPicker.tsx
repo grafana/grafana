@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import { memo, useCallback } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
@@ -21,42 +21,45 @@ interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-/**
- * Thin wrapper over AdHocFilter to add redux actions and change the props so it can be used for ad hoc variable
- * control.
- */
-export class AdHocPickerUnconnected extends PureComponent<Props> {
-  addFilter = (filter: AdHocVariableFilter) => {
-    this.props.addFilter(toKeyedVariableIdentifier(this.props.variable), filter);
-  };
+export const AdHocPickerUnconnected = memo(function AdHocPickerUnconnected(props: Props) {
+  const { addFilter, changeFilter, removeFilter, variable, readOnly } = props;
 
-  removeFilter = (index: number) => {
-    this.props.removeFilter(toKeyedVariableIdentifier(this.props.variable), index);
-  };
+  const handleAddFilter = useCallback(
+    (filter: AdHocVariableFilter) => {
+      addFilter(toKeyedVariableIdentifier(variable), filter);
+    },
+    [variable, addFilter]
+  );
 
-  changeFilter = (index: number, filter: AdHocVariableFilter) => {
-    this.props.changeFilter(toKeyedVariableIdentifier(this.props.variable), {
-      index,
-      filter,
-    });
-  };
+  const handleRemoveFilter = useCallback(
+    (index: number) => {
+      removeFilter(toKeyedVariableIdentifier(variable), index);
+    },
+    [variable, removeFilter]
+  );
 
-  render() {
-    const { filters, datasource, baseFilters } = this.props.variable;
+  const handleChangeFilter = useCallback(
+    (index: number, filter: AdHocVariableFilter) => {
+      changeFilter(toKeyedVariableIdentifier(variable), { index, filter });
+    },
+    [variable, changeFilter]
+  );
 
-    return (
-      <AdHocFilter
-        datasource={datasource}
-        filters={filters}
-        baseFilters={baseFilters}
-        disabled={this.props.readOnly}
-        addFilter={this.addFilter}
-        removeFilter={this.removeFilter}
-        changeFilter={this.changeFilter}
-      />
-    );
-  }
-}
+  const { filters, datasource, baseFilters } = props.variable;
+
+  return (
+    <AdHocFilter
+      datasource={datasource}
+      filters={filters}
+      baseFilters={baseFilters}
+      disabled={readOnly}
+      addFilter={handleAddFilter}
+      removeFilter={handleRemoveFilter}
+      changeFilter={handleChangeFilter}
+    />
+  );
+});
+AdHocPickerUnconnected.displayName = 'AdHocPickerUnconnected';
 
 export const AdHocPicker = connector(AdHocPickerUnconnected);
 AdHocPicker.displayName = 'AdHocPicker';
