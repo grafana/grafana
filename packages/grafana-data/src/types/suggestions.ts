@@ -127,6 +127,7 @@ export type VisualizationSuggestionsSupplier<TOptions extends unknown, TFieldCon
  */
 export interface VisualizationPresetsContext {
   fieldConfig?: FieldConfigSource;
+  options?: unknown;
 }
 
 /**

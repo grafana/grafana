@@ -6,9 +6,10 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
  */
 export function getPluginPresets(
   plugin: PanelPlugin,
-  fieldConfig?: FieldConfigSource
+  fieldConfig?: FieldConfigSource,
+  options?: unknown
 ): PanelPluginVisualizationSuggestion[] {
-  return plugin.getPresets({ fieldConfig }) ?? [];
+  return plugin.getPresets({ fieldConfig, options }) ?? [];
 }
 
 /**
@@ -17,8 +18,9 @@ export function getPluginPresets(
  */
 export async function getPresets(
   pluginId: string,
-  fieldConfig?: FieldConfigSource
+  fieldConfig?: FieldConfigSource,
+  options?: unknown
 ): Promise<PanelPluginVisualizationSuggestion[]> {
   const plugin = await importPanelPlugin(pluginId);
-  return getPluginPresets(plugin, fieldConfig);
+  return getPluginPresets(plugin, fieldConfig, options);
 }

@@ -8729,6 +8729,20 @@
     "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
+    "presets": {
+      "circle": "Circle",
+      "circle_desc": "plain round, from thresholds",
+      "gradient": "Gradient",
+      "gradient_desc": "gradient color scale",
+      "neon": "Neon",
+      "neon_desc": "round, single color endpoint glow",
+      "neonSegmented": "Neon segmented",
+      "neonSegmented_desc": "round, few segments",
+      "segmented": "Segmented",
+      "segmented_desc": "segmented thresholds",
+      "standard": "Standard",
+      "standard_desc": "plain, from thresholds"
+    },
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",

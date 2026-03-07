@@ -25,25 +25,37 @@ import { PanelStylesSection } from './PanelStylesSection';
 
 export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
+    const prevOptions = panel.state.options;
     dashboardEditActions.edit({
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
-        const { defaults, overrides } = panel.state.fieldConfig;
-        const presetDefaults = preset.fieldConfig?.defaults;
-        panel.onFieldConfigChange(
-          {
-            defaults: {
-              ...defaults,
-              custom: { ...defaults.custom, ...presetDefaults?.custom },
-              ...(presetDefaults?.color && { color: presetDefaults.color }),
+        if (preset.fieldConfig) {
+          const { defaults, overrides } = panel.state.fieldConfig;
+          const presetDefaults = preset.fieldConfig.defaults;
+          panel.onFieldConfigChange(
+            {
+              defaults: {
+                ...defaults,
+                ...presetDefaults,
+                custom: { ...defaults.custom, ...presetDefaults?.custom },
+                ...(presetDefaults?.color && { color: presetDefaults.color }),
+              },
+              overrides,
             },
-            overrides,
-          },
-          true
-        );
+            true
+          );
+        }
+        if (preset.options) {
+          panel.onOptionsChange({ ...panel.state.options, ...preset.options }, true);
+        }
       },
-      undo: () => panel.onFieldConfigChange(prevFieldConfig, true),
+      undo: () => {
+        panel.onFieldConfigChange(prevFieldConfig, true);
+        if (preset.options) {
+          panel.onOptionsChange(prevOptions, true);
+        }
+      },
     });
   };
 }
