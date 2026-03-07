@@ -28,7 +28,7 @@ func TestNewQuotaService(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -107,7 +107,7 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 	// Create a temporary config file
 	tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 	initialConfig := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -142,11 +142,11 @@ func TestQuotaService_ConfigReload(t *testing.T) {
 
 	// Update the config file with new values
 	updatedConfig := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 2500
-  "456":
+  "stacks-456":
     quotas:
       grafana.folder.app/folders:
         limit: 3000
@@ -187,7 +187,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -209,7 +209,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -231,7 +231,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -253,7 +253,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -262,7 +262,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 				return tmpFile
 			},
 			nsr: NamespacedResource{
-				Namespace: "123",
+				Namespace: "stacks-123",
 				Group:     "grafana.dashboard.app",
 				Resource:  "dashboards",
 			},
@@ -292,7 +292,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -316,7 +316,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
@@ -340,7 +340,7 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			setupFile: func(t *testing.T) string {
 				tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 				content := `overrides:
-  "123":
+  "stacks-123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1500
