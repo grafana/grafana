@@ -16,7 +16,6 @@ import {
   isWeekStart,
   Label,
   Stack,
-  TextLink,
   TimeZonePicker,
   useStyles2,
   WeekStart,
@@ -25,8 +24,8 @@ import {
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
+import { useSelectableThemes } from '../../../features/themes/utils';
 import { DashboardPicker } from '../Select/DashboardPicker';
-import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
 
@@ -44,7 +43,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     homeDashboardUID: '',
   });
 
-  const themes = getSelectableThemes();
+  const themes = useSelectableThemes(props.preferenceType);
   const styles = useStyles2(getStyles);
 
   const service = useMemo(() => new PreferencesService(props.resourceUri), [props.resourceUri]);
@@ -54,7 +53,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   const themeOptions: ComboboxOption[] = themes.map((theme) => ({
     value: theme.id,
     label: getTranslatedThemeName(theme),
-    group: theme.isExtra ? t('shared-preferences.theme.experimental', 'Experimental') : undefined,
+    group: theme.isExtra ? t('shared-preferences.theme.custom', 'Custom themes') : undefined,
   }));
   const languageOptions: ComboboxOption[] = getLanguageOptions();
   const regionalFormatOptions: ComboboxOption[] = getRegionalFormatOptions();
@@ -170,20 +169,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
             loading={state.isLoading}
             disabled={state.isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you&apos;d like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={themeOptions}

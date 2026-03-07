@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	"github.com/grafana/grafana/pkg/registry/apps/theme"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
@@ -39,6 +40,7 @@ func ProvideAppInstallers(
 	playlistAppInstaller *playlist.AppInstaller,
 	pluginsAppInstaller *plugins.AppInstaller,
 	liveAppInstaller *live.AppInstaller,
+	themeAppInstaller *theme.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
 	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
@@ -92,6 +94,11 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
 		installers = append(installers, liveAppInstaller)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		installers = append(installers, themeAppInstaller)
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature

@@ -1,19 +1,18 @@
 import { css } from '@emotion/css';
 
-import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
+import { GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FeatureBadge, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ThemePreview } from '../Theme/ThemePreview';
 
 interface ThemeCardProps {
   themeOption: ThemeRegistryItem;
-  isExperimental?: boolean;
   isSelected?: boolean;
   onSelect: () => void;
 }
 
-export function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeCardProps) {
+export function ThemeCard({ themeOption, isSelected, onSelect }: ThemeCardProps) {
   const theme = themeOption.build();
   const label = getTranslatedThemeName(themeOption);
   const styles = useStyles2(getStyles);
@@ -34,7 +33,6 @@ export function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }:
           onChange={onSelect}
           checked={isSelected}
         />
-        {isExperimental && <FeatureBadge featureState={FeatureState.experimental} />}
       </div>
       <ThemePreview theme={theme} />
     </div>

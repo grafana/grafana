@@ -1050,9 +1050,6 @@
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
-    },
-    "react/no-unescaped-entities": {
-      "count": 1
     }
   },
   "public/app/core/components/Signup/SignupPage.tsx": {
@@ -1072,11 +1069,6 @@
   },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/ThemeSelector/ThemeSelectorDrawer.tsx": {
-    "react/no-unescaped-entities": {
       "count": 1
     }
   },

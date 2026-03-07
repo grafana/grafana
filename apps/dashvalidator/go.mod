@@ -336,6 +336,7 @@ replace (
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
+	github.com/grafana/grafana/apps/theme => ../theme
 
 	github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery

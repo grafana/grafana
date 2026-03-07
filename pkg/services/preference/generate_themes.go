@@ -61,7 +61,7 @@ var themes = []ThemeDTO{
 			return nil // Continue processing other files
 		}
 
-		themeId := themeDef.Id
+		themeId := strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))
 		themeType := "dark" // default fallback
 		if themeDef.Colors.Mode != "" {
 			themeType = themeDef.Colors.Mode

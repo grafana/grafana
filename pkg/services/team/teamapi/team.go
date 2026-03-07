@@ -294,7 +294,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.themeValidator, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences

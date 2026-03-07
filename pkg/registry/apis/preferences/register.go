@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,8 +35,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs rest.Storage
+	authorizer     authorizer.Authorizer
+	legacyPrefs    rest.Storage
+	themeValidator pref.ThemeValidator
 
 	merger *merger // joins all preferences
 }
@@ -47,10 +49,12 @@ func RegisterAPIService(
 	prefs pref.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	themeValidator pref.ThemeValidator,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, sql),
+		merger:         newMerger(cfg, sql),
+		themeValidator: themeValidator,
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service
@@ -136,8 +140,15 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return apierrors.NewBadRequest("invalid timezone: must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string")
 	}
 
-	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
-		return apierrors.NewBadRequest("invalid theme")
+	if p.Spec.Theme != nil && *p.Spec.Theme != "" {
+		ns := a.GetNamespace()
+		nsInfo, err := claims.ParseNamespace(ns)
+		if err != nil {
+			return apierrors.NewBadRequest("invalid namespace")
+		}
+		if !b.themeValidator.IsValidThemeID(ctx, nsInfo.OrgID, *p.Spec.Theme) {
+			return apierrors.NewBadRequest("invalid theme")
+		}
 	}
 
 	return nil

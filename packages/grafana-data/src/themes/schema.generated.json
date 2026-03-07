@@ -5,9 +5,6 @@
     "name": {
       "type": "string"
     },
-    "id": {
-      "type": "string"
-    },
     "colors": {
       "type": "object",
       "properties": {
@@ -682,8 +679,7 @@
     }
   },
   "required": [
-    "name",
-    "id"
+    "name"
   ],
   "additionalProperties": false
 }

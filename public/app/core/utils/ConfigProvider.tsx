@@ -5,12 +5,14 @@ import { SkeletonTheme } from 'react-loading-skeleton';
 import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
 
+import { useRegisterCustomTheme } from '../../features/themes/useRegisterCustomTheme';
 import { appEvents } from '../app_events';
 
 import 'react-loading-skeleton/dist/skeleton.css';
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const [theme, setTheme] = useState(value);
+  useRegisterCustomTheme();
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {

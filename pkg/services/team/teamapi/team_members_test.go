@@ -46,6 +46,7 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 		&licensing.OSSLicensingService{},
 		cfg,
 		preftest.NewPreferenceServiceFake(),
+		preftest.NewFakeThemeValidator(),
 		dashboards.NewFakeDashboardService(t),
 		featuremgmt.WithFeatures(),
 		nil, // teamBindingClient not needed for these tests
@@ -381,6 +382,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				&licensing.OSSLicensingService{},
 				cfg,
 				preftest.NewPreferenceServiceFake(),
+				preftest.NewFakeThemeValidator(),
 				dashboards.NewFakeDashboardService(t),
 				featuremgmt.WithFeatures(),
 				nil, // teamBindingClient not needed for these tests

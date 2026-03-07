@@ -15,7 +15,6 @@ import { zIndex } from './zIndex';
 
 export const NewThemeOptionsSchema = z.object({
   name: z.string(),
-  id: z.string(),
   colors: ThemeColorsInputSchema.optional(),
   spacing: ThemeSpacingOptionsSchema.optional(),
   shape: ThemeShapeInputSchema.optional(),
@@ -28,7 +27,7 @@ export type NewThemeOptions = z.infer<typeof NewThemeOptionsSchema>;
 
 /** @internal */
 export function createTheme(
-  options: Omit<NewThemeOptions, 'id' | 'name'> & {
+  options: Omit<NewThemeOptions, 'name'> & {
     name?: NewThemeOptions['name'];
   } = {}
 ): GrafanaTheme2 {

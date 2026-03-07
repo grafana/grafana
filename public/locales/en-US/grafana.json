@@ -98,6 +98,26 @@
     "change-org-button": {
       "confirmText-save": "Save"
     },
+    "custom-themes": {
+      "add-button": "Add custom theme",
+      "delete-modal": {
+        "body": "Are you sure you want to delete the {{name}} theme?",
+        "confirm-text": "Delete",
+        "title": "Delete theme"
+      },
+      "empty-state": "You haven't added any custom themes yet",
+      "empty-state-description": "Add a custom theme to apply a unique look and feel to your organization"
+    },
+    "edit-custom-theme-page": {
+      "cancel": "Cancel",
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "page-nav": {
+        "text": "Edit theme"
+      },
+      "submit": "Save changes"
+    },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
       "heading": "Edit Organization",
@@ -188,6 +208,26 @@
     },
     "ldap-user-info": {
       "no-team": "No teams found via LDAP"
+    },
+    "new-custom-theme-page": {
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "gcom-field": {
+        "description": "Find and import themes at <link />",
+        "label": "Grafana.com theme URL or ID",
+        "load-button": "Load"
+      },
+      "page-nav": {
+        "sub-title": "Add a new custom theme shared with all users in your organization",
+        "text": {
+          "add-custom-theme": "Add theme"
+        }
+      },
+      "submit": "Add theme",
+      "validation": {
+        "invalid-theme-id": "Could not find a valid Grafana.com theme ID"
+      }
     },
     "org-role-picker": {
       "placeholder-choose-role": "Choose role..."
@@ -11498,6 +11538,10 @@
     "create-import": {
       "title": "Import dashboard"
     },
+    "custom-themes": {
+      "subtitle": "Manage custom themes shared to all users in your organization",
+      "title": "Themes"
+    },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
       "title": "Dashboards"
@@ -12496,6 +12540,27 @@
       "strong-password-validation-register": "Password does not comply with the strong password policy"
     },
     "change-theme": "Change theme",
+    "custom-themes": {
+      "add-button": "Add custom theme",
+      "delete-modal": {
+        "body": "Are you sure you want to delete the {{name}} theme?",
+        "confirm-text": "Delete",
+        "title": "Delete theme"
+      },
+      "empty-state": "You haven't added any custom themes yet",
+      "empty-state-description": "Add a custom theme visible only to you to personalise the look and feel of Grafana",
+      "subheading": "Custom themes"
+    },
+    "edit-custom-theme-page": {
+      "cancel": "Cancel",
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "page-nav": {
+        "text": "Edit theme"
+      },
+      "submit": "Save changes"
+    },
     "enable-kiosk-mode": "Enable kiosk mode",
     "feature-toggle-page": {
       "profile-not-enabled": "Profile is not enabled."
@@ -12505,6 +12570,23 @@
     },
     "input-suffix": {
       "content-login-details-locked-because-managed-another": "Login details locked because they are managed in another system."
+    },
+    "new-custom-theme-page": {
+      "field-preview": "Preview",
+      "field-theme-id": "Theme ID",
+      "field-theme-json": "Theme JSON",
+      "gcom-field": {
+        "description": "Find and import themes at <link />",
+        "label": "Grafana.com theme URL or ID",
+        "load-button": "Load"
+      },
+      "page-nav": {
+        "sub-title": "Add a new custom theme visible only to you",
+        "text": {
+          "add-custom-theme": "Add theme"
+        }
+      },
+      "submit": "Add theme"
     },
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
@@ -14129,6 +14211,8 @@
     "preferences": {
       "theme": {
         "dark-label": "Dark",
+        "delete": "Delete theme: {{name}}",
+        "edit": "Edit theme: {{name}}",
         "light-label": "Light",
         "system-label": "System preference"
       }
@@ -14167,14 +14251,13 @@
       "locale-preference-description": "Choose your region to see the corresponding date, time, and number format",
       "locale-preference-label": "Region format",
       "locale-preference-placeholder": "Choose region",
-      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
     "save": "Save preferences",
     "theme": {
-      "default-label": "Default",
-      "experimental": "Experimental"
+      "custom": "Custom themes",
+      "default-label": "Default"
     },
     "title": "Preferences"
   },
@@ -15719,7 +15802,8 @@
       "username-label": "Username"
     },
     "tabs": {
-      "general": "General"
+      "general": "General",
+      "themes": "Themes"
     }
   },
   "user-session": {

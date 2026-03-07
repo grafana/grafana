@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -64,6 +64,7 @@ export const ConfirmContent = ({
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputId = useId();
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
     setIsDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
@@ -104,6 +105,7 @@ export const ConfirmContent = ({
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
                 <Input
+                  id={inputId}
                   placeholder={placeholder}
                   onChange={onConfirmationTextChange}
                   data-testid={selectors.pages.ConfirmModal.input}
