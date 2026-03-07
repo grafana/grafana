@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
@@ -15,6 +16,14 @@ import (
 
 type Service struct {
 	lib *promlib.Service
+}
+
+func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
+	return promlib.NewInstanceSettings(
+		sdkhttpclient.NewProvider(),
+		logger,
+		extendClientOpts,
+	)
 }
 
 func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {

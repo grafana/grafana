@@ -84,7 +84,7 @@ func Test_healthcheck(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(NewInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
 			logger: logger,
 		}
 
@@ -102,7 +102,7 @@ func Test_healthcheck(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(NewInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
 			logger: logger,
 		}
 

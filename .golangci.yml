@@ -111,6 +111,8 @@ linters:
             - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
+            - '**/pkg/tsdb/prometheus/*'
+            - '**/pkg/tsdb/prometheus/**/*'
             - '**/pkg/tsdb/tempo/*'
             - '**/pkg/tsdb/tempo/**/*'
             - '**/pkg/tsdb/cloudwatch/*'

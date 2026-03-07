@@ -22,7 +22,7 @@ type Service struct {
 	logger log.Logger
 }
 
-type instance struct {
+type Instance struct {
 	queryData *querydata.QueryData
 	resource  *resource.Resource
 }
@@ -34,7 +34,7 @@ func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, ext
 		httpClientProvider = sdkhttpclient.NewProvider()
 	}
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog, extendOptions)),
+		im:     datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, plog, extendOptions)),
 		logger: plog,
 	}
 }
@@ -47,7 +47,7 @@ func (s *Service) Dispose() {
 	s.logger.Debug("Disposing the instance...")
 }
 
-func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, log)
@@ -81,7 +81,7 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 			return nil, err
 		}
 
-		return instance{
+		return Instance{
 			queryData: qd,
 			resource:  r,
 		}, nil
@@ -130,11 +130,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return sender.Send(resp)
 }
 
-func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*instance, error) {
+func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*Instance, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-	in := i.(instance)
+	in := i.(Instance)
 	return &in, nil
 }
