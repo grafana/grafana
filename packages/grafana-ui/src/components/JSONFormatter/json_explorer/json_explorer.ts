@@ -1,8 +1,6 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
 // License MIT, Copyright (c) 2015 Mohsen Azimi
 
-import { isNumber } from 'lodash';
-
 import { isObject, getObjectName, getType, getValuePreview, cssClass, createElement } from './helpers';
 
 const DATE_STRING_REGEX =
@@ -223,7 +221,7 @@ export class JsonExplorer {
   }
 
   isNumberArray() {
-    return this.json.length > 0 && this.json.length < 4 && (isNumber(this.json[0]) || isNumber(this.json[1]));
+    return this.json.length > 0 && this.json.length < 4 && (typeof this.json[0] === 'number' || typeof this.json[1] === 'number');
   }
 
   renderArray() {
