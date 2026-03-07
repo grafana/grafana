@@ -162,13 +162,6 @@ datasources:
     jsonData:
       sslmode: "disable"
 
-  - name: gdev-cloudwatch
-    type: cloudwatch
-    editable: true
-    jsonData:
-      authType: credentials
-      defaultRegion: eu-west-2
-
   - name: gdev-loki
     type: loki
     uid: gdev-loki

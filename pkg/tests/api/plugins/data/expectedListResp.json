@@ -443,59 +443,6 @@
     "angularDetected": false
   },
   {
-    "name": "CloudWatch",
-    "type": "datasource",
-    "id": "cloudwatch",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Data source for Amazon AWS monitoring service",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/cloudwatch/img/amazon-web-services.png",
-        "large": "public/plugins/cloudwatch/img/amazon-web-services.png"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": [
-        "aws",
-        "amazon"
-      ]
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/cloudwatch/",
-    "category": "cloud",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Dashboard list",
     "type": "panel",
     "id": "dashlist",

@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
@@ -148,7 +147,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(hcp)
-	cw := cloudwatch.ProvideService()
 	cm := cloudmonitoring.ProvideService(hcp)
 	es := elasticsearch.ProvideService(hcp)
 	grap := graphite.ProvideService(hcp, tracer)
@@ -166,7 +164,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	parca := parca.ProvideService(hcp)
 	zipkin := zipkin.ProvideService(hcp)
 	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, zipkin, jaeger)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, zipkin, jaeger)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -240,7 +238,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	}
 
 	expDataSources := map[string]struct{}{
-		"cloudwatch":                       {},
 		"grafana-azure-monitor-datasource": {},
 		"stackdriver":                      {},
 		"elasticsearch":                    {},

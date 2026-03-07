@@ -5,9 +5,7 @@ on:
     types: [opened]
     paths:
       - "public/app/plugins/datasource/elasticsearch/**"
-      - "public/app/plugins/datasource/cloudwatch/**"
       - "pkg/tsdb/elasticsearch/**"
-      - "pkg/tsdb/cloudwatch/**"
 
 jobs:
   add-comment:

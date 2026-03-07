@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
@@ -39,7 +38,6 @@ import (
 )
 
 const (
-	CloudWatch      = "cloudwatch"
 	CloudMonitoring = "stackdriver"
 	AzureMonitor    = "grafana-azure-monitor-datasource"
 	Elasticsearch   = "elasticsearch"
@@ -98,7 +96,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
@@ -106,7 +104,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
 		Elasticsearch:   asBackendPlugin(es),
@@ -224,8 +221,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		jsonData.ID = TestData
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
-	case CloudWatch:
-		svc = cloudwatch.ProvideService()
 	case CloudMonitoring:
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:

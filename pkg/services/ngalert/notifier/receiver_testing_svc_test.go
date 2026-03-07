@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
@@ -87,7 +87,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}{
 		{
 			name:        "error if integration UID is not empty",
-			integration: utils.Pointer(models.IntegrationGen()()),
+			integration: util.Pointer(models.IntegrationGen()()),
 			user:        userAuthorizedToCreate,
 			expectedErr: models.ErrReceiverTestingInvalidIntegrationBase,
 		},
@@ -219,13 +219,13 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		{
 			name:        "error if integration does not exist in receiver",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
+			integration: util.Pointer(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
 			expectedErr: models.ErrReceiverTestingIntegrationNotFound,
 		},
 		{
 			name:        "error if user changes protected field (url) without permission",
 			receiverUID: receiverUID,
-			integration: utils.Pointer(models.IntegrationGen(
+			integration: util.Pointer(models.IntegrationGen(
 				models.IntegrationMuts.WithUID(integrationUID),
 				models.IntegrationMuts.WithValidConfig("webhook"),
 				models.IntegrationMuts.AddSetting("url", "http://different-url.com"),

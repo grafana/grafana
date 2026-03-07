@@ -1,11 +1,9 @@
 import { each, find, findIndex, flattenDeep, isArray, isString, map, max, some } from 'lodash';
 
 import {
-  AnnotationQuery,
   ConstantVariableModel,
   DataLink,
   DataLinkBuiltInVars,
-  DataQuery,
   DataSourceRef,
   FieldConfigSource,
   FieldMatcherID,
@@ -49,15 +47,7 @@ import {
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
-import { LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-
-import {
-  migrateCloudWatchQuery,
-  migrateMultipleStatsAnnotationQuery,
-  migrateMultipleStatsMetricsQuery,
-} from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -543,10 +533,6 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 32 && finalTargetVersion >= 32) {
-      // CloudWatch migrations have been moved to version 34
-    }
-
     // Replace datasource name with reference, uid and type
     if (oldVersion < 33 && finalTargetVersion >= 33) {
       panelUpgrades.push((panel) => {
@@ -565,15 +551,6 @@ export class DashboardMigrator {
 
         return panel;
       });
-    }
-
-    if (oldVersion < 34 && finalTargetVersion >= 34) {
-      panelUpgrades.push((panel: PanelModel) => {
-        this.migrateCloudWatchQueries(panel);
-        return panel;
-      });
-
-      this.migrateCloudWatchAnnotationQuery();
     }
 
     if (oldVersion < 35 && finalTargetVersion >= 35) {
@@ -777,39 +754,6 @@ export class DashboardMigrator {
     }
 
     this.dashboard.panels = newPanels;
-  }
-
-  // Migrates metric queries and/or annotation queries that use more than one statistic.
-  // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
-  // New queries, that were created during migration, are put at the end of the array.
-  migrateCloudWatchQueries(panel: PanelModel) {
-    for (const target of panel.targets || []) {
-      if (isCloudWatchQuery(target)) {
-        migrateCloudWatchQuery(target);
-        if (target.hasOwnProperty('statistics')) {
-          // New queries, that were created during migration, are put at the end of the array.
-          const newQueries = migrateMultipleStatsMetricsQuery(target, [...panel.targets]);
-          for (const newQuery of newQueries) {
-            panel.targets.push(newQuery);
-          }
-        }
-      }
-    }
-  }
-
-  // Migrates CloudWatch annotation queries that use multiple statistics into separate queries.
-  // For example, if an annotation query uses ['Max', 'Min'] statistics, it will be split into
-  // two separate annotation queries - one with 'Max' and another with 'Min'.
-  // The new annotation queries are added to the end of the annotations list.
-  migrateCloudWatchAnnotationQuery() {
-    for (const annotation of this.dashboard.annotations.list) {
-      if (isLegacyCloudWatchAnnotationQuery(annotation)) {
-        const newAnnotationQueries = migrateMultipleStatsAnnotationQuery(annotation);
-        for (const newAnnotationQuery of newAnnotationQueries) {
-          this.dashboard.annotations.list.push(newAnnotationQuery);
-        }
-      }
-    }
   }
 
   upgradeToGridLayout(old: any) {
@@ -1119,27 +1063,6 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   }
 
   return panel;
-}
-
-function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery {
-  return (
-    target.hasOwnProperty('dimensions') &&
-    target.hasOwnProperty('namespace') &&
-    target.hasOwnProperty('region') &&
-    target.hasOwnProperty('metricName')
-  );
-}
-
-function isLegacyCloudWatchAnnotationQuery(
-  target: AnnotationQuery<DataQuery>
-): target is AnnotationQuery<LegacyAnnotationQuery> {
-  return (
-    target.hasOwnProperty('dimensions') &&
-    target.hasOwnProperty('namespace') &&
-    target.hasOwnProperty('region') &&
-    target.hasOwnProperty('prefixMatching') &&
-    target.hasOwnProperty('statistics')
-  );
 }
 
 function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {

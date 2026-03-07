@@ -23,7 +23,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const dsType = 'cloudwatch';
+      const dsType = 'loki';
       const variable: Variable = {
         type: 'datasource',
         name: 'VariableUnderTest',

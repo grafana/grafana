@@ -47,7 +47,7 @@ test.describe(
       // select a core data source that just runs a query during preview
       await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
 
-      const dataSource = 'gdev-cloudwatch';
+      const dataSource = 'gdev-loki';
       // this will trigger an API call to get the query options
       await page.getByText(dataSource).click();
 

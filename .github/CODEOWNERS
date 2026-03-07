@@ -358,7 +358,6 @@
 /.trivyignore @grafana/grafana-backend-services-squad
 
 # OSS Plugin Partnerships backend code
-/pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-datasources
 /pkg/tsdb/cloud-monitoring/ @grafana/partner-datasources
 
@@ -693,7 +692,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/bargauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/candlestick @grafana/dataviz-squad
 /packages/grafana-schema/src/**/canvas @grafana/dataviz-squad
-/packages/grafana-schema/src/**/cloudwatch @grafana/aws-datasources
 /packages/grafana-schema/src/**/dashboard @grafana/dashboards-squad
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-frontend-navigation
 /packages/grafana-schema/src/**/datagrid @grafana/dataviz-squad
@@ -1111,7 +1109,6 @@ eslint-suppressions.json @grafanabot
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
-/public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend

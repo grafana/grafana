@@ -92,15 +92,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/cloudwatch/**/*",
-      "pkg/tsdb/cloudwatch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/CloudWatch"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/elasticsearch/**/*",
       "pkg/tsdb/elasticsearch/**/*"
     ],

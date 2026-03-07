@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,12 +23,12 @@ var orgID = rand.Int63()
 
 func TestFilterByAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", util.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", util.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", util.Pointer("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -124,12 +123,12 @@ func TestFilterByAccess(t *testing.T) {
 
 func TestAuthorizeReadSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", util.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", util.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", util.Pointer("unknown-rule-uid"))
 
 	testCases := []struct {
 		name             string
@@ -227,13 +226,13 @@ func TestAuthorizeReadSilence(t *testing.T) {
 
 func TestAuthorizeCreateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", util.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", util.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", util.Pointer("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -404,13 +403,13 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 
 func TestAuthorizeUpdateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", util.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", util.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", util.Pointer("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -581,13 +580,13 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 
 func TestSilenceAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", util.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", util.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", util.Pointer("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,

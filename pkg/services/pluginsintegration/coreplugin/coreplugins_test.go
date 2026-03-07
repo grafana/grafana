@@ -19,7 +19,6 @@ func TestNewPlugin(t *testing.T) {
 	}{
 		{ID: AzureMonitor},
 		{ID: CloudMonitoring},
-		{ID: CloudWatch},
 		{ID: Elasticsearch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},

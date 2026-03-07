@@ -1,5 +1,3 @@
-const cloudwatchPlugin = async () =>
-  await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
 const grafanaPlugin = async () =>
@@ -68,7 +66,6 @@ const nodeGraph = async () =>
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
-  'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
   'core:plugin/grafana': grafanaPlugin,
   'core:plugin/influxdb': influxdbPlugin,

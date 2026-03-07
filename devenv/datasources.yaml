@@ -246,15 +246,6 @@ datasources:
       sslmode: 'disable'
       database: grafanadstest
 
-  - name: gdev-cloudwatch
-    uid: gdev-cloudwatch
-    type: cloudwatch
-    editable: true
-    jsonData:
-      authType: credentials
-      defaultRegion: eu-west-2
-      customMetricsNamespaces: 'CWAgent'
-
   - name: gdev-loki
     uid: gdev-loki
     type: loki

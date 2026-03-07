@@ -228,8 +228,8 @@ describe('testDataSource', () => {
                 status: 'success',
                 message: '',
               }),
-              type: 'cloudwatch',
-              uid: 'CW1234',
+              type: 'loki',
+              uid: 'LK1234',
             }),
           }) as Pick<DataSourceSrv, 'get'>,
         getBackendSrv: getBackendSrvMock,
@@ -243,15 +243,15 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
+        .whenThunkIsDispatched('Loki', DATASOURCES_ROUTES.Edit, dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
-        plugin_id: 'cloudwatch',
-        datasource_uid: 'CW1234',
+        plugin_id: 'loki',
+        datasource_uid: 'LK1234',
         grafana_version: '1.0',
         success: true,
-        path: '/datasources/edit/CloudWatch',
+        path: '/datasources/edit/Loki',
       });
     });
 
@@ -348,15 +348,15 @@ describe('testDataSource', () => {
               status: 'success',
               message: '',
             }),
-            type: 'cloudwatch',
-            uid: 'CW1234',
+            type: 'loki',
+            uid: 'LK1234',
           }),
         }),
         getBackendSrv: getBackendSrvMock,
       };
       await thunkTester({})
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
+        .whenThunkIsDispatched('Loki', DATASOURCES_ROUTES.Edit, dependencies);
       expect(appEvents.publish).toHaveBeenCalledWith({ type: 'datasource-test-succeeded' });
     });
 

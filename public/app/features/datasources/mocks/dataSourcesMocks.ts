@@ -1,7 +1,6 @@
 import { merge } from 'lodash';
 
 import { DataSourceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
-import amazonWebServicesPng from 'app/plugins/datasource/cloudwatch/img/amazon-web-services.png';
 import { DataSourceSettingsState } from 'app/types/datasources';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -53,7 +52,7 @@ export const getMockDataSource = <T extends DataSourceJsonData>(
       orgId: 1,
       readOnly: false,
       type: 'cloudwatch',
-      typeLogoUrl: amazonWebServicesPng,
+      typeLogoUrl: '',
       url: '',
       user: '',
       secureJsonFields: {},

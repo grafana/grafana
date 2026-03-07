@@ -65,12 +65,6 @@
       "import": "./dist/esm/raw/composable/canvas/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/canvas/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/cloudwatch/dataquery/x/CloudWatchDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/cloudwatch/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/cloudwatch/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/cloudwatch/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/cloudwatch/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/dashboardlist/panelcfg/x/DashboardListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/dashboardlist/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/dashboardlist/panelcfg/x/types.gen.d.ts",
