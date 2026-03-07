@@ -1329,11 +1329,6 @@
       "count": 13
     }
   },
-  "public/app/features/alerting/unified/components/notification-policies/Filters.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/TemplatePreview.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
