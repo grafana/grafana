@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"maps"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -216,6 +218,30 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			qdr := &backend.QueryDataResponse{}
 			err = json.Unmarshal(raw, qdr)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+		t.Run("chunked", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("datasources").
+				Name("test"). // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				SetHeader("Accept", chunked.CONTENT_TYPE). // <<< get a chunked response
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			// Read JSON lines
+			qdr, err := chunked.AccumulateJSONLines(bytes.NewReader(raw))
+			require.NoError(t, err)
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])

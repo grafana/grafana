@@ -105,6 +105,17 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 										},
 									},
 								},
+								"text/jsonl": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											SchemaProps: spec.SchemaProps{
+												Description: "Each line is a valid JSON event",
+												Type:        []string{"string"},
+												Format:      "",
+											},
+										},
+									},
+								},
 							},
 						},
 					},
