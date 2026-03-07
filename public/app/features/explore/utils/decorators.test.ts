@@ -22,6 +22,7 @@ import {
   decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
+  decorateWithRawPrometheusResult,
   decorateWithTableResult,
 } from './decorators';
 
@@ -333,6 +334,46 @@ describe('decorateWithTableResult', () => {
     const panelData = createExplorePanelData({ error: {}, tableFrames: [table, emptyTable] });
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     expect(panelResult.tableResult).not.toBeNull();
+  });
+});
+
+describe('decorateWithRawPrometheusResult', () => {
+  it('returns null when passed empty rawPrometheusFrames', async () => {
+    const panelData = createExplorePanelData({ rawPrometheusFrames: [] });
+    const panelResult = await lastValueFrom(decorateWithRawPrometheusResult(panelData));
+    expect(panelResult.rawPrometheusResult).toBeNull();
+  });
+
+  it('processes rawPrometheusFrames and sets display processor', async () => {
+    const rawFrame = toDataFrame({
+      name: 'raw',
+      refId: 'A',
+      meta: { preferredVisualisationType: 'rawPrometheus' },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 200, 300] },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+    const panelData = createExplorePanelData({ rawPrometheusFrames: [rawFrame] });
+    const panelResult = await lastValueFrom(decorateWithRawPrometheusResult(panelData));
+    expect(panelResult.rawPrometheusResult).not.toBeNull();
+    expect(panelResult.rawPrometheusResult?.fields[0].display).toBeDefined();
+  });
+
+  it('processes non-timeseries rawPrometheusFrames via mergeTransformer', async () => {
+    const nonTimeseriesFrame = toDataFrame({
+      name: 'raw-non-ts',
+      refId: 'A',
+      meta: { preferredVisualisationType: 'rawPrometheus' },
+      fields: [
+        { name: 'label', type: FieldType.string, values: ['instance1', 'instance2'] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const panelData = createExplorePanelData({ rawPrometheusFrames: [nonTimeseriesFrame] });
+    const panelResult = await lastValueFrom(decorateWithRawPrometheusResult(panelData));
+    expect(panelResult.rawPrometheusResult).not.toBeNull();
+    expect(panelResult.rawPrometheusResult?.fields[0].display).toBeDefined();
   });
 });
 

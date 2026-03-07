@@ -244,6 +244,10 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
 
   return transformer.pipe(
     map((frames) => {
+      if (!frames || frames.length === 0) {
+        return { ...data, rawPrometheusResult: null };
+      }
+
       const frame = frames[0];
 
       // set display processor
