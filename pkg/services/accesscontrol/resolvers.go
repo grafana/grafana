@@ -99,3 +99,9 @@ func (s *Resolvers) InvalidateCache(orgID int64, scope string) {
 	s.cache.Delete(key)
 	s.log.Debug("Invalidated scope cache", "scope", scope, "orgID", orgID)
 }
+
+// FlushCache removes all scope resolutions from the cache
+func (s *Resolvers) FlushCache() {
+	s.cache.Flush()
+	s.log.Debug("Flushed scope resolver cache")
+}

@@ -124,10 +124,15 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-	id, err := l.DeleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	id, err := l.DeleteLibraryElement(c.Req.Context(), c.SignedInUser, uid)
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to delete library element")
 	}
+
+	// Invalidate scope resolver cache for the deleted library element
+	scope := ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)
+	l.AccessControl.InvalidateResolverCache(c.GetOrgID(), scope)
 
 	return response.JSON(http.StatusOK, model.DeleteLibraryElementResponse{
 		Message: "Library element deleted",

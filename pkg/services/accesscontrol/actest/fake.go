@@ -83,6 +83,10 @@ func (f FakeAccessControl) InvalidateResolverCache(orgID int64, scope string) {
 	// No-op for fake implementation
 }
 
+func (f FakeAccessControl) InvalidateAllResolverCache() {
+	// No-op for fake implementation
+}
+
 type FakeStore struct {
 	ExpectedUserPermissions       []accesscontrol.Permission
 	ExpectedBasicRolesPermissions []accesscontrol.Permission

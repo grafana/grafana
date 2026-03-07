@@ -364,6 +364,12 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}
 
+	// Invalidate scope resolver cache for the deleted dashboard
+	dashIDScope := dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dash.ID, 10))
+	dashUIDScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), dashIDScope)
+	hs.AccessControl.InvalidateResolverCache(c.GetOrgID(), dashUIDScope)
+
 	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),

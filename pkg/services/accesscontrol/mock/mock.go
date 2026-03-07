@@ -282,3 +282,8 @@ func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
 func (m *Mock) InvalidateResolverCache(orgID int64, scope string) {
 	m.scopeResolvers.InvalidateCache(orgID, scope)
 }
+
+// InvalidateAllResolverCache implements accesscontrol.AccessControl.
+func (m *Mock) InvalidateAllResolverCache() {
+	m.scopeResolvers.FlushCache()
+}

@@ -179,3 +179,7 @@ func (f *fakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 func (f *fakeAccessControl) InvalidateResolverCache(orgID int64, scope string) {
 	// no-op for testing
 }
+
+func (f *fakeAccessControl) InvalidateAllResolverCache() {
+	// no-op for testing
+}
