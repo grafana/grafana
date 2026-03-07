@@ -23,7 +23,10 @@ function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
 }
 
-function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
+function registerCoreExtensions({
+  addedLinksRegistry,
+  exposedComponentsRegistry,
+}: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',

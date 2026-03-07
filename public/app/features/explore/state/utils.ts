@@ -26,7 +26,7 @@ import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, QueryBlock, RichHistoryQuery } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
@@ -76,6 +76,7 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   panelsState: {},
   correlations: undefined,
   compact: false,
+  blocks: [],
   queriesChangedIndex: 0,
   queriesChangedIndexAtRun: 0,
   ...overrides,
@@ -106,7 +107,7 @@ export async function loadAndInitDatasource(
   let instance: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
   try {
     // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
-    instance = await getDatasourceSrv().get(datasource);
+    instance = await getDatasourceSrv().get('-- Mixed --');
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
@@ -198,6 +199,12 @@ export function getResultsFromCache(
   const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
+}
+
+export function buildQueryBlocksFromQueries(queries: DataQuery[]): QueryBlock[] {
+  return queries
+    .map((query) => (query.refId ? { type: 'query', queryRef: query.refId } : undefined))
+    .filter((block): block is QueryBlock => Boolean(block));
 }
 
 export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {

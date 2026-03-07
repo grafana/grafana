@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
+import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState, SavedExploration } from 'app/types/explore';
 import { createAsyncThunk, ThunkResult } from 'app/types/store';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
@@ -37,6 +37,8 @@ export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings
 export const richHistorySearchFiltersUpdatedAction = createAction<{
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
+
+export const saveExploreViewAction = createAction<SavedExploration>('explore/saveExploreView');
 
 export const splitSizeUpdateAction = createAction<{
   largerExploreId?: string;
@@ -163,6 +165,7 @@ const initialExploreItemState = () => makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
+  savedQueries: [],
   correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
@@ -259,6 +262,20 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       richHistorySearchFilters,
+    };
+  }
+
+  if (saveExploreViewAction.match(action)) {
+    const title = action.payload.title.trim();
+    if (!title) {
+      return state;
+    }
+    return {
+      ...state,
+      savedQueries: [
+        ...state.savedQueries,
+        { title, url: action.payload.url, timestamp: action.payload.timestamp ?? Date.now() },
+      ],
     };
   }
 

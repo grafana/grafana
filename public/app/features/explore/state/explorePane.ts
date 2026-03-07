@@ -22,7 +22,13 @@ import { createAsyncThunk, ThunkResult } from 'app/types/store';
 import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getRange,
+  buildQueryBlocksFromQueries,
+} from './utils';
 //
 // Actions and Payloads
 //
@@ -273,6 +279,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   if (initializeExploreAction.match(action)) {
     const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef } = action.payload;
+    const hasExistingBlocks = state.blocks?.length;
 
     return {
       ...state,
@@ -288,6 +295,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       correlations: [],
       queryLibraryRef,
       compact,
+      blocks: hasExistingBlocks ? state.blocks : buildQueryBlocksFromQueries(queries),
     };
   }
 

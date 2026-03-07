@@ -54,6 +54,12 @@ export interface CorrelationEditorDetailsUpdate extends Partial<CorrelationEdito
 /**
  * Global Explore state
  */
+export interface SavedExploration {
+  title: string;
+  url: string;
+  timestamp: number;
+}
+
 export interface ExploreState {
   /**
    * True if time interval for panels are synced. Only possible with split mode.
@@ -61,6 +67,11 @@ export interface ExploreState {
   syncedTimes: boolean;
 
   panes: Record<string, ExploreItemState | undefined>;
+
+  /**
+   * Saved Explore views captured from the toolbar.
+   */
+  savedQueries: SavedExploration[];
 
   /**
    * History of all queries
@@ -252,6 +263,25 @@ export interface ExploreItemState {
    * If set to true, all query rows will be collapsed initially and the content outline will be hidden
    */
   compact: boolean;
+
+  blocks: Block[];
+}
+
+export type Block = QueryBlock | TextBlock | ExpressionBlock;
+
+export interface QueryBlock {
+  type: 'query';
+  queryRef: string;
+}
+
+export interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+export interface ExpressionBlock {
+  type: 'expression';
+  expression?: string;
 }
 
 export interface ExploreUpdateState {

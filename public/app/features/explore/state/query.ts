@@ -40,6 +40,7 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
+  Block,
   ExploreItemState,
   ExplorePanelData,
   ExploreState,
@@ -63,7 +64,13 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
+import {
+  createCacheKey,
+  filterLogRowsByIndex,
+  getCorrelationsData,
+  getResultsFromCache,
+  buildQueryBlocksFromQueries,
+} from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -90,6 +97,32 @@ export interface AddQueryRowPayload {
   query: DataQuery;
 }
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
+
+export interface AddBlockPayload {
+  exploreId: string;
+  block: Block;
+}
+export const addBlockAction = createAction<AddBlockPayload>('explore/addBlock');
+
+export interface UpdateTextBlockPayload {
+  exploreId: string;
+  index: number;
+  text: string;
+}
+export const updateTextBlockAction = createAction<UpdateTextBlockPayload>('explore/updateTextBlock');
+
+export interface UpdateExpressionBlockPayload {
+  exploreId: string;
+  index: number;
+  expression: string;
+}
+export const updateExpressionBlockAction = createAction<UpdateExpressionBlockPayload>('explore/updateExpressionBlock');
+
+export interface RemoveBlockPayload {
+  exploreId: string;
+  index: number;
+}
+export const removeBlockAction = createAction<RemoveBlockPayload>('explore/removeBlock');
 
 /**
  * Query change handler for the query row with the given index.
@@ -270,6 +303,25 @@ export function addQueryRow(exploreId: string, index: number): ThunkResult<Promi
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
 }
+
+export function addBlock(exploreId: string, block: Block): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(addBlockAction({ exploreId, block }));
+  };
+}
+
+export function updateTextBlock(exploreId: string, index: number, text: string): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(updateTextBlockAction({ exploreId, index, text }));
+  };
+}
+
+export function removeBlock(exploreId: string, index: number): ThunkResult<void> {
+  return (dispatch) => {
+    dispatch(removeBlockAction({ exploreId, index }));
+  };
+}
+
 /**
  * Cancel running queries
  */
@@ -1040,11 +1092,86 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     // Add to queries, which will cause a new row to be rendered
     const nextQueries = [...queries.slice(0, index + 1), { ...query }, ...queries.slice(index + 1)];
+    const previousBlocks = ensureBlocks(state);
+    const previousQueryRef =
+      queries.length === 0
+        ? undefined
+        : index >= queries.length
+          ? queries[queries.length - 1]?.refId
+          : queries[index]?.refId;
+    const nextBlocks = insertQueryBlock(previousBlocks, query.refId, previousQueryRef);
 
     return {
       ...state,
       queries: nextQueries,
       queryKeys: getQueryKeys(nextQueries),
+      blocks: nextBlocks,
+    };
+  }
+
+  if (addBlockAction.match(action)) {
+    const blocks = ensureBlocks(state);
+    return {
+      ...state,
+      blocks: [...blocks, action.payload.block],
+    };
+  }
+
+  if (updateTextBlockAction.match(action)) {
+    const { index, text } = action.payload;
+    const blocks = ensureBlocks(state);
+    if (!blocks[index] || blocks[index].type !== 'text') {
+      return state;
+    }
+
+    const nextBlocks = [...blocks];
+    nextBlocks[index] = { ...blocks[index], text };
+
+    return {
+      ...state,
+      blocks: nextBlocks,
+    };
+  }
+
+  if (updateExpressionBlockAction.match(action)) {
+    const { index, expression } = action.payload;
+    const blocks = ensureBlocks(state);
+    const target = blocks[index];
+    if (!target || target.type !== 'expression') {
+      return state;
+    }
+
+    const nextBlocks = [...blocks];
+    nextBlocks[index] = { ...target, expression };
+
+    return {
+      ...state,
+      blocks: nextBlocks,
+    };
+  }
+
+  if (removeBlockAction.match(action)) {
+    const { index } = action.payload;
+    const blocks = ensureBlocks(state);
+    if (index < 0 || index >= blocks.length) {
+      return state;
+    }
+
+    const blockToRemove = blocks[index];
+
+    // If removing a query block, also remove the associated query
+    let nextQueries = state.queries;
+    if (blockToRemove.type === 'query') {
+      nextQueries = state.queries.filter((q) => q.refId !== blockToRemove.queryRef);
+    }
+
+    const nextBlocks = [...blocks.slice(0, index), ...blocks.slice(index + 1)];
+
+    return {
+      ...state,
+      queries: nextQueries,
+      queryKeys: getQueryKeys(nextQueries),
+      blocks: nextBlocks,
     };
   }
 
@@ -1303,6 +1430,36 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   return state;
 };
+
+function ensureBlocks(state: ExploreItemState): Block[] {
+  if (state.blocks && state.blocks.length) {
+    return state.blocks;
+  }
+  return buildQueryBlocksFromQueries(state.queries);
+}
+
+function insertQueryBlock(blocks: Block[], newQueryRef?: string, afterQueryRef?: string): Block[] {
+  if (!newQueryRef) {
+    return blocks;
+  }
+  const newBlock: Block = { type: 'query', queryRef: newQueryRef };
+
+  if (!blocks.length) {
+    return [newBlock];
+  }
+
+  if (!afterQueryRef) {
+    return [...blocks, newBlock];
+  }
+
+  const insertIndex = blocks.findIndex((block) => block.type === 'query' && block.queryRef === afterQueryRef);
+
+  if (insertIndex === -1) {
+    return [...blocks, newBlock];
+  }
+
+  return [...blocks.slice(0, insertIndex + 1), newBlock, ...blocks.slice(insertIndex + 1)];
+}
 
 const processQueryResponse = (state: ExploreItemState, action: PayloadAction<QueryEndedPayload>): ExploreItemState => {
   const { response } = action.payload;

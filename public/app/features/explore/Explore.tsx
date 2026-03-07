@@ -1,17 +1,17 @@
+/* eslint-disable */
+/* tslint:disable:react-prefer-stateless-function */
+
 import { css, cx } from '@emotion/css';
-import { get, groupBy } from 'lodash';
+import { get } from 'lodash';
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
 import {
-  AbsoluteTimeRange,
   DataFrame,
   EventBus,
   getNextRefId,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
-  LoadingState,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -22,52 +22,27 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  AdHocFilterItem,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  ScrollContainer,
-  Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { AdHocFilterItem, PanelContainer, ScrollContainer, Themeable2, withTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import { Blocks } from './Blocks';
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
-import { CustomContainer } from './CustomContainer';
 import { ExploreToolbar } from './ExploreToolbar';
-import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
-import { GraphContainer } from './Graph/GraphContainer';
-import LogsContainer from './Logs/LogsContainer';
-import { LogsSamplePanel } from './Logs/LogsSamplePanel';
-import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
-import { QueryRows } from './QueryRows';
-import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
+import { RenderResults } from './RenderResults';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
-import { SecondaryActions } from './SecondaryActions';
-import TableContainer from './Table/TableContainer';
-import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { AddQueryButtons } from './SecondaryActions';
 import { changeDatasource } from './state/datasource';
-import { changeSize, changeCompactMode } from './state/explorePane';
+import { changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
-import {
-  addQueryRow,
-  modifyQueries,
-  scanStart,
-  scanStopAction,
-  selectIsWaitingForData,
-  setQueries,
-  setSupplementaryQueryEnabled,
-} from './state/query';
+import { addQueryRow, modifyQueries, selectIsWaitingForData, setQueries } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
@@ -289,24 +264,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
     this.props.modifyQueries(this.props.exploreId, action, modifier);
   };
 
-  onResize = (size: HorizontalSize) => {
-    this.props.changeSize(this.props.exploreId, size);
-  };
-
-  onStartScanning = () => {
-    // Scanner will trigger a query
-    this.props.scanStart(this.props.exploreId);
-  };
-
-  onStopScanning = () => {
-    this.props.scanStopAction({ exploreId: this.props.exploreId });
-  };
-
-  onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-    updateTimeRange({ exploreId, absoluteRange });
-  };
-
   /**
    * Used for interaction from the visualizations. Will open split view in compact mode.
    */
@@ -359,260 +316,19 @@ export class Explore extends PureComponent<Props, ExploreState> {
     );
   }
 
-  renderNoData() {
-    return <NoData />;
-  }
-
-  renderCustom(width: number) {
-    const { timeZone, queryResponse, eventBus } = this.props;
-
-    const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
-
-    return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
-      return (
-        <ContentOutlineItem panelId={pluginId} title={pluginId} icon="plug" key={index}>
-          <CustomContainer
-            key={index}
-            timeZone={timeZone}
-            pluginId={pluginId}
-            frames={frames}
-            state={queryResponse.state}
-            timeRange={queryResponse.timeRange}
-            height={400}
-            width={width}
-            splitOpenFn={this.onSplitOpen(pluginId)}
-            eventBus={eventBus}
-          />
-        </ContentOutlineItem>
-      );
-    });
-  }
-
-  renderGraphPanel(width: number) {
-    const { graphResult, timeZone, queryResponse, showFlameGraph, queriesChangedIndexAtRun } = this.props;
-
-    return (
-      <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
-        <GraphContainer
-          data={graphResult!}
-          height={showFlameGraph ? 180 : 400}
-          width={width}
-          timeRange={queryResponse.timeRange}
-          timeZone={timeZone}
-          onChangeTime={this.onUpdateTimeRange}
-          annotations={queryResponse.annotations}
-          splitOpenFn={this.onSplitOpen('graph')}
-          loadingState={queryResponse.state}
-          eventBus={this.graphEventBus}
-          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderTablePanel(width: number) {
-    const { exploreId, timeZone, eventBus } = this.props;
-    return (
-      <ContentOutlineItem panelId="Table" title={t('explore.explore.title-table', 'Table')} icon="table">
-        <TableContainer
-          ariaLabel={selectors.pages.Explore.General.table}
-          width={width}
-          exploreId={exploreId}
-          onCellFilterAdded={this.onCellFilterAdded}
-          timeZone={timeZone}
-          splitOpenFn={this.onSplitOpen('table')}
-          eventBus={eventBus}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderRawPrometheus(width: number) {
-    const { exploreId, datasourceInstance, timeZone } = this.props;
-    return (
-      <ContentOutlineItem
-        panelId="Raw Prometheus"
-        title={t('explore.explore.title-raw-prometheus', 'Raw Prometheus')}
-        icon="gf-prometheus"
-      >
-        <RawPrometheusContainer
-          showRawPrometheus={true}
-          ariaLabel={selectors.pages.Explore.General.table}
-          width={width}
-          exploreId={exploreId}
-          onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
-          timeZone={timeZone}
-          splitOpenFn={this.onSplitOpen('table')}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  splitOpenFnLogs = this.onSplitOpen('logs');
-
-  renderLogsPanel(width: number) {
-    const { exploreId, syncedTimes, theme, queryResponse } = this.props;
-    const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
-    // Need to make ContentOutlineItem a flex container so the gap works
-    const logsContentOutlineWrapper = css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    });
-    return (
-      <ContentOutlineItem
-        panelId="Logs"
-        title={t('explore.explore.title-logs', 'Logs')}
-        icon="gf-logs"
-        className={logsContentOutlineWrapper}
-      >
-        <LogsContainer
-          exploreId={exploreId}
-          loadingState={queryResponse.state}
-          syncedTimes={syncedTimes}
-          width={width - spacing}
-          onClickFilterLabel={this.onClickFilterLabel}
-          onClickFilterOutLabel={this.onClickFilterOutLabel}
-          onStartScanning={this.onStartScanning}
-          onStopScanning={this.onStopScanning}
-          eventBus={this.logsEventBus}
-          splitOpenFn={this.splitOpenFnLogs}
-          isFilterLabelActive={this.isFilterLabelActive}
-          onClickFilterString={this.onClickFilterString}
-          onClickFilterOutString={this.onClickFilterOutString}
-          onPinLineCallback={this.onPinLineCallback}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderLogsSamplePanel() {
-    const {
-      logsSample,
-      timeZone,
-      setSupplementaryQueryEnabled,
-      exploreId,
-      datasourceInstance,
-      queries,
-      queryResponse,
-    } = this.props;
-
-    return (
-      <ContentOutlineItem
-        panelId="Logs Sample"
-        title={t('explore.explore.title-logs-sample', 'Logs sample')}
-        icon="gf-logs"
-      >
-        <LogsSamplePanel
-          queryResponse={logsSample.data}
-          timeZone={timeZone}
-          enabled={logsSample.enabled}
-          queries={queries}
-          datasourceInstance={datasourceInstance}
-          splitOpen={this.onSplitOpen('logsSample')}
-          setLogsSampleEnabled={(enabled: boolean) =>
-            setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsSample)
-          }
-          timeRange={queryResponse.timeRange}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderNodeGraphPanel() {
-    const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
-    const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
-
-    return (
-      <ContentOutlineItem
-        panelId="Node Graph"
-        title={t('explore.explore.title-node-graph', 'Node graph')}
-        icon="code-branch"
-      >
-        <NodeGraphContainer
-          dataFrames={queryResponse.nodeGraphFrames}
-          exploreId={exploreId}
-          withTraceView={showTrace}
-          datasourceType={datasourceType}
-          splitOpenFn={this.onSplitOpen('nodeGraph')}
-        />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderFlameGraphPanel() {
-    const { queryResponse } = this.props;
-    return (
-      <ContentOutlineItem
-        panelId="Flame Graph"
-        title={t('explore.explore.title-flame-graph', 'Flame graph')}
-        icon="fire"
-      >
-        <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />
-      </ContentOutlineItem>
-    );
-  }
-
-  renderTraceViewPanel() {
-    const { queryResponse, exploreId } = this.props;
-    const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
-
-    return (
-      // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && (
-        <ContentOutlineItem panelId="Traces" title={t('explore.explore.title-traces', 'Traces')} icon="file-alt">
-          <TraceViewContainer
-            exploreId={exploreId}
-            dataFrames={dataFrames}
-            splitOpenFn={this.onSplitOpen('traceView')}
-            scrollElement={this.scrollElement}
-            timeRange={queryResponse.timeRange}
-          />
-        </ContentOutlineItem>
-      )
-    );
-  }
-
   render() {
     const {
       datasourceInstance,
       exploreId,
-      graphResult,
-      queryResponse,
       isLive,
       theme,
-      showMetrics,
-      showTable,
-      showRawPrometheus,
-      showLogs,
-      showTrace,
-      showCustom,
-      showNodeGraph,
-      showFlameGraph,
-      showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
-      showQueryInspector,
-      setShowQueryInspector,
       compact,
       queryLibraryRef,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
-    const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
-    const showNoData =
-      queryResponse.state === LoadingState.Done &&
-      [
-        queryResponse.logsFrames,
-        queryResponse.graphFrames,
-        queryResponse.nodeGraphFrames,
-        queryResponse.flameGraphFrames,
-        queryResponse.tableFrames,
-        queryResponse.rawPrometheusFrames,
-        queryResponse.traceFrames,
-        queryResponse.customFrames,
-      ].every((e) => e.length === 0);
 
     let correlationsBox = undefined;
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
@@ -649,131 +365,59 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
-                    <ContentOutlineItem
-                      panelId="Queries"
-                      title={t('explore.explore.title-queries', 'Queries')}
-                      icon="arrow"
-                      mergeSingleChild={true}
-                    >
-                      <PanelContainer className={styles.queryContainer}>
-                        {correlationsBox}
-                        <QueryRows
-                          exploreId={exploreId}
-                          // Don't simply pass isOpen here to avoid opening the row when content outline is openend and
-                          // triggers exiting from compact mode. If it's confusing we can change the behavior to exit
-                          // compact mode explicitly with a button in the UI instead of exiting when row is opened or
-                          // content outline is opened.
-                          isOpen={compact ? false : undefined}
-                          changeCompactMode={(compact: boolean) =>
-                            this.props.changeCompactMode(this.props.exploreId, false)
-                          }
-                        />
-                        <SecondaryActions
-                          // do not allow people to add queries with potentially different datasources in correlations editor mode
-                          addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
-                          }
-                          // We cannot show multiple traces at the same time right now so we do not show add query button.
-                          //TODO:unification
-                          addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          queryInspectorButtonActive={showQueryInspector}
-                          onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                          onSelectQueryFromLibrary={async (query) => {
-                            const { changeDatasource, queries, setQueries } = this.props;
-                            const newQueries = [
-                              ...queries,
-                              {
-                                ...query,
-                                refId: getNextRefId(queries),
-                              },
-                            ];
-                            setQueries(exploreId, newQueries);
-                            if (query.datasource?.uid) {
-                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
-                              const isMixed = uniqueDatasources.size > 1;
-                              const newDatasourceRef = {
-                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
-                              };
-                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
-                              if (shouldChangeDatasource) {
-                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
-                              }
-                            }
-                          }}
-                        />
-                        <ResponseErrorContainer exploreId={exploreId} />
-                      </PanelContainer>
-                    </ContentOutlineItem>
-                    <AutoSizer onResize={this.onResize} disableHeight>
-                      {({ width }) => {
-                        if (width === 0) {
-                          return null;
-                        }
+                    {correlationsBox}
+                    <Blocks
+                      exploreId={exploreId}
+                      changeCompactMode={(compact: boolean) =>
+                        this.props.changeCompactMode(this.props.exploreId, false)
+                      }
+                      onSplitOpen={this.onSplitOpen}
+                      graphEventBus={this.graphEventBus}
+                      logsEventBus={this.logsEventBus}
+                      onCellFilterAdded={this.onCellFilterAdded}
+                      onClickFilterLabel={this.onClickFilterLabel}
+                      onClickFilterOutLabel={this.onClickFilterOutLabel}
+                      onClickFilterString={this.onClickFilterString}
+                      onClickFilterOutString={this.onClickFilterOutString}
+                      isFilterLabelActive={this.isFilterLabelActive}
+                      onPinLineCallback={this.onPinLineCallback}
+                      scrollElement={this.scrollElement}
+                    />
+                    <ResponseErrorContainer exploreId={exploreId} />
 
-                        return (
-                          <main className={cx(styles.exploreMain)} style={{ width }}>
-                            <ErrorBoundaryAlert boundaryName="explore-main">
-                              {showPanels && (
-                                <>
-                                  {showMetrics && graphResult && (
-                                    <ErrorBoundaryAlert boundaryName="explore-graph-panel">
-                                      {this.renderGraphPanel(width)}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showRawPrometheus && (
-                                    <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
-                                      {this.renderRawPrometheus(width)}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showTable && (
-                                    <ErrorBoundaryAlert boundaryName="explore-table-panel">
-                                      {this.renderTablePanel(width)}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showLogs && (
-                                    <ErrorBoundaryAlert boundaryName="explore-logs-panel">
-                                      {this.renderLogsPanel(width)}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showNodeGraph && (
-                                    <ErrorBoundaryAlert boundaryName="explore-node-graph-panel">
-                                      {this.renderNodeGraphPanel()}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showFlameGraph && (
-                                    <ErrorBoundaryAlert boundaryName="explore-flame-graph-panel">
-                                      {this.renderFlameGraphPanel()}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showTrace && (
-                                    <ErrorBoundaryAlert boundaryName="explore-trace-view-panel">
-                                      {this.renderTraceViewPanel()}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showLogsSample && (
-                                    <ErrorBoundaryAlert boundaryName="explore-logs-sample-panel">
-                                      {this.renderLogsSamplePanel()}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showCustom && (
-                                    <ErrorBoundaryAlert boundaryName="explore-custom-panel">
-                                      {this.renderCustom(width)}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                  {showNoData && (
-                                    <ErrorBoundaryAlert boundaryName="explore-no-data">
-                                      {this.renderNoData()}
-                                    </ErrorBoundaryAlert>
-                                  )}
-                                </>
-                              )}
-                            </ErrorBoundaryAlert>
-                          </main>
-                        );
+                    <AddQueryButtons
+                      exploreId={exploreId}
+                      onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                      // We cannot show multiple traces at the same time right now so we do not show add query button.
+                      //TODO:unification
+                      addQueryRowButtonHidden={false}
+                      // do not allow people to add queries with potentially different datasources in correlations editor mode
+                      addQueryRowButtonDisabled={
+                        isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
+                      }
+                      onSelectQueryFromLibrary={async (query) => {
+                        const { changeDatasource, queries, setQueries } = this.props;
+                        const newQueries = [
+                          ...queries,
+                          {
+                            ...query,
+                            refId: getNextRefId(queries),
+                          },
+                        ];
+                        setQueries(exploreId, newQueries);
+                        if (query.datasource?.uid) {
+                          const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+                          const isMixed = uniqueDatasources.size > 1;
+                          const newDatasourceRef = {
+                            uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+                          };
+                          const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
+                          if (shouldChangeDatasource) {
+                            await changeDatasource({ exploreId, datasource: newDatasourceRef });
+                          }
+                        }
                       }}
-                    </AutoSizer>
+                    />
                   </>
                 ) : (
                   this.renderEmptyState(styles.exploreContainer)
@@ -855,18 +499,16 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
 const mapDispatchToProps = {
   changeDatasource,
-  changeSize,
   modifyQueries,
-  scanStart,
-  scanStopAction,
   setQueries,
-  updateTimeRange,
   addQueryRow,
   splitOpen,
-  setSupplementaryQueryEnabled,
   changeCompactMode,
+  updateTimeRange,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export default withTheme2(connector(Explore));
+/* eslint-enable */
+/* tslint:enable:react-prefer-stateless-function */
