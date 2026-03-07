@@ -97,12 +97,12 @@ func (s *ChecksumStore) ValidateOrUpdate(t *testing.T, key string, data []byte) 
 
 	expected, ok := s.data[key]
 	if !ok {
-		t.Errorf("no checksum found for %s (got %s); run with REGENERATE_CHECKSUMS=true to generate", key, hash)
+		t.Errorf("no checksum found for %s (got %s); run 'make regenerate-golden-checksums' to update", key, hash)
 		return
 	}
 
 	if expected != hash {
-		t.Errorf("checksum mismatch for %s:\n  expected: %s\n       got: %s\nRun with REGENERATE_CHECKSUMS=true to update", key, expected, hash)
+		t.Errorf("checksum mismatch for %s:\n  expected: %s\n       got: %s\nrun 'make regenerate-golden-checksums' to update", key, expected, hash)
 	}
 }
 
