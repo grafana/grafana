@@ -1,7 +1,7 @@
 // Libraries
 import { isString, map as isArray } from 'lodash';
 import { from, merge, Observable, of, timer } from 'rxjs';
-import { catchError, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, finalize, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/operators';
 
 // Utils & Services
 // Types
@@ -26,6 +26,11 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { emitDataRequestEvent } from './queryAnalytics';
+import {
+  finalizeDashboardRequestTracking,
+  startDashboardRequestTracking,
+  trackDashboardRequestPacket,
+} from './runningQueryCount';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -123,6 +128,8 @@ export function runRequest(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ): Observable<PanelData> {
+  startDashboardRequestTracking(request);
+
   let state: RunningQueryState = {
     panelData: {
       state: LoadingState.Loading,
@@ -146,6 +153,8 @@ export function runRequest(
       if (!isArray(packet.data)) {
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
+
+      trackDashboardRequestPacket(request.requestId, packet);
 
       // filter out responses for hidden queries
       const hiddenQueries = request.targets.filter((q) => q.hide);
@@ -172,6 +181,7 @@ export function runRequest(
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     cancelNetworkRequestsOnUnsubscribe(backendSrv, request.requestId),
+    finalize(() => finalizeDashboardRequestTracking(request.requestId)),
     // this makes it possible to share this observable in takeUntil
     share()
   );
