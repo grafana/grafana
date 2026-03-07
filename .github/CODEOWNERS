@@ -1079,6 +1079,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
 /scripts/check-codeowner-affected.js @grafana/dataviz-squad
 /scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
+/scripts/eslint-suppressions-by-codeowner.js @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-developer-enablement-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
