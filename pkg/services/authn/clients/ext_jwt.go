@@ -96,7 +96,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
 		}
 
-		return s.authenticateAsUser(*idTokenClaims, *accessTokenClaims, jwtToken)
+		return s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken)
 	}
 
 	// Access token without ID token: may be service-only or OBO (on-behalf-of).
@@ -113,7 +113,7 @@ func (s *ExtendedJWT) IsEnabled() bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 
-func (s *ExtendedJWT) authenticateAsUser(
+func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
@@ -133,6 +133,8 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
+	// this check is common between authenticateAsUserViaIDToken and authenticateAsUserViaOBO
+	// TypeAccessPolicy is the only current mechanism to authenticate as the user (whether through OBO token or separate ID token)
 	if !claims.IsIdentityType(accessType, claims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
@@ -260,6 +262,8 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 	if err != nil {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
+	// this check is common between authenticateAsUserViaIDToken and authenticateAsUserViaOBO
+	// TypeAccessPolicy is the only current mechanism to authenticate as the user (whether through OBO token or separate ID token)
 	if !claims.IsIdentityType(accessType, claims.TypeAccessPolicy) {
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
