@@ -153,12 +153,19 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	pluginGVR := pluginsv0alpha1.PluginKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
 		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
+	}
+	wrappers := map[schema.GroupVersionResource]func(rest.Storage) (rest.Storage, error){
+		pluginGVR: func(storage rest.Storage) (rest.Storage, error) {
+			return NewPluginStorage(p.logger, p.metaManager, clientFactory, pluginGVR.GroupResource(), storage)
+		},
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
 		replace: replacedStorage,
+		wrap:    wrappers,
 	}
 	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
 }

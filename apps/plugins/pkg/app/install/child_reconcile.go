@@ -38,6 +38,13 @@ func NewChildPluginReconciler(logger logging.Logger, metaManager *meta.ProviderM
 	return reconciler
 }
 
+func (r *ChildPluginReconciler) ReconcilePlugin(ctx context.Context, action operator.ReconcileAction, plugin *pluginsv0alpha1.Plugin) (operator.ReconcileResult, error) {
+	return r.reconcile(ctx, operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: action,
+		Object: plugin,
+	})
+}
+
 // reconcile is the main reconciliation loop for ChildPlugin resources.
 func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]) (operator.ReconcileResult, error) {
 	start := time.Now()
