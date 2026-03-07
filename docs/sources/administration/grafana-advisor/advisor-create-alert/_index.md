@@ -17,12 +17,6 @@ keywords:
 
 # Create an alert based on Grafana Advisor results
 
-{{< admonition type="note" >}}
-Grafana Advisor is available in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-Currently, Grafana Advisor performs regular checks on data sources, plugins, and your Grafana instance, but we're planning to expand its capabilities in future releases to cover more aspects of your Grafana environment. You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
-{{< /admonition >}}
-
 This guide walks you through creating a Grafana alert that monitors Advisor check results and triggers when failures are detected.
 
 Follow these steps:
