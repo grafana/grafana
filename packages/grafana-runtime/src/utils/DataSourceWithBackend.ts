@@ -326,7 +326,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
@@ -347,10 +347,23 @@ class DataSourceWithBackend<
         method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
+  }
+
+  /**
+   * Internal function to build the datasource URL based on the feature toggle
+   */
+  buildResourcesDatasourceUrl(path: string): string {
+    if (config.featureToggles.datasourcesApiServerEnableResourceEndpointFrontend) {
+      // example:
+      // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
+      const apiVersion = 'v0alpha1';
+      return `/apis/${this.type}.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
+    }
+    return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
   /**
