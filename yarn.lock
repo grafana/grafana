@@ -12192,6 +12192,87 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-darwin-arm64@npm:7.0.0-dev.20260306.1"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-darwin-x64@npm:7.0.0-dev.20260306.1"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-linux-arm64@npm:7.0.0-dev.20260306.1"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-linux-arm@npm:7.0.0-dev.20260306.1"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-linux-x64@npm:7.0.0-dev.20260306.1"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-win32-arm64@npm:7.0.0-dev.20260306.1"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260306.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview-win32-x64@npm:7.0.0-dev.20260306.1"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@typescript/native-preview@npm:^7.0.0-dev.20260305.1":
+  version: 7.0.0-dev.20260306.1
+  resolution: "@typescript/native-preview@npm:7.0.0-dev.20260306.1"
+  dependencies:
+    "@typescript/native-preview-darwin-arm64": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-darwin-x64": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-linux-arm": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-linux-arm64": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-linux-x64": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-win32-arm64": "npm:7.0.0-dev.20260306.1"
+    "@typescript/native-preview-win32-x64": "npm:7.0.0-dev.20260306.1"
+  dependenciesMeta:
+    "@typescript/native-preview-darwin-arm64":
+      optional: true
+    "@typescript/native-preview-darwin-x64":
+      optional: true
+    "@typescript/native-preview-linux-arm":
+      optional: true
+    "@typescript/native-preview-linux-arm64":
+      optional: true
+    "@typescript/native-preview-linux-x64":
+      optional: true
+    "@typescript/native-preview-win32-arm64":
+      optional: true
+    "@typescript/native-preview-win32-x64":
+      optional: true
+  bin:
+    tsgo: bin/tsgo.js
+  checksum: 10/0e249debb11f48dd66d3bb5864e3ce09fbdb05884ab5b59770059ffb1c6ba580a1b1fc5a93d6e962bfc4b99a5944bef31b7c0d81fd379d7cc48a3e888cc174c7
+  languageName: node
+  linkType: hard
+
 "@visx/bounds@npm:3.12.0":
   version: 3.12.0
   resolution: "@visx/bounds@npm:3.12.0"
@@ -20555,6 +20636,7 @@ __metadata:
     "@types/yargs": "npm:17.0.33"
     "@typescript-eslint/eslint-plugin": "npm:8.56.0"
     "@typescript-eslint/parser": "npm:8.56.0"
+    "@typescript/native-preview": "npm:^7.0.0-dev.20260305.1"
     "@visx/event": "npm:3.12.0"
     "@visx/gradient": "npm:3.12.0"
     "@visx/group": "npm:3.12.0"
@@ -21699,10 +21781,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:^3.8.2, immutable@npm:^3.x.x":
+"immutable@npm:^3.x.x":
   version: 3.8.2
   resolution: "immutable@npm:3.8.2"
   checksum: 10/8a94647c769e97c9685be1b89d5e1b3171e8c1361fb9061fbcf78f630f70bf60e4de0bfca8bdd24a54b1fb814a945a76a30b11b7ee08967f9802a138a54498a2
+  languageName: node
+  linkType: hard
+
+"immutable@npm:^4.0.0":
+  version: 4.3.8
+  resolution: "immutable@npm:4.3.8"
+  checksum: 10/27a134cec0089ba60c5f50fdd08a0296533c9ce6d112188461c89a6bb3c720368e4363dc5f8d40440c6f9120400867e9cf86bd7463c7d3ee12d4ad44f797d4cc
   languageName: node
   linkType: hard
 
