@@ -1,0 +1,217 @@
+import { useId, useMemo } from 'react';
+
+import { t } from '@grafana/i18n';
+import { SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import type { DashboardLink } from '@grafana/schema';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+
+import { DashboardScene } from '../../scene/DashboardScene';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+
+import {
+  LinkAsDropdownSwitch,
+  LinkIconSelect,
+  LinkIncludeVarsSwitch,
+  LinkKeepTimeSwitch,
+  LinkPlacementSwitch,
+  LinkTagsInput,
+  LinkTargetBlankSwitch,
+  LinkTitleInput,
+  LinkTooltipInput,
+  LinkTypeSelect,
+  LinkUrlInput,
+} from './LinkBasicOptions';
+import { linkEditActions } from './actions';
+import { NEW_LINK } from './utils';
+
+export function openAddLinkPane(dashboard: DashboardScene) {
+  const currentLinks = dashboard.state.links ?? [];
+  // default to dropdown for new links because if a dashboard has a lot of links,
+  // the side pane will be pushed down the page and be unscrollable
+  const newLink: DashboardLink = { ...NEW_LINK, asDropdown: true };
+  const linkIndex = currentLinks.length;
+
+  const selectionId = linkSelectionId(linkIndex);
+  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
+
+  linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
+}
+
+export function linkSelectionId(linkIndex: number) {
+  return `dashboard-link-${linkIndex}`;
+}
+
+export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
+  const selectionId = linkSelectionId(linkIndex);
+  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
+  dashboard.state.editPane.selectObject(element, selectionId, { force: true, multi: false });
+}
+
+export interface LinkEditState extends SceneObjectState {
+  dashboardRef: SceneObjectRef<DashboardScene>;
+  linkIndex: number;
+}
+
+export class LinkEdit extends SceneObjectBase<LinkEditState> {}
+
+function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
+  const dashboard = linkEdit.state.dashboardRef.resolve();
+  const { links } = dashboard.useState();
+  const link = (links ?? [])[linkEdit.state.linkIndex];
+  return link?.type === type;
+}
+
+function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): OptionsPaneCategoryDescriptor[] {
+  const basicCategoryId = useId();
+  const titleId = useId();
+  const typeId = useId();
+  const tagsId = useId();
+  const urlId = useId();
+  const tooltipId = useId();
+  const iconId = useId();
+
+  const optionsCategoryId = useId();
+  const asDropdownId = useId();
+  const keepTimeId = useId();
+  const includeVarsId = useId();
+  const targetBlankId = useId();
+  const placementId = useId();
+
+  const basicCategory = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({ title: '', id: basicCategoryId })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: titleId,
+          render: () => <LinkTitleInput linkEdit={linkEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: typeId,
+          render: () => <LinkTypeSelect linkEdit={linkEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: tagsId,
+          useShowIf: () => useLinkTypeShowIf(linkEdit, 'dashboards'),
+          render: () => <LinkTagsInput linkEdit={linkEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: urlId,
+          useShowIf: () => useLinkTypeShowIf(linkEdit, 'link'),
+          render: () => <LinkUrlInput linkEdit={linkEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: tooltipId,
+          useShowIf: () => useLinkTypeShowIf(linkEdit, 'link'),
+          render: () => <LinkTooltipInput linkEdit={linkEdit} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: iconId,
+          useShowIf: () => useLinkTypeShowIf(linkEdit, 'link'),
+          render: () => <LinkIconSelect linkEdit={linkEdit} />,
+        })
+      );
+  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit]);
+
+  const optionsCategory = useMemo(() => {
+    return new OptionsPaneCategoryDescriptor({
+      title: t('dashboard-scene.link-options.options-category', 'Options'),
+      id: optionsCategoryId,
+      isOpenDefault: true,
+    })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.link-options.show-as-dropdown', 'Show as dropdown'),
+          id: asDropdownId,
+          useShowIf: () => {
+            const dashboard = linkEdit.state.dashboardRef.resolve();
+            const { links } = dashboard.useState();
+            const link = (links ?? [])[linkEdit.state.linkIndex];
+            return link?.type === 'dashboards';
+          },
+          render: (d) => <LinkAsDropdownSwitch linkEdit={linkEdit} id={d.props.id} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.link-options.include-time-range', 'Include current time range'),
+          id: keepTimeId,
+          render: (d) => <LinkKeepTimeSwitch linkEdit={linkEdit} id={d.props.id} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.link-options.include-variables', 'Include current template variable values'),
+          id: includeVarsId,
+          render: (d) => <LinkIncludeVarsSwitch linkEdit={linkEdit} id={d.props.id} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.link-options.open-in-new-tab', 'Open link in new tab'),
+          id: targetBlankId,
+          render: (d) => <LinkTargetBlankSwitch linkEdit={linkEdit} id={d.props.id} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.link-options.show-in-controls-menu', 'Show in controls menu'),
+          id: placementId,
+          render: (d) => <LinkPlacementSwitch linkEdit={linkEdit} id={d.props.id} />,
+        })
+      );
+  }, [optionsCategoryId, asDropdownId, keepTimeId, includeVarsId, targetBlankId, placementId, linkEdit]);
+
+  return [basicCategory, optionsCategory];
+}
+
+export class LinkEditEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
+  public readonly typeName = 'Link';
+
+  public constructor(private linkEdit: LinkEdit) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const links = dashboard.state.links ?? [];
+    const link = links[this.linkEdit.state.linkIndex];
+    const instanceName = link?.title ?? t('dashboard-scene.add-link.inline-instance-name', 'New link');
+    return {
+      typeName: t('dashboard-scene.add-link.label-link', 'Link'),
+      icon: 'external-link-alt',
+      instanceName,
+    };
+  }
+
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
+
+  public onDelete(): void {
+    const dashboard = this.linkEdit.state.dashboardRef.resolve();
+    const editPane = dashboard.state.editPane;
+    const linkIndex = this.linkEdit.state.linkIndex;
+    const currentLinks = dashboard.state.links ?? [];
+
+    if (linkIndex < 0 || linkIndex >= currentLinks.length) {
+      editPane.selectObject(dashboard, dashboard.state.key!);
+      return;
+    }
+
+    linkEditActions.removeLink({ dashboard, linkIndex });
+    editPane.selectObject(dashboard, dashboard.state.key!);
+  }
+}

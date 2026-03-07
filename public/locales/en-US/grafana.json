@@ -5388,6 +5388,7 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
@@ -5402,6 +5403,12 @@
         "tabs": "Tabs",
         "variable": "{{type}} variable",
         "variable-set": "Variables"
+      },
+      "links": {
+        "add-link": "Add link",
+        "reorder": "Drag to reorder",
+        "select-link": "Select",
+        "untitled": "Untitled link"
       },
       "row": {
         "header": {
@@ -6448,6 +6455,11 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-link": {
+      "inline-instance-name": "New link",
+      "label-link": "Link",
+      "tooltip": "Add link to another dashboard or external site"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -6867,6 +6879,41 @@
       "last-edited": "{{timeAgo}} by<person />",
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
+    },
+    "link-edit-actions": {
+      "add-link": "Add link",
+      "change-title": "Change link title",
+      "change-tooltip": "Change link tooltip",
+      "change-url": "Change link URL",
+      "remove-link": "Remove link",
+      "update-link": "Update link"
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": "Reorder links list"
+        }
+      },
+      "render-list": {
+        "aria-label-link": "Link"
+      }
+    },
+    "link-options": {
+      "icon": "Icon",
+      "include-time-range": "Include current time range",
+      "include-variables": "Include current template variable values",
+      "open-in-new-tab": "Open link in new tab",
+      "options-category": "Options",
+      "show-as-dropdown": "Show as dropdown",
+      "show-in-controls-menu": "Show in controls menu",
+      "title": "Title",
+      "tooltip": "Tooltip",
+      "tooltip-placeholder": "Open dashboard",
+      "type": "Type",
+      "type-dashboards": "Dashboards",
+      "type-link": "Link",
+      "url": "URL",
+      "with-tags": "With tags"
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
