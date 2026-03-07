@@ -49,6 +49,11 @@ function ExtensionToolbarItemButtonComponent(
       aria-expanded={isOpen}
       onClick={onClick}
       tooltip={tooltip}
+      aria-label={
+        isOpen
+          ? t('navigation.extension-sidebar.button-label.open', '{{title}} open', { title })
+          : t('navigation.extension-sidebar.button-label.closed', '{{title}} closed', { title })
+      }
     />
   );
 }

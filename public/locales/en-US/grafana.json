@@ -10109,6 +10109,10 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "All series selected",
+      "color-picker-closed": "Color picker closed",
+      "color-picker-open": "Color picker open",
+      "only-this-series-selected": "Only {{label}} selected",
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
@@ -11713,6 +11717,10 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
+      "button-label": {
+        "closed": "{{title}} closed",
+        "open": "{{title}} open"
+      },
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
@@ -11735,8 +11743,14 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add {{itemName}} to Bookmarks",
-      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
+      "add-bookmark": {
+        "aria": "Add {{itemName}} to Bookmarks",
+        "tooltip": "Add to Bookmarks"
+      },
+      "remove-bookmark": {
+        "aria": "Remove {{itemName}} from Bookmarks",
+        "tooltip": "Remove from Bookmarks"
+      }
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
