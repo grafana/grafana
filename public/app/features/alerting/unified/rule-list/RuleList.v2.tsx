@@ -22,21 +22,31 @@ import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter';
+import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
+  const filterV2Enabled = config.featureToggles.alertingFilterV2;
+
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
-      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-      {viewMode === 'list' ? (
-        <FilterView filterState={filterState} />
-      ) : (
-        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
-      )}
+      <Stack direction="column" gap={2}>
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+          {filterV2Enabled && <RulesFilterSidebar />}
+          <div style={{ flex: 1, minWidth: 0, paddingLeft: filterV2Enabled ? '16px' : undefined }}>
+            {viewMode === 'list' ? (
+              <FilterView filterState={filterState} />
+            ) : (
+              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+            )}
+          </div>
+        </div>
+      </Stack>
     </Stack>
   );
 }
