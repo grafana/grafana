@@ -89,7 +89,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
   private _draggedTab: TabItem | undefined;
-  private _targetTabIndex: number | undefined;
+  /** Width of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  private _draggedTabWidth: number | null = null;
+  /** Height of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  private _draggedTabHeight: number | null = null;
+  private _tabPlaceholderIndex: number | undefined;
 
   public constructor() {
     super({});
@@ -262,12 +266,22 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   public startTabDrag(sourceTabsManagerId: string, draggedTabId: string): void {
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
-    this._targetTabIndex = undefined;
 
     this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
     if (this._sourceDropTarget instanceof TabsLayoutManager) {
       this._sourceDropTarget.forceSelectTab(draggedTabId);
     }
+
+    // Calculate dimensions of the dragged tab header and cache for cross-manager placeholder sizing
+    this._draggedTabWidth = null;
+    this._draggedTabHeight = null;
+    const draggedHeaderEl = this._draggedTab?.containerRef?.current ?? undefined;
+    if (draggedHeaderEl) {
+      const rect = draggedHeaderEl.getBoundingClientRect();
+      this._draggedTabWidth = rect.width;
+      this._draggedTabHeight = rect.height;
+    }
+
     document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
     document.body.addEventListener('pointermove', this._onTabDragPointerMove);
   }
@@ -281,17 +295,25 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._lastDropTarget = dropTarget;
     } else {
       this._lastDropTarget = null;
+      return;
+    }
+
+    dropTarget.setIsDropTarget(true);
+    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._draggedTab!.state.key);
+    const targetTabIndex = dropTarget?.getTabsIncludingRepeats().findIndex((t) => t.state.key === tabUnderMouse);
+
+    // move placeholder only when hovering over a tab, if not we may be outside of the drop area or over a placeholder
+    if (targetTabIndex !== -1) {
+      this._tabPlaceholderIndex = targetTabIndex === this._tabPlaceholderIndex ? targetTabIndex + 1 : targetTabIndex;
+      dropTarget.setPlaceholder({
+        width: this._draggedTabWidth!, // guaranteed as it's calculated on mousedown
+        height: this._draggedTabHeight!, // guaranteed as it's calculated on mousedown
+        index: this._tabPlaceholderIndex,
+      });
     }
   }
 
-  private _onTabDragPointerUp(evt: PointerEvent) {
-    if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
-      const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY);
-      this._targetTabIndex = this._lastDropTarget
-        ?.getTabsIncludingRepeats()
-        .findIndex((t) => t.state.key === tabUnderMouse);
-    }
-
+  private _onTabDragPointerUp() {
     document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
     document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
     // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
@@ -308,33 +330,40 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    const tab = this._draggedTab;
+    if (!this._draggedTab) {
+      return;
+    }
+
     const sourceManager = this._sourceDropTarget;
-    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === tab);
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === this._draggedTab);
 
     // targetIndex !== undefined => dropped in the same manager, target index provided by hello-pangea
     if (targetIndex !== undefined) {
-      if (sourceIndex === targetIndex) {
-        return;
+      if (sourceIndex !== targetIndex) {
+        sourceManager.moveTab(sourceIndex, targetIndex);
       }
-      sourceManager.moveTab(sourceIndex, targetIndex);
+      this.cleanUpTabDrag();
       return;
     }
 
     // dropped in a different manager => handled by the orchestrator
     if (this._lastDropTarget instanceof TabsLayoutManager) {
       const destinationManager = this._lastDropTarget;
-      targetIndex = targetIndex ?? this._targetTabIndex ?? destinationManager.getTabsIncludingRepeats().length;
+      targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
 
-      if (!tab) {
-        return;
-      }
-
-      this._draggedTab = undefined;
       const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
-      this._moveTabBetweenManagers(tab, sourceManager, destinationManager, realDestinationIndex);
+      this._moveTabBetweenManagers(this._draggedTab, sourceManager, destinationManager, realDestinationIndex);
+      this.cleanUpTabDrag();
     }
+  }
+
+  private cleanUpTabDrag() {
+    if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
+      this._lastDropTarget.setIsDropTarget?.(false);
+    }
+    this._draggedTab = undefined;
+    this._lastDropTarget = null;
   }
 
   private _moveTabBetweenManagers(
@@ -756,11 +785,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return 'Panel';
   }
 
-  private _getTabUnderMouse(clientX: number, clientY: number): string | null {
+  private _getTabUnderMouse(clientX: number, clientY: number, excludeKey?: string): string | null {
     const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
 
     const tabKey = elementsUnderPoint
-      ?.find((element) => element.getAttribute('data-tab-activation-key'))
+      ?.find(
+        (element) =>
+          element.getAttribute('data-tab-activation-key') &&
+          (!excludeKey || element.getAttribute('data-tab-activation-key') !== excludeKey)
+      )
       ?.getAttribute('data-tab-activation-key');
 
     return tabKey || null;

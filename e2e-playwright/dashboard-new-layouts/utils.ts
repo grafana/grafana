@@ -191,13 +191,14 @@ export async function verifyChanges(
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
+  requiresDataSourceSelection?: boolean;
 }
 export async function importTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
   title: string,
   dashInput?: string,
-  options: ImportTestDashboardOptions = { checkPanelsVisible: true }
+  options: ImportTestDashboardOptions = { checkPanelsVisible: true, requiresDataSourceSelection: true }
 ) {
   await page.goto(selectors.pages.ImportDashboard.url);
   await page
@@ -205,8 +206,10 @@ export async function importTestDashboard(
     .fill(dashInput || JSON.stringify(testV2Dashboard));
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-  await page.locator('div[data-testid="data-source-card"]').first().click();
+  if (options.requiresDataSourceSelection) {
+    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+    await page.locator('div[data-testid="data-source-card"]').first().click();
+  }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
   const undockMenuVisible = await undockMenuButton.isVisible();
