@@ -9,6 +9,18 @@ type InternalColumn<T extends object> = RTColumn<T> & {
   visible?: (data: T[]) => boolean;
 };
 
+function getColumnWidth<K extends object>(column: Column<K>): number | string | undefined {
+  // If explicit width is provided, use it
+  if (column.width !== undefined) {
+    return column.width;
+  }
+  // disableGrow sets width to 0, which triggers the disableGrow CSS class
+  if (column.disableGrow) {
+    return 0;
+  }
+  return undefined;
+}
+
 // Returns the columns in a "react-table" acceptable format
 export function getColumns<K extends object>(
   columns: Array<Column<K>>,
@@ -31,7 +43,7 @@ export function getColumns<K extends object>(
       Header: column.header || (() => null),
       sortType: column.sortType || 'alphanumeric',
       disableSortBy: !Boolean(column.sortType),
-      width: column.disableGrow ? 0 : undefined,
+      width: getColumnWidth(column),
       visible: column.visible,
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && { Cell: column.cell }),
