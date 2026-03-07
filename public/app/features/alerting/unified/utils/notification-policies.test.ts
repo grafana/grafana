@@ -169,8 +169,8 @@ describe('findMatchingAlertGroups', () => {
   });
 
   it('should correctly filter alerts within groups', () => {
-    const severityCritialRoute = createRoute('route-1', [['severity', MatcherOperator.equal, 'critical']]);
-    const rootRoute = createRoute('root', [], [severityCritialRoute]);
+    const severityCriticalRoute = createRoute('route-1', [['severity', MatcherOperator.equal, 'critical']]);
+    const rootRoute = createRoute('root', [], [severityCriticalRoute]);
 
     const criticalFrontendAlert = createAlert({ severity: 'critical', team: 'frontend' });
     const warningFrontendAlert = createAlert({ severity: 'warning', team: 'frontend' });
@@ -180,7 +180,7 @@ describe('findMatchingAlertGroups', () => {
       createGroup([criticalFrontendAlert, warningFrontendAlert, criticalBackendAlert]),
     ];
 
-    const result = findMatchingAlertGroups(rootRoute, severityCritialRoute, alertGroups);
+    const result = findMatchingAlertGroups(rootRoute, severityCriticalRoute, alertGroups);
 
     expect(result).toHaveLength(1);
     expect(result[0].alerts).toHaveLength(2);
