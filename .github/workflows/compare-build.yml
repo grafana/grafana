@@ -22,7 +22,7 @@ jobs:
           artifacts: targz:grafana:linux/amd64,targz:grafana:linux/arm64,targz:grafana:linux/s390x,targz:grafana:linux/arm/v7
           grafana-path: .
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: dev
+          version: ""
           build-id: ${{ github.run_id }}
           cache-builders: false
           verify: false
