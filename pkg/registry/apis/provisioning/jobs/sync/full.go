@@ -71,11 +71,6 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
-	if len(changes) == 0 {
-		progress.SetFinalMessage(ctx, "no changes to sync")
-		return nil
-	}
-
 	if folderMetadataEnabled {
 		source, readErr := repo.ReadTree(ctx, currentRef)
 		if readErr == nil {
@@ -86,6 +81,11 @@ func FullSync(
 					Build())
 			}
 		}
+	}
+
+	if len(changes) == 0 {
+		progress.SetFinalMessage(ctx, "no changes to sync")
+		return nil
 	}
 
 	// Check quota before applying changes
