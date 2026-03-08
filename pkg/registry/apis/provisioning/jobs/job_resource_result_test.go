@@ -359,4 +359,11 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
 	})
+
+	t.Run("MissingFolderMetadataWarning classifies as ReasonMissingFolderMetadata", func(t *testing.T) {
+		missingErr := &resources.MissingFolderMetadataWarning{Path: "somefolder/"}
+		result := NewResourceResult().WithWarning(missingErr).Build()
+
+		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, result.WarningReason())
+	})
 }

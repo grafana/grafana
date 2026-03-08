@@ -250,7 +250,7 @@ func setupWorkers(
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics)
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, resources.IsFolderMetadataEnabled(cfg))
 	syncWorker := sync.NewSyncWorker(
 		clients,
 		repositoryResources,

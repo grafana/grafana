@@ -33,6 +33,7 @@ func FullSync(
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -73,6 +74,18 @@ func FullSync(
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
+	}
+
+	if folderMetadataEnabled {
+		source, readErr := repo.ReadTree(ctx, currentRef)
+		if readErr == nil {
+			for _, path := range DetectMissingFolderMetadata(source) {
+				progress.Record(ctx, jobs.NewFolderResult(path).
+					WithWarning(&resources.MissingFolderMetadataWarning{Path: path}).
+					WithAction(repository.FileActionIgnored).
+					Build())
+			}
+		}
 	}
 
 	// Check quota before applying changes

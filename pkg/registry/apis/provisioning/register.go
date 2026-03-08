@@ -799,7 +799,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportEnabled,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,

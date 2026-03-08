@@ -163,3 +163,30 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 
 	return changes, nil
 }
+
+// DetectMissingFolderMetadata returns the path of every directory in source that does
+// not have a corresponding _folder.json blob. Paths are normalized with trailing "/".
+func DetectMissingFolderMetadata(source []repository.FileTreeEntry) []string {
+	metaFiles := make(map[string]struct{}, len(source))
+	for _, entry := range source {
+		if entry.Blob && resources.IsFolderMetadataFile(entry.Path) {
+			metaFiles[entry.Path] = struct{}{}
+		}
+	}
+
+	var missing []string
+	for _, entry := range source {
+		if entry.Blob {
+			continue
+		}
+		dirPath := entry.Path
+		if !strings.HasSuffix(dirPath, "/") {
+			dirPath += "/"
+		}
+		metaPath := dirPath + "_folder.json"
+		if _, ok := metaFiles[metaPath]; !ok {
+			missing = append(missing, dirPath)
+		}
+	}
+	return missing
+}

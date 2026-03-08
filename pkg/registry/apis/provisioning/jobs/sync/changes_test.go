@@ -589,3 +589,67 @@ func TestCompare(t *testing.T) {
 		})
 	}
 }
+
+func TestDetectMissingFolderMetadata(t *testing.T) {
+	tests := []struct {
+		name     string
+		source   []repository.FileTreeEntry
+		expected []string
+	}{
+		{
+			name:     "empty tree",
+			source:   nil,
+			expected: nil,
+		},
+		{
+			name: "no directories",
+			source: []repository.FileTreeEntry{
+				{Path: "dashboard.json", Blob: true},
+			},
+			expected: nil,
+		},
+		{
+			name: "directory with _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder", Blob: false},
+				{Path: "myfolder/_folder.json", Blob: true},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: nil,
+		},
+		{
+			name: "directory missing _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder", Blob: false},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: []string{"myfolder/"},
+		},
+		{
+			name: "mixed: some with and some without _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "withMeta", Blob: false},
+				{Path: "withMeta/_folder.json", Blob: true},
+				{Path: "withMeta/dashboard.json", Blob: true},
+				{Path: "noMeta", Blob: false},
+				{Path: "noMeta/dashboard.json", Blob: true},
+			},
+			expected: []string{"noMeta/"},
+		},
+		{
+			name: "directory path already has trailing slash",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder/", Blob: false},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: []string{"myfolder/"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := DetectMissingFolderMetadata(tt.source)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
