@@ -4047,6 +4047,20 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "presets": {
+      "basic": "Basic",
+      "basic_desc": "Basic, color from thresholds",
+      "basic-vertical": "Basic vertical",
+      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "gradient": "Gradient",
+      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient-BlYlRd": "Gradient blue-red",
+      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-vertical": "Gradient vertical",
+      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "retro-lcd": "Retro LCD",
+      "retro-lcd_desc": "Color scale, text color"
+    },
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
