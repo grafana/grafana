@@ -4,7 +4,7 @@ import React, { useEffect, useLayoutEffect, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useSceneObjectState, VizPanel } from '@grafana/scenes';
+import { sceneGraph, useSceneObjectState, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -74,15 +74,17 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     return () => editPane.disableSelection();
   }, [editPane]);
 
-  const { selectionContext, openPane, selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane, popoverPanelKey } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
 
-  const selectedPanel = useMemo(() => {
-    if (!selection) {
+  const popoverPanel = useMemo(() => {
+    if (!popoverPanelKey) {
       return undefined;
     }
-    const obj = selection.getFirstObject();
+    const obj = sceneGraph.findByKey(dashboard, popoverPanelKey);
     return obj instanceof VizPanel ? obj : undefined;
-  }, [selection]);
+  }, [dashboard, popoverPanelKey]);
 
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
@@ -172,8 +174,10 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {controls}
         </div>
         {renderBody()}
-        {selectedPanel && <PanelActionPopover panel={selectedPanel} editPane={editPane} dashboard={dashboard} />}
-        {!selectedPanel && <PanelHoverHint dashboard={dashboard} editPane={editPane} />}
+        {popoverPanel && (
+          <PanelActionPopover panel={popoverPanel} editPane={editPane} dashboard={dashboard} />
+        )}
+        {!popoverPanel && <PanelHoverHint dashboard={dashboard} editPane={editPane} />}
         <PanelProcessingOverlays editPane={editPane} dashboard={dashboard} />
       </ElementSelectionContext.Provider>
     </div>

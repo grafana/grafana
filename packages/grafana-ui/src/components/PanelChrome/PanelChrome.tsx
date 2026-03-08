@@ -362,6 +362,7 @@ export function PanelChrome({
         style={containerStyles}
         aria-labelledby={!!title ? panelTitleId : undefined}
         data-testid={testid}
+        {...(selectionId && { 'data-panel-key': selectionId })}
         tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
         onFocus={onFocus}
         onMouseMove={onMouseMove}

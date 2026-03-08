@@ -1,6 +1,6 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
-import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { createAssistantContextItem } from '@grafana/assistant';
@@ -35,7 +35,7 @@ export function PanelHoverHint({ editPane }: HoverHintProps) {
   useEffect(() => {
     function handleOver(e: MouseEvent) {
       const section = (e.target as HTMLElement).closest?.(PANEL_SECTION_SELECTOR);
-      if (section instanceof HTMLElement && !section.classList.contains('dashboard-selected-element')) {
+      if (section instanceof HTMLElement) {
         const header = section.querySelector(HEADER_CONTAINER_SELECTOR);
         if (header instanceof HTMLElement) {
           setHeaderEl(header);
@@ -57,15 +57,6 @@ export function PanelHoverHint({ editPane }: HoverHintProps) {
       document.removeEventListener('mouseout', handleOut);
     };
   }, []);
-
-  useEffect(() => {
-    if (headerEl) {
-      const section = headerEl.closest(PANEL_SECTION_SELECTOR);
-      if (section?.classList.contains('dashboard-selected-element')) {
-        setHeaderEl(null);
-      }
-    }
-  }, [headerEl, editPane.state.selection]);
 
   useEffect(() => {
     if (!headerEl) {
@@ -93,14 +84,31 @@ export function PanelHoverHint({ editPane }: HoverHintProps) {
     };
   }, [headerEl]);
 
+  const handleSparkleClick = useCallback(
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      const section = (e.currentTarget as HTMLElement).closest(PANEL_SECTION_SELECTOR);
+      const panelKey = section?.getAttribute('data-panel-key');
+      if (panelKey) {
+        editPane.openPopoverForPanel(panelKey);
+      }
+    },
+    [editPane]
+  );
+
   if (!portalContainer) {
     return null;
   }
 
   return createPortal(
-    <div className={styles.hintIcon}>
+    <button
+      type="button"
+      className={styles.hintIcon}
+      onClick={handleSparkleClick}
+      aria-label="Open AI assistant for this panel"
+    >
       <Icon name="ai-sparkle" size="xs" />
-    </div>,
+    </button>,
     portalContainer
   );
 }
@@ -115,19 +123,48 @@ interface Props {
 
 export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
   const styles = useStyles2(getStyles);
-  const [mode, setMode] = useState<PopoverMode>(dashboard.state.isEditing ? 'edit' : 'ai');
+  const [mode, setMode] = useState<PopoverMode>('ai');
   const [aiInput, setAiInput] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(panel.state.title ?? '');
   const titleInputRef = useRef<HTMLInputElement>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const prevWidthRef = useRef<number | null>(null);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [animatedWidth, setAnimatedWidth] = useState<number | null>(null);
+  const [isMeasuring, setIsMeasuring] = useState(false);
 
   useLayoutEffect(() => {
     const el = findPanelDomElement(panel.state.key!, dashboard);
     setAnchorEl(el);
   }, [panel, dashboard]);
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) {
+      return;
+    }
+    if (prevWidthRef.current === null) {
+      const w = content.offsetWidth;
+      prevWidthRef.current = w;
+      setAnimatedWidth(w);
+      return;
+    }
+    const fromWidth = prevWidthRef.current;
+    setAnimatedWidth(fromWidth);
+    setIsMeasuring(true);
+    const rafId = requestAnimationFrame(() => {
+      const content = contentRef.current;
+      if (!content) {return;}
+      const toWidth = Math.max(content.offsetWidth, content.scrollWidth);
+      prevWidthRef.current = toWidth;
+      setIsMeasuring(false);
+      setAnimatedWidth(toWidth);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [mode, editingTitle]);
 
   const { refs, floatingStyles, isPositioned } = useFloating({
     placement: 'bottom',
@@ -245,7 +282,21 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
           </linearGradient>
         </defs>
       </svg>
-      <div className={cx(styles.card, mode === 'ai' && styles.cardWithInput)}>
+      <div
+        className={cx(
+          styles.widthTransitionWrapper,
+          (mode === 'ai' || editingTitle) && styles.widthTransitionWrapperWithInput
+        )}
+        style={{
+          width: animatedWidth != null ? animatedWidth : 'auto',
+          transition: isMeasuring ? 'none' : 'width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          overflow: 'hidden',
+        }}
+      >
+      <div
+        ref={contentRef}
+        className={cx(styles.card, (mode === 'ai' || editingTitle) && styles.cardWithInput)}
+      >
         <div className={styles.toolbar}>
           <div className={styles.modeToggle}>
             {dashboard.state.isEditing ? (
@@ -354,6 +405,7 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
         )}
       </div>
       </div>
+      </div>
     </div>,
     document.body
   );
@@ -403,6 +455,8 @@ function getHintStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       width: 20,
       height: 20,
+      border: 'none',
+      padding: 0,
       borderRadius: '50%',
       background:
         'linear-gradient(135deg, oklab(0.49 0.04 -0.3), oklab(0.65 0.27 -0.16), oklab(0.73 0.13 0.17))',
@@ -432,10 +486,19 @@ function getStyles(theme: GrafanaTheme2) {
       gap: 2,
       transformOrigin: 'top center',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        animation: `${popoverEnter} 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+        animation: `${popoverEnter} 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)`,
       },
     }),
+    widthTransitionWrapper: css({
+      display: 'inline-block',
+      minWidth: 0,
+      borderRadius: theme.shape.radius.pill,
+    }),
+    widthTransitionWrapperWithInput: css({
+      borderRadius: 24,
+    }),
     card: css({
+      width: 'max-content',
       borderRadius: theme.shape.radius.pill,
       border: '2px solid transparent',
       background: `linear-gradient(${elevatedBg}, ${elevatedBg}) padding-box, ${GLOW_GRADIENT} border-box`,
@@ -564,7 +627,7 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
       background: 'transparent',
       color: theme.colors.text.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.pill,
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: 'all 0.15s ease',
       },
@@ -590,10 +653,10 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
       background: 'transparent',
       color: theme.colors.text.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.pill,
       flexShrink: 0,
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'color 0.15s ease',
+        transition: 'color 0.3s ease',
       },
       '&:hover': {
         color: theme.colors.text.primary,

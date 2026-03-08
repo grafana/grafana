@@ -1,4 +1,4 @@
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph } from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, VizPanel } from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
@@ -39,6 +39,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   isDocked?: boolean;
   assistantState?: AssistantPaneState;
   processingPanelKeys?: string[];
+  popoverPanelKey?: string;
 }
 
 export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'assistant';
@@ -278,9 +279,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const elementSelection = this.state.selection ?? new ElementSelection([[id, obj.getRef()]]);
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
-
-    const dashboard = getDashboardSceneFor(this);
-    const paneOnSelect = isDoubleClick ? 'element' : dashboard.state.isEditing ? 'assistant' : undefined;
+    const paneOnSelect = isDoubleClick ? 'element' : undefined;
     this.updateSelection(new ElementSelection(selection), selected, paneOnSelect);
   }
 
@@ -319,6 +318,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       selectionContext: { ...this.state.selectionContext, selected },
       openPane,
       assistantState,
+      ...(selection === undefined && { popoverPanelKey: undefined }),
     });
   }
 
@@ -337,12 +337,30 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       const obj = this.state.selection?.getFirstObject();
       const dashboard = getDashboardSceneFor(this);
       if (obj !== dashboard) {
+        this.setState({ popoverPanelKey: undefined });
         this.selectObject(dashboard, dashboard.state.key!);
       }
       return;
     }
 
     this.updateSelection(undefined, []);
+  }
+
+  /**
+   * Opens the panel action popover for the given panel (e.g. when user clicks the AI sparkle).
+   * Does not open the assistant sidebar; that opens only when the user sends a request from the popover.
+   */
+  public openPopoverForPanel(panelKey: string) {
+    const dashboard = getDashboardSceneFor(this);
+    const panel = sceneGraph.findByKey(dashboard, panelKey);
+    if (!panel || !(panel instanceof VizPanel)) {
+      return;
+    }
+    const ref = panel.getRef();
+    const elementSelection = this.state.selection ?? new ElementSelection([[panelKey, ref]]);
+    const { selection, contextItems: selected } = elementSelection.getStateWithValue(panelKey, panel, false);
+    this.updateSelection(new ElementSelection(selection), selected, undefined);
+    this.setState({ popoverPanelKey: panelKey });
   }
 
   public openPane(openPane: DashboardSidebarPaneName) {
