@@ -9530,6 +9530,7 @@
       "log-base": "Base du journal"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Axe",
         "color-label": "Couleur",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Opérateur de comparaison",
+      "reducer-value-label": "",
       "select-field-placeholder": "Sélectionner le réducteur de champ"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
-      "open": "Ouvrir le menu",
+      "open": "",
       "undock": "Ancrer le menu"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "Une connexion est requise",
       "error-fetch-branches": "",
       "error-required": "Ce champ est obligatoire.",
+      "error-save-failed": "",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
       "label-automatic-pulling": "Fusion automatique",
       "label-connection": "Connexion via l’application GitHub",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Ma configuration"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Configurez les webhooks</0> pour obtenir des mises à jour instantanées dans Grafana dès que les modifications sont validées. Examinez et approuvez les modifications à l’aide de demandes de fusion avant leur mise en ligne.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Fonctionnalités GitHub",
-      "label-realtime-feedback": "Commentaire en temps réel"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(nécessite le <2>rendu d’images</2> et l’activation de l’accès public)",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-sync-interval": "Fréquence de synchronisation des changements depuis le dépôt",
+      "description-webhook-url": "",
       "error-sync-interval-required": "L’intervalle de synchronisation est requis",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
       "label-generate-dashboard-previews": "Générer des aperçus de tableaux de bord",
       "label-read-only": "Lecture seule",
-      "label-sync-interval": "Intervalle de synchronisation (secondes)"
+      "label-sync-interval": "Intervalle de synchronisation (secondes)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Avertissement",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Veuillez prendre connaissance des limitations suivantes. Pour plus de détails, consultez la <2>documentation Git Sync</2>.",
       "alert-point-1": "Les ressources peuvent toujours être créées, modifiées ou supprimées pendant ce processus, mais les modifications peuvent ne pas être exportées.",

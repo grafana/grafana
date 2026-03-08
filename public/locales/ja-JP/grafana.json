@@ -9482,6 +9482,7 @@
       "log-base": "ログベース"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "軸",
         "color-label": "色",
@@ -9771,6 +9772,7 @@
     },
     "field-value-matcher": {
       "operator-label": "比較演算子",
+      "reducer-value-label": "",
       "select-field-placeholder": "フィールドリデューサーを選択"
     },
     "file-dropzone": {
@@ -11688,7 +11690,7 @@
       "dialog-label": "",
       "dock": "メニューを固定",
       "list-label": "移動",
-      "open": "メニューを開きます",
+      "open": "",
       "undock": "メニューの固定を解除"
     },
     "megamenu-item": {
@@ -12570,6 +12572,7 @@
       "error-connection-required": "接続が必要です",
       "error-fetch-branches": "",
       "error-required": "このフィールドは必須です。",
+      "error-save-failed": "",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
       "label-automatic-pulling": "自動取得",
       "label-connection": "GitHubアプリ接続",
@@ -12584,9 +12587,11 @@
       "placeholder-my-config": "私の設定"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "変更がコミットされたらすぐにGrafanaでリアルタイムに更新を受け取れるように、<0>Webhookを設定</0>します。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub機能",
-      "label-realtime-feedback": "リアルタイムフィードバック"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12734,11 +12739,14 @@
       "description-preview-requirements": "(<2>画像レンダリング</2>と公開アクセスが有効になっている必要があります)",
       "description-read-only": "Grafanaではリソースを変更できません。",
       "description-sync-interval": "リポジトリからの変更を同期する頻度",
+      "description-webhook-url": "",
       "error-sync-interval-required": "同期間隔が必要です",
       "label-enable-previews": "プルリクエストでダッシュボードのプレビューを有効にする",
       "label-generate-dashboard-previews": "ダッシュボードプレビューを生成",
       "label-read-only": "読み出しのみ",
-      "label-sync-interval": "同期間隔 (秒)"
+      "label-sync-interval": "同期間隔 (秒)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13129,6 +13137,10 @@
       "make-sure": ""
     },
     "warning-title-default": "警告",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "次の制限事項に注意してください。詳細については、<2>Git Syncドキュメント</2>をご覧ください。",
       "alert-point-1": "このプロセス中もリソースの作成、編集、削除は可能ですが、変更はエクスポートできない場合があります。",
