@@ -167,9 +167,9 @@ describe('PanelStylesSection', () => {
     expect(screen.getByTestId('category-title')).toHaveTextContent('Panel styles');
   });
 
-  it('gets presets directly from the panel plugin', () => {
+  it('passes data series to getPluginPresets', () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin);
+    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin, mockData.series);
   });
 
   it('calls onApplyPreset when a card is clicked', async () => {

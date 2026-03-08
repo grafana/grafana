@@ -19,7 +19,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
   const { data } = sceneGraph.getData(panel).useState();
 
   const plugin = panel.getPlugin();
-  const presets = useMemo(() => (plugin ? getPluginPresets(plugin) : null), [plugin]);
+  const presets = useMemo(() => (plugin ? getPluginPresets(plugin, data?.series) : null), [plugin, data]);
 
   const handlePresetApply = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
