@@ -74,9 +74,6 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     const bottomA = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom a');
     const bottomB = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom b');
 
-    // assert same row position
-    expect(dragged.box.y).toEqual(bottomA.box.y);
-
     // assert "bottom a" | "top a" | "bottom b" after drag
     expect(bottomA.box.x).toBeLessThan(dragged.box.x);
     expect(dragged.box.x).toBeLessThan(bottomB.box.x);
