@@ -48,3 +48,78 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           BUILD_BRANCH: ${{ github.ref_name }}
         run: docker buildx bake release
+
+  split-frontend:
+    name: Split / Frontend
+    runs-on: github-hosted-ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build frontend
+        run: yarn build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-public
+          path: public/build
+          retention-days: 1
+
+  split-backend:
+    name: Split / Backend (${{ matrix.goos }}-${{ matrix.goarch }})
+    runs-on: github-hosted-ubuntu-x64-large
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: s390x
+          - goos: linux
+            goarch: arm
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.8'
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Build backend
+        run: make build-go GO_BUILD_TAGS=oss GO_BUILD_OS=${{ matrix.goos }} GO_BUILD_ARCH=${{ matrix.goarch }}
+        env:
+          CGO_ENABLED: '0'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: bin/
+          retention-days: 1
+
+  split-collect:
+    name: Split / Collect
+    runs-on: ubuntu-latest
+    needs: [split-frontend, split-backend]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{frontend-*,backend-*}'
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
