@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -62,6 +66,87 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 
 type configurationStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+}
+
+type extraConfigsDecrypter interface {
+	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+}
+
+type PrepareConfigOptions struct {
+	OnInvalid InvalidReceiversAction
+
+	// TODO: Move to MOA when converted to method.
+	Crypto           extraConfigsDecrypter
+	AutogenRuleStore autogenRuleStore
+	Logger           log.Logger
+	Features         featuremgmt.FeatureToggles
+	Limits           alertingNotify.DynamicLimits
+}
+
+func PrepareConfig(
+	ctx context.Context,
+	orgID int64,
+	cfg *models.AlertConfiguration,
+	opts PrepareConfigOptions,
+) (alertingNotify.NotificationsConfiguration, error) {
+	prepared, err := Load([]byte(cfg.AlertmanagerConfiguration))
+	if err != nil {
+		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
+	if err := opts.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
+		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	mergeResult, err := prepared.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
+	}
+	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
+		opts.Logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
+	}
+	preparedConfig := mergeResult.Config
+
+	// Add managed routes and extra route as managed route to the configuration.
+	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
+	// route
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if opts.Features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		managedRoutes := maps.Clone(prepared.ManagedRoutes)
+		if managedRoutes == nil {
+			managedRoutes = make(map[string]*definitions.Route)
+		}
+
+		managedInhibitionRules := maps.Clone(prepared.ManagedInhibitionRules)
+		if managedInhibitionRules == nil {
+			managedInhibitionRules = make(definitions.ManagedInhibitionRules)
+		}
+
+		if mergeResult.ExtraRoute != nil {
+			if _, ok := managedRoutes[mergeResult.Identifier]; ok {
+				opts.Logger.Warn("Imported configuration name conflicts with existing managed routes, skipping adding imported config.", "identifier", mergeResult.Identifier)
+			} else {
+				managedRoutes[mergeResult.Identifier] = mergeResult.ExtraRoute
+
+				importedRules, err := legacy_storage.BuildManagedInhibitionRules(mergeResult.Identifier, mergeResult.ExtraInhibitRules)
+				if err != nil {
+					opts.Logger.Warn("failed to build managed inhibition rules for imported configuration", "identifier", mergeResult.Identifier, "err", err)
+				} else {
+					maps.Copy(managedInhibitionRules, importedRules)
+				}
+			}
+		}
+		preparedConfig.Route = legacy_storage.WithManagedRoutes(preparedConfig.Route, managedRoutes)
+		preparedConfig.InhibitRules = legacy_storage.WithManagedInhibitionRules(preparedConfig.InhibitRules, managedInhibitionRules)
+	}
+
+	if err := AddAutogenConfig(ctx, opts.Logger, opts.AutogenRuleStore, orgID, &preparedConfig, opts.OnInvalid, opts.Features); err != nil {
+		return alertingNotify.NotificationsConfiguration{}, err
+	}
+
+	prepared.AlertmanagerConfig = preparedConfig
+
+	return PostableAPIConfigToNotificationsConfiguration(prepared, opts.Limits), nil
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {

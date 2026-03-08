@@ -1,0 +1,913 @@
+[
+  {
+    "name": "fixed:alerting.rules:reader",
+    "displayName": "Rules Reader",
+    "description": "Read alert rules in all Grafana folders and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.rules:writer",
+    "displayName": "Rules Writer",
+    "description": "Add, update, and delete rules in any Grafana folder and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.rules:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:delete",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:create",
+        "scope": "folders:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.instances:reader",
+    "displayName": "Instances and Silences Reader",
+    "description": "Read instances and silences of Grafana and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.instances:read"
+      },
+      {
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.instances:writer",
+    "displayName": "Silences Writer",
+    "description": "Add and update silences in Grafana and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.instances:read"
+      },
+      {
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.instances:create"
+      },
+      {
+        "action": "alert.instances:write"
+      },
+      {
+        "action": "alert.instances.external:write",
+        "scope": "datasources:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications:reader",
+    "displayName": "Notifications Reader",
+    "description": "Read notification policies and contact points in Grafana and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications:writer",
+    "displayName": "Notifications Writer",
+    "description": "Add, update, and delete contact points and notification policies in Grafana and external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:write",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:write"
+      },
+      {
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting:reader",
+    "displayName": "Full read-only access",
+    "description": "Read alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.instances:read"
+      },
+      {
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting:writer",
+    "displayName": "Full write access",
+    "description": "Add, update and delete alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.rules:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:delete",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.instances:read"
+      },
+      {
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.instances:create"
+      },
+      {
+        "action": "alert.instances:write"
+      },
+      {
+        "action": "alert.instances.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:write",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:write"
+      },
+      {
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting:admin",
+    "displayName": "Full admin access",
+    "description": "Full write access in Grafana and all external providers, including their permissions, protected fields and secrets",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.rules:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:read",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.receivers:list"
+      },
+      {
+        "action": "alert.rules:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules:delete",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.rules.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.silences:write",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.silences:create",
+        "scope": "folders:*"
+      },
+      {
+        "action": "alert.instances:read"
+      },
+      {
+        "action": "alert.instances.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.instances:create"
+      },
+      {
+        "action": "alert.instances:write"
+      },
+      {
+        "action": "alert.instances.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications.external:read",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:write",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications:write"
+      },
+      {
+        "action": "alert.notifications.external:write",
+        "scope": "datasources:*"
+      },
+      {
+        "action": "receivers.permissions:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "receivers.permissions:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.secrets:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.protected:write",
+        "scope": "receivers:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.provisioning:writer",
+    "displayName": "Access to alert rules provisioning API",
+    "description": "Manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.provisioning:read"
+      },
+      {
+        "action": "alert.provisioning:write"
+      },
+      {
+        "action": "alert.rules.provisioning:read"
+      },
+      {
+        "action": "alert.rules.provisioning:write"
+      },
+      {
+        "action": "alert.notifications.provisioning:read"
+      },
+      {
+        "action": "alert.notifications.provisioning:write"
+      },
+      {
+        "action": "folders:read",
+        "scope": "folders:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.provisioning.secrets:reader",
+    "displayName": "Read via Provisioning API + Export Secrets",
+    "description": "Read all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API and use export with decrypted secrets",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.provisioning.secrets:read"
+      },
+      {
+        "action": "alert.provisioning:read"
+      },
+      {
+        "action": "alert.rules.provisioning:read"
+      },
+      {
+        "action": "alert.notifications.provisioning:read"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.provisioning.provenance:writer",
+    "displayName": "Set provisioning status",
+    "description": "Set provisioning status for alerting resources. Should be used together with other regular roles (Notifications Writer and/or Rules Writer)",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.provisioning.provenance:write"
+      }
+    ],
+    "grants": [
+      "Admin",
+      "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting.receivers:reader",
+    "displayName": "Contact Point Reader",
+    "description": "Read all contact points in Grafana",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.receivers:creator",
+    "displayName": "Contact Point Creator",
+    "description": "Create new contact points in Grafana",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.receivers:writer",
+    "displayName": "Contact Point Writer",
+    "description": "Create, update, and delete all contact points in Grafana",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.receivers:read",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:create"
+      },
+      {
+        "action": "alert.notifications.receivers:test"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:uid:-"
+      },
+      {
+        "action": "alert.notifications.receivers:write",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers:delete",
+        "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.receivers.test:create",
+        "scope": "receivers:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.templates:reader",
+    "displayName": "Templates Reader",
+    "description": "Read all templates in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.templates:read"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.templates:writer",
+    "displayName": "Templates Writer",
+    "description": "Create, update, and delete all templates in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.templates:read"
+      },
+      {
+        "action": "alert.notifications.templates:write"
+      },
+      {
+        "action": "alert.notifications.templates:delete"
+      },
+      {
+        "action": "alert.notifications.templates.test:write"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.time-intervals:reader",
+    "displayName": "Time Intervals Reader",
+    "description": "Read all time intervals in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.time-intervals:read"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.time-intervals:writer",
+    "displayName": "Time Intervals Writer",
+    "description": "Create, update, and delete all time intervals in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.time-intervals:read"
+      },
+      {
+        "action": "alert.notifications.time-intervals:write"
+      },
+      {
+        "action": "alert.notifications.time-intervals:delete"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.routes:reader",
+    "displayName": "Notification Policies Reader",
+    "description": "Read all notification policies in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.routes:read"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.routes:writer",
+    "displayName": "Notification Policies Writer",
+    "description": "Update and reset notification policies in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.inhibition-rules:reader",
+    "displayName": "Inhibition Rules Reader",
+    "description": "Read all inhibition rules in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      }
+    ]
+  },
+  {
+    "name": "fixed:alerting.inhibition-rules:writer",
+    "displayName": "Inhibition Rules Writer",
+    "description": "Create, update, and delete all inhibition rules in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.inhibition-rules:read",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:write",
+        "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.inhibition-rules:delete",
+        "scope": "inhibition-rules:*"
+      }
+    ]
+  }
+]
