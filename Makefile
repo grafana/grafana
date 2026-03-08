@@ -450,63 +450,25 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
-PLATFORM=linux/amd64
-
-# default to a production build for frontend
-#
-DOCKER_JS_NODE_ENV_FLAG = production
-DOCKER_JS_YARN_BUILD_FLAG = build
-DOCKER_JS_YARN_INSTALL_FLAG = --immutable
-#
-# if go is in dev mode, also build node in dev mode
-ifeq ($(GO_BUILD_DEV), dev)
-  DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
-endif
-# if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
-ifeq (${NODE_ENV}, dev)
-  DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
-endif
-
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
-	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
-	--platform $(PLATFORM) \
-	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
-	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
-	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
-	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev \
-	$(DOCKER_BUILD_ARGS)
+	@echo "build docker container"
+	COMMIT_SHA=$$(git rev-parse HEAD) \
+	BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	WIRE_TAGS=$(WIRE_TAGS) \
+	GO_BUILD_DEV=$(GO_BUILD_DEV) \
+	docker buildx bake grafana
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
-	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
-	--platform $(PLATFORM) \
-	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
-	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
-	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
-	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
-	$(DOCKER_BUILD_ARGS)
+	@echo "build docker container (ubuntu)"
+	COMMIT_SHA=$$(git rev-parse HEAD) \
+	BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	WIRE_TAGS=$(WIRE_TAGS) \
+	GO_BUILD_DEV=$(GO_BUILD_DEV) \
+	docker buildx bake grafana-ubuntu
 
 ##@ Services
 

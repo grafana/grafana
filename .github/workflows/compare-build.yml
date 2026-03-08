@@ -1,0 +1,51 @@
+name: Compare Build Performance (Dagger vs Buildx Bake)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dagger:
+    name: Dagger (targz only)
+    runs-on: github-hosted-ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/build-package
+        with:
+          artifacts: targz:grafana:linux/amd64,targz:grafana:linux/arm64,targz:grafana:linux/s390x,targz:grafana:linux/arm/v7
+          grafana-path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: dev
+          build-id: ${{ github.run_id }}
+          cache-builders: false
+          verify: false
+
+  buildx-bake:
+    name: Buildx Bake (release)
+    runs-on: github-hosted-ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all platforms
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          BUILD_BRANCH: ${{ github.ref_name }}
+        run: docker buildx bake release

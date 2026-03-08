@@ -3,6 +3,7 @@
 .git
 .gitignore
 .vscode
+*_test.go
 bin
 !bin/grafana-linux-k8s
 !bin/grafana-linux-k8s-debug
