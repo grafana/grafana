@@ -1,4 +1,4 @@
-import { FieldConfigSource, PanelPlugin, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { DataFrame, getPanelDataSummary, PanelPlugin, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getPresets } from './getPresets';
@@ -34,13 +34,21 @@ describe('getPresets', () => {
     expect(result).toEqual(presets);
   });
 
-  it('should pass fieldConfig to plugin.getPresets()', async () => {
-    const fieldConfig: FieldConfigSource = { defaults: { unit: 'bytes' }, overrides: [] };
+  it('should pass dataSummary to plugin.getPresets()', async () => {
+    const data: DataFrame[] = [{ fields: [], length: 0, name: 'series-1' }];
     mockGetPresets.mockReturnValue([]);
 
-    await getPresets('timeseries', fieldConfig);
+    await getPresets('timeseries', data);
 
-    expect(mockGetPresets).toHaveBeenCalledWith({ fieldConfig });
+    expect(mockGetPresets).toHaveBeenCalledWith({ dataSummary: getPanelDataSummary(data) });
+  });
+
+  it('should pass dataSummary when no data provided', async () => {
+    mockGetPresets.mockReturnValue([]);
+
+    await getPresets('timeseries');
+
+    expect(mockGetPresets).toHaveBeenCalledWith({ dataSummary: getPanelDataSummary(undefined) });
   });
 
   it('should return an empty array when plugin.getPresets() returns undefined', async () => {
