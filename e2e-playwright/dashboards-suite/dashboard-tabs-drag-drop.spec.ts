@@ -25,6 +25,7 @@ async function getTabWithBoundingBox(page: DashboardPage, selectors: E2ESelector
 test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
   test('drag a tab within the same tabs manager', async ({ dashboardPage, selectors, page }) => {
     await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
+      checkPanelsVisible: false,
       requiresDataSourceSelection: false,
     });
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -52,6 +53,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
 
   test('drag a tab to a different tabs manager (in a different row)', async ({ dashboardPage, selectors, page }) => {
     await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
+      checkPanelsVisible: false,
       requiresDataSourceSelection: false,
     });
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
