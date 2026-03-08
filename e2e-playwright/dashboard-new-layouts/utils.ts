@@ -198,8 +198,9 @@ export async function importTestDashboard(
   selectors: E2ESelectorGroups,
   title: string,
   dashInput?: string,
-  options: ImportTestDashboardOptions = { checkPanelsVisible: true, requiresDataSourceSelection: true }
+  options: ImportTestDashboardOptions = {}
 ) {
+  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
   await page.goto(selectors.pages.ImportDashboard.url);
   await page
     .getByTestId(selectors.components.DashboardImportPage.textarea)
