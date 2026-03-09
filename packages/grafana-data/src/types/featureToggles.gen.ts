@@ -464,6 +464,11 @@ export interface FeatureToggles {
   */
   reportingV2Layouts?: boolean;
   /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
@@ -1142,6 +1147,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthZRolesRedirect?: boolean;
+  /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false

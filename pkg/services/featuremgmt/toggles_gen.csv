@@ -88,6 +88,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-11-03,panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-02-18,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-02-19,reportRenderBinding,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 2025-07-24,timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 2023-12-13,tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
@@ -223,6 +224,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,kubernetesAuthZHandlerRedirect,deprecated,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-03-06,kubernetesAuthZRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-07-31,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false

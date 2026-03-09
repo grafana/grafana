@@ -714,6 +714,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "reportRenderBinding",
+			Description: "Enables render binding support for report rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
 			Stage:        FeatureStagePublicPreview,
@@ -1788,6 +1795,14 @@ var (
 		{
 			Name:         "kubernetesAuthZRolesRedirect",
 			Description:  "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZRoleBindingsRedirect",
+			Description:  "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
