@@ -44,11 +44,12 @@ To do so, follow these steps:
 1. Make sure the dashboard is in **Editable** mode.
 1. Select **Save** or **Save as** from the top-right corner.
 1. In the menu:
-   - Type in the name of the branch of the provisioned repository you want to work in, or create a new branch. Committing directly to `main` is not supported.
-   - Select the provisioned folder you want to save the dashboard in.
+   - **Target folder**: Select the provisioned folder from your Grafana UI where you want to save the dashboard in. 
+   - **Branch**: Type in the name of the branch of the provisioned repository you want to work in, or create a new branch. Committing directly to `main` is not supported.
+   - **Folder**: Type in the folder in your sync repository, if any.
    - Fill in the rest of the fields accordingly.
 1. Click **Save**.
-1. In your synced GitHub repository, merge the branch with the dashboard you want to save.
+1. In your synced GitHub repository, merge the branch with the dashboard you want to sync.
 
 ## Add a dashboard with Grafana CLI
 
