@@ -35,11 +35,11 @@ function pickHeadingLabel(groupLabels: Record<string, string> | undefined): stri
   if (!groupLabels || Object.keys(groupLabels).length === 0) {
     return 'Notification';
   }
-  if (groupLabels['alertname']) {
-    return groupLabels['alertname'];
+  if (groupLabels.alertname) {
+    return groupLabels.alertname;
   }
-  if (groupLabels['service_name']) {
-    return groupLabels['service_name'];
+  if (groupLabels.service_name) {
+    return groupLabels.service_name;
   }
   return Object.keys(groupLabels).sort()[0];
 }
@@ -171,7 +171,7 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
     );
   }
 
-  if (notification === null) {
+  if (!notification) {
     return (
       <Alert
         title={t('alerting.notification-detail.uuid-not-found-title', 'Notification not found')}
@@ -227,16 +227,26 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
       )}
 
       {/* Alerts fetched from queryalerts API */}
-      {isLoadingAlerts ? (
+      {isLoadingAlerts && (
         <LoadingPlaceholder text={t('alerting.notification-detail.alerts-loading', 'Loading alerts...')} />
-      ) : alerts.length === 0 ? (
+      )}
+      {!isLoadingAlerts && alerts.length === 0 && (
         <Text color="secondary">
           <Trans i18nKey="alerting.notification-detail.alerts-empty">No alerts found for this notification.</Trans>
         </Text>
-      ) : (
+      )}
+      {!isLoadingAlerts && alerts.length > 0 && (
         <>
-          <AlertsList alerts={alerts.filter((a) => a.status === 'firing')} groupLabels={notification.groupLabels} heading={t('alerting.notification-detail.firing-alerts', 'Firing Alerts')} />
-          <AlertsList alerts={alerts.filter((a) => a.status !== 'firing')} groupLabels={notification.groupLabels} heading={t('alerting.notification-detail.resolved-alerts', 'Resolved Alerts')} />
+          <AlertsList
+            alerts={alerts.filter((a) => a.status === 'firing')}
+            groupLabels={notification.groupLabels}
+            heading={t('alerting.notification-detail.firing-alerts', 'Firing Alerts')}
+          />
+          <AlertsList
+            alerts={alerts.filter((a) => a.status !== 'firing')}
+            groupLabels={notification.groupLabels}
+            heading={t('alerting.notification-detail.resolved-alerts', 'Resolved Alerts')}
+          />
         </>
       )}
 
@@ -274,11 +284,7 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
                   text={t('alerting.notification-detail.outcome-failed', 'Failed')}
                 />
               ) : (
-                <Badge
-                  color="green"
-                  icon="check"
-                  text={t('alerting.notification-detail.outcome-success', 'Success')}
-                />
+                <Badge color="green" icon="check" text={t('alerting.notification-detail.outcome-success', 'Success')} />
               )
             }
           />
@@ -319,7 +325,10 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
       {isSidebarOpen && (
         <Drawer
           title={t('alerting.notification-detail.related-sidebar-title', 'Related Notifications')}
-          subtitle={t('alerting.notification-detail.related-sidebar-subtitle', 'Notification attempts for the same alert group and route')}
+          subtitle={t(
+            'alerting.notification-detail.related-sidebar-subtitle',
+            'Notification attempts for the same alert group and route'
+          )}
           onClose={() => setIsSidebarOpen(false)}
           size="sm"
         >
@@ -527,16 +536,11 @@ function RelatedNotificationsSidebar({
                   )}
                 >
                   <span>
-                    <Badge
-                      color="purple"
-                      text={t('alerting.notification-detail.same-pipeline-time', 'Same batch')}
-                    />
+                    <Badge color="purple" text={t('alerting.notification-detail.same-pipeline-time', 'Same batch')} />
                   </span>
                 </Tooltip>
               )}
-              {isCurrent && (
-                <Badge color="blue" text={t('alerting.notification-detail.current', 'Current')} />
-              )}
+              {isCurrent && <Badge color="blue" text={t('alerting.notification-detail.current', 'Current')} />}
             </Stack>
             <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
               <NotificationState status={n.status} />
@@ -552,9 +556,7 @@ function RelatedNotificationsSidebar({
                   text={t('alerting.notification-detail.failed', 'Failed')}
                 />
               )}
-              {n.retry && (
-                <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
-              )}
+              {n.retry && <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />}
             </Stack>
           </Stack>
         );
