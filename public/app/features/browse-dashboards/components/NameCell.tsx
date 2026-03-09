@@ -29,6 +29,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
+  const teamAvatarUrl = item.kind !== 'ui' ? getTeamAvatarUrl(item.uid) : undefined;
 
   if (item.kind === 'ui') {
     return (
@@ -87,13 +88,9 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
       )}
 
       <div className={styles.iconNameContainer}>
-        {isLoading ? (
-          <Spinner size={ICON_SIZE} />
-        ) : isTeamFolderItem(item.uid) && getTeamAvatarUrl(item.uid) ? (
-          <Avatar src={getTeamAvatarUrl(item.uid)!} alt={item.title} width={2} height={2} />
-        ) : (
-          <Icon size={ICON_SIZE} name={iconName} />
-        )}
+        {isLoading && <Spinner size={ICON_SIZE} />}
+        {!isLoading && teamAvatarUrl && <Avatar src={teamAvatarUrl} alt={item.title} width={2} height={2} />}
+        {!isLoading && !teamAvatarUrl && <Icon size={ICON_SIZE} name={iconName} />}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
