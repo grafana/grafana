@@ -178,11 +178,10 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 			successCount++
 		}
 	}
-	failureCount := len(plugins.Items) - successCount
 
-	logger.Debug("Fetched metadata for plugins",
+	logger.Debug("Completed metadata list",
 		"successCount", successCount,
-		"failureCount", failureCount,
+		"failureCount", len(plugins.Items)-successCount,
 		"duration", metaFetchDuration.Milliseconds())
 
 	list := &pluginsv0alpha1.MetaList{
