@@ -2459,6 +2459,22 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesServiceAccountsApi",
+			Description:  "Enables service account APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesServiceAccountTokensApi",
+			Description:  "Enables service account token APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2577,6 +2593,14 @@ var (
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableHealthEndpoint",
+			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
 		},
 		{
 			Name:         "analyticsFramework",
