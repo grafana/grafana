@@ -276,10 +276,17 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
               <Text variant="bodySmall" color="secondary">
                 {formatDuration(notification.duration)}
               </Text>
+              {notification.retry && (
+                <Tooltip
+                  content={t(
+                    'alerting.notification-detail.retry-tooltip',
+                    'This attempt was a retry of a previous attempt'
+                  )}
+                >
+                  <Icon name="sync" size="sm" className={styles.subtleIcon} />
+                </Tooltip>
+              )}
             </Stack>
-            {notification.retry && (
-              <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
-            )}
           </Stack>
         </div>
       </div>
@@ -344,6 +351,14 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
           <DetailRow
             label={t('alerting.notification-detail.field-integration-index', 'Integration index')}
             value={String(notification.integrationIndex)}
+          />
+          <DetailRow
+            label={t('alerting.notification-detail.field-retry', 'Retry')}
+            value={
+              notification.retry
+                ? t('alerting.notification-detail.yes', 'Yes')
+                : t('alerting.notification-detail.no', 'No')
+            }
           />
           <DetailRow
             label={t('alerting.notification-detail.field-group-key', 'Group key')}
@@ -588,7 +603,14 @@ function RelatedNotificationsSidebar({
               </Text>
               {batch.hasCurrent && <Badge color="blue" text={t('alerting.notification-detail.current', 'Current')} />}
               {batch.allRetry && (
-                <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
+                <Tooltip
+                  content={t(
+                    'alerting.notification-detail.retry-tooltip',
+                    'This attempt was a retry of a previous attempt'
+                  )}
+                >
+                  <Icon name="sync" size="sm" className={styles.subtleIcon} />
+                </Tooltip>
               )}
             </Stack>
             <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
@@ -702,7 +724,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
-    maxWidth: '900px',
   }),
   headerRow: css({
     display: 'flex',
@@ -731,6 +752,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   errorIcon: css({
     color: theme.colors.error.text,
+  }),
+  subtleIcon: css({
+    color: theme.colors.text.secondary,
   }),
   detailsBox: css({
     display: 'flex',
