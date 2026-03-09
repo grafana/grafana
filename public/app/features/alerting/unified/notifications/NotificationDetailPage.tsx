@@ -17,6 +17,9 @@ import {
   Button,
   Collapse,
   Drawer,
+  Icon,
+  IconName,
+  LinkButton,
   LoadingPlaceholder,
   Stack,
   Text,
@@ -27,6 +30,8 @@ import {
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { StateTag } from '../components/StateTag';
+import { INTEGRATION_ICONS } from '../types/contact-points';
+import { makeLabelBasedSilenceLink } from '../utils/misc';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
@@ -184,47 +189,109 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
     );
   }
 
+  const failedRelated = relatedNotifications.filter((n) => n.outcome === 'error').length;
+  const integrationIcon: IconName = INTEGRATION_ICONS[notification.integration] || 'bell';
+
   return (
     <div className={styles.container}>
-      {/* Status badges + related notifications button */}
+      {/* Delivery outcome — the most important info for triage */}
+      <div className={notification.outcome === 'error' ? styles.deliveryCardError : styles.deliveryCardSuccess}>
+        <Stack direction="column" gap={1}>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Icon
+              name={notification.outcome === 'error' ? 'exclamation-circle' : 'check-circle'}
+              size="lg"
+              className={notification.outcome === 'error' ? styles.errorIcon : styles.successIcon}
+            />
+            <Text variant="h4">
+              {notification.outcome === 'error'
+                ? t('alerting.notification-detail.delivery-failed', 'Delivery failed')
+                : t('alerting.notification-detail.delivery-success', 'Delivered successfully')}
+            </Text>
+          </Stack>
+          {notification.error && <Text color="secondary">{notification.error}</Text>}
+          <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Icon name={integrationIcon} size="sm" />
+              <Text variant="body" weight="medium">
+                {notification.receiver}
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                ({notification.integration})
+              </Text>
+            </Stack>
+            <Text variant="bodySmall" color="secondary">
+              ·
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              {formatDuration(notification.duration)}
+            </Text>
+            {notification.retry && (
+              <>
+                <Text variant="bodySmall" color="secondary">
+                  ·
+                </Text>
+                <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
+              </>
+            )}
+          </Stack>
+        </Stack>
+      </div>
+
+      {/* Quick actions */}
+      <Stack direction="row" gap={1} wrap="wrap">
+        <LinkButton
+          variant="secondary"
+          size="sm"
+          icon="arrow-right"
+          href={`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`}
+        >
+          {t('alerting.notification-detail.action-view-contact-point', 'View contact point')}
+        </LinkButton>
+        {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            icon="bell-slash"
+            href={makeLabelBasedSilenceLink('grafana', notification.groupLabels)}
+          >
+            {t('alerting.notification-detail.action-silence', 'Silence this group')}
+          </LinkButton>
+        )}
+      </Stack>
+
+      {/* Status + timestamp + related */}
       <div className={styles.statusRow}>
         <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
           <NotificationState status={notification.status} />
+          <Text variant="bodySmall" color="secondary">
+            ·
+          </Text>
           <Tooltip content={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
             <Text variant="bodySmall" color="secondary">
               {formatDistanceToNow(new Date(notification.timestamp))}
             </Text>
           </Tooltip>
-          {notification.outcome === 'error' && (
-            <Badge
-              color="orange"
-              icon="exclamation-triangle"
-              text={t('alerting.notification-detail.failed', 'Failed')}
-            />
-          )}
-          {notification.retry && (
-            <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
-          )}
+          <Text variant="bodySmall" color="secondary">
+            ·
+          </Text>
+          <Text variant="bodySmall" color="secondary">
+            {t('alerting.notification-detail.alert-count-inline', '{{count}} alert(s)', {
+              count: notification.alertCount,
+            })}
+          </Text>
         </Stack>
         <Button variant="secondary" size="sm" icon="history" onClick={() => setIsSidebarOpen(true)}>
-          <Trans
-            i18nKey="alerting.notification-detail.related-count"
-            values={{ count: relatedNotifications.length + 1 }}
-          >
-            {'{{ count }} related notifications'}
-          </Trans>
+          {failedRelated > 0
+            ? t('alerting.notification-detail.related-count-with-failures', '{{count}} related ({{failed}} failed)', {
+                count: relatedNotifications.length + 1,
+                failed: failedRelated,
+              })
+            : t('alerting.notification-detail.related-count', '{{count}} related notifications', {
+                count: relatedNotifications.length + 1,
+              })}
         </Button>
       </div>
-
-      {/* Group labels */}
-      {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
-        <div className={styles.detailsBox}>
-          <Text variant="h5">
-            <Trans i18nKey="alerting.notification-detail.group-labels-heading">Group Labels</Trans>
-          </Text>
-          <AlertLabels labels={notification.groupLabels} size="sm" />
-        </div>
-      )}
 
       {/* Alerts fetched from queryalerts API */}
       {isLoadingAlerts && (
@@ -250,9 +317,19 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
         </>
       )}
 
-      {/* Details (collapsible, at the bottom) */}
+      {/* Group labels */}
+      {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
+        <div className={styles.detailsBox}>
+          <Text variant="h6">
+            <Trans i18nKey="alerting.notification-detail.group-labels-heading">Group Labels</Trans>
+          </Text>
+          <AlertLabels labels={notification.groupLabels} size="sm" />
+        </div>
+      )}
+
+      {/* Debug details (collapsible) */}
       <Collapse
-        label={t('alerting.notification-detail.details-heading', 'Details')}
+        label={t('alerting.notification-detail.debug-details-heading', 'Debug details')}
         isOpen={isDetailsOpen}
         onToggle={setIsDetailsOpen}
       >
@@ -267,57 +344,13 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
             value={dateTime(notification.pipelineTime).format('YYYY-MM-DD HH:mm:ss')}
           />
           <DetailRow
-            label={t('alerting.notification-detail.field-receiver', 'Contact point')}
-            value={notification.receiver || '-'}
-          />
-          <DetailRow
-            label={t('alerting.notification-detail.field-integration', 'Integration')}
-            value={`${notification.integration} (index ${notification.integrationIndex})`}
-          />
-          <DetailRow
-            label={t('alerting.notification-detail.field-outcome', 'Outcome')}
-            value={
-              notification.outcome === 'error' ? (
-                <Badge
-                  color="orange"
-                  icon="exclamation-triangle"
-                  text={t('alerting.notification-detail.outcome-failed', 'Failed')}
-                />
-              ) : (
-                <Badge color="green" icon="check" text={t('alerting.notification-detail.outcome-success', 'Success')} />
-              )
-            }
-          />
-          <DetailRow
-            label={t('alerting.notification-detail.field-retry', 'Retry')}
-            value={
-              notification.retry
-                ? t('alerting.notification-detail.yes', 'Yes')
-                : t('alerting.notification-detail.no', 'No')
-            }
-          />
-          <DetailRow
-            label={t('alerting.notification-detail.field-duration', 'Duration')}
-            value={formatDuration(notification.duration)}
-          />
-          <DetailRow
-            label={t('alerting.notification-detail.field-alert-count', 'Alert count')}
-            value={String(notification.alertCount)}
+            label={t('alerting.notification-detail.field-integration-index', 'Integration index')}
+            value={String(notification.integrationIndex)}
           />
           <DetailRow
             label={t('alerting.notification-detail.field-group-key', 'Group key')}
             value={<code className={styles.groupKey}>{notification.groupKey}</code>}
           />
-          {notification.error && (
-            <DetailRow
-              label={t('alerting.notification-detail.field-error', 'Error')}
-              value={
-                <Alert title="" severity="error" className={styles.inlineAlert}>
-                  {notification.error}
-                </Alert>
-              }
-            />
-          )}
         </div>
       </Collapse>
 
@@ -410,13 +443,20 @@ function AlertsList({ alerts, groupLabels, heading }: AlertsListProps) {
         return (
           <div key={index} className={styles.alertDetail}>
             <Stack direction="column" gap={1}>
-              <Stack direction="row" gap={2} alignItems="center">
+              <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
                 {ruleLink ? (
                   <TextLink href={ruleLink} color="primary" inline={false}>
                     {linkText}
                   </TextLink>
                 ) : (
                   <Text>{linkText}</Text>
+                )}
+                {alert.startsAt && (
+                  <Tooltip content={dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}>
+                    <Text variant="bodySmall" color="secondary">
+                      {formatDistanceToNow(new Date(alert.startsAt))}
+                    </Text>
+                  </Tooltip>
                 )}
               </Stack>
               {Object.keys(filteredLabels).length > 0 && (
@@ -453,16 +493,6 @@ function AlertsList({ alerts, groupLabels, heading }: AlertsListProps) {
                     <Trans i18nKey="alerting.notifications-scene.description">Description:</Trans>
                   </strong>{' '}
                   {description}
-                </Text>
-              )}
-              {alert.startsAt && (
-                <Text variant="bodySmall" color="secondary">
-                  <Trans
-                    i18nKey="alerting.notifications-scene.started"
-                    values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
-                  >
-                    Started: {'{{ value }}'}
-                  </Trans>
                 </Text>
               )}
             </Stack>
@@ -522,6 +552,8 @@ function RelatedNotificationsSidebar({
         const isCurrent = n.uuid === currentNotification.uuid;
         const hasSamePipelineTime = (pipelineTimeCounts[n.pipelineTime] ?? 0) > 1;
 
+        const nIcon: IconName = INTEGRATION_ICONS[n.integration] || 'bell';
+
         const inner = (
           <Stack direction="column" gap={0.5}>
             <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
@@ -544,17 +576,16 @@ function RelatedNotificationsSidebar({
             </Stack>
             <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
               <NotificationState status={n.status} />
-              <Tooltip content={dateTime(n.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
-                <Text variant="bodySmall" color="secondary">
-                  {formatDistanceToNow(new Date(n.timestamp))}
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Icon name={nIcon} size="sm" />
+                <Text variant="bodySmall" weight="medium">
+                  {n.receiver}
                 </Text>
-              </Tooltip>
-              {n.outcome === 'error' && (
-                <Badge
-                  color="orange"
-                  icon="exclamation-triangle"
-                  text={t('alerting.notification-detail.failed', 'Failed')}
-                />
+              </Stack>
+              {n.outcome === 'error' ? (
+                <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+              ) : (
+                <Icon name="check-circle" size="sm" className={styles.successIcon} />
               )}
               {n.retry && <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />}
             </Stack>
@@ -628,6 +659,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     maxWidth: '900px',
   }),
+  deliveryCardSuccess: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.success.transparent,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.success.border}`,
+  }),
+  deliveryCardError: css({
+    padding: theme.spacing(2),
+    backgroundColor: theme.colors.error.transparent,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.error.border}`,
+  }),
+  successIcon: css({
+    color: theme.colors.success.text,
+  }),
+  errorIcon: css({
+    color: theme.colors.error.text,
+  }),
   statusRow: css({
     display: 'flex',
     flexDirection: 'row',
@@ -665,10 +714,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     wordBreak: 'break-all',
-  }),
-  inlineAlert: css({
-    margin: 0,
-    padding: theme.spacing(1),
   }),
   alertDetail: css({
     padding: theme.spacing(1.5),
