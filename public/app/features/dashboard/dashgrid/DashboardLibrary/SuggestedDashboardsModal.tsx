@@ -15,8 +15,6 @@ import { ContentKind, EventLocation } from './constants';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
-  isOpen: boolean;
-  onDismiss: () => void;
   initialMappingContext?: MappingContext | null;
   defaultTab?: 'datasource' | 'community';
 }
@@ -36,18 +34,25 @@ export interface MappingContext {
 }
 
 export const SuggestedDashboardsModal = ({
-  isOpen,
-  onDismiss,
   initialMappingContext,
   defaultTab = 'datasource',
 }: SuggestedDashboardsModalProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  const isOpen = datasourceUid !== null;
   const showCommunityTab = config.featureToggles.suggestedDashboards && config.featureToggles.dashboardLibrary;
 
   const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
+
+  const handleDismiss = () => {
+    setSearchParams((params) => {
+      const newParams = new URLSearchParams(params);
+      newParams.delete('dashboardLibraryDatasourceUid');
+      return newParams;
+    });
+  };
 
   // Get datasource info for modal title and search
   const datasourceInfo = useMemo(() => {
@@ -110,7 +115,7 @@ export const SuggestedDashboardsModal = ({
             : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
       isOpen={isOpen}
-      onDismiss={onDismiss}
+      onDismiss={handleDismiss}
       className={styles.modal}
       contentClassName={styles.modalContent}
     >

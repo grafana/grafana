@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import {
   DataSourceSettings as DataSourceSettingsType,
@@ -55,10 +56,17 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
 
 const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
+  const [searchParams] = useSearchParams();
 
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
+
+  const suggestedDashboardsHref = (() => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('dashboardLibraryDatasourceUid', dataSourceId);
+    return `?${newParams.toString()}`;
+  })();
 
   return (
     <div className={styles.content}>
@@ -70,9 +78,17 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
           className="external-link"
           onClick={onDashboardLinkClicked}
         >
-          building a dashboard
+          building a dashboard from scratch
         </Link>
-        , or by querying data in the{' '}
+        , viewing{' '}
+        <Link
+          aria-label={t('datasources.alert-success-message.aria-label-suggested-dashboards', 'Suggested dashboards')}
+          href={suggestedDashboardsHref}
+          className="external-link"
+        >
+          suggested dashboards
+        </Link>{' '}
+        or by querying data in the{' '}
         <Link
           aria-label={t('datasources.alert-success-message.aria-label-explore-data', 'Explore data')}
           className={cx('external-link', {

@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Button, Card, Dropdown, Icon, LinkButton, Menu, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
@@ -19,6 +20,36 @@ export interface Props {
 export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
+  const [, setSearchParams] = useSearchParams();
+
+  const buildDashboardMenu = (
+    <Menu>
+      <Menu.Item
+        label={t('datasources.data-sources-list-card.from-suggestions', 'From suggestions')}
+        icon="lightbulb-alt"
+        onClick={() => {
+          setSearchParams((params) => {
+            const newParams = new URLSearchParams(params);
+            newParams.set('dashboardLibraryDatasourceUid', dataSource.uid);
+            return newParams;
+          });
+        }}
+      />
+      <Menu.Item
+        label={t('datasources.data-sources-list-card.blank', 'Blank')}
+        icon="plus"
+        url={`dashboard/new-with-ds/${dataSource.uid}`}
+        onClick={() => {
+          trackCreateDashboardClicked({
+            grafana_version: config.buildInfo.version,
+            datasource_uid: dataSource.uid,
+            plugin_name: dataSource.typeName,
+            path: window.location.pathname,
+          });
+        }}
+      />
+    </Menu>
+  );
 
   return (
     <Card noMargin href={hasWriteRights ? dsLink : undefined}>
@@ -35,22 +66,12 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <LinkButton
-          icon="apps"
-          fill="outline"
-          variant="secondary"
-          href={`dashboard/new-with-ds/${dataSource.uid}`}
-          onClick={() => {
-            trackCreateDashboardClicked({
-              grafana_version: config.buildInfo.version,
-              datasource_uid: dataSource.uid,
-              plugin_name: dataSource.typeName,
-              path: window.location.pathname,
-            });
-          }}
-        >
-          <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
-        </LinkButton>
+        <Dropdown overlay={buildDashboardMenu}>
+          <Button variant="secondary" size="md" fill="outline">
+            <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
+            <Icon name="angle-down" />
+          </Button>
+        </Dropdown>
 
         {/* Explore */}
         {hasExploreRights && (

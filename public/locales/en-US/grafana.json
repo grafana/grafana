@@ -6414,6 +6414,7 @@
     },
     "modal": {
       "description": "Browse and select from data-source provided or community dashboards",
+      "description-datasource-only": "Browse and select from data-source provided dashboards",
       "tab-community": "Community",
       "tab-datasource": "Data-source provided",
       "title": "Suggested dashboards",
@@ -7152,6 +7153,10 @@
         "title": "Unsaved changes"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <5>create one from scratch</5>.",
+      "title": "You are viewing {{title}}"
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -7517,7 +7522,7 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard from scratch</2>, viewing <5>suggested dashboards</5> or by querying data in the <9>Explore view</9>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7552,7 +7557,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Create a dashboard",
-      "aria-label-explore-data": "Explore data"
+      "aria-label-explore-data": "Explore data",
+      "aria-label-suggested-dashboards": "Suggested dashboards"
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Alerting not supported",
@@ -7657,8 +7663,10 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "blank": "Blank",
       "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
+      "from-suggestions": "From suggestions",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
     },

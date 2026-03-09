@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { PluginExtensionPoints } from '@grafana/data';
@@ -57,7 +56,6 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
-  const [isSuggestedModalOpen, setIsSuggestedModalOpen] = useState(false);
   const [, setSearchParams] = useSearchParams();
 
   // Fetch plugin extension links
@@ -141,10 +139,10 @@ export function EditDataSourceActions({ uid }: Props) {
                 trackDsConfigClicked('build_a_dashboard');
                 setSearchParams((params) => {
                   const newParams = new URLSearchParams(params);
+                  console.log('dataSource.uid', dataSource.uid);
                   newParams.set('dashboardLibraryDatasourceUid', dataSource.uid);
                   return newParams;
                 });
-                setIsSuggestedModalOpen(true);
               }}
             />
             <Menu.Item
@@ -169,18 +167,7 @@ export function EditDataSourceActions({ uid }: Props) {
           <Icon name="angle-down" />
         </Button>
       </Dropdown>
-      <SuggestedDashboardsModal
-        isOpen={isSuggestedModalOpen}
-        onDismiss={() => {
-          setIsSuggestedModalOpen(false);
-          setSearchParams((params) => {
-            const newParams = new URLSearchParams(params);
-            newParams.delete('dashboardLibraryDatasourceUid');
-            return newParams;
-          });
-        }}
-        defaultTab="datasource"
-      />
+      <SuggestedDashboardsModal defaultTab="datasource" />
     </>
   );
 }

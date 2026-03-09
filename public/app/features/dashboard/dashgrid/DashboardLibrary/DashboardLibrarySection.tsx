@@ -92,6 +92,7 @@ export const DashboardLibrarySection = () => {
       title: dashboard.title || 'Template',
       pluginId: dashboard.pluginId,
       path: dashboard.path,
+      fromDatasource: 'true',
       // tracking event purpose values
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
