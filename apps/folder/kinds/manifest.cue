@@ -4,6 +4,15 @@ manifest: {
 	appName:       "folder"
 	groupOverride: "folder.grafana.app"
 	versions: {
+		"v1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [
+				foldersV1,
+			]
+		}
 		"v1beta1": {
 			codegen: {
 				ts: {enabled: false}
