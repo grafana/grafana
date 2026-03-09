@@ -287,6 +287,7 @@ export function InteractiveTable<TableData extends object>({
                       })}
                       {...headerCellProps}
                       {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
+                      style={column.width ? { width: column.width } : undefined}
                     >
                       <ColumnHeader column={column} headerTooltip={headerTooltip} />
                     </th>
@@ -312,7 +313,12 @@ export function InteractiveTable<TableData extends object>({
                   {row.cells.map((cell) => {
                     const { key, ...otherCellProps } = cell.getCellProps();
                     return (
-                      <td className={styles.cell} key={key} {...otherCellProps}>
+                      <td
+                        className={styles.cell}
+                        key={key}
+                        {...otherCellProps}
+                        style={cell.column.width ? { width: cell.column.width } : undefined}
+                      >
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
                     );
