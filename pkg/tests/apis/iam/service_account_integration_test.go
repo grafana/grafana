@@ -43,7 +43,8 @@ func TestIntegrationServiceAccounts(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesServiceAccountsApi,
+					featuremgmt.FlagKubernetesServiceAccountTokensApi,
 				},
 			})
 			doServiceAccountCRUDTestsUsingTheNewAPIs(t, helper)
