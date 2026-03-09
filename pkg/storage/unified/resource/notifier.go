@@ -15,12 +15,10 @@ import (
 )
 
 const (
-	// TODO: remove defaultLookbackPeriod once no longer used by the KV backend.
-	defaultLookbackPeriod = 30 * time.Second
-	defaultSettleDelay    = 1 * time.Second
-	defaultMinBackoff     = 100 * time.Millisecond
-	defaultMaxBackoff     = 5 * time.Second
-	defaultBufferSize     = 10000
+	defaultSettleDelay = 1 * time.Second
+	defaultMinBackoff  = 100 * time.Millisecond
+	defaultMaxBackoff  = 5 * time.Second
+	defaultBufferSize  = 10000
 )
 
 type notifier interface {
