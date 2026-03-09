@@ -16,6 +16,7 @@ import {
 import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
+import { AnnotationVals, XYAnnoVals } from './annotations2/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2/useAnnotationClustering';
 import { useAnnotations } from './annotations2/useAnnotations';
 import { ANNOTATION_LANE_SIZE } from './utils';
@@ -41,42 +42,6 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 };
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
-
-type NullableString = null | string;
-type NullableNumber = null | number;
-
-export type AnnotationVals = {
-  time: number[];
-  isRegion?: boolean[];
-  color?: string[];
-
-  id?: NullableNumber[];
-  clusterIdx?: NullableNumber[];
-  timeEnd?: NullableNumber[];
-  alertId?: NullableNumber[];
-
-  text?: NullableString[];
-  title?: NullableString[];
-  dashboardUID?: NullableString[];
-  newState?: NullableString[];
-  login?: NullableString[];
-  avatarUrl?: NullableString[];
-
-  /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
-  data?: unknown[];
-  tags?: string[][];
-};
-
-export type XYAnnoVals = {
-  color: string[];
-  xMin: number[];
-  xMax: number[];
-  yMax: number[];
-  yMin: number[];
-  fillOpacity: number[];
-  lineWidth: number[];
-  lineStyle: string[];
-};
 
 function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

@@ -10,9 +10,8 @@ import { Form } from 'app/core/components/Form/Form';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
 
-import { AnnotationVals } from '../AnnotationsPlugin2';
-
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
+import { AnnotationVals } from './types';
 
 interface Props {
   annoVals: AnnotationVals;

@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { usePanelContext } from '@grafana/ui';
 
-import { AnnotationVals } from '../AnnotationsPlugin2';
-
 import { AnnotationEditor2 } from './AnnotationEditor2';
+import { AnnotationVals } from './types';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
