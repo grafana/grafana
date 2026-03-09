@@ -8,16 +8,57 @@ import { AutoGridLayout } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 describe('AutoGridLayoutManager', () => {
-  it('can remove panel', () => {
-    const { manager, panel1 } = setup();
+  describe('removePanel', () => {
+    it('can remove panel', () => {
+      const { manager, panel1 } = setup();
 
-    manager.subscribeToEvent(DashboardEditActionEvent, (event) => {
-      event.payload.perform();
+      manager.subscribeToEvent(DashboardEditActionEvent, (event) => {
+        event.payload.perform();
+      });
+
+      manager.removePanel(panel1);
+
+      expect(manager.state.layout.state.children.length).toBe(1);
+    });
+  });
+
+  describe('duplicate', () => {
+    it('returns a new AutoGridLayoutManager instance', () => {
+      const { manager } = setup();
+
+      const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(AutoGridLayoutManager);
+      expect(duplicated).not.toBe(manager);
+      expect(duplicated.state.key).not.toBe(manager.state.key);
     });
 
-    manager.removePanel(panel1);
+    it('deep-clones all children', () => {
+      const { manager, gridItems } = setup();
 
-    expect(manager.state.layout.state.children.length).toBe(1);
+      const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+      const clonedChildren = duplicated.state.layout.state.children;
+
+      expect(clonedChildren.length).toBe(2);
+
+      expect(clonedChildren[0]).not.toBe(gridItems[0]);
+      expect(clonedChildren[0].state.body).not.toBe(gridItems[0].state.body);
+
+      expect(clonedChildren[1]).not.toBe(gridItems[1]);
+      expect(clonedChildren[1].state.body).not.toBe(gridItems[1].state.body);
+    });
+
+    describe('when grid items contain panels', () => {
+      it('assigns unique sequential panel keys, starting after the highest existing id', () => {
+        const { manager } = setup();
+
+        const duplicated = manager.duplicate() as AutoGridLayoutManager;
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-3', 'panel-4']);
+      });
+    });
   });
 });
 
@@ -31,7 +72,7 @@ function setup() {
 
   const panel2 = new VizPanel({
     title: 'Panel A',
-    key: 'panel-1',
+    key: 'panel-2',
     pluginId: 'table',
     $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
   });
@@ -51,9 +92,12 @@ function setup() {
     }),
   ];
 
-  const manager = new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: gridItems }) });
+  const manager = new AutoGridLayoutManager({
+    key: 'test-AutoGridLayoutManager',
+    layout: new AutoGridLayout({ children: gridItems }),
+  });
 
   new DashboardScene({ body: manager });
 
-  return { manager, panel1, panel2 };
+  return { manager, gridItems, panel1, panel2 };
 }

@@ -615,8 +615,14 @@ export type Status = {
 export type Patch = object;
 export type CreateNotificationqueryNotificationOutcome = 'success' | 'error';
 export type CreateNotificationqueryNotificationStatus = 'firing' | 'resolved';
+export type CreateNotificationqueryNotificationRangeValue = {
+  /** Count is the number of notification attempts at this point in time. */
+  count: number;
+  /** Timestamp is the Unix epoch in seconds for this data point. */
+  timestamp: number;
+};
 export type CreateNotificationqueryNotificationCount = {
-  /** Count is the number of notification attempts in the time period. */
+  /** Count is the number of notification attempts in the time period. Set for counts queries. */
   count: number;
   error?: string;
   integration?: string;
@@ -624,6 +630,8 @@ export type CreateNotificationqueryNotificationCount = {
   outcome?: CreateNotificationqueryNotificationOutcome;
   receiver?: string;
   status?: CreateNotificationqueryNotificationStatus;
+  /** Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries. */
+  values: CreateNotificationqueryNotificationRangeValue[];
 };
 export type CreateNotificationqueryNotificationEntryAlert = {
   annotations: {
@@ -711,10 +719,12 @@ export type CreateNotificationqueryRequestBody = {
   ruleUID?: string;
   /** Status optionally filters the entries to only either firing or resolved. */
   status?: CreateNotificationqueryNotificationStatus;
+  /** Step is the step interval in seconds for range_counts queries. */
+  step?: number;
   /** To is the starting timestamp for the query. */
   to?: string;
   /** Type of query to perform (default: entries) */
-  type?: 'entries' | 'counts';
+  type?: 'entries' | 'counts' | 'range_counts';
 };
 export type CreateNotificationsqueryalertsNotificationEntryAlert = {
   annotations: {

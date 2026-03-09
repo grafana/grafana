@@ -63,26 +63,26 @@ func TestWorker_Process(t *testing.T) {
 		}
 
 		// Expect staging to be called with empty ref (repository determines default)
-		mockRepo.MockStageableRepository.EXPECT().Stage(ctx, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 			return opts.Ref == "" &&
 				opts.Mode == repository.StageModeCommitOnlyOnce &&
 				strings.Contains(opts.CommitOnlyOnceMessage, "Fix folder metadata")
 		})).Return(mockStaged, nil)
 
 		// Expect a marker file to be written with empty ref
-		mockStaged.EXPECT().Write(ctx, mock.MatchedBy(func(path string) bool {
+		mockStaged.EXPECT().Write(mock.Anything, mock.MatchedBy(func(path string) bool {
 			return strings.HasPrefix(path, ".grafana/folder-metadata-fixed-")
 		}), "", mock.Anything, mock.Anything).Return(nil)
 
 		// Expect push to be called
-		mockStaged.EXPECT().Push(ctx).Return(nil)
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
 
 		// Expect cleanup
-		mockStaged.EXPECT().Remove(ctx).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		// Expect progress updates with "default branch" message
-		mockProgress.EXPECT().SetMessage(ctx, "Creating marker commit on default branch").Return()
-		mockProgress.EXPECT().SetFinalMessage(ctx, "Folder metadata fixed on default branch").Return()
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Creating marker commit on default branch").Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)
@@ -114,22 +114,22 @@ func TestWorker_Process(t *testing.T) {
 		}
 
 		// Expect staging to be called with custom ref
-		mockRepo.MockStageableRepository.EXPECT().Stage(ctx, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 			return opts.Ref == customRef
 		})).Return(mockStaged, nil)
 
 		// Expect a marker file to be written
-		mockStaged.EXPECT().Write(ctx, mock.Anything, customRef, mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Write(mock.Anything, mock.Anything, customRef, mock.Anything, mock.Anything).Return(nil)
 
 		// Expect push to be called
-		mockStaged.EXPECT().Push(ctx).Return(nil)
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
 
 		// Expect cleanup
-		mockStaged.EXPECT().Remove(ctx).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		// Expect progress updates
-		mockProgress.EXPECT().SetMessage(ctx, fmt.Sprintf("Creating marker commit on branch %s", customRef)).Return()
-		mockProgress.EXPECT().SetFinalMessage(ctx, fmt.Sprintf("Folder metadata fixed on branch %s", customRef)).Return()
+		mockProgress.EXPECT().SetMessage(mock.Anything, fmt.Sprintf("Creating marker commit on branch %s", customRef)).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, fmt.Sprintf("Folder metadata fixed on branch %s", customRef)).Return()
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)
@@ -170,16 +170,16 @@ func TestWorker_Process(t *testing.T) {
 			NewPullRequestURL: "https://github.com/test/repo/compare/feature-branch",
 		}
 
-		mockRepo.MockStageableRepository.EXPECT().Stage(ctx, mock.Anything).Return(mockStaged, nil)
-		mockStaged.EXPECT().Write(ctx, mock.Anything, customRef, mock.Anything, mock.Anything).Return(nil)
-		mockStaged.EXPECT().Push(ctx).Return(nil)
-		mockStaged.EXPECT().Remove(ctx).Return(nil)
-		mockProgress.EXPECT().SetMessage(ctx, fmt.Sprintf("Creating marker commit on branch %s", customRef)).Return()
-		mockProgress.EXPECT().SetFinalMessage(ctx, fmt.Sprintf("Folder metadata fixed on branch %s", customRef)).Return()
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+		mockStaged.EXPECT().Write(mock.Anything, mock.Anything, customRef, mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+		mockProgress.EXPECT().SetMessage(mock.Anything, fmt.Sprintf("Creating marker commit on branch %s", customRef)).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, fmt.Sprintf("Folder metadata fixed on branch %s", customRef)).Return()
 
 		// Expect RefURLs to be called with the custom ref and SetRefURLs to be called with the result
-		mockRepo.MockRepositoryWithURLs.EXPECT().RefURLs(ctx, customRef).Return(expectedURLs, nil)
-		mockProgress.EXPECT().SetRefURLs(ctx, expectedURLs).Return()
+		mockRepo.MockRepositoryWithURLs.EXPECT().RefURLs(mock.Anything, customRef).Return(expectedURLs, nil)
+		mockProgress.EXPECT().SetRefURLs(mock.Anything, expectedURLs).Return()
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)
@@ -208,15 +208,15 @@ func TestWorker_Process(t *testing.T) {
 		}
 
 		// Expect staging with empty ref (repository determines default)
-		mockRepo.MockStageableRepository.EXPECT().Stage(ctx, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 			return opts.Ref == ""
 		})).Return(mockStaged, nil)
 
-		mockStaged.EXPECT().Write(ctx, mock.Anything, "", mock.Anything, mock.Anything).Return(nil)
-		mockStaged.EXPECT().Push(ctx).Return(nil)
-		mockStaged.EXPECT().Remove(ctx).Return(nil)
-		mockProgress.EXPECT().SetMessage(ctx, "Creating marker commit on default branch").Return()
-		mockProgress.EXPECT().SetFinalMessage(ctx, "Folder metadata fixed on default branch").Return()
+		mockStaged.EXPECT().Write(mock.Anything, mock.Anything, "", mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Creating marker commit on default branch").Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)

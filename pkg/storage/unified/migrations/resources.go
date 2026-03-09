@@ -16,6 +16,7 @@ func registerMigrations(cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
 	client resourcepb.ResourceIndexClient,
 	registry *MigrationRegistry,
 ) error {
@@ -28,7 +29,7 @@ func registerMigrations(cfg *setting.Cfg,
 			logger.Info("Migration is disabled in config, skipping", "migration", def.ID)
 			continue
 		}
-		registerMigration(mg, migrator, tableLocker, cfg, client, def)
+		registerMigration(mg, migrator, tableLocker, tableRenamer, cfg, client, def)
 	}
 	return nil
 }
@@ -36,14 +37,14 @@ func registerMigrations(cfg *setting.Cfg,
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
 	cfg *setting.Cfg,
 	client resourcepb.ResourceIndexClient,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, tableLocker, def, validators, opts...)
-	migration.runner.cfg = cfg
+	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }
 
