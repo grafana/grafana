@@ -268,7 +268,8 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
                 {notification.receiver}
               </Text>
               <Text variant="bodySmall" color="secondary">
-                {receiverTypeNames[notification.integration] ?? notification.integration}
+                {receiverTypeNames[notification.integration] ?? notification.integration} #
+                {notification.integrationIndex + 1}
               </Text>
               <Text variant="bodySmall" color="secondary">
                 ·
