@@ -44,6 +44,7 @@ import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
+import { createRelativeUrl } from '../utils/url';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
@@ -262,7 +263,9 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         </div>
         <div className={styles.viewCol}>
           <LinkButton
-            href={`/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`}
+            href={createRelativeUrl(
+              `/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`
+            )}
             size="sm"
             variant="secondary"
             icon="eye"

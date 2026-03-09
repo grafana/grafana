@@ -33,6 +33,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { StateTag } from '../components/StateTag';
 import { INTEGRATION_ICONS } from '../types/contact-points';
 import { makeLabelBasedSilenceLink } from '../utils/misc';
+import { createRelativeUrl } from '../utils/url';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
@@ -351,7 +352,7 @@ function QuickActions({ notification, relatedCount, failedRelatedCount, onOpenRe
         variant="secondary"
         size="sm"
         icon="arrow-right"
-        href={`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`}
+        href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`)}
       >
         {t('alerting.notification-detail.action-view-contact-point', 'View contact point')}
       </LinkButton>

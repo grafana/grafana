@@ -15,6 +15,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { formatPrometheusDuration } from '../../utils/time';
+import { createRelativeUrl } from '../../utils/url';
 
 import { dateFormatter, noop } from './timelineUtils';
 
@@ -386,7 +387,9 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
             variant="secondary"
             size="sm"
             icon="eye"
-            href={`/alerting/notifications-history/view/${notification.uuid}/${encodeURIComponent(notification.timestamp)}`}
+            href={createRelativeUrl(
+              `/alerting/notifications-history/view/${notification.uuid}/${encodeURIComponent(notification.timestamp)}`
+            )}
           >
             {t('alerting.instance-details.view-notification-detail', 'Details')}
           </LinkButton>
