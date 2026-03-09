@@ -1,4 +1,4 @@
-import { Alert, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import { MetricAggregation } from '../../../dataquery.gen';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
