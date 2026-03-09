@@ -19,9 +19,9 @@ export function DraggableListItem({ draggableId, index, children }: DraggableLis
     <Draggable draggableId={draggableId} index={index}>
       {(provided) => (
         <li ref={provided.innerRef} {...provided.draggableProps} className={styles.listItem}>
-          <div {...provided.dragHandleProps}>
+          <div {...provided.dragHandleProps} className={styles.dragHandle}>
             <Tooltip content={t('dashboard-scene.draggable-item.drag-to-reorder', 'Drag to reorder')} placement="top">
-              <Icon name="draggabledots" size="md" className={styles.dragHandle} />
+              <Icon name="draggabledots" size="md" />
             </Tooltip>
           </div>
           {children}
@@ -41,8 +41,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.25),
     }),
     dragHandle: css({
-      display: 'flex',
-      alignItems: 'center',
+      alignSelf: 'stretch',
       cursor: 'grab',
       color: theme.colors.text.secondary,
       '&:hover': {
