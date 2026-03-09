@@ -153,6 +153,10 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
+    managed: {
+      enabled: isManagedPlugin(id) || isCloudManagedPlugin(plugin),
+      strategy: plugin.managed.strategy,
+    },
   };
 }
 
@@ -203,6 +207,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    managed: {
+      enabled: isManagedPlugin(id),
+    },
   };
 }
 
@@ -267,6 +274,10 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
+    managed: {
+      enabled: isManagedPlugin(id) || isCloudManagedPlugin(remote),
+      strategy: remote?.managed.strategy,
+    },
   };
 }
 

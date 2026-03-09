@@ -15,7 +15,7 @@ import {
   isDisabledAngularPlugin,
 } from './helpers';
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './mocks/mockHelpers';
-import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin } from './types';
+import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin, PluginUpdateStrategy } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -234,6 +234,10 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: false,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 
@@ -298,13 +302,23 @@ describe('Plugins/Helpers', () => {
         const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
         config.pluginAdminExternalManageEnabled = true;
 
-        expect(mapRemoteToCatalog({ ...remotePlugin, managed: { enabled: true } })).toMatchObject({ isManaged: true });
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ isManaged: true, managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
 
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
       });
 
-      test('should return true if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
-        expect(mapRemoteToCatalog({ ...remotePlugin, managed: { enabled: true } })).toMatchObject({ isManaged: false });
+      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned } });
       });
     });
   });
@@ -344,6 +358,10 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 
@@ -400,6 +418,10 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: true,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 

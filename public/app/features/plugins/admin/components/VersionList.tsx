@@ -6,27 +6,23 @@ import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Badge } from '@grafana/ui';
 
-import { getLatestCompatibleVersion } from '../helpers';
-import { Version } from '../types';
+import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
+import { CatalogPlugin, PluginUpdateStrategy, Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 
 interface Props {
-  pluginId: string;
-  versions?: Version[];
-  installedVersion?: string;
-  disableInstallation: boolean;
+  plugin: CatalogPlugin;
   communityManaged?: boolean;
 }
 
-export const VersionList = ({
-  pluginId,
-  versions = [],
-  installedVersion,
-  disableInstallation,
-  communityManaged = false,
-}: Props) => {
+export const VersionList = ({ plugin }: Props) => {
   const styles = useStyles2(getStyles);
+  const pluginId = plugin.id;
+  const versions = useMemo(() => plugin.details?.versions ?? [], [plugin.details?.versions]);
+  const installedVersion = plugin.installedVersion;
+  const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
+
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
   const latestMajorVersions = getLatestMajorVersions(versions);
 
@@ -132,7 +128,7 @@ export const VersionList = ({
                         version,
                         latestMajorVersions,
                         installedVersion,
-                        communityManaged,
+                        updateStrategy: plugin.managed.strategy,
                       })
                     }
                     tooltip={tooltip}
@@ -209,20 +205,20 @@ interface ShouldDisableVersionInstallationArgs {
   version: Version;
   latestMajorVersions: Set<string>;
   installedVersion: string | undefined;
-  communityManaged: boolean;
+  updateStrategy: PluginUpdateStrategy;
 }
 
 function shouldDisableVersionInstallation({
   version,
   latestMajorVersions,
   installedVersion,
-  communityManaged,
+  updateStrategy,
 }: ShouldDisableVersionInstallationArgs) {
   if (!installedVersion) {
     return false;
   }
 
-  if (communityManaged) {
+  if (updateStrategy === PluginUpdateStrategy.MajorAligned) {
     if (latestMajorVersions.has(version.version) && gt(version.version, installedVersion)) {
       return false;
     }

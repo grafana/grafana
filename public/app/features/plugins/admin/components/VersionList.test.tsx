@@ -4,6 +4,9 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
 
+import { getCatalogPluginMock } from '../mocks/mockHelpers';
+import { PluginUpdateStrategy } from '../types';
+
 import { VersionList } from './VersionList';
 
 describe('VersionList', () => {
@@ -23,7 +26,17 @@ describe('VersionList', () => {
       },
     ];
 
-    renderWithStore(<VersionList pluginId={''} versions={versions} disableInstallation={false} />);
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
     const installElements = screen.getAllByText('Install');
     expect(installElements).toHaveLength(versions.length);
   });
@@ -52,14 +65,19 @@ describe('VersionList', () => {
 
     const installedVersionIndex = 1;
 
-    renderWithStore(
-      <VersionList
-        pluginId={''}
-        versions={versions}
-        installedVersion={versions[installedVersionIndex].version}
-        disableInstallation={false}
-      />
-    );
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion: versions[installedVersionIndex].version,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
     expect(screen.getAllByText('Installed')).toHaveLength(1);
     expect(screen.getAllByText('Downgrade')).toHaveLength(1);
     expect(screen.getAllByText('Upgrade')).toHaveLength(1);
@@ -97,9 +115,18 @@ describe('VersionList', () => {
     // User has 2.5.0 installed, which is deprecated
     const installedVersion = '2.5.0';
 
-    renderWithStore(
-      <VersionList pluginId={''} versions={versions} installedVersion={installedVersion} disableInstallation={false} />
-    );
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
 
     expect(screen.getByText('Deprecated')).toBeInTheDocument();
     expect(screen.getByText(/2\.5\.0.*\(installed version\)/)).toBeInTheDocument();
@@ -137,9 +164,18 @@ describe('VersionList', () => {
     // User has 2.0.0 installed, which is deprecated
     const installedVersion = '2.0.0';
 
-    renderWithStore(
-      <VersionList pluginId={''} versions={versions} installedVersion={installedVersion} disableInstallation={false} />
-    );
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
 
     const rows = screen.getAllByRole('row');
     const versionTexts = rows.slice(1).map((row) => {
@@ -154,7 +190,7 @@ describe('VersionList', () => {
     expect(versionTexts[2]).toContain('1.0.0');
   });
 
-  it('should enable only the install button for the latest compatible version, when it is community managed and there is a version installed', () => {
+  it('should enable only the install button for the latest compatible version, when it is major aligned managed plugin and there is a version installed', () => {
     const versions = [
       ...generateVersionsForMajor('1', 3),
       ...generateVersionsForMajor('2', 3),
@@ -163,16 +199,18 @@ describe('VersionList', () => {
 
     const installedVersion = '2.0.0';
 
-    renderWithStore(
-      <VersionList
-        pluginId={''}
-        versions={versions}
-        installedVersion={installedVersion}
-        disableInstallation={false}
-        communityManaged={true}
-      />
-    );
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion,
+    });
 
+    renderWithStore(<VersionList plugin={plugin} />);
     const buttons = screen.getAllByRole('button');
     const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
     expect(enabledButtons).toHaveLength(2);
