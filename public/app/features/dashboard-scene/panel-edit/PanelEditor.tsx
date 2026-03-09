@@ -25,7 +25,7 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent } from '../edit-pane/shared';
+import { DashboardEditActionEvent } from '../edit-pane/DashboardEditActionEvent';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';

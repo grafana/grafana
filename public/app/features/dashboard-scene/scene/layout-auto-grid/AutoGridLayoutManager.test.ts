@@ -1,6 +1,6 @@
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
-import { DashboardEditActionEvent } from '../../edit-pane/shared';
+import { DashboardEditActionEvent } from '../../edit-pane/DashboardEditActionEvent';
 import { DashboardScene } from '../DashboardScene';
 
 import { AutoGridItem } from './AutoGridItem';
