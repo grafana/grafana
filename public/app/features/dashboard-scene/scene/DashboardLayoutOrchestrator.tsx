@@ -22,6 +22,7 @@ import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -32,7 +33,6 @@ import {
   DashboardDropTarget,
   isDashboardDropTarget,
 } from './types/DashboardDropTarget';
-import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 
 const TAB_ACTIVATION_DELAY_MS = 600;
 
@@ -482,7 +482,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _getLayoutForDropTarget = (
     dropTarget: DashboardDropTarget | null
-  ): DashboardScene | DashboardLayoutManager => {
+  ): DashboardScene | AutoGridLayoutManager | DefaultGridLayoutManager => {
     if (dropTarget) {
       return getLayoutForObject(dropTarget) ?? this._getDashboard();
     }
@@ -499,7 +499,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _pastePanelToLayout = (dropTarget: DashboardDropTarget | null) => {
     const layout = this._getLayoutForDropTarget(dropTarget);
     // shouldn't be undefined
-    layout.pastePanel?.();
+    layout.pastePanel();
     DashboardInteractions.trackPastePanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };
 

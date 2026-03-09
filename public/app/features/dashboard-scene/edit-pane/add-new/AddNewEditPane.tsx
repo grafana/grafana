@@ -73,18 +73,23 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
                     );
                   }}
                 </Draggable>
-                <Draggable
-                  draggableId="paste-panel-drag"
-                  index={1}
-                  isDragDisabled={!hasCopiedPanel}
-                  disableInteractiveElementBlocking={true}
-                >
-                  {(dragProvided, _) => (
-                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps}>
-                      {hasCopiedPanel && (
+                {hasCopiedPanel && (
+                  <Draggable
+                    draggableId="paste-panel-drag"
+                    index={1}
+                    isDragDisabled={!hasCopiedPanel}
+                    disableInteractiveElementBlocking={true}
+                  >
+                    {(dragProvided, _) => (
+                      <div
+                        ref={dragProvided.innerRef}
+                        {...dragProvided.draggableProps}
+                        {...dragProvided.dragHandleProps}
+                      >
                         <AddButton
                           className={styles.pasteButton}
                           icon="clipboard-alt"
+                          tabIndex={0}
                           onClick={onPastePanel}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
@@ -96,10 +101,10 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
                           label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
                           tooltip={t('dashboard.canvas-actions.add.paste.description', 'Click or drag to paste panel')}
                         ></AddButton>
-                      )}
-                    </div>
-                  )}
-                </Draggable>
+                      </div>
+                    )}
+                  </Draggable>
+                )}
                 {dropProvided.placeholder}
               </div>
             )}

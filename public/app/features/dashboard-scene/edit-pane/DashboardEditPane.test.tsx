@@ -290,7 +290,7 @@ describe('DashboardEditPane', () => {
       activateFullSceneTree(sourceDashboard);
       sourceDashboard.copyPanel(panel);
 
-      editPane.pastePanel(undefined);
+      editPane.pastePanel(dashboard);
       expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
     });
   });
@@ -304,7 +304,7 @@ function buildTestScene() {
     tags: ['tag1', 'tag2'],
     editable: true,
   });
-
+  config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(scene);
 
   return scene;
@@ -365,6 +365,7 @@ function setupEmptyDashboard(): {
     isEditing: true,
     body: AutoGridLayoutManager.createEmpty(),
   });
+  config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
   return { dashboard, editPane: dashboard.state.editPane };
 }
@@ -388,6 +389,7 @@ function setupWithTwoTabs(): {
     isEditing: true,
     body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
   });
+  config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
   return { dashboard, tab1, tab2, tab1Viz: panel, editPane: dashboard.state.editPane };
 }
@@ -411,6 +413,7 @@ function setupWithTwoRows(): {
     isEditing: true,
     body: new RowsLayoutManager({ rows: [row1, row2] }),
   });
+  config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, editPane: dashboard.state.editPane };
 }

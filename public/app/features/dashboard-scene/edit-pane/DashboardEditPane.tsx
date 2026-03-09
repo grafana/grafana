@@ -353,7 +353,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     const dashboard = getDashboardSceneFor(this);
     if (targetElement) {
       const layout = getLayoutForObject(targetElement) ?? dashboard;
-      layout.pastePanel?.();
+      layout.pastePanel();
     } else {
       dashboard.pastePanel();
     }

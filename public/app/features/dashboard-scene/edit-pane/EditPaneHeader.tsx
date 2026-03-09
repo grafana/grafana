@@ -56,7 +56,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                   <Menu.Item
                     icon="clipboard-alt"
                     label={t('dashboard.layout.common.paste', 'Paste')}
-                    onClick={() => editPane.pastePanel?.(pasteTarget, 'editPaneHeader')}
+                    onClick={() => editPane.pastePanel(pasteTarget, 'editPaneHeader')}
                     data-testid={selectors.components.EditPaneHeader.paste}
                   />
                 ) : null}

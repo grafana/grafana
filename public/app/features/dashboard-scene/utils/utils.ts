@@ -429,7 +429,7 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
 
 export const getLayoutForObject = (
   object?: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene | null
-) => {
+): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
   if (object) {
     const gridManagerForObject = sceneGraph.findObject(
       object,

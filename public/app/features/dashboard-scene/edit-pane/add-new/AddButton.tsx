@@ -10,9 +10,10 @@ type AddButtonProps = {
   onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   tooltip?: string;
   className?: string;
+  tabIndex?: number;
 };
 
-export function AddButton({ icon, label, tooltip, onClick, onKeyDown, className }: AddButtonProps) {
+export function AddButton({ icon, label, tooltip, tabIndex, onClick, onKeyDown, className }: AddButtonProps) {
   const styles = useStyles2(getStyles);
   return (
     <Button
@@ -20,6 +21,7 @@ export function AddButton({ icon, label, tooltip, onClick, onKeyDown, className 
       variant="secondary"
       fill="outline"
       size="lg"
+      tabIndex={tabIndex}
       icon={icon}
       tooltip={tooltip}
       onClick={onClick}
