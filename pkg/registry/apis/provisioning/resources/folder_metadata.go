@@ -134,10 +134,19 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		return nil, fmt.Errorf("get metadata accessor: %w", err)
 	}
 
-	// For folder resources, set the folder field to the folder's own ID
-	// This is important for authorization: when checking permissions on a folder itself,
-	// the third parameter to Check() should be the folder's ID, not its parent.
-	meta.SetFolder(folderID)
+	// For folder resources, set the folder field to the PARENT folder's ID.
+	// This matches how folder permissions work: when checking permissions on a folder,
+	// we check in the context of its parent folder.
+	parentPath := safepath.Dir(path)
+	var parentFolderID string
+	if parentPath == "" {
+		// Root-level folder - parent is the root (empty string)
+		parentFolderID = ""
+	} else {
+		// Get the parent folder's ID
+		parentFolderID = GetFolderID(ctx, reader, parentPath, ref, folderMetadataEnabled)
+	}
+	meta.SetFolder(parentFolderID)
 
 	return &ParsedResource{
 		Info: &repository.FileInfo{

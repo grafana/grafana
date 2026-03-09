@@ -208,16 +208,17 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 			mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil, repository.ErrFileNotFound).Maybe()
 
-			expectedFolderID := ParseFolder(tt.path, tt.repoName).ID
+			// The folder context is the PARENT folder ID, not the folder's own ID
+			expectedParentFolderID := RootFolder(repo) // Root-level folders have "" as parent
 
 			if tt.shouldAllow {
 				mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 					return req.Verb == utils.VerbDelete &&
 						req.Group == FolderResource.Group &&
 						req.Resource == FolderResource.Resource
-				}), expectedFolderID).Return(nil).Once()
+				}), expectedParentFolderID).Return(nil).Once()
 			} else {
-				mockAccess.On("Check", mock.Anything, mock.Anything, expectedFolderID).Return(assert.AnError).Once()
+				mockAccess.On("Check", mock.Anything, mock.Anything, expectedParentFolderID).Return(assert.AnError).Once()
 			}
 
 			authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
@@ -356,17 +357,20 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 						Name: "test-repo",
 					},
 				}
-				// Mock Config() for ParseFolderResource
-				rw.On("Config").Return(repo)
+				// Mock Config() for GetFolderID calls (may be called multiple times for parent)
+				rw.On("Config").Return(repo).Maybe()
 				// Return folder metadata with stable UID
 				folderMeta := NewFolderManifest("stable-uid-123", "my-folder")
 				data, _ := json.Marshal(folderMeta)
 				rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 					Return(&repository.FileInfo{Data: data}, nil)
+				// Parent folder metadata doesn't exist (root)
+				rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, repository.ErrFileNotFound).Maybe()
 				return rw
 			},
 			folderPath:     "my-folder/",
-			expectedFolder: "stable-uid-123",
+			expectedFolder: "", // Root folder (parent of my-folder)
 			shouldPass:     true,
 			description:    "Should use stable UID from _folder.json when it exists",
 		},
@@ -379,15 +383,15 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 						Name: "test-repo",
 					},
 				}
-				// Mock Config() for GetFolderID fallback
-				rw.On("Config").Return(repo)
-				// Return not found error for _folder.json
-				rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
-					Return(nil, repository.ErrFileNotFound)
+				// Mock Config() for GetFolderID fallback (may be called multiple times)
+				rw.On("Config").Return(repo).Maybe()
+				// Return not found error for all _folder.json reads
+				rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, repository.ErrFileNotFound).Maybe()
 				return rw
 			},
 			folderPath:     "my-folder/",
-			expectedFolder: ParseFolder("my-folder/", "test-repo").ID,
+			expectedFolder: "", // Root folder (parent of my-folder)
 			shouldPass:     true,
 			description:    "Should fall back to hash-based ID when _folder.json doesn't exist",
 		},
@@ -444,13 +448,16 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 						Name: "test-repo",
 					},
 				}
-				// Mock Config() for ParseFolderResource
-				rw.On("Config").Return(repo)
+				// Mock Config() for GetFolderID calls (may be called multiple times)
+				rw.On("Config").Return(repo).Maybe()
 				// Parent folder metadata exists
 				parentMeta := NewFolderManifest("parent-stable-uid", "parent")
 				data, _ := json.Marshal(parentMeta)
 				rw.On("Read", mock.Anything, "parent/_folder.json", "").
 					Return(&repository.FileInfo{Data: data}, nil)
+				// Other metadata reads fail
+				rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, repository.ErrFileNotFound).Maybe()
 				return rw
 			},
 			childPath:        "parent/child/",
@@ -467,10 +474,11 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 						Name: "test-repo",
 					},
 				}
-				// Mock Config() for GetFolderID fallback
-				rw.On("Config").Return(repo)
-				rw.On("Read", mock.Anything, "parent/_folder.json", "").
-					Return(nil, repository.ErrFileNotFound)
+				// Mock Config() for GetFolderID fallback (may be called multiple times)
+				rw.On("Config").Return(repo).Maybe()
+				// All metadata reads fail
+				rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, repository.ErrFileNotFound).Maybe()
 				return rw
 			},
 			childPath:        "parent/child/",
@@ -520,8 +528,8 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
 
-		// Mock Config() for ParseFolderResource
-		rw.On("Config").Return(repo)
+		// Mock Config() for GetFolderID calls (may be called multiple times)
+		rw.On("Config").Return(repo).Maybe()
 
 		// Source folder has metadata
 		sourceMeta := NewFolderManifest("source-stable-uid", "source")
@@ -534,6 +542,10 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 		targetParentData, _ := json.Marshal(targetParentMeta)
 		rw.On("Read", mock.Anything, "target-parent/_folder.json", "").
 			Return(&repository.FileInfo{Data: targetParentData}, nil)
+
+		// Other metadata reads fail
+		rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
 
 		mockAccess := auth.NewMockAccessChecker(t)
 
