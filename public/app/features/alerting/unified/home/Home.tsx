@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -14,7 +15,9 @@ import { PluginIntegrations } from './PluginIntegrations';
 import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
 function Home() {
-  const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+  // In V2 nav, insights are shown under the Insights nav item, not on the home page
+  const insightsEnabled = !useV2Nav && (insightsIsAvailable() || isLocalDevEnv());
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
   const insightsScene = getInsightsScenes();

@@ -1,11 +1,14 @@
+import { useAlertHistoryNav } from '../../../navigation/useInsightsNav';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
 import { CentralAlertHistoryScene } from './CentralAlertHistoryScene';
 
 function HistoryPage() {
+  const { navId, pageNav } = useAlertHistoryNav();
+
   return (
-    <AlertingPageWrapper navId="alerts-history" isLoading={false}>
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} isLoading={false}>
       <CentralAlertHistoryScene />
     </AlertingPageWrapper>
   );

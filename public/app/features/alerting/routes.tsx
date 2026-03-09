@@ -264,6 +264,15 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/insights',
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "SystemInsightsPage" */ 'app/features/alerting/unified/insights/SystemInsightsPage'
+          )
+      ),
+    },
+    {
       path: '/alerting/history/',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
       component: importAlertingComponent(
