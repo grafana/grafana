@@ -1,7 +1,7 @@
 import { get as lodashGet } from 'lodash';
 import { useMemo } from 'react';
 
-import { PanelOptionsEditorBuilder, PanelPlugin, StandardEditorContext } from '@grafana/data';
+import { PanelOptionsEditorBuilder, PanelPlugin, StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { isNestedPanelOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, createMonitoringLogger } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import { VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DashboardEditActionEvent } from './shared';
 
@@ -50,7 +51,7 @@ export function useQuickEditOptions({
   plugin,
   enabled = true,
 }: UseQuickEditOptionsProps): OptionsPaneCategoryDescriptor | null {
-  const { options: currentOptions } = panel.useState();
+  const { options: currentOptions, _pluginInstanceState } = panel.useState();
 
   return useMemo((): OptionsPaneCategoryDescriptor | null => {
     if (!enabled || !plugin) {
@@ -70,6 +71,8 @@ export function useQuickEditOptions({
       replaceVariables: panel.interpolate,
       eventBus: panel.getPanelContext().eventBus,
       annotations: [],
+      instanceState: _pluginInstanceState,
+      getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions([], scope),
     };
 
     const builder = new PanelOptionsEditorBuilder();
@@ -157,5 +160,5 @@ export function useQuickEditOptions({
     }
 
     return category;
-  }, [enabled, panel, plugin, currentOptions]);
+  }, [enabled, panel, plugin, currentOptions, _pluginInstanceState]);
 }
