@@ -2661,6 +2661,34 @@
     },
     {
       "metadata": {
+        "name": "kubernetesServiceAccountTokensApi",
+        "resourceVersion": "1773060933794",
+        "creationTimestamp": "2026-03-09T12:55:33Z"
+      },
+      "spec": {
+        "description": "Enables service account token APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesServiceAccountsApi",
+        "resourceVersion": "1773060933794",
+        "creationTimestamp": "2026-03-09T12:55:33Z"
+      },
+      "spec": {
+        "description": "Enables service account APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-31T22:56:50Z",
