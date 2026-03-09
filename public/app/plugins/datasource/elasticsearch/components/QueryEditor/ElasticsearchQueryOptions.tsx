@@ -45,8 +45,9 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
 
   if (showSizeField) {
     sizeField = (
-      <InlineField label={label} labelWidth={16} tooltip="Maximum number of documents to return">
+      <InlineField label={label} labelWidth={16} tooltip="Maximum number of documents to return" htmlFor="es-size-field">
         <Input
+          id="es-size-field"
           type="number"
           width={10}
           placeholder="500"
