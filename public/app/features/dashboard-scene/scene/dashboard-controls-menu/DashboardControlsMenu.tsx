@@ -18,7 +18,7 @@ interface DashboardControlsMenuProps {
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
   isEditing?: boolean;
-  dashboard?: DashboardScene;
+  dashboard: DashboardScene;
 }
 
 export function DashboardControlsMenu({
@@ -30,7 +30,7 @@ export function DashboardControlsMenu({
   dashboard,
 }: DashboardControlsMenuProps) {
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
-  const fullLinks = dashboard?.state.links ?? [];
+  const fullLinks = dashboard.state.links ?? [];
 
   return (
     <Box

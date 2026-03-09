@@ -10,17 +10,12 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 
 import {
-  LinkAsDropdownSwitch,
+  LinkBooleanSwitch,
   LinkIconSelect,
-  LinkIncludeVarsSwitch,
-  LinkKeepTimeSwitch,
   LinkPlacementSwitch,
   LinkTagsInput,
-  LinkTargetBlankSwitch,
-  LinkTitleInput,
-  LinkTooltipInput,
+  LinkTextInput,
   LinkTypeSelect,
-  LinkUrlInput,
 } from './LinkBasicOptions';
 import { linkEditActions } from './actions';
 import { NEW_LINK } from './utils';
@@ -84,7 +79,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
         new OptionsPaneItemDescriptor({
           title: '',
           id: titleId,
-          render: () => <LinkTitleInput linkEdit={linkEdit} />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" />,
         })
       )
       .addItem(
@@ -107,7 +102,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
           title: '',
           id: urlId,
           useShowIf: () => useLinkTypeShowIf(linkEdit, 'link'),
-          render: () => <LinkUrlInput linkEdit={linkEdit} />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="url" />,
         })
       )
       .addItem(
@@ -115,7 +110,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
           title: '',
           id: tooltipId,
           useShowIf: () => useLinkTypeShowIf(linkEdit, 'link'),
-          render: () => <LinkTooltipInput linkEdit={linkEdit} />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="tooltip" />,
         })
       )
       .addItem(
@@ -144,28 +139,28 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
             const link = (links ?? [])[linkEdit.state.linkIndex];
             return link?.type === 'dashboards';
           },
-          render: (d) => <LinkAsDropdownSwitch linkEdit={linkEdit} id={d.props.id} />,
+          render: (d) => <LinkBooleanSwitch linkEdit={linkEdit} id={d.props.id} prop="asDropdown" />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.link-options.include-time-range', 'Include current time range'),
           id: keepTimeId,
-          render: (d) => <LinkKeepTimeSwitch linkEdit={linkEdit} id={d.props.id} />,
+          render: (d) => <LinkBooleanSwitch linkEdit={linkEdit} id={d.props.id} prop="keepTime" />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.link-options.include-variables', 'Include current template variable values'),
           id: includeVarsId,
-          render: (d) => <LinkIncludeVarsSwitch linkEdit={linkEdit} id={d.props.id} />,
+          render: (d) => <LinkBooleanSwitch linkEdit={linkEdit} id={d.props.id} prop="includeVars" />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.link-options.open-in-new-tab', 'Open link in new tab'),
           id: targetBlankId,
-          render: (d) => <LinkTargetBlankSwitch linkEdit={linkEdit} id={d.props.id} />,
+          render: (d) => <LinkBooleanSwitch linkEdit={linkEdit} id={d.props.id} prop="targetBlank" />,
         })
       )
       .addItem(

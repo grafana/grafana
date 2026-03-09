@@ -26,34 +26,77 @@ function commitUpdate(dashboard: DashboardScene, linkIndex: number, oldLink: Das
   linkEditActions.updateLink({ dashboard, linkIndex, oldLink, newLink });
 }
 
-export function LinkTitleInput({ linkEdit }: { linkEdit: LinkEdit }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  const oldTitle = useRef(link?.title ?? '');
+export type TextLinkProp = 'title' | 'url' | 'tooltip';
 
-  if (!link) {
+const TEXT_LINK_PROP_CONFIG: Record<
+  TextLinkProp,
+  {
+    labelKey: string;
+    labelFallback: string;
+    placeholderKey?: string;
+    placeholderFallback?: string;
+    blurDescriptionKey: string;
+    blurDescriptionFallback: string;
+    showIf: (link: DashboardLink) => boolean;
+  }
+> = {
+  title: {
+    labelKey: 'dashboard-scene.link-options.title',
+    labelFallback: 'Title',
+    blurDescriptionKey: 'dashboard-scene.link-edit-actions.change-title',
+    blurDescriptionFallback: 'Change link title',
+    showIf: () => true,
+  },
+  url: {
+    labelKey: 'dashboard-scene.link-options.url',
+    labelFallback: 'URL',
+    blurDescriptionKey: 'dashboard-scene.link-edit-actions.change-url',
+    blurDescriptionFallback: 'Change link URL',
+    showIf: (link) => link.type === 'link',
+  },
+  tooltip: {
+    labelKey: 'dashboard-scene.link-options.tooltip',
+    labelFallback: 'Tooltip',
+    placeholderKey: 'dashboard-scene.link-options.tooltip-placeholder',
+    placeholderFallback: 'Open dashboard',
+    blurDescriptionKey: 'dashboard-scene.link-edit-actions.change-tooltip',
+    blurDescriptionFallback: 'Change link tooltip',
+    showIf: (link) => link.type === 'link',
+  },
+};
+
+export function LinkTextInput({ linkEdit, prop }: { linkEdit: LinkEdit; prop: TextLinkProp }) {
+  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
+  const config = TEXT_LINK_PROP_CONFIG[prop];
+  const oldValue = useRef(link?.[prop] ?? '');
+  if (!link || !config.showIf(link)) {
     return null;
   }
-
   return (
-    <Field label={t('dashboard-scene.link-options.title', 'Title')} noMargin>
+    <Field label={t(config.labelKey, config.labelFallback)} noMargin>
       <Input
-        value={link.title}
+        value={link[prop] ?? ''}
+        placeholder={
+          config.placeholderKey && config.placeholderFallback
+            ? t(config.placeholderKey, config.placeholderFallback)
+            : undefined
+        }
         onFocus={() => {
-          oldTitle.current = link.title;
+          oldValue.current = link[prop] ?? '';
         }}
         onChange={(e) => {
           const links = [...(dashboard.state.links ?? [])];
-          links[linkIndex] = { ...link, title: e.currentTarget.value };
+          links[linkIndex] = { ...link, [prop]: e.currentTarget.value };
           dashboard.setState({ links });
         }}
         onBlur={() => {
-          if (oldTitle.current !== link.title) {
+          if (oldValue.current !== (link[prop] ?? '')) {
             linkEditActions.updateLink({
               dashboard,
               linkIndex,
-              oldLink: { ...link, title: oldTitle.current },
+              oldLink: { ...link, [prop]: oldValue.current },
               newLink: link,
-              description: t('dashboard-scene.link-edit-actions.change-title', 'Change link title'),
+              description: t(config.blurDescriptionKey, config.blurDescriptionFallback),
             });
           }
         }}
@@ -115,79 +158,6 @@ export function LinkTagsInput({ linkEdit }: { linkEdit: LinkEdit }) {
   );
 }
 
-export function LinkUrlInput({ linkEdit }: { linkEdit: LinkEdit }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  const oldUrl = useRef(link?.url ?? '');
-
-  if (!link || link.type !== 'link') {
-    return null;
-  }
-
-  return (
-    <Field label={t('dashboard-scene.link-options.url', 'URL')} noMargin>
-      <Input
-        value={link.url}
-        onFocus={() => {
-          oldUrl.current = link.url ?? '';
-        }}
-        onChange={(e) => {
-          const links = [...(dashboard.state.links ?? [])];
-          links[linkIndex] = { ...link, url: e.currentTarget.value };
-          dashboard.setState({ links });
-        }}
-        onBlur={() => {
-          if (oldUrl.current !== link.url) {
-            linkEditActions.updateLink({
-              dashboard,
-              linkIndex,
-              oldLink: { ...link, url: oldUrl.current },
-              newLink: link,
-              description: t('dashboard-scene.link-edit-actions.change-url', 'Change link URL'),
-            });
-          }
-        }}
-      />
-    </Field>
-  );
-}
-
-export function LinkTooltipInput({ linkEdit }: { linkEdit: LinkEdit }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  const oldTooltip = useRef(link?.tooltip ?? '');
-
-  if (!link || link.type !== 'link') {
-    return null;
-  }
-
-  return (
-    <Field label={t('dashboard-scene.link-options.tooltip', 'Tooltip')} noMargin>
-      <Input
-        value={link.tooltip}
-        placeholder={t('dashboard-scene.link-options.tooltip-placeholder', 'Open dashboard')}
-        onFocus={() => {
-          oldTooltip.current = link.tooltip;
-        }}
-        onChange={(e) => {
-          const links = [...(dashboard.state.links ?? [])];
-          links[linkIndex] = { ...link, tooltip: e.currentTarget.value };
-          dashboard.setState({ links });
-        }}
-        onBlur={() => {
-          if (oldTooltip.current !== link.tooltip) {
-            linkEditActions.updateLink({
-              dashboard,
-              linkIndex,
-              oldLink: { ...link, tooltip: oldTooltip.current },
-              newLink: link,
-              description: t('dashboard-scene.link-edit-actions.change-tooltip', 'Change link tooltip'),
-            });
-          }
-        }}
-      />
-    </Field>
-  );
-}
-
 export function LinkIconSelect({ linkEdit }: { linkEdit: LinkEdit }) {
   const { dashboard, link, linkIndex } = useLinkState(linkEdit);
 
@@ -206,21 +176,17 @@ export function LinkIconSelect({ linkEdit }: { linkEdit: LinkEdit }) {
   );
 }
 
-export function LinkAsDropdownSwitch({ linkEdit, id }: { linkEdit: LinkEdit; id?: string }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  if (!link) {
-    return null;
-  }
-  return (
-    <Switch
-      id={id}
-      value={link.asDropdown}
-      onChange={(e) => commitUpdate(dashboard, linkIndex, link, { ...link, asDropdown: e.currentTarget.checked })}
-    />
-  );
-}
+export type BooleanLinkProp = 'asDropdown' | 'keepTime' | 'includeVars' | 'targetBlank';
 
-export function LinkKeepTimeSwitch({ linkEdit, id }: { linkEdit: LinkEdit; id?: string }) {
+export function LinkBooleanSwitch({
+  linkEdit,
+  id,
+  prop,
+}: {
+  linkEdit: LinkEdit;
+  id?: string;
+  prop: BooleanLinkProp;
+}) {
   const { dashboard, link, linkIndex } = useLinkState(linkEdit);
   if (!link) {
     return null;
@@ -228,36 +194,8 @@ export function LinkKeepTimeSwitch({ linkEdit, id }: { linkEdit: LinkEdit; id?: 
   return (
     <Switch
       id={id}
-      value={link.keepTime}
-      onChange={(e) => commitUpdate(dashboard, linkIndex, link, { ...link, keepTime: e.currentTarget.checked })}
-    />
-  );
-}
-
-export function LinkIncludeVarsSwitch({ linkEdit, id }: { linkEdit: LinkEdit; id?: string }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  if (!link) {
-    return null;
-  }
-  return (
-    <Switch
-      id={id}
-      value={link.includeVars}
-      onChange={(e) => commitUpdate(dashboard, linkIndex, link, { ...link, includeVars: e.currentTarget.checked })}
-    />
-  );
-}
-
-export function LinkTargetBlankSwitch({ linkEdit, id }: { linkEdit: LinkEdit; id?: string }) {
-  const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  if (!link) {
-    return null;
-  }
-  return (
-    <Switch
-      id={id}
-      value={link.targetBlank}
-      onChange={(e) => commitUpdate(dashboard, linkIndex, link, { ...link, targetBlank: e.currentTarget.checked })}
+      value={link[prop]}
+      onChange={(e) => commitUpdate(dashboard, linkIndex, link, { ...link, [prop]: e.currentTarget.checked })}
     />
   );
 }

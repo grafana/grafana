@@ -9,17 +9,12 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { LinkEdit } from './LinkAddEditableElement';
 import {
-  LinkAsDropdownSwitch,
+  LinkBooleanSwitch,
   LinkIconSelect,
-  LinkIncludeVarsSwitch,
-  LinkKeepTimeSwitch,
   LinkPlacementSwitch,
   LinkTagsInput,
-  LinkTargetBlankSwitch,
-  LinkTitleInput,
-  LinkTooltipInput,
+  LinkTextInput,
   LinkTypeSelect,
-  LinkUrlInput,
 } from './LinkBasicOptions';
 
 const LINK_TYPE_LINK: DashboardLink = {
@@ -66,66 +61,124 @@ function createLinkEdit(dashboard: DashboardScene, linkIndex = 0) {
 }
 
 describe('LinkBasicOptions', () => {
-  describe('LinkTitleInput', () => {
-    it('renders with the current link title', () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
+  describe('LinkTextInput', () => {
+    describe('prop="title"', () => {
+      it('renders with the current link title', () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkTitleInput linkEdit={linkEdit} />);
+        render(<LinkTextInput linkEdit={linkEdit} prop="title" />);
 
-      expect(screen.getByRole('textbox')).toHaveValue('Test Link');
+        expect(screen.getByRole('textbox')).toHaveValue('Test Link');
+      });
+
+      it('updates the title on change and commits on blur', async () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
+
+        render(<LinkTextInput linkEdit={linkEdit} prop="title" />);
+
+        const input = screen.getByRole('textbox');
+        fireEvent.focus(input);
+        await userEvent.clear(input);
+        await userEvent.type(input, 'Updated Title');
+        fireEvent.blur(input);
+
+        expect(dashboard.state.links[0].title).toBe('Updated Title');
+      });
+
+      it('supports undo/redo for title changes', async () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
+        const editPane = dashboard.state.editPane;
+
+        render(<LinkTextInput linkEdit={linkEdit} prop="title" />);
+
+        const input = screen.getByRole('textbox');
+
+        fireEvent.focus(input);
+        await userEvent.clear(input);
+        await userEvent.type(input, 'Changed');
+        fireEvent.blur(input);
+
+        expect(input).toHaveValue('Changed');
+        expect(editPane.state.undoStack).toHaveLength(1);
+
+        act(() => editPane.undoAction());
+
+        expect(input).toHaveValue('Test Link');
+        expect(editPane.state.undoStack).toHaveLength(0);
+        expect(editPane.state.redoStack).toHaveLength(1);
+
+        act(() => editPane.redoAction());
+
+        expect(input).toHaveValue('Changed');
+      });
+
+      it('returns null when link does not exist', () => {
+        const dashboard = buildDashboard([]);
+        const linkEdit = createLinkEdit(dashboard, 99);
+
+        const { container } = render(<LinkTextInput linkEdit={linkEdit} prop="title" />);
+
+        expect(container.innerHTML).toBe('');
+      });
     });
 
-    it('updates the title on change and commits on blur', async () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
+    describe('prop="url"', () => {
+      it('renders for link type with current URL', () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkTitleInput linkEdit={linkEdit} />);
+        render(<LinkTextInput linkEdit={linkEdit} prop="url" />);
 
-      const input = screen.getByRole('textbox');
-      fireEvent.focus(input);
-      await userEvent.clear(input);
-      await userEvent.type(input, 'Updated Title');
-      fireEvent.blur(input);
+        expect(screen.getByRole('textbox')).toHaveValue('https://example.com');
+      });
 
-      expect(dashboard.state.links[0].title).toBe('Updated Title');
+      it('returns null for dashboards type', () => {
+        const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
+        const linkEdit = createLinkEdit(dashboard);
+
+        const { container } = render(<LinkTextInput linkEdit={linkEdit} prop="url" />);
+
+        expect(container.innerHTML).toBe('');
+      });
+
+      it('updates URL on change and commits on blur', async () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
+
+        render(<LinkTextInput linkEdit={linkEdit} prop="url" />);
+
+        const input = screen.getByRole('textbox');
+        fireEvent.focus(input);
+        await userEvent.clear(input);
+        await userEvent.type(input, 'https://new-url.com');
+        fireEvent.blur(input);
+
+        expect(dashboard.state.links[0].url).toBe('https://new-url.com');
+        expect(dashboard.state.editPane.state.undoStack).toHaveLength(1);
+      });
     });
 
-    it('supports undo/redo for title changes', async () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
-      const editPane = dashboard.state.editPane;
+    describe('prop="tooltip"', () => {
+      it('renders for link type with current tooltip', () => {
+        const dashboard = buildDashboard([LINK_TYPE_LINK]);
+        const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkTitleInput linkEdit={linkEdit} />);
+        render(<LinkTextInput linkEdit={linkEdit} prop="tooltip" />);
 
-      const input = screen.getByRole('textbox');
+        expect(screen.getByRole('textbox')).toHaveValue('Test tooltip');
+      });
 
-      fireEvent.focus(input);
-      await userEvent.clear(input);
-      await userEvent.type(input, 'Changed');
-      fireEvent.blur(input);
+      it('returns null for dashboards type', () => {
+        const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
+        const linkEdit = createLinkEdit(dashboard);
 
-      expect(input).toHaveValue('Changed');
-      expect(editPane.state.undoStack).toHaveLength(1);
+        const { container } = render(<LinkTextInput linkEdit={linkEdit} prop="tooltip" />);
 
-      act(() => editPane.undoAction());
-
-      expect(input).toHaveValue('Test Link');
-      expect(editPane.state.undoStack).toHaveLength(0);
-      expect(editPane.state.redoStack).toHaveLength(1);
-
-      act(() => editPane.redoAction());
-
-      expect(input).toHaveValue('Changed');
-    });
-
-    it('returns null when link does not exist', () => {
-      const dashboard = buildDashboard([]);
-      const linkEdit = createLinkEdit(dashboard, 99);
-
-      const { container } = render(<LinkTitleInput linkEdit={linkEdit} />);
-
-      expect(container.innerHTML).toBe('');
+        expect(container.innerHTML).toBe('');
+      });
     });
   });
 
@@ -182,62 +235,6 @@ describe('LinkBasicOptions', () => {
     });
   });
 
-  describe('LinkUrlInput', () => {
-    it('renders for link type with current URL', () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      render(<LinkUrlInput linkEdit={linkEdit} />);
-
-      expect(screen.getByRole('textbox')).toHaveValue('https://example.com');
-    });
-
-    it('returns null for dashboards type', () => {
-      const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      const { container } = render(<LinkUrlInput linkEdit={linkEdit} />);
-
-      expect(container.innerHTML).toBe('');
-    });
-
-    it('updates URL on change and commits on blur', async () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      render(<LinkUrlInput linkEdit={linkEdit} />);
-
-      const input = screen.getByRole('textbox');
-      fireEvent.focus(input);
-      await userEvent.clear(input);
-      await userEvent.type(input, 'https://new-url.com');
-      fireEvent.blur(input);
-
-      expect(dashboard.state.links[0].url).toBe('https://new-url.com');
-      expect(dashboard.state.editPane.state.undoStack).toHaveLength(1);
-    });
-  });
-
-  describe('LinkTooltipInput', () => {
-    it('renders for link type with current tooltip', () => {
-      const dashboard = buildDashboard([LINK_TYPE_LINK]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      render(<LinkTooltipInput linkEdit={linkEdit} />);
-
-      expect(screen.getByRole('textbox')).toHaveValue('Test tooltip');
-    });
-
-    it('returns null for dashboards type', () => {
-      const dashboard = buildDashboard([LINK_TYPE_DASHBOARDS]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      const { container } = render(<LinkTooltipInput linkEdit={linkEdit} />);
-
-      expect(container.innerHTML).toBe('');
-    });
-  });
-
   describe('LinkIconSelect', () => {
     it('renders for link type', () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
@@ -258,12 +255,12 @@ describe('LinkBasicOptions', () => {
     });
   });
 
-  describe('option switches', () => {
-    it('LinkKeepTimeSwitch toggles keepTime', async () => {
+  describe('LinkBooleanSwitch', () => {
+    it('toggles keepTime', async () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkKeepTimeSwitch linkEdit={linkEdit} id="keep-time" />);
+      render(<LinkBooleanSwitch linkEdit={linkEdit} id="keep-time" prop="keepTime" />);
 
       const toggle = document.getElementById('keep-time') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -272,11 +269,11 @@ describe('LinkBasicOptions', () => {
       expect(dashboard.state.links[0].keepTime).toBe(true);
     });
 
-    it('LinkIncludeVarsSwitch toggles includeVars', async () => {
+    it('toggles includeVars', async () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkIncludeVarsSwitch linkEdit={linkEdit} id="include-vars" />);
+      render(<LinkBooleanSwitch linkEdit={linkEdit} id="include-vars" prop="includeVars" />);
 
       const toggle = document.getElementById('include-vars') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -285,11 +282,11 @@ describe('LinkBasicOptions', () => {
       expect(dashboard.state.links[0].includeVars).toBe(true);
     });
 
-    it('LinkTargetBlankSwitch toggles targetBlank', async () => {
+    it('toggles targetBlank', async () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
-      render(<LinkTargetBlankSwitch linkEdit={linkEdit} id="target-blank" />);
+      render(<LinkBooleanSwitch linkEdit={linkEdit} id="target-blank" prop="targetBlank" />);
 
       const toggle = document.getElementById('target-blank') as HTMLInputElement;
       expect(toggle.checked).toBe(false);
@@ -298,7 +295,22 @@ describe('LinkBasicOptions', () => {
       expect(dashboard.state.links[0].targetBlank).toBe(true);
     });
 
-    it('LinkPlacementSwitch sets placement to inControlsMenu', async () => {
+    it('toggles asDropdown', async () => {
+      const dashboard = buildDashboard([{ ...LINK_TYPE_DASHBOARDS, asDropdown: false }]);
+      const linkEdit = createLinkEdit(dashboard);
+
+      render(<LinkBooleanSwitch linkEdit={linkEdit} id="as-dropdown" prop="asDropdown" />);
+
+      const toggle = document.getElementById('as-dropdown') as HTMLInputElement;
+      expect(toggle.checked).toBe(false);
+
+      await userEvent.click(toggle);
+      expect(dashboard.state.links[0].asDropdown).toBe(true);
+    });
+  });
+
+  describe('LinkPlacementSwitch', () => {
+    it('sets placement to inControlsMenu', async () => {
       const dashboard = buildDashboard([LINK_TYPE_LINK]);
       const linkEdit = createLinkEdit(dashboard);
 
@@ -307,19 +319,6 @@ describe('LinkBasicOptions', () => {
       const toggle = document.getElementById('placement') as HTMLInputElement;
       await userEvent.click(toggle);
       expect(dashboard.state.links[0].placement).toBe('inControlsMenu');
-    });
-
-    it('LinkAsDropdownSwitch toggles asDropdown', async () => {
-      const dashboard = buildDashboard([{ ...LINK_TYPE_DASHBOARDS, asDropdown: false }]);
-      const linkEdit = createLinkEdit(dashboard);
-
-      render(<LinkAsDropdownSwitch linkEdit={linkEdit} id="as-dropdown" />);
-
-      const toggle = document.getElementById('as-dropdown') as HTMLInputElement;
-      expect(toggle.checked).toBe(false);
-
-      await userEvent.click(toggle);
-      expect(dashboard.state.links[0].asDropdown).toBe(true);
     });
   });
 });
