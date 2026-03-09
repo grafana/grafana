@@ -320,4 +320,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-25,managedPluginsV2,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-02-25,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
 2026-02-23,dsAbstractionApp,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
