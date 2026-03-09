@@ -1,4 +1,4 @@
-import { DataSourceApi, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '@grafana/prometheus';
 import { AdHocFiltersVariable, SceneDataQuery, SceneObject, sceneGraph } from '@grafana/scenes';
 import { useVariableValue } from '@grafana/scenes-react';
@@ -52,10 +52,14 @@ export function useQueryFilter(): string {
 type AdHocFilterOperator = '=' | '!=' | '=~' | '!~' | '=|' | '!=|';
 
 /**
- * Type guard that narrows a `DataSourceApi` to `PrometheusDatasource`.
- * Uses `instanceof` so TypeScript fully narrows the type without an unsafe cast.
+ * Type guard that narrows an unknown value to `PrometheusDatasource`.
+ * The parameter is typed as `unknown` rather than `DataSourceApi` because
+ * `PrometheusDatasource` is not structurally assignable to the base class
+ * (generic variance in `components`/`annotations` causes a TS2677 error).
+ * Using `unknown` is safe here: `instanceof` performs the runtime check and
+ * TypeScript narrows the type correctly at every call site.
  */
-export function isPrometheusDatasource(ds: DataSourceApi): ds is PrometheusDatasource {
+export function isPrometheusDatasource(ds: unknown): ds is PrometheusDatasource {
   return ds instanceof PrometheusDatasource;
 }
 

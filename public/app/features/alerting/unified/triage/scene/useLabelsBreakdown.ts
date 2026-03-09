@@ -9,6 +9,14 @@ import { DATASOURCE_UID, INTERNAL_LABELS, METRIC_NAME } from '../constants';
 
 import { isPrometheusDatasource, useQueryFilter } from './utils';
 
+/**
+ * Maximum number of series to fetch from /api/v1/series.
+ * Prometheus 2.47+ honours the `limit` query parameter; older versions ignore it.
+ * Keeping this bounded prevents multi-second main-thread freezes when the metric
+ * has an extremely high cardinality (e.g. 230 MB of JSON ≈ 1.1 M series).
+ */
+const MAX_SERIES = 100_000;
+
 export interface LabelValueCount {
   value: string;
   firing: number;
@@ -34,7 +42,12 @@ export function useLabelsBreakdown(): {
     if (!isPrometheusDatasource(ds)) {
       throw new Error(`Expected a Prometheus datasource but got "${ds.type}"`);
     }
-    const result = await ds.metadataRequest('/api/v1/series', { 'match[]': matchSelector, start, end });
+    const result = await ds.metadataRequest('/api/v1/series', {
+      'match[]': matchSelector,
+      start,
+      end,
+      limit: String(MAX_SERIES),
+    });
     const raw: Array<Record<string, string>> = result?.data?.data ?? [];
     return computeLabelStats(deduplicateSeries(raw));
   });
@@ -65,24 +78,44 @@ export function useLabelsBreakdown(): {
  * Two series are considered the same instance when all their labels match
  * except for `alertstate` and `grafana_alertstate`.
  */
+
+// Labels that differentiate alertstate but not the underlying instance identity.
+const STATE_LABELS = new Set(['alertstate', 'grafana_alertstate']);
+
+// Intl.Collator is kept because Prometheus label names can be UTF-8.
 const collator = new Intl.Collator();
 
 export function deduplicateSeries(series: Array<Record<string, string>>): Array<Record<string, string>> {
-  // Labels that differentiate alertstate but not the underlying instance identity.
-  const STATE_LABELS = new Set(['alertstate', 'grafana_alertstate']);
-
-  function fingerprint(s: Record<string, string>): string {
-    return Object.entries(s)
-      .filter(([k]) => !STATE_LABELS.has(k))
-      .sort(([a], [b]) => collator.compare(a, b))
-      .map(([k, v]) => `${k}=${v}`)
-      .join(',');
+  if (series.length === 0) {
+    return [];
   }
 
+  // Collect all non-state keys by sampling the first 100 series, then sort ONCE.
+  // Prometheus series from the same metric share the same label schema in practice,
+  // but sampling handles the heterogeneous case without scanning the entire array.
+  const keysSet = new Set<string>();
+  const sampleSize = Math.min(100, series.length);
+  for (let i = 0; i < sampleSize; i++) {
+    for (const k in series[i]) {
+      if (!STATE_LABELS.has(k)) {
+        keysSet.add(k);
+      }
+    }
+  }
+  const sortedKeys = [...keysSet].sort((a, b) => collator.compare(a, b));
+
   // Group series by their instance fingerprint.
+  // Building the fingerprint from pre-sorted keys avoids re-sorting on every series.
+  // The null-byte separator prevents ambiguous concatenations (e.g. "a=bc" vs "a=b" + "c=").
   const groups = new Map<string, Array<Record<string, string>>>();
   for (const s of series) {
-    const fp = fingerprint(s);
+    let fp = '';
+    for (const k of sortedKeys) {
+      const v = s[k];
+      if (v !== undefined) {
+        fp += k + '=' + v + '\x00';
+      }
+    }
     const group = groups.get(fp);
     if (group) {
       group.push(s);
@@ -109,12 +142,15 @@ export function computeLabelStats(series: Array<Record<string, string>>): LabelS
 
   for (const s of series) {
     const isFiring = s.alertstate === 'firing';
-    const isPending = s.alertstate === 'pending';
+    const isPending = !isFiring && s.alertstate === 'pending';
 
-    for (const [key, value] of Object.entries(s)) {
+    // for..in avoids the Array allocation that Object.entries() creates on every iteration.
+    for (const key in s) {
       if (INTERNAL_LABELS.has(key)) {
         continue;
       }
+
+      const value = s[key];
 
       const stats = getOrCreate(keyStats, key, () => ({
         count: 0,
