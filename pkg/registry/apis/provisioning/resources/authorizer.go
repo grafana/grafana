@@ -47,14 +47,6 @@ type Authorizer interface {
 	//   - This prevents bypassing folder permissions via file metadata manipulation
 	AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error
 
-	// AuthorizeFolder checks if the current user has permission to perform
-	// the specified verb on the folder at the given path.
-	//
-	// Example:
-	//   - AuthorizeFolder(ctx, "team-a/", "create") checks create permission on "team-a/"
-	//   - AuthorizeFolder(ctx, "team-a/project-x/", "delete") checks delete permission on "team-a/project-x/"
-	AuthorizeFolder(ctx context.Context, path string, verb string) error
-
 	// AuthorizeCreateFolder checks if the current user has permission to create
 	// a folder at the specified path. This checks create permission on the parent folder.
 	//
@@ -157,8 +149,8 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 	}, folder)
 }
 
-// AuthorizeFolder checks if the user has permission to perform the specified verb
-// on the folder at the given path.
+// authorizeFolder is a private helper that checks if the user has permission to perform
+// the specified verb on the folder at the given path.
 //
 // Authorization model:
 //   - For delete: Checks permission in the parent folder context (removing from parent)
@@ -167,7 +159,7 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 //
 // When folder metadata is enabled, folder IDs are determined by reading _folder.json.
 // Otherwise, it falls back to hash-based ID.
-func (a *ProvisioningAuthorizer) AuthorizeFolder(ctx context.Context, path string, verb string) error {
+func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path string, verb string) error {
 	// Get the folder's ID
 	folderID := GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
 
@@ -228,7 +220,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 	}
 
 	// Check create permission on the parent folder
-	return a.AuthorizeFolder(ctx, parentPath, utils.VerbCreate)
+	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
 // AuthorizeDeleteFolder checks if the user has permission to delete the folder at the
@@ -247,7 +239,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 //	- Does NOT check: permissions on dashboard A, B, or C
 //	- Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
-	return a.AuthorizeFolder(ctx, path, utils.VerbDelete)
+	return a.authorizeFolder(ctx, path, utils.VerbDelete)
 }
 
 // AuthorizeMoveFolder checks if the user has permission to move a folder from
@@ -270,7 +262,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 //	- Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Check update permission on the source folder
-	if err := a.AuthorizeFolder(ctx, originalPath, utils.VerbUpdate); err != nil {
+	if err := a.authorizeFolder(ctx, originalPath, utils.VerbUpdate); err != nil {
 		return err
 	}
 
@@ -291,7 +283,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 	}
 
 	// Check create permission on the target parent folder
-	return a.AuthorizeFolder(ctx, parentPath, utils.VerbCreate)
+	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
 // AuthorizeWrite checks if writes are allowed to the specified ref.
