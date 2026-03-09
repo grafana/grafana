@@ -1335,6 +1335,14 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 					GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
 					Return(tt.bpResult, tt.bpError).
 					Once()
+
+				// If branch protection check succeeded, also expect rulesets check
+				if tt.bpError == nil {
+					mockClient.EXPECT().
+						GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+						Return(nil, nil).
+						Once()
+				}
 			}
 
 			repo := &githubRepository{
@@ -1400,6 +1408,339 @@ func TestBranchProtection_BlocksDirectPush(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.bp.BlocksDirectPush()
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestRulesets_BlocksDirectPush(t *testing.T) {
+	tests := []struct {
+		name     string
+		rulesets *Rulesets
+		expected []string
+	}{
+		{
+			name:     "nil rulesets returns nil",
+			rulesets: nil,
+			expected: nil,
+		},
+		{
+			name:     "no blocking rules",
+			rulesets: &Rulesets{},
+			expected: nil,
+		},
+		{
+			name:     "requires pull request blocks",
+			rulesets: &Rulesets{RequiresPullRequest: true},
+			expected: []string{"ruleset requires pull request"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rulesets.BlocksDirectPush()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGitHubRepository_Test_Rulesets(t *testing.T) {
+	tests := []struct {
+		name               string
+		workflows          []provisioning.Workflow
+		branch             string
+		rulesetsResult     *Rulesets
+		rulesetsError      error
+		expectRulesetsCall bool
+		expectedSuccess    bool
+		expectedErrField   string
+		expectedDetail     string
+	}{
+		{
+			name:      "rulesets require pull request with write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.workflows",
+			expectedDetail:     "ruleset requires pull request",
+		},
+		{
+			name:      "rulesets requiring pull request blocks write workflow",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.workflows",
+			expectedDetail:     "ruleset requires pull request",
+		},
+		{
+			name:               "no blocking rulesets with write workflow succeeds",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsResult:     nil,
+			expectRulesetsCall: true,
+			expectedSuccess:    true,
+		},
+		{
+			name:      "rulesets without write workflow succeeds",
+			workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectRulesetsCall: false,
+			expectedSuccess:    true,
+		},
+		{
+			name:               "GetRulesets error returns test failure",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsError:      errors.New("failed to get rulesets: API error"),
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.github.branch",
+			expectedDetail:     "failed to check repository rulesets",
+		},
+		{
+			name:               "GetRulesets unauthorized (401) returns test failure",
+			workflows:          []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:             "main",
+			rulesetsError:      repo.ErrUnauthorized,
+			expectRulesetsCall: true,
+			expectedSuccess:    false,
+			expectedErrField:   "spec.github.branch",
+			expectedDetail:     "failed to check repository rulesets",
+		},
+		{
+			name:      "rulesets with no blocking rules does not block",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: false,
+			},
+			expectRulesetsCall: true,
+			expectedSuccess:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			// Branch protection check always happens first
+			mockClient.EXPECT().
+				GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+				Return(nil, nil).
+				Maybe()
+
+			if tt.expectRulesetsCall {
+				mockClient.EXPECT().
+					GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+					Return(tt.rulesetsResult, tt.rulesetsError).
+					Once()
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+				assert.Contains(t, result.Errors[0].Detail, tt.expectedDetail)
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
+		})
+	}
+}
+
+func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
+	tests := []struct {
+		name             string
+		workflows        []provisioning.Workflow
+		branch           string
+		bpResult         *BranchProtection
+		bpError          error
+		rulesetsResult   *Rulesets
+		rulesetsError    error
+		expectedSuccess  bool
+		expectedErrField string
+		expectedDetails  []string
+	}{
+		{
+			name:      "both classic protection and rulesets block",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+			},
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"required pull request reviews", "ruleset requires pull request"},
+		},
+		{
+			name:      "classic protection blocks, rulesets clean",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				LockBranch: true,
+			},
+			rulesetsResult:   nil,
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"branch is locked (read-only)"},
+		},
+		{
+			name:      "rulesets block, classic protection clean",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult:  nil,
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails:  []string{"ruleset requires pull request"},
+		},
+		{
+			name:            "both classic protection and rulesets clean",
+			workflows:       []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:          "main",
+			bpResult:        nil,
+			rulesetsResult:  nil,
+			expectedSuccess: true,
+		},
+		{
+			name:      "multiple rules from both sources combined",
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:    "main",
+			bpResult: &BranchProtection{
+				RequiredPullRequestReviews: true,
+				LockBranch:                 true,
+			},
+			rulesetsResult: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			expectedSuccess:  false,
+			expectedErrField: "spec.workflows",
+			expectedDetails: []string{
+				"required pull request reviews",
+				"branch is locked (read-only)",
+				"ruleset requires pull request",
+			},
+		},
+		{
+			name:             "branch protection error stops check",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpError:          errors.New("API error"),
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetails:  []string{"failed to check branch protection"},
+		},
+		{
+			name:             "rulesets error after clean branch protection",
+			workflows:        []provisioning.Workflow{provisioning.WriteWorkflow},
+			branch:           "main",
+			bpResult:         nil,
+			rulesetsError:    errors.New("API error"),
+			expectedSuccess:  false,
+			expectedErrField: "spec.github.branch",
+			expectedDetails:  []string{"failed to check repository rulesets"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockClient := NewMockClient(t)
+
+			config := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: tt.workflows,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: tt.branch,
+					},
+				},
+			}
+
+			mockGitRepo.EXPECT().
+				Test(mock.Anything).
+				Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil).
+				Once()
+
+			mockClient.EXPECT().
+				GetBranchProtection(mock.Anything, "grafana", "grafana", tt.branch).
+				Return(tt.bpResult, tt.bpError).
+				Once()
+
+			// Only call GetRulesets if branch protection didn't error
+			if tt.bpError == nil {
+				mockClient.EXPECT().
+					GetRulesets(mock.Anything, "grafana", "grafana", tt.branch).
+					Return(tt.rulesetsResult, tt.rulesetsError).
+					Once()
+			}
+
+			repo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				gh:            mockClient,
+				owner:         "grafana",
+				repo:          "grafana",
+			}
+
+			result, err := repo.Test(context.Background())
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedSuccess, result.Success)
+
+			if !tt.expectedSuccess {
+				require.NotEmpty(t, result.Errors)
+				assert.Equal(t, tt.expectedErrField, result.Errors[0].Field)
+
+				// Check that all expected details are present in the error message
+				for _, expectedDetail := range tt.expectedDetails {
+					assert.Contains(t, result.Errors[0].Detail, expectedDetail)
+				}
+
+				assert.Equal(t, metav1.CauseTypeFieldValueInvalid, result.Errors[0].Type)
+			}
 		})
 	}
 }

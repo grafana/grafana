@@ -406,7 +406,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -750,7 +749,6 @@ describe('ResponseTransformers', () => {
           canStar: true,
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
         apiVersion: 'v1',
@@ -929,7 +927,6 @@ describe('ResponseTransformers', () => {
           slug: 'dashboard-slug',
           annotationsPermissions: {
             dashboard: { canAdd: true, canEdit: true, canDelete: true },
-            organization: { canAdd: true, canEdit: true, canDelete: true },
           },
         },
       };
