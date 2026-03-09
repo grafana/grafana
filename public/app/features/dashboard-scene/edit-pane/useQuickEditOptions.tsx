@@ -69,7 +69,8 @@ export function useQuickEditOptions({
       if (!item) {
         console.warn(
           `useQuickEditOptions: Quick edit path "${path}" not found in plugin options for "${plugin.meta?.id ?? 'unknown'}". ` +
-            `Make sure the path matches an option defined in setPanelOptions().`
+            `Make sure the path matches an option defined in setPanelOptions(). ` +
+            `Note: Options defined via addNestedOptions() are not currently supported.`
         );
         continue;
       }

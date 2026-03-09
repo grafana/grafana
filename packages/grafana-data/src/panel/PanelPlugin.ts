@@ -287,7 +287,14 @@ export class PanelPlugin<
    *
    * @param paths - Array of option paths (max 5) that should be shown in quick edit.
    *                Paths should match those defined in setPanelOptions.
-   *                Supports nested paths using dot notation (e.g., 'legend.displayMode').
+   *                Supports nested paths using dot notation for options with categories
+   *                (e.g., 'legend.displayMode' for options defined with `category: ['Legend']`).
+   *
+   * @remarks
+   * **Limitations:**
+   * - Options defined via `addNestedOptions()` are not currently supported.
+   *   Only top-level options added directly to the builder are discoverable.
+   * - Field configuration options (defined via `useFieldConfig`) are not supported.
    *
    * @example
    * ```typescript
