@@ -16,6 +16,8 @@ import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -224,6 +226,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   };
 
   const currentOptions = panel.state.options;
+  const quickEditPaths = plugin.getQuickEditPaths() ?? [];
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
@@ -232,6 +235,22 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
           viz_type: plugin.meta.id,
           feature_type: 'time_comparison',
           option_type: value ? 'toggle_enabled' : 'toggle_disabled',
+        });
+      }
+
+      if (quickEditPaths.includes(path)) {
+        let dashboardUid: string | undefined;
+        try {
+          dashboardUid = getDashboardSceneFor(panel).state.uid;
+        } catch {
+          // Dashboard may not be available in all contexts
+        }
+
+        DashboardInteractions.quickEditOptionChanged({
+          panelType: plugin.meta.id,
+          optionPath: path,
+          source: 'panel_editor',
+          dashboardUid,
         });
       }
 

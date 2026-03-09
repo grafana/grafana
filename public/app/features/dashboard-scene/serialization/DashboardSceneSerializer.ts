@@ -22,6 +22,7 @@ import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
+import type { DashboardTrackingInfo, DynamicDashboardsTrackingInformation } from './dashboardTrackingTypes';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
@@ -60,31 +61,6 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getDSReferencesMapping: () => DSReferencesMapping;
   makeExportableExternally: (s: DashboardScene) => Promise<E | { error: unknown }>;
   getK8SMetadata: () => Partial<ObjectMeta> | undefined;
-}
-
-export interface DashboardTrackingInfo {
-  uid?: string;
-  title?: string;
-  schemaVersion: number;
-  panels_count: number;
-  rowCount?: number;
-  settings_nowdelay?: number;
-  settings_livenow?: boolean;
-}
-
-export interface DynamicDashboardsTrackingInformation {
-  panelCount: number;
-  rowCount: number;
-  tabCount: number;
-  templateVariableCount: number;
-  maxNestingLevel: number;
-  conditionalRenderRulesCount: number;
-  autoLayoutCount: number;
-  customGridLayoutCount: number;
-  rowsLayoutCount: number;
-  tabsLayoutCount: number;
-  dashStructure: string;
-  panelsByDatasourceType: Record<string, number>;
 }
 
 interface DynamicDashboardTrackingInformationStructureNode {
