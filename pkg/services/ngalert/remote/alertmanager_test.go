@@ -440,7 +440,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			require.NoError(t, r.Body.Close())
 			got = string(b)
 		} else if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/config") {
-
 			w.Header().Add("content-type", "application/json")
 			configSent := client.UserGrafanaConfig{}
 			if got != "" {
