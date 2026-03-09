@@ -89,6 +89,24 @@ describe('VariableControls', () => {
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
+
+  it('should show skeleton when defaultVariablesLoading is true', () => {
+    const dashboard = buildScene([]);
+    dashboard.activate();
+    dashboard.setState({ defaultVariablesLoading: true });
+
+    const { container } = render(<VariableControls dashboard={dashboard} />);
+    expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
+  });
+
+  it('should not show skeleton when defaultVariablesLoading is false', () => {
+    const dashboard = buildScene([]);
+    dashboard.activate();
+    dashboard.setState({ defaultVariablesLoading: false });
+
+    const { container } = render(<VariableControls dashboard={dashboard} />);
+    expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
+  });
 });
 
 function buildScene(variables: SceneVariable[] = []) {

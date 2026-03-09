@@ -16,7 +16,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
@@ -62,7 +62,10 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import {
+  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  transformSaveModelSchemaV2ToScene,
+} from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
@@ -165,6 +168,10 @@ export interface DashboardSceneState extends SceneObjectState {
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator?: DashboardLayoutOrchestrator;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -290,6 +297,38 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const perRow = Number.parseInt(panelsPerRow, 10);
       this.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
     }
+  }
+
+  public addDefaultVariables(defaultVariables: VariableKind[]) {
+    if (defaultVariables.length === 0) {
+      return;
+    }
+
+    const variableSet = sceneGraph.getVariables(this);
+    const defaultVarObjects = defaultVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v));
+
+    variableSet.setState({
+      variables: [...defaultVarObjects, ...variableSet.state.variables],
+    });
+  }
+
+  public addDefaultLinks(defaultLinks: DashboardLink[]) {
+    if (defaultLinks.length === 0) {
+      return;
+    }
+
+    this.setState({
+      links: [...defaultLinks, ...this.state.links],
+    });
   }
 
   public onEnterEditMode = () => {
