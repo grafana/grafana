@@ -186,7 +186,6 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 		&datasourceV0.QueryTypeDefinition{},
 		&datasourceV0.QueryTypeDefinitionList{},
 		&datasourceV0.QueryResponseSQLSchemas{},
-		&metav1.Status{},
 	)
 }
 

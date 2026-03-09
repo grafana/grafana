@@ -16,7 +16,7 @@ import (
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	sqlSchema := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
+	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{Path: "query",
@@ -79,7 +79,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &sqlSchema,
+															Schema: &sqlSchemas,
 														},
 													},
 												},
