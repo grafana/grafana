@@ -1440,6 +1440,28 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('reloadDashboardsOnParamsChange feature toggle', () => {
+      const setupGetDashboardDTOMock = () => {
+        const getDashboardDTOMock = jest.fn().mockResolvedValue({
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        });
+
+        (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+          getDashboardDTO: getDashboardDTOMock,
+          deleteDashboard: jest.fn(),
+          saveDashboard: jest.fn(),
+        }));
+
+        return getDashboardDTOMock;
+      };
+
       it(
         'should process query params when enabled',
         withFeatureToggle(true, async () => {
@@ -1453,23 +1475,7 @@ describe('DashboardScenePageStateManager v2', () => {
           const expectedFromISO = '2023-10-01T06:00:00.000Z';
           const expectedToISO = '2023-10-01T12:00:00.000Z';
 
-          const getDashboardDTOMock = jest.fn().mockResolvedValue({
-            access: {},
-            apiVersion: 'v2beta1',
-            kind: 'DashboardWithAccessInfo',
-            metadata: {
-              name: 'fake-dash',
-              creationTimestamp: '',
-              resourceVersion: '1',
-            },
-            spec: { ...defaultDashboardV2Spec() },
-          });
-
-          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-            getDashboardDTO: getDashboardDTOMock,
-            deleteDashboard: jest.fn(),
-            saveDashboard: jest.fn(),
-          }));
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
 
           const loader = new DashboardScenePageStateManagerV2({});
           await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -1493,23 +1499,7 @@ describe('DashboardScenePageStateManager v2', () => {
       it(
         'should pass undefined query params when disabled',
         withFeatureToggle(false, async () => {
-          const getDashboardDTOMock = jest.fn().mockResolvedValue({
-            access: {},
-            apiVersion: 'v2beta1',
-            kind: 'DashboardWithAccessInfo',
-            metadata: {
-              name: 'fake-dash',
-              creationTimestamp: '',
-              resourceVersion: '1',
-            },
-            spec: { ...defaultDashboardV2Spec() },
-          });
-
-          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-            getDashboardDTO: getDashboardDTOMock,
-            deleteDashboard: jest.fn(),
-            saveDashboard: jest.fn(),
-          }));
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
 
           const loader = new DashboardScenePageStateManagerV2({});
           await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -1536,23 +1526,7 @@ describe('DashboardScenePageStateManager v2', () => {
           const expectedFromISO = '2023-10-01T06:00:00.000Z';
           const expectedToISO = '2023-10-01T12:00:00.000Z';
 
-          const getDashboardDTOMock = jest.fn().mockResolvedValue({
-            access: {},
-            apiVersion: 'v2beta1',
-            kind: 'DashboardWithAccessInfo',
-            metadata: {
-              name: 'fake-dash',
-              creationTimestamp: '',
-              resourceVersion: '1',
-            },
-            spec: { ...defaultDashboardV2Spec() },
-          });
-
-          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-            getDashboardDTO: getDashboardDTOMock,
-            deleteDashboard: jest.fn(),
-            saveDashboard: jest.fn(),
-          }));
+          const getDashboardDTOMock = setupGetDashboardDTOMock();
 
           const loader = new DashboardScenePageStateManagerV2({});
           await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
@@ -1745,6 +1719,47 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       }
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+    });
+
+    it('should sync state to active manager before reloading', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(manager.state.dashboard).toBeDefined();
+
+      const v2Manager = manager['activeManager'] as DashboardScenePageStateManagerV2;
+
+      // Clear the active manager's state to simulate the bug scenario where
+      // the unified manager has the dashboard but the active manager does not
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      const setStateSpy = jest.spyOn(v2Manager, 'setState');
+
+      v2Manager.fetchDashboard = jest.fn().mockResolvedValue({
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'fake-dash',
+          creationTimestamp: '',
+          resourceVersion: '2',
+          generation: 2,
+        },
+        spec: { ...defaultDashboardV2Spec() },
+      });
+
+      const params = { version: 2, scopes: [], from: 'now-1h', to: 'now' };
+      await manager.reloadDashboard(params);
+
+      // Verify setState was called on the active manager to sync unified state
+      // before the reload operation
+      expect(setStateSpy).toHaveBeenCalled();
+      const firstSetStateCall = setStateSpy.mock.calls[0][0];
+      expect(firstSetStateCall).toHaveProperty('dashboard');
     });
 
     it('should not use cache if cache version and current dashboard state version differ in v1', async () => {
