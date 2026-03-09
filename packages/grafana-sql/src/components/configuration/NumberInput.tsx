@@ -14,6 +14,7 @@ export function NumberInput({ value, defaultValue, onChange, width }: NumberInpu
   return (
     <Input
       type="number"
+      min={0}
       placeholder={String(defaultValue)}
       value={isEmpty ? '' : value}
       onChange={(e) => {

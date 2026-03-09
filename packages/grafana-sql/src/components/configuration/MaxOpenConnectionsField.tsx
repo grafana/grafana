@@ -29,7 +29,7 @@ export function MaxOpenConnectionsField({ labelWidth, onMaxConnectionsChanged, j
                     The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
                     than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
                     <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
-                    to 0, there is no limit on the number of open connections.
+                    to 0, the driver default is used.
                   </Trans>
                 </span>
               }
