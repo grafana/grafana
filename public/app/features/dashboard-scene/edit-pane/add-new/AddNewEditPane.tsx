@@ -5,14 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Button, Sidebar, useStyles2, useTheme2 } from '@grafana/ui';
+import { Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
-import { getNewButtonStyles } from './AddButton';
+import { AddButton } from './AddButton';
 import { AddNewSection } from './AddNewSection';
 import { AddVariable } from './AddVariable';
 
@@ -27,11 +27,10 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(dashboard);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
-  const theme = useTheme2();
 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
-    orchestrator?.startDraggingNewPanel(mode);
+    orchestrator.startDraggingNewPanel(mode);
   };
 
   return (
@@ -82,15 +81,10 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
                 >
                   {(dragProvided, _) => (
                     <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps}>
-                      {hasCopiedPanel ? (
-                        <Button
-                          variant="secondary"
-                          fill="outline"
-                          className={cx(getNewButtonStyles(theme).iconButton, styles.pasteButton)}
-                          role="button"
+                      {hasCopiedPanel && (
+                        <AddButton
+                          className={styles.pasteButton}
                           icon="clipboard-alt"
-                          size="lg"
-                          tabIndex={0}
                           onClick={onPastePanel}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
@@ -99,12 +93,9 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
                             }
                           }}
                           aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
+                          label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
                           tooltip={t('dashboard.canvas-actions.add.paste.description', 'Click or drag to paste panel')}
-                        >
-                          {t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
-                        </Button>
-                      ) : (
-                        <div className={styles.placeholder} aria-hidden />
+                        ></AddButton>
                       )}
                     </div>
                   )}
@@ -137,9 +128,6 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         opacity: 1,
       },
-    }),
-    placeholder: css({
-      display: 'none',
     }),
     pasteButton: css({
       width: '100%',

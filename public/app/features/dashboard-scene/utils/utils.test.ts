@@ -448,7 +448,7 @@ describe('utils', () => {
       expect(layout).toBeInstanceOf(AutoGridLayoutManager);
     });
 
-    it('returns the layout when given a RowItem', () => {
+    it('when passed a RowItem, returns its layout', () => {
       const { grid } = getDefaultGrid();
       const row = new RowItem({ layout: grid });
 
@@ -458,7 +458,7 @@ describe('utils', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
     });
 
-    it('returns the layout when given a TabItem', () => {
+    it('when passed a TabItem, returns its layout', () => {
       const { grid } = getDefaultGrid();
       const tab = new TabItem({ layout: grid });
 
@@ -468,7 +468,7 @@ describe('utils', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
     });
 
-    it('returns itself when given a DefaultGridLayoutManager', () => {
+    it('when passed a DefaultGridLayoutManager, returns the DefaultGridManager', () => {
       const { grid: defaultGrid } = getDefaultGrid();
       const layout = getLayoutForObject(defaultGrid);
 
@@ -476,7 +476,7 @@ describe('utils', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
     });
 
-    it('returns itself when given an AutoGridLayoutManager', () => {
+    it('when passed an AutoGridLayoutManager, returns the AutoGridManager', () => {
       const { grid: autoGrid } = getAutoGrid();
       const layout = getLayoutForObject(autoGrid);
 
@@ -484,7 +484,7 @@ describe('utils', () => {
       expect(layout).toBeInstanceOf(AutoGridLayoutManager);
     });
 
-    it('returns the grid manager when given a panel in default grid (via dashboard body)', () => {
+    it('whe passed a panel in default grid, returns the default grid', () => {
       const { grid: defaultGrid, panel } = getDefaultGrid();
 
       const layout = getLayoutForObject(panel);
@@ -492,7 +492,7 @@ describe('utils', () => {
       expect(layout).toBe(defaultGrid);
     });
 
-    it('returns the grid manager when given a panel in auto grid', () => {
+    it('when passed a panel in auto grid, returns the auto grid', () => {
       const { grid: autoGrid, panel } = getAutoGrid();
 
       const layout = getLayoutForObject(panel);
