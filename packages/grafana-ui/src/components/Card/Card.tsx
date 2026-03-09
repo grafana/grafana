@@ -124,7 +124,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const optionLabel = t('grafana-ui.card.option', 'option');
 
   return (
-    <h2 className={cx(styles.heading, className)}>
+    <div className={cx(styles.heading, className)}>
       {href ? (
         <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
@@ -138,7 +138,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       )}
       {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
       {isSelected !== undefined && <input aria-label={optionLabel} type="radio" checked={isSelected} readOnly />}
-    </h2>
+    </div>
   );
 };
 Heading.displayName = 'Heading';
