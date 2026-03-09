@@ -99,70 +99,106 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
   const [fetchAlerts] = useCreateNotificationsqueryalertsMutation();
 
   useEffect(() => {
-    // If a timestamp is provided, query a 1-second window around it.
-    // Otherwise fall back to a 90-day window.
-    const { from, to } = timestamp
-      ? (() => {
-          const ts = new Date(timestamp).getTime();
-          return {
-            from: new Date(ts - 1000).toISOString(),
-            to: new Date(ts + 1000).toISOString(),
-          };
-        })()
-      : {
-          from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-          to: new Date().toISOString(),
-        };
+    let cancelled = false;
 
-    fetchNotifications({
-      createNotificationqueryRequestBody: { from, to, limit: 1000 },
-    })
-      .unwrap()
-      .then((result) => {
+    async function load() {
+      // If a timestamp is provided, query a 1-second window around it.
+      // Otherwise fall back to a 90-day window.
+      let from: string;
+      let to: string;
+      if (timestamp) {
+        const ts = new Date(timestamp).getTime();
+        from = new Date(ts - 1000).toISOString();
+        to = new Date(ts + 1000).toISOString();
+      } else {
+        from = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+        to = new Date().toISOString();
+      }
+
+      try {
+        const result = await fetchNotifications({
+          createNotificationqueryRequestBody: { from, to, limit: 1000 },
+        }).unwrap();
+
         const found = (result.entries ?? []).find((e) => e.uuid === uuid) ?? null;
+        if (cancelled) {
+          return;
+        }
+
         setNotification(found);
-        if (found) {
-          onTitleChange(pickHeadingLabel(found.groupLabels));
+        if (!found) {
+          return;
         }
 
-        if (found) {
-          // Related notifications: ±7 days around the found notification's timestamp
-          const foundTs = new Date(found.timestamp).getTime();
-          const relFrom = new Date(foundTs - 7 * 24 * 60 * 60 * 1000).toISOString();
-          const relTo = new Date(foundTs + 7 * 24 * 60 * 60 * 1000).toISOString();
+        onTitleChange(pickHeadingLabel(found.groupLabels));
 
-          setIsLoadingRelated(true);
-          fetchNotifications({
-            createNotificationqueryRequestBody: { from: relFrom, to: relTo, limit: 1000 },
-          })
-            .unwrap()
-            .then((relResult) => {
-              const related = (relResult.entries ?? [])
-                .filter((e) => e.groupKey === found.groupKey && e.uuid !== found.uuid)
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-              setRelatedNotifications(related);
-            })
-            .catch(() => {})
-            .finally(() => setIsLoadingRelated(false));
+        const foundTs = new Date(found.timestamp).getTime();
 
-          // Alerts: use the notification's timestamp + 1 second as the window
-          const alertFrom = found.timestamp;
-          const alertTo = new Date(new Date(found.timestamp).getTime() + 1000).toISOString();
-
-          setIsLoadingAlerts(true);
-          fetchAlerts({
-            createNotificationsqueryalertsRequestBody: { uuid, from: alertFrom, to: alertTo, limit: 1000 },
-          })
-            .unwrap()
-            .then((alertResult) => setAlerts(alertResult.alerts ?? []))
-            .catch(() => {})
-            .finally(() => setIsLoadingAlerts(false));
+        // Fetch related notifications and alerts in parallel
+        const relatedPromise = fetchRelatedNotifications(found, foundTs);
+        const alertsPromise = fetchNotificationAlerts(found);
+        await Promise.all([relatedPromise, alertsPromise]);
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : t('alerting.notification-detail.error-unknown', 'Unknown error');
+          setFetchError(message);
+          setNotification(null);
         }
-      })
-      .catch((err) => {
-        setFetchError(err?.message ?? t('alerting.notification-detail.error-unknown', 'Unknown error'));
-        setNotification(null);
-      });
+      }
+    }
+
+    async function fetchRelatedNotifications(found: NotificationEntry, foundTs: number) {
+      const relFrom = new Date(foundTs - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const relTo = new Date(foundTs + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      setIsLoadingRelated(true);
+      try {
+        const relResult = await fetchNotifications({
+          createNotificationqueryRequestBody: { from: relFrom, to: relTo, limit: 1000 },
+        }).unwrap();
+
+        if (!cancelled) {
+          const related = (relResult.entries ?? [])
+            .filter((e) => e.groupKey === found.groupKey && e.uuid !== found.uuid)
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          setRelatedNotifications(related);
+        }
+      } catch {
+        // Related notifications are non-critical; silently ignore failures
+      } finally {
+        if (!cancelled) {
+          setIsLoadingRelated(false);
+        }
+      }
+    }
+
+    async function fetchNotificationAlerts(found: NotificationEntry) {
+      const alertFrom = found.timestamp;
+      const alertTo = new Date(new Date(found.timestamp).getTime() + 1000).toISOString();
+
+      setIsLoadingAlerts(true);
+      try {
+        const alertResult = await fetchAlerts({
+          createNotificationsqueryalertsRequestBody: { uuid, from: alertFrom, to: alertTo, limit: 1000 },
+        }).unwrap();
+
+        if (!cancelled) {
+          setAlerts(alertResult.alerts ?? []);
+        }
+      } catch {
+        // Alert details are non-critical; silently ignore failures
+      } finally {
+        if (!cancelled) {
+          setIsLoadingAlerts(false);
+        }
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uuid, timestamp]);
 
