@@ -663,14 +663,22 @@ func TestBuildAlertQuery(t *testing.T) {
 func TestBuildAlertLabelQuery(t *testing.T) {
 	tests := []struct {
 		name     string
+		ruleUID  *string
 		labels   Matchers
 		expected string
 		experr   error
 	}{
 		{
-			name:   "single label matcher",
+			name:   "single label matcher without rule uid",
 			labels: Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
 			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:    "single label matcher with rule uid",
+			ruleUID: stringPtr("test-rule-uid"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "test-rule-uid" | json | labels_alertname = "HighCPU"`,
 				historian.LabelFrom, historian.LabelFromValueAlerts),
 		},
 		{
@@ -684,6 +692,16 @@ func TestBuildAlertLabelQuery(t *testing.T) {
 				historian.LabelFrom, historian.LabelFromValueAlerts),
 		},
 		{
+			name:    "multiple label matchers with rule uid",
+			ruleUID: stringPtr("my-rule"),
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "my-rule" | json | labels_alertname = "HighCPU" | labels_severity != "info"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
 			name:   "invalid label key",
 			labels: Matchers{{Type: "=", Label: "bad key", Value: "bar"}},
 			experr: ErrInvalidQuery,
@@ -693,11 +711,24 @@ func TestBuildAlertLabelQuery(t *testing.T) {
 			labels: Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
 			experr: ErrInvalidQuery,
 		},
+		{
+			name:    "invalid rule uid",
+			ruleUID: stringPtr("bad uid!"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			experr:  ErrInvalidQuery,
+		},
+		{
+			name:    "empty rule uid is ignored",
+			ruleUID: stringPtr(""),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := buildAlertLabelQuery(tt.labels)
+			result, err := buildAlertLabelQuery(tt.ruleUID, tt.labels)
 			if tt.experr != nil {
 				require.ErrorIs(t, err, tt.experr)
 			} else {

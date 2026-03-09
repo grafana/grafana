@@ -538,7 +538,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.
