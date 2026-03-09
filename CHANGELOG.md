@@ -1,3 +1,17 @@
+<!-- 12.2.7 START -->
+
+# 12.2.7 (2026-03-09)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.8 [#119696](https://github.com/grafana/grafana/pull/119696), [@macabu](https://github.com/macabu)
+- **Rendering:** Add support for custom CA certs in Image Renderer [#118911](https://github.com/grafana/grafana/pull/118911), [@mrevutskyi](https://github.com/mrevutskyi)
+
+### Bug fixes
+
+- **Dashboards:** Fix start parameter in list versions API for K8s backend [#119398](https://github.com/grafana/grafana/pull/119398), [@MissingRoberto](https://github.com/MissingRoberto)
+
+<!-- 12.2.7 END -->
 <!-- 12.1.9 START -->
 
 # 12.1.9 (2026-03-09)
