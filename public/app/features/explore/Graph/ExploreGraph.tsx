@@ -211,6 +211,7 @@ export function ExploreGraph({
         showLegend: true,
         placement: 'bottom',
         calcs: [],
+        enableFacetedFilter: false,
         ...vizLegendOverrides,
       },
     }),

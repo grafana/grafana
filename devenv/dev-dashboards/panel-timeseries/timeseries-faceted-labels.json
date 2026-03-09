@@ -11,7 +11,13 @@
       "type": "timeseries",
       "gridPos": { "h": 14, "w": 12, "x": 0, "y": 0 },
       "options": {
-        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["mean"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -31,7 +37,13 @@
       "type": "timeseries",
       "gridPos": { "h": 14, "w": 12, "x": 12, "y": 0 },
       "options": {
-        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["mean"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": ["mean"],
+          "enableFacetedFilter": true
+        },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -51,7 +63,7 @@
       "type": "timeseries",
       "gridPos": { "h": 14, "w": 8, "x": 0, "y": 28 },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -71,7 +83,7 @@
       "type": "timeseries",
       "gridPos": { "h": 14, "w": 8, "x": 8, "y": 28 },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -91,7 +103,7 @@
       "type": "timeseries",
       "gridPos": { "h": 14, "w": 8, "x": 16, "y": 28 },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "enableFacetedFilter": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
