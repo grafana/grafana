@@ -160,6 +160,10 @@ var serviceIdentityTokenPermissions = []string{
 	"query.grafana.app:*",
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
+	"provisioning.grafana.app/repositories:read",
+	"provisioning.grafana.app/repositories:watch",
+	"provisioning.grafana.app/settings:read",
+	"provisioning.grafana.app/settings:watch",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",

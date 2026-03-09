@@ -101,6 +101,7 @@ var _ KVBackend = &kvStorageBackend{}
 type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer
+	Stop()
 }
 
 type KVBackendOptions struct {
@@ -197,7 +198,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
-		tw, err := NewTenantWatcher(ctx, kv, func(ctx context.Context, event *WriteEvent) (int64, error) {
+		tw, err := NewTenantWatcher(ctx, backend.dataStore, func(ctx context.Context, event *WriteEvent) (int64, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
@@ -224,6 +225,13 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 		}
 	}
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
+}
+
+// Stop shuts down services owned by the backend.
+func (k *kvStorageBackend) Stop() {
+	if k.tenantWatcher != nil {
+		k.tenantWatcher.Stop()
+	}
 }
 
 // runCleanups starts periodically cleans up old events and last import times.

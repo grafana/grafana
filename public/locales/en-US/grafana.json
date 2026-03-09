@@ -9549,6 +9549,7 @@
       "log-base": "Log base"
     },
     "builder": {
+      "annotations": "Annotations",
       "axis": {
         "category-axis": "Axis",
         "color-label": "Color",
