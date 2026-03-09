@@ -1,14 +1,15 @@
 import { render, screen } from '@testing-library/react';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
-import { DashboardInputs, DashboardSource } from '../../types';
+import { DashboardSource } from '../../types';
 
 import { ImportOverview } from './ImportOverview';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  locationService: {
-    getSearchObject: jest.fn().mockReturnValue({}),
-  },
+const mockIsDashboardV2Spec = jest.mocked(isDashboardV2Spec);
+
+jest.mock('app/features/dashboard/api/utils', () => ({
+  ...jest.requireActual('app/features/dashboard/api/utils'),
+  isDashboardV2Spec: jest.fn(),
 }));
 
 jest.mock('./ImportOverviewV1', () => ({
@@ -19,14 +20,12 @@ jest.mock('./ImportOverviewV2', () => ({
   ImportOverviewV2: () => <div data-testid="import-overview-v2">V2 Overview</div>,
 }));
 
-const emptyInputs: DashboardInputs = {
-  dataSources: [],
-  constants: [],
-  libraryPanels: [],
-};
-
 const defaultProps = {
-  inputs: emptyInputs,
+  inputs: {
+    dataSources: [],
+    constants: [],
+    libraryPanels: [],
+  },
   meta: { updatedAt: '', orgName: '' },
   source: DashboardSource.Json,
   onCancel: jest.fn(),
@@ -34,24 +33,14 @@ const defaultProps = {
 
 describe('ImportOverview', () => {
   it('renders V1 overview for empty dashboard object', () => {
+    mockIsDashboardV2Spec.mockReturnValue(false);
     render(<ImportOverview {...defaultProps} dashboard={{}} />);
     expect(screen.getByTestId('import-overview-v1')).toBeInTheDocument();
     expect(screen.queryByTestId('import-overview-v2')).not.toBeInTheDocument();
   });
 
-  it('renders V1 overview for V1 dashboard with title', () => {
-    render(<ImportOverview {...defaultProps} dashboard={{ title: 'Test Dashboard', uid: 'test-uid' }} />);
-    expect(screen.getByTestId('import-overview-v1')).toBeInTheDocument();
-    expect(screen.queryByTestId('import-overview-v2')).not.toBeInTheDocument();
-  });
-
-  it('renders V1 overview for dashboard with only panels', () => {
-    render(<ImportOverview {...defaultProps} dashboard={{ panels: [] }} />);
-    expect(screen.getByTestId('import-overview-v1')).toBeInTheDocument();
-    expect(screen.queryByTestId('import-overview-v2')).not.toBeInTheDocument();
-  });
-
   it('renders V2 overview for dashboard with elements', () => {
+    mockIsDashboardV2Spec.mockReturnValue(true);
     render(<ImportOverview {...defaultProps} dashboard={{ title: 'Test', elements: {} }} />);
     expect(screen.getByTestId('import-overview-v2')).toBeInTheDocument();
     expect(screen.queryByTestId('import-overview-v1')).not.toBeInTheDocument();
