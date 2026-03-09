@@ -11,18 +11,19 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Create a test repository first
 	const repo = "job-validation-test-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:               repo,
 		Target:             "folder",
 		Copies:             map[string]string{},

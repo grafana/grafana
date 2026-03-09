@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { Button, Icon, IconButton, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_BANNER_FEEDBACK_URL, getQueryEditorBannerColors } from './PanelEditNext/constants';
+import { trackBannerDismiss, trackFeedbackClick } from './PanelEditNext/tracking';
 
 interface Props {
   useQueryExperienceNext: boolean;
@@ -19,11 +20,11 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
   return (
     <div className={cx(styles.banner, className)}>
       <div className={styles.left}>
-        <Icon name={useQueryExperienceNext ? 'rocket' : 'bolt'} size="md" className={styles.accentIcon} />
+        <Icon name="flask" size="md" className={styles.accentIcon} />
         <span className={styles.title}>
           {useQueryExperienceNext
-            ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor!')
-            : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available!')}
+            ? t('dashboard-scene.query-editor-banner.downgrade-title', 'New query editor')
+            : t('dashboard-scene.query-editor-banner.upgrade-title', 'New editor available')}
         </span>
         <span className={styles.description}>
           {useQueryExperienceNext
@@ -43,10 +44,11 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             variant="primary"
             fill="text"
             size="sm"
-            icon="comment-alt"
+            icon="external-link-alt"
             href={QUERY_EDITOR_BANNER_FEEDBACK_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={trackFeedbackClick}
           >
             {t('dashboard-scene.query-editor-banner.give-feedback', 'Give feedback')}
           </LinkButton>
@@ -64,7 +66,10 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
           name="times"
           size="md"
           tooltip={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
-          onClick={onDismiss}
+          onClick={() => {
+            trackBannerDismiss();
+            onDismiss();
+          }}
           className={styles.closeButton}
           aria-label={t('dashboard-scene.query-editor-banner.dismiss', 'Dismiss')}
         />

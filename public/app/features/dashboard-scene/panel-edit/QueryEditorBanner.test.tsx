@@ -16,14 +16,14 @@ describe('QueryEditorBanner', () => {
     it('shows the upgrade title and "Try it out" button', () => {
       render(<QueryEditorBanner useQueryExperienceNext={false} onToggle={onToggle} onDismiss={onDismiss} />);
 
-      expect(screen.getByText('New editor available!')).toBeInTheDocument();
+      expect(screen.getByText('New editor available')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /try it out/i })).toBeInTheDocument();
     });
 
     it('does not show new-editor-specific content', () => {
       render(<QueryEditorBanner useQueryExperienceNext={false} onToggle={onToggle} onDismiss={onDismiss} />);
 
-      expect(screen.queryByText('Go back to classic')).not.toBeInTheDocument();
+      expect(screen.queryByText('Back to classic')).not.toBeInTheDocument();
     });
 
     it('calls onToggle when "Try it out" is clicked', async () => {
@@ -39,7 +39,7 @@ describe('QueryEditorBanner', () => {
     it('shows the new editor title and "Go back to classic" button', () => {
       render(<QueryEditorBanner useQueryExperienceNext={true} onToggle={onToggle} onDismiss={onDismiss} />);
 
-      expect(screen.getByText('New query editor!')).toBeInTheDocument();
+      expect(screen.getByText('New query editor')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /back to classic/i })).toBeInTheDocument();
     });
 
