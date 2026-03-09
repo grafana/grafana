@@ -1,9 +1,19 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  SceneGridLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
@@ -15,13 +25,13 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
+import { DashboardEditPane } from './DashboardEditPane';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: (uid: string) => ({}),
-    };
-  },
+  getDataSourceSrv: () => ({
+    getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
+  }),
 }));
 
 setPluginImportUtils({
@@ -163,6 +173,127 @@ describe('DashboardEditPane', () => {
       expect(editPane.getSelection()).toBe(sourceTab);
     });
   });
+
+  describe('addNewPanel', () => {
+    it('adds panel to the correct tab layout when target is first tab', () => {
+      const { tab1, tab2, editPane } = setupWithTwoTabs();
+      editPane.addNewPanel(tab1);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the correct tab layout when target is second tab', () => {
+      const { tab1, tab2, editPane } = setupWithTwoTabs();
+      editPane.addNewPanel(tab2);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds panel to the correct row layout when target is first row', () => {
+      const { row1, row2, editPane } = setupWithTwoRows();
+      editPane.addNewPanel(row1);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the correct row layout when target is second row', () => {
+      const { row1, row2, editPane } = setupWithTwoRows();
+      editPane.addNewPanel(row2);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds panel to the first element in the dashboard when target is the dashboard itself', () => {
+      const { dashboard, tab1, tab2, editPane } = setupWithTwoTabs();
+      editPane.addNewPanel(dashboard);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the first element in the dashboard when target is undefined', () => {
+      const { tab1, tab2, editPane } = setupWithTwoTabs();
+      editPane.addNewPanel(undefined);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds panel to the dashboard when dashboard is empty', () => {
+      const { dashboard, editPane } = setupEmptyDashboard();
+      editPane.addNewPanel(undefined);
+      expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
+    });
+  });
+
+  describe('pastePanel', () => {
+    it('adds pasted panel to the correct tab layout when target is first tab', () => {
+      const { dashboard, tab1, tab2, tab1Viz, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+      editPane.pastePanel(tab1);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the correct tab layout when target is second tab', () => {
+      const { dashboard, tab1, tab2, tab1Viz, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1Viz);
+      editPane.pastePanel(tab2);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds pasted panel to the correct row layout when target is first row', () => {
+      const { dashboard, row1, row2, row1Viz, editPane } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+      editPane.pastePanel(row1);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the correct row layout when target is second row', () => {
+      const { dashboard, row1, row2, row1Viz, editPane } = setupWithTwoRows();
+      dashboard.copyPanel(row1Viz);
+      editPane.pastePanel(row2);
+      expect(row1.getLayout().getVizPanels()).toHaveLength(1);
+      expect(row2.getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('adds pasted panel to the first element in the dashboard when target is the dashboard itself', () => {
+      const { dashboard, tab1, tab2, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1.getLayout().getVizPanels()[0]);
+      editPane.pastePanel(dashboard);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the first element in the dashboard when target is undefined', () => {
+      const { dashboard, tab1, tab2, editPane } = setupWithTwoTabs();
+      dashboard.copyPanel(tab1.getLayout().getVizPanels()[0]);
+      editPane.pastePanel(undefined);
+      expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
+      expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
+    });
+
+    it('adds pasted panel to the dashboard when dashboard is empty', () => {
+      const { dashboard, editPane } = setupEmptyDashboard();
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutWithPanel = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
+      });
+      const tabWithPanel = new TabItem({ title: 'Source', layout: layoutWithPanel });
+      const sourceDashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: new TabsLayoutManager({ tabs: [tabWithPanel] }),
+      });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(sourceDashboard);
+      sourceDashboard.copyPanel(panel);
+
+      editPane.pastePanel(undefined);
+      expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
+    });
+  });
 });
 
 function buildTestScene() {
@@ -173,8 +304,6 @@ function buildTestScene() {
     tags: ['tag1', 'tag2'],
     editable: true,
   });
-
-  config.featureToggles.dashboardNewLayouts = true;
 
   activateFullSceneTree(scene);
 
@@ -219,12 +348,69 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
     body: layoutManager,
   });
 
-  config.featureToggles.dashboardNewLayouts = true;
-
   activateFullSceneTree(scene);
 
   return {
     variables,
     editPane: scene.state.editPane,
   };
+}
+
+function setupEmptyDashboard(): {
+  dashboard: DashboardScene;
+  editPane: DashboardEditPane;
+} {
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: AutoGridLayoutManager.createEmpty(),
+  });
+  activateFullSceneTree(dashboard);
+  return { dashboard, editPane: dashboard.state.editPane };
+}
+
+function setupWithTwoTabs(): {
+  dashboard: DashboardScene;
+  tab1: TabItem;
+  tab2: TabItem;
+  tab1Viz: VizPanel;
+  editPane: DashboardEditPane;
+} {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const gridItem = new AutoGridItem({ body: panel });
+  const layoutWithPanel = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: [gridItem] }),
+  });
+  const tab1 = new TabItem({ title: 'Tab 1', layout: layoutWithPanel });
+  const tab2 = new TabItem({ title: 'Tab 2' });
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
+  });
+  activateFullSceneTree(dashboard);
+  return { dashboard, tab1, tab2, tab1Viz: panel, editPane: dashboard.state.editPane };
+}
+
+function setupWithTwoRows(): {
+  dashboard: DashboardScene;
+  row1: RowItem;
+  row2: RowItem;
+  row1Viz: VizPanel;
+  editPane: DashboardEditPane;
+} {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const gridItem = new AutoGridItem({ body: panel });
+  const layoutWithPanel = new AutoGridLayoutManager({
+    layout: new AutoGridLayout({ children: [gridItem] }),
+  });
+  const row1 = new RowItem({ title: 'Row 1', layout: layoutWithPanel });
+  const row2 = new RowItem({ title: 'Row 2' });
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body: new RowsLayoutManager({ rows: [row1, row2] }),
+  });
+  activateFullSceneTree(dashboard);
+  return { dashboard, row1, row2, row1Viz: panel, editPane: dashboard.state.editPane };
 }

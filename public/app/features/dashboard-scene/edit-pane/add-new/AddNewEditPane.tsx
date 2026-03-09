@@ -18,12 +18,11 @@ import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
-  selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
   onPastePanel: () => void;
 }
 
-export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
+export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEditPaneProps) {
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(dashboard);

@@ -149,7 +149,7 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
     action: 'drop' | 'click' = 'click'
   ) {

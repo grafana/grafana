@@ -5728,10 +5728,11 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy or Duplicate",
+        "copy-or-duplicate": "Copy/paste or duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout"
+        "layout": "Layout",
+        "paste": "Paste"
       },
       "continue": "Continue",
       "panel": {

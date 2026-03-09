@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -13,15 +13,12 @@ import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadg
 import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
-import { DashboardInteractions } from '../utils/interactions';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -56,27 +53,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
   const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
-  const onAddNewPanel = useCallback(() => {
-    const panel = getDefaultVizPanel();
-    if (lastSelectedElement) {
-      const layout = getLayoutForObject(lastSelectedElement) ?? dashboard;
-      layout.addPanel(panel);
-    } else {
-      dashboard.addPanel(panel);
-    }
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(lastSelectedElement));
-  }, [dashboard, lastSelectedElement]);
-
-  const onPastePanel = useCallback(() => {
-    if (lastSelectedElement) {
-      const layout = getLayoutForObject(lastSelectedElement) ?? dashboard;
-      layout.pastePanel?.();
-    } else {
-      dashboard.pastePanel();
-    }
-    DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(lastSelectedElement), 'click');
-  }, [lastSelectedElement, dashboard]);
-
   return (
     <>
       {editableElement && (
@@ -92,10 +68,9 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       {openPane === 'add' && (
         <Sidebar.OpenPane>
           <AddNewEditPane
-            onAddPanel={onAddNewPanel}
-            onPastePanel={onPastePanel}
+            onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
+            onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
             dashboard={dashboard}
-            selectedElement={lastSelectedElement}
           />
         </Sidebar.OpenPane>
       )}

@@ -2,6 +2,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Menu, Stack, Dropdown, Icon, Sidebar } from '@grafana/ui';
 
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -14,7 +17,9 @@ interface EditPaneHeaderProps {
 
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
+  const { hasCopiedPanel } = useClipboardState();
 
+  const pasteTarget = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -47,11 +52,19 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                     onClick={onDuplicate}
                   />
                 ) : null}
+                {pasteTarget && hasCopiedPanel ? (
+                  <Menu.Item
+                    icon="clipboard-alt"
+                    label={t('dashboard.layout.common.paste', 'Paste')}
+                    onClick={() => editPane.pastePanel?.(pasteTarget, 'editPaneHeader')}
+                    data-testid={selectors.components.EditPaneHeader.paste}
+                  />
+                ) : null}
               </Menu>
             }
           >
             <Button
-              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy or Duplicate')}
+              tooltip={t('dashboard.layout.common.copy-or-duplicate', 'Copy/paste or duplicate')}
               tooltipPlacement="bottom"
               variant="secondary"
               size="sm"
