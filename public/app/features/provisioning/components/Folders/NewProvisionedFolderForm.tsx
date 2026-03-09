@@ -7,6 +7,7 @@ import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
@@ -32,6 +33,7 @@ interface Props {
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
+  const [, updateUrlParams] = useUrlParams();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
   const methods = useForm<BaseProvisionedFormData>({
@@ -46,14 +48,18 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
     const paramValue = prUrl ?? repository?.url ?? '';
+    const params: Record<string, string> = {};
 
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue,
-      repoType: info.repoType,
-    });
+    if (paramValue) {
+      params.new_pull_request_url = paramValue;
+    }
+    if (info.repoType) {
+      params.repo_type = info.repoType;
+    }
 
-    navigate(url);
+    if (Object.keys(params).length > 0) {
+      updateUrlParams(params);
+    }
   };
 
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
@@ -174,7 +180,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             isNew
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
-            hidePath
+            hiddenFields={['path']}
           />
 
           {prURL && (

@@ -101,6 +101,7 @@ var _ KVBackend = &kvStorageBackend{}
 type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer
+	Stop()
 }
 
 type KVBackendOptions struct {
@@ -197,7 +198,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant watcher.
 	if opts.TenantWatcherConfig != nil {
-		tw, err := NewTenantWatcher(ctx, kv, func(ctx context.Context, event *WriteEvent) (int64, error) {
+		tw, err := NewTenantWatcher(ctx, backend.dataStore, func(ctx context.Context, event *WriteEvent) (int64, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
@@ -224,6 +225,13 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 		}
 	}
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
+}
+
+// Stop shuts down services owned by the backend.
+func (k *kvStorageBackend) Stop() {
+	if k.tenantWatcher != nil {
+		k.tenantWatcher.Stop()
+	}
 }
 
 // runCleanups starts periodically cleans up old events and last import times.
@@ -415,6 +423,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	start := time.Now()
 
 	totalDeleted := int64(0)
+	totalDryRun := int64(0)
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -426,7 +435,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	prefix := key.Prefix()
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
-	nextEndKey := ""
 
 	for {
 		keysProcessed := int64(0)
@@ -465,7 +473,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 			// update the next end key for pagination. We will use this to continue scanning in the next batch
 			// the next end key is the immediate previous key for the current key
-			nextEndKey = previousKey(dataKey)
+			endKey = previousKey(dataKey)
 
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
@@ -483,25 +491,25 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
-					b.log.Info("garbage collection", "key to delete", deleteKey)
 					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
-				// if not in dry run mode, batch delete the keys
-				if !b.garbageCollection.DryRun {
-					err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
-					if err != nil {
-						return fmt.Errorf("failed to batch delete keys: %s", err)
-					}
-
-					keysDeleted = keysDeleted + int64(len(keysToDelete))
+				if b.garbageCollection.DryRun {
+					// if in dry run mode, just count the keys to delete
+					totalDryRun += int64(len(keysToDelete))
+					continue
 				}
+
+				// if not in dry run mode, batch delete the keys
+				err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+				if err != nil {
+					return fmt.Errorf("failed to batch delete keys: %s", err)
+				}
+
+				// update the total number of keys deleted
+				keysDeleted = keysDeleted + int64(len(keysToDelete))
 			}
 		}
-
-		// update the end key for the next batch to be the last processed key in this batch,
-		// so that we can continue scanning from there
-		endKey = nextEndKey
 
 		// if there are no more entries to process, break the loop
 		if keysProcessed == 0 {
@@ -519,6 +527,15 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			"group", group,
 			"resource", resourceName,
 			"rows", totalDeleted,
+			"seconds", time.Since(start).Seconds(),
+		)
+	}
+
+	if totalDryRun > 0 {
+		b.log.Info("garbage collection dry run",
+			"group", group,
+			"resource", resourceName,
+			"rows", totalDryRun,
 			"seconds", time.Since(start).Seconds(),
 		)
 	}
