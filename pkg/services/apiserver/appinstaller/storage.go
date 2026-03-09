@@ -23,9 +23,5 @@ func NewDualWriter(
 		builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 	}
 
-	if dualWriteService != nil {
-		return dualWriteService.NewStorage(gr, legacy, storage)
-	}
-
-	return legacy, nil
+	return dualWriteService.NewStorage(gr, legacy, storage)
 }

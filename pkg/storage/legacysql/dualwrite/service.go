@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -104,25 +105,48 @@ func ProvideService(
 		}
 	}
 
+	cacheTTL := gocache.NoExpiration
+	cacheCleanup := time.Duration(0)
+	if cfg != nil && cfg.StorageModeCacheTTL > 0 {
+		cacheTTL = cfg.StorageModeCacheTTL
+		cacheCleanup = cacheTTL * 2
+	}
+
 	return &service{
 		db: &keyvalueDB{
 			db:     kv,
 			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 		},
-		enabled:      enabled,
-		statusReader: statusReader,
+		enabled:            enabled,
+		statusReader:       statusReader,
+		resourceModesCache: gocache.New(cacheTTL, cacheCleanup),
 	}, nil
 }
 
 type service struct {
-	db           *keyvalueDB
-	enabled      bool
-	statusReader unifiedmigrations.MigrationStatusReader
+	db                 *keyvalueDB
+	enabled            bool
+	statusReader       unifiedmigrations.MigrationStatusReader
+	resourceModesCache *gocache.Cache
+}
+
+// getStorageMode returns the cached StorageMode for a non-managed resource.
+// Results are cached with the TTL configured via StorageModeCacheTTL.
+func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+	key := gr.String()
+	if val, ok := m.resourceModesCache.Get(key); ok {
+		return val.(unifiedmigrations.StorageMode)
+	}
+
+	mode := m.statusReader.GetStorageMode(ctx, gr)
+	m.resourceModesCache.SetDefault(key, mode)
+
+	logging.DefaultLogger.With("resource", key, "mode", mode).Info("resolved dynamic storage mode")
+	return mode
 }
 
 func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
 	// Only managed resources (folders, dashboards) use the runtime KV-based path.
-	// Unmanaged use MigrationStatusReader.
 	if m.ShouldManage(gr) {
 		status, err := m.Status(context.Background(), gr)
 		if err != nil {
@@ -130,18 +154,19 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 		}
 
 		if m.enabled && status.Runtime {
+			// Dynamic storage behavior
 			return &runtimeDualWriter{
 				service:   m,
 				legacy:    legacy,
 				unified:   unified,
-				dualwrite: &dualWriter{legacy: legacy, unified: unified},
+				dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
 				gr:        gr,
 			}, nil
 		}
 	}
 
-	// Use MigrationStatusReader for mode selection on non-managed resources
-	switch m.statusReader.GetStorageMode(context.Background(), gr) {
+	// Use MigrationStatusReader for mode selection on non-managed resources.
+	switch m.getStorageMode(context.Background(), gr) {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
@@ -166,12 +191,32 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 }
 
 func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
-	v, ok, err := m.db.get(ctx, gr)
-	return ok && v.ReadUnified, err
+	if m.ShouldManage(gr) {
+		v, ok, err := m.db.get(ctx, gr)
+		return ok && v.ReadUnified, err
+	}
+	return m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeUnified, nil
 }
 
 // Status implements Service.
 func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
+	if !m.ShouldManage(gr) {
+		// Non-managed: derive status from statusReader, same as staticService.
+		status := StorageStatus{Group: gr.Group, Resource: gr.Resource}
+		switch m.getStorageMode(ctx, gr) {
+		case unifiedmigrations.StorageModeUnified:
+			status.WriteUnified = true
+			status.ReadUnified = true
+		case unifiedmigrations.StorageModeDualWrite:
+			status.WriteLegacy = true
+			status.WriteUnified = true
+		default:
+			status.WriteLegacy = true
+		}
+		return status, nil
+	}
+
+	// Managed resources: existing KV-based behavior
 	v, found, err := m.db.get(ctx, gr)
 	if err != nil {
 		return v, err

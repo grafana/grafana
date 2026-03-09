@@ -21,12 +21,13 @@ func TestService(t *testing.T) {
 		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader())
 		require.NoError(t, err)
 
-		gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
+		// Use a managed resource so KV-based Status path is exercised.
+		gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 		status, err := mode.Status(ctx, gr)
 		require.NoError(t, err)
 		require.Equal(t, StorageStatus{
-			Group:        "ggg",
-			Resource:     "rrr",
+			Group:        "folder.grafana.app",
+			Resource:     "folders",
 			WriteLegacy:  true,
 			WriteUnified: true,
 			ReadUnified:  false,
@@ -132,7 +133,6 @@ func TestService(t *testing.T) {
 			{"Unified", unifiedmigrations.StorageModeUnified, "unified"},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
-				ctx := context.Background()
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
 					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), // enabled=true to get dynamic service
@@ -143,14 +143,7 @@ func TestService(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				// Status() auto-creates with Runtime=true; flip it to false so
-				// NewStorage falls through to the statusReader path.
-				status, err := svc.Status(ctx, gr)
-				require.NoError(t, err)
-				status.Runtime = false
-				_, err = svc.Update(ctx, status)
-				require.NoError(t, err)
-
+				// Non-managed GR: NewStorage delegates directly to statusReader
 				storage, err := svc.NewStorage(gr, ls, us)
 				require.NoError(t, err)
 				_, isDual := storage.(*dualWriter)
@@ -164,6 +157,100 @@ func TestService(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("dynamic ReadFromUnified uses statusReader for non-managed resources", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}
+
+		for _, tt := range []struct {
+			name string
+			mode unifiedmigrations.StorageMode
+			want bool
+		}{
+			{"Legacy", unifiedmigrations.StorageModeLegacy, false},
+			{"DualWrite", unifiedmigrations.StorageModeDualWrite, false},
+			{"Unified", unifiedmigrations.StorageModeUnified, true},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				ctx := context.Background()
+				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
+				svc, err := ProvideService(
+					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+					kvstore.NewFakeKVStore(),
+					NewFakeConfig(),
+					NewFakeMigrator(),
+					statusReader,
+				)
+				require.NoError(t, err)
+
+				got, err := svc.ReadFromUnified(ctx, gr)
+				require.NoError(t, err)
+				require.Equalf(t, tt.want, got, "ReadFromUnified for StorageMode %s", tt.name)
+			})
+		}
+	})
+
+	t.Run("dynamic Status uses statusReader for non-managed resources", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}
+
+		for _, tt := range []struct {
+			name   string
+			mode   unifiedmigrations.StorageMode
+			expect StorageStatus
+		}{
+			{"Legacy", unifiedmigrations.StorageModeLegacy, StorageStatus{
+				Group: gr.Group, Resource: gr.Resource, WriteLegacy: true,
+			}},
+			{"DualWrite", unifiedmigrations.StorageModeDualWrite, StorageStatus{
+				Group: gr.Group, Resource: gr.Resource, WriteLegacy: true, WriteUnified: true,
+			}},
+			{"Unified", unifiedmigrations.StorageModeUnified, StorageStatus{
+				Group: gr.Group, Resource: gr.Resource, WriteUnified: true, ReadUnified: true,
+			}},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				ctx := context.Background()
+				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
+				svc, err := ProvideService(
+					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+					kvstore.NewFakeKVStore(),
+					NewFakeConfig(),
+					NewFakeMigrator(),
+					statusReader,
+				)
+				require.NoError(t, err)
+
+				status, err := svc.Status(ctx, gr)
+				require.NoError(t, err)
+				require.Equal(t, tt.expect, status)
+			})
+		}
+	})
+
+	t.Run("dynamic getStorageMode caches statusReader results", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}
+		calls := 0
+		reader := &countingStatusReader{
+			delegate: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
+			calls:    &calls,
+		}
+
+		svc, err := ProvideService(
+			featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
+			kvstore.NewFakeKVStore(),
+			NewFakeConfig(),
+			NewFakeMigrator(),
+			reader,
+		)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		for i := 0; i < 10; i++ {
+			got, err := svc.ReadFromUnified(ctx, gr)
+			require.NoError(t, err)
+			require.True(t, got)
+		}
+		require.Equal(t, 1, calls, "should resolve from reader exactly once (cached)")
 	})
 
 	t.Run("static getStorageMode resolves from reader exactly once", func(t *testing.T) {
