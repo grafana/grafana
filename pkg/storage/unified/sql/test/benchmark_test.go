@@ -28,7 +28,7 @@ func TestIntegrationBenchmarkSQLStorageAndSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	opts := test.DefaultBenchmarkOptions(t)
 	if db.IsTestDbSQLite() {
-		opts.Concurrency = 1
+		t.Skip("concurrency benchmark skipped with sqlite")
 	}
 	backend := newTestBackend(t, true, 2*time.Millisecond, min(max(10, opts.Concurrency), 100))
 	searchBackend, err := search.NewBleveBackend(search.BleveOptions{

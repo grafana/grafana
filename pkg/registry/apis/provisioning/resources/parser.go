@@ -280,7 +280,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			Kind:     utils.ManagerKindRepo,
 			Identity: f.Repo.Name,
 		}
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			return err
 		}
 
@@ -301,7 +301,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	// Check for ownership conflicts after fetching existing resource
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -375,7 +375,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		}
 
 		// Check ownership with the existing resource
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			deleteSpan.RecordError(err)
 			deleteSpan.End()
 			return err
@@ -405,7 +405,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Check ownership with the existing resource (if any)
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
