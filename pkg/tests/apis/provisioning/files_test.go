@@ -1014,11 +1014,11 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
-	helper.CreateRepo(t, TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -1057,27 +1057,44 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
 	})
 
-	t.Run("nested creation writes _folder.json only for the leaf", func(t *testing.T) {
+	t.Run("nested creation writes _folder.json for every folder in the path", func(t *testing.T) {
 		resp := postFolder(t, "parent-folder/child-folder/")
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested folder should succeed")
 
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
-		require.Error(t, err, "parent _folder.json should not exist — only the directly-created folder gets one")
+		// Parent must have _folder.json
+		parentWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/_folder.json")
+		require.NoError(t, err, "parent _folder.json should exist")
+		parentUID, _, _ := unstructured.NestedString(parentWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, parentUID)
 
+		// Child must have _folder.json
 		childWrap, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-folder/child-folder/_folder.json")
-		require.NoError(t, err, "child _folder.json should be readable via the files endpoint")
+		require.NoError(t, err, "child _folder.json should exist")
+		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, childUID)
+		require.NotEqual(t, parentUID, childUID, "each folder gets a distinct UID")
 
 		childAPIVersion, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "apiVersion")
 		require.Equal(t, "folder.grafana.app/v1beta1", childAPIVersion)
-		childUID, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child _folder.json should contain a non-empty stable UID")
 		childTitle, _, _ := unstructured.NestedString(childWrap.Object, "resource", "file", "spec", "title")
 		require.Equal(t, "child-folder", childTitle)
 
 		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
-		require.NoError(t, err, "child Grafana folder should exist with the stable UID from _folder.json")
+		require.NoError(t, err, "child Grafana folder should exist with the stable UID")
+	})
+
+	t.Run("duplicate folder creation returns 409 Conflict", func(t *testing.T) {
+		resp := postFolder(t, "duplicate-folder/")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "first creation should succeed")
+
+		resp2 := postFolder(t, "duplicate-folder/")
+		// nolint:errcheck
+		defer resp2.Body.Close()
+		require.Equal(t, http.StatusConflict, resp2.StatusCode, "second creation should return 409 Conflict")
 	})
 
 	t.Run("child created inside existing managed folder gets its own _folder.json", func(t *testing.T) {
@@ -1112,5 +1129,71 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.NoError(t, err, "parent Grafana folder should exist")
 		_, err = helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist")
+	})
+}
+
+func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repo = "folder-protection-test-repo"
+	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	filesURL := func(filePath string) string {
+		return fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+			addr, repo, filePath)
+	}
+
+	// Create a managed folder so its _folder.json exists for PUT/DELETE tests.
+	req, err := http.NewRequest(http.MethodPost, filesURL("protected-folder/"), nil)
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	// nolint:errcheck
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating protected-folder should succeed")
+
+	t.Run("POST to _folder.json is blocked", func(t *testing.T) {
+		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"some-uid"},"spec":{"title":"attempt"}}`)
+		req, err := http.NewRequest(http.MethodPost, filesURL("new-folder/_folder.json"), bytes.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "direct POST to _folder.json must be blocked")
+	})
+
+	t.Run("PUT to existing _folder.json is blocked", func(t *testing.T) {
+		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"tampered-uid"},"spec":{"title":"tampered"}}`)
+		req, err := http.NewRequest(http.MethodPut, filesURL("protected-folder/_folder.json"), bytes.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "PUT to _folder.json must be blocked")
+	})
+
+	t.Run("DELETE of _folder.json is blocked", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodDelete, filesURL("protected-folder/_folder.json"), nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, "DELETE of _folder.json must be blocked")
+	})
+
+	t.Run("GET of _folder.json is still allowed", func(t *testing.T) {
+		wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "protected-folder/_folder.json")
+		require.NoError(t, err, "_folder.json must remain readable")
+		uid, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+		require.NotEmpty(t, uid)
 	})
 }
