@@ -74,11 +74,11 @@ export function Actions({
       if (requiresDeleteConfirmation) {
         setShowDeleteConfirmation(true);
       } else {
-        trackCardAction('delete', item.type);
+        trackCardAction('delete', item.type, contentHeader ? 'content_header' : 'sidebar_card');
         onDelete();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type]
+    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type, contentHeader]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -86,11 +86,11 @@ export function Actions({
       return;
     }
 
-    trackCardAction('delete', item.type);
+    trackCardAction('delete', item.type, contentHeader ? 'content_header' : 'sidebar_card');
     onDelete();
     setShowDeleteConfirmation(false);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus, item.type]);
+  }, [onDelete, handleResetFocus, item.type, contentHeader]);
 
   const handleDismissModal = useCallback(() => {
     setShowDeleteConfirmation(false);
@@ -111,7 +111,7 @@ export function Actions({
         label: labels.duplicate,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('duplicate', item.type);
+          trackCardAction('duplicate', item.type, contentHeader ? 'content_header' : 'sidebar_card');
           onDuplicate();
         },
       },
@@ -127,7 +127,7 @@ export function Actions({
         label: item.isHidden ? labels.show : labels.hide,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('toggle_hide', item.type);
+          trackCardAction('toggle_hide', item.type, contentHeader ? 'content_header' : 'sidebar_card');
           onToggleHide();
         },
       },
@@ -146,6 +146,7 @@ export function Actions({
     onDelete,
     handleDelete,
     order,
+    contentHeader,
   ]);
 
   return (

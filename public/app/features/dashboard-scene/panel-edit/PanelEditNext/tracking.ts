@@ -57,10 +57,15 @@ export function trackAddTransformationInitiated(source: AddCardSource) {
   });
 }
 
-export function trackCardAction(action: 'delete' | 'toggle_hide' | 'duplicate', itemType: QueryEditorType) {
+export function trackCardAction(
+  action: 'delete' | 'toggle_hide' | 'duplicate',
+  itemType: QueryEditorType,
+  source: 'content_header' | 'sidebar_card'
+) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
     item_type: itemType,
+    source,
   });
 }
 
@@ -104,5 +109,45 @@ export function trackBannerDismiss() {
 export function trackFeedbackClick() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'click_feedback_link',
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar
+// ---------------------------------------------------------------------------
+
+export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_sidebar_size',
+    direction,
+  });
+}
+
+export function trackSidebarViewChange(view: QueryEditorType) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'change_sidebar_view',
+    view,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Query options footer
+// ---------------------------------------------------------------------------
+
+export function trackQueryOptionsToggle(open: boolean) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_query_options',
+    open,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Rename
+// ---------------------------------------------------------------------------
+
+export function trackRenameInitiated() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'rename_initiated',
+    item_type: QueryEditorType.Query,
   });
 }

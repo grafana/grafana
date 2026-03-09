@@ -172,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTop: `1px solid ${theme.colors.border.weak}`,
   }),
   boxNestedExpanded: css({
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(3),
   }),
   title: css({
     flexGrow: 1,
@@ -189,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(0.5, 1.5),
+    padding: theme.spacing(1, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
     cursor: 'pointer',
@@ -204,10 +204,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
   }),
   headerNested: css({
-    padding: theme.spacing(0.5, 0, 0.5, 0),
+    padding: theme.spacing(1, 0),
   }),
   body: css({
-    padding: theme.spacing(1, 2, 1, 2),
+    padding: theme.spacing(1.5, 2),
   }),
   titleDisabled: css({
     color: theme.colors.text.disabled,
