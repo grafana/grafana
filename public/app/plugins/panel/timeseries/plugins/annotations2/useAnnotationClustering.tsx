@@ -171,8 +171,12 @@ const MIN_ANNOTATION_SPACING = 24;
 const calculateMergeThreshold = (timeRange: TimeRange2, plotBox: BBox) => {
   const pixelThreshold = MIN_ANNOTATION_SPACING * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;
-  // If the plot width is undefined or 0 we would get NaN for threshold, which would still work, it would just always cluster all annotations in the panel.
-  const plotWidth = plotBox?.width ?? 1;
+  const plotWidth = plotBox?.width;
+  // If the plot width is undefined or zero, something is very wrong! Let's avoid clustering in this case.
+  if (!plotWidth) {
+    return 0;
+  }
+
   const thresholdRatio = pixelThreshold / plotWidth;
   return thresholdRatio * dt;
 };
