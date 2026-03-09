@@ -17,7 +17,6 @@ import {
 } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { defaultGraphConfig } from './config';
 import { Options } from './panelcfg.gen';
 
 const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) => {
@@ -261,74 +260,58 @@ const FC_MULTI_STACKED_BARS: FieldConfigSource<Partial<GraphFieldConfig>> = {
   overrides: [],
 };
 
-const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.default', 'Default'),
-  fieldConfig: {
-    defaults: {
-      custom: { ...defaultGraphConfig },
-      color: { mode: FieldColorModeId.PaletteClassic },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
-
 const FEW_POINTS_THRESHOLD = 80;
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
   const isSingleSeries = (dataSummary?.frameCount ?? 0) === 1;
   const isMultiSeries = (dataSummary?.frameCount ?? 0) > 1;
   const hasFewPoints = (dataSummary?.rowCountMax ?? 0) < FEW_POINTS_THRESHOLD;
-  const hasManyPoints = (dataSummary?.rowCountMax ?? 0) >= FEW_POINTS_THRESHOLD;
 
-  if (isSingleSeries && hasFewPoints) {
-    return [
-      makePreset(t('timeseries.presets.single-few-points', 'Single fill'), makeSingleLineFillConfig(4)),
-      makePreset(t('timeseries.presets.single-smooth-scheme', 'Smooth scheme'), FC_SINGLE_SMOOTH_SCHEME),
-      makePreset(t('timeseries.presets.single-dashed-threshold', 'Dashed threshold'), FC_SINGLE_DASHED_THRESHOLD),
-      makePreset(t('timeseries.presets.single-step-fill', 'Step fill'), FC_SINGLE_STEP_FILL),
-      makePreset(t('timeseries.presets.single-bars', 'Bars'), FC_SINGLE_BARS_HUE),
-      makePreset(t('timeseries.presets.single-bars-scheme', 'Bars scheme'), FC_SINGLE_BARS_SCHEME),
-    ];
+  if (isSingleSeries) {
+    if (hasFewPoints) {
+      return [
+        makePreset(t('timeseries.presets.single-few-points', 'Single fill'), makeSingleLineFillConfig(4)),
+        makePreset(t('timeseries.presets.single-smooth-scheme', 'Smooth scheme'), FC_SINGLE_SMOOTH_SCHEME),
+        makePreset(t('timeseries.presets.single-dashed-threshold', 'Dashed threshold'), FC_SINGLE_DASHED_THRESHOLD),
+        makePreset(t('timeseries.presets.single-step-fill', 'Step fill'), FC_SINGLE_STEP_FILL),
+        makePreset(t('timeseries.presets.single-bars', 'Bars'), FC_SINGLE_BARS_HUE),
+        makePreset(t('timeseries.presets.single-bars-scheme', 'Bars scheme'), FC_SINGLE_BARS_SCHEME),
+      ];
+    } else {
+      return [
+        makePreset(t('timeseries.presets.single-many-points-fill', 'Line fill'), makeSingleLineFillConfig(5)),
+        makePreset(t('timeseries.presets.single-many-points-hue', 'Line hue'), FC_SINGLE_LINE_HUE),
+        makePreset(t('timeseries.presets.single-many-points-scheme', 'Line scheme'), FC_SINGLE_LINE_SCHEME),
+        makePreset(
+          t('timeseries.presets.single-many-points-threshold-scheme', 'Threshold scheme'),
+          FC_SINGLE_THRESHOLD_SCHEME
+        ),
+      ];
+    }
+  } else if (isMultiSeries) {
+    if (hasFewPoints) {
+      return [
+        makePreset(t('timeseries.presets.multi-points', 'Points'), FC_MULTI_POINTS),
+        makePreset(
+          t('timeseries.presets.multi-stacked-points', 'Stacked points'),
+          makeMultiStackedConfig(StackingMode.Normal)
+        ),
+        makePreset(t('timeseries.presets.multi-stacked-bars', 'Stacked bars'), FC_MULTI_STACKED_BARS),
+      ];
+    } else {
+      return [
+        makePreset(t('timeseries.presets.multi-many-points', 'Points'), FC_MULTI_POINTS),
+        makePreset(
+          t('timeseries.presets.multi-many-points-stacked', 'Stacked points'),
+          makeMultiStackedConfig(StackingMode.Normal)
+        ),
+        makePreset(
+          t('timeseries.presets.multi-many-points-stacked-pct', 'Stacked 100%'),
+          makeMultiStackedConfig(StackingMode.Percent)
+        ),
+      ];
+    }
   }
 
-  if (isSingleSeries && hasManyPoints) {
-    return [
-      makePreset(t('timeseries.presets.single-many-points-fill', 'Line fill'), makeSingleLineFillConfig(5)),
-      makePreset(t('timeseries.presets.single-many-points-hue', 'Line hue'), FC_SINGLE_LINE_HUE),
-      makePreset(t('timeseries.presets.single-many-points-scheme', 'Line scheme'), FC_SINGLE_LINE_SCHEME),
-      makePreset(
-        t('timeseries.presets.single-many-points-threshold-scheme', 'Threshold scheme'),
-        FC_SINGLE_THRESHOLD_SCHEME
-      ),
-    ];
-  }
-
-  if (isMultiSeries && hasFewPoints) {
-    return [
-      makePreset(t('timeseries.presets.multi-points', 'Points'), FC_MULTI_POINTS),
-      makePreset(
-        t('timeseries.presets.multi-stacked-points', 'Stacked points'),
-        makeMultiStackedConfig(StackingMode.Normal)
-      ),
-      makePreset(t('timeseries.presets.multi-stacked-bars', 'Stacked bars'), FC_MULTI_STACKED_BARS),
-    ];
-  }
-
-  if (isMultiSeries && hasManyPoints) {
-    return [
-      makePreset(t('timeseries.presets.multi-many-points', 'Points'), FC_MULTI_POINTS),
-      makePreset(
-        t('timeseries.presets.multi-many-points-stacked', 'Stacked points'),
-        makeMultiStackedConfig(StackingMode.Normal)
-      ),
-      makePreset(
-        t('timeseries.presets.multi-many-points-stacked-pct', 'Stacked 100%'),
-        makeMultiStackedConfig(StackingMode.Percent)
-      ),
-    ];
-  }
-
-  // @TODO
-  return [defaultPreset()];
+  return [];
 };
