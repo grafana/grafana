@@ -87,7 +87,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 			folder := resources.Folder{ID: rf.Name, Path: rf.Path, Title: rf.Title}
 			written, ensureErr := repoResources.EnsureFolderMetadata(ctx, folder, ref)
-			// written, ensureErr := true, error(nil)
 
 			action := repository.FileActionIgnored
 			if written {
