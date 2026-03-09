@@ -3432,6 +3432,7 @@ __metadata:
     "@grafana/i18n": "npm:13.0.0-pre"
     "@grafana/scenes": "npm:^7.1.1"
     "@grafana/schema": "npm:13.0.0-pre"
+    "@grafana/test-utils": "workspace:^"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
@@ -3478,6 +3479,7 @@ __metadata:
     uplot: "npm:1.6.32"
     vite-tsconfig-paths: "npm:^6.1.1"
     vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
   peerDependencies:
@@ -4079,7 +4081,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/test-utils@workspace:*, @grafana/test-utils@workspace:packages/grafana-test-utils":
+"@grafana/test-utils@workspace:*, @grafana/test-utils@workspace:^, @grafana/test-utils@workspace:packages/grafana-test-utils":
   version: 0.0.0-use.local
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:

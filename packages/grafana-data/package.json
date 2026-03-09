@@ -57,6 +57,8 @@
   "scripts": {
     "build": "yarn themes-schema && tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
+    "test": "vitest --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
@@ -95,6 +97,7 @@
   },
   "devDependencies": {
     "@grafana/scenes": "^7.1.1",
+    "@grafana/test-utils": "workspace:^",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/react": "16.3.0",
@@ -114,7 +117,10 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "tsx": "^4.21.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.0.18",
+    "vitest-fail-on-console": "^0.10.1"
   },
   "peerDependencies": {
     "react": "^18.0.0",
