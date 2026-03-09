@@ -592,21 +592,24 @@ func TestCompare(t *testing.T) {
 
 func TestChanges_MissingFolderMetadata(t *testing.T) {
 	tests := []struct {
-		name     string
-		source   []repository.FileTreeEntry
-		expected []string
+		name        string
+		source      []repository.FileTreeEntry
+		flagEnabled bool
+		expected    []string
 	}{
 		{
-			name:     "empty tree",
-			source:   nil,
-			expected: nil,
+			name:        "empty tree",
+			source:      nil,
+			flagEnabled: true,
+			expected:    nil,
 		},
 		{
 			name: "no directories",
 			source: []repository.FileTreeEntry{
 				{Path: "dashboard.json", Blob: true},
 			},
-			expected: nil,
+			flagEnabled: true,
+			expected:    nil,
 		},
 		{
 			name: "directory with _folder.json",
@@ -615,7 +618,8 @@ func TestChanges_MissingFolderMetadata(t *testing.T) {
 				{Path: "myfolder/_folder.json", Blob: true},
 				{Path: "myfolder/dashboard.json", Blob: true},
 			},
-			expected: nil,
+			flagEnabled: true,
+			expected:    nil,
 		},
 		{
 			name: "directory missing _folder.json",
@@ -623,7 +627,8 @@ func TestChanges_MissingFolderMetadata(t *testing.T) {
 				{Path: "myfolder", Blob: false},
 				{Path: "myfolder/dashboard.json", Blob: true},
 			},
-			expected: []string{"myfolder/"},
+			flagEnabled: true,
+			expected:    []string{"myfolder/"},
 		},
 		{
 			name: "mixed: some with and some without _folder.json",
@@ -634,7 +639,8 @@ func TestChanges_MissingFolderMetadata(t *testing.T) {
 				{Path: "noMeta", Blob: false},
 				{Path: "noMeta/dashboard.json", Blob: true},
 			},
-			expected: []string{"noMeta/"},
+			flagEnabled: true,
+			expected:    []string{"noMeta/"},
 		},
 		{
 			name: "directory path already has trailing slash",
@@ -642,13 +648,23 @@ func TestChanges_MissingFolderMetadata(t *testing.T) {
 				{Path: "myfolder/", Blob: false},
 				{Path: "myfolder/dashboard.json", Blob: true},
 			},
-			expected: []string{"myfolder/"},
+			flagEnabled: true,
+			expected:    []string{"myfolder/"},
+		},
+		{
+			name: "flag disabled: directory missing _folder.json returns nil",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder", Blob: false},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			flagEnabled: false,
+			expected:    nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, missing, err := Changes(context.Background(), tt.source, &provisioning.ResourceList{}, true)
+			_, missing, err := Changes(context.Background(), tt.source, &provisioning.ResourceList{}, tt.flagEnabled)
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, missing)
 		})

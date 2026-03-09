@@ -20,7 +20,7 @@ func classifyWarning(err error) (string, bool) {
 	var ownershipErr *resources.ResourceOwnershipConflictError
 	var unmanagedErr *resources.ResourceUnmanagedConflictError
 	var quotaExceededErr *quotas.QuotaExceededError
-	var missingMetaErr *resources.MissingFolderMetadataWarning
+	var missingMetaErr *resources.MissingFolderMetadata
 
 	switch {
 	case errors.As(err, &quotaExceededErr):

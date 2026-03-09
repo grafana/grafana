@@ -23,13 +23,13 @@ const (
 	folderMetadataFileName = "_folder.json"
 )
 
-// MissingFolderMetadataWarning is returned when a folder in the repository does not
+// MissingFolderMetadata is returned when a folder in the repository does not
 // have a _folder.json file and thus has an unstable hash-derived UID.
-type MissingFolderMetadataWarning struct {
+type MissingFolderMetadata struct {
 	Path string
 }
 
-func (e *MissingFolderMetadataWarning) Error() string {
+func (e *MissingFolderMetadata) Error() string {
 	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
 }
 

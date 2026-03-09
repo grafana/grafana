@@ -74,7 +74,7 @@ func FullSync(
 
 	for _, p := range missingFolderMetadata {
 		progress.Record(ctx, jobs.NewFolderResult(p).
-			WithWarning(&resources.MissingFolderMetadataWarning{Path: p}).
+			WithWarning(&resources.MissingFolderMetadata{Path: p}).
 			WithAction(repository.FileActionIgnored).
 			Build())
 	}
