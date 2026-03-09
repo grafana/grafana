@@ -13,9 +13,35 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+const testRepoName = "test-repo"
+
+func testRepoInfo() provisioning.ResourceRepositoryInfo {
+	return provisioning.ResourceRepositoryInfo{Name: testRepoName}
+}
+
+// managedGrafanaObj builds an unstructured object with manager annotations
+// matching testRepoName so that CheckResourceOwnership passes.
+func managedGrafanaObj(name, namespace string, extraAnnotations map[string]any) *unstructured.Unstructured {
+	annotations := map[string]any{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+		utils.AnnoKeyManagerIdentity: testRepoName,
+	}
+	for k, v := range extraAnnotations {
+		annotations[k] = v
+	}
+	return &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name":        name,
+			"namespace":   namespace,
+			"annotations": annotations,
+		},
+	}}
+}
 
 func TestRemoveResourceFromFile(t *testing.T) {
 	dashboardGVK := schema.GroupVersionKind{
@@ -41,17 +67,12 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Obj:    parsedObj,
 			GVK:    dashboardGVK,
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}, nil)
 
-		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      "my-dashboard",
-				"namespace": "default",
-				"annotations": map[string]any{
-					utils.AnnoKeyFolder: "my-folder",
-				},
-			},
-		}}
+		grafanaObj := managedGrafanaObj("my-dashboard", "default", map[string]any{
+			utils.AnnoKeyFolder: "my-folder",
+		})
 		mockClient.On("Get", mock.Anything, "my-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "my-dashboard", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
@@ -135,6 +156,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Obj:    parsedObj,
 			GVK:    dashboardGVK,
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}, nil)
 
 		mockClient.On("Get", mock.Anything, "deleted-dashboard", metav1.GetOptions{}, mock.Anything).
@@ -165,17 +187,12 @@ func TestRemoveResourceFromFile(t *testing.T) {
 			Obj:    parsedObj,
 			GVK:    dashboardGVK,
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}, nil)
 
-		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      "fail-dashboard",
-				"namespace": "default",
-				"annotations": map[string]any{
-					utils.AnnoKeyFolder: "some-folder",
-				},
-			},
-		}}
+		grafanaObj := managedGrafanaObj("fail-dashboard", "default", map[string]any{
+			utils.AnnoKeyFolder: "some-folder",
+		})
 		mockClient.On("Get", mock.Anything, "fail-dashboard", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "fail-dashboard", metav1.DeleteOptions{}, mock.Anything).
 			Return(fmt.Errorf("Folder cannot be deleted: folder is not empty"))
@@ -211,22 +228,16 @@ func TestRenameResourceFile(t *testing.T) {
 			"kind":       "Dashboard",
 			"metadata":   map[string]any{"name": "rename-uid"},
 		}}
-		// First Parse call is for the remove step (RemoveResourceFromFile)
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
 			Obj:    parsedObj,
 			GVK:    dashboardGVK,
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}, nil)
 
-		grafanaObj := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      "rename-uid",
-				"namespace": "default",
-				"annotations": map[string]any{
-					utils.AnnoKeyFolder: "src-folder",
-				},
-			},
-		}}
+		grafanaObj := managedGrafanaObj("rename-uid", "default", map[string]any{
+			utils.AnnoKeyFolder: "src-folder",
+		})
 		mockClient.On("Get", mock.Anything, "rename-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "rename-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
