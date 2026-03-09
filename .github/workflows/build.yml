@@ -102,7 +102,7 @@ jobs:
         with:
           username: ${{ vars.JFROG_USERNAME }}
           password: ${{ secrets.JFROG_ACCESS_TOKEN }}
-          registry: niartifacts.jfrog.io
+          registry: push.artifacts.ni.com
       - name: Create signature staging directory
         run: mkdir ${{ runner.temp }}/sigstore
       - name: Create gnupghome directory
