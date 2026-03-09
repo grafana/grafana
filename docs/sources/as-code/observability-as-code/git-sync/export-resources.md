@@ -35,7 +35,7 @@ Git Sync is under development, and traditional operations like moving or copying
 - [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli)
 - [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
-## Provision an existing dashboard from the Grafana UI
+## Add an existing dashboard from the Grafana UI
 
 You can save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
@@ -44,7 +44,7 @@ To do so, follow these steps:
 1. Make sure the dashboard is in **Editable** mode.
 1. Select **Save** or **Save as** from the top-right corner.
 1. In the menu:
-   - Type in the name of the branch of the provisioned repository you want to work in. Committing directly to `main` is not supported.
+   - Type in the name of the branch of the provisioned repository you want to work in, or create a new branch. Committing directly to `main` is not supported.
    - Select the provisioned folder you want to save the dashboard in.
    - Fill in the rest of the fields accordingly.
 1. Click **Save**.
