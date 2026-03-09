@@ -298,6 +298,7 @@ func TestCreateFolder(t *testing.T) {
 		setup       func(t *testing.T) (*DualReadWriter, DualWriteOptions)
 		wantErr     bool
 		errContains string
+		errCheck    func(t *testing.T, err error)
 		check       func(t *testing.T, result *provisioning.ResourceWrapper)
 	}{
 		{
@@ -322,6 +323,7 @@ func TestCreateFolder(t *testing.T) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 				var capturedUID string
 				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 					var res folders.Folder
@@ -403,6 +405,7 @@ func TestCreateFolder(t *testing.T) {
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(fmt.Errorf("repo error"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -410,6 +413,38 @@ func TestCreateFolder(t *testing.T) {
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
+		},
+		{
+			name: "error: flag enabled, leaf already has _folder.json returns AlreadyExists",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				existing := NewFolderManifest("existing-uid", "newfolder")
+				existingData, _ := json.Marshal(existing)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(&repository.FileInfo{Data: existingData}, nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.True(t, apierrors.IsAlreadyExists(err), "expected AlreadyExists, got: %v", err)
+			},
+		},
+		{
+			name: "error: flag enabled, read error other than not-found is propagated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(newTestRepoConfig("test-repo"))
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, fmt.Errorf("network error"))
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/"}
+			},
+			wantErr:     true,
+			errContains: "failed to read folder metadata",
 		},
 		{
 			name: "sync enabled, flag disabled: GetFolder not found → no Upsert",
@@ -498,6 +533,7 @@ func TestCreateFolder(t *testing.T) {
 				config := newSyncEnabledConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -529,6 +565,7 @@ func TestCreateFolder(t *testing.T) {
 				config := newSyncEnabledConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 				rw.On("Create", mock.Anything, "newfolder/_folder.json", "", mock.Anything, "").Return(nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -582,6 +619,9 @@ func TestCreateFolder(t *testing.T) {
 				require.Error(t, err)
 				if tt.errContains != "" {
 					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				if tt.errCheck != nil {
+					tt.errCheck(t, err)
 				}
 				return
 			}
@@ -668,14 +708,22 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 }
 
 func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
-	t.Run("flag enabled: nested folder creates _folder.json only for the leaf, not the parent", func(t *testing.T) {
+	t.Run("flag enabled: nested folder creates _folder.json for every segment", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		// Only the leaf _folder.json should be created.
+		// Parent: not found → create
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "parent/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			return json.Unmarshal(b, &f) == nil && f.Name != "" && f.Spec.Title == "parent"
+		}), "").Return(nil)
+
+		// Child (leaf): not found → create
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").Return(nil, repository.ErrFileNotFound)
 		rw.On("Create", mock.Anything, "parent/child/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 			var f folders.Folder
 			return json.Unmarshal(b, &f) == nil && f.Name != "" && f.Spec.Title == "child"
@@ -686,9 +734,36 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		// Verify parent/_folder.json was never created.
+		rw.AssertExpectations(t)
+	})
+
+	t.Run("flag enabled: skips existing parent _folder.json, creates child", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		// Parent: already exists → skip (no Create call)
+		existingParent := NewFolderManifest("existing-parent-uid", "parent")
+		existingData, _ := json.Marshal(existingParent)
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData}, nil)
+
+		// Child: not found → create
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").Return(nil, repository.ErrFileNotFound)
+		rw.On("Create", mock.Anything, "parent/child/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			return json.Unmarshal(b, &f) == nil && f.Name != "" && f.Spec.Title == "child"
+		}), "").Return(nil)
+
+		dw := &DualReadWriter{repo: rw, access: accessMock, folderMetadataEnabled: true}
+		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		rw.AssertExpectations(t)
 		rw.AssertNotCalled(t, "Create", mock.Anything, "parent/_folder.json",
 			mock.Anything, mock.Anything, mock.Anything)
-		rw.AssertExpectations(t)
 	})
 }
