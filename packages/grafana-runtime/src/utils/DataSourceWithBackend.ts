@@ -361,7 +361,7 @@ class DataSourceWithBackend<
 
     if (config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend) {
       const apiVersion = 'v0alpha1';
-      healthCheckURL = `/apis/${this.type}.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/health`;
+      healthCheckURL = `/apis/${this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/health`;
     }
 
     return lastValueFrom(
