@@ -118,6 +118,9 @@ describe('QueryEditorRenderer', () => {
             pendingTransformation: null,
             setPendingTransformation: jest.fn(),
             finalizePendingTransformation: jest.fn(),
+            pendingSavedQuery: null,
+            setPendingSavedQuery: jest.fn(),
+            showVersionBanner: false,
           }}
           actions={mockActions}
         >
