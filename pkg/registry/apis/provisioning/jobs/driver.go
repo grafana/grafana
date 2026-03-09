@@ -424,7 +424,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 			updated, err := d.store.Update(ctx, job)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-					// Conflict detected, retry with fresh data
+					d.mu.Unlock()
 					logging.FromContext(ctx).Debug("progress update conflict, retrying", "attempt", attempt+1)
 					continue
 				}
