@@ -28,4 +28,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     });
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
-  .setDataSupport({ annotations: true, alertStates: true });
+  .setDataSupport({ annotations: true, alertStates: true })
+  .setQuickEditPaths(['legend.showLegend', 'legend.calcs']);
