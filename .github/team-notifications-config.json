@@ -7,7 +7,7 @@
       "codeowners_teams": [
         "@grafana/dataviz-squad"
       ],
-      "area_labels": ["area/panel"],
+      "area_labels": ["area/dataviz"],
       "enabled": {
         "pr_notify": true,
         "pr_weekly": true,
