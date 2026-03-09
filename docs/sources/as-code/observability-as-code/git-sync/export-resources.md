@@ -29,15 +29,15 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like moving or saving a dashboard to a provisioned folder are not fully supported for resources already existing in Grafana. Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
+Git Sync is under development, and traditional operations like moving or copying a dashboard to a provisioned folder are not fully supported for resources already existing in Grafana. Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
 
-- [Save a dashboard from the Grafana UI](#save-a-dashboard-from-the-grafana-ui)
+- [Provision an existing dashboard from the Grafana UI](#provision-an-existing-dashboard-from-the-grafana-ui)
 - [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli)
 - [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
-## Save a dashboard from the Grafana UI
+## Provision an existing dashboard from the Grafana UI
 
-You can save any dashboard directly from the Grafana UI to your provisioned folder.
+You can save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
 To do so, follow these steps:
 
@@ -51,7 +51,7 @@ To do so, follow these steps:
 
 ## Add a dashboard with Grafana CLI
 
-You can export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use the CLI to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
+You can also export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use the CLI to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
 To do so, follow these steps:
 
