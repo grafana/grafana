@@ -8,11 +8,11 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -347,27 +347,21 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, err
 	}
 
+	parsed.Action = provisioning.ResourceActionDelete
+
+	err = parsed.Run(ctx)
+
+	// Extract the folder annotation from the existing Grafana object (if fetched by Run).
+	// The folder annotation is not stored in the git file.
 	objName := parsed.Obj.GetName()
-
-	// The folder annotation is not stored in the git file, so we need to get it from grafana
-	grafanaObj, err := parsed.Client.Get(ctx, objName, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return objName, "", parsed.GVK, nil
+	var folderName string
+	if parsed.Existing != nil {
+		if meta, metaErr := utils.MetaAccessor(parsed.Existing); metaErr == nil {
+			folderName = meta.GetFolder()
 		}
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get grafana object: %w", err)
 	}
-	meta, err := utils.MetaAccessor(grafanaObj)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("unable to get meta accessor: %w", err)
-	}
-	folderName := meta.GetFolder()
 
-	err = parsed.Client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return objName, folderName, parsed.GVK, nil
-		}
 		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)
 	}
 
