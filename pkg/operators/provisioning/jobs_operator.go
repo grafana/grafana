@@ -262,9 +262,23 @@ func setupWorkers(
 	)
 	workers = append(workers, syncWorker)
 
-	// Export
+	// Export — standalone export generates new UIDs so exported files
+	// don't reference existing resource identifiers.
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
 	exportWorker := export.NewExportWorker(
+		clients,
+		repositoryResources,
+		resourceLister,
+		export.ExportAllWithNewUIDs,
+		stageIfPossible,
+		metrics,
+		exportEnabled,
+	)
+	workers = append(workers, exportWorker)
+
+	// Migrate — export preserves original names so the takeover
+	// allowlist can correlate resources during the sync phase.
+	migrateExportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
 		resourceLister,
@@ -273,13 +287,10 @@ func setupWorkers(
 		metrics,
 		exportEnabled,
 	)
-	workers = append(workers, exportWorker)
-
-	// Migrate
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 		cleaner,
-		exportWorker,
+		migrateExportWorker,
 		syncWorker,
 	)
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)

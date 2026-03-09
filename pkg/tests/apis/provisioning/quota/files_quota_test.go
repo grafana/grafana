@@ -1,4 +1,4 @@
-package provisioning
+package quota
 
 import (
 	"context"
@@ -31,7 +31,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -48,7 +48,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "new-dashboard.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&createStatusCode)
 		require.NoError(t, result.Error(), "POST (create) should succeed when no quota is configured")
@@ -61,7 +61,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when no quota is configured")
@@ -91,7 +91,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -107,7 +107,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "new-dashboard.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&createStatusCode)
 		require.NoError(t, result.Error(), "POST (create) should succeed when within quota")
@@ -120,7 +120,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when within quota")
@@ -150,7 +150,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -165,7 +165,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "new-dashboard.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.Error(t, result.Error(), "POST (create) should be blocked when quota is reached")
@@ -178,7 +178,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&updateStatusCode)
 		require.NoError(t, result.Error(), "PUT (update) should succeed when quota is reached")
@@ -207,8 +207,8 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Target: "folder",
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 folder = 3 resources, exceeding limit of 1
-				"testdata/all-panels.json":   "dashboard1.json",
-				"testdata/text-options.json": "dashboard2.json",
+				"../testdata/all-panels.json":   "dashboard1.json",
+				"../testdata/text-options.json": "dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -228,7 +228,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "new-dashboard.json").
-			Body(helper.LoadFile("testdata/timeline-demo.json")).
+			Body(helper.LoadFile("../testdata/timeline-demo.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.Error(t, result.Error(), "POST (create) should be blocked when quota is exceeded")
@@ -240,7 +240,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "dashboard1.json").
-			Body(helper.LoadFile("testdata/text-options.json")).
+			Body(helper.LoadFile("../testdata/text-options.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.Error(t, result.Error(), "PUT (update) should be blocked when quota is exceeded")

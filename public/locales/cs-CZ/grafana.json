@@ -9626,6 +9626,7 @@
       "log-base": "Základ protokolu"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Osa",
         "color-label": "Barva",
@@ -9915,6 +9916,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Operátor porovnání",
+      "reducer-value-label": "",
       "select-field-placeholder": "Vyberte pole reduktoru"
     },
     "file-dropzone": {
@@ -11856,7 +11858,7 @@
       "dialog-label": "",
       "dock": "Připojit nabídku",
       "list-label": "Navigace",
-      "open": "Otevřít nabídku",
+      "open": "",
       "undock": "Odpojit nabídku"
     },
     "megamenu-item": {
@@ -12756,6 +12758,7 @@
       "error-connection-required": "Připojení je povinné",
       "error-fetch-branches": "",
       "error-required": "Toto pole je povinné.",
+      "error-save-failed": "",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
       "label-automatic-pulling": "Automatické vyžádání",
       "label-connection": "Připojení aplikace GitHub",
@@ -12770,9 +12773,11 @@
       "placeholder-my-config": "Moje konfigurace"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Nakonfigurujte webhooky</0> a získejte okamžité aktualizace v Grafaně ihned po potvrzení změn. Před zveřejněním zkontrolujte a schvalte změny pomocí pull requestů.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Funkce GitHubu",
-      "label-realtime-feedback": "Zpětná vazba v reálném čase"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12923,11 +12928,14 @@
       "description-preview-requirements": "(vyžaduje <2>vykreslování obrázků</2> a povolený veřejný přístup)",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
       "description-sync-interval": "Jak často synchronizovat změny z úložiště",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Je vyžadován interval synchronizace",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
       "label-generate-dashboard-previews": "Generovat náhledy nástěnky",
       "label-read-only": "Jen pro čtení",
-      "label-sync-interval": "Interval synchronizace (sekundy)"
+      "label-sync-interval": "Interval synchronizace (sekundy)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13324,6 +13332,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Varování",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Mějte na paměti následující omezení. Další podrobnosti najdete v <2>dokumentaci k synchronizaci Git</2>.",
       "alert-point-1": "Během tohoto procesu lze stále vytvářet, upravovat nebo odstraňovat zdroje, ale změny nelze exportovat.",
