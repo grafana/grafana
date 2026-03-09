@@ -8,9 +8,10 @@ type AddButtonProps = {
   label: string;
   onClick: () => void;
   tooltip?: string;
+  disabled?: boolean;
 };
 
-export function AddButton({ icon, label, tooltip, onClick }: AddButtonProps) {
+export function AddButton({ icon, label, tooltip, onClick, disabled }: AddButtonProps) {
   const styles = useStyles2(getStyles);
   return (
     <Button
@@ -21,6 +22,7 @@ export function AddButton({ icon, label, tooltip, onClick }: AddButtonProps) {
       icon={icon}
       tooltip={tooltip}
       onClick={onClick}
+      disabled={disabled}
     >
       {label}
     </Button>
