@@ -30,12 +30,23 @@ type ResourceStorageAuthorizer interface {
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
 }
 
+type Options struct {
+	// PreserveUserIdentity, when true, passes the request identity to the inner store instead of
+	// switching to service identity. Use this when the inner store should record the actual user
+	// in metadata (e.g. grafana.app/createdBy, grafana.app/updatedBy). When false (default), the
+	// wrapper uses service identity for inner store calls so authorization is enforced only by
+	// the wrapper and the inner store does not need to authorize the caller.
+	PreserveUserIdentity bool
+}
+
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
-// It overrides the identity in the context to use service identity for the underlying store operations.
-// That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
+// By default it overrides the identity in the context to use service identity for the underlying store operations,
+// so the underlying store authorization always succeeds and the wrapper enforces authorization. Use Options.PreserveUserIdentity
+// when the inner store should record the actual user (e.g. for createdBy/updatedBy annotations).
 type Wrapper struct {
-	inner      K8sStorage
-	authorizer ResourceStorageAuthorizer
+	inner                K8sStorage
+	authorizer           ResourceStorageAuthorizer
+	preserveUserIdentity bool
 }
 
 type K8sStorage interface {
@@ -51,8 +62,30 @@ type K8sStorage interface {
 var _ rest.Storage = (*Wrapper)(nil)
 var _ k8srest.Watcher = (*Wrapper)(nil)
 
+// New returns a Wrapper with default options (service identity used for inner store calls).
 func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
-	return &Wrapper{inner: store, authorizer: authz}
+	return NewWithOptions(store, authz, Options{})
+}
+
+// NewWithOptions returns a Wrapper with the given options. Use Options.PreserveUserIdentity
+// when the inner store should record the actual user in createdBy/updatedBy annotations.
+func NewWithOptions(store K8sStorage, authz ResourceStorageAuthorizer, opts Options) *Wrapper {
+	return &Wrapper{
+		inner:                store,
+		authorizer:           authz,
+		preserveUserIdentity: opts.PreserveUserIdentity,
+	}
+}
+
+// storeCtx returns the context to use for inner store calls: original ctx when preserving
+// user identity, otherwise a context with service identity so the store records the caller
+// and authorization is enforced only by the wrapper.
+func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
+	if w.preserveUserIdentity {
+		return ctx
+	}
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	return srvCtx
 }
 
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
@@ -65,20 +98,17 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	return w.inner.Create(srvCtx, obj, createValidation, options)
+	return w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
 }
 
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	storeCtx := w.storeCtx(ctx)
 	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}
-	obj, err := w.inner.Get(srvCtx, name, getOpts)
+	obj, err := w.inner.Get(storeCtx, name, getOpts)
 	if err != nil {
 		return nil, false, err
 	}
@@ -88,7 +118,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 		return nil, false, err
 	}
 
-	return w.inner.Delete(srvCtx, name, deleteValidation, options)
+	return w.inner.Delete(storeCtx, name, deleteValidation, options)
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
@@ -102,10 +132,7 @@ func (w *Wrapper) Destroy() {
 }
 
 func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	item, err := w.inner.Get(srvCtx, name, options)
+	item, err := w.inner.Get(w.storeCtx(ctx), name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +150,7 @@ func (w *Wrapper) GetSingularName() string {
 }
 
 func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	list, err := w.inner.List(srvCtx, options)
+	list, err := w.inner.List(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -163,10 +187,7 @@ func (w *Wrapper) Update(
 		userCtx:    ctx, // Keep original context for authorization
 	}
 
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	return w.inner.Update(srvCtx, name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 type authorizedUpdateInfo struct {
@@ -196,9 +217,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		// Override the identity to use service identity for the watch operation
-		srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-		return watcher.Watch(srvCtx, options)
+		return watcher.Watch(w.storeCtx(ctx), options)
 	}
 	return nil, fmt.Errorf("watch is not supported on the underlying storage")
 }

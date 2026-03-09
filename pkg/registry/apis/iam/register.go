@@ -500,7 +500,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		}
 	}
 
-	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
+	authzWrapper := storewrapper.NewWithOptions(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient), storewrapper.Options{PreserveUserIdentity: true})
 	storage[teamBindingResource.StoragePath()] = authzWrapper
 	return nil
 }
@@ -666,7 +666,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 		// roles API disabled, then deny bindings
 		rbAuthorizer = iamauthorizer.NewDenyCustomRoleRefsAuthorizer()
 	}
-	storage[iamv0.RoleBindingInfo.StoragePath()] = storewrapper.New(roleBindingStore, rbAuthorizer)
+	storage[iamv0.RoleBindingInfo.StoragePath()] = storewrapper.NewWithOptions(roleBindingStore, rbAuthorizer, storewrapper.Options{PreserveUserIdentity: true})
 	return nil
 }
 
@@ -709,7 +709,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 		}
 	}
 
-	authzWrapper := storewrapper.New(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider))
+	authzWrapper := storewrapper.NewWithOptions(regStoreDW, iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider), storewrapper.Options{PreserveUserIdentity: true})
 
 	storage[iamv0.ResourcePermissionInfo.StoragePath()] = authzWrapper
 	return nil
