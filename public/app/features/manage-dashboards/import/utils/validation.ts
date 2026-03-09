@@ -12,7 +12,7 @@ export const validateDashboardJson = (json: string) => {
   } catch (error) {
     return t('dashboard.validation.invalid-json', 'Not valid JSON');
   }
-  if (dashboard.hasOwnProperty('tags')) {
+  if (dashboard && dashboard.hasOwnProperty('tags')) {
     if (Array.isArray(dashboard.tags)) {
       const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
       if (hasInvalidTag) {
