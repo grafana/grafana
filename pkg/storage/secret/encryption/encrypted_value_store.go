@@ -299,7 +299,7 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 		opts.OrderBy = "created"
 	}
 	if opts.OrderDirection == "" {
-		opts.OrderDirection = contracts.OrderDirectionDesc
+		opts.OrderDirection = contracts.OrderDirectionAsc
 	}
 	attrs := []attribute.KeyValue{
 		attribute.Int64("limit", opts.Limit),
