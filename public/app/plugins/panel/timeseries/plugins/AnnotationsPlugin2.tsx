@@ -115,7 +115,7 @@ export const AnnotationsPlugin2 = ({
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
-    plotBox: plot?.bbox,
+    plotWidth: plot?.bbox.width,
     timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
