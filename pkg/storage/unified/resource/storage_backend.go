@@ -1109,7 +1109,18 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+// listModifiedSinceLookback is the duration subtracted from sinceRv before
+// querying the data or event store. This guards against concurrent writes that
+// commit slightly out-of-order, ensuring recently-committed events are re-scanned.
+const listModifiedSinceLookback = time.Second
+
+// ListModifiedSince returns all resources that have changed since the given
+// resource version. A small lookback window (listModifiedSinceLookback) is
+// applied so that events committed concurrently with the previous call are not
+// missed. Because of this, callers may receive events with resource versions
+// slightly before sinceRv. If a `lastCalledWithSinceRv` parameter is passed,
+// the lookback may be skipped as an optimization.
+func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
 			yield(nil, fmt.Errorf("group, resource, and namespace are required"))
@@ -1133,22 +1144,39 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	if latestEvent.ResourceVersion == sinceRv {
-		return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	// Determine whether to apply the lookback window. If the caller has previously
+	// called with this same sinceRv and enough wall-clock time has elapsed since that
+	// call, any in-flight concurrent writes at sinceRv time must have committed, so
+	// lookback is unnecessary.
+	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	sinceRvTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
+
+	var skipLookback bool
+	if lastCalledWithSinceRv != nil {
+		skipLookback = (*lastCalledWithSinceRv).Sub(sinceRvTime) > listModifiedSinceLookback
 	}
 
-	// Check if sinceRv is older than 1 hour
-	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
-	sinceTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
-	sinceRvAge := time.Since(sinceTime)
+	var effectiveRv int64
+	if skipLookback {
+		effectiveRv = sinceRv
+	} else {
+		effectiveRv = subtractDurationFromSnowflake(sinceRv, listModifiedSinceLookback)
+	}
+
+	// If no new events since effectiveRv, return early and avoid doing a range query.
+	if latestEvent.ResourceVersion <= effectiveRv {
+		return latestEvent.ResourceVersion, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	}
+
+	sinceRvAge := time.Since(sinceRvTime)
 
 	if sinceRvAge > time.Hour {
-		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 
-	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, sinceRv)
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
 }
 
 func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
@@ -1251,7 +1279,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, subtractDurationFromSnowflake(sinceRv, defaultLookbackPeriod), SortOrderDesc) {
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv, SortOrderDesc) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -1261,10 +1289,6 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
-			}
-
-			if evtKey.ResourceVersion < sinceRv {
-				continue
 			}
 
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
