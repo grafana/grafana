@@ -7,7 +7,7 @@ import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDTO } from 'app/types/dashboard';
 
-import { validateDashboardJson, validateUid } from './validation';
+import { validateUid } from './validation';
 
 const legacyDashboard: DashboardDTO = {
   dashboard: {
@@ -39,61 +39,6 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     title: 'V2 Dashboard',
   },
 };
-
-describe('validateDashboardJson', () => {
-  it('should reject invalid JSON', () => {
-    expect(validateDashboardJson('not json')).toBe('Not valid JSON');
-  });
-
-  it('should reject empty JSON object', () => {
-    expect(validateDashboardJson('{}')).toBe(
-      'JSON does not appear to be a valid dashboard: missing required fields'
-    );
-  });
-
-  it('should reject null', () => {
-    expect(validateDashboardJson('null')).toBe('Dashboard JSON must be a JSON object');
-  });
-
-  it('should reject arrays', () => {
-    expect(validateDashboardJson('[]')).toBe('Dashboard JSON must be a JSON object');
-  });
-
-  it('should reject primitive values', () => {
-    expect(validateDashboardJson('"hello"')).toBe('Dashboard JSON must be a JSON object');
-    expect(validateDashboardJson('42')).toBe('Dashboard JSON must be a JSON object');
-  });
-
-  it('should reject objects without dashboard fields', () => {
-    expect(validateDashboardJson('{"foo": "bar"}')).toBe(
-      'JSON does not appear to be a valid dashboard: missing required fields'
-    );
-  });
-
-  it('should accept V1 dashboard with title', () => {
-    expect(validateDashboardJson('{"title": "My Dashboard"}')).toBe(true);
-  });
-
-  it('should accept V1 dashboard with panels', () => {
-    expect(validateDashboardJson('{"panels": []}')).toBe(true);
-  });
-
-  it('should accept V2 dashboard with elements', () => {
-    expect(validateDashboardJson('{"elements": {}}')).toBe(true);
-  });
-
-  it('should accept legacy dashboard with rows', () => {
-    expect(validateDashboardJson('{"rows": []}')).toBe(true);
-  });
-
-  it('should reject dashboard with invalid tags', () => {
-    expect(validateDashboardJson('{"title": "test", "tags": [123]}')).toBe('tags expected array of strings');
-  });
-
-  it('should reject dashboard with non-array tags', () => {
-    expect(validateDashboardJson('{"title": "test", "tags": "not-array"}')).toBe('tags expected array');
-  });
-});
 
 describe('validateUid', () => {
   beforeAll(() => {

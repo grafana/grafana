@@ -12,15 +12,6 @@ export const validateDashboardJson = (json: string) => {
   } catch (error) {
     return t('dashboard.validation.invalid-json', 'Not valid JSON');
   }
-  if (typeof dashboard !== 'object' || dashboard === null || Array.isArray(dashboard)) {
-    return t('dashboard.validation.invalid-dashboard-json', 'Dashboard JSON must be a JSON object');
-  }
-  if (!('title' in dashboard) && !('panels' in dashboard) && !('elements' in dashboard) && !('rows' in dashboard)) {
-    return t(
-      'dashboard.validation.missing-dashboard-fields',
-      'JSON does not appear to be a valid dashboard: missing required fields'
-    );
-  }
   if (dashboard.hasOwnProperty('tags')) {
     if (Array.isArray(dashboard.tags)) {
       const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
