@@ -2,15 +2,18 @@ import { ChangeEvent, useEffect, useState } from 'react';
 
 import { store, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Stack, Input, Icon, IconButton } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
 import { getSectionExpanded } from './utils';
 
 export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: string) => void }) => {
-  const [isAnythingExpanded, setIsAnythingExpanded] = useState(true);
-  const [filterValue, setFilterValue] = useState('');
   const navTree = useSelector((state) => state.navBarTree);
+  const [isAnythingExpanded, setIsAnythingExpanded] = useState(() =>
+    navTree.some((item) => getSectionExpanded(item))
+  );
+  const [filterValue, setFilterValue] = useState('');
   const toggleAllSections = (tree: NavModelItem[], expanded: boolean) => {
     setIsAnythingExpanded(expanded);
     tree.forEach((item) => {
@@ -39,6 +42,8 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
   };
 
   const handleExpandCollapse = () => {
+    const action = isAnythingExpanded ? 'collapse' : 'expand';
+    reportInteraction('grafana_mega_menu_toggle_all_sections', { action });
     if (isAnythingExpanded) {
       collapseAllSections();
     } else {
@@ -50,6 +55,9 @@ export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: 
     setFilterValue(filter);
     expandAllSections();
     onFilterChange(filter);
+    if (filter) {
+      reportInteraction('grafana_mega_menu_search', { queryLength: filter.length });
+    }
   };
 
   const tooltip = isAnythingExpanded
