@@ -57,10 +57,12 @@ export function trackAddTransformationInitiated(source: AddCardSource) {
   });
 }
 
+export type CardActionSource = 'content_header' | 'sidebar_card';
+
 export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
   itemType: QueryEditorType,
-  source: 'content_header' | 'sidebar_card'
+  source: CardActionSource
 ) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
