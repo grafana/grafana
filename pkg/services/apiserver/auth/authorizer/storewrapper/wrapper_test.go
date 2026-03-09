@@ -35,6 +35,19 @@ func newTestSetup(t *testing.T) *testSetup {
 	return &testSetup{mockStore: mockStore, mockAuth: mockAuth, wrapper: wrapper, ctx: ctx}
 }
 
+func newTestSetupWithPreserveIdentity(t *testing.T) *testSetup {
+	mockStore := rest.NewMockStorage(t)
+	mockAuth := &FakeAuthorizer{}
+	wrapper := New(mockStore, mockAuth, WithPreserveIdentity())
+
+	ctx := identity.WithRequester(
+		context.Background(),
+		&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+	)
+
+	return &testSetup{mockStore: mockStore, mockAuth: mockAuth, wrapper: wrapper, ctx: ctx}
+}
+
 func matchesOriginalUser() func(context.Context) bool {
 	return func(ctx context.Context) bool {
 		user, err := identity.GetRequester(ctx)
@@ -334,6 +347,78 @@ func TestWrapper_PassthroughMethods(t *testing.T) {
 	})
 
 	setup.mockStore.AssertExpectations(t)
+}
+
+func TestWrapper_WithPreserveIdentity(t *testing.T) {
+	t.Run("Create passes original user identity to inner store", func(t *testing.T) {
+		setup := newTestSetupWithPreserveIdentity(t)
+
+		obj := &fakeObject{}
+		createOpts := &metaV1.CreateOptions{}
+		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
+
+		setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+		// Inner store must receive original user identity, not service identity.
+		setup.mockStore.On("Create", mock.MatchedBy(matchesOriginalUser()), obj, mock.Anything, createOpts).Return(expectedObj, nil)
+
+		result, err := setup.wrapper.Create(setup.ctx, obj, nil, createOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedObj, result)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Get passes original user identity to inner store", func(t *testing.T) {
+		setup := newTestSetupWithPreserveIdentity(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+
+		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "fetched", mock.Anything).Return(obj, nil)
+		setup.mockAuth.On("AfterGet", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+
+		result, err := setup.wrapper.Get(setup.ctx, "fetched", &metaV1.GetOptions{})
+
+		require.NoError(t, err)
+		assert.Equal(t, obj, result)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("List passes original user identity to inner store", func(t *testing.T) {
+		setup := newTestSetupWithPreserveIdentity(t)
+
+		listObj := &metaV1.List{}
+
+		setup.mockStore.On("List", mock.MatchedBy(matchesOriginalUser()), mock.Anything).Return(listObj, nil)
+		setup.mockAuth.On("FilterList", mock.MatchedBy(matchesOriginalUser()), listObj).Return(listObj, nil)
+
+		result, err := setup.wrapper.List(setup.ctx, &internalversion.ListOptions{})
+
+		require.NoError(t, err)
+		assert.Equal(t, listObj, result)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Delete passes original user identity to inner store", func(t *testing.T) {
+		setup := newTestSetupWithPreserveIdentity(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		deleteOpts := &metaV1.DeleteOptions{}
+
+		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything).Return(obj, nil)
+		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
+		setup.mockStore.On("Delete", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+
+		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, obj, result)
+		assert.True(t, deleted)
+		setup.mockAuth.AssertExpectations(t)
+		setup.mockStore.AssertExpectations(t)
+	})
 }
 
 // -----

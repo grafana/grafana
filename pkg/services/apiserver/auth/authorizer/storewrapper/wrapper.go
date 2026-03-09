@@ -31,11 +31,26 @@ type ResourceStorageAuthorizer interface {
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
-// It overrides the identity in the context to use service identity for the underlying store operations.
+// By default it overrides the identity in the context to use service identity for the underlying store operations.
 // That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
+// Use WithPreserveIdentity() to pass the original caller identity through to the inner store instead.
 type Wrapper struct {
-	inner      K8sStorage
-	authorizer ResourceStorageAuthorizer
+	inner            K8sStorage
+	authorizer       ResourceStorageAuthorizer
+	preserveIdentity bool
+}
+
+// Option configures a Wrapper.
+type Option func(*Wrapper)
+
+// WithPreserveIdentity instructs the Wrapper to leave the caller's identity in the context when
+// calling the inner store, instead of replacing it with a service identity. Use this when the inner
+// store does not perform its own RBAC checks and the caller's identity is needed downstream
+// (e.g. for admission webhooks).
+func WithPreserveIdentity() Option {
+	return func(w *Wrapper) {
+		w.preserveIdentity = true
+	}
 }
 
 type K8sStorage interface {
@@ -51,8 +66,23 @@ type K8sStorage interface {
 var _ rest.Storage = (*Wrapper)(nil)
 var _ k8srest.Watcher = (*Wrapper)(nil)
 
-func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
-	return &Wrapper{inner: store, authorizer: authz}
+func New(store K8sStorage, authz ResourceStorageAuthorizer, opts ...Option) *Wrapper {
+	w := &Wrapper{inner: store, authorizer: authz}
+	for _, opt := range opts {
+		opt(w)
+	}
+	return w
+}
+
+// innerCtx returns the context to use for inner store calls.
+// When preserveIdentity is true the original caller context is returned unchanged;
+// otherwise a service identity is injected so the inner store's own authz always succeeds.
+func (w *Wrapper) innerCtx(ctx context.Context) context.Context {
+	if w.preserveIdentity {
+		return ctx
+	}
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	return srvCtx
 }
 
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
@@ -65,24 +95,18 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 
-	// Wrap createValidation to run with the original user context so that admission
-	// webhooks (e.g. duplicate-email/login checks) see the real requester identity.
-	validationInUserCtx := validationWithUserContext(ctx, createValidation)
-
-	return w.inner.Create(srvCtx, obj, validationInUserCtx, options)
+	return w.inner.Create(w.innerCtx(ctx), obj, createValidation, options)
 }
 
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	innerCtx := w.innerCtx(ctx)
 	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}
-	obj, err := w.inner.Get(srvCtx, name, getOpts)
+	obj, err := w.inner.Get(innerCtx, name, getOpts)
 	if err != nil {
 		return nil, false, err
 	}
@@ -92,7 +116,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 		return nil, false, err
 	}
 
-	return w.inner.Delete(srvCtx, name, deleteValidation, options)
+	return w.inner.Delete(innerCtx, name, deleteValidation, options)
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
@@ -106,10 +130,7 @@ func (w *Wrapper) Destroy() {
 }
 
 func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	item, err := w.inner.Get(srvCtx, name, options)
+	item, err := w.inner.Get(w.innerCtx(ctx), name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +148,7 @@ func (w *Wrapper) GetSingularName() string {
 }
 
 func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	list, err := w.inner.List(srvCtx, options)
+	list, err := w.inner.List(w.innerCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -167,15 +185,7 @@ func (w *Wrapper) Update(
 		userCtx:    ctx, // Keep original context for authorization
 	}
 
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	// Wrap validation callbacks to run with the original user context so that admission
-	// webhooks see the real requester identity.
-	wrappedCreate := validationWithUserContext(ctx, createValidation)
-	wrappedUpdate := updateValidationWithUserContext(ctx, updateValidation)
-
-	return w.inner.Update(srvCtx, name, wrappedObjInfo, wrappedCreate, wrappedUpdate, forceAllowCreate, options)
+	return w.inner.Update(w.innerCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 type authorizedUpdateInfo struct {
@@ -203,34 +213,9 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	return updatedObj, nil
 }
 
-// validationWithUserContext returns a ValidateObjectFunc that always runs fn with userCtx
-// instead of whatever context the inner store passes in. This ensures that
-// admission webhooks (e.g. duplicate email/login checks) see the real requester
-// identity even after the storage context has been replaced with service identity.
-func validationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectFunc) k8srest.ValidateObjectFunc {
-	if fn == nil {
-		return nil
-	}
-	return func(_ context.Context, obj runtime.Object) error {
-		return fn(userCtx, obj)
-	}
-}
-
-// updateValidationWithUserContext is the same as validationWithUserContext but for ValidateObjectUpdateFunc.
-func updateValidationWithUserContext(userCtx context.Context, fn k8srest.ValidateObjectUpdateFunc) k8srest.ValidateObjectUpdateFunc {
-	if fn == nil {
-		return nil
-	}
-	return func(_ context.Context, newObj, oldObj runtime.Object) error {
-		return fn(userCtx, newObj, oldObj)
-	}
-}
-
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		// Override the identity to use service identity for the watch operation
-		srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-		return watcher.Watch(srvCtx, options)
+		return watcher.Watch(w.innerCtx(ctx), options)
 	}
 	return nil, fmt.Errorf("watch is not supported on the underlying storage")
 }
