@@ -175,6 +175,8 @@ function fixScalarUnions(definitions: Record<string, JSONSchema>): void {
 const OPAQUE_MAP_PROPERTIES: Record<string, string[]> = {
   DashboardFieldConfig: ['custom'],
   DashboardVizConfigSpec: ['options'],
+  DashboardDataQueryKind: ['spec'],
+  DashboardAnnotationQuerySpec: ['legacyOptions'],
 };
 
 function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
