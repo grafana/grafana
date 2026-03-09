@@ -496,7 +496,9 @@ describe('DataSourceWithBackend', () => {
     ds.callHealthCheck();
 
     expect(mock.calls.length).toBe(1);
-    expect(mock.calls[0][0].url).toEqual('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/health');
+    expect(mock.calls[0][0].url).toEqual(
+      '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+    );
   });
 
   test('check that callHealthCheck uses the legacy URL based on the feature toggle', () => {
