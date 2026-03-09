@@ -16,13 +16,14 @@ import {
 import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
+import { AnnotationVals, XYAnnoVals } from './annotations2/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2/useAnnotationClustering';
 import { useAnnotations } from './annotations2/useAnnotations';
 import { ANNOTATION_LANE_SIZE } from './utils';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotationsOptions: VizAnnotations | undefined;
+  options: VizAnnotations | undefined;
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
@@ -41,42 +42,6 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 };
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
-
-type NullableString = null | string;
-type NullableNumber = null | number;
-
-export type AnnotationVals = {
-  time: number[];
-  isRegion?: boolean[];
-  color?: string[];
-
-  id?: NullableNumber[];
-  clusterIdx?: NullableNumber[];
-  timeEnd?: NullableNumber[];
-  alertId?: NullableNumber[];
-
-  text?: NullableString[];
-  title?: NullableString[];
-  dashboardUID?: NullableString[];
-  newState?: NullableString[];
-  login?: NullableString[];
-  avatarUrl?: NullableString[];
-
-  /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
-  data?: unknown[];
-  tags?: string[][];
-};
-
-export type XYAnnoVals = {
-  color: string[];
-  xMin: number[];
-  xMax: number[];
-  yMax: number[];
-  yMin: number[];
-  fillOpacity: number[];
-  lineWidth: number[];
-  lineStyle: string[];
-};
 
 function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -97,7 +62,7 @@ export const AnnotationsPlugin2 = ({
   setNewRange,
   replaceVariables,
   canvasRegionRendering = true,
-  annotationsOptions,
+  options,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
   const [portalRoot] = useState(() => getPortalContainer());
@@ -106,7 +71,7 @@ export const AnnotationsPlugin2 = ({
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const clusteringMode: ClusteringMode | null = annotationsOptions?.clustering ? ClusteringMode.Render : null;
+  const clusteringMode: ClusteringMode | null = options?.clustering ? ClusteringMode.Render : null;
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = canExecuteActions?.() ?? false;
 
@@ -115,7 +80,7 @@ export const AnnotationsPlugin2 = ({
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
-    plotBox: plot?.bbox,
+    plotWidth: plot?.bbox.width,
     timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
@@ -151,8 +116,8 @@ export const AnnotationsPlugin2 = ({
       ctx.clip();
 
       // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering;
-      const shouldRenderLine = !annotationsOptions?.multiLane || annotationsOptions.clustering;
+      const shouldRenderRegion = !options?.multiLane || options.clustering;
+      const shouldRenderLine = !options?.multiLane || options.clustering;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -231,7 +196,7 @@ export const AnnotationsPlugin2 = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, annotationsOptions?.multiLane, annotationsOptions?.clustering]);
+  }, [config, canvasRegionRendering, getColorByName, options?.multiLane, options?.clustering]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
@@ -247,11 +212,6 @@ export const AnnotationsPlugin2 = ({
     }
   }, [xAnnos, plot]);
 
-  // Set active annotation tooltip state
-  const setPinnedAnnotationIndex = useCallback((annoIdx: string | undefined) => {
-    setPinnedAnnotationId(annoIdx);
-  }, []);
-
   if (plot) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
@@ -263,7 +223,7 @@ export const AnnotationsPlugin2 = ({
       const markers: React.ReactNode[] = [];
 
       // Top offset for multi-lane annotations
-      const top = annotationsOptions?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+      const top = options?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
       for (let i = 0; i < vals.time.length; i++) {
         if (skipClusteredAnno(vals, i)) {
@@ -301,9 +261,9 @@ export const AnnotationsPlugin2 = ({
           const annotationKey = getAnnotationKey(frameIdx, i);
           const setPinned = (active: boolean) => {
             if (active) {
-              setPinnedAnnotationIndex(annotationKey);
+              setPinnedAnnotationId(annotationKey);
             } else {
-              setPinnedAnnotationIndex(undefined);
+              setPinnedAnnotationId(undefined);
             }
           };
 

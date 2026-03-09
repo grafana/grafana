@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import uPlot, { BBox } from 'uplot';
+import uPlot from 'uplot';
 
 import { DataFrame, FieldType } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
@@ -8,8 +8,8 @@ import { TimeRange2 } from '@grafana/ui/internal';
 interface Props {
   annotations: DataFrame[];
   clusteringMode: ClusteringMode | null;
-  plotBox?: BBox;
   timeRange: TimeRange2;
+  plotWidth: number | undefined;
 }
 
 export enum ClusteringMode {
@@ -17,7 +17,7 @@ export enum ClusteringMode {
   Render = 'render',
 }
 
-export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, timeRange }: Props) => {
+export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange }: Props) => {
   const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
 
@@ -29,8 +29,8 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
         const timeVals: number[] = frame.fields.find((f) => f.name === 'time')?.values ?? [];
         const colorVals: string[] = frame.fields.find((f) => f.name === 'color')?.values ?? [];
 
-        if (timeVals.length > 1 && plotBox) {
-          let { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, plotBox, timeRange);
+        if (timeVals.length > 1 && plotWidth) {
+          let { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, plotWidth, timeRange);
 
           const timeEndFrame: DataFrame = {
             ...frame,
@@ -62,32 +62,22 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
 
           // append cluster annotation regions to frame
           clusters.forEach((idxs, ci) => {
-            // @todo more succinctly?
-            timeEndFrame.fields.forEach((field) => {
-              const vals = field.values;
-              if (field.name === 'time') {
-                // Push the first clustered annotation as the annotation region start time
-                vals.push(timeVals[idxs[0]]);
-              } else if (field.name === 'timeEnd') {
-                // push the last clustered annotation as the annotation region end time
-                let lastIdx = idxs.length - 1;
-                vals.push(timeVals[idxs[lastIdx]]);
-              } else if (field.name === 'isRegion') {
-                // Clusters are regions
-                vals.push(true);
-              } else if (field.name === 'color') {
-                // Use the color of the first annotation in the region
-                vals.push(colorVals[idxs[0]]);
-              } else if (field.name === 'title') {
-                vals.push(null);
-              } else if (field.name === 'text') {
-                vals.push(null);
-              } else if (field.name === 'clusterIdx') {
-                vals.push(ci);
-              } else {
-                vals.push(null);
-              }
-            });
+            const valMapping: Record<string, () => number | boolean | string> = {
+              // Push the first clustered annotation as the annotation region start time
+              time: () => timeVals[idxs[0]],
+              // push the last clustered annotation as the annotation region end time
+              timeEnd: () => timeVals[idxs[idxs.length - 1]],
+              // Clusters are regions
+              isRegion: () => true,
+              // Push color of the first annotation in the region
+              color: () => colorVals[idxs[0]],
+              // Push cluster index
+              clusterIdx: () => ci,
+            };
+
+            for (const field of timeEndFrame.fields) {
+              field.values.push(valMapping?.[field.name]?.() ?? null);
+            }
           });
 
           // Set data frame length
@@ -114,12 +104,12 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
             )
           : annotations,
     };
-  }, [annotations, clusteringMode, plotBox, timeRange]);
+  }, [annotations, clusteringMode, plotWidth, timeRange]);
 
   return outAnnos;
 };
 
-const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: BBox, timeRange: TimeRange2) => {
+const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotWidth: number, timeRange: TimeRange2) => {
   const isRegionVals: boolean[] =
     frame.fields.find((f) => f.name === 'isRegion')?.values ?? Array(timeVals.length).fill(false);
   const clusterIdx: Array<number | null> = Array(timeVals.length).fill(null);
@@ -127,7 +117,7 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
 
   let thisCluster: number[] = [];
   let prevIdx = null;
-  const mergeThreshold = calculateMergeThreshold(timeRange, plotBox);
+  const mergeThreshold = calculateMergeThreshold(timeRange, plotWidth);
 
   for (let j = 0; j < timeVals.length; j++) {
     let time = timeVals[j];
@@ -168,10 +158,14 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotBox: 
 // Recommended minimum spacing between interactive elements (a11y)
 const MIN_ANNOTATION_SPACING = 24;
 
-const calculateMergeThreshold = (timeRange: TimeRange2, plotBox: BBox) => {
+const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {
+  // If the plot width is zero, something is very wrong! Let's avoid clustering in this case.
+  if (!plotWidth) {
+    return 0;
+  }
+
   const pixelThreshold = MIN_ANNOTATION_SPACING * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;
-  const plotWidth = plotBox?.width;
   const thresholdRatio = pixelThreshold / plotWidth;
   return thresholdRatio * dt;
 };

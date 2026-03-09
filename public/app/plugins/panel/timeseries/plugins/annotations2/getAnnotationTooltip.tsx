@@ -1,7 +1,7 @@
 import { dateTimeFormat, systemDateFormats } from '@grafana/data';
 import alertDef from 'app/features/alerting/state/alertDef';
 
-import { AnnotationVals } from '../AnnotationsPlugin2';
+import { AnnotationVals } from './types';
 
 const timeFormatter = (value: number, timeZone: string) =>
   dateTimeFormat(value, {

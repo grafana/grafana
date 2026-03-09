@@ -141,7 +141,7 @@ describe('AnnotationsPlugin2', () => {
     const result = render(
       <div>
         <AnnotationsPlugin2
-          annotationsOptions={{}}
+          options={{}}
           config={configOverride ?? config}
           timeZone={'browser'}
           newRange={null}
@@ -539,7 +539,7 @@ describe('AnnotationsPlugin2', () => {
         // should cluster all points within 48px
         setUp({
           annotations: [mockIRMClusteringAnnotation],
-          annotationsOptions: {
+          options: {
             clustering: false,
           },
         });
@@ -551,7 +551,7 @@ describe('AnnotationsPlugin2', () => {
         // should cluster all points within 48px
         setUp({
           annotations: [mockIRMClusteringAnnotation],
-          annotationsOptions: {
+          options: {
             clustering: true,
           },
         });
@@ -596,7 +596,7 @@ describe('AnnotationsPlugin2', () => {
         } as PanelContext);
         setUp({
           annotations: [mockAlertingFrame],
-          annotationsOptions: {
+          options: {
             clustering: true,
           },
         });
@@ -666,7 +666,7 @@ describe('AnnotationsPlugin2', () => {
       it('should render each frame into separate lanes in the viz', () => {
         setUp({
           annotations: [mockAlertingFrame, mockIRMAnnotationRegion],
-          annotationsOptions: { multiLane: true },
+          options: { multiLane: true },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers).toHaveLength(14);
@@ -784,7 +784,7 @@ describe('AnnotationsPlugin2', () => {
       it('multi-lane disables indicator line and rect fill', () => {
         setUp({
           annotations: [mockAnnotationFrame],
-          annotationsOptions: { multiLane: true },
+          options: { multiLane: true },
         });
         const mockU = createMockUPlot();
         const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;

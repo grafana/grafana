@@ -4,11 +4,10 @@ import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 
-import { AnnotationVals } from '../AnnotationsPlugin2';
-
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
 import { getAnnotationTooltip } from './getAnnotationTooltip';
+import { AnnotationVals } from './types';
 
 export interface AnnotationTooltipProps {
   annoVals: AnnotationVals;

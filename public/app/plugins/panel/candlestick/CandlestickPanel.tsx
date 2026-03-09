@@ -330,7 +330,7 @@ export const CandlestickPanel = ({
               timeZone={timeZone}
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
-              annotationsOptions={options.annotations}
+              options={options.annotations}
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (

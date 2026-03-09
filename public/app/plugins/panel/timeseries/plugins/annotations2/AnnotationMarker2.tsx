@@ -12,11 +12,10 @@ import { TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
 import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
 
-import { AnnotationVals } from '../AnnotationsPlugin2';
-
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
 import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
+import { AnnotationVals } from './types';
 
 interface AnnotationMarkerProps {
   // Annotation dataframe
