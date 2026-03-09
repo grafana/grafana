@@ -3476,6 +3476,8 @@ __metadata:
     tsx: "npm:^4.21.0"
     typescript: "npm:5.9.2"
     uplot: "npm:1.6.32"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
   peerDependencies:
@@ -3672,6 +3674,7 @@ __metadata:
     typescript: "npm:5.9.2"
     vite-tsconfig-paths: "npm:^6.1.1"
     vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
   peerDependencies:
     react: ">=18"
   languageName: unknown

@@ -47,8 +47,8 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "test": "vitest",
-    "test:ci": "vitest run",
+    "test": "vitest --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
@@ -69,7 +69,8 @@
     "rollup-plugin-copy": "3.5.0",
     "typescript": "5.9.2",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "vitest-fail-on-console": "^0.10.1"
   },
   "peerDependencies": {
     "react": ">=18"
