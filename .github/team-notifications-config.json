@@ -2,33 +2,17 @@
   "_docs": "Team notifications configuration.",
   "teams": [
     {
-      "name": "alerting",
-      "adoption_date": "YYYY-MM-DD",
-      "codeowners_teams": [
-        "@grafana/alerting-backend",
-        "@grafana/alerting-frontend",
-        "@grafana/alerting-squad"
-      ],
-      "area_labels": ["area/alerting"],
-      "enabled": {
-        "pr_notify": false,
-        "pr_weekly": false,
-        "fr_notify": false,
-        "fr_weekly": false
-      }
-    },
-    {
       "name": "dataviz",
-      "adoption_date": "YYYY-MM-DD",
+      "adoption_date": "2026-03-09",
       "codeowners_teams": [
         "@grafana/dataviz-squad"
       ],
       "area_labels": ["area/panel"],
       "enabled": {
-        "pr_notify": false,
-        "pr_weekly": false,
-        "fr_notify": false,
-        "fr_weekly": false
+        "pr_notify": true,
+        "pr_weekly": true,
+        "fr_notify": true,
+        "fr_weekly": true
       }
     }
   ]
