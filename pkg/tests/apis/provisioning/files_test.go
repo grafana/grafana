@@ -1076,7 +1076,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			}
 		}`
 
-		result = helper.EditorREST.Put().
+		_ = helper.EditorREST.Put().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
