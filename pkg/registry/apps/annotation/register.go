@@ -87,9 +87,9 @@ func RegisterAppInstaller(
 
 	// Layer 2→3: Wrap Store interface with K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
-		store:  store,
-		mapper: mapper,
-    authService: authService,
+		store:       store,
+		mapper:      mapper,
+		authService: authService,
 	}
 
 	// Create the tags handler
