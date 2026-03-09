@@ -42,17 +42,19 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo         repository.ReaderWriter
-	tree         FolderTree
-	client       dynamic.ResourceInterface
-	beforeCreate FolderCreationInterceptor
+	repo                  repository.ReaderWriter
+	tree                  FolderTree
+	client                dynamic.ResourceInterface
+	beforeCreate          FolderCreationInterceptor
+	folderMetadataEnabled bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:   repo,
-		tree:   lookup,
-		client: client,
+		repo:                  repo,
+		tree:                  lookup,
+		client:                client,
+		folderMetadataEnabled: folderMetadataEnabled,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -96,12 +98,27 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
+	// Use stable UID from _folder.json if available
+	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
+		if meta.Name != "" {
+			f.ID = meta.Name
+		}
+	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
+		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
+			if meta.Name != "" {
+				f.ID = meta.Name
+			}
+		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
@@ -232,6 +249,33 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// CreateFolderWithUID creates a Grafana folder using a caller-provided stable UID
+// instead of the path-derived hash UID produced by ParseFolder.
+// It ensures all ancestor folders exist first, then creates the leaf folder.
+// Used when _folder.json has already been written to the repository.
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID string) error {
+	cfg := fm.repo.Config()
+
+	// Determine the parent folder ID, ensuring ancestor folders exist.
+	parentPath := safepath.Dir(folderPath)
+	var parentFolderID string
+	if parentPath == "" {
+		parentFolderID = RootFolder(cfg)
+	} else {
+		var err error
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath)
+		if err != nil {
+			return fmt.Errorf("ensure parent folder path: %w", err)
+		}
+	}
+
+	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
+	leaf := ParseFolder(folderPath, cfg.GetName())
+	leaf.ID = stableUID
+
+	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
