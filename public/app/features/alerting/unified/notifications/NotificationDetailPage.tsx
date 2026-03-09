@@ -9,7 +9,7 @@ import {
   useCreateNotificationqueryMutation,
   useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { GrafanaTheme2, dateTime, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -300,7 +300,7 @@ function NotificationHeader({
           <NotificationState status={notification.status} />
           <Tooltip content={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
             <Text variant="bodySmall" color="secondary">
-              {formatDistanceToNow(new Date(notification.timestamp))}
+              {dateTimeFormatTimeAgo(notification.timestamp)}
             </Text>
           </Tooltip>
           <Text variant="bodySmall" color="secondary">
@@ -577,7 +577,7 @@ function AlertsList({ alerts, groupLabels, heading }: AlertsListProps) {
                 {alert.startsAt && (
                   <Tooltip content={dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}>
                     <Text variant="bodySmall" color="secondary">
-                      {formatDistanceToNow(new Date(alert.startsAt))}
+                      {dateTimeFormatTimeAgo(alert.startsAt)}
                     </Text>
                   </Tooltip>
                 )}
@@ -785,38 +785,6 @@ function RelatedNotificationsSidebar({
       ))}
     </Stack>
   );
-}
-
-function formatDistanceToNow(date: Date): string {
-  const diffMs = Date.now() - date.getTime();
-  const diffS = Math.floor(Math.abs(diffMs) / 1000);
-  const suffix = diffMs >= 0 ? ' ago' : ' from now';
-
-  if (diffS < 60) {
-    return `${diffS} second${diffS !== 1 ? 's' : ''}${suffix}`;
-  }
-  const diffM = Math.floor(diffS / 60);
-  const remS = diffS % 60;
-  if (diffM < 60) {
-    if (remS === 0) {
-      return `${diffM} minute${diffM !== 1 ? 's' : ''}${suffix}`;
-    }
-    return `${diffM} minute${diffM !== 1 ? 's' : ''} ${remS} second${remS !== 1 ? 's' : ''}${suffix}`;
-  }
-  const diffH = Math.floor(diffM / 60);
-  const remM = diffM % 60;
-  if (diffH < 24) {
-    if (remM === 0) {
-      return `${diffH} hour${diffH !== 1 ? 's' : ''}${suffix}`;
-    }
-    return `${diffH} hour${diffH !== 1 ? 's' : ''} ${remM} minute${remM !== 1 ? 's' : ''}${suffix}`;
-  }
-  const diffD = Math.floor(diffH / 24);
-  const remH = diffH % 24;
-  if (remH === 0) {
-    return `${diffD} day${diffD !== 1 ? 's' : ''}${suffix}`;
-  }
-  return `${diffD} day${diffD !== 1 ? 's' : ''} ${remH} hour${remH !== 1 ? 's' : ''}${suffix}`;
 }
 
 function formatDuration(durationNs: number): string {
