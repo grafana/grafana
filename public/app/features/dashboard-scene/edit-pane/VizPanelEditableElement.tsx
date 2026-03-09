@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -25,10 +26,12 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { useQuickEditOptions } from './useQuickEditOptions';
 
 function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
+  const plugin = panel.getPlugin();
   const rootId = useId();
   const titleId = useId();
   const descriptionId = useId();
@@ -71,12 +74,22 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       );
   }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
 
+  const isPanelQuickEditEnabled = useBooleanFlagValue('panelQuickEdit', false);
+  const quickEditOptions = useQuickEditOptions({ panel, plugin });
+  const quickEditCategory = isPanelQuickEditEnabled ? quickEditOptions : null;
+
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
     [layoutElement]
   );
 
-  return [panelOptions, ...layoutCategories];
+  const categories: OptionsPaneCategoryDescriptor[] = [panelOptions];
+  if (quickEditCategory) {
+    categories.push(quickEditCategory);
+  }
+  categories.push(...layoutCategories);
+
+  return categories;
 }
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {

@@ -5873,6 +5873,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edit": {
+      "category-title": "Quick edit",
+      "change-option": "Change {{optionName}}"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
