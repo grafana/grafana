@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	dataWrap "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
@@ -67,14 +67,14 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		dqr := dataWrap.QueryDataRequest{}
+		dqr := data.QueryDataRequest{}
 		err := web.Bind(req, &dqr)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		queries, dsRef, err := dataWrap.ToDataSourceQueries(dqr)
+		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
 			responder.Error(err)
 			return
