@@ -8,5 +8,6 @@ export default defineConfig({
     defaultNS: 'grafana-prometheus',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    warnOnConflicts: 'error',
   },
 });

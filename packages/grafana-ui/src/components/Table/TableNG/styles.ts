@@ -126,8 +126,15 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       overflowY: 'hidden',
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
+      // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
+      '&[aria-expanded="false"]': {
+        display: 'none',
+      },
     }),
-    cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+    cellNested: css({
+      '&[aria-selected=true]': { outline: 'none' },
+      '&:hover': { backgroundColor: 'transparent' },
+    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',
