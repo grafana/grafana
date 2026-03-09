@@ -381,19 +381,13 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		const hiddenLogin = "hidden-integration-user"
 
-		// Register the hidden login in the live Cfg so UserFilter picks it up.
-		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
-		t.Cleanup(func() {
-			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
-		})
-
 		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
 			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
 			GVR:       gvrUsers,
 		})
 
-		// Create a user whose login is in the hidden list.
+		// Create the user before marking it as hidden so BeforeCreate does not block it.
 		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
 		spec := obj.Object["spec"].(map[string]interface{})
 		spec["login"] = hiddenLogin
@@ -403,7 +397,12 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		createdUID := created.GetName()
+
+		// Register the hidden login in the live Cfg so UserFilter picks it up.
+		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		// Cleanup: remove from hidden list first so that Delete can succeed.
 		t.Cleanup(func() {
+			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
 			_ = adminClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
 		})
 
@@ -421,6 +420,54 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 			itemSpec := item.Object["spec"].(map[string]interface{})
 			require.NotEqual(t, hiddenLogin, itemSpec["login"])
 		}
+
+		// Update should return 403 for a hidden user.
+		userToUpdate := created.DeepCopy()
+		updateSpec := userToUpdate.Object["spec"].(map[string]interface{})
+		updateSpec["title"] = "Updated Title"
+		userToUpdate.Object["spec"] = updateSpec
+		_, err = adminClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
+
+		// Delete should return 403 for a hidden user.
+		err = adminClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
+	})
+
+	t.Run("should not be able to create a user whose login is in the hidden users list", func(t *testing.T) {
+		ctx := context.Background()
+
+		const hiddenLogin = "hidden-create-blocked-user"
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		t.Cleanup(func() {
+			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
+		})
+
+		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		spec := obj.Object["spec"].(map[string]interface{})
+		spec["login"] = hiddenLogin
+		spec["email"] = hiddenLogin + "@example.com"
+		obj.Object["spec"] = spec
+
+		_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
 	})
 }
 
