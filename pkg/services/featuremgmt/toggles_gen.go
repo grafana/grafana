@@ -638,6 +638,10 @@ const (
 	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
+	// FlagKubernetesAuthZRoleBindingsRedirect
+	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"

@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
@@ -157,6 +158,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
 
     commonOptionsBuilder.addLegendOptions(builder, false, true, config.featureToggles.vizLegendSeriesLimit);
     commonOptionsBuilder.addTooltipOptions(builder);
+    addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier(
     showDefaultSuggestion((ds) => {

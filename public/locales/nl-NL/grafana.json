@@ -9530,6 +9530,7 @@
       "log-base": "Logboekbase"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "As",
         "color-label": "Kleur",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Vergelijkingsoperator",
+      "reducer-value-label": "",
       "select-field-placeholder": "Veldverkleiner selecteren"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Menu koppelen",
       "list-label": "Navigatie",
-      "open": "Menu openen",
+      "open": "",
       "undock": "Menu ontkoppelen"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "Verbinding is vereist",
       "error-fetch-branches": "",
       "error-required": "Dit veld is verplicht.",
+      "error-save-failed": "",
       "error-save-repository": "Kan de repository-instellingen niet opslaan",
       "label-automatic-pulling": "Automatische pulling",
       "label-connection": "GitHub-app-verbinding",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Mijn configuratie"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Configureer webhooks</0> om directe updates in Grafana te krijgen zodra wijzigingen zijn doorgevoerd. Bekijk en keur wijzigingen goed met pull requests voordat ze live gaan.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub-functies",
-      "label-realtime-feedback": "Realtime feedback"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(vereist <2>afbeeldingsweergave</2> en ingeschakelde openbare toegang)",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-sync-interval": "Hoe vaak wijzigingen uit de repository moeten worden gesynchroniseerd",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Synchronisatie-interval is vereist",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
       "label-generate-dashboard-previews": "Dashboardvoorbeeldweergaven genereren",
       "label-read-only": "Alleen lezen",
-      "label-sync-interval": "Synchronisatie-interval (seconden)"
+      "label-sync-interval": "Synchronisatie-interval (seconden)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Waarschuwing",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Houd rekening met de volgende beperkingen. Zie de <2>Git Sync-documentatie</2> voor meer informatie.",
       "alert-point-1": "Bronnen kunnen tijdens dit proces nog steeds worden gemaakt, bewerkt of verwijderd, maar wijzigingen kunnen niet worden geëxporteerd.",
