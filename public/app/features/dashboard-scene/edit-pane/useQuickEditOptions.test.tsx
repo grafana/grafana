@@ -6,7 +6,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
 import { DashboardEditActionEvent } from './shared';
-import { useQuickEditOptions } from './useQuickEditOptions';
+import { resetQuickEditWarnings, useQuickEditOptions } from './useQuickEditOptions';
 
 describe('useQuickEditOptions', () => {
   const createMockPanel = (options: Record<string, unknown> = {}) => {
@@ -153,6 +153,7 @@ describe('useQuickEditOptions', () => {
   });
 
   it('should warn and skip invalid paths', () => {
+    resetQuickEditWarnings();
     const panel = createMockPanel();
     const plugin = createMockPlugin(['textMode', 'invalidPath']);
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
@@ -162,6 +163,26 @@ describe('useQuickEditOptions', () => {
     expect(result.current).not.toBeNull();
     expect(result.current?.items).toHaveLength(1);
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Quick edit path "invalidPath" not found'));
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should only warn once per invalid path to avoid console spam', () => {
+    resetQuickEditWarnings();
+    const panel = createMockPanel({ textMode: 'auto' });
+    const plugin = createMockPlugin(['textMode', 'invalidPath']);
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+    const { result, rerender } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+    expect(result.current).not.toBeNull();
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+
+    rerender();
+    rerender();
+    rerender();
+
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
 
     consoleSpy.mockRestore();
   });
@@ -210,6 +231,7 @@ describe('useQuickEditOptions', () => {
   });
 
   it('should return null when all paths are invalid', () => {
+    resetQuickEditWarnings();
     const panel = createMockPanel();
     const plugin = createMockPlugin(['invalidPath1', 'invalidPath2']);
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();

@@ -11,6 +11,20 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { DashboardEditActionEvent } from './shared';
 
+const warnedPaths = new Set<string>();
+
+function warnOnce(key: string, message: string) {
+  if (!warnedPaths.has(key)) {
+    warnedPaths.add(key);
+    console.warn(message);
+  }
+}
+
+/** @internal - exported for testing only */
+export function resetQuickEditWarnings() {
+  warnedPaths.clear();
+}
+
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
   plugin: PanelPlugin | undefined;
@@ -66,9 +80,12 @@ export function useQuickEditOptions({
     for (const path of quickEditPaths) {
       const item = allItems.find((opt) => opt.path === path);
 
+      const pluginId = plugin.meta?.id ?? 'unknown';
+
       if (!item) {
-        console.warn(
-          `useQuickEditOptions: Quick edit path "${path}" not found in plugin options for "${plugin.meta?.id ?? 'unknown'}". ` +
+        warnOnce(
+          `${pluginId}:${path}:not-found`,
+          `useQuickEditOptions: Quick edit path "${path}" not found in plugin options for "${pluginId}". ` +
             `Make sure the path matches an option defined in setPanelOptions(). ` +
             `Note: Options defined via addNestedOptions() are not currently supported.`
         );
@@ -76,7 +93,8 @@ export function useQuickEditOptions({
       }
 
       if (isNestedPanelOptions(item)) {
-        console.warn(
+        warnOnce(
+          `${pluginId}:${path}:nested`,
           `useQuickEditOptions: Quick edit path "${path}" refers to a nested options group, which is not supported. ` +
             `Use paths to individual options instead.`
         );
