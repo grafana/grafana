@@ -1,13 +1,17 @@
-import { FieldColorModeId, VisualizationPresetsSupplier, VisualizationSuggestion } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigSource,
+  ThresholdsMode,
+  VisualizationPresetsSupplier,
+  VisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  AxisColorMode,
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  ScaleDistribution,
   StackingMode,
   VisibilityMode,
 } from '@grafana/schema';
@@ -29,36 +33,234 @@ const STACKING_OFF: GraphFieldConfig = {
   stacking: { mode: StackingMode.None, group: 'A' },
 };
 
-// Shared options for (3) step presets
-const STEP_BASE_CUSTOM: GraphFieldConfig = {
-  lineWidth: 1,
-  lineInterpolation: LineInterpolation.StepBefore,
-  showPoints: VisibilityMode.Auto,
-  pointSize: 1,
+function makePreset(
+  name: string,
+  fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>>
+): VisualizationSuggestion<Options, GraphFieldConfig> {
+  return { name, fieldConfig, cardOptions: { previewModifier } };
+}
+
+// --- Single series ---
+
+/** Line with opacity fill */
+const makeSingleLineFillConfig = (pointSize: number): FieldConfigSource<Partial<GraphFieldConfig>> => ({
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 1,
+      fillOpacity: 27,
+      gradientMode: GraphGradientMode.Opacity,
+      showPoints: VisibilityMode.Auto,
+      pointSize,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'last' },
+  },
+  overrides: [],
+});
+
+const FC_SINGLE_SMOOTH_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Smooth,
+      lineWidth: 2,
+      fillOpacity: 19,
+      gradientMode: GraphGradientMode.Scheme,
+      showPoints: VisibilityMode.Never,
+      pointSize: 5,
+    },
+    color: { mode: FieldColorModeId.ContinuousBlYlRd, seriesBy: 'last' },
+  },
+  overrides: [],
 };
 
-// Shared options for stacked presets
-const STACKED_BASE_CUSTOM: GraphFieldConfig = {
-  drawStyle: GraphDrawStyle.Line,
-  barAlignment: 0,
-  spanNulls: false,
-  insertNulls: false,
-  lineStyle: { fill: 'solid' },
+const FC_SINGLE_DASHED_THRESHOLD: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 1,
+      fillOpacity: 39,
+      gradientMode: GraphGradientMode.Scheme,
+      showPoints: VisibilityMode.Never,
+      pointSize: 5,
+      lineStyle: { fill: 'dash', dash: [10, 10] },
+    },
+    color: { mode: FieldColorModeId.Thresholds, seriesBy: 'last' },
+  },
+  overrides: [],
 };
 
-// Shared options for the (2) stacked area presets
-const STACKED_AREA_BASE_CUSTOM: GraphFieldConfig = {
-  ...STACKED_BASE_CUSTOM,
-  barWidthFactor: 0.6,
-  lineInterpolation: LineInterpolation.Linear,
-  gradientMode: GraphGradientMode.Opacity,
-  lineWidth: 1,
-  showValues: false,
+const FC_SINGLE_STEP_FILL: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.StepBefore,
+      lineWidth: 2,
+      fillOpacity: 25,
+      gradientMode: GraphGradientMode.Opacity,
+      showPoints: VisibilityMode.Never,
+      pointSize: 5,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'last' },
+  },
+  overrides: [],
 };
 
-/**
- * Default preset
- */
+const FC_SINGLE_BARS_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Bars,
+      lineWidth: 1,
+      fillOpacity: 70,
+      gradientMode: GraphGradientMode.Hue,
+      showPoints: VisibilityMode.Auto,
+      pointSize: 5,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'last' },
+  },
+  overrides: [],
+};
+
+const FC_SINGLE_BARS_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Bars,
+      lineWidth: 1,
+      fillOpacity: 70,
+      gradientMode: GraphGradientMode.Scheme,
+      showPoints: VisibilityMode.Auto,
+      pointSize: 5,
+    },
+    color: { mode: FieldColorModeId.ContinuousGrYlRd, seriesBy: 'last' },
+  },
+  overrides: [],
+};
+
+const FC_SINGLE_LINE_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 1,
+      fillOpacity: 57,
+      gradientMode: GraphGradientMode.Hue,
+      showPoints: VisibilityMode.Auto,
+      pointSize: 5,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'last' },
+  },
+  overrides: [],
+};
+
+const FC_SINGLE_LINE_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 2,
+      fillOpacity: 17,
+      gradientMode: GraphGradientMode.Scheme,
+      showPoints: VisibilityMode.Auto,
+      pointSize: 3,
+    },
+    color: { mode: FieldColorModeId.ContinuousGrYlRd, seriesBy: 'last' },
+  },
+  overrides: [],
+};
+
+const FC_SINGLE_THRESHOLD_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 1,
+      fillOpacity: 27,
+      gradientMode: GraphGradientMode.Scheme,
+      showPoints: VisibilityMode.Auto,
+      pointSize: 3,
+    },
+    color: { mode: 'thresholds', seriesBy: 'last' },
+    thresholds: {
+      mode: ThresholdsMode.Percentage,
+      steps: [
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        { value: null as unknown as number, color: 'green' },
+        { value: 40, color: '#EAB839' },
+        { value: 60, color: 'red' },
+      ],
+    },
+  },
+  overrides: [],
+};
+
+// --- Multi series ---
+
+/** Lines with small always-visible points; shared between few-points and many-points */
+const FC_MULTI_POINTS: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      ...STACKING_OFF,
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 1,
+      fillOpacity: 0,
+      gradientMode: GraphGradientMode.None,
+      showPoints: VisibilityMode.Always,
+      pointSize: 1,
+      barWidthFactor: 0.9,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'max' },
+  },
+  overrides: [],
+};
+
+/** Stacked lines with fill; stackingMode is the only difference between Normal and Percent variants */
+const makeMultiStackedConfig = (stackingMode: StackingMode): FieldConfigSource<Partial<GraphFieldConfig>> => ({
+  defaults: {
+    custom: {
+      stacking: { mode: stackingMode, group: 'A' },
+      drawStyle: GraphDrawStyle.Line,
+      lineInterpolation: LineInterpolation.Linear,
+      lineWidth: 2,
+      fillOpacity: 50,
+      gradientMode: GraphGradientMode.None,
+      showPoints: VisibilityMode.Always,
+      pointSize: 1,
+      barWidthFactor: 0.9,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'max' },
+  },
+  overrides: [],
+});
+
+const FC_MULTI_STACKED_BARS: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    custom: {
+      stacking: { mode: StackingMode.Normal, group: 'A' },
+      drawStyle: GraphDrawStyle.Bars,
+      lineWidth: 1,
+      fillOpacity: 68,
+      gradientMode: GraphGradientMode.None,
+      showPoints: VisibilityMode.Always,
+      pointSize: 1,
+      barWidthFactor: 0.9,
+    },
+    color: { mode: FieldColorModeId.PaletteClassic, seriesBy: 'max' },
+  },
+  overrides: [],
+};
+
 const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
   name: t('timeseries.presets.default', 'Default'),
   fieldConfig: {
@@ -71,237 +273,62 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
   cardOptions: { previewModifier },
 });
 
-/**
- * Smooth preset with visible points - TS3
- */
-const smoothPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.smooth', 'Smooth'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKING_OFF,
-        lineWidth: 1,
-        fillOpacity: 24,
-        gradientMode: GraphGradientMode.Opacity,
-        lineInterpolation: LineInterpolation.Smooth,
-        showPoints: VisibilityMode.Always,
-        pointSize: 6,
-      },
-      color: {
-        mode: FieldColorModeId.PaletteClassic,
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+const FEW_POINTS_THRESHOLD = 80;
 
-/**
- * Area chart preset with no line border -TS6
- */
-const areaPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.area', 'Area'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKING_OFF,
-        lineWidth: 0,
-        fillOpacity: 100,
-        gradientMode: GraphGradientMode.Opacity,
-        lineInterpolation: LineInterpolation.Smooth,
-        showPoints: VisibilityMode.Auto,
-        pointSize: 4,
-      },
-      color: {
-        mode: FieldColorModeId.PaletteClassic,
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  const isSingleSeries = (dataSummary?.frameCount ?? 0) === 1;
+  const isMultiSeries = (dataSummary?.frameCount ?? 0) > 1;
+  const hasFewPoints = (dataSummary?.rowCountMax ?? 0) < FEW_POINTS_THRESHOLD;
+  const hasManyPoints = (dataSummary?.rowCountMax ?? 0) >= FEW_POINTS_THRESHOLD;
 
-/**
- * Step chart preset - TS4
- */
-const stepPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.step', 'Step'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKING_OFF,
-        ...STEP_BASE_CUSTOM,
-        fillOpacity: 0,
-        gradientMode: GraphGradientMode.Opacity,
-      },
-      color: {
-        mode: FieldColorModeId.ContinuousPurples,
-        seriesBy: 'max',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+  if (isSingleSeries && hasFewPoints) {
+    return [
+      makePreset(t('timeseries.presets.single-few-points', 'Single fill'), makeSingleLineFillConfig(4)),
+      makePreset(t('timeseries.presets.single-smooth-scheme', 'Smooth scheme'), FC_SINGLE_SMOOTH_SCHEME),
+      makePreset(t('timeseries.presets.single-dashed-threshold', 'Dashed threshold'), FC_SINGLE_DASHED_THRESHOLD),
+      makePreset(t('timeseries.presets.single-step-fill', 'Step fill'), FC_SINGLE_STEP_FILL),
+      makePreset(t('timeseries.presets.single-bars', 'Bars'), FC_SINGLE_BARS_HUE),
+      makePreset(t('timeseries.presets.single-bars-scheme', 'Bars scheme'), FC_SINGLE_BARS_SCHEME),
+    ];
+  }
 
-/**
- * Step chart with fill preset - TS5
- */
-const stepFilledPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.step-filled', 'Step filled'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKING_OFF,
-        ...STEP_BASE_CUSTOM,
-        fillOpacity: 45,
-        gradientMode: GraphGradientMode.Opacity,
-      },
-      color: {
-        mode: FieldColorModeId.ContinuousMagma,
-        seriesBy: 'max',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+  if (isSingleSeries && hasManyPoints) {
+    return [
+      makePreset(t('timeseries.presets.single-many-points-fill', 'Line fill'), makeSingleLineFillConfig(5)),
+      makePreset(t('timeseries.presets.single-many-points-hue', 'Line hue'), FC_SINGLE_LINE_HUE),
+      makePreset(t('timeseries.presets.single-many-points-scheme', 'Line scheme'), FC_SINGLE_LINE_SCHEME),
+      makePreset(
+        t('timeseries.presets.single-many-points-threshold-scheme', 'Threshold scheme'),
+        FC_SINGLE_THRESHOLD_SCHEME
+      ),
+    ];
+  }
 
-/**
- * Step chart with hue gradient preset - TS5hue
- */
-const stepHuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.step-hue', 'Step hue'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKING_OFF,
-        ...STEP_BASE_CUSTOM,
-        fillOpacity: 45,
-        gradientMode: GraphGradientMode.Hue,
-      },
-      color: {
-        mode: FieldColorModeId.Fixed,
-        fixedColor: '#d0d0d0',
-        seriesBy: 'max',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
+  if (isMultiSeries && hasFewPoints) {
+    return [
+      makePreset(t('timeseries.presets.multi-points', 'Points'), FC_MULTI_POINTS),
+      makePreset(
+        t('timeseries.presets.multi-stacked-points', 'Stacked points'),
+        makeMultiStackedConfig(StackingMode.Normal)
+      ),
+      makePreset(t('timeseries.presets.multi-stacked-bars', 'Stacked bars'), FC_MULTI_STACKED_BARS),
+    ];
+  }
 
-/**
- * STACKED
- */
+  if (isMultiSeries && hasManyPoints) {
+    return [
+      makePreset(t('timeseries.presets.multi-many-points', 'Points'), FC_MULTI_POINTS),
+      makePreset(
+        t('timeseries.presets.multi-many-points-stacked', 'Stacked points'),
+        makeMultiStackedConfig(StackingMode.Normal)
+      ),
+      makePreset(
+        t('timeseries.presets.multi-many-points-stacked-pct', 'Stacked 100%'),
+        makeMultiStackedConfig(StackingMode.Percent)
+      ),
+    ];
+  }
 
-const stackedStepPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.stacked-step', 'Stacked step'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKED_BASE_CUSTOM,
-        barWidthFactor: 0.3,
-        lineInterpolation: LineInterpolation.StepBefore,
-        gradientMode: GraphGradientMode.Hue,
-        lineWidth: 1,
-        fillOpacity: 40,
-        showPoints: VisibilityMode.Auto,
-        pointSize: 1,
-        scaleDistribution: { type: ScaleDistribution.Linear },
-        stacking: { mode: StackingMode.Normal, group: 'A' },
-      },
-      color: {
-        mode: FieldColorModeId.Fixed,
-        fixedColor: '#90a1b9',
-        seriesBy: 'max',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
-
-const smoothStackedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.stacked-smooth', 'Stacked smooth'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKED_BASE_CUSTOM,
-        barWidthFactor: 0.3,
-        lineInterpolation: LineInterpolation.Smooth,
-        gradientMode: GraphGradientMode.Hue,
-        lineWidth: 0,
-        fillOpacity: 100,
-        showPoints: VisibilityMode.Auto,
-        pointSize: 4,
-        scaleDistribution: { type: ScaleDistribution.Linear },
-        stacking: { mode: StackingMode.Normal, group: 'A' },
-        axisColorMode: AxisColorMode.Text,
-      },
-      color: {
-        mode: 'palette-classic',
-        seriesBy: 'max',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
-
-const stackedAreaPercentPointsPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.stacked-area', 'Stacked area'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKED_AREA_BASE_CUSTOM,
-        fillOpacity: 40,
-        showPoints: VisibilityMode.Always,
-        pointSize: 4,
-        scaleDistribution: { type: ScaleDistribution.Linear },
-        stacking: { mode: StackingMode.Percent, group: 'A' },
-      },
-      color: {
-        mode: 'palette-classic-by-name',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
-
-const stackedAreaGradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => ({
-  name: t('timeseries.presets.stacked-area-gradient', 'Stacked area gradient'),
-  fieldConfig: {
-    defaults: {
-      custom: {
-        ...STACKED_AREA_BASE_CUSTOM,
-        fillOpacity: 100,
-        showPoints: VisibilityMode.Auto,
-        pointSize: 5,
-        stacking: { mode: StackingMode.Normal, group: 'A' },
-      },
-      color: {
-        mode: 'continuous-viridis',
-        seriesBy: 'last',
-      },
-    },
-    overrides: [],
-  },
-  cardOptions: { previewModifier },
-});
-
-export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
-  return [
-    defaultPreset(),
-    smoothPreset(),
-    areaPreset(),
-    stepPreset(),
-    stepFilledPreset(),
-    stepHuePreset(),
-    stackedStepPreset(),
-    smoothStackedPreset(),
-    stackedAreaPercentPointsPreset(),
-    stackedAreaGradientPreset(),
-  ];
+  // @TODO
+  return [defaultPreset()];
 };
