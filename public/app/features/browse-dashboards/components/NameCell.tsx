@@ -4,15 +4,16 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
+import { getTeamAvatarUrl } from '../api/services';
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { DashboardsTreeCellProps } from '../types';
-import { makeRowID } from '../utils/dashboards';
+import { isTeamFolderItem, makeRowID } from '../utils/dashboards';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -86,7 +87,13 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
       )}
 
       <div className={styles.iconNameContainer}>
-        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
+        {isLoading ? (
+          <Spinner size={ICON_SIZE} />
+        ) : isTeamFolderItem(item.uid) && getTeamAvatarUrl(item.uid) ? (
+          <Avatar src={getTeamAvatarUrl(item.uid)!} alt={item.title} width={2} height={2} />
+        ) : (
+          <Icon size={ICON_SIZE} name={iconName} />
+        )}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (

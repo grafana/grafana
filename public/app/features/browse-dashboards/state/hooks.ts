@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
+import { config } from '@grafana/runtime';
 import { DashboardViewItem } from 'app/features/search/types';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -12,7 +13,7 @@ import {
   DashboardViewItemWithUIItems,
   UIDashboardViewItem,
 } from '../types';
-import { isSharedWithMe } from '../utils/dashboards';
+import { isSharedWithMe, isTeamFolders } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -183,12 +184,26 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    if (isSharedWithMe(thisItem.item.uid)) {
+    // Add a divider after "Shared with me" only if "Team folders" doesn't follow it
+    if (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders) {
       items.push({
         item: {
           kind: 'ui',
           uiKind: 'divider',
           uid: 'shared-with-me-divider',
+        },
+        parentUID,
+        level: level + 1,
+        isOpen: false,
+      });
+    }
+
+    if (isTeamFolders(thisItem.item.uid)) {
+      items.push({
+        item: {
+          kind: 'ui',
+          uiKind: 'divider',
+          uid: 'team-folders-divider',
         },
         parentUID,
         level: level + 1,
