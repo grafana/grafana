@@ -9482,6 +9482,7 @@
       "log-base": "Basis log"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Sumbu",
         "color-label": "Warna",
@@ -9771,6 +9772,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Operator perbandingan",
+      "reducer-value-label": "",
       "select-field-placeholder": "Pilih peredam bidang"
     },
     "file-dropzone": {
@@ -11688,7 +11690,7 @@
       "dialog-label": "",
       "dock": "Gandeng menu",
       "list-label": "Navigasi",
-      "open": "Buka menu",
+      "open": "",
       "undock": "Lepas gandengan menu"
     },
     "megamenu-item": {
@@ -12570,6 +12572,7 @@
       "error-connection-required": "Koneksi diperlukan",
       "error-fetch-branches": "Gagal mengambil cabang",
       "error-required": "Bidang ini wajib diisi.",
+      "error-save-failed": "",
       "error-save-repository": "Gagal menyimpan pengaturan repositori",
       "label-automatic-pulling": "Pulling otomatis",
       "label-connection": "Koneksi Aplikasi GitHub",
@@ -12584,9 +12587,11 @@
       "placeholder-my-config": "Konfigurasi saya"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Konfigurasikan webhook</0> untuk segera mendapatkan pembaruan instan di Grafana setelah perubahan dilakukan. Tinjau dan setujui perubahan menggunakan permintaan pull sebelum live.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Fitur GitHub",
-      "label-realtime-feedback": "Umpan balik real-time"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12734,11 +12739,14 @@
       "description-preview-requirements": "(membutuhkan <2>rendering gambar</2> dan akses publik diaktifkan)",
       "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
       "description-sync-interval": "Frekuens menyinkronkan perubahan dari repositori",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Interval sinkronisasi wajib diisi",
       "label-enable-previews": "Aktifkan pratinjau dasbor dalam permintaan pull",
       "label-generate-dashboard-previews": "Buat Pratinjau Dasbor",
       "label-read-only": "Hanya baca",
-      "label-sync-interval": "Interval Sinkronisasi (detik)"
+      "label-sync-interval": "Interval Sinkronisasi (detik)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13129,6 +13137,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Peringatan",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Harap perhatikan batasan berikut. Untuk detail selengkapnya, lihat <2>dokumentasi Sinkronisasi Git</2>.",
       "alert-point-1": "Sumber daya masih dapat dibuat, diedit, atau dihapus selama proses ini, tetapi perubahan mungkin tidak diekspor.",

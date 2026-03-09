@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -363,7 +364,11 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 		return c.tracer, nil
 	}
 
-	tracingConfig, err := tracing.ProvideTracingConfig(c.Settings)
+	cfgProvider, err := configprovider.ProvideService(c.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}
