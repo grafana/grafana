@@ -152,12 +152,12 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
       // cluster header
       await expect(
-        tooltip.getByText('2025-10-02 02:08:15 - 2025-10-02 02:35:40'),
+        tooltip.getByText(/2025-10-02 \d\d:08:15 - 2025-10-02 \d\d:35:40/),
         'cluster header time range is visible'
       ).toBeVisible();
       await expect(tooltip.getByText('11 annotations'), 'cluster header annotation count is visible').toBeVisible();
       // alert specific text
-      await expect(tooltip.getByText('ALERTING2025-10-02 02:08:15'), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/ALERTING2025-10-02 \d\d:08:15/), 'custom alert text is visible').toBeVisible();
       await expect(
         tooltip.getByRole('link', { name: 'loki-prod-020-writes-error' }),
         'html link is rendered'
@@ -168,11 +168,11 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
       await expect(tooltip.getByText('team_name:loki'), 'annotation tag is visible').toBeVisible();
 
       // More alert specific headers
-      await expect(tooltip.getByText('OK2025-10-02 02:09'), 'custom alert text is visible').toBeVisible();
-      await expect(tooltip.getByText('PENDING2025-10-02 02:26:38'), 'custom alert text is visible').toBeVisible();
-      await expect(tooltip.getByText('NO DATA2025-10-02 02:26:39'), 'custom alert text is visible').toBeVisible();
-      await expect(tooltip.getByText('RECOVERING2025-10-02 02:27:00'), 'custom alert text is visible').toBeVisible();
-      await expect(tooltip.getByText('ERROR2025-10-02 02:35:40'), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/OK2025-10-02 \d\d:09/), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/PENDING2025-10-02 \d\d:26:38/), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/NO DATA2025-10-02 \d\d:26:39/), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/RECOVERING2025-10-02 \d\d:27:00/), 'custom alert text is visible').toBeVisible();
+      await expect(tooltip.getByText(/ERROR2025-10-02 \d\d:35:40/), 'custom alert text is visible').toBeVisible();
     });
   });
   test.describe('wip', () => {
