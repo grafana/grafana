@@ -10,9 +10,7 @@ import { getSectionExpanded } from './utils';
 
 export const MegaMenuControls = ({ onFilterChange }: { onFilterChange: (filter: string) => void }) => {
   const navTree = useSelector((state) => state.navBarTree);
-  const [isAnythingExpanded, setIsAnythingExpanded] = useState(() =>
-    navTree.some((item) => getSectionExpanded(item))
-  );
+  const [isAnythingExpanded, setIsAnythingExpanded] = useState(() => navTree.some((item) => getSectionExpanded(item)));
   const [filterValue, setFilterValue] = useState('');
   const toggleAllSections = (tree: NavModelItem[], expanded: boolean) => {
     setIsAnythingExpanded(expanded);
