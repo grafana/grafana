@@ -114,13 +114,8 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 		defer close(out)
 		var buffer []Event
 
-		nextEmit := time.After(opts.MinBackoff)
-		backoffConfig := backoff.Config{
-			MinBackoff: opts.MinBackoff,
-			MaxBackoff: opts.MaxBackoff,
-			MaxRetries: 0, // infinite retries
-		}
-		bo := backoff.New(ctx, backoffConfig)
+		ticker := time.NewTicker(opts.SettleDelay)
+		defer ticker.Stop()
 
 		for {
 			// Wait for an event or a tick
@@ -131,7 +126,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 				}
 				buffer = append(buffer, evt)
 				continue
-			case <-nextEmit:
+			case <-ticker.C:
 			case <-ctx.Done():
 				return
 			}
@@ -153,13 +148,6 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 				emitted++
 			}
 			buffer = buffer[emitted:]
-
-			if emitted > 0 || len(buffer) > 0 {
-				bo.Reset()
-				nextEmit = time.After(opts.MinBackoff)
-			} else {
-				nextEmit = time.After(bo.NextDelay())
-			}
 		}
 	}()
 
