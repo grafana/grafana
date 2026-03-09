@@ -112,10 +112,6 @@ export function trackFeedbackClick() {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Sidebar
-// ---------------------------------------------------------------------------
-
 export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'toggle_sidebar_size',
@@ -130,20 +126,12 @@ export function trackSidebarViewChange(view: QueryEditorType) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Query options footer
-// ---------------------------------------------------------------------------
-
 export function trackQueryOptionsToggle(open: boolean) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'toggle_query_options',
     open,
   });
 }
-
-// ---------------------------------------------------------------------------
-// Rename
-// ---------------------------------------------------------------------------
 
 export function trackRenameInitiated() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
