@@ -11,8 +11,14 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
+	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
+	return fakeclientset.NewSimpleClientset().ProvisioningV0alpha1()
+}
 
 // TestRenewLease_StaleResourceVersion verifies that after RenewLease, the
 // in-memory job's ResourceVersion matches what K8s actually has.
@@ -21,8 +27,7 @@ import (
 // the stale ResourceVersion from the prior Get call. This guarantees that
 // the next Store.Update (e.g., from onProgress) will get a conflict error.
 func TestRenewLease_StaleResourceVersion(t *testing.T) {
-	cs := fakeclientset.NewSimpleClientset()
-	fakeClient := cs.ProvisioningV0alpha1()
+	fakeClient := newTestClientset()
 
 	store := &persistentStore{
 		client: fakeClient,
@@ -73,8 +78,7 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 // TestRenewLease_ResourceVersionProgresses verifies that consecutive
 // RenewLease calls keep the in-memory ResourceVersion in sync with K8s.
 func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
-	cs := fakeclientset.NewSimpleClientset()
-	fakeClient := cs.ProvisioningV0alpha1()
+	fakeClient := newTestClientset()
 
 	store := &persistentStore{
 		client: fakeClient,
@@ -126,8 +130,7 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 // immediately after RenewLease does NOT produce a conflict. This is the
 // real-world scenario: lease renewal followed by a progress update.
 func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
-	cs := fakeclientset.NewSimpleClientset()
-	fakeClient := cs.ProvisioningV0alpha1()
+	fakeClient := newTestClientset()
 
 	store := &persistentStore{
 		client: fakeClient,
