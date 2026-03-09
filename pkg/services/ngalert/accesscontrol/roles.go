@@ -1,4 +1,4 @@
-package ngalert
+package accesscontrol
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
