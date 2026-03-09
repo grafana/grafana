@@ -126,4 +126,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
   })
-  .setSuggestionsSupplier(tableSuggestionsSupplier);
+  .setSuggestionsSupplier(tableSuggestionsSupplier)
+  .setQuickEditPaths(['cellHeight', 'enablePagination']);

@@ -66,4 +66,5 @@ export const plugin = new PanelPlugin<Options>(TextPanel)
     ds.fieldCount === 0 && !config.featureToggles.newVizSuggestions
       ? [{ cardOptions: { imgSrc: icnTextPanelSvg } }]
       : []
-  );
+  )
+  .setQuickEditPaths(['mode', 'content']);
