@@ -689,13 +689,13 @@
     "list": []
   },
   "time": {
-    "from": "2025-10-01T22:18:58.000Z",
-    "to": "2025-10-02T23:19:25.000Z"
+    "from": "2025-10-02T00:00:00.000Z",
+    "to": "2025-10-03T04:00:00.000Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Annotations clustering",
-  "uid": "adlz8lzk",
+  "uid": "ad7p5pjk",
   "version": 2,
   "weekStart": ""
 }
