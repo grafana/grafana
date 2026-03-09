@@ -198,54 +198,25 @@ export const ResourceAccessPage = ({ entityId, entityType = 'service-account' }:
         />
       </Stack>
 
-      {/* Wildcard warnings */}
+      {/* Wildcard info */}
       {wildcardTypes.size > 0 && (
         <div className={styles.wildcardSection}>
-          {wildcardTypes.has('dashboards') && (
-            <Alert
-              severity="warning"
-              title={t(
-                'serviceaccounts.resource-access.wildcard-dashboards',
-                'This service account has access to ALL dashboards'
-              )}
-            >
-              {t(
-                'serviceaccounts.resource-access.wildcard-dashboards-detail',
-                'Granted via wildcard permission. {{count}} dashboards currently in this org.',
-                { count: wildcardCounts.dashboards ?? '...' }
-              )}
-            </Alert>
-          )}
-          {wildcardTypes.has('folders') && (
-            <Alert
-              severity="warning"
-              title={t(
-                'serviceaccounts.resource-access.wildcard-folders',
-                'This service account has access to ALL folders'
-              )}
-            >
-              {t(
-                'serviceaccounts.resource-access.wildcard-folders-detail',
-                'Granted via wildcard permission. {{count}} folders currently in this org.',
-                { count: wildcardCounts.folders ?? '...' }
-              )}
-            </Alert>
-          )}
-          {wildcardTypes.has('datasources') && (
-            <Alert
-              severity="warning"
-              title={t(
-                'serviceaccounts.resource-access.wildcard-datasources',
-                'This service account has access to ALL datasources'
-              )}
-            >
-              {t(
-                'serviceaccounts.resource-access.wildcard-datasources-detail',
-                'Granted via wildcard permission. {{count}} datasources currently in this org.',
-                { count: wildcardCounts.datasources ?? '...' }
-              )}
-            </Alert>
-          )}
+          <Alert
+            severity="info"
+            title={t(
+              'serviceaccounts.resource-access.wildcard-info',
+              'Wildcard access detected'
+            )}
+          >
+            {t(
+              'serviceaccounts.resource-access.wildcard-detail',
+              'This {{entityType}} has wildcard permissions granting access to all {{types}}. The counts above reflect total resources in the org.',
+              {
+                entityType: entityType === 'service-account' ? 'service account' : 'user',
+                types: Array.from(wildcardTypes).join(', '),
+              }
+            )}
+          </Alert>
         </div>
       )}
 
@@ -326,9 +297,7 @@ const SummaryCard = ({ type, count, isWildcard, wildcardCount }: SummaryCardProp
       </Stack>
       <Text variant="h3">
         {isWildcard ? (
-          <>
-            <Icon name="exclamation-triangle" size="sm" /> All ({wildcardCount ?? '...'})
-          </>
+          <>All ({wildcardCount ?? '...'})</>
         ) : (
           count
         )}
@@ -347,9 +316,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   summaryCardWarning: css({
     padding: theme.spacing(2),
-    border: `1px solid ${theme.colors.warning.border}`,
+    border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.warning.transparent,
+    backgroundColor: theme.colors.background.secondary,
     minWidth: 160,
     flex: '1 1 0',
   }),
