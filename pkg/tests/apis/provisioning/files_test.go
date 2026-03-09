@@ -26,10 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
