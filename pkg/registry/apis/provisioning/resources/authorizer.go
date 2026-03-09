@@ -166,17 +166,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 	if path != "" {
 		parentPath := safepath.Dir(path)
 		if parentPath != "" {
-			// When folder metadata is enabled, try to read the stable UID from _folder.json
-			if a.folderMetadataEnabled {
-				if meta, err := ReadFolderMetadata(ctx, a.reader, parentPath, ""); err == nil && meta.Name != "" {
-					parentFolder = meta.Name
-				} else {
-					// Fall back to hash-based ID if _folder.json doesn't exist
-					parentFolder = ParseFolder(parentPath, a.repo.Name).ID
-				}
-			} else {
-				parentFolder = ParseFolder(parentPath, a.repo.Name).ID
-			}
+			parentFolder = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
 		} else {
 			parentFolder = RootFolder(a.repo)
 		}
@@ -207,16 +197,7 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 //	- Does NOT check: permissions on dashboard A, B, or C
 //	- Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
-	var folderID string
-	if a.folderMetadataEnabled {
-		if meta, err := ReadFolderMetadata(ctx, a.reader, path, ""); err == nil && meta.Name != "" {
-			folderID = meta.Name
-		} else {
-			folderID = ParseFolder(path, a.repo.Name).ID
-		}
-	} else {
-		folderID = ParseFolder(path, a.repo.Name).ID
-	}
+	folderID := GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
 
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    FolderResource.Group,
@@ -246,16 +227,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 //	- Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Determine source folder ID
-	var sourceFolderID string
-	if a.folderMetadataEnabled {
-		if meta, err := ReadFolderMetadata(ctx, a.reader, originalPath, ""); err == nil && meta.Name != "" {
-			sourceFolderID = meta.Name
-		} else {
-			sourceFolderID = ParseFolder(originalPath, a.repo.Name).ID
-		}
-	} else {
-		sourceFolderID = ParseFolder(originalPath, a.repo.Name).ID
-	}
+	sourceFolderID := GetFolderID(ctx, a.reader, originalPath, "", a.folderMetadataEnabled)
 
 	// Check update permission on the source folder
 	if err := a.access.Check(ctx, authlib.CheckRequest{
@@ -272,15 +244,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 	if targetPath != "" {
 		parentPath := safepath.Dir(targetPath)
 		if parentPath != "" {
-			if a.folderMetadataEnabled {
-				if meta, err := ReadFolderMetadata(ctx, a.reader, parentPath, ""); err == nil && meta.Name != "" {
-					parentFolder = meta.Name
-				} else {
-					parentFolder = ParseFolder(parentPath, a.repo.Name).ID
-				}
-			} else {
-				parentFolder = ParseFolder(parentPath, a.repo.Name).ID
-			}
+			parentFolder = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
 		} else {
 			parentFolder = RootFolder(a.repo)
 		}

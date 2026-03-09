@@ -194,11 +194,19 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
+			mockReader := repository.NewMockReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
 				},
 			}
+
+			// Mock Config() call for GetFolderID
+			mockReader.On("Config").Return(repo)
+
+			// Mock Read() call to simulate metadata not found (fallback to hash-based ID)
+			mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil, repository.ErrFileNotFound).Maybe()
 
 			expectedFolderID := ParseFolder(tt.path, tt.repoName).ID
 
@@ -212,7 +220,7 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedFolderID).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
 			err := authorizer.AuthorizeDeleteFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -272,11 +280,19 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
+			mockReader := repository.NewMockReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
 				},
 			}
+
+			// Mock Config() call for GetFolderID
+			mockReader.On("Config").Return(repo)
+
+			// Mock Read() call to simulate metadata not found (fallback to hash-based ID)
+			mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil, repository.ErrFileNotFound).Maybe()
 
 			sourceFolderID := ParseFolder(tt.originalPath, tt.repoName).ID
 
@@ -308,7 +324,7 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				}
 			}
 
-			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
 			err := authorizer.AuthorizeMoveFolder(context.Background(), tt.originalPath, tt.targetPath)
 
 			if tt.shouldSucceed {
@@ -351,13 +367,20 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			name: "folder metadata missing - falls back to hash-based ID",
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
+				repo := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+				}
+				// Mock Config() for GetFolderID fallback
+				rw.On("Config").Return(repo)
 				// Return not found error for _folder.json
 				rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 					Return(nil, repository.ErrFileNotFound)
 				return rw
 			},
 			folderPath:     "my-folder/",
-			expectedFolder: ParseFolder("my-folder", "test-repo").ID,
+			expectedFolder: ParseFolder("my-folder/", "test-repo").ID,
 			shouldPass:     true,
 			description:    "Should fall back to hash-based ID when _folder.json doesn't exist",
 		},
@@ -425,12 +448,19 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 			name: "parent missing _folder.json - uses hash-based ID",
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
+				repo := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+				}
+				// Mock Config() for GetFolderID fallback
+				rw.On("Config").Return(repo)
 				rw.On("Read", mock.Anything, "parent/_folder.json", "").
 					Return(nil, repository.ErrFileNotFound)
 				return rw
 			},
 			childPath:        "parent/child/",
-			expectedParentID: ParseFolder("parent", "test-repo").ID,
+			expectedParentID: ParseFolder("parent/", "test-repo").ID,
 			shouldPass:       true,
 			description:      "Should use hash-based parent ID when _folder.json missing",
 		},

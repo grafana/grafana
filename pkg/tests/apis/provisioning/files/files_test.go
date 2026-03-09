@@ -1,4 +1,4 @@
-package provisioning
+package files_test
 
 import (
 	"bytes"
@@ -1103,7 +1103,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -1224,7 +1224,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
@@ -1290,7 +1290,7 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-auth-metadata-repo"

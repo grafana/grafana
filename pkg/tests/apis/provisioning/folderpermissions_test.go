@@ -20,10 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 // We currently block permission updates for folders managed by provisioning.
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

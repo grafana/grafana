@@ -71,3 +71,15 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 	}
 	return folder.Name, nil
 }
+
+// GetFolderID returns the folder ID for the given path.
+// When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
+// If metadata is disabled or reading fails, it falls back to the hash-based ID.
+func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) string {
+	if folderMetadataEnabled {
+		if meta, err := ReadFolderMetadata(ctx, reader, path, ref); err == nil && meta.Name != "" {
+			return meta.Name
+		}
+	}
+	return ParseFolder(path, reader.Config().Name).ID
+}
