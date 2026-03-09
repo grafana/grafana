@@ -262,6 +262,7 @@ const getPlotLegendStyles = (theme: GrafanaTheme2) => ({
   }),
   filterDockedActions: css({
     position: 'absolute',
+    zIndex: 1,
     right: theme.spacing(0.5),
     top: theme.spacing(0.5),
     display: 'flex',
