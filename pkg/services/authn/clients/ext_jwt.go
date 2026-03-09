@@ -295,6 +295,7 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 
 	identity := &authn.Identity{
 		ID:                id,
+		UID:               authInfo.GetIdentifier(),
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
 		AccessToken:       accessTokenInPlainText,

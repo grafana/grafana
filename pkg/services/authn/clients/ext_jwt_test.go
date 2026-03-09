@@ -122,7 +122,8 @@ var (
 			Actor: &authnlib.ActorClaims{
 				Subject: "user:2",
 				IDTokenClaims: authnlib.IDTokenClaims{
-					Type: claims.TypeUser,
+					Identifier: "abc123uid",
+					Type:       claims.TypeUser,
 				},
 			},
 		},
@@ -147,7 +148,8 @@ var (
 				Actor: &authnlib.ActorClaims{
 					Subject: "user:2",
 					IDTokenClaims: authnlib.IDTokenClaims{
-						Type: claims.TypeUser,
+						Identifier: "abc123uid",
+						Type:       claims.TypeUser,
 					},
 				},
 			},
@@ -328,6 +330,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:       1,
 			want: &authn.Identity{
 				ID:                "2",
+				UID:               "abc123uid",
 				Type:              claims.TypeUser,
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWithActor,
@@ -350,6 +353,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:       1,
 			want: &authn.Identity{
 				ID:                "2",
+				UID:               "abc123uid",
 				Type:              claims.TypeUser,
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWithActorChain,
