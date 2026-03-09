@@ -18,7 +18,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -430,7 +430,7 @@ jobs:
     if: always()
 
     name: All E2E tests complete
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     steps:
     - name: Placeholder step
       run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."
