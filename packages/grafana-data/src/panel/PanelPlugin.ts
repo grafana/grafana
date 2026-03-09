@@ -326,7 +326,7 @@ export class PanelPlugin<
    * @alpha
    */
   getQuickEditPaths(): string[] | undefined {
-    return this._quickEditPaths;
+    return this._quickEditPaths ? [...this._quickEditPaths] : undefined;
   }
 
   /**

@@ -48,12 +48,22 @@ describe('PanelPlugin', () => {
       expect(result).toBe(plugin);
     });
 
-    it('should create a copy of the paths array', () => {
+    it('should create a copy of the paths array on set', () => {
       const plugin = getPanelPlugin({ id: 'test-panel' });
       const paths = ['path1', 'path2'];
 
       plugin.setQuickEditPaths(paths);
       paths.push('path3');
+
+      expect(plugin.getQuickEditPaths()).toEqual(['path1', 'path2']);
+    });
+
+    it('should return a defensive copy on get to prevent mutation', () => {
+      const plugin = getPanelPlugin({ id: 'test-panel' });
+      plugin.setQuickEditPaths(['path1', 'path2']);
+
+      const returnedPaths = plugin.getQuickEditPaths();
+      returnedPaths?.push('path3');
 
       expect(plugin.getQuickEditPaths()).toEqual(['path1', 'path2']);
     });
