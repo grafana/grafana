@@ -15,6 +15,8 @@ import {
   type MonacoEditor,
 } from '@grafana/ui';
 
+import { K8S_V2_DASHBOARD_API_CONFIG } from '../../dashboard/api/v2';
+
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 export type SchemaEditorFormat = 'json' | 'yaml';
@@ -23,7 +25,7 @@ interface JSONSchema {
   [key: string]: unknown;
 }
 
-const SCHEMA_URI = 'http://grafana.com/schemas/dashboard-v2beta1.json';
+const SCHEMA_URI = `http://grafana.com/schemas/dashboard-${K8S_V2_DASHBOARD_API_CONFIG.version}.json`;
 
 export interface DashboardSchemaEditorProps {
   /** The JSON value to edit */
@@ -103,7 +105,6 @@ export function DashboardSchemaEditor({
       setFormat(newFormat);
       setYamlParseError(null);
       setLocalYamlContent(null);
-      onValidationChange?.(false);
       onFormatChange?.(newFormat);
     },
     [localYamlContent, value, onChange, onValidationChange, onFormatChange]
