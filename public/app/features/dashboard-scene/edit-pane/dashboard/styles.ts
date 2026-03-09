@@ -18,7 +18,7 @@ export function getDraggableListStyles(theme: GrafanaTheme2) {
     listItem: css({
       display: 'flex',
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: theme.spacing(0.5),
       padding: theme.spacing(0.25),
     }),
@@ -46,8 +46,7 @@ export function getDraggableListStyles(theme: GrafanaTheme2) {
       },
     }),
     dragHandle: css({
-      display: 'flex',
-      alignItems: 'center',
+      alignSelf: 'stretch',
       cursor: 'grab',
       color: theme.colors.text.secondary,
       '&:hover': {

@@ -182,12 +182,12 @@ function VariablesSection({
             >
               {(draggableProvided) => (
                 <li ref={draggableProvided.innerRef} {...draggableProvided.draggableProps} className={styles.listItem}>
-                  <div {...draggableProvided.dragHandleProps}>
+                  <div {...draggableProvided.dragHandleProps} className={styles.dragHandle}>
                     <Tooltip
                       content={t('dashboard-scene.variables-section.content-drag-to-reorder', 'Drag to reorder')}
                       placement="top"
                     >
-                      <Icon name="draggabledots" size="md" className={styles.dragHandle} />
+                      <Icon name="draggabledots" size="md" />
                     </Tooltip>
                   </div>
                   <div
