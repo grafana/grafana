@@ -22,6 +22,12 @@ const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/
 
 type HitFilterArray = Array<(hit: DashboardHit) => boolean>;
 
+/**
+ * Very similar to the default handler, but this takes a list of DashboardHit objects which will get filtered and then
+ * returned without mapping. This means you can test more custom responses and object shapes as DashboardHit has
+ * lots of optional fields.
+ * @param hits
+ */
 export function getCustomSearchHandler(hits: DashboardHit[]) {
   return http.get(searchRoute, ({ request }) => {
     const url = new URL(request.url);
