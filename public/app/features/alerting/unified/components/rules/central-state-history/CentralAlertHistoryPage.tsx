@@ -19,8 +19,7 @@ enum ActiveTab {
 function HistoryPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
-  const activeTab =
-    queryParams.tab === ActiveTab.Notifications ? ActiveTab.Notifications : ActiveTab.AlertEvents;
+  const activeTab = queryParams.tab === ActiveTab.Notifications ? ActiveTab.Notifications : ActiveTab.AlertEvents;
 
   const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
 
