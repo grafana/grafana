@@ -195,104 +195,101 @@ function NotificationDetail({ uuid, timestamp, onTitleChange }: NotificationDeta
 
   return (
     <div className={styles.container}>
-      {/* Delivery outcome — the most important info for triage */}
-      <div className={notification.outcome === 'error' ? styles.deliveryCardError : styles.deliveryCardSuccess}>
+      {/* Header: two-column layout — left: context, right: delivery outcome */}
+      <div className={styles.headerRow}>
         <Stack direction="column" gap={1}>
-          <Stack direction="row" gap={1} alignItems="center">
-            <Icon
-              name={notification.outcome === 'error' ? 'exclamation-circle' : 'check-circle'}
-              size="lg"
-              className={notification.outcome === 'error' ? styles.errorIcon : styles.successIcon}
-            />
-            <Text variant="h4">
-              {notification.outcome === 'error'
-                ? t('alerting.notification-detail.delivery-failed', 'Delivery failed')
-                : t('alerting.notification-detail.delivery-success', 'Delivered successfully')}
-            </Text>
-          </Stack>
-          {notification.error && <Text color="secondary">{notification.error}</Text>}
-          <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-            <Stack direction="row" gap={0.5} alignItems="center">
-              <Icon name={integrationIcon} size="sm" />
-              <Text variant="body" weight="medium">
-                {notification.receiver}
-              </Text>
+          <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
+            <NotificationState status={notification.status} />
+            <Tooltip content={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
               <Text variant="bodySmall" color="secondary">
-                ({receiverTypeNames[notification.integration] ?? notification.integration})
+                {formatDistanceToNow(new Date(notification.timestamp))}
               </Text>
-            </Stack>
+            </Tooltip>
             <Text variant="bodySmall" color="secondary">
               ·
             </Text>
             <Text variant="bodySmall" color="secondary">
-              {formatDuration(notification.duration)}
+              {t('alerting.notification-detail.alert-count-inline', '{{count}} alert(s)', {
+                count: notification.alertCount,
+              })}
             </Text>
-            {notification.retry && (
-              <>
-                <Text variant="bodySmall" color="secondary">
-                  ·
-                </Text>
-                <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
-              </>
+          </Stack>
+          <Stack direction="row" gap={1} wrap="wrap">
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="arrow-right"
+              href={`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`}
+            >
+              {t('alerting.notification-detail.action-view-contact-point', 'View contact point')}
+            </LinkButton>
+            {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
+              <LinkButton
+                variant="secondary"
+                size="sm"
+                icon="bell-slash"
+                href={makeLabelBasedSilenceLink('grafana', notification.groupLabels)}
+              >
+                {t('alerting.notification-detail.action-silence', 'Silence this group')}
+              </LinkButton>
             )}
+            <Button variant="secondary" size="sm" icon="history" onClick={() => setIsSidebarOpen(true)}>
+              {failedRelated > 0
+                ? t(
+                    'alerting.notification-detail.related-count-with-failures',
+                    '{{count}} related ({{failed}} failed)',
+                    {
+                      count: relatedNotifications.length + 1,
+                      failed: failedRelated,
+                    }
+                  )
+                : t('alerting.notification-detail.related-count', '{{count}} related notifications', {
+                    count: relatedNotifications.length + 1,
+                  })}
+            </Button>
           </Stack>
         </Stack>
+        <div className={notification.outcome === 'error' ? styles.deliveryBadgeError : styles.deliveryBadgeSuccess}>
+          <Stack direction="column" gap={0.5} alignItems="flex-end">
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Icon
+                name={notification.outcome === 'error' ? 'exclamation-circle' : 'check-circle'}
+                className={notification.outcome === 'error' ? styles.errorIcon : styles.successIcon}
+              />
+              <Text variant="h5">
+                {notification.outcome === 'error'
+                  ? t('alerting.notification-detail.delivery-failed', 'Delivery failed')
+                  : t('alerting.notification-detail.delivery-success', 'Delivered successfully')}
+              </Text>
+            </Stack>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Icon name={integrationIcon} size="sm" />
+              <Text variant="bodySmall" weight="medium">
+                {notification.receiver}
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                {receiverTypeNames[notification.integration] ?? notification.integration}
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                ·
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                {formatDuration(notification.duration)}
+              </Text>
+            </Stack>
+            {notification.retry && (
+              <Badge color="blue" icon="sync" text={t('alerting.notification-detail.retry', 'Retry')} />
+            )}
+          </Stack>
+        </div>
       </div>
 
-      {/* Quick actions */}
-      <Stack direction="row" gap={1} wrap="wrap">
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          icon="arrow-right"
-          href={`/alerting/notifications?search=${encodeURIComponent(notification.receiver)}`}
-        >
-          {t('alerting.notification-detail.action-view-contact-point', 'View contact point')}
-        </LinkButton>
-        {notification.groupLabels && Object.keys(notification.groupLabels).length > 0 && (
-          <LinkButton
-            variant="secondary"
-            size="sm"
-            icon="bell-slash"
-            href={makeLabelBasedSilenceLink('grafana', notification.groupLabels)}
-          >
-            {t('alerting.notification-detail.action-silence', 'Silence this group')}
-          </LinkButton>
-        )}
-      </Stack>
-
-      {/* Status + timestamp + related */}
-      <div className={styles.statusRow}>
-        <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
-          <NotificationState status={notification.status} />
-          <Text variant="bodySmall" color="secondary">
-            ·
-          </Text>
-          <Tooltip content={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
-            <Text variant="bodySmall" color="secondary">
-              {formatDistanceToNow(new Date(notification.timestamp))}
-            </Text>
-          </Tooltip>
-          <Text variant="bodySmall" color="secondary">
-            ·
-          </Text>
-          <Text variant="bodySmall" color="secondary">
-            {t('alerting.notification-detail.alert-count-inline', '{{count}} alert(s)', {
-              count: notification.alertCount,
-            })}
-          </Text>
-        </Stack>
-        <Button variant="secondary" size="sm" icon="history" onClick={() => setIsSidebarOpen(true)}>
-          {failedRelated > 0
-            ? t('alerting.notification-detail.related-count-with-failures', '{{count}} related ({{failed}} failed)', {
-                count: relatedNotifications.length + 1,
-                failed: failedRelated,
-              })
-            : t('alerting.notification-detail.related-count', '{{count}} related notifications', {
-                count: relatedNotifications.length + 1,
-              })}
-        </Button>
-      </div>
+      {/* Error message — full width, prominent */}
+      {notification.error && (
+        <Alert title={t('alerting.notification-detail.error-title-banner', 'Delivery error')} severity="error">
+          {notification.error}
+        </Alert>
+      )}
 
       {/* Alerts fetched from queryalerts API */}
       {isLoadingAlerts && (
@@ -707,31 +704,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     maxWidth: '900px',
   }),
-  deliveryCardSuccess: css({
-    padding: theme.spacing(2),
+  headerRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: theme.spacing(2),
+    flexWrap: 'wrap',
+  }),
+  deliveryBadgeSuccess: css({
+    padding: theme.spacing(1.5),
     backgroundColor: theme.colors.success.transparent,
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.success.border}`,
+    flexShrink: 0,
   }),
-  deliveryCardError: css({
-    padding: theme.spacing(2),
+  deliveryBadgeError: css({
+    padding: theme.spacing(1.5),
     backgroundColor: theme.colors.error.transparent,
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.error.border}`,
+    flexShrink: 0,
   }),
   successIcon: css({
     color: theme.colors.success.text,
   }),
   errorIcon: css({
     color: theme.colors.error.text,
-  }),
-  statusRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
   }),
   detailsBox: css({
     display: 'flex',
