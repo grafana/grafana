@@ -20,15 +20,21 @@ import {
 import { linkEditActions } from './actions';
 import { NEW_LINK } from './utils';
 
-export function openAddLinkPane(dashboard: DashboardScene) {
-  const currentLinks = dashboard.state.links ?? [];
-  // default to dropdown for new links because if a dashboard has a lot of links,
-  // the side pane will be pushed down the page and be unscrollable
-  const newLink: DashboardLink = { ...NEW_LINK, asDropdown: true };
-  const linkIndex = currentLinks.length;
+// Default to dropdown for new links because if a dashboard has a lot of links,
+// the side pane will be pushed down the page and be unscrollable
+function createDefaultLink(): DashboardLink {
+  return { ...NEW_LINK, asDropdown: true };
+}
 
+function createLinkEdit(dashboard: DashboardScene, linkIndex: number): LinkEdit {
   const selectionId = linkSelectionId(linkIndex);
-  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
+  return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
+}
+
+export function openAddLinkPane(dashboard: DashboardScene) {
+  const newLink = createDefaultLink();
+  const linkIndex = (dashboard.state.links ?? []).length;
+  const element = createLinkEdit(dashboard, linkIndex);
 
   linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
 }
@@ -38,9 +44,8 @@ export function linkSelectionId(linkIndex: number) {
 }
 
 export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
-  const selectionId = linkSelectionId(linkIndex);
-  const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
-  dashboard.state.editPane.selectObject(element, selectionId, { force: true, multi: false });
+  const element = createLinkEdit(dashboard, linkIndex);
+  dashboard.state.editPane.selectObject(element, linkSelectionId(linkIndex), { force: true, multi: false });
 }
 
 export interface LinkEditState extends SceneObjectState {

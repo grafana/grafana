@@ -60,6 +60,14 @@ describe('LinkAddEditableElement', () => {
       expect(dashboard.state.links[0].type).toBe(NEW_LINK.type);
     });
 
+    it('defaults asDropdown to true for new links', () => {
+      const dashboard = buildDashboard();
+
+      openAddLinkPane(dashboard);
+
+      expect(dashboard.state.links[0].asDropdown).toBe(true);
+    });
+
     it('appends to existing links', () => {
       const existing = createTestLink({ title: 'Existing' });
       const dashboard = buildDashboard([existing]);
