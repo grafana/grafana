@@ -1,3 +1,12 @@
+<!-- 11.6.13 START -->
+
+# 11.6.13 (2026-03-09)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.8 [#119702](https://github.com/grafana/grafana/pull/119702), [@macabu](https://github.com/macabu)
+
+<!-- 11.6.13 END -->
 <!-- 12.4.0 START -->
 
 # 12.4.0 (2026-02-24)
