@@ -1,8 +1,12 @@
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
+
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
@@ -53,6 +57,8 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+  const [isSuggestedModalOpen, setIsSuggestedModalOpen] = useState(false);
+  const [, setSearchParams] = useSearchParams();
 
   // Fetch plugin extension links
   const { links: allLinks, isLoading } = usePluginLinks({
@@ -125,22 +131,56 @@ export function EditDataSourceActions({ uid }: Props) {
           )}
         </>
       )}
-      <LinkButton
-        size="sm"
-        variant="secondary"
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
-        onClick={() => {
-          trackDsConfigClicked('build_a_dashboard');
-          trackCreateDashboardClicked({
-            grafana_version: config.buildInfo.version,
-            datasource_uid: dataSource.uid,
-            plugin_name: dataSource.typeName,
-            path: window.location.pathname,
+      <Dropdown
+        overlay={
+          <Menu>
+            <Menu.Item
+              label={t('datasources.edit-data-source-actions.from-suggestions', 'From suggestions')}
+              icon="lightbulb-alt"
+              onClick={() => {
+                trackDsConfigClicked('build_a_dashboard');
+                setSearchParams((params) => {
+                  const newParams = new URLSearchParams(params);
+                  newParams.set('dashboardLibraryDatasourceUid', dataSource.uid);
+                  return newParams;
+                });
+                setIsSuggestedModalOpen(true);
+              }}
+            />
+            <Menu.Item
+              label={t('datasources.edit-data-source-actions.blank', 'Blank')}
+              icon="plus"
+              url={`dashboard/new-with-ds/${dataSource.uid}`}
+              onClick={() => {
+                trackDsConfigClicked('build_a_dashboard');
+                trackCreateDashboardClicked({
+                  grafana_version: config.buildInfo.version,
+                  datasource_uid: dataSource.uid,
+                  plugin_name: dataSource.typeName,
+                  path: window.location.pathname,
+                });
+              }}
+            />
+          </Menu>
+        }
+      >
+        <Button size="sm" variant="secondary">
+          <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
+          <Icon name="angle-down" />
+        </Button>
+      </Dropdown>
+      <SuggestedDashboardsModal
+        isOpen={isSuggestedModalOpen}
+        onDismiss={() => {
+          setIsSuggestedModalOpen(false);
+          setSearchParams((params) => {
+            const newParams = new URLSearchParams(params);
+            newParams.delete('dashboardLibraryDatasourceUid');
+            return newParams;
           });
         }}
-      >
-        <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
-      </LinkButton>
+        defaultTab="datasource"
+      />
     </>
   );
 }

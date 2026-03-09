@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
 import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
 
@@ -43,6 +43,7 @@ export const SuggestedDashboardsModal = ({
 }: SuggestedDashboardsModalProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  const showCommunityTab = config.featureToggles.suggestedDashboards && config.featureToggles.dashboardLibrary;
 
   const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
@@ -116,31 +117,39 @@ export const SuggestedDashboardsModal = ({
       {activeView !== 'mapping' && (
         <div className={styles.stickyHeader}>
           <Text element="p">
-            <Trans i18nKey="dashboard-library.modal.description">
-              Browse and select from data-source provided or community dashboards
-            </Trans>
+            {showCommunityTab ? (
+              <Trans i18nKey="dashboard-library.modal.description">
+                Browse and select from data-source provided or community dashboards
+              </Trans>
+            ) : (
+              <Trans i18nKey="dashboard-library.modal.description-datasource-only">
+                Browse and select from data-source provided dashboards
+              </Trans>
+            )}
           </Text>
 
-          <TabsBar>
-            <Tab
-              label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
-              icon="apps"
-              active={activeView === 'datasource'}
-              onChangeTab={() => onTabChange('datasource')}
-            />
-            <Tab
-              label={t('dashboard-library.modal.tab-community', 'Community')}
-              icon="users-alt"
-              active={activeView === 'community'}
-              onChangeTab={() => onTabChange('community')}
-            />
-          </TabsBar>
+          {showCommunityTab && (
+            <TabsBar>
+              <Tab
+                label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
+                icon="apps"
+                active={activeView === 'datasource'}
+                onChangeTab={() => onTabChange('datasource')}
+              />
+              <Tab
+                label={t('dashboard-library.modal.tab-community', 'Community')}
+                icon="users-alt"
+                active={activeView === 'community'}
+                onChangeTab={() => onTabChange('community')}
+              />
+            </TabsBar>
+          )}
         </div>
       )}
 
       <TabContent className={styles.tabContent}>
         {activeView === 'datasource' && <DashboardLibrarySection />}
-        {activeView === 'community' && (
+        {showCommunityTab && activeView === 'community' && (
           <CommunityDashboardSection onShowMapping={handleShowMapping} datasourceType={datasourceInfo.type} />
         )}
         {activeView === 'mapping' && mappingContext && (
