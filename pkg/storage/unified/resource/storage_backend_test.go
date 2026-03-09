@@ -456,12 +456,8 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	for _, evt := range received {
 		receivedRVs[evt.ResourceVersion] = true
 	}
-	for rv := range writtenRVs {
-		require.True(t, receivedRVs[rv], "event with RV %d was written but never received on the watch stream", rv)
-	}
 
-	// Assert nothing else was received.
-	require.Len(t, receivedRVs, numEvents, "should have received exactly numEvents")
+	require.Equal(t, writtenRVs, receivedRVs, "should have received all written RVs")
 
 	// Assert ascending RV order.
 	for i := 1; i < len(received); i++ {
@@ -475,7 +471,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	for _, evt := range received {
 		receivedNames[evt.Key.Name] = true
 	}
-	for i := 0; i < numEvents; i++ {
+	for i := range numEvents {
 		name := fmt.Sprintf("concurrent-resource-%d", i)
 		require.True(t, receivedNames[name], "event for resource %q was not received", name)
 	}
