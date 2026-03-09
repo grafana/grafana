@@ -61,8 +61,9 @@ func FullSync(
 
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	var changes []ResourceFileChange
+	var missingFolderMetadata []string
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
@@ -71,16 +72,11 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
-	if folderMetadataEnabled {
-		source, readErr := repo.ReadTree(ctx, currentRef)
-		if readErr == nil {
-			for _, path := range DetectMissingFolderMetadata(source) {
-				progress.Record(ctx, jobs.NewFolderResult(path).
-					WithWarning(&resources.MissingFolderMetadataWarning{Path: path}).
-					WithAction(repository.FileActionIgnored).
-					Build())
-			}
-		}
+	for _, p := range missingFolderMetadata {
+		progress.Record(ctx, jobs.NewFolderResult(p).
+			WithWarning(&resources.MissingFolderMetadataWarning{Path: p}).
+			WithAction(repository.FileActionIgnored).
+			Build())
 	}
 
 	if len(changes) == 0 {

@@ -19,6 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	folderMetadataFileName = "_folder.json"
+)
+
 // MissingFolderMetadataWarning is returned when a folder in the repository does not
 // have a _folder.json file and thus has an unstable hash-derived UID.
 type MissingFolderMetadataWarning struct {
@@ -26,7 +30,7 @@ type MissingFolderMetadataWarning struct {
 }
 
 func (e *MissingFolderMetadataWarning) Error() string {
-	return fmt.Sprintf("folder %q is missing _folder.json metadata file; its UID is unstable and may change on re-sync", e.Path)
+	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
 }
 
 // IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
@@ -34,8 +38,6 @@ func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
 	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
 	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
-
-const folderMetadataFileName = "_folder.json"
 
 // IsFolderMetadataFile reports whether path refers to a _folder.json file.
 func IsFolderMetadataFile(path string) bool {

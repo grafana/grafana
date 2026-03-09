@@ -21,20 +21,25 @@ type ResourceFileChange struct {
 	Existing *provisioning.ResourceListItem
 }
 
-func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error) {
+// Compare reads the repository tree at ref, lists the current Grafana resources,
+// and delegates to Changes to produce the diff.
+// It returns the file changes to apply,
+// the folder paths missing a folder metadata file (only populated when the feature flag is enabled),
+// and any error encountered.
+func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error listing current: %w", err)
+		return nil, nil, fmt.Errorf("error listing current: %w", err)
 	}
 
 	source, err := repo.ReadTree(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, err := Changes(ctx, source, target)
+	changes, missingFolderMetadata, err := Changes(ctx, source, target, folderMetadataEnabled)
 	if err != nil {
-		return nil, fmt.Errorf("calculate changes: %w", err)
+		return nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
 	if len(changes) > 0 {
@@ -43,16 +48,20 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 		repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 	}
 
-	return changes, nil
+	return changes, missingFolderMetadata, nil
 }
 
-func Changes(ctx context.Context, source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
+// Changes computes the diff between a repository source tree and the current Grafana state (target).
+// It returns the list of file changes to apply (creates, updates, deletes),
+// the list of folder paths that are missing a folder metadata file (only populated when the feature flag is enabled),
+// and any error encountered.
+func Changes(ctx context.Context, source []repository.FileTreeEntry, target *provisioning.ResourceList, folderMetadataEnabled bool) ([]ResourceFileChange, []string, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
-				return nil, fmt.Errorf("empty path on a non folder")
+				return nil, nil, fmt.Errorf("empty path on a non folder")
 			}
 			continue
 		}
@@ -67,10 +76,25 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
+
+	var seenFolders []string
+	foldersWithMeta := make(map[string]struct{})
+
 	for _, file := range source {
 		// TODO: why do we have to do this here?
 		if !file.Blob && !strings.HasSuffix(file.Path, "/") {
 			file.Path = file.Path + "/"
+		}
+
+		if folderMetadataEnabled {
+			if !file.Blob {
+				seenFolders = append(seenFolders, file.Path)
+			} else if resources.IsFolderMetadataFile(file.Path) {
+				parent := safepath.Dir(file.Path)
+				if parent != "" {
+					foldersWithMeta[parent] = struct{}{}
+				}
+			}
 		}
 
 		check, ok := lookup[file.Path]
@@ -84,7 +108,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 			}
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			if check.Resource != resources.FolderResource.Resource {
@@ -95,12 +119,12 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
-			// _folder.json is a folder-metadata file (like .keep), not a resource.
+			// The folder metadata file, like .keep, is not a resource we should consider for the changes.
 			// Skip it here; the parent directory change handles folder creation.
 			if resources.IsFolderMetadataFile(file.Path) {
 				logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
-					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+					return nil, nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
 				continue
 			}
@@ -111,7 +135,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 			})
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			continue
@@ -125,7 +149,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 
 		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
 			if err := keep.Add(safeSegment); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			_, ok := lookup[safeSegment]
@@ -161,32 +185,14 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 	// Deepest first (stable sort order)
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
-	return changes, nil
-}
-
-// DetectMissingFolderMetadata returns the path of every directory in source that does
-// not have a corresponding _folder.json blob. Paths are normalized with trailing "/".
-func DetectMissingFolderMetadata(source []repository.FileTreeEntry) []string {
-	metaFiles := make(map[string]struct{}, len(source))
-	for _, entry := range source {
-		if entry.Blob && resources.IsFolderMetadataFile(entry.Path) {
-			metaFiles[entry.Path] = struct{}{}
+	var missingFolderMetadata []string
+	if folderMetadataEnabled {
+		for _, folderPath := range seenFolders {
+			if _, ok := foldersWithMeta[folderPath]; !ok {
+				missingFolderMetadata = append(missingFolderMetadata, folderPath)
+			}
 		}
 	}
 
-	var missing []string
-	for _, entry := range source {
-		if entry.Blob {
-			continue
-		}
-		dirPath := entry.Path
-		if !strings.HasSuffix(dirPath, "/") {
-			dirPath += "/"
-		}
-		metaPath := dirPath + "_folder.json"
-		if _, ok := metaFiles[metaPath]; !ok {
-			missing = append(missing, dirPath)
-		}
-	}
-	return missing
+	return changes, missingFolderMetadata, nil
 }
