@@ -30,156 +30,165 @@ func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
-// TestIntegrationProvisioning_FixFolderMetadata_NestedFolders verifies
-// that the fix-folder-metadata job correctly manages _folder.json files
-// for nested folder structures.
-//
-// All four subtests create a two-level hierarchy (parent/ → parent/child/)
-// and exercise a different pre-existing state of the metadata files:
-//
-//  1. no metadata file → job must create it
-//  2. valid metadata already present → job must leave it unchanged
-//  3. metadata file has a mismatched UID → job must correct it
-//  4. metadata file has wrong JSON format → job must rewrite it
-func TestIntegrationProvisioning_FixFolderMetadata(t *testing.T) {
+// TestIntegrationProvisioning_FixFolderMetadata_MissingFile verifies that the
+// fix-folder-metadata job creates _folder.json files for folders that don't
+// have them yet.
+func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
-	// ── Case 1: no metadata file present ───────────────────────────────────
-	t.Run("missing metadata file should be created", func(t *testing.T) {
-		const repoName = "fix-meta-no-metadata"
-		repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	const repoName = "fix-meta-no-metadata"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repoName,
-			Path:   repoPath,
-			Target: "folder",
-			Copies: map[string]string{
-				// A dashboard inside parent/child/ causes both folders to be
-				// created in Grafana during sync.
-				"../testdata/all-panels.json": "parent/child/dashboard.json",
-			},
-			ExpectedDashboards: 1,
-			// root folder + parent + parent/child
-			ExpectedFolders: 3,
-		})
-
-		// Confirm the metadata files do not exist before the job runs.
-		requireFileAbsent(t, filepath.Join(repoPath, "parent", folderMetadataFileName))
-		requireFileAbsent(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName))
-
-		runFixFolderMetadataJob(t, helper, repoName)
-
-		// After the job both folders must have a well-formed metadata file.
-		parentUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		childUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
-
-		// The two folders should carry distinct UIDs.
-		require.NotEqual(t, parentUID, childUID,
-			"parent and child folders should have different UIDs")
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repoName,
+		Path:   repoPath,
+		Target: "folder",
+		Copies: map[string]string{
+			// A dashboard inside parent/child/ causes both folders to be
+			// created in Grafana during sync.
+			"../testdata/all-panels.json": "parent/child/dashboard.json",
+		},
+		ExpectedDashboards: 1,
+		// root folder + parent + parent/child
+		ExpectedFolders: 3,
 	})
 
-	// ── Case 2: valid metadata already present ─────────────────────────────
-	t.Run("valid metadata file should remain unchanged", func(t *testing.T) {
-		const repoName = "fix-meta-valid-metadata"
-		repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	// Confirm the metadata files do not exist before the job runs.
+	requireFileAbsent(t, filepath.Join(repoPath, "parent", folderMetadataFileName))
+	requireFileAbsent(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName))
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repoName,
-			Path:   repoPath,
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/all-panels.json": "parent/child/dashboard.json",
-			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    3,
-		})
+	runFixFolderMetadataJob(t, helper, repoName)
 
-		// First run: let the job create the metadata files.
-		runFixFolderMetadataJob(t, helper, repoName)
+	// After the job both folders must have a well-formed metadata file.
+	parentUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	childUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
 
-		firstParentUID, firstParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		firstChildUID, firstChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	// The two folders should carry distinct UIDs.
+	require.NotEqual(t, parentUID, childUID,
+		"parent and child folders should have different UIDs")
+}
 
-		// Second run: the metadata files are already correct, nothing should change.
-		runFixFolderMetadataJob(t, helper, repoName)
+// TestIntegrationProvisioning_FixFolderMetadata_ValidFile verifies that the
+// fix-folder-metadata job leaves already-correct _folder.json files unchanged.
+func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		require.Equal(t, firstParentUID, afterParentUID, "parent folder UID must not change when the metadata file is already valid")
-		require.Equal(t, firstParentTitle, afterParentTitle, "parent folder title must not change when the metadata file is already valid")
-		afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
-		require.Equal(t, firstChildUID, afterChildUID, "child folder UID must not change when the metadata file is already valid")
-		require.Equal(t, firstChildTitle, afterChildTitle, "child folder title must not change when the metadata file is already valid")
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repoName = "fix-meta-valid-metadata"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repoName,
+		Path:   repoPath,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "parent/child/dashboard.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    3,
 	})
 
-	// ── Case 3: metadata file has a mismatched UID ─────────────────────────
-	t.Run("metadata file with mismatched UID should be corrected", func(t *testing.T) {
-		const repoName = "fix-meta-wrong-uid"
-		repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	// First run: let the job create the metadata files.
+	runFixFolderMetadataJob(t, helper, repoName)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repoName,
-			Path:   repoPath,
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/all-panels.json": "parent/child/dashboard.json",
-			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    3,
-		})
+	firstParentUID, firstParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	firstChildUID, firstChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
 
-		// First run: establish what the correct UIDs and titles are.
-		runFixFolderMetadataJob(t, helper, repoName)
+	// Second run: the metadata files are already correct, nothing should change.
+	runFixFolderMetadataJob(t, helper, repoName)
 
-		correctParentUID, correctParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		correctChildUID, correctChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	require.Equal(t, firstParentUID, afterParentUID, "parent folder UID must not change when the metadata file is already valid")
+	require.Equal(t, firstParentTitle, afterParentTitle, "parent folder title must not change when the metadata file is already valid")
+	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	require.Equal(t, firstChildUID, afterChildUID, "child folder UID must not change when the metadata file is already valid")
+	require.Equal(t, firstChildTitle, afterChildTitle, "child folder title must not change when the metadata file is already valid")
+}
 
-		// Overwrite both metadata files with UIDs that do not correspond to
-		// any real folder in Grafana.
-		writeFolderMetadata(t, filepath.Join(repoPath, "parent"), "mismatched-uid-parent-9999", "parent")
-		writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), "mismatched-uid-child-9999", "child")
+// TestIntegrationProvisioning_FixFolderMetadata_MismatchedUID verifies that
+// the fix-folder-metadata job corrects a _folder.json whose UID does not match
+// any real folder in Grafana.
+func TestIntegrationProvisioning_FixFolderMetadata_MismatchedUID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-		// The job must detect the mismatch and restore the correct UIDs and titles.
-		runFixFolderMetadataJob(t, helper, repoName)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
 
-		afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		require.Equal(t, correctParentUID, afterParentUID, "parent folder UID should be corrected to match the actual Grafana folder")
-		require.Equal(t, correctParentTitle, afterParentTitle, "parent folder title should be preserved after UID correction")
-		afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
-		require.Equal(t, correctChildUID, afterChildUID, "child folder UID should be corrected to match the actual Grafana folder")
-		require.Equal(t, correctChildTitle, afterChildTitle, "child folder title should be preserved after UID correction")
+	const repoName = "fix-meta-wrong-uid"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repoName,
+		Path:   repoPath,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "parent/child/dashboard.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    3,
 	})
 
-	// ── Case 4: metadata file has wrong JSON format ────────────────────────
-	t.Run("metadata file with wrong format should be rewritten", func(t *testing.T) {
-		const repoName = "fix-meta-wrong-format"
-		repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+	// First run: establish what the correct UIDs and titles are.
+	runFixFolderMetadataJob(t, helper, repoName)
 
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repoName,
-			Path:   repoPath,
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/all-panels.json": "parent/child/dashboard.json",
-			},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    3,
-		})
+	correctParentUID, correctParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	correctChildUID, correctChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
 
-		// Write _folder.json files whose content is valid JSON but does not
-		// represent a Folder resource (wrong schema, empty UID, no title).
-		writeMalformedMetadata(t, filepath.Join(repoPath, "parent"))
-		writeMalformedMetadata(t, filepath.Join(repoPath, "parent", "child"))
+	// Overwrite both metadata files with UIDs that do not correspond to
+	// any real folder in Grafana.
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent"), "mismatched-uid-parent-9999", "parent")
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), "mismatched-uid-child-9999", "child")
 
-		// The job should detect the broken format and rewrite the files.
-		runFixFolderMetadataJob(t, helper, repoName)
+	// The job must detect the mismatch and restore the correct UIDs and titles.
+	runFixFolderMetadataJob(t, helper, repoName)
 
-		// Both files must now be well-formed.
-		requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-		requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	require.Equal(t, correctParentUID, afterParentUID, "parent folder UID should be corrected to match the actual Grafana folder")
+	require.Equal(t, correctParentTitle, afterParentTitle, "parent folder title should be preserved after UID correction")
+	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	require.Equal(t, correctChildUID, afterChildUID, "child folder UID should be corrected to match the actual Grafana folder")
+	require.Equal(t, correctChildTitle, afterChildTitle, "child folder title should be preserved after UID correction")
+}
+
+// TestIntegrationProvisioning_FixFolderMetadata_WrongFormat verifies that the
+// fix-folder-metadata job rewrites a _folder.json whose content is valid JSON
+// but not a valid Folder resource.
+func TestIntegrationProvisioning_FixFolderMetadata_WrongFormat(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repoName = "fix-meta-wrong-format"
+	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repoName,
+		Path:   repoPath,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "parent/child/dashboard.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    3,
 	})
+
+	// Write _folder.json files whose content is valid JSON but does not
+	// represent a Folder resource (wrong schema, empty UID, no title).
+	writeMalformedMetadata(t, filepath.Join(repoPath, "parent"))
+	writeMalformedMetadata(t, filepath.Join(repoPath, "parent", "child"))
+
+	// The job should detect the broken format and rewrite the files.
+	runFixFolderMetadataJob(t, helper, repoName)
+
+	// Both files must now be well-formed.
+	requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────

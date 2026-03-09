@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -586,7 +587,8 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	tmpl := "../testdata/local-write.json.tmpl"
+	_, thisFile, _, _ := runtime.Caller(0)
+	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
@@ -1088,6 +1090,35 @@ func CountFilesInDir(rootPath string) (int, error) {
 		return nil
 	})
 	return count, err
+}
+
+// CleanupRepo deletes the named repository and waits until all managed
+// dashboards and folders have been cleaned up by the provisioning controller
+// finalizer. Useful between subtests that share a single Grafana instance.
+func (h *ProvisioningTestHelper) CleanupRepo(t *testing.T, repoName string) {
+	t.Helper()
+	ctx := context.Background()
+
+	if err := h.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete repository %q: %v", repoName, err)
+	}
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		if !assert.True(collect, apierrors.IsNotFound(err), "repo %q should be fully deleted", repoName) {
+			return
+		}
+
+		dashboards, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		if assert.NoError(collect, err, "failed to list dashboards during cleanup") {
+			assert.Empty(collect, dashboards.Items, "all dashboards should be removed after deleting repo %q", repoName)
+		}
+
+		folders, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
+		if assert.NoError(collect, err, "failed to list folders during cleanup") {
+			assert.Empty(collect, folders.Items, "all folders should be removed after deleting repo %q", repoName)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "managed resources should be cleaned up after deleting repo %q", repoName)
 }
 
 // CleanupAllRepos deletes all repositories and waits for them to be fully removed
