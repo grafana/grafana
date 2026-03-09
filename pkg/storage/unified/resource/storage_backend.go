@@ -36,6 +36,7 @@ const (
 	prunerMaxEvents             = 20
 	defaultEventRetentionPeriod = 1 * time.Hour
 	defaultEventPruningInterval = 5 * time.Minute
+	defaultSearchLookback       = 1 * time.Second
 	clusterScopeNamespace       = "__cluster__"
 )
 
@@ -176,6 +177,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	eventPruningInterval := opts.EventPruningInterval
 	if eventPruningInterval <= 0 {
 		eventPruningInterval = defaultEventPruningInterval
+	}
+
+	searchLookback := opts.SearchLookback
+	if searchLookback < 0 {
+		searchLookback = defaultSearchLookback
 	}
 
 	backend := &kvStorageBackend{
