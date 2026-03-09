@@ -1,4 +1,11 @@
+import { getFieldDisplayName } from '../field/fieldState';
 import { Labels } from '../types/data';
+import { DataFrame, FieldType } from '../types/dataFrame';
+
+/**
+ * Synthetic facet key representing the field/metric name as a filterable dimension.
+ */
+export const FIELD_NAME_FACET_KEY = '__name__';
 
 /**
  * Regexp to extract Prometheus-style labels
@@ -70,6 +77,78 @@ export function matchAllLabels(expect: Labels, against?: Labels): boolean {
     }
   }
   return true;
+}
+
+/**
+ * Collects unique label values per key across all fields.
+ * Adds a synthetic `__name__` facet when fields have multiple distinct names.
+ */
+export function extractFacetedLabels(frames: DataFrame[]): Record<string, string[]> {
+  const valuesByKey: Record<string, Set<string>> = {};
+  const fieldNames = new Set<string>();
+
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.time) {
+        continue;
+      }
+
+      fieldNames.add(field.name);
+
+      if (field.labels) {
+        for (const [key, value] of Object.entries(field.labels)) {
+          (valuesByKey[key] ??= new Set<string>()).add(value);
+        }
+      }
+    }
+  }
+
+  const result: Record<string, string[]> = {};
+
+  if (fieldNames.size > 1) {
+    result[FIELD_NAME_FACET_KEY] = Array.from(fieldNames).sort();
+  }
+
+  for (const key in valuesByKey) {
+    result[key] = Array.from(valuesByKey[key]).sort();
+  }
+
+  return result;
+}
+
+/**
+ * Returns display names of fields matching the faceted selection (OR within key, AND across keys).
+ * Returns null when selection is empty.
+ */
+export function resolveFacetedFilterNames(frames: DataFrame[], selected: Record<string, string[]>): string[] | null {
+  const activeKeys = Object.entries(selected).filter(([, values]) => values.length > 0);
+
+  if (activeKeys.length === 0) {
+    return null;
+  }
+
+  const names: string[] = [];
+
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.time) {
+        continue;
+      }
+
+      const matches = activeKeys.every(([key, allowed]) => {
+        if (key === FIELD_NAME_FACET_KEY) {
+          return allowed.includes(field.name);
+        }
+        return field.labels?.[key] !== undefined && allowed.includes(field.labels[key]);
+      });
+
+      if (matches) {
+        names.push(getFieldDisplayName(field, frame, frames));
+      }
+    }
+  }
+
+  return names;
 }
 
 /**
