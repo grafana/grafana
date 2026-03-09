@@ -95,21 +95,6 @@ describe('Virtualization', () => {
       expect(size).toBe((virtualization.getTruncationLineCount() + 1) * LINE_HEIGHT);
     });
 
-    test('Returns the size of a truncated long line', () => {
-      // Very small container
-      log.collapsed = true;
-      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(10);
-      const size = getLogLineSize(
-        virtualization,
-        [log],
-        container,
-        [],
-        { ...defaultOptions, wrap: true, showTime: true },
-        0
-      );
-      expect(size).toBe((virtualization.getTruncationLineCount() + 1) * LINE_HEIGHT);
-    });
-
     test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, wrap: true, showTime }, 0);
       expect(size).toBe(SINGLE_LINE_HEIGHT);
@@ -127,24 +112,6 @@ describe('Virtualization', () => {
 
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, wrap: true }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
-    });
-
-    test('Measures a multi-line log line with level, controls, and displayed time', () => {
-      log = createLogLine(
-        { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        preProcessOptions
-      );
-
-      const size = getLogLineSize(
-        virtualization,
-        [log],
-        container,
-        [],
-        { ...defaultOptions, wrap: true, showTime: true },
-        0
-      );
-      // Two lines for the log and one extra for level and time
-      expect(size).toBe(THREE_LINES_HEIGHT);
     });
 
     test('Measures a multi-line log line with level, controls, and displayed time', () => {
