@@ -305,7 +305,7 @@ func setupWorkers(
 	workers = append(workers, moveWorker)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(repositoryResources)
+	fixMetadataWorker := fixfoldermetadata.NewWorker()
 	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest

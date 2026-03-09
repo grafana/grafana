@@ -110,16 +110,15 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	require.Equal(t, firstChildTitle, afterChildTitle, "child folder title must not change when the metadata file is already valid")
 }
 
-// TestIntegrationProvisioning_FixFolderMetadata_MismatchedUID verifies that
-// the fix-folder-metadata job corrects a _folder.json whose UID does not match
-// any real folder in Grafana.
-func TestIntegrationProvisioning_FixFolderMetadata_MismatchedUID(t *testing.T) {
+// TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata verifies
+// that the fix-folder-metadata job does not overwrite a _folder.json that is
+// already present.
+func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-	ctx := context.Background()
 
-	const repoName = "fix-meta-wrong-uid"
+	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateRepo(t, common.TestRepo{
@@ -133,38 +132,29 @@ func TestIntegrationProvisioning_FixFolderMetadata_MismatchedUID(t *testing.T) {
 		ExpectedFolders:    3,
 	})
 
-	// First run: establish what the correct UIDs and titles are.
+	// Plant _folder.json files with UIDs that don't match any real Grafana folder.
+	const wrongParentUID = "wrong-uid-parent-9999"
+	const wrongChildUID = "wrong-uid-child-9999"
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent"), wrongParentUID, "parent")
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), wrongChildUID, "child")
+
+	// The job must leave existing _folder.json files untouched — it only creates
+	// metadata for directories that have none at all.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	correctParentUID, correctParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-	correctChildUID, correctChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
-
-	// Overwrite both metadata files with UIDs that do not correspond to
-	// any real folder in Grafana.
-	writeFolderMetadata(t, filepath.Join(repoPath, "parent"), "mismatched-uid-parent-9999", "parent")
-	writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), "mismatched-uid-child-9999", "child")
-
-	// The job must detect the mismatch and restore the correct UIDs and titles.
-	runFixFolderMetadataJob(t, helper, repoName)
-
-	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-	require.Equal(t, correctParentUID, afterParentUID, "parent folder UID should be corrected to match the actual Grafana folder")
-	require.Equal(t, correctParentTitle, afterParentTitle, "parent folder title should be preserved after UID correction")
-	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
-	require.Equal(t, correctChildUID, afterChildUID, "child folder UID should be corrected to match the actual Grafana folder")
-	require.Equal(t, correctChildTitle, afterChildTitle, "child folder title should be preserved after UID correction")
+	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", folderMetadataFileName), wrongParentUID)
+	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName), wrongChildUID)
 }
 
-// TestIntegrationProvisioning_FixFolderMetadata_WrongFormat verifies that the
-// fix-folder-metadata job rewrites a _folder.json whose content is valid JSON
-// but not a valid Folder resource.
-func TestIntegrationProvisioning_FixFolderMetadata_WrongFormat(t *testing.T) {
+// TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata verifies
+// that the fix-folder-metadata job does not overwrite a _folder.json that is
+// already present, even when its content is not a valid Folder resource.
+func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-	ctx := context.Background()
 
-	const repoName = "fix-meta-wrong-format"
+	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateRepo(t, common.TestRepo{
@@ -178,17 +168,16 @@ func TestIntegrationProvisioning_FixFolderMetadata_WrongFormat(t *testing.T) {
 		ExpectedFolders:    3,
 	})
 
-	// Write _folder.json files whose content is valid JSON but does not
-	// represent a Folder resource (wrong schema, empty UID, no title).
+	// Write _folder.json files that are valid JSON but not Folder resources.
 	writeMalformedMetadata(t, filepath.Join(repoPath, "parent"))
 	writeMalformedMetadata(t, filepath.Join(repoPath, "parent", "child"))
 
-	// The job should detect the broken format and rewrite the files.
+	// The job must not overwrite existing _folder.json files, even malformed ones.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	// Both files must now be well-formed.
-	requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-	requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	// Files should retain their original malformed content.
+	requireFileContains(t, filepath.Join(repoPath, "parent", folderMetadataFileName), `"type":"not-a-folder"`)
+	requireFileContains(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName), `"type":"not-a-folder"`)
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -209,10 +198,9 @@ func requireFileAbsent(t *testing.T, path string) {
 	require.True(t, os.IsNotExist(err), "expected %s to be absent before the job runs", path)
 }
 
-// requireValidFolderMetadata reads a _folder.json via the repository files API,
-// asserts it is a valid Folder resource (correct apiVersion/kind, non-empty UID
-// and title), and confirms the UID resolves to a real Grafana folder.
-// It returns the (uid, title) so callers can assert stability across runs.
+// requireValidFolderMetadata reads a _folder.json via the repository files API
+// and asserts it is a valid Folder resource (correct apiVersion/kind, non-empty
+// UID and title).
 func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.ProvisioningTestHelper, repoName, filePath string) (string, string) {
 	t.Helper()
 
@@ -228,9 +216,6 @@ func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.Pro
 	require.NotEmpty(t, uid, "%s: should have a non-empty UID", filePath)
 	title, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
 	require.NotEmpty(t, title, "%s: should have a non-empty title", filePath)
-
-	_, err = h.Folders.Resource.Get(ctx, uid, metav1.GetOptions{})
-	require.NoError(t, err, "%s: UID %q should resolve to an existing Grafana folder", filePath, uid)
 
 	return uid, title
 }
@@ -258,4 +243,26 @@ func writeMalformedMetadata(t *testing.T, folderPath string) {
 	data := []byte(`{"type":"not-a-folder","description":"wrong format"}`)
 	metadataPath := filepath.Join(folderPath, folderMetadataFileName)
 	require.NoError(t, os.WriteFile(metadataPath, data, 0o600)) //nolint:gosec
+}
+
+// requireFolderMetadataUID reads a _folder.json from the filesystem and asserts
+// that its metadata.name equals expectedUID.
+func requireFolderMetadataUID(t *testing.T, path, expectedUID string) {
+	t.Helper()
+	data, err := os.ReadFile(path) //nolint:gosec
+	require.NoError(t, err, "reading %s", path)
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(data, &obj), "parsing %s", path)
+	meta, _ := obj["metadata"].(map[string]interface{})
+	name, _ := meta["name"].(string)
+	require.Equal(t, expectedUID, name, "unexpected UID in %s — job must not overwrite existing _folder.json", path)
+}
+
+// requireFileContains reads a file from the filesystem and asserts it contains
+// the given substring.
+func requireFileContains(t *testing.T, path, substr string) {
+	t.Helper()
+	data, err := os.ReadFile(path) //nolint:gosec
+	require.NoError(t, err, "reading %s", path)
+	require.Contains(t, string(data), substr, "unexpected content in %s — job must not overwrite existing _folder.json", path)
 }

@@ -8,22 +8,22 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Worker implements the fix-folder-metadata job type.
-// It ensures every managed folder in the repository has a _folder.json metadata file.
-type Worker struct {
-	repositoryResources resources.RepositoryResourcesFactory
-}
+// It scans the repository tree and writes a _folder.json metadata file for
+// every directory that does not already have one, using a hash-derived UID.
+type Worker struct{}
 
-func NewWorker(repositoryResources resources.RepositoryResourcesFactory) *Worker {
-	return &Worker{repositoryResources: repositoryResources}
+func NewWorker() *Worker {
+	return &Worker{}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -70,37 +70,55 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			return fmt.Errorf("repository does not support read/write operations")
 		}
 
-		repoResources, err := w.repositoryResources.Client(ctx, rw)
+		entries, err := rw.ReadTree(ctx, ref)
 		if err != nil {
-			return fmt.Errorf("create repository resources client: %w", err)
+			return fmt.Errorf("read repository tree: %w", err)
 		}
 
-		list, err := repoResources.List(ctx)
-		if err != nil {
-			return fmt.Errorf("list managed resources: %w", err)
+		// Build set of directory paths (with trailing slash) that already contain _folder.json.
+		hasMetadata := make(map[string]struct{}, len(entries))
+		for _, entry := range entries {
+			if entry.Blob && resources.IsFolderMetadataFile(entry.Path) {
+				hasMetadata[safepath.Dir(entry.Path)] = struct{}{}
+			}
 		}
 
-		for _, rf := range list.Items {
-			if rf.Group != folders.GROUP {
+		repoName := rw.Config().GetName()
+
+		for _, entry := range entries {
+			if entry.Blob {
 				continue
 			}
 
-			folder := resources.Folder{ID: rf.Name, Path: rf.Path, Title: rf.Title}
-			written, ensureErr := repoResources.EnsureFolderMetadata(ctx, folder, ref)
-			// written, ensureErr := true, error(nil)
+			dirPath := entry.Path
+			if !safepath.IsDir(dirPath) {
+				dirPath += "/"
+			}
+			folder := resources.ParseFolder(dirPath, repoName)
 
-			action := repository.FileActionIgnored
-			if written {
-				action = repository.FileActionCreated
+			if _, ok := hasMetadata[folder.Path]; ok {
+				progress.Record(ctx, jobs.NewFolderResult(folder.Path).
+					WithName(folder.ID).
+					WithAction(repository.FileActionIgnored).Build())
+				if err := progress.TooManyErrors(); err != nil {
+					return err
+				}
+				continue
 			}
 
-			resultBuilder := jobs.NewFolderResult(folder.Path).
+			// Not found: write a new folder metadata file
+			uid := util.GenerateShortUID()
+			manifest := resources.NewFolderManifest(uid, safepath.Base(folder.Path))
+			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
+				fmt.Sprintf("Add folder metadata for %s", folder.Path))
+
+			rb := jobs.NewFolderResult(folder.Path).
 				WithName(folder.ID).
-				WithAction(action)
-			if ensureErr != nil {
-				resultBuilder.WithError(fmt.Errorf("writing folder metadata for %s: %w", folder.Path, ensureErr))
+				WithAction(repository.FileActionCreated)
+			if writeErr != nil {
+				rb.WithError(fmt.Errorf("writing folder metadata for %s: %w", folder.Path, writeErr))
 			}
-			progress.Record(ctx, resultBuilder.Build())
+			progress.Record(ctx, rb.Build())
 
 			if err := progress.TooManyErrors(); err != nil {
 				return err
@@ -120,7 +138,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	// Set RefURLs if the repository supports it and a ref was used
 	// For empty ref (default branch), we need to get the actual branch name that was used
 	if repoWithURLs, ok := repo.(repository.RepositoryWithURLs); ok {
-		// If ref is empty, try to get the default branch to use for URLs
 		actualRef := ref
 		if actualRef == "" {
 			if branchHandler, ok := repo.(repository.BranchHandler); ok {

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -17,7 +16,7 @@ import (
 )
 
 func TestWorker_IsSupported(t *testing.T) {
-	w := NewWorker(nil)
+	w := NewWorker()
 
 	tests := []struct {
 		name     string
@@ -67,6 +66,14 @@ func (m *mockStageableRepoWithURLs) Test(ctx context.Context) (*provisioning.Tes
 	return &provisioning.TestResults{}, nil
 }
 
+// mockNonRWRepo implements only repository.Repository (no staging, no read/write)
+type mockNonRWRepo struct{}
+
+func (m *mockNonRWRepo) Config() *provisioning.Repository { return &provisioning.Repository{} }
+func (m *mockNonRWRepo) Test(_ context.Context) (*provisioning.TestResults, error) {
+	return &provisioning.TestResults{}, nil
+}
+
 func makeTestJob(ref string) provisioning.Job {
 	return provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -83,51 +90,51 @@ func makeTestJob(ref string) provisioning.Job {
 	}
 }
 
-func makeFolderItem(name, path, title string) provisioning.ResourceListItem {
-	return provisioning.ResourceListItem{
-		Group: folders.GROUP,
-		Name:  name,
-		Path:  path,
-		Title: title,
+func treeEntry(path string, blob bool) repository.FileTreeEntry {
+	return repository.FileTreeEntry{Path: path, Blob: blob}
+}
+
+func repoConfig(name string) *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
 	}
 }
 
 func TestWorker_Process(t *testing.T) {
-	t.Run("calls EnsureFolderMetadata for each folder", func(t *testing.T) {
+	t.Run("creates _folder.json for directories without metadata", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("feature-branch")
 
-		list := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				makeFolderItem("uid-parent", "parent/", "parent"),
-				makeFolderItem("uid-child", "parent/child/", "child"),
-			},
+		tree := []repository.FileTreeEntry{
+			treeEntry("parent", false),
+			treeEntry("parent/child", false),
 		}
+
+		parentFolder := resources.ParseFolder("parent/", "test-repo")
+		childFolder := resources.ParseFolder("parent/child/", "test-repo")
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 			return opts.Ref == "feature-branch" && opts.Mode == repository.StageModeCommitOnlyOnce
 		})).Return(mockStaged, nil)
 
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(list, nil)
-		mockRepoResources.EXPECT().EnsureFolderMetadata(mock.Anything, resources.Folder{ID: "uid-parent", Path: "parent/", Title: "parent"}, "feature-branch").Return(true, nil)
-		mockRepoResources.EXPECT().EnsureFolderMetadata(mock.Anything, resources.Folder{ID: "uid-child", Path: "parent/child/", Title: "child"}, "feature-branch").Return(false, nil)
+		mockStaged.EXPECT().ReadTree(mock.Anything, "feature-branch").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "parent/_folder.json", "feature-branch", mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Create(mock.Anything, "parent/child/_folder.json", "feature-branch", mock.Anything, mock.Anything).Return(nil)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on branch feature-branch").Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Action() == repository.FileActionCreated && r.Name() == "uid-parent"
+			return r.Action() == repository.FileActionCreated && r.Name() == parentFolder.ID
 		})).Return()
 		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Action() == repository.FileActionIgnored && r.Name() == "uid-child"
+			return r.Action() == repository.FileActionCreated && r.Name() == childFolder.ID
 		})).Return()
 		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on branch feature-branch").Return()
@@ -139,33 +146,33 @@ func TestWorker_Process(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("skips non-folder resources", func(t *testing.T) {
+	t.Run("skips directories that already have _folder.json", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
-		list := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				{Group: "dashboard.grafana.app", Name: "dash-uid", Path: "dash.json", Title: "My Dashboard"},
-				makeFolderItem("uid-folder", "myfolder/", "myfolder"),
-			},
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
+			treeEntry("myfolder/_folder.json", true),
 		}
 
+		folder := resources.ParseFolder("myfolder/", "test-repo")
+
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(list, nil)
-		// Only the folder item should trigger EnsureFolderMetadata, not the dashboard
-		mockRepoResources.EXPECT().EnsureFolderMetadata(mock.Anything, resources.Folder{ID: "uid-folder", Path: "myfolder/", Title: "myfolder"}, "").Return(true, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		// No Create expected — the file already exists
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
-		mockProgress.EXPECT().Record(mock.Anything, mock.Anything).Return()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored && r.Name() == folder.ID
+		})).Return()
 		mockProgress.EXPECT().TooManyErrors().Return(nil)
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
@@ -176,29 +183,69 @@ func TestWorker_Process(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("records error when EnsureFolderMetadata fails but continues", func(t *testing.T) {
+	t.Run("mixed: creates missing metadata and skips existing", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
-		folderErr := fmt.Errorf("disk full")
 
-		list := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				makeFolderItem("uid-folder", "myfolder/", "myfolder"),
-			},
+		tree := []repository.FileTreeEntry{
+			treeEntry("has-meta", false),
+			treeEntry("has-meta/_folder.json", true),
+			treeEntry("no-meta", false),
+		}
+
+		hasMetaFolder := resources.ParseFolder("has-meta/", "test-repo")
+		noMetaFolder := resources.ParseFolder("no-meta/", "test-repo")
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "no-meta/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored && r.Name() == hasMetaFolder.ID
+		})).Return()
+		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionCreated && r.Name() == noMetaFolder.ID
+		})).Return()
+		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
+
+	t.Run("records error when Create fails but continues", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+		createErr := fmt.Errorf("disk full")
+
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
 		}
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(list, nil)
-		mockRepoResources.EXPECT().EnsureFolderMetadata(mock.Anything, resources.Folder{ID: "uid-folder", Path: "myfolder/", Title: "myfolder"}, "").Return(false, folderErr)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(createErr)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -216,29 +263,26 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("stops early when too many errors", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 		tooManyErr := fmt.Errorf("too many errors")
 
-		list := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				makeFolderItem("uid-first", "first/", "first"),
-				makeFolderItem("uid-second", "second/", "second"),
-			},
+		tree := []repository.FileTreeEntry{
+			treeEntry("first", false),
+			treeEntry("second", false),
 		}
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(list, nil)
-		// Only first folder is processed; TooManyErrors stops iteration before second
-		mockRepoResources.EXPECT().EnsureFolderMetadata(mock.Anything, resources.Folder{ID: "uid-first", Path: "first/", Title: "first"}, "").Return(true, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "first/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
+		// second folder is never reached
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.Anything).Return()
@@ -253,12 +297,10 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("uses default branch when options are nil", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := provisioning.Job{
@@ -269,13 +311,13 @@ func TestWorker_Process(t *testing.T) {
 				FixFolderMetadata: nil,
 			},
 		}
-		emptyList := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 			return opts.Ref == ""
 		})).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(emptyList, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return([]repository.FileTreeEntry{}, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
@@ -287,20 +329,18 @@ func TestWorker_Process(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("returns error when repository resources client creation fails", func(t *testing.T) {
+	t.Run("returns error when ReadTree fails", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
-		factoryErr := fmt.Errorf("failed to create client")
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(nil, factoryErr)
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(nil, fmt.Errorf("git error"))
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, mock.MatchedBy(func(s string) bool { return s != "" })).Return()
@@ -308,50 +348,39 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
-		require.ErrorContains(t, err, "create repository resources client")
+		require.ErrorContains(t, err, "read repository tree")
 	})
 
-	t.Run("returns error when listing managed resources fails", func(t *testing.T) {
+	t.Run("returns error when repository does not support read/write operations", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
+		// mockNonRWRepo is not stageable, so WrapWithStageAndPushIfPossible calls fn with the original repo.
+		// The original repo does not implement ReaderWriter, so the cast fails.
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
-		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(nil, fmt.Errorf("storage unavailable"))
-
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, mock.MatchedBy(func(s string) bool { return s != "" })).Return()
 
-		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
-
-		err := w.Process(ctx, mockRepo, job, mockProgress)
-		require.ErrorContains(t, err, "list managed resources")
+		err := w.Process(ctx, &mockNonRWRepo{}, job, mockProgress)
+		require.ErrorContains(t, err, "does not support read/write operations")
 	})
 
 	t.Run("sets ref URLs when repository supports it and ref is specified", func(t *testing.T) {
 		ctx := context.Background()
-		mockFactory := resources.NewMockRepositoryResourcesFactory(t)
-		w := NewWorker(mockFactory)
+		w := NewWorker()
 
 		mockRepo := &mockStageableRepoWithURLs{
 			mockStageableRepo:      mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)},
 			MockRepositoryWithURLs: repository.NewMockRepositoryWithURLs(t),
 		}
 		mockStaged := repository.NewMockStagedRepository(t)
-		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		customRef := "feature-branch"
 		job := makeTestJob(customRef)
-		emptyList := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
 
 		expectedURLs := &provisioning.RepositoryURLs{
 			RepositoryURL:     "https://github.com/test/repo",
@@ -360,8 +389,9 @@ func TestWorker_Process(t *testing.T) {
 		}
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-		mockFactory.On("Client", mock.Anything, mockStaged).Return(mockRepoResources, nil)
-		mockRepoResources.EXPECT().List(mock.Anything).Return(emptyList, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, customRef).Return([]repository.FileTreeEntry{}, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
 		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
@@ -371,6 +401,37 @@ func TestWorker_Process(t *testing.T) {
 
 		mockRepo.MockRepositoryWithURLs.EXPECT().RefURLs(mock.Anything, customRef).Return(expectedURLs, nil)
 		mockProgress.EXPECT().SetRefURLs(mock.Anything, expectedURLs).Return()
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
+
+	t.Run("blob entries are not processed as directories", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+
+		// Only blob entries, no directory entries
+		tree := []repository.FileTreeEntry{
+			treeEntry("dashboard.json", true),
+			treeEntry("other.json", true),
+		}
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)
