@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -82,4 +87,73 @@ func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string
 		}
 	}
 	return ParseFolder(path, reader.Config().Name).ID
+}
+
+// ParseFolderResource constructs a ParsedResource for a folder at the given path.
+// This allows folders to be authorized using the same AuthorizeResource flow as other resources.
+func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (*ParsedResource, error) {
+	config := reader.Config()
+
+	// Try to read existing folder metadata (single read for both metadata and ID)
+	var folderObj *folders.Folder
+	var folderID string
+	var err error
+
+	if folderMetadataEnabled {
+		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
+		if err != nil && err != repository.ErrFileNotFound {
+			return nil, fmt.Errorf("read folder metadata: %w", err)
+		}
+
+		// If metadata was found, use its stable UID
+		if folderObj != nil && folderObj.Name != "" {
+			folderID = folderObj.Name
+		}
+	}
+
+	// If no metadata exists or metadata is disabled, use hash-based ID
+	if folderID == "" {
+		folderID = ParseFolder(path, config.Name).ID
+	}
+
+	// If no metadata object exists, create a minimal folder object
+	if folderObj == nil {
+		folderObj = NewFolderManifest(folderID, safepath.Base(path))
+	}
+
+	// Convert to unstructured
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(folderObj)
+	if err != nil {
+		return nil, fmt.Errorf("convert folder to unstructured: %w", err)
+	}
+	folderUnstructured := &unstructured.Unstructured{Object: unstructuredMap}
+
+	// Get metadata accessor
+	meta, err := utils.MetaAccessor(folderUnstructured)
+	if err != nil {
+		return nil, fmt.Errorf("get metadata accessor: %w", err)
+	}
+
+	// For folder resources, set the folder field to the folder's own ID
+	// This is important for authorization: when checking permissions on a folder itself,
+	// the third parameter to Check() should be the folder's ID, not its parent.
+	meta.SetFolder(folderID)
+
+	return &ParsedResource{
+		Info: &repository.FileInfo{
+			Path: path,
+			Ref:  ref,
+		},
+		Repo: provisioning.ResourceRepositoryInfo{
+			Type:      config.Spec.Type,
+			Namespace: config.Namespace,
+			Name:      config.Name,
+			Title:     config.Spec.Title,
+		},
+		Obj:    folderUnstructured,
+		Meta:   meta,
+		GVK:    folders.FolderResourceInfo.GroupVersionKind(),
+		GVR:    FolderResource,
+		Action: provisioning.ResourceActionUpdate, // Default to update for authorization
+	}, nil
 }

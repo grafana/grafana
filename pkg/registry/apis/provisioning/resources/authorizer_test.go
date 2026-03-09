@@ -351,6 +351,13 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			name: "folder metadata exists - uses stable UID from _folder.json",
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
+				repo := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+				}
+				// Mock Config() for ParseFolderResource
+				rw.On("Config").Return(repo)
 				// Return folder metadata with stable UID
 				folderMeta := NewFolderManifest("stable-uid-123", "my-folder")
 				data, _ := json.Marshal(folderMeta)
@@ -432,6 +439,13 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 			name: "parent has _folder.json - uses stable UID",
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
+				repo := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+				}
+				// Mock Config() for ParseFolderResource
+				rw.On("Config").Return(repo)
 				// Parent folder metadata exists
 				parentMeta := NewFolderManifest("parent-stable-uid", "parent")
 				data, _ := json.Marshal(parentMeta)
@@ -502,6 +516,12 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 	t.Run("both source and target use stable UIDs from metadata", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+
+		// Mock Config() for ParseFolderResource
+		rw.On("Config").Return(repo)
 
 		// Source folder has metadata
 		sourceMeta := NewFolderManifest("source-stable-uid", "source")
@@ -516,9 +536,6 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 			Return(&repository.FileInfo{Data: targetParentData}, nil)
 
 		mockAccess := auth.NewMockAccessChecker(t)
-		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		}
 
 		// Expect update check on source with stable UID
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {

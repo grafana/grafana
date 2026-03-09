@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -161,24 +162,33 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 //   - Creating "team-a/new-project/" requires create permission on "team-a"
 //   - Creating "top-level-folder/" requires create permission on root
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
-	// Determine parent folder from path
-	parentFolder := ""
-	if path != "" {
-		parentPath := safepath.Dir(path)
-		if parentPath != "" {
-			parentFolder = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
-		} else {
-			parentFolder = RootFolder(a.repo)
-		}
+	// For create operations, check permission on the parent folder
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
 	}
 
-	// Check create permission on the parent folder
-	return a.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     "", // Empty name indicates permission check on parent
-		Verb:     utils.VerbCreate,
-	}, parentFolder)
+	parentPath := safepath.Dir(path)
+	if parentPath == "" {
+		// Creating at root - check root folder permission
+		// TODO: Consider how to handle root folder authorization
+		// For now, delegate to the old permission check on root
+		return a.access.Check(ctx, authlib.CheckRequest{
+			Group:    FolderResource.Group,
+			Resource: FolderResource.Resource,
+			Name:     "",
+			Verb:     utils.VerbCreate,
+		}, RootFolder(a.repo))
+	}
+
+	// Construct a ParsedResource for the parent folder
+	// Note: safepath.Dir() already returns a path with trailing slash
+	parentResource, err := ParseFolderResource(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
+	if err != nil {
+		return fmt.Errorf("parse parent folder resource: %w", err)
+	}
+
+	// Use AuthorizeResource to check create permission on the parent folder
+	return a.AuthorizeResource(ctx, parentResource, utils.VerbCreate)
 }
 
 // AuthorizeDeleteFolder checks if the user has permission to delete the folder at the
@@ -197,14 +207,14 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 //	- Does NOT check: permissions on dashboard A, B, or C
 //	- Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
-	folderID := GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	// Construct a ParsedResource for the folder itself
+	folderResource, err := ParseFolderResource(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	if err != nil {
+		return fmt.Errorf("parse folder resource: %w", err)
+	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     folderID,
-		Verb:     utils.VerbDelete,
-	}, folderID)
+	// Use AuthorizeResource to check delete permission on the folder
+	return a.AuthorizeResource(ctx, folderResource, utils.VerbDelete)
 }
 
 // AuthorizeMoveFolder checks if the user has permission to move a folder from
@@ -226,37 +236,42 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 //	- Checks: create permission on "team-b" (parent of target)
 //	- Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
-	// Determine source folder ID
-	sourceFolderID := GetFolderID(ctx, a.reader, originalPath, "", a.folderMetadataEnabled)
+	// Construct a ParsedResource for the source folder
+	sourceResource, err := ParseFolderResource(ctx, a.reader, originalPath, "", a.folderMetadataEnabled)
+	if err != nil {
+		return fmt.Errorf("parse source folder resource: %w", err)
+	}
 
 	// Check update permission on the source folder
-	if err := a.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     sourceFolderID,
-		Verb:     utils.VerbUpdate,
-	}, sourceFolderID); err != nil {
+	if err := a.AuthorizeResource(ctx, sourceResource, utils.VerbUpdate); err != nil {
 		return err
 	}
 
-	// Determine target parent folder ID
-	parentFolder := ""
-	if targetPath != "" {
-		parentPath := safepath.Dir(targetPath)
-		if parentPath != "" {
-			parentFolder = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
-		} else {
-			parentFolder = RootFolder(a.repo)
-		}
+	// Check create permission on the target parent folder
+	if targetPath == "" {
+		return fmt.Errorf("target path cannot be empty")
 	}
 
-	// Check create permission on the target parent folder
-	return a.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     "", // Empty name indicates permission check on parent
-		Verb:     utils.VerbCreate,
-	}, parentFolder)
+	parentPath := safepath.Dir(targetPath)
+	if parentPath == "" {
+		// Moving to root - check root folder permission
+		return a.access.Check(ctx, authlib.CheckRequest{
+			Group:    FolderResource.Group,
+			Resource: FolderResource.Resource,
+			Name:     "",
+			Verb:     utils.VerbCreate,
+		}, RootFolder(a.repo))
+	}
+
+	// Construct a ParsedResource for the target parent folder
+	// Note: safepath.Dir() already returns a path with trailing slash
+	targetParentResource, err := ParseFolderResource(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
+	if err != nil {
+		return fmt.Errorf("parse target parent folder resource: %w", err)
+	}
+
+	// Use AuthorizeResource to check create permission on the target parent
+	return a.AuthorizeResource(ctx, targetParentResource, utils.VerbCreate)
 }
 
 // AuthorizeWrite checks if writes are allowed to the specified ref.
