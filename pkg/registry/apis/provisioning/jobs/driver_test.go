@@ -83,10 +83,10 @@ func TestOnProgress_AllRetriesConflict(t *testing.T) {
 	// so it takes the non-conflict error path. But attempts 0 and 1 hit the `continue`.
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once() // attempt 0
 	freshJob := makeTestJob("200")
-	store.EXPECT().Get(mock.Anything, "test-ns", "test-job").Return(freshJob, nil).Once() // retry fetch for attempt 1
+	store.EXPECT().Get(mock.Anything, "test-ns", "test-job").Return(freshJob, nil).Once()      // retry fetch for attempt 1
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once() // attempt 1
 	freshJob2 := makeTestJob("300")
-	store.EXPECT().Get(mock.Anything, "test-ns", "test-job").Return(freshJob2, nil).Once() // retry fetch for attempt 2
+	store.EXPECT().Get(mock.Anything, "test-ns", "test-job").Return(freshJob2, nil).Once()     // retry fetch for attempt 2
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once() // attempt 2 (last, no continue)
 
 	progressFn := driver.onProgress()

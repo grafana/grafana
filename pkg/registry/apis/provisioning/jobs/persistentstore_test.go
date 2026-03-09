@@ -29,8 +29,8 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize: nil,
-			queueWaitTime:  nil,
+			queueSize:     nil,
+			queueWaitTime: nil,
 		},
 	}
 
@@ -81,8 +81,8 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize: nil,
-			queueWaitTime:  nil,
+			queueSize:     nil,
+			queueWaitTime: nil,
 		},
 	}
 
@@ -134,8 +134,8 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize: nil,
-			queueWaitTime:  nil,
+			queueSize:     nil,
+			queueWaitTime: nil,
 		},
 	}
 
