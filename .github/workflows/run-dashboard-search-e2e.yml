@@ -34,10 +34,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       - run: go version
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - name: Cache Node Modules
         id: cache-node-modules
         uses: actions/cache@v4
