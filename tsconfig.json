@@ -16,7 +16,7 @@
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
     },
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "systemjs", "node", "webpack-env", "gtag.js", "trusted-types"]
   },
   "ts-node": {
     "swc": true,

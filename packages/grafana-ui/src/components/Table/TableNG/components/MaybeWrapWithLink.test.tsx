@@ -12,7 +12,9 @@ describe('MaybeWrapWithLink', () => {
         type: FieldType.string,
         name: 'Test Field',
         values: [],
-        getLinks: vi.fn(() => [{ title: link.title, href: link.url, target: '_blank', origin: field }]),
+        getLinks: vi.fn<NonNullable<Field['getLinks']>>(() => [
+          { title: link.title, href: link.url, target: '_blank', origin: field },
+        ]),
         config: {
           links: [link],
           actions: [],
@@ -59,7 +61,9 @@ describe('MaybeWrapWithLink', () => {
         type: FieldType.string,
         name: 'Test Field',
         values: [],
-        getLinks: vi.fn(() => links.map((l) => ({ title: l.title, href: l.url, target: '_blank', origin: field }))),
+        getLinks: vi.fn<NonNullable<Field['getLinks']>>(() =>
+          links.map((l) => ({ title: l.title, href: l.url, target: '_blank', origin: field }))
+        ),
         config: {
           links,
           actions: [],
@@ -146,7 +150,9 @@ describe('MaybeWrapWithLink', () => {
         type: FieldType.string,
         name: 'Test Field',
         values: [],
-        getLinks: vi.fn(() => links.map((l) => ({ title: l.title, href: l.url, target: '_blank', origin: field }))),
+        getLinks: vi.fn<NonNullable<Field['getLinks']>>(() =>
+          links.map((l) => ({ title: l.title, href: l.url, target: '_blank', origin: field }))
+        ),
         config: {
           links,
           actions: [

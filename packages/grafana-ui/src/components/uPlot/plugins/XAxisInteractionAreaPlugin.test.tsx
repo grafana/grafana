@@ -16,7 +16,7 @@ const createMockXAxis = () => {
 const createMockConfigBuilder = () => {
   return {
     setState: vi.fn(),
-    getState: vi.fn(() => ({ isPanning: false })),
+    getState: vi.fn<UPlotConfigBuilder['getState']>(() => ({ isPanning: false })),
   } satisfies Partial<UPlotConfigBuilder>;
 };
 
@@ -72,13 +72,13 @@ describe('XAxisInteractionAreaPlugin', () => {
   });
 
   describe('setupXAxisPan', () => {
-    let mockQueryZoom: ReturnType<typeof vi.fn>;
+    let mockQueryZoom: (range: { from: number; to: number }) => void;
     let mockConfigBuilder: ReturnType<typeof createMockConfigBuilder>;
     let xAxisElement: HTMLElement;
     let mockUPlot: ReturnType<typeof createMockUPlot>;
 
     beforeEach(() => {
-      mockQueryZoom = vi.fn();
+      mockQueryZoom = vi.fn<(range: { from: number; to: number }) => void>();
       mockConfigBuilder = createMockConfigBuilder();
       xAxisElement = createMockXAxis();
       mockUPlot = createMockUPlot(xAxisElement);
