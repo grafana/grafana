@@ -1438,6 +1438,150 @@ describe('DashboardScenePageStateManager v2', () => {
         await expect(loader.reloadDashboard(params)).rejects.toThrow(DashboardVersionError);
       });
     });
+
+    describe('reloadDashboardsOnParamsChange feature toggle', () => {
+      it(
+        'should process query params when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-1h',
+            to: 'now',
+            timezone: 'UTC',
+            extraParam: 'shouldBeRemoved',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z';
+          const expectedToISO = '2023-10-01T12:00:00.000Z';
+
+          const getDashboardDTOMock = jest.fn().mockResolvedValue({
+            access: {},
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-dash',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec() },
+          });
+
+          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          }));
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          expect(getDashboardDTOMock).toHaveBeenCalledWith(
+            'fake-dash',
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+            })
+          );
+
+          const callArgs = getDashboardDTOMock.mock.calls[0][1];
+          expect(callArgs).not.toHaveProperty('extraParam');
+          expect(callArgs).not.toHaveProperty('timezone');
+
+          cleanup();
+        })
+      );
+
+      it(
+        'should pass undefined query params when disabled',
+        withFeatureToggle(false, async () => {
+          const getDashboardDTOMock = jest.fn().mockResolvedValue({
+            access: {},
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-dash',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec() },
+          });
+
+          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          }));
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          expect(getDashboardDTOMock).toHaveBeenCalledWith('fake-dash', undefined);
+        })
+      );
+
+      it(
+        'should filter parameters correctly when enabled',
+        withFeatureToggle(true, async () => {
+          const cleanup = mockTimeAndLocation(MOCK_NOW, {
+            from: 'now-6h',
+            to: 'now',
+            'var-server': 'web-01',
+            'var-env': 'production',
+            scopes: 'scope1,scope2',
+            version: '2',
+            refresh: '5s',
+            theme: 'dark',
+            kiosk: 'true',
+          });
+
+          const expectedFromISO = '2023-10-01T06:00:00.000Z';
+          const expectedToISO = '2023-10-01T12:00:00.000Z';
+
+          const getDashboardDTOMock = jest.fn().mockResolvedValue({
+            access: {},
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              name: 'fake-dash',
+              creationTimestamp: '',
+              resourceVersion: '1',
+            },
+            spec: { ...defaultDashboardV2Spec() },
+          });
+
+          (getDashboardAPI as jest.Mock).mockImplementation(() => ({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          }));
+
+          const loader = new DashboardScenePageStateManagerV2({});
+          await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+          const callArgs = getDashboardDTOMock.mock.calls[0][1];
+
+          expect(callArgs).toEqual(
+            expect.objectContaining({
+              from: expectedFromISO,
+              to: expectedToISO,
+              'var-server': 'web-01',
+              'var-env': 'production',
+              scopes: 'scope1,scope2',
+              version: '2',
+            })
+          );
+
+          expect(callArgs).toEqual(
+            expect.not.objectContaining({
+              refresh: expect.anything(),
+              theme: expect.anything(),
+              kiosk: expect.anything(),
+            })
+          );
+
+          cleanup();
+        })
+      );
+    });
   });
 });
 
