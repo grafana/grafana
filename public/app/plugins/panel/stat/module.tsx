@@ -138,5 +138,4 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)
   .setSuggestionsSupplier(statSuggestionsSupplier)
-  .setMigrationHandler(sharedSingleStatMigrationHandler)
-  .setQuickEditPaths(['textMode', 'colorMode', 'graphMode']);
+  .setMigrationHandler(sharedSingleStatMigrationHandler);
