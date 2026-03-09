@@ -1,3 +1,20 @@
+<!-- 12.4.1 START -->
+
+# 12.4.1 (2026-03-09)
+
+### Features and enhancements
+
+- **AccessControl:** Invalidate scope resolver cache on datasource deletion [#118741](https://github.com/grafana/grafana/pull/118741), [@mihai-turdean](https://github.com/mihai-turdean)
+- **Go:** Update to 1.25.8 [#119693](https://github.com/grafana/grafana/pull/119693), [@macabu](https://github.com/macabu)
+- **Rendering:** Add support for custom CA certs in Image Renderer [#118859](https://github.com/grafana/grafana/pull/118859), [@mrevutskyi](https://github.com/mrevutskyi)
+
+### Bug fixes
+
+- **AccessControl:** Fix test utility for datasource deletion permissions cleanup (Enterprise)
+- **Alerting:** Change scope for testing new receivers to use supported resource type. [#118495](https://github.com/grafana/grafana/pull/118495), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix CollateAlertRuleGroup migration for MariaDB compatibility [#119028](https://github.com/grafana/grafana/pull/119028), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 12.4.1 END -->
 <!-- 12.3.5 START -->
 
 # 12.3.5 (2026-03-09)
