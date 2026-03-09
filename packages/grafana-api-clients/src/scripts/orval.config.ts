@@ -5,15 +5,17 @@ import path from 'path';
 const basePath = path.resolve(__dirname, '../../../..');
 
 const createAPIConfig = (app: string, version: string): Config => {
-  const filePath = `../clients/fetch/${app}/${version}/endpoints.gen.ts`;
+  const filePath = `../clients/fetch/${app}/${version}/client.gen.ts`;
 
   return {
     [filePath]: {
       input: { target: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`) },
       output: {
-        target: `../clients/fetch/${app}/${version}/client.gen.ts`,
+        target: filePath,
         client: 'fetch' as const,
+        mode: 'split' as const,
         baseUrl: '',
+        fileExtension: '.gen.ts',
         override: {
           namingConvention: { enum: 'PascalCase' },
           mutator: {
