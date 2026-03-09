@@ -41,6 +41,7 @@ type DataSourceAPIBuilderConfig struct {
 	LoadQueryTypes         bool
 	UseDualWriter          bool
 	EnableResourceEndpoint bool
+	EnableHealthEndpoint   bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -109,6 +110,7 @@ func RegisterAPIService(
 				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},
 		)
 		if err != nil {
@@ -246,10 +248,13 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
 		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+	}
+
+	if b.cfg.EnableHealthEndpoint {
+		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
 
 	// FIXME: temporarily register both "datasources" and "connections" query paths

@@ -1403,6 +1403,11 @@ export interface FeatureToggles {
   */
   vizLegendSeriesLimit?: boolean;
   /**
+  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
+  * @default false
+  */
+  nestedFramesFieldOverrides?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
@@ -1622,6 +1627,11 @@ export interface FeatureToggles {
   * @default false
   */
   dsAbstractionApp?: boolean;
+  /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
   /**
   * Enables new analytics framework
   * @default false

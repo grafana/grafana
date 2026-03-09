@@ -2213,6 +2213,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "nestedFramesFieldOverrides",
+			Description:  "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
@@ -2569,6 +2577,14 @@ var (
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableHealthEndpoint",
+			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
 		},
 		{
 			Name:         "analyticsFramework",
