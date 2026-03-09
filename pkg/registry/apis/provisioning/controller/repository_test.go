@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -22,15 +23,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type mockProvisioningV0alpha1Interface struct {
 	repositoriesFunc func(namespace string) client.RepositoryInterface
+	connectionsFunc  func(namespace string) client.ConnectionInterface
 }
 
 func (m mockProvisioningV0alpha1Interface) RESTClient() rest.Interface {
@@ -46,6 +50,9 @@ func (m mockProvisioningV0alpha1Interface) Jobs(namespace string) client.JobInte
 }
 
 func (m mockProvisioningV0alpha1Interface) Connections(namespace string) client.ConnectionInterface {
+	if m.connectionsFunc != nil {
+		return m.connectionsFunc(namespace)
+	}
 	panic("not needed for testing")
 }
 
@@ -107,9 +114,61 @@ func (m mockRepoInterface) ApplyStatus(ctx context.Context, repository *provisio
 	panic("not needed for testing")
 }
 
+type mockConnectionInterface struct {
+	getFunc func(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Connection, error)
+}
+
+func (m mockConnectionInterface) Create(_ context.Context, _ *provisioning.Connection, _ metav1.CreateOptions) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Update(_ context.Context, _ *provisioning.Connection, _ metav1.UpdateOptions) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) UpdateStatus(_ context.Context, _ *provisioning.Connection, _ metav1.UpdateOptions) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Delete(_ context.Context, _ string, _ metav1.DeleteOptions) error {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) DeleteCollection(_ context.Context, _ metav1.DeleteOptions, _ metav1.ListOptions) error {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Get(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Connection, error) {
+	if m.getFunc != nil {
+		return m.getFunc(ctx, name, opts)
+	}
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) List(_ context.Context, _ metav1.ListOptions) (*provisioning.ConnectionList, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Watch(_ context.Context, _ metav1.ListOptions) (watch.Interface, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) Apply(_ context.Context, _ *provisioningv0alpha1.ConnectionApplyConfiguration, _ metav1.ApplyOptions) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
+func (m mockConnectionInterface) ApplyStatus(_ context.Context, _ *provisioningv0alpha1.ConnectionApplyConfiguration, _ metav1.ApplyOptions) (*provisioning.Connection, error) {
+	panic("not needed for testing")
+}
+
 var (
 	_ client.ProvisioningV0alpha1Interface = (*mockProvisioningV0alpha1Interface)(nil)
 	_ client.RepositoryInterface           = (*mockRepoInterface)(nil)
+	_ client.ConnectionInterface           = (*mockConnectionInterface)(nil)
 )
 
 func TestRepositoryController_handleDelete(t *testing.T) {
@@ -710,22 +769,20 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 	}
 }
 
-// capturingStatusPatcher records all Patch calls for later inspection.
-type capturingStatusPatcher struct {
-	calls [][]map[string]interface{}
+// capturePatcher captures all patch operations for inspection in tests.
+type capturePatcher struct {
+	ops []map[string]interface{}
 }
 
-func (c *capturingStatusPatcher) Patch(_ context.Context, _ *provisioning.Repository, ops ...map[string]interface{}) error {
-	c.calls = append(c.calls, ops)
+func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+	c.ops = append(c.ops, patchOperations...)
 	return nil
 }
 
-func (c *capturingStatusPatcher) findPatchOp(path string) (map[string]interface{}, bool) {
-	for _, ops := range c.calls {
-		for _, op := range ops {
-			if op["path"] == path {
-				return op, true
-			}
+func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
+	for _, op := range c.ops {
+		if op["path"] == path {
+			return op, true
 		}
 	}
 	return nil, false
@@ -801,7 +858,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			require.NoError(t, indexer.Add(repo))
 			repoLister := listers.NewRepositoryLister(indexer)
 
-			patcher := &capturingStatusPatcher{}
+			patcher := &capturePatcher{}
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
@@ -841,10 +898,10 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			assert.NoError(t, err)
 
 			if tc.expectReconcile {
-				assert.NotEmpty(t, patcher.calls,
+				assert.NotEmpty(t, patcher.ops,
 					"expected status patcher to be called during reconciliation")
 			} else {
-				assert.Empty(t, patcher.calls,
+				assert.Empty(t, patcher.ops,
 					"expected no status patch when reconciliation is skipped")
 			}
 
@@ -877,4 +934,217 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			}
 		})
 	}
+}
+
+// TestRepositoryController_process_ConditionsNotOverwritten verifies that the reconciliation loop
+// produces a final /status/conditions patch containing both the quota and ready condition.
+func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{
+				Enabled: false,
+			},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	mockMetrics := NewMockHealthMetricsRecorder(t)
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
+
+	mockConfigRepo := repository.NewMockConfigRepository(t)
+	mockConfigRepo.EXPECT().Config().Return(repo)
+	mockConfigRepo.EXPECT().Test(mock.Anything).Return(
+		&provisioning.TestResults{Success: true, Code: http.StatusOK},
+		nil,
+	)
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConfigRepo, nil)
+
+	patcher := &capturePatcher{}
+
+	rc := &RepositoryController{
+		repoLister:    mockLister,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(mockLister),
+		healthChecker: healthChecker,
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+	}
+
+	err := rc.process(&queueItem{key: "default/test-repo"})
+	require.NoError(t, err)
+
+	// Find the last /status/conditions patch operation — if there are multiple
+	// replace ops on the same path, the last one wins when applied as a JSON Patch.
+	var lastConditionsPatch map[string]interface{}
+	for _, op := range patcher.ops {
+		if path, ok := op["path"].(string); ok && path == "/status/conditions" {
+			lastConditionsPatch = op
+		}
+	}
+
+	require.NotNil(t, lastConditionsPatch, "expected at least one /status/conditions patch")
+
+	conditions, ok := lastConditionsPatch["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	var hasQuotaCondition, hasReadyCondition bool
+	for _, c := range conditions {
+		switch c.Type {
+		case provisioning.ConditionTypeNamespaceQuota:
+			hasQuotaCondition = true
+		case provisioning.ConditionTypeReady:
+			hasReadyCondition = true
+		}
+	}
+
+	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
+	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
+	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
+}
+
+// TestRepositoryController_process_TokenRefreshedWhileOverQuota verifies that auth token
+// refresh is not skipped when a repository is blocked due to namespace quota being exceeded.
+func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+	resyncInterval := 5 * time.Minute
+
+	// Token was created long ago (not recently created) and expires soon (within the
+	// 2*resyncInterval+10s refresh buffer), so shouldGenerateTokenFromConnection returns true.
+	expiration := time.Now().Add(30 * time.Second)
+	lastUpdated := time.Now().Add(-1 * time.Hour)
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			// spec is already observed — no spec-change trigger
+			ObservedGeneration: 1,
+			Health: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().UnixMilli(),
+			},
+			Token: provisioning.TokenStatus{
+				LastUpdated: lastUpdated.UnixMilli(),
+				Expiration:  expiration.UnixMilli(),
+			},
+			// Repository is CURRENTLY BLOCKED by namespace quota
+			Conditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeNamespaceQuota,
+					Status:             metav1.ConditionFalse,
+					Reason:             provisioning.ReasonQuotaExceeded,
+					Message:            "namespace quota exceeded: 2/1 repositories",
+					LastTransitionTime: metav1.Now(),
+				},
+			},
+		},
+		// Existing (non-zero) token so IsZero() == false and we exercise the expiry path
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{Create: "old-expiring-token"},
+		},
+	}
+
+	// A second repo in the same namespace keeps the namespace over quota (maxRepositories=1).
+	repo2 := repo.DeepCopy()
+	repo2.Name = "other-repo"
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	require.NoError(t, indexer.Add(repo2))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// quotaGetter: maxRepositories=1 with 2 repos → still over quota (isOverQuota=true)
+	quotaStatus := provisioning.QuotaStatus{MaxRepositories: 1}
+
+	// Connection mock: GenerateRepositoryToken returns a fresh long-lived token
+	freshToken := &connection.ExpirableSecureValue{
+		Token:     "fresh-token",
+		ExpiresAt: time.Now().Add(2 * time.Hour),
+	}
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	// Client mock: Connections(namespace).Get returns the Connection object
+	connObj := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace},
+	}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	// The repo factory and health checker are reached.
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(repo).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	patcher := &capturePatcher{}
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	rc := &RepositoryController{
+		repoLister:        repoLister,
+		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
+		quotaChecker:      NewRepositoryQuotaChecker(repoLister),
+		statusPatcher:     patcher,
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		repoFactory:       repoFactory,
+		healthChecker:     healthChecker,
+		resyncInterval:    resyncInterval,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+	}
+
+	err := rc.process(&queueItem{key: namespace + "/" + repoName})
+	require.NoError(t, err)
+
+	// The token patch must be present even though the repository is currently over quota.
+	_, found := patcher.findPatchOp("/status/token")
+	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
 }

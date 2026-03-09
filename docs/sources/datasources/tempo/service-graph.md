@@ -13,52 +13,6 @@ labels:
 menuTitle: Service Graph and Service Graph view
 title: Service Graph and Service Graph view
 weight: 500
-refs:
-  explore-trace-integration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
-  variable-syntax:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
-  exemplars:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  configure-grafana-feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  node-graph:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/
 ---
 
 # Service Graph and Service Graph view
@@ -73,14 +27,14 @@ You use the Service Graph to detect performance issues; track increases in error
 ## Display the Service Graph
 
 1. [Configure Grafana Alloy](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/grafana-alloy/) or [Tempo or GET](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
-1. Link a Prometheus data source in the Tempo data source's [Service Graph](../configure-tempo-data-source#configure-service-graph) settings.
-1. Navigate to [Explore](ref:explore).
+1. Link a Prometheus data source in the Tempo data source's [Service Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#configure-service-graph) settings.
+1. Navigate to [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.
 1. Run the query.
 1. _(Optional)_ Filter by service name.
 
-For details, refer to [Node Graph panel](ref:node-graph).
+For details, refer to [Node Graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/).
 
 Each circle in the graph represents a service.
 To open a context menu with additional links for quick navigation to other relevant information, click a service.
@@ -102,12 +56,12 @@ Service graph view displays a table of request rate, error rate, and duration me
 
 {{< figure src="/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png" class="docs-image--no-shadow" max-width="500px" alt="Screenshot of the Service Graph view" >}}
 
-For details, refer to the [Service Graph view documentation](/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/).
+For details, refer to the [Service Graph view documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-generator/service-graph-view/).
 
 To open the Service Graph view:
 
 1. Link a Prometheus data source in the Tempo data source settings.
-1. Navigate to [Explore](ref:explore).
+1. Navigate to [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.
 1. Run the query.

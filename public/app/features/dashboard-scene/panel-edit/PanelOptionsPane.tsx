@@ -27,6 +27,7 @@ import {
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 
 import { PanelOptions } from './PanelOptions';
@@ -73,6 +74,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       plugin_id: pluginId,
       from_suggestions: options.fromSuggestions ?? false,
     });
+
+    vizSuggestionsTracker.record(
+      panel.state.key!,
+      options.suggestionMetadata
+        ? { pluginId: options.pluginId, isNewPanel: this.state.isNewPanel ?? false, ...options.suggestionMetadata }
+        : undefined
+    );
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {

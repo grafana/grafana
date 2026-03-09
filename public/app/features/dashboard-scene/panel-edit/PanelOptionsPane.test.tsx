@@ -3,12 +3,16 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/utils';
+import * as utils from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
 import { testDashboard } from './testfiles/testDashboard';
+
+jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
 
 let pluginToLoad: PanelPlugin | undefined;
 
@@ -62,6 +66,7 @@ describe('PanelOptionsPane', () => {
       });
 
       expect(panel.state.options).toEqual({ showHeader: false });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((panel.state.fieldConfig.defaults.custom as any).axisBorderShow).toEqual(true);
     });
 
@@ -192,7 +197,11 @@ function setupTest(panelId: string) {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const optionsPane = new PanelOptionsPane({ panelRef: panel.getRef(), listMode: OptionFilter.All, searchQuery: '' });
+  const optionsPane = new PanelOptionsPane({
+    panelRef: panel.getRef(),
+    listMode: OptionFilter.All,
+    searchQuery: '',
+  });
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error

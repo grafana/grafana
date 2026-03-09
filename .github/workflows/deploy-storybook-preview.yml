@@ -38,11 +38,8 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
-        env:
-          # If the PR isn't from a fork then don't use the slower yarn checks
-          YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Build storybook
         run: yarn storybook:build

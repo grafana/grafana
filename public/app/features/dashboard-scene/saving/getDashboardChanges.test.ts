@@ -1,6 +1,6 @@
-import { Dashboard, Panel } from '@grafana/schema';
+import { Dashboard } from '@grafana/schema';
 
-import { adHocVariableFiltersEqual, getRawDashboardChanges, getPanelChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -433,116 +433,5 @@ describe('getDashboardChanges', () => {
     const result = getRawDashboardChanges(initial, changed, false, true, false);
 
     expect(result).toEqual(expectedChanges);
-  });
-});
-
-describe('getPanelChanges', () => {
-  const initial: Panel = {
-    id: 1,
-    type: 'graph',
-    title: 'Panel 1',
-    gridPos: {
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 8,
-    },
-    targets: [
-      {
-        refId: 'A',
-        query: 'query1',
-      },
-    ],
-  };
-
-  it('should return the correct result when no changes', () => {
-    const changed = { ...initial };
-
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {},
-      diffCount: 0,
-      hasChanges: false,
-    };
-
-    expect(getPanelChanges(initial, changed)).toEqual(expectedChanges);
-  });
-
-  it('should return the correct result when there is some changes', () => {
-    const changed = {
-      ...initial,
-      title: 'Panel 2',
-      type: 'table',
-      gridPos: {
-        ...initial.gridPos,
-        x: 1,
-      },
-      targets: [
-        {
-          refId: 'A',
-          query: 'query2',
-        },
-      ],
-    } as Panel;
-
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {
-        title: [
-          {
-            endLineNumber: 3,
-            op: 'replace',
-            originalValue: 'Panel 1',
-            path: ['title'],
-            startLineNumber: 3,
-            value: 'Panel 2',
-          },
-        ],
-        type: [
-          {
-            endLineNumber: 2,
-            op: 'replace',
-            originalValue: 'graph',
-            path: ['type'],
-            startLineNumber: 2,
-            value: 'table',
-          },
-        ],
-        gridPos: [
-          {
-            endLineNumber: 5,
-            op: 'replace',
-            originalValue: 0,
-            path: ['gridPos', 'x'],
-            startLineNumber: 5,
-            value: 1,
-          },
-        ],
-        targets: [
-          {
-            endLineNumber: 13,
-            op: 'replace',
-            originalValue: 'query1',
-            path: ['targets', '0', 'query'],
-            startLineNumber: 13,
-            value: 'query2',
-          },
-        ],
-      },
-      diffCount: 4,
-      hasChanges: true,
-    };
-
-    expect(getPanelChanges(changed, initial)).toEqual(expectedChanges);
   });
 });

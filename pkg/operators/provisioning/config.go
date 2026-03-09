@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,6 +50,7 @@ type ControllerConfig struct {
 	Settings              *setting.Cfg
 	workerCount           int
 	resyncInterval        time.Duration
+	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
@@ -110,6 +112,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		Settings:       cfg,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
+		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
 	}
 
 	for _, opt := range registeredConfigOptions {
@@ -298,6 +301,10 @@ func (c *ControllerConfig) NumberOfWorkers() int {
 	return c.workerCount
 }
 
+func (c *ControllerConfig) DrainTimeout() time.Duration {
+	return c.drainTimeout
+}
+
 func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 	if c.decryptService != nil {
 		return c.decryptService, nil
@@ -357,7 +364,11 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 		return c.tracer, nil
 	}
 
-	tracingConfig, err := tracing.ProvideTracingConfig(c.Settings)
+	cfgProvider, err := configprovider.ProvideService(c.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
 	}

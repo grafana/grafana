@@ -385,12 +385,12 @@ export interface FeatureToggles {
   alertingProvenanceLockWrites?: boolean;
   /**
   * Enables the UI to use certain backend-side filters
-  * @default false
+  * @default true
   */
   alertingUIUseBackendFilters?: boolean;
   /**
   * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
-  * @default false
+  * @default true
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
@@ -463,6 +463,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingV2Layouts?: boolean;
+  /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -589,6 +594,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Enables configuring default origin filters for ad-hoc filter variables
+  * @default false
+  */
+  adHocFilterDefaultValues?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -643,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+  * @default false
+  */
+  alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
   * @default false
@@ -1133,6 +1148,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthZRolesRedirect?: boolean;
   /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
   */
@@ -1354,7 +1374,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
-  * @default false
+  * @default true
   */
   newGauge?: boolean;
   /**
@@ -1377,6 +1397,11 @@ export interface FeatureToggles {
   * @default false
   */
   externalVizSuggestions?: boolean;
+  /**
+  * Limit the number of legend items by default, with an option to show all
+  * @default false
+  */
+  vizLegendSeriesLimit?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
@@ -1473,6 +1498,11 @@ export interface FeatureToggles {
   */
   multiPropsVariables?: boolean;
   /**
+  * Enables support for section level variables (rows and tabs)
+  * @default false
+  */
+  dashboardSectionVariables?: boolean;
+  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1538,6 +1568,11 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
+  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * @default false
+  */
+  appPluginAPIServer?: boolean;
+  /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
   */
@@ -1552,6 +1587,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Enables the notification history timeline in the triage instance details drawer
+  * @default false
+  */
+  alertingNotificationHistoryTriage?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false

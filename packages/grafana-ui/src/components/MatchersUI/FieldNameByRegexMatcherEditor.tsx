@@ -9,7 +9,7 @@ import { Input } from '../Input/Input';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { options, onChange } = props;
+  const { id, options, onChange } = props;
 
   const onBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
@@ -20,6 +20,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
 
   return (
     <Input
+      id={id}
       placeholder={t('grafana-ui.field-name-by-regex-matcher.input-placeholder', 'Enter regular expression')}
       defaultValue={options}
       onBlur={onBlur}
