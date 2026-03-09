@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "12.3.5";
+export const pluginVersion = "12.3.6";
 
 export interface ArcOption {
   /**
