@@ -44,6 +44,7 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
       options: currentOptions,
       replaceVariables: panel.interpolate,
       eventBus: panel.getPanelContext().eventBus,
+      annotations: [],
     };
 
     const builder = new PanelOptionsEditorBuilder();

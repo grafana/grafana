@@ -178,6 +178,28 @@ describe('useQuickEditOptions', () => {
     expect(result.current?.items).toHaveLength(2);
   });
 
+  it('should pass annotations array to showIf callback', () => {
+    const panel = createMockPanel({ textMode: 'auto' });
+    const showIfMock = jest.fn().mockReturnValue(true);
+
+    const plugin = getPanelPlugin({ id: 'test' })
+      .setPanelOptions((builder) => {
+        builder.addBooleanSwitch({
+          path: 'testOption',
+          name: 'Test option',
+          defaultValue: false,
+          showIf: showIfMock,
+        });
+      })
+      .setQuickEditPaths(['testOption']);
+
+    renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+    expect(showIfMock).toHaveBeenCalledWith(expect.any(Object), expect.any(Array), expect.any(Array));
+    const annotations = showIfMock.mock.calls[0][2];
+    expect(Array.isArray(annotations)).toBe(true);
+  });
+
   it('should return null when all paths are invalid', () => {
     const panel = createMockPanel();
     const plugin = createMockPlugin(['invalidPath1', 'invalidPath2']);
