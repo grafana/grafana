@@ -1,8 +1,10 @@
+import { TEAM_FOLDERS_UID } from 'app/core/components/NestedFolderPicker/useTeamOwnedFolder';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
-import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
+import { listDashboards, listFolders, listTeamFolderChildren, listTeamFolders, PAGE_SIZE } from '../api/services';
+import { isTeamFolderItem } from '../utils/dashboards';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
 import { findItem } from './utils';
@@ -55,7 +57,17 @@ export const refreshParents = createAsyncThunk(
 
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
-  async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
+  async ({ parentUID, pageSize }: RefetchChildrenArgs, thunkAPI): Promise<RefetchChildrenResult> => {
+    if (parentUID === TEAM_FOLDERS_UID) {
+      const children = await listTeamFolders(thunkAPI.dispatch);
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+    }
+
+    if (parentUID && isTeamFolderItem(parentUID)) {
+      const children = await listTeamFolderChildren(thunkAPI.dispatch, parentUID);
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+    }
+
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
@@ -94,6 +106,19 @@ export const fetchNextChildrenPage = createAsyncThunk(
     { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
+    if (parentUID === TEAM_FOLDERS_UID || (parentUID && isTeamFolderItem(parentUID))) {
+      const state = thunkAPI.getState().browseDashboards;
+      const collection = parentUID ? state.childrenByParentUID[parentUID] : undefined;
+      if (collection?.isFullyLoaded) {
+        return undefined;
+      }
+      const children =
+        parentUID === TEAM_FOLDERS_UID
+          ? await listTeamFolders(thunkAPI.dispatch)
+          : await listTeamFolderChildren(thunkAPI.dispatch, parentUID!);
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+    }
+
     // TODO: invert prop to `includeKinds`, but also support not loading folders
     const loadDashboards = !excludeKinds.includes('dashboard');
 
