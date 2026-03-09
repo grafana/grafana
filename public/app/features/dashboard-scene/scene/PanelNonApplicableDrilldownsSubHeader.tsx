@@ -4,8 +4,8 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, buildApplicabilityMatcher, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { t } from '@grafana/i18n';
+import { AdHocFiltersVariable, buildApplicabilityMatcher, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 const GAP_SIZE = 8;
