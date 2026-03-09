@@ -38,6 +38,16 @@ interface ActionsProps {
   };
 }
 
+const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
+  const isTransformation = item.type === QueryEditorType.Transformation;
+  const isHidden = item.isHidden;
+
+  if (isTransformation) {
+    return isHidden ? labels.enable : labels.disable;
+  }
+  return isHidden ? labels.show : labels.hide;
+};
+
 export function Actions({
   contentHeader = false,
   handleResetFocus,
@@ -59,6 +69,8 @@ export function Actions({
       remove: t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel }),
       show: t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel }),
       hide: t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel }),
+      enable: t('query-editor-next.action.enable', 'Enable {{type}}', { type: typeLabel }),
+      disable: t('query-editor-next.action.disable', 'Disable {{type}}', { type: typeLabel }),
     }),
     [typeLabel]
   );
@@ -124,7 +136,7 @@ export function Actions({
       onToggleHide && {
         id: 'hide',
         icon: item.isHidden ? 'eye-slash' : 'eye',
-        label: item.isHidden ? labels.show : labels.hide,
+        label: getToggleLabel(item, labels),
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
           trackCardAction('toggle_hide', item.type);
@@ -134,19 +146,7 @@ export function Actions({
     ]
       .filter((btn): btn is ActionButtonConfig => Boolean(btn))
       .sort((a, b) => (orderMap[a.id] ?? 0) - (orderMap[b.id] ?? 0));
-  }, [
-    onDuplicate,
-    labels.duplicate,
-    labels.show,
-    labels.hide,
-    labels.remove,
-    onToggleHide,
-    item.isHidden,
-    item.type,
-    onDelete,
-    handleDelete,
-    order,
-  ]);
+  }, [order, onDuplicate, labels, onDelete, handleDelete, onToggleHide, item]);
 
   return (
     <>
