@@ -180,7 +180,10 @@ export function ExploreGraph({
     eventBus,
     // TODO: Re-enable DashboardCursorSync.Crosshair when #81505 is fixed
     sync: () => DashboardCursorSync.Off,
-    onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
+    onToggleSeriesVisibility(label: string | string[] | null, mode: SeriesVisibilityChangeMode) {
+      if (typeof label !== 'string') {
+        return;
+      }
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
   };

@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 
 import { VizLegendListItem } from './VizLegendListItem';
@@ -25,6 +24,7 @@ export const VizLegendList = <T extends unknown>({
   className,
   readonly,
   limit = 0,
+  filterAction,
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
@@ -41,7 +41,6 @@ export const VizLegendList = <T extends unknown>({
     );
   }
 
-  // split into left & right items when bottom/default legend, else everything goes in leftItems
   const leftItems = useMemo(
     () => (placement === 'right' ? items : items.filter((item) => item.yAxis === 1)),
     [placement, items]
@@ -61,26 +60,33 @@ export const VizLegendList = <T extends unknown>({
 
       return (
         <div className={cx(styles.rightWrapper, className)}>
+          {filterAction && <span className={styles.itemRight}>{filterAction}</span>}
           <List items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
         </div>
       );
     }
     case 'bottom':
     default: {
-      const renderItem = (item: VizLegendItem<T>, index: number) => {
-        return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
-      };
-
       return (
         <div className={cx(styles.bottomWrapper, className)}>
           {leftItems.length > 0 && (
             <div className={styles.section}>
-              <InlineList items={leftItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
+              {filterAction && <span className={styles.itemBottom}>{filterAction}</span>}
+              {leftItems.map((item, i) => (
+                <span key={getItemKey(item)} className={styles.itemBottom}>
+                  {itemRenderer!(item, i)}
+                </span>
+              ))}
             </div>
           )}
           {rightItems.length > 0 && (
             <div className={cx(styles.section, styles.sectionRight)}>
-              <InlineList items={rightItems} renderItem={renderItem} getItemKey={getItemKey} limit={limit} />
+              {!leftItems.length && filterAction && <span className={styles.itemBottom}>{filterAction}</span>}
+              {rightItems.map((item, i) => (
+                <span key={getItemKey(item)} className={styles.itemBottom}>
+                  {itemRenderer!(item, i)}
+                </span>
+              ))}
             </div>
           )}
         </div>
@@ -120,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     section: css({
       display: 'flex',
+      flexWrap: 'wrap',
     }),
     sectionRight: css({
       justifyContent: 'flex-end',

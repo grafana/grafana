@@ -41,7 +41,7 @@ export function TimeSeries(props: TimeSeriesProps) {
         return null;
       }
 
-      return <PlotLegend data={frames} config={config} {...legend} />;
+      return <PlotLegend data={frames} config={config} enableFacetedFilter {...legend} />;
     },
     [legend, frames]
   );
