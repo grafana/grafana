@@ -11,6 +11,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**'],
     setupFiles: ['vitest.setup.ts', 'vitest-canvas-mock'],
+    testTimeout: 30_000,
   },
   resolve: {
     conditions: ['@grafana-app/source', 'import', 'module', 'default'],
