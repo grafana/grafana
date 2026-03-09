@@ -11,7 +11,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: [
       'packages/grafana-alerting/**/*.test.{ts,tsx}',
-      'packages/grafana-runtime/**/*.test.{ts,tsx}',
       'packages/grafana-ui/**/*.test.{ts,tsx}',
       // TODO: uncomment when everything is migrated
       // 'public/app/**/*.test.{ts,tsx}',
@@ -25,6 +24,7 @@ export default defineConfig({
       'packages/grafana-eslint-rules/**/*.test.{ts,tsx}',
       'packages/grafana-flamegraph/**/*.test.{ts,tsx}',
       'packages/grafana-i18n/**/*.test.{ts,tsx}',
+      'packages/grafana-runtime/**/*.test.{ts,tsx}',
       'public/app/plugins/datasource/azuremonitor/**',
       'public/app/plugins/datasource/cloud-monitoring/**',
       'public/app/plugins/datasource/elasticsearch/**',

@@ -9,11 +9,12 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**'],
-    setupFiles: ['vitest.setup.ts', 'vitest-canvas-mock'],
+    setupFiles: ['vitest.setup.ts'],
   },
   resolve: {
     conditions: ['@grafana-app/source', 'import', 'module', 'default'],
     alias: [
+      { find: /.*\.(svg|png|jpg)$/, replacement: path.resolve(__dirname, '../../public/test/mocks/images.ts') },
       { find: 'react-inlinesvg', replacement: path.resolve(__dirname, '../../public/test/mocks/react-inlinesvg.tsx') },
     ],
   },
