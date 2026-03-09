@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.25.7
+go 1.25.8
 
 // Direct requirements -- every entry needs an owner
 require (
@@ -88,7 +88,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260304175146-4d37d7b17452 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260306155606-142355827498 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -704,6 +704,8 @@ require (
 )
 
 require github.com/grafana/nanogit/gittest v0.6.0 // @grafana/grafana-git-ui-sync-team
+
+require github.com/grafana/schemads v0.0.1 // @grafana/data-sources
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

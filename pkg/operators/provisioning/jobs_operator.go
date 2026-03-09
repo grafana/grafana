@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -36,7 +37,11 @@ func RunJobController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-job-controller")
 	logger.Info("Starting provisioning job controller")
 
-	tracingConfig, err := tracing.ProvideTracingConfig(deps.Config)
+	cfgProvider, err := configprovider.ProvideService(deps.Config)
+	if err != nil {
+		return fmt.Errorf("failed to provide config: %w", err)
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(cfgProvider)
 	if err != nil {
 		return fmt.Errorf("failed to provide tracing config: %w", err)
 	}
@@ -224,7 +229,7 @@ func setupWorkers(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients)
+	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -237,7 +242,7 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, resources.IsFolderMetadataEnabled(cfg))
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)

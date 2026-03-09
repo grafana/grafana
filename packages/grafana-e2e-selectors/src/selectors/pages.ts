@@ -657,6 +657,9 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
       },
