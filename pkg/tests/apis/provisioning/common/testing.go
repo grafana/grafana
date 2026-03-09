@@ -1335,8 +1335,3 @@ func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.
 	}
 	return nil
 }
-
-// WithProvisioningFolderMetadata is a helper to enable the provisioningFolderMetadata feature flag.
-func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}

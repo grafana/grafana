@@ -1,4 +1,4 @@
-package files_test
+package provisioning
 
 import (
 	"bytes"
@@ -15,7 +15,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +25,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+}
 
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -1103,7 +1109,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -1224,7 +1230,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
@@ -1290,7 +1296,7 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-auth-metadata-repo"
