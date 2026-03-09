@@ -14828,7 +14828,6 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "default": "Default",
       "multi-many-points": "Points",
       "multi-many-points-stacked": "Stacked points",
       "multi-many-points-stacked-pct": "Stacked 100%",
