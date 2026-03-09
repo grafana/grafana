@@ -45,10 +45,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             environment="jfrog-ci"
-            registry_path="niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana"
+            registry_path="push.artifacts.ni.com/rnd-docker-ci/ni/systemlink/ni-grafana"
           else
             environment="jfrog-pre"
-            registry_path="niartifacts.jfrog.io/rnd-docker-pre/ni/systemlink/ni-grafana"
+            registry_path="push.artifacts.ni.com/rnd-docker-pre/ni/systemlink/ni-grafana"
           fi
           
           echo "::set-output name=environment::$environment"
