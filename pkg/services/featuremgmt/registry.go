@@ -1801,6 +1801,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthZRoleBindingsRedirect",
+			Description:  "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzResourcePermissionApis",
 			Description:  "Registers AuthZ resource permission /apis endpoints",
 			Stage:        FeatureStageExperimental,
