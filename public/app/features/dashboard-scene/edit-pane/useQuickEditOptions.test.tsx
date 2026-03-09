@@ -8,6 +8,21 @@ import { VizPanel } from '@grafana/scenes';
 import { DashboardEditActionEvent } from './shared';
 import { resetQuickEditWarnings, useQuickEditOptions } from './useQuickEditOptions';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    buildInfo: {
+      env: 'development',
+    },
+  },
+  createMonitoringLogger: () => ({
+    logWarning: jest.fn(),
+    logError: jest.fn(),
+    logInfo: jest.fn(),
+  }),
+}));
+
 describe('useQuickEditOptions', () => {
   const createMockPanel = (options: Record<string, unknown> = {}) => {
     const panel = new VizPanel({
@@ -162,7 +177,10 @@ describe('useQuickEditOptions', () => {
 
     expect(result.current).not.toBeNull();
     expect(result.current?.items).toHaveLength(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Quick edit path "invalidPath" not found'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Quick edit path not found in plugin options',
+      expect.objectContaining({ path: 'invalidPath', pluginId: 'stat' })
+    );
 
     consoleSpy.mockRestore();
   });

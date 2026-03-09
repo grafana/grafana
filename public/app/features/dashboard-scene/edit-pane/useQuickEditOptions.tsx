@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { PanelOptionsEditorBuilder, PanelPlugin, StandardEditorContext } from '@grafana/data';
 import { isNestedPanelOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+import { config, createMonitoringLogger } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,11 +13,15 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { DashboardEditActionEvent } from './shared';
 
 const warnedPaths = new Set<string>();
+const monitoringLogger = createMonitoringLogger('quick-edit-options');
 
-function warnOnce(key: string, message: string) {
+function warnOnce(key: string, message: string, labels: Record<string, string>) {
   if (!warnedPaths.has(key)) {
     warnedPaths.add(key);
-    console.warn(message);
+    monitoringLogger.logWarning(message, labels);
+    if (config.buildInfo.env === 'development') {
+      console.warn(message, labels);
+    }
   }
 }
 
@@ -83,21 +88,20 @@ export function useQuickEditOptions({
       const pluginId = plugin.meta?.id ?? 'unknown';
 
       if (!item) {
-        warnOnce(
-          `${pluginId}:${path}:not-found`,
-          `useQuickEditOptions: Quick edit path "${path}" not found in plugin options for "${pluginId}". ` +
-            `Make sure the path matches an option defined in setPanelOptions(). ` +
-            `Note: Options defined via addNestedOptions() are not currently supported.`
-        );
+        warnOnce(`${pluginId}:${path}:not-found`, `Quick edit path not found in plugin options`, {
+          pluginId,
+          path,
+          reason: 'not-found',
+        });
         continue;
       }
 
       if (isNestedPanelOptions(item)) {
-        warnOnce(
-          `${pluginId}:${path}:nested`,
-          `useQuickEditOptions: Quick edit path "${path}" refers to a nested options group, which is not supported. ` +
-            `Use paths to individual options instead.`
-        );
+        warnOnce(`${pluginId}:${path}:nested`, `Quick edit path refers to unsupported nested options group`, {
+          pluginId,
+          path,
+          reason: 'nested-options',
+        });
         continue;
       }
 
