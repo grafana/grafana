@@ -26,6 +26,7 @@ type ResourceFileChange struct {
 // It returns the file changes to apply,
 // the folder paths missing a folder metadata file (only populated when the feature flag is enabled),
 // and any error encountered.
+//nolint:gocyclo
 func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {

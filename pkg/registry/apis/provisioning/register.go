@@ -303,7 +303,7 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata),
+		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
