@@ -62,32 +62,22 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotBox, 
 
           // append cluster annotation regions to frame
           clusters.forEach((idxs, ci) => {
-            // @todo more succinctly?
-            timeEndFrame.fields.forEach((field) => {
-              const vals = field.values;
-              if (field.name === 'time') {
-                // Push the first clustered annotation as the annotation region start time
-                vals.push(timeVals[idxs[0]]);
-              } else if (field.name === 'timeEnd') {
-                // push the last clustered annotation as the annotation region end time
-                let lastIdx = idxs.length - 1;
-                vals.push(timeVals[idxs[lastIdx]]);
-              } else if (field.name === 'isRegion') {
-                // Clusters are regions
-                vals.push(true);
-              } else if (field.name === 'color') {
-                // Use the color of the first annotation in the region
-                vals.push(colorVals[idxs[0]]);
-              } else if (field.name === 'title') {
-                vals.push(null);
-              } else if (field.name === 'text') {
-                vals.push(null);
-              } else if (field.name === 'clusterIdx') {
-                vals.push(ci);
-              } else {
-                vals.push(null);
-              }
-            });
+            const valMapping: Record<string, () => number | boolean | string> = {
+              // Push the first clustered annotation as the annotation region start time
+              time: () => timeVals[idxs[0]],
+              // push the last clustered annotation as the annotation region end time
+              timeEnd: () => timeVals[idxs[idxs.length - 1]],
+              // Clusters are regions
+              isRegion: () => true,
+              // Push color of the first annotation in the region
+              color: () => colorVals[idxs[0]],
+              // Push cluster index
+              clusterIdx: () => ci,
+            };
+
+            for (const field of timeEndFrame.fields) {
+              field.values.push(valMapping?.[field.name]?.() ?? null);
+            }
           });
 
           // Set data frame length
