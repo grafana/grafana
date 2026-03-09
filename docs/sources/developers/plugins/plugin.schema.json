@@ -15,7 +15,7 @@
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel", "renderer"]
+      "enum": ["alerting", "app", "datasource", "panel", "renderer"]
     },
     "info": {
       "type": "object",

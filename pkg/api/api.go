@@ -288,6 +288,14 @@ func (hs *HTTPServer) registerRoutes() {
 	// ShortURL API
 	hs.registerShortURLAPI(r)
 
+	// Alerting plugin ingest — unauthenticated, token-in-URL is the credential.
+	// Registered outside the reqSignedIn group so external services can POST
+	// alert payloads without Grafana auth headers.
+	r.Group("/api/plugins", func(alertRoute routing.RouteRegister) {
+		alertRoute.Post("/:pluginId/alert/:token/*", hs.HandlePluginWebhook)
+		alertRoute.Post("/:pluginId/alert/:token", hs.HandlePluginWebhook)
+	})
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)
@@ -524,6 +532,14 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
 		)
+
+		// Alerting ingest instances — org admins only.
+		apiRoute.Group("/alerting/ingest-instances", func(ingestRoute routing.RouteRegister) {
+			ingestRoute.Get("/", routing.Wrap(hs.ListIngestInstances))
+			ingestRoute.Post("/", routing.Wrap(hs.CreateIngestInstance))
+			ingestRoute.Put("/:token", routing.Wrap(hs.UpdateIngestInstance))
+			ingestRoute.Delete("/:token", routing.Wrap(hs.DeleteIngestInstance))
+		}, reqSignedIn, reqOrgAdmin)
 
 		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))

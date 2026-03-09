@@ -77,6 +77,7 @@ import (
 	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert/ingestinstance"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -227,6 +228,7 @@ type HTTPServer struct {
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
+	ingestInstanceStore             ingestinstance.Store
 }
 
 type TLSCerts struct {
@@ -390,7 +392,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
-		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
+		dsConnectionClient:  datasource.NewLegacyConnectionClient(dataSourcesService),
+		ingestInstanceStore: ingestinstance.NewSQLStore(sqlStore),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
