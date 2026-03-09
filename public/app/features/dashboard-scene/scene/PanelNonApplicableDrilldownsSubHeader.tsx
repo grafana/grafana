@@ -5,6 +5,7 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AdHocFiltersVariable, buildApplicabilityMatcher, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 const GAP_SIZE = 8;
@@ -28,7 +29,6 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
   const nonApplicable = useMemo(() => {
-    // queryRunnerState.data is read to re-trigger this memo after each query run
     if (!queryRunnerState.data) {
       return [];
     }
@@ -102,7 +102,10 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
   const remainingCount = nonApplicable.length - visibleCount;
   const hasOverflow = remainingCount > 0;
   const remainingItems = nonApplicable.slice(visibleCount);
-  const defaultReason = 'Filter is not applicable';
+  const defaultReason = t(
+    'dashboard-scene.panel-non-applicable-drilldowns-sub-header.default-reason',
+    'Filter is not applicable'
+  );
 
   return (
     <div

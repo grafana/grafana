@@ -30,6 +30,7 @@ import {
   ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   BackendSrvRequest,
   config,
@@ -667,7 +668,10 @@ export class PrometheusDatasource
         results.push({
           key: f.key,
           applicable: false,
-          reason: 'Overridden by another filter with the same key',
+          reason: t(
+            'grafana-prometheus.datasource.drilldowns-applicability.filter-overridden',
+            'Overridden by another filter with the same key'
+          ),
           origin: f.origin,
         });
         return;
@@ -677,7 +681,11 @@ export class PrometheusDatasource
         results.push({
           key: f.key,
           applicable: false,
-          reason: `Label "${f.key}" not found in the queried metrics`,
+          reason: t(
+            'grafana-prometheus.datasource.drilldowns-applicability.filter-label-not-found',
+            'Label "{{label}}" not found in the queried metrics',
+            { label: f.key }
+          ),
           origin: f.origin,
         });
         return;
@@ -689,7 +697,11 @@ export class PrometheusDatasource
           results.push({
             key: f.key,
             applicable: false,
-            reason: `Value "${f.value}" not found for label "${f.key}"`,
+            reason: t(
+              'grafana-prometheus.datasource.drilldowns-applicability.filter-value-not-found',
+              'Value "{{value}}" not found for label "{{label}}"',
+              { value: f.value, label: f.key }
+            ),
             origin: f.origin,
           });
           return;
@@ -701,7 +713,11 @@ export class PrometheusDatasource
             results.push({
               key: f.key,
               applicable: false,
-              reason: `None of the selected values exist for label "${f.key}"`,
+              reason: t(
+                'grafana-prometheus.datasource.drilldowns-applicability.filter-no-valid-values',
+                'None of the selected values exist for label "{{label}}"',
+                { label: f.key }
+              ),
               origin: f.origin,
             });
             return;
@@ -718,12 +734,27 @@ export class PrometheusDatasource
 
     groupByKeys.forEach((k, i) => {
       if (groupByLastIndex.get(k) !== i) {
-        results.push({ key: k, applicable: false, reason: 'Overridden by another group-by with the same key' });
+        results.push({
+          key: k,
+          applicable: false,
+          reason: t(
+            'grafana-prometheus.datasource.drilldowns-applicability.group-by-overridden',
+            'Overridden by another group-by with the same key'
+          ),
+        });
         return;
       }
 
       if (!availableLabelKeysSet.has(k)) {
-        results.push({ key: k, applicable: false, reason: `Label "${k}" not found in the queried metrics` });
+        results.push({
+          key: k,
+          applicable: false,
+          reason: t(
+            'grafana-prometheus.datasource.drilldowns-applicability.group-by-label-not-found',
+            'Label "{{label}}" not found in the queried metrics',
+            { label: k }
+          ),
+        });
         return;
       }
 
