@@ -42,13 +42,14 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
 
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
-    const filterValues = [...filters, ...originFilters];
+    const filterValues = [...originFilters, ...filters];
 
     if (filterValues.length && applicability.filters.length) {
       const matchFilter = buildApplicabilityMatcher(applicability.filters);
 
-      for (const filter of filterValues) {
-        const result = matchFilter(filter.key, filter.origin);
+      for (let i = 0; i < filterValues.length; i++) {
+        const filter = filterValues[i];
+        const result = matchFilter(filter.key, filter.origin, i);
         if (result && !result.applicable) {
           const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
           items.push({ label: `${filter.key} ${filter.operator} ${displayValue}`, reason: result.reason });
