@@ -213,6 +213,25 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			// Virtual resource for dashboard-scoped annotation permissions.
+			// Maps annotation verbs (create/update/delete) to annotation actions (annotations:create/write/delete)
+			// but uses dashboard scopes (dashboards:uid:<uid>) to maintain backward compatibility with
+			// the legacy authorization model.
+			"annotations": translation{
+				resource:  "dashboards", // Use dashboards as the scope resource
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "annotations:read",
+					utils.VerbList:             "annotations:read",
+					utils.VerbCreate:           "annotations:create",
+					utils.VerbUpdate:           "annotations:write",
+					utils.VerbPatch:            "annotations:write",
+					utils.VerbDelete:           "annotations:delete",
+					utils.VerbDeleteCollection: "annotations:delete",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"folder.grafana.app": {
 			"folders": newFolderTranslation(),
@@ -325,6 +344,10 @@ func NewMapperRegistry() MapperRegistry {
 			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
 			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
 			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
+		},
+		"annotation.grafana.app": {
+			// Annotations use "type" as the scope attribute to map to legacy scopes like "annotations:type:organization".
+			"annotations": newResourceTranslation("annotations", "type", false, nil),
 		},
 	})
 
