@@ -176,14 +176,9 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
-	// remove user access if empty. Happens if grafana-auth-app is not injected
-	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
-	}
-	// double-check and remove admin menu if empty
-	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
-	}
+	// NOTE: empty admin section cleanup is intentionally NOT done here.
+	// It happens in setIndexViewData (pkg/api/index.go) AFTER RunIndexDataHooks,
+	// so enterprise hooks have a chance to add items before empty sections are pruned.
 
 	if c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{

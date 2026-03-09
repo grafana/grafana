@@ -9,6 +9,7 @@ import (
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -16,7 +17,7 @@ import (
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	ctx := context.Background()
 	clientFactory := resources.NewClientFactory(&helper.Org1.Admin)
