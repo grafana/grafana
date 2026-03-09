@@ -10,7 +10,7 @@ import (
 
 #NotificationQuery: {
     // Type of query to perform (default: entries)
-    type?: "entries" | "counts" @cog(kind="enum",memberNames="Entries|Counts")
+    type?: "entries" | "counts" | "range_counts" @cog(kind="enum",memberNames="Entries|Counts|RangeCounts")
 
     // From is the starting timestamp for the query.
     from?: time.Time
@@ -18,6 +18,8 @@ import (
     to?: time.Time
     // Limit is the maximum number of entries to return.
     limit?: int64    
+    // Step is the step interval in seconds for range_counts queries.
+    step?: int64
     // Receiver optionally filters the entries by receiver title (contact point).
     receiver?: string
     // Status optionally filters the entries to only either firing or resolved.
@@ -90,7 +92,18 @@ import (
     outcome?: #NotificationOutcome
     error?: string
 
-    // Count is the number of notification attempts in the time period.
+    // Count is the number of notification attempts in the time period. Set for counts queries.
+    count: int
+
+    // Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.
+    values: [...#NotificationRangeValue]
+}
+
+// NotificationRangeValue is a single (timestamp, count) data point in a range count series.
+#NotificationRangeValue: {
+    // Timestamp is the Unix epoch in seconds for this data point.
+    timestamp: int64
+    // Count is the number of notification attempts at this point in time.
     count: int
 }
 
