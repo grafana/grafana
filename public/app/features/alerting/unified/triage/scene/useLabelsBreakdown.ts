@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
-import { useQueryRunner } from '@grafana/scenes-react';
+import { getPrometheusTime } from '@grafana/prometheus';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { useTimeRange } from '@grafana/scenes-react';
 
-import { INTERNAL_LABELS } from '../constants';
+import { useAsync } from '../../hooks/useAsync';
+import { DATASOURCE_UID, INTERNAL_LABELS, METRIC_NAME } from '../constants';
 
-import { dataFrameToLabelMaps } from './dataFrameUtils';
-import { uniqueAlertInstancesQuery } from './queries';
-import { useQueryFilter } from './utils';
+import { isPrometheusDatasource, useQueryFilter } from './utils';
 
 export interface LabelValueCount {
   value: string;
@@ -26,18 +27,77 @@ export function useLabelsBreakdown(): {
   isLoading: boolean;
 } {
   const filter = useQueryFilter();
-  const dataProvider = useQueryRunner({ queries: [uniqueAlertInstancesQuery(filter)] });
-  const { data } = dataProvider.useState();
-  const frame = data?.series?.at(0);
+  const [timeRange] = useTimeRange();
 
-  const labels = useMemo(() => {
-    if (!frame) {
-      return [];
+  const [{ execute }, state] = useAsync(async (matchSelector: string, start: string, end: string) => {
+    const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
+    if (!isPrometheusDatasource(ds)) {
+      throw new Error(`Expected a Prometheus datasource but got "${ds.type}"`);
     }
-    return computeLabelStats(dataFrameToLabelMaps(frame));
-  }, [frame]);
+    const result = await ds.metadataRequest('/api/v1/series', { 'match[]': matchSelector, start, end });
+    const raw: Array<Record<string, string>> = result?.data?.data ?? [];
+    return computeLabelStats(deduplicateSeries(raw));
+  });
 
-  return { labels, isLoading: !dataProvider.isDataReadyToDisplay() };
+  useEffect(() => {
+    const matchSelector = filter
+      ? `${METRIC_NAME}{alertstate=~"firing|pending",${filter}}`
+      : `${METRIC_NAME}{alertstate=~"firing|pending"}`;
+
+    const start = getPrometheusTime(timeRange.from, false).toString();
+    const end = getPrometheusTime(timeRange.to, true).toString();
+
+    execute(matchSelector, start, end);
+  }, [execute, filter, timeRange]);
+
+  return {
+    labels: state.result ?? [],
+    isLoading: state.status === 'loading' || state.status === 'not-executed',
+  };
+}
+
+/**
+ * Deduplicate series so that when the same alert instance appears as both
+ * "firing" and "pending" within the time window, only the "firing" entry is
+ * kept — mirroring the `unless ignoring(alertstate, grafana_alertstate)`
+ * logic used in the previous PromQL query.
+ *
+ * Two series are considered the same instance when all their labels match
+ * except for `alertstate` and `grafana_alertstate`.
+ */
+const collator = new Intl.Collator();
+
+export function deduplicateSeries(series: Array<Record<string, string>>): Array<Record<string, string>> {
+  // Labels that differentiate alertstate but not the underlying instance identity.
+  const STATE_LABELS = new Set(['alertstate', 'grafana_alertstate']);
+
+  function fingerprint(s: Record<string, string>): string {
+    return Object.entries(s)
+      .filter(([k]) => !STATE_LABELS.has(k))
+      .sort(([a], [b]) => collator.compare(a, b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join(',');
+  }
+
+  // Group series by their instance fingerprint.
+  const groups = new Map<string, Array<Record<string, string>>>();
+  for (const s of series) {
+    const fp = fingerprint(s);
+    const group = groups.get(fp);
+    if (group) {
+      group.push(s);
+    } else {
+      groups.set(fp, [s]);
+    }
+  }
+
+  // For each group: prefer firing over pending.
+  const result: Array<Record<string, string>> = [];
+  for (const group of groups.values()) {
+    const firing = group.filter((s) => s.alertstate === 'firing');
+    result.push(...(firing.length > 0 ? firing : group));
+  }
+  return result;
 }
 
 /**

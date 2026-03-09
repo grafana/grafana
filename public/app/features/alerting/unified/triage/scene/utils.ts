@@ -1,4 +1,5 @@
-import { TimeRange } from '@grafana/data';
+import { DataSourceApi, TimeRange } from '@grafana/data';
+import { PrometheusDatasource } from '@grafana/prometheus';
 import { AdHocFiltersVariable, SceneDataQuery, SceneObject, sceneGraph } from '@grafana/scenes';
 import { useVariableValue } from '@grafana/scenes-react';
 import { DataSourceRef } from '@grafana/schema';
@@ -49,6 +50,14 @@ export function useQueryFilter(): string {
 }
 
 type AdHocFilterOperator = '=' | '!=' | '=~' | '!~' | '=|' | '!=|';
+
+/**
+ * Type guard that narrows a `DataSourceApi` to `PrometheusDatasource`.
+ * Uses `instanceof` so TypeScript fully narrows the type without an unsafe cast.
+ */
+export function isPrometheusDatasource(ds: DataSourceApi): ds is PrometheusDatasource {
+  return ds instanceof PrometheusDatasource;
+}
 
 export function addOrReplaceFilter(
   sceneContext: SceneObject,
