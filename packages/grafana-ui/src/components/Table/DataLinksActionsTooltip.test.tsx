@@ -7,8 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
 
 describe('DataLinksActionsTooltip', () => {
-  let logSpy: jest.SpyInstance;
-
   const mockCoords = { clientX: 100, clientY: 100 };
   const mockLink: LinkModel = {
     href: 'http://link1.com',
@@ -27,11 +25,6 @@ describe('DataLinksActionsTooltip', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    logSpy.mockRestore();
   });
 
   it('should not render when there is only one link', () => {

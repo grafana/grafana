@@ -83,12 +83,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
           ref={refCallback}
           {...getReferenceProps()}
           {...getFloatingProps()}
-          style={{
-            ...floatingStyles,
-            maxHeight: 'calc(100vh - 32px)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}
+          style={floatingStyles}
           className={styles.tooltipWrapper}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
@@ -124,6 +119,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
+      maxHeight: 'calc(100vh - 32px)',
+      overflowY: 'auto',
+      overflowX: 'hidden',
       userSelect: 'text',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
