@@ -1,3 +1,13 @@
+<!-- 12.1.9 START -->
+
+# 12.1.9 (2026-03-09)
+
+### Features and enhancements
+
+- **Go:** Update to 1.25.8 [#119701](https://github.com/grafana/grafana/pull/119701), [@macabu](https://github.com/macabu)
+- **Rendering:** Add support for custom CA certs in Image Renderer [#118912](https://github.com/grafana/grafana/pull/118912), [@mrevutskyi](https://github.com/mrevutskyi)
+
+<!-- 12.1.9 END -->
 <!-- 12.1.8 START -->
 
 # 12.1.8 (2026-02-24)
