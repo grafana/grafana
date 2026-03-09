@@ -9,10 +9,12 @@ import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfig
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
+import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export const FinishStep = memo(function FinishStep() {
+  const { setStepStatusInfo, hasStepError } = useStepStatus();
   const {
     register,
     watch,
@@ -21,7 +23,13 @@ export const FinishStep = memo(function FinishStep() {
   } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
-  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const [type, readOnly, pushToConfiguredEnables, prWorkflow, generatePreviews] = watch([
+    'repository.type',
+    'repository.readOnly',
+    'repository.enablePushToConfiguredBranch',
+    'repository.prWorkflow',
+    'repository.generateDashboardPreviews',
+  ]);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -33,6 +41,12 @@ export const FinishStep = memo(function FinishStep() {
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
+
+  useEffect(() => {
+    if (hasStepError) {
+      setStepStatusInfo({ status: 'idle' });
+    }
+  }, [pushToConfiguredEnables, prWorkflow, generatePreviews, setStepStatusInfo, hasStepError]);
 
   // Get field configurations for git-based providers
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
