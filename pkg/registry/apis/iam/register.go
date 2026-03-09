@@ -124,6 +124,8 @@ func RegisterAPIService(
 		authorizer:                        authorizer,
 		legacyAccessClient:                legacyAccessClient,
 		accessClient:                      accessClient,
+		ac:                                ac,
+		roleConfigProvider:                restConfig.GetRestConfig,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                           user.NewLegacyDisplayREST(store),
@@ -406,7 +408,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableRoleBindingsApi {
-		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync, enableRolesApi); err != nil {
 			return err
 		}
 	}
@@ -616,6 +618,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	opts builder.APIGroupOptions,
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
+	enableRolesApi bool,
 ) error {
 	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.RoleBindingInfo, opts.OptsGetter)
 	if err != nil {
@@ -650,7 +653,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 		}
 	}
 
-	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
+	var rbAuthorizer storewrapper.ResourceStorageAuthorizer
+	if enableRolesApi && b.ac != nil && b.roleConfigProvider != nil {
+		validator := iamauthorizer.NewRolePermissionValidator(b.accessClient, b.ac)
+		roleRefResolver := iamauthorizer.RoleRefResolverFromConfigProvider(b.roleConfigProvider)
+		rbAuthorizer = iamauthorizer.NewRoleBindingAuthorizer(validator, roleRefResolver)
+	} else {
+		// roles API disabled, then deny bindings
+		rbAuthorizer = iamauthorizer.NewDenyCustomRoleRefsAuthorizer()
+	}
+	storage[iamv0.RoleBindingInfo.StoragePath()] = storewrapper.New(roleBindingStore, rbAuthorizer)
 	return nil
 }
 
@@ -873,8 +885,14 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ExternalGroupMapping:
 		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
+		if err := ValidateRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.GlobalRole:
+		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.TeamLBACRule:
 		return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
@@ -910,11 +928,17 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Role, got %T", oldObj)
 		}
+		if err := ValidateRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
 	case *iamv0.GlobalRole:
 		oldGlobalRoleObj, ok := oldObj.(*iamv0.GlobalRole)
 		if !ok {
 			return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldObj)
+		}
+		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
+			return err
 		}
 		return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
 	case *iamv0.TeamLBACRule:

@@ -588,18 +588,18 @@ var (
 		{
 			Name:         "alertingUIUseBackendFilters",
 			Description:  "Enables the UI to use certain backend-side filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingUIUseFullyCompatBackendFilters",
 			Description:  "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
@@ -712,6 +712,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "reportRenderBinding",
+			Description: "Enables render binding support for report rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1788,6 +1795,14 @@ var (
 		{
 			Name:         "kubernetesAuthZRolesRedirect",
 			Description:  "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthZRoleBindingsRedirect",
+			Description:  "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
