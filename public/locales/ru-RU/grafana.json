@@ -9626,6 +9626,7 @@
       "log-base": "База журналов"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Ось",
         "color-label": "Цвет",
@@ -9915,6 +9916,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Оператор сравнения",
+      "reducer-value-label": "",
       "select-field-placeholder": "Выбрать редуктор полей"
     },
     "file-dropzone": {
@@ -11856,7 +11858,7 @@
       "dialog-label": "",
       "dock": "Закрепить меню",
       "list-label": "Навигация",
-      "open": "Открыть меню",
+      "open": "",
       "undock": "Открепить меню"
     },
     "megamenu-item": {
@@ -12756,6 +12758,7 @@
       "error-connection-required": "Требуется подключение",
       "error-fetch-branches": "Не удалось получить ветви",
       "error-required": "Поле является обязательным.",
+      "error-save-failed": "",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
       "label-connection": "Подключение к приложению GitHub",
@@ -12770,9 +12773,11 @@
       "placeholder-my-config": "Моя конфигурация"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Настройте веб-перехватчики</0>, чтобы получать мгновенные обновления в Grafana сразу после фиксации изменений. Просматривайте и утверждайте изменения с помощью соответствующих запросов перед их внедрением.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Возможности GitHub",
-      "label-realtime-feedback": "Отзывы в реальном времени"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12923,11 +12928,14 @@
       "description-preview-requirements": "(требует <2>визуализации изображений</2> и включенного общего доступа)",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-sync-interval": "Как часто синхронизировать изменения из репозитория",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Требуется указать интервал синхронизации",
       "label-enable-previews": "Включить просмотр дашбордов в запросах на включение изменений",
       "label-generate-dashboard-previews": "Создать предварительный просмотр дашборда",
       "label-read-only": "Только для чтения",
-      "label-sync-interval": "Интервал синхронизации (в секундах)"
+      "label-sync-interval": "Интервал синхронизации (в секундах)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13324,6 +13332,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Предупреждение",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Обратите внимание на следующие ограничения. Подробнее см. в <2>документации Git Sync</2>.",
       "alert-point-1": "Во время этого процесса можно создавать, редактировать и удалять ресурсы, но изменения нельзя экспортировать.",

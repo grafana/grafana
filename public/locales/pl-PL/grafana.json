@@ -9626,6 +9626,7 @@
       "log-base": "Baza logów"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Oś",
         "color-label": "Kolor",
@@ -9915,6 +9916,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Operator porównania",
+      "reducer-value-label": "",
       "select-field-placeholder": "Zaznacz reduktor pola"
     },
     "file-dropzone": {
@@ -11856,7 +11858,7 @@
       "dialog-label": "",
       "dock": "Zadokuj menu",
       "list-label": "Nawigacja",
-      "open": "Otwórz menu",
+      "open": "",
       "undock": "Odepnij menu z dokowania"
     },
     "megamenu-item": {
@@ -12756,6 +12758,7 @@
       "error-connection-required": "Połączenie jest wymagane",
       "error-fetch-branches": "",
       "error-required": "To pole jest wymagane.",
+      "error-save-failed": "",
       "error-save-repository": "Nie udało się zapisać ustawień repozytorium",
       "label-automatic-pulling": "Automatyczne operacje pull",
       "label-connection": "Połączenie z aplikacją GitHub",
@@ -12770,9 +12773,11 @@
       "placeholder-my-config": "Moja konfiguracja"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Skonfiguruj webhooki</0>, aby otrzymywać aktualizacje w usłudze Grafana natychmiast po zatwierdzeniu zmian (commit). Przejrzyj i zatwierdź zmiany za pomocą żądań pull przed ich opublikowaniem.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Funkcje GitHub",
-      "label-realtime-feedback": "Informacje zwrotne w czasie rzeczywistym"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12923,11 +12928,14 @@
       "description-preview-requirements": "(wymaga <2>renderowania obrazów</2> i włączonego dostępu publicznego)",
       "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
       "description-sync-interval": "Jak często synchronizować zmiany z repozytorium",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Odstęp czasu synchronizacji jest wymagany",
       "label-enable-previews": "Włącz podglądy pulpitu w żądaniach pull",
       "label-generate-dashboard-previews": "Generuj podglądy pulpitu",
       "label-read-only": "Tylko do odczytu",
-      "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)"
+      "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13324,6 +13332,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Ostrzeżenie",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Pamiętaj o następujących ograniczeniach. Więcej szczegółów można znaleźć w <2>dokumentacji dotyczącej synchronizacji z usługą Git</2>.",
       "alert-point-1": "Podczas tego procesu nadal można tworzyć, edytować lub usuwać zasoby, ale zmian nie można eksportować.",
