@@ -869,8 +869,4 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
-
-	// FlagDatasourcesApiServerEnableHealthEndpointFrontend
-	// Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
-	FlagDatasourcesApiServerEnableHealthEndpointFrontend = "datasourcesApiServerEnableHealthEndpointFrontend"
 )

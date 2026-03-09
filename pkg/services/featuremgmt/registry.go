@@ -2546,6 +2546,7 @@ var (
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
 			Expression:      "false",
+			FrontendOnly:    true,
 		},
 	}
 )
