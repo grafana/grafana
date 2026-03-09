@@ -82,16 +82,17 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
-    builder.addBooleanSwitch({
-      path: 'unwrappedColumns',
-      name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
-      category,
-      description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields'),
-      defaultValue: false,
-      showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
-    });
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'unwrappedColumns',
+        name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
+        category,
+        description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields'),
+        defaultValue: false,
+        showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
+      });
+    }
 
-    // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
     builder.addBooleanSwitch({
       path: 'prettifyLogMessage',
       name: t('logs.name-prettify-json', 'Prettify JSON'),
@@ -164,7 +165,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
-    if (config.featureToggles.otelLogsFormatting) {
+    if (config.featureToggles.otelLogsFormatting && config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
         path: 'showLogAttributes',
         name: t('logs.show-log-attributes', 'Display log attributes for OTel logs'),
