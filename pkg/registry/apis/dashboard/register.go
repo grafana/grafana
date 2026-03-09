@@ -837,6 +837,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
+		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

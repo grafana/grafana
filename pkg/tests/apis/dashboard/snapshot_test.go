@@ -72,23 +72,53 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("create and get snapshot", func(t *testing.T) {
 				// Create a snapshot via the custom /snapshots/create subresource
-				key := createSnapshotViaSubresource(t, helper, ns)
-				require.NotEmpty(t, key)
+				createResp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, createResp.Key)
 
 				// Try to get the snapshot
-				got, err := client.Resource.Get(context.Background(), key, metav1.GetOptions{})
+				got, err := client.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
 				require.NoError(t, err, "Failed to get snapshot in mode %d", tc.dualWrite)
 				require.NotNil(t, got)
-				assert.Equal(t, key, got.GetName())
+				assert.Equal(t, createResp.Key, got.GetName())
+
+				// Verify deleteKey is NOT in the spec
+				spec := got.Object["spec"].(map[string]interface{})
+				_, hasDeleteKey := spec["deleteKey"]
+				assert.False(t, hasDeleteKey, "deleteKey should NOT be present in spec")
+			})
+
+			t.Run("get deletekey subresource", func(t *testing.T) {
+				// Create a snapshot
+				createResp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, createResp.Key)
+				require.NotEmpty(t, createResp.DeleteKey, "create response should contain deleteKey")
+
+				// GET the deletekey subresource
+				path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/%s/deletekey",
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Group,
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Version,
+					ns,
+					createResp.Key,
+				)
+
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: http.MethodGet,
+					Path:   path,
+				}, &dashv0.DashboardSnapshotWithDeleteKey{})
+
+				require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "deletekey subresource should succeed, body: %s", string(rsp.Body))
+				require.NotNil(t, rsp.Result)
+				assert.Equal(t, createResp.DeleteKey, rsp.Result.DeleteKey, "subresource should return the same deleteKey as the create response")
 			})
 
 			t.Run("list snapshots", func(t *testing.T) {
 				// Create multiple snapshots
 				createdSnapshots := []string{}
 				for i := 0; i < 3; i++ {
-					key := createSnapshotViaSubresource(t, helper, ns)
-					require.NotEmpty(t, key)
-					createdSnapshots = append(createdSnapshots, key)
+					resp := createSnapshotViaSubresource(t, helper, ns)
+					require.NotEmpty(t, resp.Key)
+					createdSnapshots = append(createdSnapshots, resp.Key)
 				}
 
 				// List snapshots
@@ -115,17 +145,17 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Run("delete snapshot", func(t *testing.T) {
 				// Create a snapshot
-				key := createSnapshotViaSubresource(t, helper, ns)
-				require.NotEmpty(t, key)
+				resp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, resp.Key)
 
 				// Delete the snapshot
-				err := client.Resource.Delete(context.Background(), key, metav1.DeleteOptions{})
+				err := client.Resource.Delete(context.Background(), resp.Key, metav1.DeleteOptions{})
 
 				// Both modes should support deletion
 				require.NoError(t, err)
 
 				// Verify it's deleted
-				_, err = client.Resource.Get(context.Background(), key, metav1.GetOptions{})
+				_, err = client.Resource.Get(context.Background(), resp.Key, metav1.GetOptions{})
 
 				require.Error(t, err, "snapshot should be deleted")
 			})
@@ -134,8 +164,8 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 }
 
 // createSnapshotViaSubresource creates a snapshot using the custom /snapshots/create
-// subresource endpoint and returns the snapshot key.
-func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns string) string {
+// subresource endpoint and returns the create response (containing key and deleteKey).
+func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns string) *dashv0.DashboardCreateResponse {
 	t.Helper()
 
 	cmd := dashv0.DashboardCreateCommand{
@@ -174,5 +204,5 @@ func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns s
 	require.NotNil(t, rsp.Result, "response should have a result")
 	require.NotEmpty(t, rsp.Result.Key, "response should have a key")
 
-	return rsp.Result.Key
+	return rsp.Result
 }

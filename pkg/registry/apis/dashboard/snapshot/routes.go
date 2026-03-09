@@ -203,7 +203,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					// Build response
 					response := dashv0.DashboardCreateResponse{
 						Key:       snapshot.Name,
-						DeleteKey: *snapshot.Spec.DeleteKey,
+						DeleteKey: cmd.DeleteKey,
 						URL:       snapshotURL,
 						DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
 					}
