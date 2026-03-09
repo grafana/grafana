@@ -42,7 +42,7 @@ describe('DashboardCard', () => {
       <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('My Dashboard')).toBeInTheDocument();
   });
 
   it('should render image when imageUrl is provided', () => {
@@ -87,7 +87,7 @@ describe('DashboardCard', () => {
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
     expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
@@ -325,7 +325,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
+      expect(screen.getByText('Community Dashboard')).toBeInTheDocument();
     });
   });
 

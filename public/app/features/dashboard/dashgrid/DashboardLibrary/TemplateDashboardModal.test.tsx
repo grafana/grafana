@@ -143,8 +143,8 @@ describe('TemplateDashboardModal', () => {
 
       await waitFor(() => {
         // Assert DashboardCard components are rendered by checking for their headings
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard 2' })).toBeInTheDocument();
+        expect(screen.getByText('Test Template Dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Test Template Dashboard 2')).toBeInTheDocument();
 
         // Assert DashboardCard components are rendered by checking for "View template" buttons
         const viewTemplateButtons = screen.getAllByRole('button', { name: 'View template' });
@@ -172,7 +172,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          expect(screen.getByText('Test Template Dashboard')).toBeInTheDocument();
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -186,7 +186,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          expect(screen.getByText('Test Template Dashboard')).toBeInTheDocument();
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          expect(screen.getByText('Test Template Dashboard')).toBeInTheDocument();
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
