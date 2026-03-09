@@ -8,18 +8,22 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // Worker implements the fix-folder-metadata job type.
-// It creates a marker commit on the specified branch to document when folder metadata was fixed.
-type Worker struct{}
+// It ensures every managed folder in the repository has a _folder.json metadata file.
+type Worker struct {
+	repositoryResources resources.RepositoryResourcesFactory
+}
 
-func NewWorker() *Worker {
-	return &Worker{}
+func NewWorker(repositoryResources resources.RepositoryResourcesFactory) *Worker {
+	return &Worker{repositoryResources: repositoryResources}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -46,9 +50,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	ref := options.Ref
 	logger.Info("starting folder metadata fix job")
 	if ref == "" {
-		progress.SetMessage(ctx, "Creating marker commit on default branch")
+		progress.SetMessage(ctx, "Writing folder metadata files on default branch")
 	} else {
-		progress.SetMessage(ctx, fmt.Sprintf("Creating marker commit on branch %s", ref))
+		progress.SetMessage(ctx, fmt.Sprintf("Writing folder metadata files on branch %s", ref))
 	}
 
 	// Configure staging options to commit everything at once
@@ -57,44 +61,58 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		Timeout:               5 * time.Minute,
 		PushOnWrites:          false,
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: fmt.Sprintf("Fix folder metadata\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
+		CommitOnlyOnceMessage: fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
 	}
 
-	// Create a marker file to document when the fix was run
 	fn := func(stagedRepo repository.Repository, staged bool) error {
 		rw, ok := stagedRepo.(repository.ReaderWriter)
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
 
-		// Write a marker file with timestamp
-		markerPath := fmt.Sprintf(".grafana/folder-metadata-fixed-%d", time.Now().Unix())
-		markerContent := []byte(fmt.Sprintf("Folder metadata fixed by job %s\nTimestamp: %s\n",
-			job.Name,
-			time.Now().UTC().Format(time.RFC3339),
-		))
-		if ref != "" {
-			markerContent = []byte(fmt.Sprintf("Folder metadata fixed by job %s\nTimestamp: %s\nRef: %s\n",
-				job.Name,
-				time.Now().UTC().Format(time.RFC3339),
-				ref,
-			))
+		repoResources, err := w.repositoryResources.Client(ctx, rw)
+		if err != nil {
+			return fmt.Errorf("create repository resources client: %w", err)
 		}
 
-		// Write the marker file
-		// For staged repos, this will be committed and pushed
-		// For local repos, this will be written directly to the filesystem
-		if err := rw.Write(ctx, markerPath, ref, markerContent, "Add folder metadata fix marker"); err != nil {
-			return fmt.Errorf("failed to write marker file: %w", err)
+		list, err := repoResources.List(ctx)
+		if err != nil {
+			return fmt.Errorf("list managed resources: %w", err)
 		}
 
-		logger.Info("marker file written", "path", markerPath, "staged", staged)
+		for _, rf := range list.Items {
+			if rf.Group != folders.GROUP {
+				continue
+			}
+
+			folder := resources.Folder{ID: rf.Name, Path: rf.Path, Title: rf.Title}
+			written, ensureErr := repoResources.EnsureFolderMetadata(ctx, folder, ref)
+			// written, ensureErr := true, error(nil)
+
+			action := repository.FileActionIgnored
+			if written {
+				action = repository.FileActionCreated
+			}
+
+			resultBuilder := jobs.NewFolderResult(folder.Path).
+				WithName(folder.ID).
+				WithAction(action)
+			if ensureErr != nil {
+				resultBuilder.WithError(fmt.Errorf("writing folder metadata for %s: %w", folder.Path, ensureErr))
+			}
+			progress.Record(ctx, resultBuilder.Build())
+
+			if err := progress.TooManyErrors(); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 
 	// Execute the staging operation
 	if err := repository.WrapWithStageAndPushIfPossible(ctx, repo, stageOptions, fn); err != nil {
-		logger.Error("failed to create marker commit", "error", err)
+		logger.Error("failed to write folder metadata files", "error", err)
 		progress.SetFinalMessage(ctx, fmt.Sprintf("Failed to fix folder metadata: %s", err.Error()))
 		return err
 	}

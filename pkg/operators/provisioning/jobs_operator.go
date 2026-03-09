@@ -288,8 +288,8 @@ func setupWorkers(
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, moveWorker)
 
-	// Fix Metadata (no-op placeholder)
-	fixMetadataWorker := fixfoldermetadata.NewWorker()
+	// Fix Metadata
+	fixMetadataWorker := fixfoldermetadata.NewWorker(repositoryResources)
 	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest

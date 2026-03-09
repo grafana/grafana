@@ -821,7 +821,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			fixMetadataWorker := fixfoldermetadata.NewWorker(b.repositoryResources)
 
 			// All workers registered - export/migrate will check feature flag at runtime
 			workers := make([]jobs.Worker, 0, 6+len(b.extraWorkers))

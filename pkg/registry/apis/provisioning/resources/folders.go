@@ -282,7 +282,26 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-// ReplicateTree replicates the folder tree to the repository.
+// EnsureFolderMetadata writes or verifies _folder.json for a single folder.
+// Returns true if the file was written (created or overwritten), false if the
+// existing metadata already had the correct UID and title (no-op).
+// Any read failure other than file-not-found is treated as a reason to overwrite,
+// since the write itself will surface genuine I/O errors.
+func (fm *FolderManager) EnsureFolderMetadata(ctx context.Context, folder Folder, ref string) (bool, error) {
+	existing, err := ReadFolderMetadata(ctx, fm.repo, folder.Path, ref)
+	if err == nil && existing.Name == folder.ID && existing.Spec.Title == folder.Title {
+		return false, nil
+	}
+
+	manifest := NewFolderManifest(folder.ID, folder.Title)
+	if _, err := UpsertFolderMetadata(ctx, fm.repo, folder.Path, manifest, ref,
+		fmt.Sprintf("Add folder metadata for %s", folder.Path)); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// EnsureFolderTreeExists replicates the folder tree to the repository.
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.

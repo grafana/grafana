@@ -586,7 +586,7 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	tmpl := "testdata/local-write.json.tmpl"
+	tmpl := "../testdata/local-write.json.tmpl"
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}

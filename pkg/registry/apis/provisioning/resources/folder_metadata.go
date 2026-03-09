@@ -71,3 +71,17 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 	}
 	return folder.Name, nil
 }
+
+// UpsertFolderMetadata writes _folder.json into folderPath, creating or updating
+// the file as needed. Returns the stable UID of the folder.
+func UpsertFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
+	data, err := marshalFolderManifest(folder)
+	if err != nil {
+		return "", fmt.Errorf("marshal folder metadata: %w", err)
+	}
+	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
+	if err := repo.Write(ctx, metadataPath, ref, data, message); err != nil {
+		return "", fmt.Errorf("failed to write folder metadata: %w", err)
+	}
+	return folder.Name, nil
+}
