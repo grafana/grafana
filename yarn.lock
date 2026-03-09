@@ -3355,6 +3355,9 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.9.2"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
   peerDependencies:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"

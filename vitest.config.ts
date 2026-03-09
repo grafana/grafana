@@ -10,7 +10,6 @@ export default defineConfig({
     css: false, // disables CSS processing entirely in tests
     environment: 'jsdom',
     include: [
-      'packages/grafana-alerting/**/*.test.{ts,tsx}',
       // TODO: uncomment when everything is migrated
       // 'public/app/**/*.test.{ts,tsx}',
       // 'public/test/**/*.test.{ts,tsx}',
@@ -19,6 +18,7 @@ export default defineConfig({
     ],
     exclude: [
       '**/node_modules/**',
+      'packages/grafana-alerting/**/*.test.{ts,tsx}',
       'packages/grafana-data/**/*.test.{ts,tsx}',
       'packages/grafana-eslint-rules/**/*.test.{ts,tsx}',
       'packages/grafana-flamegraph/**/*.test.{ts,tsx}',
