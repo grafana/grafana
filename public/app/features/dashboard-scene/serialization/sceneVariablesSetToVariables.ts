@@ -253,7 +253,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           },
         ],
       });
-    } else if (variable.state.type === 'system') {
+    } else if (variable.state.type === 'system' || variable.state.type === 'snapshot') {
       // Not persisted
     } else {
       throw new Error('Unsupported variable type');
@@ -591,7 +591,7 @@ export function sceneVariablesSetToSchemaV2Variables(
         },
       };
       variables.push(switchVariable);
-    } else if (variable.state.type === 'system') {
+    } else if (variable.state.type === 'system' || variable.state.type === 'snapshot') {
       // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);

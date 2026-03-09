@@ -26,6 +26,7 @@ import {
 } from '@grafana/scenes';
 import { DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -893,6 +894,23 @@ describe('sceneVariablesSetToVariables', () => {
     });
   });
 
+  it('should skip SnapshotVariable during serialization', () => {
+    const variable = new SnapshotVariable({
+      name: 'test',
+      label: 'test-label',
+      value: 'foo',
+      text: 'foo',
+      options: [],
+      isMulti: false,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+    expect(result).toHaveLength(0);
+  });
+
   it('should handle SwitchVariable with "true" value', () => {
     const variable = new SwitchVariable({
       name: 'test',
@@ -1618,6 +1636,23 @@ describe('sceneVariablesSetToVariables', () => {
 
         expect(() => sceneVariablesSetToSchemaV2Variables(set)).toThrow('Unsupported variable type');
       });
+    });
+
+    it('should skip SnapshotVariable during serialization', () => {
+      const variable = new SnapshotVariable({
+        name: 'test',
+        label: 'test-label',
+        value: 'foo',
+        text: 'foo',
+        options: [],
+        isMulti: false,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+      expect(result).toHaveLength(0);
     });
 
     it('should handle SwitchVariable with true value', () => {
