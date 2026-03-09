@@ -3539,6 +3539,7 @@ __metadata:
     jest: "npm:29.7.0"
     tslib: "npm:2.8.1"
     vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
   languageName: unknown
   linkType: soft
 
