@@ -4259,6 +4259,9 @@ __metadata:
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
     uwrap: "npm:0.1.2"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
     webpack: "npm:^5.105.0"
   peerDependencies:
     react: ^18.0.0

@@ -54,6 +54,8 @@
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "storybook:test": "test-storybook --url http://localhost:9001",
+    "test": "vitest --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
@@ -203,6 +205,9 @@
     "storybook": "^8.6.15",
     "style-loader": "4.0.0",
     "typescript": "5.9.2",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.0.18",
+    "vitest-fail-on-console": "^0.10.1",
     "webpack": "^5.105.0"
   },
   "peerDependencies": {
