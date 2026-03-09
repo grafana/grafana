@@ -1,4 +1,4 @@
-import { memo, useId, useMemo } from 'react';
+import { memo, useId } from 'react';
 
 import { FieldDisplay, GrafanaTheme2, Threshold, ThresholdsMode } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -44,6 +44,8 @@ export const RadialScaleLabels = memo(
     angleRange,
     neutral: rawNeutral,
   }: RadialScaleLabelsProps) => {
+    const pathId = useId();
+
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius, barWidth } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
     const thresholds = rawThresholds.filter(
@@ -65,16 +67,9 @@ export const RadialScaleLabels = memo(
     const fontSize = scaleLabelsFontSize;
     const textLineHeight = scaleLabelsFontSize * LINE_HEIGHT_FACTOR;
     const radius = scaleLabelsRadius - textLineHeight;
-
-    const pathId = useId();
-    const labelsPath = useMemo(
-      () => drawRadialArcPath(startAngle, angleRange, radius, centerX, centerY),
-      [centerX, centerY, radius, startAngle, angleRange]
-    );
-
+    const labelsPath = drawRadialArcPath(startAngle, angleRange, radius, centerX, centerY);
     const pathLength = (angleRange / 360) * 2 * Math.PI * radius;
 
-    // For full circle, add extra space for labels near the top (12 o'clock) to avoid crowding
     const isFullCircle = angleRange >= 360;
 
     const minLabelValue = allValues.reduce((min, value) => Math.min(value, min), allValues[0]);
