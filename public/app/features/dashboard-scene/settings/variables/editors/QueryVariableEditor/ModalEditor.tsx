@@ -44,23 +44,78 @@ export function ModalEditor(props: ModalEditorProps) {
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'column',
-    initialSize: 0.8,
+    initialSize: 0.2,
   });
 
   return (
     <Drawer
       size="lg"
-      title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable: {{name}}', {
-        name: draftVariable.state.name,
-      })}
+      title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query variable editor')}
+      subtitle={
+        <Stack direction="row" gap={2} justifyContent="space-between">
+          <div className={styles.variableName}>{draftVariable.state.name}</div>
+          <Stack direction="row" gap={1} justifyContent="space-between">
+            <Button
+              variant="primary"
+              onClick={onClickApply}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
+            >
+              <Trans i18nKey="dashboard-scene.modal-editor.apply">Apply</Trans>
+            </Button>
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={onCloseModal}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
+            >
+              <Trans i18nKey="dashboard-scene.modal-editor.discard">Discard</Trans>
+            </Button>
+          </Stack>
+        </Stack>
+      }
       closeOnMaskClick={false}
       onClose={onCloseModal}
       scrollableContent={false}
     >
       <div className={styles.wrapper}>
+        <div className={styles.buttonsRow}>
+          <Stack direction="row" gap={1} justifyContent="space-between">
+            <h5>
+              <Trans i18nKey="dashboard-scene.modal-editor.preview-of-values" values={{ optionsCount: options.length }}>
+                Preview of values ({'{{ optionsCount }}'})
+              </Trans>
+            </h5>
+            <Button
+              variant="secondary"
+              onClick={previewValues}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+            >
+              {isLoading ? (
+                <Spinner inline />
+              ) : (
+                <Trans i18nKey="dashboard-scene.modal-editor.run-query">Run query</Trans>
+              )}
+            </Button>
+          </Stack>
+        </div>
         <div className={styles.content}>
           <div {...containerProps}>
             <div {...primaryProps} style={{ ...primaryProps.style, minHeight: 0 }}>
+              <div className={styles.splitContainer}>
+                {!options.length ? (
+                  <div className={styles.noOptions}>
+                    <Trans i18nKey="dashboard-scene.modal-editor.no-options-hint">
+                      Provide a valid query and click the &quot;Run query&quot; button to see a preview of the variable
+                      options.
+                    </Trans>
+                  </div>
+                ) : (
+                  <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} noPagination hideTitle />
+                )}
+              </div>
+            </div>
+            <div {...splitterProps} />
+            <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
               <div className={styles.splitContainer}>
                 <TabsBar>
                   <Tab
@@ -98,55 +153,7 @@ export function ModalEditor(props: ModalEditorProps) {
                 </div>
               </div>
             </div>
-            <div {...splitterProps} />
-            <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
-              <div className={styles.splitContainer}>
-                {!options.length ? (
-                  <div className={styles.noOptions}>
-                    <Trans i18nKey="dashboard-scene.modal-editor.no-options-hint">
-                      Provide a query above and click &quot;Run query&quot; to see a preview of the variable options.
-                    </Trans>
-                  </div>
-                ) : (
-                  <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} noPagination />
-                )}
-              </div>
-            </div>
           </div>
-        </div>
-        <div className={styles.buttonsRow}>
-          <Stack direction="row" gap={2} justifyContent="space-between">
-            <div>
-              <Button
-                variant="secondary"
-                onClick={previewValues}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-              >
-                {isLoading ? (
-                  <Spinner inline />
-                ) : (
-                  <Trans i18nKey="dashboard-scene.modal-editor.run-query">Run query</Trans>
-                )}
-              </Button>
-            </div>
-            <Stack direction="row" gap={2}>
-              <Button
-                variant="secondary"
-                fill="outline"
-                onClick={onCloseModal}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
-              >
-                <Trans i18nKey="dashboard-scene.modal-editor.discard">Discard</Trans>
-              </Button>
-              <Button
-                variant="primary"
-                onClick={onClickApply}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton}
-              >
-                <Trans i18nKey="dashboard-scene.modal-editor.apply">Apply</Trans>
-              </Button>
-            </Stack>
-          </Stack>
         </div>
       </div>
     </Drawer>
@@ -263,8 +270,11 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
     }),
     buttonsRow: css({
-      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
       flexShrink: 0,
+    }),
+    variableName: css({
+      fontSize: theme.typography.h4.fontSize,
     }),
   };
 }

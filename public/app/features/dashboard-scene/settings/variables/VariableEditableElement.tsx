@@ -1,6 +1,6 @@
 import { FormEvent, useId, useMemo, useRef, useState } from 'react';
 
-import { VariableHide } from '@grafana/data';
+import { VariableHide, VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -15,6 +15,7 @@ import {
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
@@ -24,7 +25,6 @@ import { VariableDisplaySelect } from '../../settings/variables/components/Varia
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { useVariableRefreshCategory } from './editors/QueryVariableEditor/useVariableRefreshCategory';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
@@ -86,10 +86,6 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
 
   if (variable instanceof MultiValueVariable) {
     categories.push(useVariableSelectionOptionsCategory(variable));
-  }
-
-  if (variable instanceof QueryVariable) {
-    categories.push(useVariableRefreshCategory(variable));
   }
 
   return categories;
@@ -288,14 +284,15 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
 
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
+  const refreshId = useId();
+
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
-    const categoryName = t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
-      type: variableEditorDef.name,
-    });
 
     const category = new OptionsPaneCategoryDescriptor({
-      title: categoryName,
+      title: t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
+        type: variableEditorDef.name,
+      }),
       id: 'variable-type',
       isOpenDefault: true,
     });
@@ -314,8 +311,31 @@ function useVariableTypeCategory(variable: SceneVariable) {
       );
     }
 
+    if (variable instanceof QueryVariable) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          // TODO: use title and description here and not in <QueryVariableRefreshSelect />
+          id: refreshId,
+          render: (descriptor) => {
+            const { refresh } = variable.useState();
+            return (
+              <div id={descriptor.props.id}>
+                <QueryVariableRefreshSelect
+                  refresh={refresh}
+                  onChange={(refresh: VariableRefresh) => {
+                    variable.setState({ refresh });
+                  }}
+                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
+                />
+              </div>
+            );
+          },
+        })
+      );
+    }
+
     return category;
-  }, [oldVariableId, variable]);
+  }, [oldVariableId, refreshId, variable]);
 }
 
 function OpenOldVariableEditButton({ variable }: VariableInputProps) {

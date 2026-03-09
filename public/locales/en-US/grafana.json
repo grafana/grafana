@@ -5431,7 +5431,7 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "modal-title": "Query Variable: {{name}}",
+          "modal-title": "Query variable editor",
           "tabs": {
             "query": "Query"
           }
@@ -6878,7 +6878,8 @@
       "apply": "Apply",
       "discard": "Discard",
       "label-static-options": "Static options ({{staticOptionsCount}})",
-      "no-options-hint": "Provide a query above and click \"Run query\" to see a preview of the variable options.",
+      "no-options-hint": "Provide a valid query and click the \"Run query\" button to see a preview of the variable options.",
+      "preview-of-values": "Preview of values ({{ optionsCount }})",
       "run-query": "Run query"
     },
     "move-provisioned-dashboard-form": {
@@ -7231,11 +7232,6 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
-    },
-    "use-variable-refreshs-category": {
-      "title": {
-        "refresh-options": "Refresh options"
-      }
     },
     "use-variables-category": {
       "category": {

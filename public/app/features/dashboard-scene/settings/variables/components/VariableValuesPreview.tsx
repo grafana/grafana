@@ -13,6 +13,7 @@ export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
   noPagination?: boolean;
+  hideTitle?: boolean;
 }
 
 export const useGetAllVariableOptions = (
@@ -63,7 +64,12 @@ export const useGetPropertiesFromOptions = (
     return ['value', 'text', ...keys];
   }, [options, staticOptions]);
 
-export const VariableValuesPreview = ({ options, staticOptions, noPagination }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({
+  options,
+  staticOptions,
+  noPagination,
+  hideTitle,
+}: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
@@ -71,17 +77,21 @@ export const VariableValuesPreview = ({ options, staticOptions, noPagination }: 
 
   return (
     <div className={styles.previewContainer}>
-      <Trans
-        i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
-        values={{ count: options.length }}
-        className={styles.previewTitle}
-      >
-        Preview of values ({'{{count}}'})
-      </Trans>
-      {hasOptions && displayMultiPropsPreview && (
-        <VariableValuesWithPropsPreview options={options} properties={properties} noPagination />
+      {!hideTitle && (
+        <Trans
+          i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
+          values={{ count: options.length }}
+          className={styles.previewTitle}
+        >
+          Preview of values ({'{{count}}'})
+        </Trans>
       )}
-      {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} noPagination />}
+      {hasOptions && displayMultiPropsPreview && (
+        <VariableValuesWithPropsPreview options={options} properties={properties} noPagination={noPagination} />
+      )}
+      {hasOptions && !displayMultiPropsPreview && (
+        <VariableValuesWithoutPropsPreview options={options} noPagination={noPagination} />
+      )}
       {/* </Text> */}
     </div>
   );
