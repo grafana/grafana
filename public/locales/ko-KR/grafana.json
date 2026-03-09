@@ -9482,6 +9482,7 @@
       "log-base": "로그 베이스"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "축",
         "color-label": "색상",
@@ -9771,6 +9772,7 @@
     },
     "field-value-matcher": {
       "operator-label": "비교 연산자",
+      "reducer-value-label": "",
       "select-field-placeholder": "필드 리듀서 선택"
     },
     "file-dropzone": {
@@ -11688,7 +11690,7 @@
       "dialog-label": "",
       "dock": "메뉴 고정",
       "list-label": "내비게이션",
-      "open": "메뉴 열기",
+      "open": "",
       "undock": "메뉴 고정 해제"
     },
     "megamenu-item": {
@@ -12570,6 +12572,7 @@
       "error-connection-required": "연결이 필요합니다",
       "error-fetch-branches": "",
       "error-required": "이 필드는 필수 입력 항목입니다.",
+      "error-save-failed": "",
       "error-save-repository": "리포지토리 설정 저장 실패",
       "label-automatic-pulling": "자동 풀링",
       "label-connection": "GitHub 앱 연결",
@@ -12584,9 +12587,11 @@
       "placeholder-my-config": "내 구성"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>웹훅을 구성</0>하면 변경 사항이 커밋되는 즉시 Grafana에서 업데이트를 받을 수 있습니다. 변경 사항이 실제로 적용되기 전에 풀 요청을 사용하여 검토하고 승인하세요.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub 기능",
-      "label-realtime-feedback": "실시간 피드백"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12734,11 +12739,14 @@
       "description-preview-requirements": "(<2>이미지 렌더링</2> 및 공개 액세스가 활성화되어야 함)",
       "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
       "description-sync-interval": "리포지토리의 변경 사항을 동기화하는 빈도",
+      "description-webhook-url": "",
       "error-sync-interval-required": "동기화 간격은 필수 입력 항목입니다",
       "label-enable-previews": "풀 요청에서 대시보드 미리 보기 활성화",
       "label-generate-dashboard-previews": "대시보드 미리 보기 생성",
       "label-read-only": "읽기 전용",
-      "label-sync-interval": "동기화 간격(초)"
+      "label-sync-interval": "동기화 간격(초)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13129,6 +13137,10 @@
       "make-sure": ""
     },
     "warning-title-default": "경고",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "다음 제한 사항에 유의하세요. 자세한 내용은 <2>Git 동기화 문서</2>를 참조하세요.",
       "alert-point-1": "이 프로세스 중에도 리소스를 생성, 편집 또는 삭제할 수 있지만 변경 사항은 내보낼 수 없습니다.",
