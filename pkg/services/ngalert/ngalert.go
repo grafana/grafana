@@ -38,7 +38,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -235,9 +234,6 @@ func (ng *AlertNG) init() error {
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 			RuntimeConfig:     runtimeConfig,
 		}
-		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error {
-			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, invalidReceiverAction, ng.FeatureToggles)
-		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
 		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
@@ -245,7 +241,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer, ng.FeatureToggles)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, ng.store, m, ng.tracer, ng.FeatureToggles)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -254,7 +250,7 @@ func (ng *AlertNG) init() error {
 				ng.store,
 				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 				crypto,
-				autogenFn,
+				ng.store,
 				m,
 				ng.tracer,
 				remoteSecondaryWithRemoteState,
@@ -542,7 +538,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.
