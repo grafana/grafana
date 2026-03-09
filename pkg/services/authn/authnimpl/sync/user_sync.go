@@ -357,10 +357,10 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	syncUserToIdentity(ctx, usr, id)
 
-	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions because
-	// those haven't been migrated to Kubernetes yet.
+	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions
 	if s.isKubernetesUserSyncEnabled(ctx) {
 		id.ClientParams.SyncOrgRoles = false
+		// Permissions sync is not needed when working with unistore
 		id.ClientParams.SyncPermissions = false
 	}
 
@@ -798,5 +798,8 @@ func (s *UserSync) isKubernetesUserSyncEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false
 	}
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx))
+	// kubernetesUserSync requires kubernetesUsersApi to be enabled as well,
+	// since the users k8s API endpoint is only registered when that flag is on.
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUserSync, false, openfeature.TransactionContext(ctx)) &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 }

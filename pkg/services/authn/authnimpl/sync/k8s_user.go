@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -17,9 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	res "github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	userFieldEmail = "spec.email"
+	userFieldLogin = "spec.login"
 )
 
 type k8sUserClient interface {
@@ -81,6 +85,9 @@ func (s *K8sUserService) GetByUserAuth(ctx context.Context, userAuth *login.User
 
 	u, err := s.userClient.Get(ctx, resource.Identifier{Namespace: namespace, Name: userAuth.UserUID})
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -93,11 +100,12 @@ func (s *K8sUserService) GetByEmail(ctx context.Context, email string, orgID int
 	namespace := s.namespaceMapper(orgID)
 
 	users, err := s.userClient.List(ctx, namespace, resource.ListOptions{
-		FieldSelectors: []string{
-			res.SEARCH_FIELD_PREFIX + builders.USER_EMAIL + "=" + email,
-		},
+		FieldSelectors: []string{userFieldEmail + "=" + email},
 	})
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -114,11 +122,12 @@ func (s *K8sUserService) GetByLogin(ctx context.Context, login string, orgID int
 	namespace := s.namespaceMapper(orgID)
 
 	users, err := s.userClient.List(ctx, namespace, resource.ListOptions{
-		FieldSelectors: []string{
-			res.SEARCH_FIELD_PREFIX + builders.USER_LOGIN + "=" + login,
-		},
+		FieldSelectors: []string{userFieldLogin + "=" + login},
 	})
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -136,6 +145,9 @@ func (s *K8sUserService) GetSignedInUser(ctx context.Context, query *user.GetSig
 
 	u, err := s.userClient.Get(ctx, resource.Identifier{Namespace: namespace, Name: query.UserUID})
 	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -196,9 +208,6 @@ func (s *K8sUserService) Create(ctx context.Context, cmd *user.CreateUserCommand
 			Provisioned:   cmd.IsProvisioned,
 			Role:          cmd.DefaultOrgRole,
 		},
-	}
-	if obj.Spec.Role == "" {
-		obj.Spec.Role = "Viewer"
 	}
 
 	created, err := s.userClient.Create(ctx, obj, resource.CreateOptions{})
