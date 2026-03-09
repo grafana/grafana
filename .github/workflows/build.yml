@@ -73,7 +73,7 @@ jobs:
         env:
           GNUPGHOME: ${{ runner.temp }}/gpg
       - name: Sign image
-        run: podman image sign --sign-by security@ni.com -d ${{ runner.temp }}/sigstore docker://niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
+        run: podman image sign --sign-by security@ni.com -d ${{ runner.temp }}/sigstore docker://push.artifacts.ni.com/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
         env:
           GNUPGHOME: ${{ runner.temp }}/gpg
       - name: Configure AWS credentials
