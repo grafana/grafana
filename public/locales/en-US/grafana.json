@@ -6882,9 +6882,6 @@
     },
     "link-edit-actions": {
       "add-link": "Add link",
-      "change-title": "Change link title",
-      "change-tooltip": "Change link tooltip",
-      "change-url": "Change link URL",
       "remove-link": "Remove link",
       "update-link": "Update link"
     },
@@ -6906,13 +6903,9 @@
       "options-category": "Options",
       "show-as-dropdown": "Show as dropdown",
       "show-in-controls-menu": "Show in controls menu",
-      "title": "Title",
-      "tooltip": "Tooltip",
-      "tooltip-placeholder": "Open dashboard",
       "type": "Type",
       "type-dashboards": "Dashboards",
       "type-link": "Link",
-      "url": "URL",
       "with-tags": "With tags"
     },
     "managed-badge": {
