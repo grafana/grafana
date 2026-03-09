@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { QueryVariable } from '@grafana/scenes';
-import { Alert, Button, Drawer, Spinner, Stack, Tab, TabsBar, useSplitter, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Drawer, getPortalContainer, Spinner, Stack, Tab, TabsBar, useSplitter, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 import {
   QueryVariableStaticOptions,
@@ -50,6 +50,7 @@ export function ModalEditor(props: ModalEditorProps) {
   return (
     <Drawer
       size="lg"
+      container={getPortalContainer()}
       title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query variable editor')}
       subtitle={
         <Stack direction="row" gap={2} justifyContent="space-between">
