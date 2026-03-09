@@ -9530,6 +9530,7 @@
       "log-base": "Base de registro"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Eje",
         "color-label": "Color",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Operador de comparación",
+      "reducer-value-label": "",
       "select-field-placeholder": "Seleccionar reductor de campo"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
-      "open": "Abrir menú",
+      "open": "",
       "undock": "Desanclar el menú"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "La conexión es obligatoria",
       "error-fetch-branches": "",
       "error-required": "Este campo es obligatorio.",
+      "error-save-failed": "",
       "error-save-repository": "Error al guardar los ajustes del repositorio",
       "label-automatic-pulling": "Extracción automática",
       "label-connection": "Conexión de la aplicación de GitHub",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Mi configuración"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Configura webhooks</0> para obtener actualizaciones instantáneas en Grafana en cuanto se realicen los cambios. Revisa y aprueba los cambios mediante solicitudes de extracción antes de que se publiquen.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Características de GitHub",
-      "label-realtime-feedback": "Comentario en tiempo real"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(requiere <2>renderizado de imágenes</2> y acceso público habilitado)",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
       "description-sync-interval": "Con qué frecuencia se deben sincronizar los cambios del repositorio",
+      "description-webhook-url": "",
       "error-sync-interval-required": "El intervalo de sincronización es obligatorio",
       "label-enable-previews": "Habilitar las vistas previas del dashboard en las solicitudes de extracción",
       "label-generate-dashboard-previews": "Generar vistas previas de dashboard",
       "label-read-only": "Solo lectura",
-      "label-sync-interval": "Intervalo de sincronización (segundos)"
+      "label-sync-interval": "Intervalo de sincronización (segundos)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Advertencia",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Ten en cuenta las siguientes limitaciones. Para obtener más información, consulta la <2>documentación de Git Sync</2>.",
       "alert-point-1": "Los recursos se pueden crear, editar o eliminar durante este proceso, pero es posible que los cambios no se exporten.",

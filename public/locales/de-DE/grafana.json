@@ -9530,6 +9530,7 @@
       "log-base": "Logarithmische Basis"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Achse",
         "color-label": "Farbe",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Vergleichsoperator",
+      "reducer-value-label": "",
       "select-field-placeholder": "Feldreduzierer auswählen"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Menü andocken",
       "list-label": "Navigation",
-      "open": "Menü öffnen",
+      "open": "",
       "undock": "Menü abdocken"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "Verbindung erforderlich",
       "error-fetch-branches": "",
       "error-required": "Dieses Feld ist erforderlich.",
+      "error-save-failed": "",
       "error-save-repository": "Speichern der Repository-Einstellungen fehlgeschlagen",
       "label-automatic-pulling": "Automatisches Pulling",
       "label-connection": "GitHub-App-Verbindung",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Meine Konfiguration"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Konfigurieren Sie Webhooks</0>, um sofortige Updates in Grafana zu erhalten, sobald Änderungen übernommen werden. Überprüfen und genehmigen Sie Änderungen mithilfe von Pull-Requests, bevor sie übernommen werden.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub-Funktionen",
-      "label-realtime-feedback": "Echtzeit-Feedback"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(erfordert <2>Image Rendering</2> und aktivierten öffentlichen Zugriff)",
       "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
       "description-sync-interval": "Wie oft Änderungen aus dem Repository synchronisiert werden sollen",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Synchronisierungsintervall erforderlich",
       "label-enable-previews": "Dashboard-Vorschau in Pull-Requests aktivieren",
       "label-generate-dashboard-previews": "Dashboard-Vorschauen generieren",
       "label-read-only": "Nur lesen",
-      "label-sync-interval": "Synchronisierungsintervall (Sekunden)"
+      "label-sync-interval": "Synchronisierungsintervall (Sekunden)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Warnung",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Bitte beachten Sie die folgenden Einschränkungen. Weitere Details finden Sie in der <2>Git-Sync-Dokumentation</2>.",
       "alert-point-1": "Während dieses Vorgangs können weiterhin Ressourcen erstellt, bearbeitet oder gelöscht werden, aber Änderungen könnten nicht exportiert werden.",
