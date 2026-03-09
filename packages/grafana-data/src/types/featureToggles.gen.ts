@@ -385,12 +385,12 @@ export interface FeatureToggles {
   alertingProvenanceLockWrites?: boolean;
   /**
   * Enables the UI to use certain backend-side filters
-  * @default false
+  * @default true
   */
   alertingUIUseBackendFilters?: boolean;
   /**
   * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
-  * @default false
+  * @default true
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
@@ -463,6 +463,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingV2Layouts?: boolean;
+  /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -1143,6 +1148,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthZRolesRedirect?: boolean;
   /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
   */
@@ -1392,6 +1402,11 @@ export interface FeatureToggles {
   * @default false
   */
   vizLegendSeriesLimit?: boolean;
+  /**
+  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
+  * @default false
+  */
+  nestedFramesFieldOverrides?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
