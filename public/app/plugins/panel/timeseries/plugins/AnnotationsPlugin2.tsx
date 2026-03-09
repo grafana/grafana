@@ -22,7 +22,7 @@ import { ANNOTATION_LANE_SIZE } from './utils';
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotationsOptions: VizAnnotations | undefined;
+  options: VizAnnotations | undefined;
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
@@ -97,7 +97,7 @@ export const AnnotationsPlugin2 = ({
   setNewRange,
   replaceVariables,
   canvasRegionRendering = true,
-  annotationsOptions,
+  options,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
   const [portalRoot] = useState(() => getPortalContainer());
@@ -106,7 +106,7 @@ export const AnnotationsPlugin2 = ({
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const clusteringMode: ClusteringMode | null = annotationsOptions?.clustering ? ClusteringMode.Render : null;
+  const clusteringMode: ClusteringMode | null = options?.clustering ? ClusteringMode.Render : null;
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = canExecuteActions?.() ?? false;
 
@@ -151,8 +151,8 @@ export const AnnotationsPlugin2 = ({
       ctx.clip();
 
       // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !annotationsOptions?.multiLane || annotationsOptions.clustering;
-      const shouldRenderLine = !annotationsOptions?.multiLane || annotationsOptions.clustering;
+      const shouldRenderRegion = !options?.multiLane || options.clustering;
+      const shouldRenderLine = !options?.multiLane || options.clustering;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -231,7 +231,7 @@ export const AnnotationsPlugin2 = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, annotationsOptions?.multiLane, annotationsOptions?.clustering]);
+  }, [config, canvasRegionRendering, getColorByName, options?.multiLane, options?.clustering]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
@@ -263,7 +263,7 @@ export const AnnotationsPlugin2 = ({
       const markers: React.ReactNode[] = [];
 
       // Top offset for multi-lane annotations
-      const top = annotationsOptions?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
+      const top = options?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
       for (let i = 0; i < vals.time.length; i++) {
         if (skipClusteredAnno(vals, i)) {

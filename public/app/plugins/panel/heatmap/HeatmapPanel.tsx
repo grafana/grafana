@@ -266,7 +266,7 @@ const HeatmapPanelViz = ({
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
               canvasRegionRendering={false}
-              annotationsOptions={options.annotations}
+              options={options.annotations}
             />
             <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </UPlotChart>
