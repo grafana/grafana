@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { useGetUserPreferencesQuery } from '@grafana/api-clients/rtkq/legacy/preferences';
@@ -9,4 +10,8 @@ export const usePinnedItems = () => {
   const pinnedItems = useMemo(() => preferences.data?.navbar?.bookmarkUrls || [], [preferences]);
 
   return pinnedItems;
+};
+
+export const useMegaMenuControls = () => {
+  return useBooleanFlagValue('megaMenuControls', false);
 };
