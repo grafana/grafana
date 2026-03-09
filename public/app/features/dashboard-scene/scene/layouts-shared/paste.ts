@@ -1,4 +1,5 @@
 import { store } from '@grafana/data';
+import { VizPanel } from '@grafana/scenes';
 import {
   AutoGridLayoutItemKind,
   Spec as DashboardV2Spec,
@@ -77,36 +78,35 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
   return tab;
 }
 
-export function getPanelFromClipboard(scene: DashboardScene): DashboardGridItem | AutoGridItem {
+interface ClipboardGridItem {
+  body: VizPanel;
+  key: string;
+  variableName?: string;
+}
+
+// Deserializes the clipboard data into a layout-agnostic grid item representation,
+// detaching the VizPanel so callers can safely parent it into the correct grid item type.
+function getGridItemFromClipboard(scene: DashboardScene): ClipboardGridItem {
   const jsonData = store.get(LS_PANEL_COPY_KEY);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const { elements, gridItem }: PanelStore = JSON.parse(jsonData) as PanelStore;
 
-  if (gridItem.kind === 'GridLayoutItem') {
-    return deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
-  }
-  return deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
+  const deserializedGridItem =
+    gridItem.kind === 'GridLayoutItem'
+      ? deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene))
+      : deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
+
+  const { body, key, variableName } = deserializedGridItem.state;
+  body.clearParent();
+  return { body, key: key!, variableName };
 }
 
 export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridItem {
-  const panel = getPanelFromClipboard(scene);
-  if (panel instanceof AutoGridItem) {
-    return panel;
-  }
-  // Convert to AutoGridItem
-  return new AutoGridItem({ body: panel.state.body, key: panel.state.key, variableName: panel.state.variableName });
+  const { body, key, variableName } = getGridItemFromClipboard(scene);
+  return new AutoGridItem({ body, key, variableName });
 }
 
 export function getDashboardGridItemFromClipboard(scene: DashboardScene, gridCell: GridCell | null): DashboardGridItem {
-  const panel = getPanelFromClipboard(scene);
-  if (panel instanceof DashboardGridItem) {
-    return panel;
-  }
-  // Convert to DashboardGridItem
-  return new DashboardGridItem({
-    ...gridCell,
-    body: panel.state.body,
-    key: panel.state.key,
-    variableName: panel.state.variableName,
-  });
+  const { body, key, variableName } = getGridItemFromClipboard(scene);
+  return new DashboardGridItem({ ...gridCell, body, key, variableName });
 }
