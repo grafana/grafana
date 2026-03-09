@@ -3208,6 +3208,20 @@
     },
     {
       "metadata": {
+        "name": "newSavedQueriesExperience",
+        "resourceVersion": "1773079824945",
+        "creationTimestamp": "2026-03-09T18:10:24Z"
+      },
+      "spec": {
+        "description": "Enables the new Saved queries frontend experience",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-02-17T19:05:46Z"
