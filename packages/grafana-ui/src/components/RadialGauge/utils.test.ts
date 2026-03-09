@@ -341,6 +341,7 @@ describe('RadialGauge utils', () => {
       { description: 'quarter arc', startAngle: 0, endAngle: 90 },
       { description: 'half arc', startAngle: 0, endAngle: 180 },
       { description: 'three quarter arc', startAngle: 0, endAngle: 270 },
+      { description: 'full circle', startAngle: 0, endAngle: 360 },
       { description: 'narrow radius', startAngle: 0, endAngle: 180, radius: 50 },
       { description: 'with offset', startAngle: 0, endAngle: 90, xOffset: 80, yOffset: 80 },
     ])(`should draw correct path for $description`, ({ startAngle, endAngle, radius = 80, xOffset, yOffset }) => {
