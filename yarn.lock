@@ -3670,6 +3670,8 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-copy: "npm:3.5.0"
     typescript: "npm:5.9.2"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
   peerDependencies:
     react: ">=18"
   languageName: unknown

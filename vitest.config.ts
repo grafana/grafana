@@ -24,6 +24,7 @@ export default defineConfig({
     ],
     exclude: [
       '**/node_modules/**',
+      'packages/grafana-i18n/**/*.test.{ts,tsx}',
       'public/app/plugins/datasource/azuremonitor/**',
       'public/app/plugins/datasource/cloud-monitoring/**',
       'public/app/plugins/datasource/elasticsearch/**',

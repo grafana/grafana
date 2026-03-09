@@ -10,7 +10,7 @@
     "rootDirs": ["."],
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "types": ["vitest/globals", "systemjs"]
+    "types": ["vitest/globals", "systemjs", "jquery"]
   },
   "exclude": ["dist/**/*"],
   "include": [

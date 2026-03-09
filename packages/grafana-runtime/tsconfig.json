@@ -10,7 +10,7 @@
     "allowJs": true,
     "rootDirs": ["."],
     "moduleResolution": "bundler",
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "systemjs"]
   },
   "exclude": ["dist/**/*"],
   "include": [
