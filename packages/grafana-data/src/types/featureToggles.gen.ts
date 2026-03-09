@@ -1403,6 +1403,11 @@ export interface FeatureToggles {
   */
   heatmapRowsAxisOptions?: boolean;
   /**
+  * Enable quick edit options for panel plugins in the dashboard edit pane
+  * @default false
+  */
+  panelQuickEdit?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */

@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -73,7 +74,9 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       );
   }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
 
-  const quickEditCategory = useQuickEditOptions({ panel, plugin });
+  const isPanelQuickEditEnabled = useBooleanFlagValue('panelQuickEdit', false);
+  const quickEditOptions = useQuickEditOptions({ panel, plugin });
+  const quickEditCategory = isPanelQuickEditEnabled ? quickEditOptions : null;
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),

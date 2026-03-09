@@ -3266,6 +3266,23 @@
     },
     {
       "metadata": {
+        "name": "panelQuickEdit",
+        "resourceVersion": "1773045630979",
+        "creationTimestamp": "2026-03-09T08:27:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-09 08:40:30.97947 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable quick edit options for panel plugins in the dashboard edit pane",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelStyleActions",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
