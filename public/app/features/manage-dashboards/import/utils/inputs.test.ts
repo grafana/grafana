@@ -244,8 +244,8 @@ describe('extractV1Inputs', () => {
 
     const result = await extractV1Inputs(dashboard);
 
-    expect(result.dataSources).toHaveLength(2);
-    expect(result.constants).toHaveLength(1);
+    expect(result.dataSources.map((ds) => ds.name)).toEqual(['DS_PROMETHEUS', 'DS_LOKI']);
+    expect(result.constants.map((c) => c.name)).toEqual(['VAR_NAMESPACE']);
   });
 
   it('should handle empty __inputs array', async () => {
