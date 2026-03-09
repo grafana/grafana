@@ -508,7 +508,7 @@
         "name": "c25z",
         "namespace": "default",
         "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X",
-        "resourceVersion": "77d734ad4c196d36",
+        "resourceVersion": "d45308fd19fecf7d",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -541,16 +541,16 @@
               "message": "{{ template \"sns.default.message\" . }}",
               "send_resolved": true,
               "sigv4": {
-                "AccessKey": "secret-access-key",
-                "Profile": "default,",
-                "Region": "us-east-1",
-                "RoleARN": "arn:aws:iam::123456789012:role/role-name"
+                "access_key": "secret-access-key",
+                "profile": "default,",
+                "region": "us-east-1",
+                "role_arn": "arn:aws:iam::123456789012:role/role-name"
               },
               "subject": "{{ template \"sns.default.subject\" . }}",
               "topic_arn": "arn:aws:sns:us-east-1:123456789012:alerts"
             },
             "secureFields": {
-              "sigv4.SecretKey": true
+              "sigv4.secret_key": true
             }
           }
         ]
