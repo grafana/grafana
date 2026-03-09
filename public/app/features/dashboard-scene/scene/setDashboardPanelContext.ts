@@ -39,21 +39,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canEdit);
+    return false;
   };
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canDelete);
+    return false;
   };
 
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {

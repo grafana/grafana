@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -16,7 +17,7 @@ import (
 func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	t.Run("viewer can GET settings", func(t *testing.T) {
@@ -54,7 +55,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 
 	t.Run("settings endpoint returns MaxRepositories field with default value", func(t *testing.T) {
 		// HACK: Explicitly set to 10 to test default behavior, since we can't distinguish "not set" from "set to 0"
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxRepositories = 10 // Explicitly set to default to test default behavior
 		})
 		ctx := context.Background()
@@ -74,7 +75,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 	})
 
 	t.Run("settings endpoint returns 0 when unlimited is configured", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxRepositories = 0 // 0 means unlimited
 		})
 		ctx := context.Background()
@@ -94,7 +95,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 	})
 
 	t.Run("settings endpoint returns configured value", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxRepositories = 1000
 		})
 		ctx := context.Background()
@@ -117,12 +118,12 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	// Create a repository to ensure stats endpoint has data
 	const repo = "stats-auth-test"
-	helper.CreateRepo(t, TestRepo{
+	helper.CreateRepo(t, common.TestRepo{
 		Name:               repo,
 		Target:             "folder",
 		Copies:             map[string]string{},

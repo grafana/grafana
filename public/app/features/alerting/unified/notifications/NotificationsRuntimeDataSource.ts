@@ -1,9 +1,8 @@
-import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import {
   CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationEntry,
+  CreateNotificationqueryNotificationCount,
   CreateNotificationqueryNotificationOutcome,
   CreateNotificationqueryNotificationStatus,
   CreateNotificationqueryResponse,
@@ -82,10 +81,7 @@ interface NotificationsAPIQuery extends DataQuery {
   labelFilter?: string;
 }
 
-// Use the generated type from the API client
-type NotificationEntry = CreateNotificationqueryNotificationEntry;
-
-const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
+type NotificationRangeCount = CreateNotificationqueryNotificationCount;
 
 /**
  * This class is a runtime datasource that fetches notification events from the notifications API.
@@ -116,16 +112,17 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
       groupLabels = matchers.map(matcherToAPIFormat);
     }
 
-    const notificationResult = await getNotifications(
+    const rangeCounts = await getNotificationsRangeCounts(
       from,
       to,
       isNotificationStatus(statusFilter) ? statusFilter : undefined,
       isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
       receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
-      groupLabels
+      groupLabels,
+      Math.round(request.intervalMs / 1000)
     );
 
-    const dataFrame = notificationsToDataFrame(notificationResult);
+    const dataFrame = rangeCountsToDataFrame(rangeCounts);
 
     return {
       data: [dataFrame],
@@ -216,15 +213,45 @@ export const getNotifications = async (
 };
 
 /**
- * Convert notification entries to a DataFrame for visualization.
- * Groups notifications by time interval and counts them.
+ * Fetch notification range counts from the notifications API for graph visualization.
  */
-export function notificationsToDataFrame(notificationResult: { entries: NotificationEntry[] }): DataFrame {
-  // Extract entries from API response (properly typed from the generated client)
-  const entriesArray = notificationResult.entries ?? [];
+export const getNotificationsRangeCounts = async (
+  from: string,
+  to: string,
+  status?: CreateNotificationqueryNotificationStatus,
+  outcome?: CreateNotificationqueryNotificationOutcome,
+  receiver?: string,
+  groupLabels?: CreateNotificationqueryMatcher[],
+  step?: number
+): Promise<NotificationRangeCount[]> => {
+  const result = await dispatch(
+    notificationsApi.endpoints.createNotificationquery.initiate(
+      {
+        createNotificationqueryRequestBody: {
+          type: 'range_counts',
+          from: from,
+          to: to,
+          status: status,
+          outcome: outcome,
+          receiver: receiver,
+          groupLabels: groupLabels || [],
+          step: step,
+        },
+      },
+      // @ts-expect-error forceRefetch is a valid RTK Query initiate option but not included in generated types
+      { forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval) }
+    )
+  ).unwrap();
 
-  if (entriesArray.length === 0) {
-    // Return empty DataFrame
+  return result.counts ?? [];
+};
+
+/**
+ * Convert notification range counts to a DataFrame for graph visualization.
+ * Each range count series becomes a separate data frame series with timestamps in milliseconds.
+ */
+export function rangeCountsToDataFrame(rangeCounts: NotificationRangeCount[]): DataFrame {
+  if (rangeCounts.length === 0) {
     return {
       fields: [
         {
@@ -244,28 +271,23 @@ export function notificationsToDataFrame(notificationResult: { entries: Notifica
     };
   }
 
-  // Extract timestamps and convert from ISO strings to milliseconds
-  const timestamps = entriesArray.map((entry) => new Date(entry.timestamp).getTime());
+  // Use the first (and typically only) series from the range counts.
+  // The range_counts query without groupBy returns a single aggregated series.
+  const series = rangeCounts[0];
+  const values = series.values ?? [];
 
-  // Group timestamps by interval
-  const groupedTimestamps = groupBy(
-    timestamps,
-    (time: number) => Math.floor(time / GROUPING_INTERVAL) * GROUPING_INTERVAL
-  );
-
-  // Create time field with grouped time values
   const timeField: Field = {
     name: 'time',
     type: FieldType.time,
-    values: Object.keys(groupedTimestamps).map(Number),
+    // Timestamps from Loki are Unix epoch seconds; convert to milliseconds for Grafana
+    values: values.map((v) => v.timestamp * 1000),
     config: { displayName: 'Time' },
   };
 
-  // Create count field with count of notifications in each group
   const countField: Field = {
     name: 'value',
     type: FieldType.number,
-    values: Object.values(groupedTimestamps).map((group) => group.length),
+    values: values.map((v) => v.count),
     config: {},
   };
 

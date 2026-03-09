@@ -103,7 +103,7 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 	// Phase 1: If labels are specified, query the alerts stream to collect matching UUIDs.
 	var labelUUIDs []string
 	if query.Labels != nil && len(*query.Labels) > 0 {
-		alertLogql, err := buildAlertLabelQuery(*query.Labels)
+		alertLogql, err := buildAlertLabelQuery(query.RuleUID, *query.Labels)
 		if err != nil {
 			return QueryResult{}, err
 		}
@@ -482,9 +482,19 @@ func parseLokiAlertEntry(s lokiclient.Sample) (AlertEntry, error) {
 }
 
 // buildAlertLabelQuery builds a LogQL query against the alerts stream with label matchers.
+// When ruleUID is provided, a structured metadata filter is added before JSON parsing
+// so Loki can discard non-matching entries without deserializing the log line.
 // After | json, Loki flattens nested label keys so labels.alertname becomes labels_alertname.
-func buildAlertLabelQuery(labels Matchers) (string, error) {
+func buildAlertLabelQuery(ruleUID *string, labels Matchers) (string, error) {
 	logql := fmt.Sprintf(`{%s=%q}`, historian.LabelFrom, historian.LabelFromValueAlerts)
+
+	if ruleUID != nil && *ruleUID != "" {
+		if !validRuleUIDRegex.MatchString(*ruleUID) {
+			return "", fmt.Errorf("%w: rule uid: %q", ErrInvalidQuery, *ruleUID)
+		}
+		logql += fmt.Sprintf(` | rule_uid = %q`, *ruleUID)
+	}
+
 	logql += ` | json`
 	for _, matcher := range labels {
 		if !validLabelKeyRegex.MatchString(matcher.Label) {

@@ -12,6 +12,7 @@ import (
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -20,7 +21,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("export succeeds when resources are within quota", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 10
 		})
 		ctx := context.Background()
@@ -36,7 +37,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		// Create an empty repository with instance target for export
 		const repo = "export-quota-success"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:               repo,
 			Target:             "instance",
 			Copies:             map[string]string{},
@@ -59,13 +60,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		// Verify files were actually exported to the provisioning path
-		files, err := countFilesInDir(helper.ProvisioningPath)
+		files, err := common.CountFilesInDir(helper.ProvisioningPath)
 		require.NoError(t, err)
 		require.Greater(t, files, 0, "should have exported dashboard files")
 	})
 
 	t.Run("export fails when existing resources already exceed the quota", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 1
 		})
 		ctx := context.Background()
@@ -80,7 +81,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		require.NoError(t, err, "should be able to create second dashboard")
 
 		const repo = "export-quota-resources-exceeded"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:               repo,
 			Target:             "instance",
 			Copies:             map[string]string{},
@@ -111,13 +112,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 			"error message should report the exact resource count vs quota limit")
 
 		// Verify no files were exported since quota check happens before any writes
-		files, err := countFilesInDir(helper.ProvisioningPath)
+		files, err := common.CountFilesInDir(helper.ProvisioningPath)
 		require.NoError(t, err)
 		require.Equal(t, 0, files, "should not have exported any files when quota is exceeded")
 	})
 
 	t.Run("export fails when exceeding folders and resources already exceed the quota", func(t *testing.T) {
-		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
 			opts.ProvisioningMaxResourcesPerRepository = 2
 		})
 		ctx := context.Background()
@@ -147,7 +148,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		}
 
 		const repo = "export-quota-folders-exceeded"
-		testRepo := TestRepo{
+		testRepo := common.TestRepo{
 			Name:               repo,
 			Target:             "instance",
 			Copies:             map[string]string{},
@@ -178,7 +179,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 			"error message should report the exact resource count vs quota limit")
 
 		// Verify no files were exported since quota check happens before any writes
-		files, err := countFilesInDir(helper.ProvisioningPath)
+		files, err := common.CountFilesInDir(helper.ProvisioningPath)
 		require.NoError(t, err)
 		require.Equal(t, 0, files, "should not have exported any files when quota is exceeded due to folders")
 	})

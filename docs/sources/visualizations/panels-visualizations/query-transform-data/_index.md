@@ -58,6 +58,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
+keywords:
+  - saved queries
+  - reuse queries
+  - saved query
+  - reuse query
 ---
 
 # Query and transform data
@@ -117,7 +122,12 @@ SELECT hostname FROM host WHERE region IN($region)
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
-### Saved queries
+### Special data sources
+
+Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
+For details, refer to [Data sources](ref:data-sources)
+
+## Saved queries
 
 {{< admonition type="note" >}}
 Saved queries is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -135,9 +145,25 @@ Saved queries are available in:
 - [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/explore/get-started-with-explore/#explore-elements)
 - [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries)
 
+Learn more about saved queries:
+
+- [Saved queries drawer](#saved-queries-drawer)
+- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
+- [How to save a query](#save-a-query)
+- [Variables in saved queries](#variables-in-saved-queries)
+- [Known limitations](#known-limitations)
+
+### Saved queries drawer
+
 You can see a list of these queries in the **Saved queries** drawer:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-queries-v12.4.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-drawer-v13.0.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** drawer accessed from Dashboards" >}}
+
+{{< admonition type="tip">}}
+When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** drawer displays a **Drilldown** button.
+Click the button to open the associated Drilldown app, while maintaining the context of the query.
+Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
+{{< /admonition >}}
 
 When you first open the drawer, the list of queries in the **All** tab is filtered by the data source of the panel.
 However, you can clear that filter to display all saved queries.
@@ -162,14 +188,7 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
-Learn more about saved queries:
-
-- [Roles, permission, and RBAC](#roles-permissions-and-rbac)
-- [How to save a query](#save-a-query)
-- [Variables in saved queries](#variables-in-saved-queries)
-- [Known limitations](#known-limitations)
-
-#### Roles, permissions, and RBAC
+### Roles, permissions, and RBAC
 
 Saved queries support role-based access controls.
 By default, saved queries have two RBAC roles:
@@ -183,7 +202,7 @@ If you used saved queries prior to the addition of RBAC support in Grafana v12.4
 - Editor > Writer
 - Viewer > Reader
 
-#### Save a query
+### Save a query
 
 To save a query you've created:
 
@@ -195,7 +214,7 @@ To save a query you've created:
 1. (Optional) Enter a description and relevant tags.
 1. Click **Save**.
 
-#### Variables in saved queries
+### Variables in saved queries
 
 If a saved query includes variables, you can substitute the variables in the query without modifying it.
 This is useful in environments where variable names or available values differ between dashboards.
@@ -214,17 +233,12 @@ However, the substitutions only apply to the query when it's reused, and the ori
 In Explore, you can map variables to custom values.
 {{< /admonition >}}
 
-#### Known limitations
+### Known limitations
 
 - No validation is performed when you save a query, so it's possible to save an invalid query. You should confirm the query is working properly before you save it.
 - Saved queries are currently accessible from the query editors in Dashboards and Explore.
 - You can save a maximum of 1000 queries.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** drawer, the edited query replaces your open queries in Explore.
-
-### Special data sources
-
-Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
-For details, refer to [Data sources](ref:data-sources)
 
 ## Navigate the Queries tab {#navigate-the-query-tab}
 

@@ -8,17 +8,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repo = "fix-folder-metadata-test-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -35,7 +36,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
+		state := common.MustNestedString(job.Object, "status", "state")
 		if state != "success" {
 			// Print the error message for debugging
 			if msg, ok := job.Object["status"].(map[string]interface{})["message"].(string); ok {
@@ -102,7 +103,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
+		state := common.MustNestedString(job.Object, "status", "state")
 		require.Equal(t, "success", state, "fix-folder-metadata job with explicit empty ref should complete with success")
 	})
 
@@ -113,7 +114,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
+		state := common.MustNestedString(job.Object, "status", "state")
 		require.Equal(t, "success", state, "fix-folder-metadata job with empty options should complete with success")
 	})
 }

@@ -2,6 +2,7 @@ name: Check Frontend Test Coverage
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - '**/*.js'

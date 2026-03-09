@@ -101,6 +101,11 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 	var ns *NotificationSettings
 	if rand.Int63()%2 == 0 {
 		ns = util.Pointer(NotificationSettingsGen()())
+		if rand.Int63()%2 == 0 {
+			// Use PolicyRouting instead.
+			ns.ContactPointRouting = nil
+			ns.PolicyRouting = util.Pointer(PolicyRoutingGen()())
+		}
 	}
 
 	var updatedBy *UserUID
@@ -549,14 +554,22 @@ func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSe
 		rule.NotificationSettings = util.Pointer(ns())
 	}
 }
+
 func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NotificationSettings = &ns
 	}
 }
+
 func (a *AlertRuleMutators) WithContactPointRouting(ns ContactPointRouting) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NotificationSettings = &NotificationSettings{ContactPointRouting: &ns}
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromContact(ns))
+	}
+}
+
+func (a *AlertRuleMutators) WithPolicyRouting(pr PolicyRouting) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = util.Pointer(NotificationSettingsFromPolicy(pr.Policy))
 	}
 }
 
@@ -1109,11 +1122,27 @@ func (n ContactPointRoutingMutators) WithActiveTimeIntervals(activeTimeIntervals
 	}
 }
 
+// PolicyRoutingGen generates PolicyRouting using a base and mutators.
+func PolicyRoutingGen(mutators ...Mutator[PolicyRouting]) func() PolicyRouting {
+	return func() PolicyRouting {
+		c := PolicyRouting{
+			Policy: util.GenerateShortUID(),
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
 func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
 	c := NotificationSettings{}
 	if ns.ContactPointRouting != nil {
 		c.ContactPointRouting = util.Pointer(CopyContactPointRouting(*ns.ContactPointRouting))
+	}
+	if ns.PolicyRouting != nil {
+		c.PolicyRouting = &PolicyRouting{Policy: ns.PolicyRouting.Policy}
 	}
 	for _, mutator := range mutators {
 		mutator(&c)
@@ -1197,6 +1226,15 @@ func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeInterval
 			ns.ContactPointRouting = &ContactPointRouting{}
 		}
 		CPRMuts.WithActiveTimeIntervals(activeTimeIntervals...)(ns.ContactPointRouting)
+	}
+}
+
+func (n NotificationSettingsMutators) WithPolicy(policy string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if ns.PolicyRouting == nil {
+			ns.PolicyRouting = &PolicyRouting{}
+		}
+		ns.PolicyRouting.Policy = policy
 	}
 }
 

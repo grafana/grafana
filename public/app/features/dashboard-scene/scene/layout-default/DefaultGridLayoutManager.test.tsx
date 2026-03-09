@@ -211,6 +211,69 @@ describe('DefaultGridLayoutManager', () => {
       expect(gridRow.state.children.length).toBe(3);
     });
   });
+
+  describe('duplicate', () => {
+    it('returns a new DefaultGridLayoutManager instance', () => {
+      const { manager } = setup();
+
+      const duplicated = manager.duplicate() as DefaultGridLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(duplicated).not.toBe(manager);
+      expect(duplicated.state.key).not.toBe(manager.state.key);
+    });
+
+    it('deep-clones all children', () => {
+      const { manager, grid } = setup();
+      const originalChildren = grid.state.children;
+
+      const duplicated = manager.duplicate() as DefaultGridLayoutManager;
+      const clonedChildren = duplicated.state.grid.state.children;
+
+      expect(clonedChildren.length).toBe(originalChildren.length);
+
+      expect(clonedChildren[0]).not.toBe(originalChildren[0]);
+      expect((clonedChildren[0] as DashboardGridItem).state.body).not.toBe(
+        (originalChildren[0] as DashboardGridItem).state.body
+      );
+
+      expect(clonedChildren[1]).not.toBe(originalChildren[1]);
+      expect((clonedChildren[1] as DashboardGridItem).state.body).not.toBe(
+        (originalChildren[1] as DashboardGridItem).state.body
+      );
+
+      expect(clonedChildren[2]).not.toBe(originalChildren[2]);
+    });
+
+    describe('when grid items contain panels', () => {
+      it('assigns unique sequential panel keys, starting after the highest existing id', () => {
+        const gridItems = [
+          new DashboardGridItem({
+            key: 'griditem-1',
+            body: new VizPanel({
+              key: 'panel-39',
+              title: 'Panel A',
+              pluginId: 'table',
+            }),
+          }),
+          new DashboardGridItem({
+            key: 'griditem-2',
+            body: new VizPanel({
+              key: 'panel-40',
+              title: 'Panel B',
+              pluginId: 'table',
+            }),
+          }),
+        ];
+        const { manager } = setup({ gridItems });
+
+        const duplicated = manager.duplicate() as DefaultGridLayoutManager;
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-41', 'panel-42']);
+      });
+    });
+  });
 });
 
 interface TestOptions {

@@ -1,10 +1,16 @@
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
 import { Subscription } from 'rxjs';
 
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
 
 interface OnCacheEntryAddedOptions<List = unknown> {
-  onError?: (error: unknown, updateCachedData: (fn: (draft: List) => void) => void) => void;
+  onError?: (
+    error: unknown,
+    updateCachedData: (fn: (draft: List) => void) => void,
+    dispatch: ThunkDispatch<unknown, unknown, UnknownAction>,
+    arg: ListOptions | undefined
+  ) => (() => void) | undefined | void;
 }
 
 /**
@@ -21,10 +27,12 @@ export function createOnCacheEntryAdded<Spec, Status>(
       updateCachedData,
       cacheDataLoaded,
       cacheEntryRemoved,
+      dispatch,
     }: {
       updateCachedData: (fn: (draft: List) => void) => void;
       cacheDataLoaded: Promise<{ data: List }>;
       cacheEntryRemoved: Promise<void>;
+      dispatch: ThunkDispatch<unknown, unknown, UnknownAction>;
     }
   ) {
     if (!arg?.watch) {
@@ -38,6 +46,7 @@ export function createOnCacheEntryAdded<Spec, Status>(
     });
 
     let subscription: Subscription | null = null;
+    const errorCleanup: { fn?: () => void } = {};
     try {
       // Wait for the initial query to resolve before proceeding
       const response = await cacheDataLoaded;
@@ -65,7 +74,7 @@ export function createOnCacheEntryAdded<Spec, Status>(
           });
         },
         error: (error) => {
-          options.onError?.(error, updateCachedData);
+          errorCleanup.fn = options.onError?.(error, updateCachedData, dispatch, arg) ?? undefined;
         },
       });
     } catch (error) {
@@ -75,5 +84,6 @@ export function createOnCacheEntryAdded<Spec, Status>(
 
     await cacheEntryRemoved;
     subscription?.unsubscribe();
+    errorCleanup.fn?.();
   };
 }

@@ -36,7 +36,7 @@ function isBooleanReducer(r: ReducerID) {
   return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
 }
 
-export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
+export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
   const styles = useStyles2(getStyles);
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 
@@ -68,6 +68,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
   return (
     <div className={styles.spot}>
       <Select
+        inputId={id}
         value={reducer.current}
         options={reducer.options}
         onChange={onSetReducer}
@@ -83,7 +84,12 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
             width={19}
           />
 
-          <Input type="number" value={opts.value} onChange={onChangeValue} />
+          <Input
+            type="number"
+            value={opts.value}
+            aria-label={t('grafana-ui.field-value-matcher.reducer-value-label', 'Reducer value')}
+            onChange={onChangeValue}
+          />
         </>
       )}
     </div>

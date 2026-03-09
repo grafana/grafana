@@ -94,6 +94,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TokenStatus"):
 		return &provisioningv0alpha1.TokenStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("WebhookConfig"):
+		return &provisioningv0alpha1.WebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
 		return &provisioningv0alpha1.WebhookStatusApplyConfiguration{}
 

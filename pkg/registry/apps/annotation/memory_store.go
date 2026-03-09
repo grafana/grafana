@@ -76,6 +76,10 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 			}
 		}
 
+		if opts.CreatedBy != "" && anno.GetCreatedBy() != opts.CreatedBy {
+			continue
+		}
+
 		result = append(result, *anno.DeepCopy())
 
 		if opts.Limit > 0 && int64(len(result)) >= opts.Limit {

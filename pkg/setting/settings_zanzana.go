@@ -59,6 +59,27 @@ type ZanzanaReconcilerSettings struct {
 	WriteBatchSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
+
+	// --- HA leader election (standalone mode in K8s) ---
+
+	// LeaderElectionEnabled enables Kubernetes lease-based leader election so
+	// only one replica runs the reconciler loop at a time.
+	LeaderElectionEnabled bool
+	// LeaderElectionLeaseName is the name of the Kubernetes Lease object used
+	// for leader election. Default: "zanzana-mt-reconciler".
+	LeaderElectionLeaseName string
+	// LeaderElectionNamespace is the namespace in which the Lease object is created.
+	LeaderElectionNamespace string
+	// LeaderElectionIdentity is the unique identity of this instance used in the Lease object.
+	LeaderElectionIdentity string
+	// LeaseDuration is how long a lease is held before it can be acquired by
+	// another candidate. Default: 15s.
+	LeaseDuration time.Duration
+	// RenewDeadline is the duration the leader retries refreshing leadership
+	// before giving up. Default: 10s.
+	RenewDeadline time.Duration
+	// RetryPeriod is the interval between leader election retries. Default: 2s.
+	RetryPeriod time.Duration
 }
 
 type ZanzanaServerSettings struct {
@@ -348,5 +369,12 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.LeaderElectionEnabled = reconcilerSec.Key("leader_election_enabled").MustBool(false)
+	zr.LeaderElectionLeaseName = reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler")
+	zr.LeaderElectionNamespace = reconcilerSec.Key("leader_election_namespace").MustString("")
+	zr.LeaderElectionIdentity = reconcilerSec.Key("leader_election_identity").MustString("")
+	zr.LeaseDuration = reconcilerSec.Key("lease_duration").MustDuration(15 * time.Second)
+	zr.RenewDeadline = reconcilerSec.Key("renew_deadline").MustDuration(10 * time.Second)
+	zr.RetryPeriod = reconcilerSec.Key("retry_period").MustDuration(2 * time.Second)
 	cfg.ZanzanaReconciler = zr
 }

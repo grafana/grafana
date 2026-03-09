@@ -29,7 +29,7 @@ test.describe(
       const undockButton = page.getByRole('button', { name: 'Undock menu' });
       await undockButton.click();
 
-      const openMenuButton = page.getByRole('button', { name: 'Open menu' });
+      const openMenuButton = page.getByRole('button', { name: 'Main menu' });
       await openMenuButton.click();
 
       const dockButton = page.getByRole('button', { name: 'Dock menu' });
@@ -45,7 +45,7 @@ test.describe(
       await undockButton.click();
 
       // Navigate
-      const openMenuButton = page.getByRole('button', { name: 'Open menu' });
+      const openMenuButton = page.getByRole('button', { name: 'Main menu' });
       await openMenuButton.click();
 
       const administrationLink = page.getByRole('link', { name: 'Administration' });

@@ -80,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   animated: css({
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${slideInAndPulse} 0.4s ${theme.transitions.easing.easeOut} both`,
+      animation: `${slideInAndPulse} 0.6s ${theme.transitions.easing.easeOut} 100ms both`,
     },
   }),
   button: css({

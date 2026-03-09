@@ -222,6 +222,47 @@ func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
 	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceOwnershipConflictError should be stored as warning")
 }
 
+func TestNewJobResourceResult_WithUnmanagedConflictAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "repo-1",
+	}
+	unmanagedErr := resources.NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(unmanagedErr).
+		Build()
+
+	assert.Nil(t, result.Error(), "ResourceUnmanagedConflictError should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "ResourceUnmanagedConflictError should be stored as warning")
+	assert.Equal(t, unmanagedErr, result.Warning())
+
+	wrappedErr := fmt.Errorf("writing resource from file: %w", unmanagedErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning")
+}
+
 func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
@@ -291,6 +332,25 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 	t.Run("regular error returns empty reason", func(t *testing.T) {
 		result := NewResourceResult().WithError(errors.New("not a warning")).Build()
 		assert.Empty(t, result.WarningReason())
+	})
+
+	t.Run("ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
+		unmanagedErr := resources.NewResourceUnmanagedConflictError("res",
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
+		)
+		result := NewResourceResult().WithError(unmanagedErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
+	t.Run("wrapped ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
+		unmanagedErr := resources.NewResourceUnmanagedConflictError("res",
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
+		)
+		wrapped := fmt.Errorf("writing resource: %w", unmanagedErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
 	})
 
 	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {

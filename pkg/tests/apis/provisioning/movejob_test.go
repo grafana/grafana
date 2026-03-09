@@ -14,16 +14,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	const repo = "move-test-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -147,7 +148,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
+		state := common.MustNestedString(job.Object, "status", "state")
 		require.Equal(t, "error", state, "move job should have failed due to non-existent file")
 	})
 
@@ -167,7 +168,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := mustNestedString(job.Object, "status", "state")
+		state := common.MustNestedString(job.Object, "status", "state")
 		require.Equal(t, "error", state, "move job should have failed due to non-existent uid")
 	})
 
@@ -182,7 +183,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}
 
 		// The job should be rejected by the admission controller with validation error
-		body := asJSON(&spec)
+		body := common.AsJSON(&spec)
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -235,7 +236,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Create a unique repository for resource reference testing to avoid contamination
 		const refRepo = "move-ref-test-repo"
-		helper.CreateRepo(t, TestRepo{
+		helper.CreateRepo(t, common.TestRepo{
 			Name:                   refRepo,
 			Target:                 "folder",
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.

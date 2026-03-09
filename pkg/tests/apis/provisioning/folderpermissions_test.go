@@ -9,6 +9,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +29,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	repoName := "nested-folder-repo"
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := common.RunGrafana(t)
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -68,7 +69,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 		for _, folder := range provisionedFolders {
 			folderName := folder.GetName()
 			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
-			permissionsData, code, err := postHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
+			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
 			require.Error(t, err, "should fail to update permissions for folder %s", folderName)
 			require.Equal(t, http.StatusForbidden, code, "should return forbidden status for folder %s", folderName)
 			require.NotNil(t, permissionsData, "should have error response for folder %s", folderName)
@@ -83,8 +84,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	repoName := "nested-folder-repo-flag"
-	helper := runGrafana(t, withProvisioningFolderMetadata)
-	helper.CreateRepo(t, TestRepo{
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -123,7 +124,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 		for _, folder := range provisionedFolders {
 			folderName := folder.GetName()
 			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
-			permissionsData, code, err := postHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
+			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
 			require.NoError(t, err, "should succeed updating permissions for folder %s", folderName)
 			require.Equal(t, http.StatusOK, code, "should return OK status for folder %s", folderName)
 			require.NotNil(t, permissionsData, "should have response data for folder %s", folderName)
@@ -133,8 +134,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 
 func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := common.RunGrafana(t)
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -182,7 +183,7 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 			},
 		}
 		permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", managedFolderName)
-		permissionsData, code, err := postHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
+		permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, permissionsData)
@@ -215,7 +216,7 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 			},
 		}
 		permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", unmanagedFolderName)
-		permissionsData, code, err := postHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
+		permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, permissionsData)

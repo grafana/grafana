@@ -15,7 +15,7 @@ import {
   getTemplateColumnsTemplate,
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
@@ -107,7 +107,7 @@ export function deserializeAutoGridLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): AutoGridLayoutManager {
   if (layout.kind !== 'AutoGridLayout') {
     throw new Error('Invalid layout kind');
@@ -154,7 +154,7 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
 export function deserializeAutoGridItem(
   item: AutoGridLayoutItemKind,
   elements: DashboardV2Spec['elements'],
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): AutoGridItem {
   const panel = elements[item.spec.element.name];
   if (!panel) {

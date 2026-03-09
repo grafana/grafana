@@ -14,6 +14,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -332,11 +333,11 @@ describe('PanelEditor', () => {
   describe('Query editor version toggle', () => {
     describe('when queryEditorNext feature toggle is enabled', () => {
       beforeEach(() => {
-        config.featureToggles.queryEditorNext = true;
+        setTestFlags({ queryEditorNext: true });
       });
 
       afterEach(() => {
-        config.featureToggles.queryEditorNext = false;
+        setTestFlags({});
       });
 
       it('should use the v2 query editor experience by default', async () => {
@@ -365,7 +366,7 @@ describe('PanelEditor', () => {
 
     describe('when queryEditorNext feature toggle is disabled', () => {
       beforeEach(() => {
-        config.featureToggles.queryEditorNext = false;
+        setTestFlags({});
       });
 
       it('should use the v1 query editor experience', async () => {

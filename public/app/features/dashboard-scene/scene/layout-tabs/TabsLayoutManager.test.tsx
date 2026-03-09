@@ -1,8 +1,9 @@
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -33,8 +34,8 @@ jest.mock('../../edit-pane/shared', () => ({
   ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
 }));
 
-function buildTabsLayoutManager(tabs: TabItem[]) {
-  const tabsLayoutManager = new TabsLayoutManager({ tabs });
+function buildTabsLayoutManager(tabs: TabItem[] = []) {
+  const tabsLayoutManager = new TabsLayoutManager({ key: 'test-TabsLayoutManager', tabs });
   new DashboardScene({ body: tabsLayoutManager });
   return tabsLayoutManager;
 }
@@ -417,6 +418,77 @@ describe('TabsLayoutManager', () => {
       expect(tabsManager.state.tabs).toHaveLength(2);
       expect(tabsManager.state.tabs[0].state.title).toBe('New row');
       expect(tabsManager.state.tabs[1].state.title).toBe('New tab');
+    });
+  });
+
+  describe('duplicate', () => {
+    it('should return a new TabsLayoutManager instance', () => {
+      const tabsLayoutManager = buildTabsLayoutManager();
+
+      const duplicated = tabsLayoutManager.duplicate() as TabsLayoutManager;
+
+      expect(duplicated).toBeInstanceOf(TabsLayoutManager);
+      expect(duplicated).not.toBe(tabsLayoutManager);
+      expect(duplicated.state.key).not.toBe(tabsLayoutManager.state.key);
+    });
+
+    it('should duplicate each tab', () => {
+      const tabs = [new TabItem({ title: 'Tab 1' }), new TabItem({ title: 'Tab 2' }), new TabItem({ title: 'Tab 3' })];
+      const tabDuplicateSpies = tabs.map((row) => jest.spyOn(row, 'duplicate'));
+      const tabsLayoutManager = buildTabsLayoutManager(tabs);
+
+      const duplicated = tabsLayoutManager.duplicate() as TabsLayoutManager;
+
+      expect(tabDuplicateSpies[0]).toHaveBeenCalledTimes(1);
+      expect(tabDuplicateSpies[1]).toHaveBeenCalledTimes(1);
+      expect(tabDuplicateSpies[2]).toHaveBeenCalledTimes(1);
+
+      expect(duplicated.state.tabs.length).toBe(3);
+      expect(duplicated.state.tabs[0]).not.toBe(tabs[0]);
+      expect(duplicated.state.tabs[1]).not.toBe(tabs[1]);
+      expect(duplicated.state.tabs[2]).not.toBe(tabs[2]);
+    });
+
+    describe('when tabs contain panels', () => {
+      it('should assign unique panel keys across all tabs, starting after the highest existing id', () => {
+        const tabsLayoutManager = buildTabsLayoutManager([
+          new TabItem({
+            title: 'Tab 1',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-1', title: 'Panel A' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-2', title: 'Panel B' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+          new TabItem({
+            title: 'Tab 2',
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: [
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-3', title: 'Panel C', pluginId: 'table' }),
+                  }),
+                  new DashboardGridItem({
+                    body: new VizPanel({ key: 'panel-4', title: 'Panel D', pluginId: 'table' }),
+                  }),
+                ],
+              }),
+            }),
+          }),
+        ]);
+
+        const duplicated = tabsLayoutManager.duplicate();
+
+        const panelKeys = duplicated.getVizPanels().map((p) => p.state.key);
+        expect(panelKeys).toEqual(['panel-5', 'panel-6', 'panel-7', 'panel-8']);
+      });
     });
   });
 });

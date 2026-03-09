@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
@@ -24,6 +25,11 @@ func NewClient(cfg rest.Config, namespace string) (*Client, error) {
 	cfg.GroupVersion = &schema.GroupVersion{
 		Group:   APIGroup,
 		Version: APIVersion,
+	}
+
+	// If the caller didn't pass one, specify a reasonable default.
+	if cfg.NegotiatedSerializer == nil {
+		cfg.NegotiatedSerializer = &k8s.GenericNegotiatedSerializer{}
 	}
 
 	client, err := rest.RESTClientFor(&cfg)

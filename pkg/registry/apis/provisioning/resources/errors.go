@@ -43,6 +43,37 @@ func NewResourceOwnershipConflictError(resourceName string, currentManager utils
 	}
 }
 
+// ResourceUnmanagedConflictError represents an error when a sync would overwrite
+// an existing unmanaged resource that was not explicitly allowed for takeover.
+type ResourceUnmanagedConflictError struct {
+	Err error
+}
+
+func (e *ResourceUnmanagedConflictError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "resource unmanaged conflict"
+}
+
+func (e *ResourceUnmanagedConflictError) Unwrap() error {
+	return e.Err
+}
+
+// NewResourceUnmanagedConflictError creates a BadRequest error for when a sync
+// would overwrite an existing unmanaged resource.
+func NewResourceUnmanagedConflictError(resourceName string, requestingManager utils.ManagerProperties) error {
+	message := fmt.Sprintf(
+		"resource '%s' already exists and is not managed; %s '%s' cannot take over without an explicit migration",
+		resourceName,
+		requestingManager.Kind,
+		requestingManager.Identity,
+	)
+	return &ResourceUnmanagedConflictError{
+		Err: apierrors.NewBadRequest(message),
+	}
+}
+
 // ResourceValidationError represents an error that occurred while validating a resource.
 type ResourceValidationError struct {
 	Err error

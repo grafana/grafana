@@ -63,11 +63,8 @@ jobs:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db'
-      - name: Setup nodejs environment
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: yarn
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - name: Find plugin directory
         shell: bash
         id: get_dir
@@ -79,11 +76,10 @@ jobs:
             )" \
           )"
           echo "dir=${dir}" >> "$GITHUB_OUTPUT"
-      - name: Install frontend dependencies
-        shell: bash
-        working-directory: ${{ steps.get_dir.outputs.dir }}
-        run: |
-          yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          cwd: ${{ steps.get_dir.outputs.dir }}
       - name: Download grabpl executable
         shell: sh
         working-directory: ${{ steps.get_dir.outputs.dir }}
@@ -164,7 +160,7 @@ jobs:
         if: steps.check_backend.outputs.has_backend == 'true'
         shell: bash
         env:
-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+          VERSION: ${{ steps.build_frontend.outputs.version }}
         run: |
           make build-plugin-go PLUGIN_ID="$PLUGIN_ID"
       - name: package
@@ -178,7 +174,7 @@ jobs:
       - name: Check existing release
         env:
           GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+          VERSION: ${{ steps.build_frontend.outputs.version }}
           GCOM_API: ${{ env.GCOM_API }}
         run: |
           api_res="$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
@@ -215,7 +211,7 @@ jobs:
         working-directory: ${{ steps.get_dir.outputs.dir }}
         env:
           GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+          VERSION: ${{ steps.build_frontend.outputs.version }}
           GCP_BUCKET: ${{ env.GCP_BUCKET }}
           OUTPUT_DIR: ${{ steps.get_dir.outputs.dir }}
           GCOM_API: ${{ env.GCOM_API }}

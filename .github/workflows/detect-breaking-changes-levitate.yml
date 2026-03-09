@@ -122,9 +122,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v6

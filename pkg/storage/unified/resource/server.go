@@ -508,6 +508,10 @@ func (s *server) Stop(ctx context.Context) error {
 		}
 	}
 
+	if kvBackend, ok := s.backend.(KVBackend); ok {
+		kvBackend.Stop()
+	}
+
 	// Stops the streaming
 	s.cancel()
 

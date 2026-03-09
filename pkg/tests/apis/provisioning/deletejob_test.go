@@ -15,17 +15,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repo = "delete-job-test-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name: repo,
 		Copies: map[string]string{
 			"testdata/all-panels.json":    "dashboard1.json",
@@ -357,7 +358,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			}
 
 			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-			state := mustNestedString(job.Object, "status", "state")
+			state := common.MustNestedString(job.Object, "status", "state")
 			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
 		})
 	})

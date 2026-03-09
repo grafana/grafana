@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -12,7 +11,6 @@ import {
   getPortalContainer,
   UPlotConfigBuilder,
   usePanelContext,
-  useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
@@ -30,7 +28,7 @@ interface AnnotationsPluginProps {
   annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
-  setNewRange: (newRage: TimeRange2 | null) => void;
+  setNewRange: (newRange: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
   replaceVariables: InterpolateFunction;
   multiLane?: boolean;
@@ -79,8 +77,7 @@ export const AnnotationsPlugin2 = ({
   const [plot, setPlot] = useState<uPlot>();
 
   const [portalRoot] = useState(() => getPortalContainer());
-
-  const styles = useStyles2(getStyles);
+  const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -237,8 +234,13 @@ export const AnnotationsPlugin2 = ({
   }, [xAnnos, plot]);
 
   if (plot) {
+    const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
+    const wipVals = wipFrame ? getVals(wipFrame) : null;
+    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time[0] > 0;
+
     let markers = xAnnos.flatMap((frame, frameIdx) => {
-      let vals = getVals(frame);
+      const isWipFrame = frame?.meta?.custom?.isWip;
+      const vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
 
@@ -249,7 +251,6 @@ export const AnnotationsPlugin2 = ({
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
-        let className = '';
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
@@ -262,31 +263,44 @@ export const AnnotationsPlugin2 = ({
             let clampedRight = Math.min(plot.rect.width, right);
 
             style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
-            className = styles.annoRegion;
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };
-            className = styles.annoMarker;
           }
         }
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          let isWip = frame.meta?.custom?.isWip;
+          const annotationKey = getAnnotationKey(frameIdx, i);
+          const setPinned = (active: boolean) => {
+            if (active) {
+              setPinnedAnnotationId(annotationKey);
+            } else {
+              setPinnedAnnotationId(undefined);
+            }
+          };
+
+          // Do not let other tooltips render if one is already pinned, or the wip is being edited
+          const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
+
+          // The tooltip should render as pinned if the pinned state index matches this annotation
+          const isPinned = pinnedAnnotationId === annotationKey;
 
           markers.push(
             <AnnotationMarker2
+              key={annotationKey}
+              setPinned={setPinned}
+              isPinned={isPinned}
+              showTooltipOnHover={showTooltipOnHover}
               frame={frame}
               annoIdx={i}
               annoVals={vals}
-              className={className}
               style={style}
               timeZone={timeZone}
-              key={`${frameIdx}:${i}`}
-              exitWipEdit={isWip ? exitWipEdit : null}
+              exitWipEdit={isWipFrame ? exitWipEdit : null}
               portalRoot={portalRoot}
               canExecuteActions={userCanExecuteActions}
               replaceVariables={replaceVariables}
@@ -304,23 +318,11 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
-const getStyles = () => ({
-  annoMarker: css({
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeft: '5px solid transparent',
-    borderRight: '5px solid transparent',
-    borderBottomWidth: '5px',
-    borderBottomStyle: 'solid',
-    transform: 'translateX(-50%)',
-    cursor: 'pointer',
-    zIndex: 1,
-  }),
-  annoRegion: css({
-    position: 'absolute',
-    height: '5px',
-    cursor: 'pointer',
-    zIndex: 1,
-  }),
-});
+/**
+ * helper method to return a unique identifier for an annotation
+ * @param frameIdx
+ * @param i
+ */
+const getAnnotationKey = (frameIdx: number, i: number) => {
+  return `${frameIdx}:${i}`;
+};

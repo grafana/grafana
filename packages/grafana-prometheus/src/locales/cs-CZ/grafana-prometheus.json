@@ -184,7 +184,7 @@
         "tooltip-cache-level": "Nastaví úroveň ukládání do vyrovnávací paměti prohlížeče pro dotazy editoru. Pro zdroje dat s vysokou kardinalitou se doporučuje nastavit vyšší úroveň vyrovnávací paměti.",
         "tooltip-custom-query-parameters": "Přidejte vlastní parametry do adresy URL dotazu Prometheus. Například {{example1}}, {{example2}}, {{example3}} nebo {{example4}}. Více parametrů by mělo být pospojováno pomocí {{concatenationChar}}.",
         "tooltip-default-editor": "Nastavit výchozí možnost editoru pro všechny uživatele tohoto zdroje dat.",
-        "tooltip-disable-metrics-lookup": "Zaškrtnutím této možnosti zakážete výběr metrik a podporu metrik/štítků v automatickém doplňování pole dotazu. Užitečné, pokud máte problémy s výkonem u větších instancí Prometheus.",
+        "tooltip-disable-metrics-lookup": "Zaškrtnutím této možnosti zakážete výběr metrik a podporu metrik/štítků v automatickém doplňování pole dotazu. Užitečné, pokud máte problémy s výkonem u větších instancí Prometheus. ",
         "tooltip-disable-recording-rules-beta": "Tato funkce zakáže pravidla nahrávání. Zapněte tuto možnost pro zlepšení výkonu nástěnky",
         "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
         "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "volič"
       },
       "results-table": {
-        "content-descriptive-type": "Při vytváření {{descriptiveType}} Prometheus zobrazí více řad s počítadlem typů.",
+        "content-descriptive-type": "Při vytváření {{descriptiveType}} Prometheus zobrazí více řad s počítadlem typů. ",
         "description": "Popis",
         "message-expand-label-filters": "Nebyly nalezeny žádné metriky. Zkuste rozšířit filtry štítků.",
         "message-expand-search": "Nebyly nalezeny žádné metriky. Zkuste rozšířit vyhledávání a filtry.",

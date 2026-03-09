@@ -18,6 +18,7 @@ func classifyWarning(err error) (string, bool) {
 
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
+	var unmanagedErr *resources.ResourceUnmanagedConflictError
 	var quotaExceededErr *quotas.QuotaExceededError
 
 	switch {
@@ -26,6 +27,8 @@ func classifyWarning(err error) (string, bool) {
 	case errors.As(err, &validationErr):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
+		return provisioning.ReasonResourceInvalid, true
+	case errors.As(err, &unmanagedErr):
 		return provisioning.ReasonResourceInvalid, true
 	default:
 		return "", false

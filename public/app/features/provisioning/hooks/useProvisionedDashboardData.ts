@@ -9,6 +9,7 @@ import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
+import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -55,8 +56,7 @@ export function useDefaultValues({
 
   return {
     values: {
-      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
-      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
+      ref: defaultWorkflow === 'branch' ? generateNewBranchName('dashboard') : (repository?.branch ?? ''),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',

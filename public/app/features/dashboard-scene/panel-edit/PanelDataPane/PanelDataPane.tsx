@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -100,13 +101,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const styles = useStyles2(getStyles);
+  const showTryNewEditor = useBooleanFlagValue('queryEditorNext', false);
 
   if (!tabs || !tabs.length) {
     return;
   }
 
   const currentTab = tabs.find((t) => t.tabId === tab);
-  const showTryNewEditor = getConfig().featureToggles.queryEditorNext;
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>

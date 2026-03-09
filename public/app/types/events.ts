@@ -205,6 +205,10 @@ export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
 }
 
+export class DashboardDiscardedEvent extends BusEventBase {
+  static type = 'dashboard-discarded';
+}
+
 export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery> {
   static type = 'annotation-query-started';
 }

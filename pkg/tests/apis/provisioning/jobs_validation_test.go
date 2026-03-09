@@ -9,17 +9,18 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
 	const repoReadOnly = "job-validation-readonly"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
 		Template:           "testdata/local-readonly.json.tmpl",
 		Target:             "folder",
@@ -80,7 +81,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 
 		for _, test := range writeJobs {
 			t.Run(test.name, func(t *testing.T) {
-				body := asJSON(test.spec)
+				body := common.AsJSON(test.spec)
 
 				var statusCode int
 				result := helper.AdminREST.Post().
@@ -101,7 +102,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	})
 
 	t.Run("pull job should be allowed for read-only repositories", func(t *testing.T) {
-		body := asJSON(provisioning.JobSpec{
+		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},
 		})

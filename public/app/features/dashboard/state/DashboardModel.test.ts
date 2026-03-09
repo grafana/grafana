@@ -986,7 +986,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd, canEdit: true, canDelete: true },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );
@@ -1017,8 +1016,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: true },
-              organization: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: false },
+              dashboard: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: true },
             },
           }
         );
@@ -1048,7 +1046,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd: false, canEdit: canEditWithDashboardPermission, canDelete: true },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );
@@ -1079,8 +1076,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: false },
-              organization: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
+              dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
             },
           }
         );
@@ -1110,7 +1106,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithDashboardPermission },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );

@@ -18,6 +18,7 @@ import {
 import { TooltipDisplayMode } from '@grafana/ui';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
@@ -494,6 +495,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
         annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
+
+    addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier(heatmapSuggestionsSupplier)
   .setDataSupport({ annotations: true });

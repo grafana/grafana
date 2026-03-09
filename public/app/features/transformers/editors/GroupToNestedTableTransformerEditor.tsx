@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useCallback, useId } from 'react';
 
 import {
   DataTransformerID,
@@ -89,7 +89,7 @@ export const GroupToNestedTableTransformerEditor = ({
   const showCalcAlert = hasAggregation && !hasGrouping;
 
   return (
-    <Stack direction="column">
+    <Stack gap={1} direction="column">
       {showCalcAlert && (
         <Alert
           title={t(
@@ -118,6 +118,7 @@ export const GroupToNestedTableTransformerEditor = ({
           'transformers.group-to-nested-table-transformer-editor.description-show-field-names',
           'If enabled nested tables will show field names as a table header'
         )}
+        noMargin
       >
         <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
       </Field>
@@ -128,6 +129,7 @@ export const GroupToNestedTableTransformerEditor = ({
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const id = useId();
   const onChange = useCallback(
     (value: SelectableValue<GroupByOperationID | null>) => {
       onConfigChange({
@@ -150,10 +152,11 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
   ];
 
   return (
-    <InlineField className={styles.label} label={fieldName} grow shrink>
+    <InlineField className={styles.label} label={fieldName} grow shrink htmlFor={id}>
       <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
           <Select
+            inputId={id}
             options={options}
             value={config?.operation}
             placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}

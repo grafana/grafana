@@ -14,7 +14,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
@@ -186,23 +186,23 @@ export class AutoGridLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
+  // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.layout.state.children;
     const clonedChildren: AutoGridItem[] = [];
 
     if (children.length) {
-      let panelId = dashboardSceneGraph.getNextPanelId(children[0].state.body);
+      const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(children[0].state.body);
 
       children.forEach((child) => {
         const clone = child.clone({
           key: undefined,
           body: child.state.body.clone({
-            key: getVizPanelKeyForPanelId(panelId),
+            key: getVizPanelKeyForPanelId(nextId()),
           }),
         });
 
         clonedChildren.push(clone);
-        panelId++;
       });
     }
 

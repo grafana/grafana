@@ -174,4 +174,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddScopedReceiverTestingPermissions(mg)
 
 	ualert.AddAlertRuleFolderFullpath(mg)
+
+	ualert.AddRuleAlertRoutingColumns(mg)
 }

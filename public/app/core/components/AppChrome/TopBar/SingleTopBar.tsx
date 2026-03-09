@@ -71,7 +71,8 @@ export const SingleTopBar = memo(function SingleTopBar({
               narrow
               id={MEGA_MENU_TOGGLE_ID}
               onClick={onToggleMegaMenu}
-              tooltip={t('navigation.megamenu.open', 'Open menu')}
+              tooltip={t('navigation.megamenu.open', 'Main menu')}
+              aria-expanded={state.megaMenuOpen}
             >
               <Stack gap={0} alignItems="center">
                 <Icon name="bars" size="xl" />

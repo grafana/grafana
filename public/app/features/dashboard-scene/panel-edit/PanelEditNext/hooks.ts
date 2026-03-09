@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage, useSessionStorage } from 'react-use';
 
-import { config } from '@grafana/runtime';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -123,7 +123,8 @@ export function useRatioResize({
 
 export function useQueryEditorBanner() {
   const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
-  const showBanner = Boolean(config.featureToggles.queryEditorNext) && !dismissed;
+  const isQueryEditorNextEnabled = useBooleanFlagValue('queryEditorNext', false);
+  const showBanner = isQueryEditorNextEnabled && !dismissed;
   const dismissBanner = useCallback(() => setDismissed(true), [setDismissed]);
 
   return { showBanner, dismissBanner };
