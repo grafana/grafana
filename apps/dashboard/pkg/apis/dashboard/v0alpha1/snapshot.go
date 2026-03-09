@@ -24,6 +24,7 @@ func (in *DashboardSnapshotWithDeleteKey) DeepCopyObject() runtime.Object {
 	if in == nil {
 		return nil
 	}
+	// nolint:staticcheck // explicit selector needed to avoid recursion with promoted DeepCopy
 	out := &DashboardSnapshotWithDeleteKey{
 		Snapshot:  *in.Snapshot.DeepCopy(),
 		DeleteKey: in.DeleteKey,
