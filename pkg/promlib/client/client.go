@@ -102,9 +102,13 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
 
-	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
-	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
+	// Use the configured datasource method to ensure the request method matches the datasource's configured HTTP method.
+	// This prevents method mismatch errors when the incoming request method differs from the datasource's configured method.
+	bodyReader := bytes.NewReader(req.Body)
+	if strings.ToUpper(c.method) == http.MethodGet {
+		bodyReader = http.NoBody
+	}
+	httpRequest, err := createRequest(ctx, c.method, u, bodyReader)
 	if err != nil {
 		return nil, err
 	}
