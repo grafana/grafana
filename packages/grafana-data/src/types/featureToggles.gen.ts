@@ -1647,4 +1647,9 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Enables the notification history contact points page drawer
+  * @default false
+  */
+  alertingNotificationHistoryContactPoints?: boolean;
 }

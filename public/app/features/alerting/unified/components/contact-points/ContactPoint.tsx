@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
 import { Fragment, ReactNode } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Drawer, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
@@ -17,6 +19,8 @@ import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
+
+import { NotificationsScene } from '../../notifications/NotificationsScene';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
@@ -66,6 +70,7 @@ export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
                   diagnostics={diagnostics}
                   pluginMetadata={pluginMetadata}
                   sendingResolved={sendingResolved}
+                  contactPointName={contactPoint.name}
                 />
               );
             })}
@@ -88,10 +93,11 @@ interface ContactPointReceiverProps {
   sendingResolved?: boolean;
   diagnostics?: NotifierStatus;
   pluginMetadata?: ReceiverPluginMetadata;
+  contactPointName: string;
 }
 
 const ContactPointReceiver = (props: ContactPointReceiverProps) => {
-  const { name, type, description, diagnostics, pluginMetadata, sendingResolved = true } = props;
+  const { name, type, description, diagnostics, pluginMetadata, sendingResolved = true, contactPointName } = props;
   const styles = useStyles2(getStyles);
 
   const hasMetadata = diagnostics !== undefined;
@@ -105,7 +111,13 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
           description={description}
           pluginMetadata={pluginMetadata}
         />
-        {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
+        {hasMetadata && (
+          <ContactPointReceiverMetadataRow
+            diagnostics={diagnostics}
+            sendingResolved={sendingResolved}
+            contactPointName={contactPointName}
+          />
+        )}
       </Stack>
     </div>
   );
@@ -142,11 +154,6 @@ export function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRow
       )}
     </Stack>
   );
-}
-
-interface ContactPointReceiverMetadata {
-  sendingResolved: boolean;
-  diagnostics: NotifierStatus;
 }
 
 type ContactPointReceiverSummaryProps = {
@@ -210,64 +217,143 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
   );
 };
 
-const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
-  const styles = useStyles2(getStyles);
+interface ContactPointReceiverMetadata {
+  sendingResolved: boolean;
+  diagnostics: NotifierStatus;
+  contactPointName: string;
+}
 
-  const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
+const ContactPointReceiverMetadataRow = ({
+  diagnostics,
+  sendingResolved,
+  contactPointName,
+}: ContactPointReceiverMetadata) => {
+  const styles = useStyles2(getStyles);
+  const [isDrawerOpen, toggleDrawer] = useToggle(false);
+  const notificationHistoryEnabled = config.featureToggles.alertingNotificationHistoryContactPoints;
+
+  const totalAttempts = diagnostics.totalAttempts || 0;
+  const failedAttempts = diagnostics.failedAttempts || 0;
+  const successAttempts = diagnostics.successAttempts || 0;
+
+  const noAttempts = totalAttempts === 0;
+  const allFailed = totalAttempts > 0 && failedAttempts === totalAttempts;
+  const allSuccess = totalAttempts > 0 && successAttempts === totalAttempts;
+  const hasMixedState = totalAttempts > 0 && failedAttempts > 0 && successAttempts > 0;
+
   const lastDeliveryAttempt = dateTime(diagnostics.lastNotifyAttempt);
   const lastDeliveryAttemptDuration = diagnostics.lastNotifyAttemptDuration;
   const hasDeliveryAttempt = lastDeliveryAttempt.isValid();
 
+  const handleClick = () => {
+    toggleDrawer(true);
+  };
+
+  const handleClose = () => {
+    toggleDrawer(false);
+  };
+
   return (
-    <div className={styles.metadataRow}>
-      <Stack direction="row" gap={1}>
-        {/* this is shown when the last delivery failed – we don't show any additional metadata */}
-        {failedToSend ? (
-          <MetaText color="error" icon="exclamation-circle">
-            <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-              <span>
-                <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
-              </span>
-            </Tooltip>
-          </MetaText>
-        ) : (
-          <>
-            {/* this is shown when we have a last delivery attempt */}
-            {hasDeliveryAttempt && (
-              <>
-                <MetaText icon="clock-nine">
-                  <Trans i18nKey="alerting.contact-points.last-delivery-attempt">Last delivery attempt</Trans>
-                  <Tooltip content={lastDeliveryAttempt.toLocaleString()}>
-                    <span>
-                      <Text color="primary">{lastDeliveryAttempt.locale('en').fromNow()}</Text>
+    <>
+      <div className={styles.metadataRow}>
+        <Stack direction="row" gap={1}>
+          {/* All failed state */}
+          {allFailed ? (
+            <MetaText color="error" icon="exclamation-circle">
+              <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+                {notificationHistoryEnabled ? (
+                  <span className={styles.clickableStatus} onClick={handleClick}>
+                    <Trans i18nKey="alerting.contact-points.all-delivery-failed">
+                      All {totalAttempts} attempts failed in last 1h
+                    </Trans>
+                  </span>
+                ) : (
+                  <span>
+                    <Trans i18nKey="alerting.contact-points.all-delivery-failed">
+                      All {totalAttempts} attempts failed in last 1h
+                    </Trans>
+                  </span>
+                )}
+              </Tooltip>
+            </MetaText>
+          ) : (
+            <>
+              {/* Mixed state - some failures, some success */}
+              {hasMixedState ? (
+                <MetaText color="warning" icon="exclamation-triangle">
+                  {notificationHistoryEnabled ? (
+                    <span className={styles.clickableStatus} onClick={handleClick}>
+                      <Trans i18nKey="alerting.contact-points.mixed-delivery-attempts">
+                        {failedAttempts} of {totalAttempts} attempts failed in the last 1h
+                      </Trans>
                     </span>
-                  </Tooltip>
+                  ) : (
+                    <Trans i18nKey="alerting.contact-points.mixed-delivery-attempts">
+                      {failedAttempts} of {totalAttempts} attempts failed in the last 1h
+                    </Trans>
+                  )}
                 </MetaText>
-                <MetaText icon="stopwatch">
-                  <Trans i18nKey="alerting.contact-points.delivery-duration">
-                    Last delivery took <PrimaryText content={lastDeliveryAttemptDuration} />
-                  </Trans>
-                </MetaText>
-              </>
-            )}
-            {/* when we have no last delivery attempt */}
-            {!hasDeliveryAttempt && (
-              <MetaText icon="clock-nine">
-                <Trans i18nKey="alerting.contact-points.no-delivery-attempts">No delivery attempts</Trans>
-              </MetaText>
-            )}
-            {/* this is only shown for contact points that only want "firing" updates */}
-            {!sendingResolved && (
-              <MetaText icon="info-circle">
-                <Trans i18nKey="alerting.contact-points.only-firing">
-                  Delivering <Text color="primary">only firing</Text> notifications
-                </Trans>
-              </MetaText>
-            )}
-          </>
-        )}
-      </Stack>
-    </div>
+              ) : (
+                <>
+                  {/* All success state */}
+                  {allSuccess && hasDeliveryAttempt && (
+                    <>
+                      <MetaText icon="clock-nine">
+                        {notificationHistoryEnabled ? (
+                          <span className={styles.clickableStatus} onClick={handleClick}>
+                            <Trans i18nKey="alerting.contact-points.last-delivery">Last delivery</Trans>
+                          </span>
+                        ) : (
+                          <Trans i18nKey="alerting.contact-points.last-delivery">Last delivery</Trans>
+                        )}
+                        <Tooltip content={lastDeliveryAttempt.toLocaleString()}>
+                          <span>
+                            <Text color="primary">{lastDeliveryAttempt.locale('en').fromNow()}</Text>
+                          </span>
+                        </Tooltip>
+                      </MetaText>
+                      <MetaText icon="stopwatch">
+                        <Trans i18nKey="alerting.contact-points.delivery-duration">
+                          Last delivery took <PrimaryText content={lastDeliveryAttemptDuration} />
+                        </Trans>
+                      </MetaText>
+                    </>
+                  )}
+                  {/* No attempts state */}
+                  {noAttempts && (
+                    <MetaText icon="clock-nine">
+                      {notificationHistoryEnabled ? (
+                        <span className={styles.clickableStatus} onClick={handleClick}>
+                          <Trans i18nKey="alerting.contact-points.no-delivery-attempts-time">
+                            No delivery attempts in the last 1h
+                          </Trans>
+                        </span>
+                      ) : (
+                        <Trans i18nKey="alerting.contact-points.no-delivery-attempts-time">
+                          No delivery attempts in the last 1h
+                        </Trans>
+                      )}
+                    </MetaText>
+                  )}
+                </>
+              )}
+            </>
+          )}
+          {/* this is only shown for contact points that only want "firing" updates */}
+          {!sendingResolved && !allFailed && !hasMixedState && (
+            <MetaText icon="info-circle">
+              <Trans i18nKey="alerting.contact-points.only-firing">
+                Delivering <Text color="primary">only firing</Text> notifications
+              </Trans>
+            </MetaText>
+          )}
+        </Stack>
+      </div>
+
+      {notificationHistoryEnabled && isDrawerOpen && (
+        <ContactPointStatusDrawer contactPointName={contactPointName} onClose={handleClose} />
+      )}
+    </>
   );
 };
 
@@ -293,4 +379,40 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: `${theme.spacing(1.5)}`,
     paddingLeft: `${theme.spacing(1.5)}`,
   }),
+  clickableStatus: css({
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    '&:hover': {
+      textDecoration: 'none',
+    },
+  }),
 });
+
+interface ContactPointStatusDrawerProps {
+  contactPointName: string;
+  onClose: () => void;
+}
+
+function ContactPointStatusDrawer({ contactPointName, onClose }: ContactPointStatusDrawerProps) {
+  return (
+    <Drawer
+      title={t('alerting.contact-points.status-drawer.title', 'Contact point status')}
+      subtitle={t('alerting.contact-points.status-drawer.subtitle', 'Notification history for {{name}}', {
+        name: contactPointName,
+      })}
+      onClose={onClose}
+      size="lg"
+    >
+      <NotificationsScene
+        defaultTimeRange={{
+          from: 'now-1h',
+          to: 'now',
+        }}
+        defaultReceiver={contactPointName}
+        hideFilters={false}
+        hideReceiverFilter={true}
+        hideReceiverColumn={true}
+      />
+    </Drawer>
+  );
+}

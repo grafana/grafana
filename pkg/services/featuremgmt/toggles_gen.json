@@ -485,6 +485,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryContactPoints",
+        "resourceVersion": "1772225621410",
+        "creationTimestamp": "2026-02-27T20:53:41Z"
+      },
+      "spec": {
+        "description": "Enables the notification history contact points page drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistoryGlobal",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

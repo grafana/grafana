@@ -211,6 +211,13 @@ export interface NotifierStatus {
   lastNotifyAttemptDuration: string;
   name: string;
   sendResolved?: boolean;
+  // New fields for aggregation from notification history
+  totalAttempts?: number;
+  failedAttempts?: number;
+  successAttempts?: number;
+  // Integration type and index for matching against contact point configs
+  integrationType?: string;
+  integrationIndex?: number;
 }
 
 export interface NotifiersState {

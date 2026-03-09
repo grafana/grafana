@@ -11,6 +11,7 @@ import {
   Receiver as K8sReceiver,
   generatedAPI,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { config } from '@grafana/runtime';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
@@ -30,6 +31,7 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { enhanceContactPointsWithMetadata } from './utils';
+import { useNotificationHistoryForContactPoints } from './useNotificationHistory';
 
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
@@ -43,7 +45,6 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 const {
   useGetAlertmanagerConfigurationQuery,
-  useGetContactPointsStatusQuery,
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
 const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
@@ -139,11 +140,24 @@ export const useGrafanaContactPoints = ({
   const alertNotifiers = useIntegrationTypeSchemas(potentiallySkip);
   const contactPointsListResponse = useK8sContactPoints({}, potentiallySkip);
 
-  const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
+  const notificationHistoryEnabled = config.featureToggles.alertingNotificationHistoryContactPoints;
+
+  // Get contact point names for notification history (only when feature is enabled)
+  const contactPointNames = contactPointsListResponse.data?.map((cp) => cp.name) || [];
+
+  // Fetch notification history when feature toggle is enabled
+  const notificationHistoryResponse = useNotificationHistoryForContactPoints(contactPointNames, {
+    skip: skip || !fetchStatuses || !notificationHistoryEnabled,
+    pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
+  });
+
+  // Fetch legacy receiver status when feature toggle is disabled
+  const contactPointsStatusResponse = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
     ...defaultOptions,
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
-    skip: skip || !fetchStatuses,
+    skip: skip || !fetchStatuses || notificationHistoryEnabled,
   });
+
   const alertmanagerConfigResponse = useGetAlertmanagerConfigurationQuery(GRAFANA_RULES_SOURCE_NAME, {
     skip: skip || !fetchPolicies,
   });
@@ -163,8 +177,10 @@ export const useGrafanaContactPoints = ({
       };
     }
 
+    const status = notificationHistoryEnabled ? notificationHistoryResponse.data : contactPointsStatusResponse.data;
+
     const enhanced = enhanceContactPointsWithMetadata({
-      status: contactPointsStatusResponse.data,
+      status,
       notifiers: alertNotifiers.data,
       onCallIntegrations: onCallResponse?.data,
       onCallPluginId: irmOrOnCallPlugin.pluginId,
@@ -180,7 +196,9 @@ export const useGrafanaContactPoints = ({
     alertNotifiers,
     alertmanagerConfigResponse,
     contactPointsListResponse,
+    notificationHistoryResponse,
     contactPointsStatusResponse,
+    notificationHistoryEnabled,
     onCallResponse,
     irmOrOnCallPlugin.pluginId,
   ]);

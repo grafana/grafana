@@ -266,3 +266,39 @@ export function setupMswServer() {
 
   return server;
 }
+
+/**
+ * Helper to mock notification history API response
+ */
+export function mockNotificationHistory(
+  server: SetupServer,
+  receiver: string,
+  entries: Array<{
+    timestamp: string;
+    duration?: number;
+    outcome: 'success' | 'error';
+    error?: string;
+    status: 'firing' | 'resolved';
+  }>
+) {
+  server.use(
+    http.post('/api/notifications/query', async ({ request }) => {
+      const body = (await request.json()) as any;
+
+      // Filter entries for the requested receiver
+      const filteredEntries = body.receiver === receiver ? entries : [];
+
+      return HttpResponse.json({
+        entries: filteredEntries.map((entry) => ({
+          receiver,
+          timestamp: entry.timestamp,
+          duration: entry.duration,
+          outcome: entry.outcome,
+          error: entry.error,
+          status: entry.status,
+          groupLabels: {},
+        })),
+      });
+    })
+  );
+}
