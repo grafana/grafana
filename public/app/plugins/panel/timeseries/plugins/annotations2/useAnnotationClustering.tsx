@@ -8,7 +8,6 @@ import { TimeRange2 } from '@grafana/ui/internal';
 interface Props {
   annotations: DataFrame[];
   clusteringMode: ClusteringMode | null;
-  // plotBox?: BBox;
   timeRange: TimeRange2;
   plotWidth: number | undefined;
 }
