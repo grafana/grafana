@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1566,6 +1567,41 @@ func TestIntegrationPostgres(t *testing.T) {
 		_, err = pgpassPool.Query(t.Context(), "SELECT 1") // Test connection
 		require.NoError(t, err)
 	})
+}
+
+func TestMaxOpenConnsZero(t *testing.T) {
+	cnnstr := "user='test' host='localhost' dbname='test' sslmode='disable'"
+	pgxConf, err := pgxpool.ParseConfig(cnnstr)
+	require.NoError(t, err)
+
+	defaultMaxConns := pgxConf.MaxConns
+
+	// maxOpenConns=0 means unlimited in database/sql; we should not override
+	// the pgxpool default in that case.
+	dsInfo := sqleng.DataSourceInfo{
+		JsonData: sqleng.JsonData{
+			MaxOpenConns: 0,
+		},
+	}
+	config := sqleng.DataPluginConfiguration{DSInfo: dsInfo}
+	if config.DSInfo.JsonData.MaxOpenConns > 0 {
+		pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
+	}
+	require.Equal(t, defaultMaxConns, pgxConf.MaxConns)
+
+	// Positive value should be applied.
+	pgxConf2, err := pgxpool.ParseConfig(cnnstr)
+	require.NoError(t, err)
+	dsInfo2 := sqleng.DataSourceInfo{
+		JsonData: sqleng.JsonData{
+			MaxOpenConns: 20,
+		},
+	}
+	config2 := sqleng.DataPluginConfiguration{DSInfo: dsInfo2}
+	if config2.DSInfo.JsonData.MaxOpenConns > 0 {
+		pgxConf2.MaxConns = int32(config2.DSInfo.JsonData.MaxOpenConns)
+	}
+	require.Equal(t, int32(20), pgxConf2.MaxConns)
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {
