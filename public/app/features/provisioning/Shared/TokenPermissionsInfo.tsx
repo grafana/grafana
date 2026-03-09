@@ -122,12 +122,11 @@ function AccessLevelField({ label, access }: { label: string; access: string }) 
 function connectStepInstruction() {
   return {
     bitbucket: {
-      // Bitbucket App password will be replaced by API tokens on Sep 9 2025
-      createTokenLink: 'https://bitbucket.org/account/settings/app-passwords/',
-      tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket Personal Access Token'),
+      createTokenLink: 'https://id.atlassian.com/manage-profile/security/api-tokens',
+      tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket API tokens'),
       createTokenButtonText: t(
         'provisioning.token-permissions-info.bitbucket.create-token-button',
-        'Create App passwords'
+        'Create API Token with scopes'
       ),
     },
     gitlab: {

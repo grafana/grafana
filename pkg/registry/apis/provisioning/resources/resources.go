@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -119,45 +118,6 @@ func (r *ResourcesManager) addResource(id resourceID, path string) {
 	}
 
 	r.resourcesLookup[id] = path
-}
-
-// CheckResourceOwnership validates that the requesting manager can modify the existing resource
-// Returns an error if the existing resource is owned by a different manager that doesn't allow edits
-// If existingResource is nil, no ownership conflict exists (new resource)
-// This is a package-level function that can be used without a ResourcesManager instance
-func CheckResourceOwnership(existingResource *unstructured.Unstructured, resourceName string, requestingManager utils.ManagerProperties) error {
-	if existingResource == nil {
-		// Resource doesn't exist, so no ownership conflict
-		return nil
-	}
-
-	// Check if the existing resource has manager properties
-	existingMeta, err := utils.MetaAccessor(existingResource)
-	if err != nil {
-		// If we can't get metadata, allow the operation
-		return nil
-	}
-
-	currentManager, hasManager := existingMeta.GetManagerProperties()
-	if !hasManager {
-		// No manager information, so no ownership conflict
-		return nil
-	}
-
-	// Check if this is the same manager
-	if currentManager.Kind == requestingManager.Kind && currentManager.Identity == requestingManager.Identity {
-		// Same manager, no conflict
-		return nil
-	}
-
-	// Check if the current manager allows edits
-	if currentManager.AllowsEdits {
-		// Manager allows edits from others, no conflict
-		return nil
-	}
-
-	// Different manager and edits not allowed - return ownership conflict error
-	return NewResourceOwnershipConflictError(resourceName, currentManager, requestingManager)
 }
 
 // CreateResource writes an object to the repository
@@ -290,9 +250,14 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 	// For resources that exist in folders, set the header annotation
 	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
-		// Make sure the parent folders exist
+		// Make sure the parent folders exist.
+		// For _folder.json the resource IS the folder, so its parent is one level above.
+		folderPath := path
+		if IsFolderMetadataFile(path) {
+			folderPath = safepath.Dir(safepath.Dir(path))
+		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, path)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()
@@ -338,9 +303,9 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	obj, gvk, _ := DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if obj == nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("no object found")
+	obj, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, err
 	}
 
 	objName := obj.GetName()

@@ -184,7 +184,7 @@
         "tooltip-cache-level": "Mengatur level cache peramban untuk kueri editor. Pengaturan cache yang lebih tinggi disarankan untuk sumber data dengan kardinalitas tinggi.",
         "tooltip-custom-query-parameters": "Tambahkan parameter kustom ke URL kueri Prometheus. Misalnya {{example1}}, {{example2}}, {{example3}}, atau {{example4}}. Beberapa parameter harus digabungkan bersama dengan {{concatenationChar}}.",
         "tooltip-default-editor": "Atur opsi editor default untuk semua pengguna sumber data ini.",
-        "tooltip-disable-metrics-lookup": "Memeriksa opsi ini akan menonaktifkan pemilih metrik dan dukungan metrik/label dalam pelengkapan otomatis bidang kueri. Ini membantu jika Anda memiliki masalah kinerja dengan instans Prometheus yang lebih besar.",
+        "tooltip-disable-metrics-lookup": "Memeriksa opsi ini akan menonaktifkan pemilih metrik dan dukungan metrik/label dalam pelengkapan otomatis bidang kueri. Ini membantu jika Anda memiliki masalah kinerja dengan instans Prometheus yang lebih besar. ",
         "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
         "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
         "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "selektor"
       },
       "results-table": {
-        "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis.",
+        "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis. ",
         "description": "Deskripsi",
         "message-expand-label-filters": "Tidak ada metrik yang ditemukan. Coba perluas filter label Anda.",
         "message-expand-search": "Tidak ada metrik yang ditemukan. Coba perluas pencarian dan filter Anda.",

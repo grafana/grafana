@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMeasure } from 'react-use';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLocalStorage, useSessionStorage } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
@@ -11,148 +12,122 @@ import { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { SidebarSize } from './constants';
+import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 
-type UseHorizontalRatioResizeOptions = {
-  getDefaultRatio: (containerWidth: number) => number;
-  containerWidth: number;
+const CONTROLS_ROW_HEIGHT = 'auto';
+const MIN_SIDEBAR_RATIO = 0.1;
+const MAX_SIDEBAR_RATIO = 0.5;
+const MIN_SIDEBAR_PIXELS = 220;
+const vizResizerClassName = css({ height: 2, width: '100%' });
+// Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
+const FALLBACK_SIDEBAR_RATIO = 0.25;
+
+type UseRatioResizeOptions = {
+  direction: 'horizontal' | 'vertical';
+  initialRatio: number;
+  containerRef: RefObject<HTMLElement>;
+  /**
+   * If provided, called once at mount with the container's measured size to compute a
+   * responsive initial ratio (e.g. different defaults for small vs large screens).
+   * Runs in useLayoutEffect so there is no visible flash before the first paint.
+   */
+  getDefaultRatio?: (containerSize: number) => number;
   minRatio?: number;
   maxRatio?: number;
   className?: string;
 };
 
-export function useHorizontalRatioResize({
+export function useRatioResize({
+  direction,
+  initialRatio,
+  containerRef,
   getDefaultRatio,
-  containerWidth,
   minRatio = 0,
   maxRatio = 1,
   className,
-}: UseHorizontalRatioResizeOptions) {
-  // null = user hasn't manually dragged, so the ratio tracks the container width automatically.
-  // Once the user drags, their chosen value is locked in.
-  const [userRatio, setUserRatio] = useState<number | null>(null);
-  const ratio = userRatio ?? getDefaultRatio(containerWidth);
-
+}: UseRatioResizeOptions) {
+  const [ratio, setRatio] = useState(initialRatio);
   const styles = useStyles2(getDragStyles, 'middle');
 
   const ratioRef = useRef(ratio);
-  const containerWidthRef = useRef(containerWidth);
   const minRatioRef = useRef(minRatio);
   const maxRatioRef = useRef(maxRatio);
 
   ratioRef.current = ratio;
-  containerWidthRef.current = containerWidth;
   minRatioRef.current = minRatio;
   maxRatioRef.current = maxRatio;
 
-  const handleRef = useCallback((handle: HTMLElement | null) => {
-    let startX = 0;
-    let startRatio = 0;
-    let totalWidth = 0;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX;
-      const deltaRatio = deltaX / totalWidth;
-      const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + deltaRatio));
-      setUserRatio(newRatio);
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    const onMouseDown = (e: MouseEvent) => {
-      e.preventDefault();
-      startX = e.clientX;
-      startRatio = ratioRef.current;
-      totalWidth = containerWidthRef.current;
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    if (handle?.nodeType === Node.ELEMENT_NODE) {
-      handle.addEventListener('mousedown', onMouseDown);
+  // Override the initial ratio once with a responsive value read from the DOM.
+  // All three deps are stable for the lifetime of the hook, so this runs exactly once.
+  useLayoutEffect(() => {
+    if (!getDefaultRatio) {
+      return;
     }
+    const rect = containerRef.current?.getBoundingClientRect();
+    const size = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
+    if (size > 0) {
+      setRatio(getDefaultRatio(size));
+    }
+  }, [containerRef, direction, getDefaultRatio]);
 
-    return () => {
-      if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.removeEventListener('mousedown', onMouseDown);
+  const handleRef = useCallback(
+    (handle: HTMLElement | null) => {
+      let startPos = 0;
+      let startRatio = 0;
+      let totalSize = 0;
+
+      const onPointerMove = (e: PointerEvent) => {
+        const delta = (direction === 'horizontal' ? e.clientX : e.clientY) - startPos;
+        const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + delta / totalSize));
+        setRatio(newRatio);
+      };
+
+      const onPointerUp = (e: PointerEvent) => {
+        handle?.releasePointerCapture(e.pointerId);
+        handle?.removeEventListener('pointermove', onPointerMove);
+        handle?.removeEventListener('pointerup', onPointerUp);
+      };
+
+      const onPointerDown = (e: PointerEvent) => {
+        e.preventDefault();
+        startPos = direction === 'horizontal' ? e.clientX : e.clientY;
+        startRatio = ratioRef.current;
+        // Read exact dimensions at the moment of interaction — no continuous measurement needed.
+        const rect = containerRef.current?.getBoundingClientRect();
+        totalSize = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
+        // Pointer capture keeps move/up events on this element regardless of where the pointer travels.
+        handle?.setPointerCapture(e.pointerId);
+        handle?.addEventListener('pointermove', onPointerMove);
+        handle?.addEventListener('pointerup', onPointerUp);
+      };
+
+      if (handle) {
+        handle.addEventListener('pointerdown', onPointerDown);
       }
-    };
-  }, []);
 
-  const setRatio = setUserRatio;
+      return () => {
+        if (handle) {
+          handle.removeEventListener('pointerdown', onPointerDown);
+        }
+      };
+    },
+    [containerRef, direction]
+  );
 
-  return { handleRef, ratio, setRatio, className: cx(styles.dragHandleVertical, className) };
+  // dragHandleVertical = a vertical bar the user drags horizontally (col-resize cursor)
+  // dragHandleHorizontal = a horizontal bar the user drags vertically (row-resize cursor)
+  const dragClass = direction === 'horizontal' ? styles.dragHandleVertical : styles.dragHandleHorizontal;
+
+  return { handleRef, ratio, setRatio, className: cx(dragClass, className) };
 }
 
-type UseVerticalRatioResizeOptions = {
-  initialRatio: number;
-  containerHeight: number;
-  minRatio?: number;
-  maxRatio?: number;
-  className?: string;
-};
+export function useQueryEditorBanner() {
+  const [dismissed, setDismissed] = useSessionStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
+  const isQueryEditorNextEnabled = useBooleanFlagValue('queryEditorNext', false);
+  const showBanner = isQueryEditorNextEnabled && !dismissed;
+  const dismissBanner = useCallback(() => setDismissed(true), [setDismissed]);
 
-export function useVerticalRatioResize({
-  initialRatio,
-  containerHeight,
-  minRatio = 0,
-  maxRatio = 1,
-  className,
-}: UseVerticalRatioResizeOptions) {
-  const [ratio, setRatio] = useState<number>(initialRatio);
-  const styles = useStyles2(getDragStyles, 'middle');
-
-  const ratioRef = useRef(ratio);
-  const containerHeightRef = useRef(containerHeight);
-  const minRatioRef = useRef(minRatio);
-  const maxRatioRef = useRef(maxRatio);
-
-  ratioRef.current = ratio;
-  containerHeightRef.current = containerHeight;
-  minRatioRef.current = minRatio;
-  maxRatioRef.current = maxRatio;
-
-  const handleRef = useCallback((handle: HTMLElement | null) => {
-    let startY = 0;
-    let startRatio = 0;
-    let totalHeight = 0;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const deltaRatio = deltaY / totalHeight;
-      const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + deltaRatio));
-      setRatio(newRatio);
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-
-    const onMouseDown = (e: MouseEvent) => {
-      e.preventDefault();
-      startY = e.clientY;
-      startRatio = ratioRef.current;
-      totalHeight = containerHeightRef.current;
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    if (handle?.nodeType === Node.ELEMENT_NODE) {
-      handle.addEventListener('mousedown', onMouseDown);
-    }
-
-    return () => {
-      if (handle?.nodeType === Node.ELEMENT_NODE) {
-        handle.removeEventListener('mousedown', onMouseDown);
-      }
-    };
-  }, []);
-
-  return { handleRef, ratio, setRatio, className: cx(styles.dragHandleHorizontal, className) };
+  return { showBanner, dismissBanner };
 }
 
 export function usePanelEditorShell(model: PanelEditor) {
@@ -161,7 +136,7 @@ export function usePanelEditorShell(model: PanelEditor) {
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
   const isScrollingLayout = useScrollReflowLimit();
   const theme = useTheme2();
-  const panePadding = +theme.spacing(2).replace(/px$/, '');
+  const panePadding = parseFloat(theme.spacing(2));
 
   const splitter = useSnappingSplitter({
     direction: 'row',
@@ -177,33 +152,24 @@ export function usePanelEditorShell(model: PanelEditor) {
     setIsCollapsed(splitter.splitterState.collapsed);
   }, [splitter.splitterState.collapsed, setIsCollapsed]);
 
-  const [containerRef, { height: measuredHeight, width: measuredWidth }] = useMeasure<HTMLDivElement>();
-  const containerHeight = Math.max(measuredHeight, 500);
-  const containerWidth = Math.max(measuredWidth, 800);
-
   return {
     dashboard,
     optionsPane,
     isScrollingLayout,
-    containerRef,
-    containerHeight,
-    containerWidth,
     splitter,
   };
 }
 
 /**
- * Returns a default sidebar ratio based on the full panel editor container width
- * (which includes both the viz/data area and the options pane).
- * This is reactive — it re-evaluates on window/container resize, but is overridden
- * once the user manually drags the handle.
+ * Returns an initial sidebar ratio based on the container width measured once at mount.
+ * After that, only a manual drag updates the ratio.
  *
  * Breakpoints (containerWidth ≈ window width minus Grafana nav sidebar):
  *   >= 2200px  → large monitor full-screen (e.g. 27" 4K)   → 0.15
  *   >= 1800px  → medium-large (e.g. 24" FHD full-screen)   → 0.20
  *   below      → 16" laptop or smaller / partial window     → 0.25
  */
-function getDefaultSidebarRatio(containerWidth: number): number {
+export function getDefaultSidebarRatio(containerWidth: number): number {
   if (containerWidth >= 2200) {
     return 0.15;
   }
@@ -213,46 +179,40 @@ function getDefaultSidebarRatio(containerWidth: number): number {
   return 0.25;
 }
 
-export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: number, containerWidth: number) {
-  const CONTROLS_ROW_HEIGHT = 'auto';
-  const SIDEBAR_EXPANDED_PADDING = 16;
-  const COLLAPSE_BELOW_PX = 150;
-  const MIN_VIZ_RATIO = 0;
-  const MAX_VIZ_RATIO = 1;
-  const MIN_SIDEBAR_RATIO = 0.1; // Minimum 10% for sidebar
-  const MAX_SIDEBAR_RATIO = 0.5; // Maximum 50% for sidebar
-
+export function useVizAndDataPaneLayout(
+  model: PanelEditor,
+  containerRef: RefObject<HTMLDivElement>,
+  showBanner = false
+) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
   const { controls } = dashboard.useState();
-  const [sidebarSize, setSidebarSize] = useState<SidebarSize>(SidebarSize.Mini);
+  const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
+    QUERY_EDITOR_SIDEBAR_SIZE_KEY,
+    SidebarSize.Mini
+  );
 
   const isScrollingLayout = useScrollReflowLimit();
 
-  const { splitterState, onToggleCollapse } = useSnappingSplitter({
-    direction: 'column',
-    dragPosition: 'start',
-    initialSize: 0.5,
-    collapseBelowPixels: COLLAPSE_BELOW_PX,
-    disabled: isScrollingLayout,
-  });
-
   const panelToShow = tableView ?? panel;
 
-  const sidebarResize = useHorizontalRatioResize({
+  const sidebarResize = useRatioResize({
+    direction: 'horizontal',
+    initialRatio: FALLBACK_SIDEBAR_RATIO,
     getDefaultRatio: getDefaultSidebarRatio,
-    containerWidth,
+    containerRef,
     minRatio: MIN_SIDEBAR_RATIO,
     maxRatio: MAX_SIDEBAR_RATIO,
   });
 
-  const vizResize = useVerticalRatioResize({
-    initialRatio: 0.5,
-    containerHeight,
-    minRatio: MIN_VIZ_RATIO,
-    maxRatio: MAX_VIZ_RATIO,
-    className: css({ height: 2, width: '100%' }),
+  const vizResize = useRatioResize({
+    direction: 'vertical',
+    initialRatio: 0.55,
+    containerRef,
+    minRatio: 0.1,
+    maxRatio: 0.9,
+    className: vizResizerClassName,
   });
 
   const gridStyles = useMemo(
@@ -261,14 +221,12 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
         controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
         isSidebarFullWidth: sidebarSize === SidebarSize.Full,
-        controlsRowHeight: CONTROLS_ROW_HEIGHT,
+        showBanner,
         vizRatio: vizResize.ratio,
         sidebarRatio: sidebarResize.ratio,
       }),
-    [controls, dataPane, sidebarSize, vizResize.ratio, sidebarResize.ratio]
+    [controls, dataPane, sidebarSize, showBanner, vizResize.ratio, sidebarResize.ratio]
   );
-
-  const expandedSidebarHeight = containerHeight - SIDEBAR_EXPANDED_PADDING;
 
   return {
     scene: {
@@ -280,21 +238,15 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
       sidebarSize,
       setSidebarSize,
       isScrollingLayout,
-      sidebarResize,
-      vizRatio: vizResize.ratio,
-      setVizRatio: vizResize.setRatio,
-      expandedSidebarHeight,
+      gridStyles,
+      sidebarResizeHandle: {
+        ref: sidebarResize.handleRef,
+        className: sidebarResize.className,
+      },
       vizResizeHandle: {
         ref: vizResize.handleRef,
         className: vizResize.className,
       },
-    },
-    actions: {
-      onToggleCollapse,
-    },
-    grid: {
-      gridStyles,
-      splitterState,
     },
   };
 }
@@ -303,16 +255,16 @@ type VizAndDataPaneGridInput = {
   controlsEnabled: boolean;
   hasDataPane: boolean;
   isSidebarFullWidth: boolean;
-  controlsRowHeight: string;
+  showBanner: boolean;
   vizRatio: number;
   sidebarRatio: number;
 };
 
-function buildVizAndDataPaneGrid({
+export function buildVizAndDataPaneGrid({
   controlsEnabled,
   hasDataPane,
   isSidebarFullWidth,
-  controlsRowHeight,
+  showBanner,
   vizRatio,
   sidebarRatio,
 }: VizAndDataPaneGridInput) {
@@ -320,25 +272,22 @@ function buildVizAndDataPaneGrid({
   const grid: Array<[string, string]> = [];
 
   if (controlsEnabled) {
-    rows.push(controlsRowHeight);
+    rows.push(CONTROLS_ROW_HEIGHT);
     grid.push(['controls', 'controls']);
   }
 
-  // Use fractional units based on ratio (e.g., 0.5 = 1fr:1fr, 0.6 = 1.5fr:1fr)
-  // Handle edge cases: 0 and 1 ratios
-  if (vizRatio === 0) {
-    // No viz, all data pane
-    rows.push('0px');
-  } else if (vizRatio === 1) {
-    // All viz, no data pane
-    rows.push('1fr');
-  } else {
-    const vizFr = vizRatio / (1 - vizRatio);
-    rows.push(`${vizFr}fr`);
-  }
+  // Convert ratio to fractional units (e.g. 0.5 → 1fr:1fr, 0.6 → 1.5fr:1fr).
+  // vizRatio is clamped to [0.1, 0.9] so 0 and 1 are unreachable.
+  const vizFr = vizRatio / (1 - vizRatio);
+  rows.push(`${vizFr}fr`);
   grid.push(['viz', 'viz']);
 
   if (hasDataPane) {
+    if (showBanner) {
+      rows.push('auto');
+      grid.push([isSidebarFullWidth ? 'sidebar' : 'version-toggle', 'version-toggle']);
+    }
+
     rows.push('1fr');
     grid.push(['sidebar', 'data-pane']);
   }
@@ -349,20 +298,15 @@ function buildVizAndDataPaneGrid({
     }
   }
 
-  // Convert sidebar ratio to fractional units
-  let columns: string;
-  if (sidebarRatio === 0) {
-    columns = '0px 1fr';
-  } else if (sidebarRatio === 1) {
-    columns = '1fr 0px';
-  } else {
-    const sidebarFr = sidebarRatio / (1 - sidebarRatio);
-    columns = `${sidebarFr}fr 1fr`;
-  }
+  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable).
+  // minmax() enforces the pixel floor at the CSS level so window resizes can't push the sidebar
+  // below MIN_SIDEBAR_PIXELS — consistent with the same floor applied in the drag handler.
+  const sidebarFr = sidebarRatio / (1 - sidebarRatio);
+  const columns = `minmax(${MIN_SIDEBAR_PIXELS}px, ${sidebarFr}fr) 1fr`;
 
   return {
     height: '100%',
-    gridTemplateAreas: '\n' + grid.map((row) => `"${row.join(' ')}"`).join('\n'),
+    gridTemplateAreas: grid.map((row) => `"${row.join(' ')}"`).join('\n'),
     gridTemplateRows: rows.join(' '),
     gridTemplateColumns: columns,
   };

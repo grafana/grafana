@@ -560,6 +560,12 @@ export const versionedComponents = {
         Container: {
           '12.4.0': 'data-testid gauge container',
         },
+        Track: {
+          '13.0.0': 'data-testid gauge track',
+        },
+        Bar: {
+          '13.0.0': 'data-testid gauge bar',
+        },
       },
     },
   },
@@ -1332,6 +1338,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    toggle: {
+      [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-toggle-for-${title}`,
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,

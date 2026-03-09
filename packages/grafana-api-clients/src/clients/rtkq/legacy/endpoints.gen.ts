@@ -4051,6 +4051,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5649,34 +5650,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  /** ForceQuery indicates whether the original URL contained a query ('?') character.
-    When set, the String method will include a trailing '?', even when RawQuery is empty. */
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  /** OmitHost indicates the URL has an empty host (authority).
-    When set, the String method will not include the host when it is empty. */
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  /** RawFragment is an optional field containing an encoded fragment hint.
-    See the EscapedFragment method for more details.
-    
-    In general, code should call EscapedFragment instead of reading RawFragment. */
-  RawFragment?: string;
-  /** RawPath is an optional field containing an encoded path hint.
-    See the EscapedPath method for more details.
-    
-    In general, code should call EscapedPath instead of reading RawPath. */
-  RawPath?: string;
-  /** RawQuery contains the encoded query values, without the initial '?'.
-    Use URL.Query to decode the query. */
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5821,7 +5795,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5843,7 +5817,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey

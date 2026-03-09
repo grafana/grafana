@@ -1,34 +1,50 @@
-import { DropResult } from '@hello-pangea/dnd';
+import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { LoadingBar } from '@grafana/ui';
 
-import { Transformation } from '../types';
+import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
+import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { AddCardButton } from './AddCardButton';
-import { DraggableList } from './DraggableList';
-import { QueryCard } from './QueryCard';
-import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
-import { TransformationCard } from './TransformationCard';
+import { GhostSidebarCard } from './Cards/GhostSidebarCard';
+import { QueryCard } from './Cards/QueryCard';
+import { TransformationCard } from './Cards/TransformationCard';
+import { DraggableList } from './DraggableList/DraggableList';
+import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
+import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
-interface QueriesAndTransformationsViewProps {
-  queries: DataQuery[];
-  transformations: Transformation[];
-  onQueryDragEnd: (result: DropResult) => void;
-  onTransformationDragEnd: (result: DropResult) => void;
-}
+export function QueriesAndTransformationsView() {
+  const { queries, isLoading } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { pendingExpression, pendingSavedQuery, pendingTransformation } = useQueryEditorUIContext();
+  const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
-export function QueriesAndTransformationsView({
-  queries,
-  transformations,
-  onQueryDragEnd,
-  onTransformationDragEnd,
-}: QueriesAndTransformationsViewProps) {
+  const [queriesOpen, setQueriesOpen] = useState(true);
+  const [transformationsOpen, setTransformationsOpen] = useState(true);
+
+  const expandQueries = useCallback(() => setQueriesOpen(true), []);
+  const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
+
+  if (isLoading) {
+    return (
+      <LoadingBar
+        width={400}
+        ariaLabel={t(
+          'query-editor-next.sidebar.loading-queries-transformations',
+          'Loading queries and transformations'
+        )}
+      />
+    );
+  }
+
   return (
     <>
-      <QuerySidebarCollapsableHeader
+      <SidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-        headerAction={<AddCardButton variant="query" alwaysVisible />}
+        isOpen={queriesOpen}
+        onToggle={setQueriesOpen}
+        headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
       >
         <DraggableList
           droppableId="query-sidebar-queries"
@@ -37,10 +53,18 @@ export function QueriesAndTransformationsView({
           renderItem={(query) => <QueryCard query={query} />}
           onDragEnd={onQueryDragEnd}
         />
-      </QuerySidebarCollapsableHeader>
-      <QuerySidebarCollapsableHeader
+        {pendingExpression && !pendingExpression.insertAfter && (
+          <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />
+        )}
+        {pendingSavedQuery && !pendingSavedQuery.insertAfter && (
+          <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
+        )}
+      </SidebarCollapsableHeader>
+      <SidebarCollapsableHeader
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
-        headerAction={<AddCardButton variant="transformation" alwaysVisible />}
+        isOpen={transformationsOpen}
+        onToggle={setTransformationsOpen}
+        headerAction={<AddCardButton variant="transformation" alwaysVisible onAdd={expandTransformations} />}
       >
         {transformations.length > 0 && (
           <DraggableList
@@ -51,7 +75,10 @@ export function QueriesAndTransformationsView({
             onDragEnd={onTransformationDragEnd}
           />
         )}
-      </QuerySidebarCollapsableHeader>
+        {pendingTransformation && !pendingTransformation.insertAfter && (
+          <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
+        )}
+      </SidebarCollapsableHeader>
     </>
   );
 }

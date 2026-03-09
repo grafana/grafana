@@ -1,0 +1,87 @@
+{
+  "kind": "InhibitionRuleList",
+  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "metadata": {},
+  "items": [
+    {
+      "metadata": {
+        "name": "integration-test-imported-inhibition-rule-0",
+        "namespace": "default",
+        "uid": "6l9FtSak11LLD4VZEKotOiV1sWRgt9W8ToWy2dWNLRQX",
+        "resourceVersion": "fa1ddb8baf6c4173",
+        "annotations": {
+          "grafana.com/provenance": "converted_prometheus"
+        }
+      },
+      "spec": {
+        "source_matchers": [
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
+          },
+          {
+            "type": "=",
+            "label": "alertname",
+            "value": "HighCPU"
+          }
+        ],
+        "target_matchers": [
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
+          },
+          {
+            "type": "=",
+            "label": "alertname",
+            "value": "CPUWarning"
+          }
+        ],
+        "equal": [
+          "instance"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "integration-test-imported-inhibition-rule-1",
+        "namespace": "default",
+        "uid": "zZ7kSZEGBQGRuY74Qp0nJLg8fWXVWSAkPWKvQWbGXVAX",
+        "resourceVersion": "b3e5c88931ea4509",
+        "annotations": {
+          "grafana.com/provenance": "converted_prometheus"
+        }
+      },
+      "spec": {
+        "source_matchers": [
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
+          },
+          {
+            "type": "=",
+            "label": "severity",
+            "value": "critical"
+          }
+        ],
+        "target_matchers": [
+          {
+            "type": "=",
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
+          },
+          {
+            "type": "=",
+            "label": "severity",
+            "value": "warning"
+          }
+        ],
+        "equal": [
+          "cluster"
+        ]
+      }
+    }
+  ]
+}

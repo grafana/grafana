@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apiserver/pkg/admission"
@@ -55,6 +56,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
+	}
+
+	if r.Spec.Webhook != nil && r.Spec.Webhook.BaseURL != "" {
+		r.Spec.Webhook.BaseURL = strings.TrimRight(r.Spec.Webhook.BaseURL, "/")
 	}
 
 	// Extra mutators from factory

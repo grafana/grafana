@@ -41,9 +41,10 @@ func TestTestConnection(t *testing.T) {
 			},
 			expectedCode: http.StatusUnprocessableEntity,
 			expectedErrs: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueRequired,
-				Field:  "spec.github",
-				Detail: "github info must be specified for GitHub connection",
+				Type:     metav1.CauseTypeFieldValueRequired,
+				Field:    "spec.github",
+				Detail:   "github info must be specified for GitHub connection",
+				BadValue: "",
 			}},
 		},
 		{
@@ -66,9 +67,10 @@ func TestTestConnection(t *testing.T) {
 			},
 			expectedCode: http.StatusUnprocessableEntity,
 			expectedErrs: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueRequired,
-				Field:  "secure.privateKey",
-				Detail: "privateKey must be specified for GitHub connection",
+				Type:     metav1.CauseTypeFieldValueRequired,
+				Field:    "secure.privateKey",
+				Detail:   "privateKey must be specified for GitHub connection",
+				BadValue: "",
 			}},
 		},
 		{
@@ -230,14 +232,16 @@ func TestTestConnection(t *testing.T) {
 			expectedCode: http.StatusUnprocessableEntity,
 			expectedErrs: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueRequired,
-					Field:  "spec.github.appID",
-					Detail: "appID must be specified for GitHub connection",
+					Type:     metav1.CauseTypeFieldValueRequired,
+					Field:    "spec.github.appID",
+					Detail:   "appID must be specified for GitHub connection",
+					BadValue: "",
 				},
 				{
-					Type:   metav1.CauseTypeFieldValueRequired,
-					Field:  "spec.github.installationID",
-					Detail: "installationID must be specified for GitHub connection",
+					Type:     metav1.CauseTypeFieldValueRequired,
+					Field:    "spec.github.installationID",
+					Detail:   "installationID must be specified for GitHub connection",
+					BadValue: "",
 				},
 			},
 		},

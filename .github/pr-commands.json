@@ -184,7 +184,7 @@
       "pkg/tsdb/grafana-pyroscope-datasource/**/*"
     ],
     "action": "updateLabel",
-    "addLabel": "datasource/grafana-pyroscope"
+    "addLabel": "datasource/Pyroscope"
   },
   {
     "type": "changedfiles",

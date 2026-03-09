@@ -14,11 +14,12 @@ import (
 // DashboardStore implements the FolderStore interface
 // It fetches folders from the dashboard DB table
 type DashboardFolderStoreImpl struct {
-	store db.DB
+	store    db.DB
+	maxDepth int
 }
 
-func newDashboardFolderStore(sqlStore db.DB) *DashboardFolderStoreImpl {
-	return &DashboardFolderStoreImpl{store: sqlStore}
+func newDashboardFolderStore(sqlStore db.DB, maxDepth int) *DashboardFolderStoreImpl {
+	return &DashboardFolderStoreImpl{store: sqlStore, maxDepth: maxDepth}
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
@@ -88,15 +89,15 @@ func (d *DashboardFolderStoreImpl) Get(ctx context.Context, q folder.GetFolderQu
 			d.updated_by as updated_by,
 			d.has_acl as has_acl`)
 		if q.WithFullpath {
-			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(d.store.GetDialect())))
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(d.store.GetDialect(), d.maxDepth)))
 		}
 		if q.WithFullpathUIDs {
-			s.WriteString(fmt.Sprintf(`, %s AS fullpath_uids`, getFullapathUIDsSQL(d.store.GetDialect())))
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath_uids`, getFullapathUIDsSQL(d.store.GetDialect(), d.maxDepth)))
 		}
 		s.WriteString(" FROM folder f0")
 		s.WriteString(" INNER JOIN dashboard d ON f0.uid = d.uid AND f0.org_id = d.org_id")
 		if q.WithFullpath || q.WithFullpathUIDs {
-			s.WriteString(getFullpathJoinsSQL())
+			s.WriteString(getFullpathJoinsSQL(d.maxDepth))
 		}
 		switch {
 		case q.UID != nil:

@@ -124,3 +124,23 @@ func (spec *AlertRuleSpec) ClampDurations() error {
 	}
 	return nil
 }
+
+func (e *AlertRuleExpression) IsSource() bool {
+	return e.Source != nil && *e.Source
+}
+
+func (e *AlertRuleExpression) GetDatasource() *string {
+	return (*string)(e.DatasourceUID)
+}
+
+func (e *AlertRuleExpression) HasValidRelativeTimeRange() bool {
+	if e.RelativeTimeRange == nil {
+		return false
+	}
+	from, errFrom := ToDuration(string(e.RelativeTimeRange.From))
+	to, errTo := ToDuration(string(e.RelativeTimeRange.To))
+	if errFrom != nil || errTo != nil {
+		return false
+	}
+	return from > to
+}
