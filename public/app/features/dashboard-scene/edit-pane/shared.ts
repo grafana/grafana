@@ -26,7 +26,6 @@ import { VariableEditableElement } from '../settings/variables/VariableEditableE
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
 
-import { DashboardEditActionEvent, DashboardEditActionEventPayload } from './DashboardEditActionEvent';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 
@@ -104,6 +103,20 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 
 export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
+}
+
+export interface DashboardEditActionEventPayload {
+  removedObject?: SceneObject;
+  addedObject?: SceneObject;
+  movedObject?: SceneObject;
+  source: SceneObject;
+  description?: string;
+  perform: () => void;
+  undo: () => void;
+}
+
+export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
+  static type = 'dashboard-edit-action';
 }
 
 /**

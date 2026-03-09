@@ -11,7 +11,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { DashboardEditActionEvent } from './DashboardEditActionEvent';
+import { DashboardEditActionEvent } from './shared';
 
 const warnedPaths = new Set<string>();
 const monitoringLogger = createMonitoringLogger('quick-edit-options');
