@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/semaphore"
 )
 
 type ConsolidationService struct {
@@ -77,7 +78,7 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 	}
 
 	log := logging.FromContext(ctx)
-	sem := make(chan struct{}, workers)
+	sem := semaphore.NewWeighted(int64(workers))
 	var wg sync.WaitGroup
 	var firstErr error
 	var firstErrMu sync.Mutex
@@ -134,8 +135,15 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 		wg.Add(1)
 		go func(ns string, values []*contracts.EncryptedValue) {
 			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
+			if err := sem.Acquire(ctx, 1); err != nil {
+				firstErrMu.Lock()
+				if firstErr == nil {
+					firstErr = err
+				}
+				firstErrMu.Unlock()
+				return
+			}
+			defer sem.Release(1)
 			if err := finalizeNamespace(ns, values); err != nil {
 				firstErrMu.Lock()
 				if firstErr == nil {
