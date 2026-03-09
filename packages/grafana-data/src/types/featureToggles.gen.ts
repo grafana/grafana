@@ -1628,6 +1628,11 @@ export interface FeatureToggles {
   */
   dsAbstractionApp?: boolean;
   /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
+  /**
   * Enables new analytics framework
   * @default false
   */
