@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-var kind = schema.GroupResource{Group: "g", Resource: "r"}
+var kind = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 
 func TestRuntime_Create(t *testing.T) {
 	type testCase struct {

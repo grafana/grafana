@@ -121,23 +121,26 @@ type service struct {
 }
 
 func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
-	status, err := m.Status(context.Background(), gr)
-	if err != nil {
-		return nil, err
+	// Only managed resources (folders, dashboards) use the runtime KV-based path.
+	// Unmanaged use MigrationStatusReader.
+	if m.ShouldManage(gr) {
+		status, err := m.Status(context.Background(), gr)
+		if err != nil {
+			return nil, err
+		}
+
+		if m.enabled && status.Runtime {
+			return &runtimeDualWriter{
+				service:   m,
+				legacy:    legacy,
+				unified:   unified,
+				dualwrite: &dualWriter{legacy: legacy, unified: unified},
+				gr:        gr,
+			}, nil
+		}
 	}
 
-	if m.enabled && status.Runtime {
-		// Dynamic storage behavior
-		return &runtimeDualWriter{
-			service:   m,
-			legacy:    legacy,
-			unified:   unified,
-			dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
-			gr:        gr,
-		}, nil
-	}
-
-	// Use MigrationStatusReader for non-runtime mode selection.
+	// Use MigrationStatusReader for mode selection on non-managed resources
 	switch m.statusReader.GetStorageMode(context.Background(), gr) {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
