@@ -7,3 +7,5 @@ exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow
 exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 0 -80 A 80 80 0 0 1 80 0"`;
 
 exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 0 -80 A 80 80 0 1 1 -80 0"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for with offset 1`] = `"M 80 0 A 80 80 0 0 1 160 80"`;

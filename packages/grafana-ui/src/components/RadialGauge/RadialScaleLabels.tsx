@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { measureText } from '../../utils/measureText';
 
 import { RadialGaugeDimensions } from './types';
-import { getFieldConfigMinMax, toRad } from './utils';
+import { getFieldConfigMinMax, drawRadialArcPath } from './utils';
 
 interface RadialScaleLabelsProps {
   fieldDisplay: FieldDisplay;
@@ -67,20 +67,10 @@ export const RadialScaleLabels = memo(
     const radius = scaleLabelsRadius - textLineHeight;
 
     const pathId = useId();
-    const labelsPath = useMemo(() => {
-      let endAngle = angleRange;
-      if (endAngle >= 360) {
-        endAngle = 359.99;
-      }
-      const startRadians = toRad(startAngle);
-      const endRadians = toRad(startAngle + endAngle);
-      const largeArc = endAngle > 180 ? 1 : 0;
-      const x1 = centerX + radius * Math.cos(startRadians);
-      const y1 = centerY + radius * Math.sin(startRadians);
-      const x2 = centerX + radius * Math.cos(endRadians);
-      const y2 = centerY + radius * Math.sin(endRadians);
-      return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
-    }, [centerX, centerY, radius, startAngle, angleRange]);
+    const labelsPath = useMemo(
+      () => drawRadialArcPath(startAngle, angleRange, radius, centerX, centerY),
+      [centerX, centerY, radius, startAngle, angleRange]
+    );
 
     const pathLength = (angleRange / 360) * 2 * Math.PI * radius;
 
