@@ -274,6 +274,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications-history',
+      component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
+    },
+    {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()
