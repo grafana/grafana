@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -197,7 +198,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
 	ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
 
-	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return fmt.Errorf("%w with name %q: %w", ErrGetOrCreateFolder, fr.Cfg.Folder, err)
 	}
@@ -220,17 +221,29 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
-		folderName := ""
-
 		dashboardsFolder := filepath.Dir(path)
-		if dashboardsFolder != resolvedPath {
-			folderName = filepath.Base(dashboardsFolder)
+		relPath, err := filepath.Rel(resolvedPath, dashboardsFolder)
+		if err != nil {
+			return fmt.Errorf("failed to calculate relative path from %q to %q: %w", resolvedPath, dashboardsFolder, err)
+		}
+
+		// Replace the OS separator with a forward slash to get the full path of the folder
+		folderFullpath := strings.ReplaceAll(relPath, string(filepath.Separator), "/")
+		if folderFullpath == "." || folderFullpath == "" {
+			folderFullpath = ""
 		}
 
 		ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
-		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
-		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
+		var folderID int64
+		var folderUID string
+		if folderFullpath == "" {
+			folderID = 0
+			folderUID = ""
+		} else {
+			folderID, folderUID, err = fr.getOrCreateFolderFullpath(ctx, folderFullpath, fr.Cfg.OrgID)
+			if err != nil {
+				return fmt.Errorf("%w with full path %q from file system structure: %w", ErrGetOrCreateFolder, folderFullpath, err)
+			}
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
@@ -369,28 +382,27 @@ func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, servic
 	return byPath, nil
 }
 
-func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, string, error) {
+// getOrCreateFolderInternal is the shared logic for getting or creating a folder.
+// - explicitUID: if non-nil and non-empty, used for lookup and creation; otherwise lookup by Title+ParentUID and generate UID on create
+// - parentUID: optional parent for nested folders
+func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64, folderName string, parentUID *string, explicitUID *string) (int64, string, error) {
 	if folderName == "" {
 		return 0, "", ErrFolderNameMissing
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return 0, "", err
-	}
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	cmd := &folder.GetFolderQuery{
-		OrgID:        cfg.OrgID,
+		OrgID:        orgID,
 		SignedInUser: user,
 	}
 
-	if cfg.FolderUID != "" {
-		cmd.UID = &cfg.FolderUID
+	if explicitUID != nil && *explicitUID != "" {
+		cmd.UID = explicitUID
 	} else {
-		// provisioning depends on unique names
-		//nolint:staticcheck
 		cmd.Title = &folderName
+		cmd.ParentUID = parentUID
 	}
 
 	result, err := fr.folderService.Get(ctx, cmd)
@@ -406,7 +418,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	// When we expect folders in unified storage, they should have a manager indicated.
 	// NOTE: when everything has been running in mode5 for a while, this check can be removed.
 	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
-		result, err = service.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		result, err = fr.dashboardProvisioningService.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", fmt.Errorf("unable to update provisioned folder")
 		}
@@ -414,14 +426,25 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		// Generate a new UID for the folder if not provided
+		uid := util.GenerateShortUID()
+		if explicitUID != nil {
+			uid = *explicitUID
+		}
+
 		createCmd := &folder.CreateFolderCommand{
-			OrgID:        cfg.OrgID,
-			UID:          cfg.FolderUID,
+			OrgID:        orgID,
+			UID:          uid,
 			Title:        folderName,
 			SignedInUser: user,
 		}
 
-		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
+		// If a parent UID is provided, set it as the parent of the new folder
+		if parentUID != nil {
+			createCmd.ParentUID = *parentUID
+		}
+
+		f, err := fr.dashboardProvisioningService.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", err
 		}
@@ -430,8 +453,41 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return f.ID, f.UID, nil
 	}
 
-	//nolint:staticcheck
+	// nolint:staticcheck
 	return result.ID, result.UID, nil
+}
+
+func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, folderName string) (int64, string, error) {
+	var explicitUID *string
+	if cfg.FolderUID != "" {
+		explicitUID = &cfg.FolderUID
+	}
+	return fr.getOrCreateFolderInternal(ctx, cfg.OrgID, folderName, nil, explicitUID)
+}
+
+func (fr *FileReader) getOrCreateFolderByTitle(ctx context.Context, folderName string, orgID int64, parentUID *string) (int64, string, error) {
+	return fr.getOrCreateFolderInternal(ctx, orgID, folderName, parentUID, nil)
+}
+
+func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullpath string, orgID int64) (int64, string, error) {
+	folderTitles := folderimpl.SplitFullpath(folderFullpath)
+	if len(folderTitles) == 0 {
+		return 0, "", fmt.Errorf("invalid folder full path: %s", folderFullpath)
+	}
+
+	// Build nested hierarchy: each folder is created under the previous one.
+	// folderUID tracks the parent for the next level (nil for the first/root folder).
+	var folderUID *string
+	var folderID int64
+	for i := range folderTitles {
+		id, uid, err := fr.getOrCreateFolderByTitle(ctx, folderTitles[i], orgID, folderUID)
+		if err != nil {
+			return 0, "", err
+		}
+		folderID = id
+		folderUID = &uid
+	}
+	return folderID, *folderUID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
