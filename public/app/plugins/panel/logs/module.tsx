@@ -77,7 +77,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       category,
       description: t(
         'logs.description-wrap-lines',
-        'Display logs as a single line or wrap long log entries to fit the panel'
+        'Display logs as a single line or wrap long log entries to fit the panel.'
       ),
       defaultValue: false,
     });
@@ -87,7 +87,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         path: 'unwrappedColumns',
         name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
         category,
-        description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields'),
+        description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields.'),
         defaultValue: false,
         showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
       });
@@ -109,7 +109,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         category,
         description: t(
           'logs.description-enable-logs-highlighting',
-          'Use a predefined coloring scheme to highlight relevant parts of the log lines'
+          'Use a predefined coloring scheme to highlight relevant parts of the log lines.'
         ),
       });
     }
@@ -185,7 +185,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         category,
         description: t(
           'logs.description-show-controls',
-          'Display controls to jump to the last or first log line, and filters by log level'
+          'Display controls to jump to the last or first log line, and filters by log level.'
         ),
         defaultValue: false,
       });
