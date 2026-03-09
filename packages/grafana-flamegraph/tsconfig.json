@@ -9,7 +9,7 @@
     "isolatedModules": true,
     "rootDirs": ["."],
     "moduleResolution": "bundler",
-    "types": ["vitest/globals", "systemjs"]
+    "types": ["vitest/globals", "systemjs", "vitest-canvas-mock"]
   },
   "exclude": ["dist/**/*"],
   "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]

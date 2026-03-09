@@ -3639,7 +3639,10 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
     vitest-canvas-mock: "npm:^1.1.3"
+    vitest-fail-on-console: "npm:^0.10.1"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0

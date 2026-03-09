@@ -9,8 +9,6 @@ import FlameGraph from './FlameGraph';
 import { FlameGraphDataContainer } from './dataTransform';
 import { data } from './testData/dataNestedSet';
 
-import 'vitest-canvas-mock';
-
 vi.mock('react-use', async (originalImport) => {
   return {
     ...(await originalImport()),
