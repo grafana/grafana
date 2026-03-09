@@ -3738,6 +3738,20 @@
     },
     {
       "metadata": {
+        "name": "queryServiceUseOverrideSettings",
+        "resourceVersion": "1772809491553",
+        "creationTimestamp": "2026-03-06T15:04:51Z"
+      },
+      "spec": {
+        "description": "Enables the query service to use override settings from the settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-group",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryServiceWithConnections",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-28T19:28:26Z",

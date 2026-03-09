@@ -2578,6 +2578,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "queryServiceUseOverrideSettings",
+			Description:  "Enables the query service to use override settings from the settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendGroup,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 	}
 )
 

@@ -1627,4 +1627,9 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Enables the query service to use override settings from the settings service
+  * @default false
+  */
+  queryServiceUseOverrideSettings?: boolean;
 }

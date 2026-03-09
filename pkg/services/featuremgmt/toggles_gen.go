@@ -881,4 +881,8 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagQueryServiceUseOverrideSettings
+	// Enables the query service to use override settings from the settings service
+	FlagQueryServiceUseOverrideSettings = "queryServiceUseOverrideSettings"
 )
