@@ -9,7 +9,7 @@ import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { DashboardInputs, DataSourceInput, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
 import {
   applyV1Inputs,
