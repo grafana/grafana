@@ -64,6 +64,24 @@ describe('useQuickEditOptions', () => {
           name: 'Conditional option',
           defaultValue: false,
           showIf: (config) => config.showGraph === true,
+        })
+        .addBooleanSwitch({
+          path: 'legend.showLegend',
+          name: 'Visibility',
+          category: ['Legend'],
+          defaultValue: true,
+        })
+        .addSelect({
+          path: 'tooltip.mode',
+          name: 'Mode',
+          category: ['Tooltip'],
+          settings: {
+            options: [
+              { value: 'single', label: 'Single' },
+              { value: 'all', label: 'All' },
+            ],
+          },
+          defaultValue: 'single',
         });
     });
 
@@ -107,10 +125,22 @@ describe('useQuickEditOptions', () => {
     const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
 
     expect(result.current).not.toBeNull();
-    expect(result.current?.props.title).toBe('Quick settings');
+    expect(result.current?.props.title).toBe('Quick edit');
     expect(result.current?.items).toHaveLength(2);
     expect(result.current?.items[0].props.title).toBe('Text mode');
     expect(result.current?.items[1].props.title).toBe('Color mode');
+  });
+
+  it('should include category prefix for nested options', () => {
+    const panel = createMockPanel({ legend: { showLegend: true }, tooltip: { mode: 'single' } });
+    const plugin = createMockPlugin(['legend.showLegend', 'tooltip.mode']);
+
+    const { result } = renderHook(() => useQuickEditOptions({ panel, plugin }));
+
+    expect(result.current).not.toBeNull();
+    expect(result.current?.items).toHaveLength(2);
+    expect(result.current?.items[0].props.title).toBe('Legend Visibility');
+    expect(result.current?.items[1].props.title).toBe('Tooltip Mode');
   });
 
   it('should warn and skip invalid paths', () => {

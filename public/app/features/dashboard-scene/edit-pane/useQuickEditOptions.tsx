@@ -52,7 +52,7 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
     const allItems = builder.getItems();
 
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.quick-edit.category-title', 'Quick settings'),
+      title: t('dashboard.quick-edit.category-title', 'Quick edit'),
       id: 'quick-edit-options',
     });
 
@@ -81,12 +81,16 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
 
       const Editor = item.editor;
       const htmlId = `quick-edit-${item.id}`;
-      const optionName = item.name;
       const optionPath = item.path;
+
+      // Build display name including category for nested options
+      const displayName =
+        item.category && item.category.length > 0 ? `${item.category.join(' > ')} ${item.name}` : item.name;
+      const optionName = displayName;
 
       category.addItem(
         new OptionsPaneItemDescriptor({
-          title: item.name,
+          title: displayName,
           id: htmlId,
           description: item.description,
           render: function renderQuickEditOption() {
