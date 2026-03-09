@@ -97,7 +97,7 @@ func TestAuthorizeResource_SecurityFix(t *testing.T) {
 					req.Resource == parsed.GVR.Resource
 			}), tt.expectedFolder).Return(nil).Once()
 
-			authorizer := NewAuthorizer(repo, mockAccess)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
 			err := authorizer.AuthorizeResource(context.Background(), parsed, tt.verb)
 
 			assert.NoError(t, err, tt.description)
@@ -151,7 +151,7 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, mockAccess)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
 			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -210,7 +210,7 @@ func TestAuthorizeDeleteFolder(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedFolderID).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, mockAccess)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
 			err := authorizer.AuthorizeDeleteFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -306,7 +306,7 @@ func TestAuthorizeMoveFolder(t *testing.T) {
 				}
 			}
 
-			authorizer := NewAuthorizer(repo, mockAccess)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
 			err := authorizer.AuthorizeMoveFolder(context.Background(), tt.originalPath, tt.targetPath)
 
 			if tt.shouldSucceed {
