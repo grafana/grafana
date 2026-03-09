@@ -112,11 +112,11 @@ func TestAuthorizeResource_SecurityFix(t *testing.T) {
 // TestAuthorizeCreateFolder tests authorization checks for folder creation.
 func TestAuthorizeCreateFolder(t *testing.T) {
 	tests := []struct {
-		name         string
-		path         string
-		repoName     string
-		shouldAllow  bool
-		description  string
+		name        string
+		path        string
+		repoName    string
+		shouldAllow bool
+		description string
 	}{
 		{
 			name:        "create folder with permission",
@@ -169,11 +169,11 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 // TestAuthorizeDeleteFolder tests authorization checks for folder deletion.
 func TestAuthorizeDeleteFolder(t *testing.T) {
 	tests := []struct {
-		name         string
-		path         string
-		repoName     string
-		shouldAllow  bool
-		description  string
+		name        string
+		path        string
+		repoName    string
+		shouldAllow bool
+		description string
 	}{
 		{
 			name:        "delete folder with permission",
@@ -398,12 +398,12 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 // TestAuthorizeCreateFolderWithMetadata tests parent folder ID resolution with metadata
 func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 	tests := []struct {
-		name               string
-		setupReader        func(*testing.T) repository.Reader
-		childPath          string
-		expectedParentID   string
-		shouldPass         bool
-		description        string
+		name             string
+		setupReader      func(*testing.T) repository.Reader
+		childPath        string
+		expectedParentID string
+		shouldPass       bool
+		description      string
 	}{
 		{
 			name: "parent has _folder.json - uses stable UID",
@@ -472,13 +472,13 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 	t.Run("both source and target use stable UIDs from metadata", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
-		
+
 		// Source folder has metadata
 		sourceMeta := NewFolderManifest("source-stable-uid", "source")
 		sourceData, _ := json.Marshal(sourceMeta)
 		rw.On("Read", mock.Anything, "source/_folder.json", "").
 			Return(&repository.FileInfo{Data: sourceData}, nil)
-		
+
 		// Target parent has metadata
 		targetParentMeta := NewFolderManifest("target-parent-stable-uid", "target-parent")
 		targetParentData, _ := json.Marshal(targetParentMeta)

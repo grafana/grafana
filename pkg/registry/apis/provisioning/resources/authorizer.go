@@ -22,11 +22,12 @@ import (
 //   - File metadata is user-controlled and not solely trusted for permission checks
 //
 // Example Hierarchy:
-//   Team Folder (user is Editor)
-//   ├── Dashboard A (inherits at least Editor from parent)
-//   ├── Dashboard B (can have elevated permissions, e.g., Admin)
-//   └── Subfolder (inherits at least Editor from parent)
-//       └── Dashboard C (inherits at least Editor from Team Folder)
+//
+//	Team Folder (user is Editor)
+//	├── Dashboard A (inherits at least Editor from parent)
+//	├── Dashboard B (can have elevated permissions, e.g., Admin)
+//	└── Subfolder (inherits at least Editor from parent)
+//	    └── Dashboard C (inherits at least Editor from Team Folder)
 //
 // If user is Editor on "Team Folder", they automatically have at least Editor on all contents.
 type Authorizer interface {
@@ -200,10 +201,11 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 // When folder metadata is enabled, the folder ID is determined by reading _folder.json.
 //
 // Example:
-//   Deleting "team-a/project-x/" (containing dashboards A, B, C):
-//   - Checks: delete permission on "team-a/project-x"
-//   - Does NOT check: permissions on dashboard A, B, or C
-//   - Reason: Parent folder permissions apply to all contents
+//
+//	Deleting "team-a/project-x/" (containing dashboards A, B, C):
+//	- Checks: delete permission on "team-a/project-x"
+//	- Does NOT check: permissions on dashboard A, B, or C
+//	- Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path string) error {
 	var folderID string
 	if a.folderMetadataEnabled {
@@ -228,8 +230,8 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 // originalPath to targetPath.
 //
 // Moving a folder requires two permissions:
-//   1. Update permission on the source folder (the folder being moved)
-//   2. Create permission on the target parent folder (where it's being moved to)
+//  1. Update permission on the source folder (the folder being moved)
+//  2. Create permission on the target parent folder (where it's being moved to)
 //
 // Individual nested resources are not checked separately. Permissions on the source folder
 // apply to all its contents, so checking the folder itself is sufficient.
@@ -237,10 +239,11 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteFolder(ctx context.Context, path
 // When folder metadata is enabled, folder IDs are determined by reading _folder.json files.
 //
 // Example:
-//   Moving "team-a/old-project/" to "team-b/new-project/":
-//   - Checks: update permission on "team-a/old-project"
-//   - Checks: create permission on "team-b" (parent of target)
-//   - Does NOT check: permissions on contents of "old-project"
+//
+//	Moving "team-a/old-project/" to "team-b/new-project/":
+//	- Checks: update permission on "team-a/old-project"
+//	- Checks: create permission on "team-b" (parent of target)
+//	- Does NOT check: permissions on contents of "old-project"
 func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
 	// Determine source folder ID
 	var sourceFolderID string

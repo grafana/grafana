@@ -560,7 +560,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	return newParsed, nil
 }
 
-
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// Reject directory delete operations for configured branch - use bulk operations instead
 	if r.isConfiguredBranch(opts) {
