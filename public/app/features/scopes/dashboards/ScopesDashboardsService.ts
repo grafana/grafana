@@ -206,6 +206,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
         ? this.apiClient.fetchScopeNavigations
         : this.apiClient.fetchDashboards;
 
+      // No depth param: sub-scope expansions fetch one level at a time (on demand).
+      // Only the initial fetchDashboards uses depth=1 to prefetch the first expansion.
       const subScopeItems = await fetchNavigations([subScopeName]);
 
       // Filter out items that have a subScope matching any subScope already in the path
