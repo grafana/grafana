@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -586,7 +587,8 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	tmpl := "testdata/local-write.json.tmpl"
+	_, thisFile, _, _ := runtime.Caller(0)
+	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
