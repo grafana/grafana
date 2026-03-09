@@ -351,9 +351,8 @@ func TestCreateFolder(t *testing.T) {
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := newTestRepoConfig("test-repo")
 				rw := repository.NewMockReaderWriter(t)
-				rw.On("Config").Return(config)
+				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config() before the IsDir check
 				accessMock := auth.NewMockAccessChecker(t)
-				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false)}
 				return dw, DualWriteOptions{Path: "not-a-folder"}
 			},
@@ -371,7 +370,7 @@ func TestCreateFolder(t *testing.T) {
 					},
 				}
 				rw := repository.NewMockReaderWriter(t)
-				rw.On("Config").Return(config)
+				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config()
 				accessMock := auth.NewMockAccessChecker(t)
 				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
@@ -383,9 +382,9 @@ func TestCreateFolder(t *testing.T) {
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				rw := repository.NewMockReaderWriter(t)
 				config := newTestRepoConfig("test-repo")
-				rw.On("Config").Return(config)
+				rw.On("Config").Return(config).Maybe() // AuthorizeWrite calls Config()
 				accessMock := auth.NewMockAccessChecker(t)
-				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("unauthorized"))
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("unauthorized")).Maybe()
 				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},

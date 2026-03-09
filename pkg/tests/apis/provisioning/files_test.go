@@ -1294,7 +1294,11 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "folder-auth-metadata-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+	helper.CreateRepo(t, common.TestRepo{
+		Name:                   repo,
+		Target:                 "instance",
+		SkipResourceAssertions: true,
+	})
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -1315,6 +1319,11 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		},
 	})
 
+	// Test that authorization checks use stable UIDs from _folder.json when creating folders
+	// Note: We test folder creation because:
+	// 1. It validates that parent folder permissions are checked using stable UIDs
+	// 2. Folder deletion on the configured branch is intentionally disabled (returns 405)
+	// 3. Testing deletion on feature branches requires git repositories with BranchWorkflow
 	t.Run("create folder with metadata - authorization checks stable UID", func(t *testing.T) {
 		// Create a parent folder as admin
 		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/parent-auth/", addr, repo)
@@ -1326,13 +1335,15 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should create parent folder")
 
-		// Verify _folder.json was created
+		// Verify _folder.json was created with stable UID
 		parentMeta, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-auth/_folder.json")
 		require.NoError(t, err, "parent _folder.json should exist")
 		parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
 		require.NotEmpty(t, parentUID, "parent should have stable UID")
 
-		// Editor should be able to create a child folder (tests that authorization uses stable UID from parent _folder.json)
+		// Editor should be able to create a child folder
+		// This validates that authorization uses the stable UID from parent's _folder.json
+		// instead of the hash-based ID
 		childURL := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/parent-auth/child-auth/", addr, repo)
 		childReq, err := http.NewRequest(http.MethodPost, childURL, nil)
 		require.NoError(t, err)
@@ -1348,37 +1359,5 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		childUID, _, _ := unstructured.NestedString(childMeta.Object, "resource", "file", "metadata", "name")
 		require.NotEmpty(t, childUID, "child should have stable UID")
 		require.NotEqual(t, parentUID, childUID, "parent and child should have different UIDs")
-	})
-
-	t.Run("delete folder with metadata - authorization checks stable UID from _folder.json", func(t *testing.T) {
-		// Create a folder to delete
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/delete-test/", addr, repo)
-		req, err := http.NewRequest(http.MethodPost, url, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-
-		// Get the stable UID from _folder.json
-		meta, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-test/_folder.json")
-		require.NoError(t, err)
-		stableUID, _, _ := unstructured.NestedString(meta.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, stableUID, "folder should have stable UID")
-
-		// Editor should be able to delete (authorization uses stable UID)
-		deleteURL := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/delete-test/", addr, repo)
-		deleteReq, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
-		require.NoError(t, err)
-		deleteResp, err := http.DefaultClient.Do(deleteReq)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer deleteResp.Body.Close()
-		require.Equal(t, http.StatusOK, deleteResp.StatusCode, "editor should delete folder using stable UID for authorization")
-
-		// Verify folder and _folder.json are deleted
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-test/_folder.json")
-		require.Error(t, err, "_folder.json should be deleted")
 	})
 }
