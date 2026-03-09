@@ -313,14 +313,17 @@ export class PanelPlugin<
   setQuickEditPaths(paths: Array<keyof TOptions & string> | string[]) {
     const MAX_QUICK_EDIT_PATHS = 5;
 
-    if (paths.length > MAX_QUICK_EDIT_PATHS) {
+    // Deduplicate while preserving order
+    const uniquePaths = [...new Set(paths)];
+
+    if (uniquePaths.length > MAX_QUICK_EDIT_PATHS) {
       console.warn(
-        `PanelPlugin [${this.meta?.id ?? 'unknown'}]: setQuickEditPaths received ${paths.length} paths, ` +
+        `PanelPlugin [${this.meta?.id ?? 'unknown'}]: setQuickEditPaths received ${uniquePaths.length} unique paths, ` +
           `but only ${MAX_QUICK_EDIT_PATHS} are allowed. Extra paths will be ignored.`
       );
-      this._quickEditPaths = paths.slice(0, MAX_QUICK_EDIT_PATHS);
+      this._quickEditPaths = uniquePaths.slice(0, MAX_QUICK_EDIT_PATHS);
     } else {
-      this._quickEditPaths = [...paths];
+      this._quickEditPaths = uniquePaths;
     }
 
     return this;
