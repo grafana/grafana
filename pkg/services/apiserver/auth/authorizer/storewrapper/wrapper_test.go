@@ -23,13 +23,9 @@ type testSetup struct {
 }
 
 func newTestSetup(t *testing.T) *testSetup {
-	return newTestSetupWithOptions(t, Options{})
-}
-
-func newTestSetupWithOptions(t *testing.T, opts Options) *testSetup {
 	mockStore := rest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
-	wrapper := NewWithOptions(mockStore, mockAuth, opts)
+	wrapper := New(mockStore, mockAuth)
 
 	ctx := identity.WithRequester(
 		context.Background(),
@@ -284,27 +280,6 @@ func TestWrapper_Update(t *testing.T) {
 	assert.Equal(t, oldObj, obj)
 
 	// Assert expectations
-	setup.mockAuth.AssertExpectations(t)
-	setup.mockStore.AssertExpectations(t)
-}
-
-func TestWrapper_Create_PreserveUserIdentity(t *testing.T) {
-	setup := newTestSetupWithOptions(t, Options{PreserveUserIdentity: true})
-
-	obj := &fakeObject{}
-	createOpts := &metaV1.CreateOptions{}
-	expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
-
-	// Authorization still uses original user
-	setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
-
-	// Store receives original user context (not service identity) so createdBy/updatedBy reflect the user
-	setup.mockStore.On("Create", mock.MatchedBy(matchesOriginalUser()), obj, mock.Anything, createOpts).Return(expectedObj, nil)
-
-	result, err := setup.wrapper.Create(setup.ctx, obj, nil, createOpts)
-
-	require.NoError(t, err)
-	assert.Equal(t, expectedObj, result)
 	setup.mockAuth.AssertExpectations(t)
 	setup.mockStore.AssertExpectations(t)
 }

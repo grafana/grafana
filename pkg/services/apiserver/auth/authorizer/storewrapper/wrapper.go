@@ -30,23 +30,13 @@ type ResourceStorageAuthorizer interface {
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
 }
 
-type Options struct {
-	// PreserveUserIdentity, when true, passes the request identity to the inner store instead of
-	// switching to service identity. Use this when the inner store should record the actual user
-	// in metadata (e.g. grafana.app/createdBy, grafana.app/updatedBy). When false (default), the
-	// wrapper uses service identity for inner store calls so authorization is enforced only by
-	// the wrapper and the inner store does not need to authorize the caller.
-	PreserveUserIdentity bool
-}
-
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
-// By default it overrides the identity in the context to use service identity for the underlying store operations,
-// so the underlying store authorization always succeeds and the wrapper enforces authorization. Use Options.PreserveUserIdentity
-// when the inner store should record the actual user (e.g. for createdBy/updatedBy annotations).
+// It overrides the identity in the context to use service identity for the underlying store operations so the
+// store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
+// user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithMetadataIdentityUID).
 type Wrapper struct {
-	inner                K8sStorage
-	authorizer           ResourceStorageAuthorizer
-	preserveUserIdentity bool
+	inner      K8sStorage
+	authorizer ResourceStorageAuthorizer
 }
 
 type K8sStorage interface {
@@ -62,29 +52,19 @@ type K8sStorage interface {
 var _ rest.Storage = (*Wrapper)(nil)
 var _ k8srest.Watcher = (*Wrapper)(nil)
 
-// New returns a Wrapper with default options (service identity used for inner store calls).
+// New returns a Wrapper that enforces authorization and uses service identity for inner store calls,
+// injecting the original user's UID for createdBy/updatedBy annotations.
 func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
-	return NewWithOptions(store, authz, Options{})
+	return &Wrapper{inner: store, authorizer: authz}
 }
 
-// NewWithOptions returns a Wrapper with the given options. Use Options.PreserveUserIdentity
-// when the inner store should record the actual user in createdBy/updatedBy annotations.
-func NewWithOptions(store K8sStorage, authz ResourceStorageAuthorizer, opts Options) *Wrapper {
-	return &Wrapper{
-		inner:                store,
-		authorizer:           authz,
-		preserveUserIdentity: opts.PreserveUserIdentity,
-	}
-}
-
-// storeCtx returns the context to use for inner store calls: original ctx when preserving
-// user identity, otherwise a context with service identity so the store records the caller
-// and authorization is enforced only by the wrapper.
+// storeCtx returns the context for inner store calls: service identity so the store's authorization
+// succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithMetadataIdentityUID).
 func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
-	if w.preserveUserIdentity {
-		return ctx
-	}
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
+		srvCtx = identity.WithMetadataIdentityUID(srvCtx, user.GetUID())
+	}
 	return srvCtx
 }
 

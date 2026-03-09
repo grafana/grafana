@@ -10,6 +10,23 @@ import (
 )
 
 type ctxUserKey struct{}
+type metadataIdentityUIDKey struct{}
+
+// WithMetadataIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
+// context identity is overridden (e.g. by the store wrapper using service identity). Storage
+// that sets these annotations (e.g. unistore prepare) should call MetadataIdentityUIDFrom
+// and use it when present so the real acting user is recorded.
+func WithMetadataIdentityUID(ctx context.Context, uid string) context.Context {
+	return context.WithValue(ctx, metadataIdentityUIDKey{}, uid)
+}
+
+// MetadataIdentityUIDFrom returns the UID to use for createdBy/updatedBy when set by a
+// wrapper (e.g. store wrapper). If not set, the caller should use the identity from
+// AuthInfoFrom(ctx) for annotations.
+func MetadataIdentityUIDFrom(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(metadataIdentityUIDKey{}).(string)
+	return uid, ok && uid != ""
+}
 
 // WithRequester attaches the requester to the context.
 func WithRequester(ctx context.Context, usr Requester) context.Context {
