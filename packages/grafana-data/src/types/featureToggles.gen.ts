@@ -1216,6 +1216,11 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
+  * Enables search filtering and expand/collapse controls in the mega menu
+  * @default false
+  */
+  megaMenuControls?: boolean;
+  /**
   * A/A test for recently viewed dashboards feature
   * @default false
   */

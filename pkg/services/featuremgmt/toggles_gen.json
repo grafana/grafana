@@ -3345,6 +3345,20 @@
     },
     {
       "metadata": {
+        "name": "megaMenuControls",
+        "resourceVersion": "1773057836219",
+        "creationTimestamp": "2026-03-09T12:03:56Z"
+      },
+      "spec": {
+        "description": "Enables search filtering and expand/collapse controls in the mega menu",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "metricsFromProfiles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-09T10:55:28Z"
