@@ -50,8 +50,12 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 
+	// To allow injection for testing.
+	processFn func(ctx context.Context, item *connectionQueueItem) error
+
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
+	drainTimeout   time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -62,6 +66,7 @@ func NewConnectionController(
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
 	resyncInterval time.Duration,
+	drainTimeout time.Duration,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -78,6 +83,7 @@ func NewConnectionController(
 		connectionFactory: connectionFactory,
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
+		drainTimeout:      drainTimeout,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -89,6 +95,8 @@ func NewConnectionController(
 	if err != nil {
 		return nil, err
 	}
+
+	cc.processFn = cc.process
 
 	return cc, nil
 }
@@ -104,20 +112,44 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
 // all workers have been launched, before blocking on ctx.Done().
-func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func()) {
+func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
 	defer utilruntime.HandleCrash()
 	defer cc.queue.ShutDown()
 
-	cc.logger.Info("starting connection controller", "workers", workerCount)
+	logger := cc.logger
+	ctx = logging.Context(ctx, logger)
+	logger.Info("Starting ConnectionController")
+	defer logger.Info("Shutting down ConnectionController")
 
+	if !cache.WaitForCacheSync(ctx.Done(), cc.connSynced) {
+		return
+	}
+
+	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
 	}
 
+	logger.Info("Started workers")
 	onStarted()
 
 	<-ctx.Done()
-	cc.logger.Info("shutting down connection controller")
+	onShutdown()
+	logger.Info("Shutting down workers, draining queue")
+
+	drainDone := make(chan struct{})
+	go func() {
+		cc.queue.ShutDownWithDrain()
+		close(drainDone)
+	}()
+
+	select {
+	case <-drainDone:
+		logger.Info("Queue drained successfully")
+	case <-time.After(cc.drainTimeout):
+		logger.Warn("Drain timeout exceeded, forcing shutdown")
+		cc.queue.ShutDown()
+	}
 }
 
 func (cc *ConnectionController) runWorker(ctx context.Context) {
@@ -136,7 +168,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
-	err := cc.process(ctx, item)
+	err := cc.processFn(ctx, item)
 	if err == nil {
 		cc.queue.Forget(item)
 		return true

@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -75,6 +74,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		),
 		connectionFactory,
 		controllerCfg.ResyncInterval(),
+		controllerCfg.DrainTimeout(),
 	)
 
 	if err != nil {
@@ -82,12 +82,9 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}
 
 	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
-	}
 	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("connection operator is ready")
 		deps.HealthNotifier.SetReady()
-	})
+	}, func() {})
 	return nil
 }
