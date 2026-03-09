@@ -2,14 +2,13 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Box, EmptyState, FilterInput, Icon, Stack, TextLink } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
 import { UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
-import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 
 interface Props {
   items: Repository[];
@@ -19,10 +18,12 @@ export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
   const isProvisionedInstance = useIsProvisionedInstance();
   const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0]?.metadata?.name);
-
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const maxRepositories = frontendSettings?.maxRepositories ?? 0;
+  const maxResourcesPerRepository = items[0]?.status?.quota?.maxResourcesPerRepository ?? 0;
+  const isRepoLimitHit = maxRepositories > 0 && items.length >= maxRepositories;
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const isEmpty = items.length === 0;
-
   if (isEmpty) {
     return (
       <EmptyState
@@ -66,16 +67,19 @@ export function RepositoryList({ items }: Props) {
                 </Trans>
               </>
             )}
-            {isFreeTierLicense() && (
+            {isRepoLimitHit && (maxRepositories > 0 || maxResourcesPerRepository > 0) && (
               <>
-                <br />
-                <Trans i18nKey="provisioning.folder-repository-list.free-tier-limit.message-connection">
-                  Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,
+                {' '}
+                <Trans
+                  i18nKey="provisioning.quota-limit.message-both"
+                  values={{ maxRepositories, maxResourcesPerRepository }}
+                >
+                  Your account is limited to {{ maxRepositories }} connected repositories and{' '}
+                  {{ maxResourcesPerRepository }} synced resources per repository.
                 </Trans>{' '}
                 <TextLink href={UPGRADE_URL} external>
-                  <Trans i18nKey="provisioning.free-tier-limit.upgrade-link">upgrade your account</Trans>{' '}
+                  <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
                 </TextLink>
-                .
               </>
             )}
           </Alert>
