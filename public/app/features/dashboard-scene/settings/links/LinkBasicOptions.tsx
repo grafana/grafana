@@ -178,15 +178,7 @@ export function LinkIconSelect({ linkEdit }: { linkEdit: LinkEdit }) {
 
 export type BooleanLinkProp = 'asDropdown' | 'keepTime' | 'includeVars' | 'targetBlank';
 
-export function LinkBooleanSwitch({
-  linkEdit,
-  id,
-  prop,
-}: {
-  linkEdit: LinkEdit;
-  id?: string;
-  prop: BooleanLinkProp;
-}) {
+export function LinkBooleanSwitch({ linkEdit, id, prop }: { linkEdit: LinkEdit; id?: string; prop: BooleanLinkProp }) {
   const { dashboard, link, linkIndex } = useLinkState(linkEdit);
   if (!link) {
     return null;
