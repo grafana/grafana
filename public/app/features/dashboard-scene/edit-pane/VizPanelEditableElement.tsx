@@ -75,8 +75,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
   }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
 
   const isPanelQuickEditEnabled = useBooleanFlagValue('panelQuickEdit', false);
-  const quickEditOptions = useQuickEditOptions({ panel, plugin });
-  const quickEditCategory = isPanelQuickEditEnabled ? quickEditOptions : null;
+  const quickEditCategory = useQuickEditOptions({ panel, plugin, enabled: isPanelQuickEditEnabled });
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),

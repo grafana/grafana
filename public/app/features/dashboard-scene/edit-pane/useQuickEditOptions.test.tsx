@@ -100,6 +100,15 @@ describe('useQuickEditOptions', () => {
     expect(result.current).toBeNull();
   });
 
+  it('should return null when enabled is false', () => {
+    const panel = createMockPanel({ textMode: 'auto' });
+    const plugin = createMockPlugin(['textMode']);
+
+    const { result } = renderHook(() => useQuickEditOptions({ panel, plugin, enabled: false }));
+
+    expect(result.current).toBeNull();
+  });
+
   it('should return null when plugin has no quick edit paths', () => {
     const panel = createMockPanel();
     const plugin = createMockPlugin();

@@ -14,6 +14,7 @@ import { DashboardEditActionEvent } from './shared';
 interface UseQuickEditOptionsProps {
   panel: VizPanel;
   plugin: PanelPlugin | undefined;
+  enabled?: boolean;
 }
 
 /**
@@ -22,13 +23,18 @@ interface UseQuickEditOptionsProps {
  * Quick edit options appear in the dashboard edit pane, allowing users to modify
  * common panel settings without entering the full panel editor.
  *
- * @returns OptionsPaneCategoryDescriptor with the quick edit options, or null if none are defined
+ * @param enabled - When false, short-circuits early to avoid building options. Defaults to true.
+ * @returns OptionsPaneCategoryDescriptor with the quick edit options, or null if none are defined or disabled
  */
-export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps): OptionsPaneCategoryDescriptor | null {
+export function useQuickEditOptions({
+  panel,
+  plugin,
+  enabled = true,
+}: UseQuickEditOptionsProps): OptionsPaneCategoryDescriptor | null {
   const { options: currentOptions } = panel.useState();
 
   return useMemo((): OptionsPaneCategoryDescriptor | null => {
-    if (!plugin) {
+    if (!enabled || !plugin) {
       return null;
     }
 
@@ -128,5 +134,5 @@ export function useQuickEditOptions({ panel, plugin }: UseQuickEditOptionsProps)
     }
 
     return category;
-  }, [panel, plugin, currentOptions]);
+  }, [enabled, panel, plugin, currentOptions]);
 }
