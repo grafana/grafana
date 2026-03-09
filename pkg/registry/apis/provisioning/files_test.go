@@ -1,10 +1,14 @@
 package provisioning
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -153,6 +157,79 @@ func TestCheckQuota(t *testing.T) {
 				assert.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
+	tests := []struct {
+		name            string
+		method          string
+		path            string
+		flagEnabled     bool
+		expectForbidden bool
+	}{
+		{
+			name:            "POST _folder.json flag on",
+			method:          http.MethodPost,
+			path:            "folder/_folder.json",
+			flagEnabled:     true,
+			expectForbidden: true,
+		},
+		{
+			name:            "PUT _folder.json flag on",
+			method:          http.MethodPut,
+			path:            "folder/_folder.json",
+			flagEnabled:     true,
+			expectForbidden: true,
+		},
+		{
+			name:            "DELETE _folder.json flag on",
+			method:          http.MethodDelete,
+			path:            "folder/_folder.json",
+			flagEnabled:     true,
+			expectForbidden: true,
+		},
+		{
+			name:            "GET _folder.json flag on",
+			method:          http.MethodGet,
+			path:            "folder/_folder.json",
+			flagEnabled:     true,
+			expectForbidden: false,
+		},
+		{
+			name:            "POST _folder.json flag off",
+			method:          http.MethodPost,
+			path:            "folder/_folder.json",
+			flagEnabled:     false,
+			expectForbidden: false,
+		},
+		{
+			name:            "POST regular file flag on",
+			method:          http.MethodPost,
+			path:            "folder/dashboard.json",
+			flagEnabled:     true,
+			expectForbidden: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			connector := &filesConnector{folderMetadataEnabled: tc.flagEnabled}
+			req := httptest.NewRequest(tc.method, "/", nil)
+			opts := resources.DualWriteOptions{Path: tc.path}
+
+			if tc.expectForbidden {
+				_, err := connector.handleMethodRequest(context.Background(), req, opts, false, nil)
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err))
+			} else {
+				// Guard does not fire; code reaches nil dualReadWriter and panics.
+				require.Panics(t, func() {
+					//nolint:errcheck
+					_, _ = connector.handleMethodRequest(context.Background(), req, opts, false, nil)
+				}, "guard must not intercept; code should proceed past the guard")
 			}
 		})
 	}

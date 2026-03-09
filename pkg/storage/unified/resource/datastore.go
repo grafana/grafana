@@ -1091,13 +1091,8 @@ func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db
 }
 
 // isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
-// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
-// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
-// to dates in the future if interpreted as a microsecond timestamp.
+// Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
+// to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
 func isSnowflake(rv int64) bool {
-	ts := time.UnixMicro(rv)
-	oneHourFromNow := time.Now().Add(time.Hour)
-	isMicroSecRV := ts.Before(oneHourFromNow)
-
-	return !isMicroSecRV
+	return rv >= 1e18
 }

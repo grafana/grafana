@@ -82,6 +82,7 @@ describe('LogList', () => {
       enableLogDetails: true,
       logs,
       showControls: false,
+      showLevel: true,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
       timeRange: getDefaultTimeRange(),
