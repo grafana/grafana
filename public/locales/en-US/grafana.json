@@ -14352,6 +14352,10 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "presets": {
+      "threshold-value": "Threshold value",
+      "threshold-value-description": "Color from thresholds, no graph"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
