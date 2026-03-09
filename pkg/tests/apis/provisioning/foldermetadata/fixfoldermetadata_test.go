@@ -132,18 +132,19 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 		ExpectedFolders:    3,
 	})
 
-	// Plant _folder.json files with UIDs that don't match any real Grafana folder.
-	const wrongParentUID = "wrong-uid-parent-9999"
-	const wrongChildUID = "wrong-uid-child-9999"
-	writeFolderMetadata(t, filepath.Join(repoPath, "parent"), wrongParentUID, "parent")
-	writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), wrongChildUID, "child")
+	// Plant _folder.json files with arbitrary UIDs so we can verify the job
+	// leaves them untouched.
+	const existingParentUID = "existing-uid-parent-9999"
+	const existingChildUID = "existing-uid-child-9999"
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent"), existingParentUID, "parent")
+	writeFolderMetadata(t, filepath.Join(repoPath, "parent", "child"), existingChildUID, "child")
 
 	// The job must leave existing _folder.json files untouched — it only creates
 	// metadata for directories that have none at all.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", folderMetadataFileName), wrongParentUID)
-	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName), wrongChildUID)
+	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", folderMetadataFileName), existingParentUID)
+	requireFolderMetadataUID(t, filepath.Join(repoPath, "parent", "child", folderMetadataFileName), existingChildUID)
 }
 
 // TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata verifies
@@ -221,7 +222,7 @@ func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.Pro
 }
 
 // writeFolderMetadata writes a syntactically valid _folder.json that
-// references uid as the folder's name.  Used to plant a mismatched UID.
+// references uid as the folder's name.
 func writeFolderMetadata(t *testing.T, folderPath, uid, title string) {
 	t.Helper()
 	f := folders.NewFolder()
