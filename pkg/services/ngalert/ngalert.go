@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 
@@ -37,7 +38,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -234,9 +234,6 @@ func (ng *AlertNG) init() error {
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 			RuntimeConfig:     runtimeConfig,
 		}
-		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error {
-			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, invalidReceiverAction, ng.FeatureToggles)
-		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
 		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
@@ -244,7 +241,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer, ng.FeatureToggles)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, ng.store, m, ng.tracer, ng.FeatureToggles)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -253,7 +250,7 @@ func (ng *AlertNG) init() error {
 				ng.store,
 				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 				crypto,
-				autogenFn,
+				ng.store,
 				m,
 				ng.tracer,
 				remoteSecondaryWithRemoteState,
@@ -485,6 +482,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
+	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -514,6 +512,7 @@ func (ng *AlertNG) init() error {
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
+		InhibitionRules:      inhibitionRuleService,
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,
@@ -539,7 +538,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 // initInstanceStore initializes the instance store based on the feature toggles.
@@ -602,14 +601,79 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 	// clean up the current state
 	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
 		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
+
+		// Increment version for all rules
 		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
 		if err != nil {
 			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
 			return err
 		}
 		logger.Info("Updated version for alert rules", "keys", updatedKeys)
+
+		// Update folder fullpaths for all rules
+		if err := dbStore.UpdateFolderFullpathsForFolders(ctx, evt.OrgID, evt.UIDs); err != nil {
+			logger.Error("Failed to update folder fullpaths for alert rules", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
+			return err
+		}
+		logger.Info("Updated folder fullpaths for alert rules", "folderUIDs", evt.UIDs)
+
 		return nil
 	})
+}
+
+// BackfillFolderFullpaths populates folder_fullpath for all existing alert rules.
+// This is a one-time operation that runs during startup after the migration.
+func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
+	// Get all organizations
+	orgIDs, err := ng.store.FetchOrgIds(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch organizations: %w", err)
+	}
+
+	anyBackfilled := false
+	for _, orgID := range orgIDs {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
+		var folderUIDs []string
+		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(`
+				SELECT DISTINCT namespace_uid
+				FROM alert_rule
+				WHERE org_id = ? AND folder_fullpath IS NULL
+			`, orgID).Find(&folderUIDs)
+		})
+		if err != nil {
+			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
+			continue
+		}
+
+		if len(folderUIDs) == 0 {
+			continue
+		}
+
+		if !anyBackfilled {
+			ng.Log.Info("Starting backfill of folder fullpaths for alert rules")
+			anyBackfilled = true
+		}
+
+		ng.Log.Info("Backfilling folder fullpaths", "org_id", orgID, "folder_count", len(folderUIDs))
+
+		// Use the existing sync method to populate fullpaths
+		if err := ng.store.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
+			ng.Log.Error("Failed to backfill folder fullpaths", "org_id", orgID, "error", err)
+			// Continue with next org instead of failing completely
+		}
+	}
+
+	if anyBackfilled {
+		ng.Log.Info("Completed backfill of folder fullpaths for alert rules")
+	}
+	return nil
 }
 
 // Run starts the scheduler and Alertmanager.
@@ -617,6 +681,14 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
 	children, subCtx := errgroup.WithContext(ctx)
+
+	// Run backfill job in background
+	children.Go(func() error {
+		if err := ng.BackfillFolderFullpaths(subCtx); err != nil {
+			ng.Log.Warn("Failed to backfill folder fullpaths", "error", err)
+		}
+		return nil
+	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

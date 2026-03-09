@@ -107,6 +107,7 @@ func newModuleServer(opts Options,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
+		healthNotifier:   NewHealthNotifier(),
 	}
 
 	return s, nil
@@ -153,6 +154,14 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+
+	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
+	// so that operators can signal readiness to the /readyz endpoint.
+	healthNotifier *HealthNotifier
+
+	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
+	// StorageServer and SearchServer module registrations. This is intended for tests.
+	StorageServiceOptions []sql.ServiceOption
 }
 
 // init initializes the server and its services.
@@ -203,6 +212,22 @@ func (s *ModuleServer) Run() error {
 		return s.grpcService, nil
 	})
 
+	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
+		var err error
+		if s.storageBackend == nil {
+			// If storage server not being used, disable GC, pruner, and RV manager
+			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if backendService, ok := s.storageBackend.(services.Service); ok {
+			return backendService, nil
+		}
+		return services.NewIdleService(nil, nil).WithName(modules.UnifiedBackend), nil
+	})
+
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
@@ -235,7 +260,7 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -243,7 +268,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
@@ -283,9 +308,10 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 							Commit:      s.commit,
 							BuildBranch: s.buildBranch,
 						},
-						CLIContext: cliContext,
-						Config:     s.cfg,
-						Registerer: s.registerer,
+						CLIContext:     cliContext,
+						Config:         s.cfg,
+						Registerer:     s.registerer,
+						HealthNotifier: s.healthNotifier,
 					}
 					return op.RunFunc(deps)
 				},

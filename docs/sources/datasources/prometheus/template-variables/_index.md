@@ -13,30 +13,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Prometheus template variables
+menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
-refs:
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  add-template-variables-add-ad-hoc-filters:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-  add-template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
-  add-template-variables-global-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
 ---
 
 # Prometheus template variables
@@ -44,7 +23,7 @@ refs:
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the displayed data.
 
-For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
+For an introduction to templating and template variables, refer to [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
 ## Use query variables
 
@@ -93,7 +72,7 @@ You can use global built-in variables in query variables, including the followin
 - `$__range_s`
 - `$__range_ms`
 
-For details, refer to [Global built-in variables](ref:add-template-variables-global-variables).
+For details, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
 The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
 
 Configure the variable’s `refresh` setting to `On Time Range Change` to ensure it dynamically queries and displays the correct instances when the dashboard time range is modified.
@@ -165,4 +144,4 @@ If you've enabled the `Multi-value` or `Include all value` options, Grafana conv
 
 ## Use the ad hoc filters variable type
 
-Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, allowing dynamic filtering without modifying individual queries.
+Prometheus supports the special [ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, allowing dynamic filtering without modifying individual queries.

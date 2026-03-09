@@ -7,6 +7,7 @@ import { Actions } from '../../Actions';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { PluginActions } from './PluginActions';
 import { QueryActionsMenu } from './QueryActionsMenu';
 import { SaveButton } from './SaveButton';
@@ -56,12 +57,27 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
   };
 
+  if (cardType === QueryEditorType.Alert) {
+    return null;
+  }
+
   return (
     <Stack gap={1} alignItems="center">
       <WarningBadges />
       <SaveButton parentRef={containerRef} />
       <PluginActions app={CoreApp.PanelEditor} />
-      <Actions contentHeader={true} item={item} onDelete={onDelete} onToggleHide={onToggleHide} />
+      <Actions
+        contentHeader={true}
+        item={item}
+        onDelete={onDelete}
+        onToggleHide={onToggleHide}
+        order={{
+          delete: 2,
+          hide: 1,
+          duplicate: 0,
+        }}
+      />
+      <ExperimentalFeedbackButton />
       {cardType === QueryEditorType.Transformation ? <TransformationActionButtons /> : <QueryActionsMenu />}
     </Stack>
   );

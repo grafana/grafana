@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,13 +24,14 @@ func TestMain(m *testing.M) {
 }
 func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 	store := db.InitTestDB(t)
+	cfg := setting.NewCfg()
 
 	user := &user.SignedInUser{
 		OrgID: 1,
 	}
 
 	// Create permission filters
-	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect())
+	p1 := permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, featuremgmt.WithFeatures(), true, store.GetDialect(), cfg.MaxNestedFolderDepth)
 	p2 := searchstore.OrgFilter{OrgId: 1}
 
 	// If DashboardUID is provided, it should be added as a filter
@@ -80,6 +82,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 		features:                  featuremgmt.WithFeatures(),
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: 100,
+		maxDepth:                  cfg.MaxNestedFolderDepth,
 	}
 
 	// First call without DashboardUID

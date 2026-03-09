@@ -27,7 +27,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { CellValues, Options } from './types';
+import { CellValues, Options } from './panelcfg.gen';
 import { boundedMinMax, valuesToFills } from './utils';
 
 export interface HeatmapData {
@@ -89,6 +89,11 @@ export function prepareHeatmapData({
   replaceVariables = (v) => v,
   timeRange,
 }: PrepareHeatmapDataOptions): HeatmapData {
+  // exclude empty frames
+  frames = frames.filter(
+    (frame) => frame.length > 0 && frame.fields.length > 0 && frame.fields.every((field) => field.values.length > 0)
+  );
+
   if (!frames?.length) {
     return {};
   }

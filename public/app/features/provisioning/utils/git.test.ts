@@ -1,6 +1,6 @@
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoHrefForProvider } from './git';
+import { getRepoFileUrl, getRepoHrefForProvider } from './git';
 
 // Partial specs for testing; getRepoHrefForProvider only reads type and provider url/branch/path.
 function spec(s: Partial<RepositorySpec>): RepositorySpec {
@@ -127,7 +127,7 @@ describe('buildRepoUrl', () => {
       ).toBe('https://bitbucket.org/workspace/repo/src/main');
     });
 
-    it('builds generic git href with tree segment', () => {
+    it('builds generic git href without tree segment', () => {
       expect(
         getRepoHrefForProvider(
           spec({
@@ -135,7 +135,7 @@ describe('buildRepoUrl', () => {
             git: { url: 'https://git.example.com/owner/repo.git', branch: 'main' },
           })
         )
-      ).toBe('https://git.example.com/owner/repo/tree/main');
+      ).toBe('https://git.example.com/owner/repo');
     });
   });
 
@@ -157,5 +157,62 @@ describe('buildRepoUrl', () => {
     it('returns undefined for unknown provider type', () => {
       expect(getRepoHrefForProvider({ type: 'unknown' } as unknown as RepositorySpec)).toBeUndefined();
     });
+  });
+});
+
+describe('getRepoFileUrl', () => {
+  it('joins pathPrefix and filePath with a slash', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/my-dashboard.json',
+        pathPrefix: 'grafana',
+      })
+    ).toBe('https://github.com/owner/repo/blob/main/grafana/dashboards/my-dashboard.json');
+  });
+
+  it('handles pathPrefix with trailing slash', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/my-dashboard.json',
+        pathPrefix: 'grafana/',
+      })
+    ).toBe('https://github.com/owner/repo/blob/main/grafana/dashboards/my-dashboard.json');
+  });
+
+  it('uses filePath as-is when pathPrefix is not set', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/my-dashboard.json',
+      })
+    ).toBe('https://github.com/owner/repo/blob/main/dashboards/my-dashboard.json');
+  });
+
+  it('returns undefined when url is missing', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: undefined,
+        filePath: 'dashboards/my-dashboard.json',
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when filePath is missing', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'github',
+        url: 'https://github.com/owner/repo',
+        filePath: undefined,
+      })
+    ).toBeUndefined();
   });
 });

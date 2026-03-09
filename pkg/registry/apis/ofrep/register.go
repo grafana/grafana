@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +23,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -138,6 +139,24 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				},
 			}}}
 
+	flagsResponse := &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: spec.MapProperty(nil),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -160,23 +179,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO... real type?
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -212,23 +215,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO, real type
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -252,16 +239,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, ns := b.validateNamespace(r)
-	b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
-	if !valid {
-		_ = tracing.Errorf(span, namespaceMismatchMsg)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error(namespaceMismatchMsg)
-		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-		return
-	}
-
 	span.SetAttributes(attribute.String("flag_key", flagKey))
 
 	isAuthedReq := b.isAuthenticatedRequest(r)
@@ -277,6 +254,16 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+		valid, ns := b.validateNamespace(r)
+		b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
+		if !valid {
+			_ = tracing.Errorf(span, namespaceMismatchMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(namespaceMismatchMsg)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
@@ -290,21 +277,21 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	r = r.WithContext(ctx)
 
-	valid, ns := b.validateNamespace(r)
-	b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
-
-	if !valid {
-		_ = tracing.Errorf(span, namespaceMismatchMsg)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error(namespaceMismatchMsg)
-		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
-		return
-	}
-
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
+		valid, ns := b.validateNamespace(r)
+		b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
+
+		if !valid {
+			_ = tracing.Errorf(span, namespaceMismatchMsg)
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			b.logger.Error(namespaceMismatchMsg)
+			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			return
+		}
+
 		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}
@@ -384,8 +371,8 @@ func (b *APIBuilder) validateNamespace(r *http.Request) (bool, string) {
 	span.SetAttributes(attribute.String("request.body", string(body)))
 
 	evalCtxNamespace := b.namespaceFromEvalCtx(body)
-	// "default" namespace case can only occur in on-prem grafana
-	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
+	// Remote providers MUST include namespace in evaluation context
+	if evalCtxNamespace == namespace {
 		span.SetAttributes(attribute.Bool("validation.success", true))
 		return true, evalCtxNamespace
 	}

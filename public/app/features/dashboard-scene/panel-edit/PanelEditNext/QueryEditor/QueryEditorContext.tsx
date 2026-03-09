@@ -20,6 +20,15 @@ export interface PendingExpression {
   insertAfter: string;
 }
 
+export interface PendingSavedQuery {
+  insertAfter: string;
+}
+
+export interface PendingTransformation {
+  insertAfter?: string;
+  showPicker?: boolean;
+}
+
 export interface DatasourceState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
@@ -36,6 +45,7 @@ export interface QueryRunnerState {
 export interface AlertingState {
   alertRules: AlertRule[];
   loading: boolean;
+  isDashboardSaved: boolean;
 }
 
 export interface PanelState {
@@ -78,9 +88,16 @@ export interface QueryEditorUIState {
   pendingExpression: PendingExpression | null;
   setPendingExpression: (pending: PendingExpression | null) => void;
   finalizePendingExpression: (type: ExpressionQueryType) => void;
+  pendingSavedQuery: PendingSavedQuery | null;
+  setPendingSavedQuery: (pending: PendingSavedQuery | null) => void;
+  pendingTransformation: PendingTransformation | null;
+  setPendingTransformation: (pending: PendingTransformation | null) => void;
+  finalizePendingTransformation: (transformationId: string) => void;
+  showVersionBanner: boolean;
 }
 
 export interface QueryEditorActions {
+  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
@@ -90,6 +107,7 @@ export interface QueryEditorActions {
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;
   deleteTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;

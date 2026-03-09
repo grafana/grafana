@@ -8,18 +8,20 @@ import { PullRequestButtons } from '../Repository/PullRequestButtons';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { StepStatusInfo } from '../Wizard/types';
+import { JobType } from '../types';
 
 import { JobSummary } from './JobSummary';
 import { getJobMessages } from './getJobMessage';
 
 export interface JobContentProps {
-  jobType: 'sync' | 'delete' | 'move';
+  jobType: JobType;
   job?: Job;
   isFinishedJob?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
+  onRetry?: () => void;
 }
 
-export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange }: JobContentProps) {
+export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
   const errorSetRef = useRef(false);
 
   const { state, message, progress, summary } = job?.status || {};
@@ -66,6 +68,10 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
               message: messages.error,
             },
             warning: warningInfo,
+            action: onRetry && {
+              label: t('provisioning.job-status.retry-action', 'Retry'),
+              onClick: onRetry,
+            },
           });
           errorSetRef.current = true;
         }
@@ -78,7 +84,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       default:
         break;
     }
-  }, [state, message, job, onStatusChange]);
+  }, [state, message, job, onStatusChange, onRetry]);
 
   if (!job?.status) {
     return null;

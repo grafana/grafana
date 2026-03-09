@@ -128,6 +128,8 @@ export function Drawer({
         motionAppear: true,
         motionName: styles.maskMotion,
       }}
+      // this is handled by floating-ui
+      autoFocus={false}
     >
       <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
         <div className={styles.container} ref={refs.setFloating}>

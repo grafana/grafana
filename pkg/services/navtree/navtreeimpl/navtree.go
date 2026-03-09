@@ -176,14 +176,9 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
-	// remove user access if empty. Happens if grafana-auth-app is not injected
-	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
-	}
-	// double-check and remove admin menu if empty
-	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
-	}
+	// NOTE: empty admin section cleanup is intentionally NOT done here.
+	// It happens in setIndexViewData (pkg/api/index.go) AFTER RunIndexDataHooks,
+	// so enterprise hooks have a chance to add items before empty sections are pruned.
 
 	if c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
@@ -222,7 +217,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
 		ctx := c.Req.Context()
 		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			var children []*navtree.NavLink
+			children := make([]*navtree.NavLink, 0, 1)
 			// setup guide (a submenu item under Home)
 			children = append(children, &navtree.NavLink{
 				Id:         "home-setup-guide",
@@ -438,10 +433,29 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
-		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
-			})
+		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
+		instanceAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead)))
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			// V2 Navigation: Group Alert activity and Alert groups under single parent (tabs managed on frontend)
+			if alertRulesAccess || instanceAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text:     "Alert activity",
+					SubTitle: "View alerts and active notifications",
+					Id:       "alert-activity",
+					Url:      s.cfg.AppSubURL + "/alerting/alerts",
+					Icon:     "bell",
+					IsNew:    true,
+				})
+			}
+		} else {
+			// Legacy: Show Alert activity as standalone
+			if alertRulesAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+				})
+			}
 		}
 	}
 
@@ -525,7 +539,12 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		// In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage)
+		if !isV2WithTriage {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		}
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature

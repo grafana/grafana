@@ -8,7 +8,6 @@ import (
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Schema Migration: v2beta1 → v2alpha1
@@ -50,7 +49,7 @@ func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2
 			ctx = scopeCtx
 		}
 	}
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.v2beta1_to_v2alpha1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2beta1_to_v2alpha1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 	)
@@ -75,7 +74,7 @@ func ConvertDashboard_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2
 }
 
 func convertDashboardSpec_V2beta1_to_V2alpha1(ctx context.Context, in *dashv2beta1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope) error {
-	_, span := tracing.Start(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2beta1_to_v2alpha1")
 	defer span.End()
 
 	// Convert annotations

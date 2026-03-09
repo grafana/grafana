@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -175,7 +176,8 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 				keys = append(keys, k)
 			}
 			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect())
+				cfg := setting.NewCfg()
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect(), cfg.MaxNestedFolderDepth)
 
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
@@ -348,7 +350,8 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 				keys = append(keys, k)
 			}
 			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect())
+				cfg := setting.NewCfg()
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect(), cfg.MaxNestedFolderDepth)
 
 				var result int
 				err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -443,7 +446,8 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 				db := setupNestedTest(t, usr, tc.permissions, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 				require.NoError(t, err)
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect())
+				cfg := setting.NewCfg()
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect(), cfg.MaxNestedFolderDepth)
 				var result []string
 				err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 					q, params := filter.Where()
@@ -543,7 +547,8 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				db := setupNestedTest(t, helperUser, []accesscontrol.Permission{}, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 				require.NoError(t, err)
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect())
+				cfg := setting.NewCfg()
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect(), cfg.MaxNestedFolderDepth)
 				var result []string
 				err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 					q, params := filter.Where()
@@ -653,7 +658,8 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 				db := setupNestedTest(t, usr, tc.signedInUserPermissions, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 				require.NoError(t, err)
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect())
+				cfg := setting.NewCfg()
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect(), cfg.MaxNestedFolderDepth)
 				var result []string
 				err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 					q, params := filter.Where()
@@ -680,7 +686,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	db, cfg := db.InitTestDBWithCfg(t)
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db)
+	fStore := folderimpl.ProvideStore(db, cfg)
 
 	// Create a signed-in user for folder creation
 	usr := &user.SignedInUser{
@@ -795,7 +801,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db)
+	fStore := folderimpl.ProvideStore(db, cfg)
 	// create in both the folder & dashboard tables
 	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:        "parent",

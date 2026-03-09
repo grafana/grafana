@@ -69,6 +69,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Sort alert rule groups by folder full path in the Prometheus rules API
+  * @default false
+  */
+  alertingRuleGroupSortByFolderFullpath?: boolean;
+  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
@@ -178,6 +183,16 @@ export interface FeatureToggles {
   * @default false
   */
   provisioning?: boolean;
+  /**
+  * Allow setting folder metadata for provisioned folders
+  * @default false
+  */
+  provisioningFolderMetadata?: boolean;
+  /**
+  * Enable export functionality for provisioned resources
+  * @default false
+  */
+  provisioningExport?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   * @default false
@@ -339,6 +354,16 @@ export interface FeatureToggles {
   */
   datasourcesRerouteLegacyCRUDAPIs?: boolean;
   /**
+  * Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * @default false
+  */
+  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
@@ -360,12 +385,12 @@ export interface FeatureToggles {
   alertingProvenanceLockWrites?: boolean;
   /**
   * Enables the UI to use certain backend-side filters
-  * @default false
+  * @default true
   */
   alertingUIUseBackendFilters?: boolean;
   /**
   * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
-  * @default false
+  * @default true
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
@@ -419,6 +444,11 @@ export interface FeatureToggles {
   */
   perPanelFiltering?: boolean;
   /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
@@ -433,6 +463,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingV2Layouts?: boolean;
+  /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -559,6 +594,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Enables configuring default origin filters for ad-hoc filter variables
+  * @default false
+  */
+  adHocFilterDefaultValues?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -604,10 +644,20 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
+  * Enables the Assistant button in the dashboard templates card
+  * @default false
+  */
+  dashboardTemplatesAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+  * @default false
+  */
+  alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
   * @default false
@@ -618,6 +668,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSavedSearches?: boolean;
+  /**
+  * Enables saved searches for the Alert Activity page
+  * @default false
+  */
+  alertingTriageSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
@@ -694,11 +749,6 @@ export interface FeatureToggles {
   * @default false
   */
   dataplaneAggregator?: boolean;
-  /**
-  * Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-  * @default true
-  */
-  newFiltersUI?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1098,6 +1148,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthZRolesRedirect?: boolean;
   /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
   */
@@ -1138,11 +1193,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthnMutation?: boolean;
   /**
-  * Routes external group mapping requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesExternalGroupMapping?: boolean;
-  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1157,6 +1207,11 @@ export interface FeatureToggles {
   * @default false
   */
   experimentRecentlyViewedDashboards?: boolean;
+  /**
+  * Enables the created by me search filter on the browse dashboards page
+  * @default false
+  */
+  createdByMeSearchFilter?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1197,11 +1252,6 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
-  /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
   /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
@@ -1249,7 +1299,7 @@ export interface FeatureToggles {
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
   /**
   * Enables sharing a list of APIs with a list of plugins
-  * @default false
+  * @default true
   */
   restrictedPluginApis?: boolean;
   /**
@@ -1324,7 +1374,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
-  * @default false
+  * @default true
   */
   newGauge?: boolean;
   /**
@@ -1347,6 +1397,11 @@ export interface FeatureToggles {
   * @default false
   */
   externalVizSuggestions?: boolean;
+  /**
+  * Limit the number of legend items by default, with an option to show all
+  * @default false
+  */
+  vizLegendSeriesLimit?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
@@ -1398,11 +1453,6 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
-  * Enables app platform API for annotations
-  * @default false
-  */
-  kubernetesAnnotations?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1448,6 +1498,11 @@ export interface FeatureToggles {
   */
   multiPropsVariables?: boolean;
   /**
+  * Enables support for section level variables (rows and tabs)
+  * @default false
+  */
+  dashboardSectionVariables?: boolean;
+  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1483,10 +1538,25 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
-  * Redirects the request to teams related endpoints to the app platform API
+  * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
   kubernetesTeamsHandlerRedirect?: boolean;
+  /**
+  * Enables user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersApi?: boolean;
+  /**
+  * Enables external group mapping APIs in the app platform
+  * @default false
+  */
+  kubernetesExternalGroupMappingsApi?: boolean;
+  /**
+  * Redirects the request of the external group mapping endpoints to the app platform APIs
+  * @default false
+  */
+  kubernetesExternalGroupMappingsRedirect?: boolean;
   /**
   * Use the new APIs for syncing users to teams
   * @default false
@@ -1497,6 +1567,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * @default false
+  */
+  appPluginAPIServer?: boolean;
   /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
@@ -1512,4 +1587,44 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryGlobal?: boolean;
+  /**
+  * Enables the notification history timeline in the triage instance details drawer
+  * @default false
+  */
+  alertingNotificationHistoryTriage?: boolean;
+  /**
+  * Whether to use the new React 19 runtime
+  * @default false
+  */
+  react19?: boolean;
+  /**
+  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
+  * @default false
+  */
+  frontendServiceUseSettingsService?: boolean;
+  /**
+  * Whether to use the new SharedPreferences functional component
+  * @default false
+  */
+  functionalSharedPreferences?: boolean;
+  /**
+  * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+  * @default false
+  */
+  managedPluginsV2?: boolean;
+  /**
+  * Remember the last viewed organization for users using SSO
+  * @default true
+  */
+  rememberUserOrgForSso?: boolean;
+  /**
+  * Registers the dsabstraction app for querying datasources via unified SQL
+  * @default false
+  */
+  dsAbstractionApp?: boolean;
+  /**
+  * Enables new analytics framework
+  * @default false
+  */
+  analyticsFramework?: boolean;
 }

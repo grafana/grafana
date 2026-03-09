@@ -8,7 +8,7 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
-import SharedPreferences from './SharedPreferences';
+import { SharedPreferences } from './SharedPreferences';
 
 setBackendSrv(backendSrv);
 setupMockServer();

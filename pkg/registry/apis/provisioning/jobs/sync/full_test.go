@@ -47,7 +47,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
-	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -66,7 +66,7 @@ func TestFullSync_Error(t *testing.T) {
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.EqualError(t, err, "compare changes: some error")
 }
 
@@ -86,7 +86,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.NoError(t, err)
 }
 
@@ -117,7 +117,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		Path:  "",
 	}, "").Return(nil)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.NoError(t, err)
 }
 
@@ -146,7 +146,7 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 		Path:  "",
 	}, "").Return(fmt.Errorf("folder creation failed"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "create root folder: folder creation failed")
 }
@@ -175,7 +175,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, fmt.Errorf("compare error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "compare changes: compare error")
 }
@@ -746,7 +746,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			})
 
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0))
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
@@ -1019,4 +1019,88 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionCreated, Path: "dashboards/a.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/b.json"},
+		{Action: repository.FileActionCreated, Path: "dashboards/c.json"},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 3).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	// First file: allowed, write succeeds
+	progress.On("HasDirPathFailedCreation", "dashboards/a.json").Return(false)
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/a.json", "").
+		Return("dash-a", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/a.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
+	})).Return().Once()
+
+	// Second and third files: quota exceeded, skipped
+	progress.On("HasDirPathFailedCreation", "dashboards/b.json").Return(false).Maybe()
+	progress.On("HasDirPathFailedCreation", "dashboards/c.json").Return(false).Maybe()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return (r.Path() == "dashboards/b.json" || r.Path() == "dashboards/c.json") &&
+			r.Warning() != nil && r.Error() == nil
+	})).Return().Maybe()
+
+	// Tracker: 9 out of 10, so only 1 creation allowed
+	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker)
+	require.NoError(t, err)
+
+	// WriteResourceFromFile should have been called only once (for "a.json")
+	repoResources.AssertNumberOfCalls(t, "WriteResourceFromFile", 1)
+}
+
+func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	compareFn := NewMockCompareFn(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+	})
+
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionUpdated, Path: "dashboards/existing.json"},
+	}
+
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil)
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
+
+	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "").
+		Return("dash-existing", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/existing.json" && r.Action() == repository.FileActionUpdated && r.Error() == nil
+	})).Return()
+
+	// Tracker already at limit — but updates should still proceed
+	tracker := quotas.NewInMemoryQuotaTracker(10, 10)
+
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracker)
+	require.NoError(t, err)
+
+	repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "")
 }

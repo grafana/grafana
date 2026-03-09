@@ -316,7 +316,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -339,7 +339,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -363,7 +363,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -392,7 +392,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"}, K8sRestrictedActions: []string{},
 					},
 				},
 			},
@@ -412,8 +412,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},
@@ -440,8 +441,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},
@@ -524,8 +526,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
-					SyncPermissions: true,
+					FetchSyncedUser:        true,
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
 		},

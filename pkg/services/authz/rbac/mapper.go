@@ -27,10 +27,6 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
-	// VerbForAction returns the K8s verb for the given RBAC action.
-	// If multiple verbs map to the same action, returns the first match.
-	// If no verb is found, returns empty string and false.
-	VerbForAction(action string) (string, bool)
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
 }
@@ -92,16 +88,6 @@ func (t translation) SkipScope(verb string) bool {
 	return false
 }
 
-// Reverse lookup: find which k8s verbs map to the RBAC action
-func (t translation) VerbForAction(action string) (string, bool) {
-	for verb, rbacAction := range t.verbMapping {
-		if rbacAction == action {
-			return verb, true
-		}
-	}
-	return "", false
-}
-
 func (t translation) Resource() string {
 	return t.resource
 }
@@ -111,6 +97,10 @@ type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource string) (Mapping, bool)
+	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
+	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
+	// Returns ("", false) if no translation is found.
+	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
 	// GetGroups returns all registered group names
@@ -313,6 +303,17 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"datasource.grafana.app": { // duplicate the query group here
+			"query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
+		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
 		},
@@ -374,6 +375,23 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	}
 
 	return &t, true
+}
+
+func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	groupKey, ok := m.findGroupKey(group)
+	if !ok {
+		return "", false
+	}
+	resources := m[groupKey]
+	if _, ok := resources[resource]; ok {
+		return resource, true
+	}
+	for apiResource, t := range resources {
+		if t.Resource() == resource {
+			return apiResource, true
+		}
+	}
+	return "", false
 }
 
 func (m mapper) GetAll(group string) []Mapping {

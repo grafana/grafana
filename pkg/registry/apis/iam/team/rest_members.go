@@ -162,14 +162,14 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		parsedResult, err := parseResults(searchResult, searchRequest.Offset)
+		parsedResult, err := parseResults(searchResult)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		result := &iamv0alpha1.GetMembersResponse{
-			GetMembersBody: parsedResult,
+		result := &iamv0alpha1.GetTeamMembersResponse{
+			GetTeamMembersBody: parsedResult,
 		}
 
 		responder.Object(http.StatusOK, result)
@@ -186,15 +186,15 @@ func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetMembersBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse) (iamv0alpha1.GetTeamMembersBody, error) {
 	if result == nil {
-		return iamv0alpha1.GetMembersBody{}, nil
+		return iamv0alpha1.GetTeamMembersBody{}, nil
 	}
 	if result.Error != nil {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
 	}
 	if result.Results == nil {
-		return iamv0alpha1.GetMembersBody{}, nil
+		return iamv0alpha1.GetTeamMembersBody{}, nil
 	}
 
 	subjectNameIDX := -1
@@ -220,28 +220,28 @@ func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv
 	}
 
 	if subjectNameIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT)
 	}
 	if teamRefIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM)
 	}
 	if permissionIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
 	}
 	if externalIDX < 0 {
-		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
+		return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
 	}
 
-	body := iamv0alpha1.GetMembersBody{
-		Items: make([]iamv0alpha1.GetMembersTeamUser, len(result.Results.Rows)),
+	body := iamv0alpha1.GetTeamMembersBody{
+		Items: make([]iamv0alpha1.GetTeamMembersTeamUser, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
 		if len(row.Cells) != len(result.Results.Columns) {
-			return iamv0alpha1.GetMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
+			return iamv0alpha1.GetTeamMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
 		}
 
-		body.Items[i] = iamv0alpha1.GetMembersTeamUser{
+		body.Items[i] = iamv0alpha1.GetTeamMembersTeamUser{
 			User:       string(row.Cells[subjectNameIDX]),
 			Team:       string(row.Cells[teamRefIDX]),
 			Permission: string(row.Cells[permissionIDX]),

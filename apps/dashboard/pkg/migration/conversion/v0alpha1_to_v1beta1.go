@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // prepareV0ConversionContext sets up the context with namespace and service identity
@@ -91,7 +90,7 @@ func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard,
 	}
 
 	sourceSchemaVersion := schemaversion.GetSchemaVersion(in.Spec.Object)
-	ctx, span := tracing.Start(ctx, "dashboard.conversion.v0alpha1_to_v1beta1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v0alpha1_to_v1beta1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 		attribute.String("source.version", dashv0.APIVERSION),

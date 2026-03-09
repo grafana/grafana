@@ -20,9 +20,9 @@ export const WelcomeBanner = () => {
         <Trans i18nKey="welcome.welcome-banner.welcome-to-grafana">Welcome to Grafana</Trans>
       </h1>
       <div className={styles.help}>
-        <h3 className={styles.helpText}>
+        <h2 className={styles.helpText}>
           <Trans i18nKey="welcome.welcome-banner.need-help">Need help?</Trans>
-        </h3>
+        </h2>
         <div className={styles.helpLinks}>
           {helpOptions.map((option, index) => (
             <TextLink
@@ -80,6 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'baseline',
     }),
     helpText: css({
+      ...theme.typography.h3,
       marginRight: theme.spacing(2),
       marginBottom: 0,
 

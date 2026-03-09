@@ -495,6 +495,7 @@ func TestDeleteDataSourceByName_IncludesUIDForPermissions(t *testing.T) {
 			pluginStore:        &pluginstore.FakePluginStore{},
 			DataSourcesService: mockDsService,
 			Live:               newTestLive(t),
+			AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		}
 
 		// Create scenario context

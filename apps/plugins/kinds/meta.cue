@@ -50,7 +50,7 @@ metaV0Alpha1: {
 	backend?:            bool
 	buildMode?:          string
 	builtIn?:            bool
-	category?:           "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
+	category?:           string
 	enterpriseFeatures?: #EnterpriseFeatures
 	executable?:         string
 	hideFromList?:       bool

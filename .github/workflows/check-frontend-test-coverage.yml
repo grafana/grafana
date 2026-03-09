@@ -2,6 +2,7 @@ name: Check Frontend Test Coverage
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - '**/*.js'
@@ -120,7 +121,7 @@ jobs:
         run: |
           TEAMS='${{ needs.setup.outputs.opted-in-teams }}'
           TEAM_LIST=$(echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"' | tr '\n' '\n')
-          
+
           {
             echo "message<<EOF"
             echo "## ⚠️ Frontend Test Coverage Checks Skipped"
@@ -192,7 +193,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install dependencies for manifest generation
-        run: yarn install --immutable
+        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           CYPRESS_INSTALL_BINARY: 0
@@ -220,7 +221,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check-affected.outputs.affected == 'true'
-        run: yarn install --immutable
+        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           CYPRESS_INSTALL_BINARY: 0
@@ -273,7 +274,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install dependencies for manifest and comparison
-        run: yarn install --immutable
+        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
           CYPRESS_INSTALL_BINARY: 0
@@ -347,7 +348,7 @@ jobs:
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
           fi
-          
+
           # Always capture the markdown output
           {
             echo "markdown<<EOF"
