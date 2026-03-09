@@ -1678,7 +1678,7 @@ describe('getDrilldownsApplicability', () => {
       );
     mockLanguageProvider({ fetchSuggestions: fetchSuggestionsSpy });
 
-    const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as Scope[];
+    const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as unknown as Scope[];
 
     const results = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'prod', operator: '=' }],
