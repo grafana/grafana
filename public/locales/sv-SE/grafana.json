@@ -9530,6 +9530,7 @@
       "log-base": "Loggbas"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Axel",
         "color-label": "Färg",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Jämförelseoperator",
+      "reducer-value-label": "",
       "select-field-placeholder": "Välj fältreducerare"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Docka menyn",
       "list-label": "Navigering",
-      "open": "Öppna meny",
+      "open": "",
       "undock": "Avdocka menyn"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "Anslutning krävs",
       "error-fetch-branches": "",
       "error-required": "Detta fält är obligatoriskt.",
+      "error-save-failed": "",
       "error-save-repository": "Det gick inte att spara lagringsplatsinställningar",
       "label-automatic-pulling": "Automatisk hämtning",
       "label-connection": "GitHub-appanslutning",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Min konfiguration"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Konfigurera webhooks</0> för att få omedelbara uppdateringar i Grafana så snart ändringar görs. Granska och godkänn ändringar med hjälp av pull-förfrågningar innan de publiceras.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub-funktioner",
-      "label-realtime-feedback": "Feedback i realtid"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(kräver <2>bildrendering</2> och att offentlig åtkomst är aktiverad)",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
       "description-sync-interval": "Hur ofta ändringar ska synkroniseras från lagringsplatsen",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Synkroniseringsintervall är obligatoriskt",
       "label-enable-previews": "Aktivera förhandsgranskningar av panelen i pull-förfrågningar",
       "label-generate-dashboard-previews": "Generera förhandsgranskningar av kontrollpanelen",
       "label-read-only": "Skrivskyddad",
-      "label-sync-interval": "Synkroniseringsintervall (sekunder)"
+      "label-sync-interval": "Synkroniseringsintervall (sekunder)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Varning",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Var medveten om följande begränsningar. Mer information ges i <2>Git Sync-dokumentationen</2>.",
       "alert-point-1": "Resurser kan fortfarande skapas, redigeras eller raderas under den här processen, men ändringar kanske inte exporteras.",

@@ -9482,6 +9482,7 @@
       "log-base": "记录基础"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "轴",
         "color-label": "颜色",
@@ -9771,6 +9772,7 @@
     },
     "field-value-matcher": {
       "operator-label": "比较运算符",
+      "reducer-value-label": "",
       "select-field-placeholder": "选择字段归约器"
     },
     "file-dropzone": {
@@ -11688,7 +11690,7 @@
       "dialog-label": "",
       "dock": "停靠菜单",
       "list-label": "导航",
-      "open": "打开菜单",
+      "open": "",
       "undock": "取消停靠菜单"
     },
     "megamenu-item": {
@@ -12570,6 +12572,7 @@
       "error-connection-required": "连接为必填项",
       "error-fetch-branches": "",
       "error-required": "此字段是必填字段。",
+      "error-save-failed": "",
       "error-save-repository": "保存存储库设置失败",
       "label-automatic-pulling": "自动拉取",
       "label-connection": "GitHub 应用连接",
@@ -12584,9 +12587,11 @@
       "placeholder-my-config": "我的配置"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>配置 Webhook</0>，以便在提交更改后立即在 Grafana 中获取更新。使用拉取请求审核和批准更改，然后再发布。",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub 功能",
-      "label-realtime-feedback": "实时反馈"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12734,11 +12739,14 @@
       "description-preview-requirements": "（需要启用<2>图像渲染</2>和公共访问权限）",
       "description-read-only": "无法通过 Grafana 修改资源。",
       "description-sync-interval": "从存储库同步更改的频率",
+      "description-webhook-url": "",
       "error-sync-interval-required": "同步间隔为必填项",
       "label-enable-previews": "在拉取请求中启用数据面板预览",
       "label-generate-dashboard-previews": "生成数据面板预览",
       "label-read-only": "只读",
-      "label-sync-interval": "间隔（秒）"
+      "label-sync-interval": "间隔（秒）",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13129,6 +13137,10 @@
       "make-sure": ""
     },
     "warning-title-default": "警告",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "请注意以下限制。有关更多详细信息，请参阅<2>Git 同步文档</2>。",
       "alert-point-1": "在此过程中仍然可以创建、编辑或删除资源，但可能无法导出更改。",

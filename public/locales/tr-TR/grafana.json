@@ -9530,6 +9530,7 @@
       "log-base": "Günlük tabanı"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Eksen",
         "color-label": "Renk",
@@ -9819,6 +9820,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Karşılaştırma işleci",
+      "reducer-value-label": "",
       "select-field-placeholder": "Alan azaltıcı seçin"
     },
     "file-dropzone": {
@@ -11744,7 +11746,7 @@
       "dialog-label": "",
       "dock": "Menüyü sabitle",
       "list-label": "Gezinme",
-      "open": "Menüyü aç",
+      "open": "",
       "undock": "Menünün sabitlemesini kaldır"
     },
     "megamenu-item": {
@@ -12632,6 +12634,7 @@
       "error-connection-required": "Bağlantı gerekli",
       "error-fetch-branches": "Dallar getirilemedi",
       "error-required": "Bu alan gereklidir.",
+      "error-save-failed": "",
       "error-save-repository": "Depo ayarları kaydedilemedi",
       "label-automatic-pulling": "Otomatik çekme",
       "label-connection": "GitHub Uygulaması bağlantısı",
@@ -12646,9 +12649,11 @@
       "placeholder-my-config": "Yapılandırmam"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "Değişiklikler gönderildiği anda Grafana'da anlık güncellemeler almak için <0>web kancalarını yapılandırın</0>. Değişiklikleri kullanıma sunmadan önce çekme isteklerini kullanarak gözden geçirip onaylayın.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub özellikleri",
-      "label-realtime-feedback": "Gerçek zamanlı geri bildirim"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12802,14 @@
       "description-preview-requirements": "(<2>görsel oluşturma</2> ve herkese açık erişimin etkinleştirilmesi gerekir)",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-sync-interval": "Depodaki değişikliklerin ne sıklıkta eşitleneceği",
+      "description-webhook-url": "",
       "error-sync-interval-required": "Sync aralığı gereklidir",
       "label-enable-previews": "Çekme isteklerinde pano ön izlemelerini etkinleştir",
       "label-generate-dashboard-previews": "Pano Ön İzlemeleri Oluştur",
       "label-read-only": "Salt okunur",
-      "label-sync-interval": "Eşitleme Aralığı (saniye)"
+      "label-sync-interval": "Eşitleme Aralığı (saniye)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13202,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Uyarı",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Lütfen aşağıdaki sınırlamalara dikkat edin. Daha fazla ayrıntı için <2>Git Senkronizasyonu belgelerine</2> bakın.",
       "alert-point-1": "Bu işlem sırasında kaynaklar hâlâ oluşturulabilir, düzenlenebilir veya silinebilir ancak yapılan değişiklikler dışa aktarılamayabilir.",
