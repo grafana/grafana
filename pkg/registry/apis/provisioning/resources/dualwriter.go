@@ -2,8 +2,10 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -171,15 +173,38 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// When the feature flag is enabled, write a _folder.json with a stable UID
-	// for this folder only. Intermediate ancestor folders are not given a
-	// _folder.json automatically — they receive one only when explicitly created.
+	// When the feature flag is enabled, write folder metadata for every path segment
+	// (ancestor and leaf), skipping any segment that already has one.
 	var stableUID string
 	if r.folderMetadataEnabled {
-		uid := util.GenerateShortUID()
-		manifest := NewFolderManifest(uid, safepath.Base(opts.Path))
-		var err error
-		stableUID, err = WriteFolderMetadata(ctx, r.repo, opts.Path, manifest, opts.Ref, opts.Message)
+		leafPath := strings.TrimSuffix(opts.Path, "/")
+		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
+			folderPath := segPath + "/"
+			existing, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			if readErr == nil {
+				if segPath == leafPath {
+					return apierrors.NewAlreadyExists(
+						provisioning.RepositoryResourceInfo.GroupResource(),
+						opts.Path,
+					)
+				}
+				// Ancestor already has folder metadata; reuse its UID
+				stableUID = existing.Name
+				return nil
+			}
+			if !errors.Is(readErr, repository.ErrFileNotFound) {
+				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
+			}
+			// Not found: write a new folder metadata file
+			uid := util.GenerateShortUID()
+			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
+			var writeErr error
+			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
+			if writeErr != nil {
+				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
+			}
+			return nil
+		})
 		if err != nil {
 			return nil, err
 		}
