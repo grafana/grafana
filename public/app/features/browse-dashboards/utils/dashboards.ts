@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { TEAM_FOLDERS_UID } from 'app/core/components/NestedFolderPicker/useTeamOwnedFolder';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 
@@ -10,6 +11,16 @@ export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
 
 export function isSharedWithMe(uid: string) {
   return uid === config.sharedWithMeFolderUID;
+}
+
+export function isTeamFolders(uid: string) {
+  return uid === TEAM_FOLDERS_UID;
+}
+
+export const TEAM_FOLDER_PREFIX = 'teamfolder-team-';
+
+export function isTeamFolderItem(uid: string) {
+  return uid.startsWith(TEAM_FOLDER_PREFIX);
 }
 
 // Construct folder URL and append orgId to it
