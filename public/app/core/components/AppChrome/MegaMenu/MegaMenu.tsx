@@ -18,7 +18,7 @@ import { MegaMenuControls } from './MegaMenuControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
-import { usePinnedItems } from './hooks';
+import { useMegaMenuControls, usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
@@ -38,6 +38,7 @@ export const MegaMenu = memo(
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
     const { isAvailable: isAssistantAvailable } = useAssistant();
+    const megaMenuControlsEnabled = useMegaMenuControls();
 
     const [navTree, setFilteredNavTree] = useState<NavModelItem[]>(rawNavTree);
     const [menuFilterValue, setMenuFilterValue] = useState<string>('');
@@ -149,7 +150,7 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <MegaMenuControls onFilterChange={onFilterChange} />
+        {megaMenuControlsEnabled && <MegaMenuControls onFilterChange={onFilterChange} />}
 
         <nav className={styles.content}>
           {menuFilterValue && navItems.length === 0 && (

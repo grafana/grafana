@@ -3,6 +3,7 @@ import { getWrapper, render, screen, userEvent } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { AppChromeService } from '../AppChromeService';
@@ -107,6 +108,14 @@ describe('MegaMenu', () => {
   });
 
   describe('mega menu controls', () => {
+    beforeAll(() => {
+      setTestFlags({ megaMenuControls: true });
+    });
+
+    afterAll(() => {
+      setTestFlags({});
+    });
+
     describe('expand/collapse', () => {
       it('should expand and collapse all sections', async () => {
         const allExpectedChildItems = ['Child1', 'Grandchild1', 'Child2'];
@@ -115,7 +124,7 @@ describe('MegaMenu', () => {
         allExpectedChildItems.forEach((item) => {
           expect(screen.queryByText(item)).not.toBeInTheDocument();
         });
-
+        await screen.findByRole('button', { name: 'Expand all sections' });
         await user.click(await screen.findByRole('button', { name: 'Expand all sections' }));
 
         allExpectedChildItems.forEach((item) => {
