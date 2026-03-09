@@ -9,29 +9,40 @@ import { Options } from './panelcfg.gen';
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
     const category = [t('logs.category-logs', 'Logs')];
-    builder
-      .addBooleanSwitch({
-        path: 'showTime',
-        name: t('logs.name-time', 'Show timestamps'),
-        category,
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        path: 'showLabels',
-        name: t('logs.name-unique-labels', 'Unique labels'),
-        category,
-        description: '',
-      });
+    builder.addBooleanSwitch({
+      path: 'showTime',
+      name: t('logs.name-time', 'Show timestamps'),
+      category,
+      description: '',
+      defaultValue: false,
+    });
 
     if (config.featureToggles.newLogsPanel) {
-      builder.addBooleanSwitch({
-        path: 'showLevel',
-        name: t('logs.name-show-level', 'Display log level'),
-        category,
-        defaultValue: true,
-        description: '',
-      });
+      builder
+        .addRadio({
+          path: 'timestampResolution',
+          name: t('logs.timestamp-format', 'Timestamp resolution'),
+          category,
+          description: '',
+          defaultValue: 'ms',
+          showIf: (currentOptions) => Boolean(currentOptions.showTime),
+          settings: {
+            options: [
+              { value: 'ms', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
+              {
+                value: 'ns',
+                label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
+              },
+            ],
+          },
+        })
+        .addBooleanSwitch({
+          path: 'showLevel',
+          name: t('logs.name-show-level', 'Display log level'),
+          category,
+          defaultValue: true,
+          description: '',
+        });
     }
 
     if (!config.featureToggles.newLogsPanel) {
@@ -42,19 +53,18 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         description: '',
         defaultValue: false,
       });
-    } else if (context.options?.showTime) {
+    } else {
       builder.addRadio({
-        path: 'timestampResolution',
-        name: t('logs.timestamp-format', 'Timestamp resolution'),
+        path: 'fontSize',
+        name: t('logs.name-font-size', 'Font size'),
         category,
         description: '',
-        defaultValue: 'ms',
         settings: {
           options: [
-            { value: 'ms', label: t('logs.logs.timestamp-resolution.label-milliseconds', 'Milliseconds') },
+            { value: 'default', label: t('logs.font-size-options.label-default', 'Default') },
             {
-              value: 'ns',
-              label: t('logs.logs.timestamp-resolution.label-nanoseconds', 'Nanoseconds'),
+              value: 'small',
+              label: t('logs.font-size-options.label-small', 'Small'),
             },
           ],
         },
@@ -65,7 +75,10 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       path: 'wrapLogMessage',
       name: t('logs.name-wrap-lines', 'Wrap lines'),
       category,
-      description: '',
+      description: t(
+        'logs.description-wrap-lines',
+        'Display logs as a single line or wrap long log entries to fit the panel'
+      ),
       defaultValue: false,
     });
 
@@ -73,21 +86,20 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       path: 'unwrappedColumns',
       name: t('logs.name-unwrapped-columns', 'Enable columns for displayed fields'),
       category,
-      description: 'Align values using columns when using displayed fields',
+      description: t('logs.description-unwrapped-columns', 'Align values using columns when using displayed fields'),
       defaultValue: false,
       showIf: (currentOptions) => Boolean(currentOptions.wrapLogMessage) === false,
     });
 
     // In the old panel this is an independent option, in the new panel is linked to wrapLogMessage
-    if (!config.featureToggles.newLogsPanel || context.options?.wrapLogMessage) {
-      builder.addBooleanSwitch({
-        path: 'prettifyLogMessage',
-        name: t('logs.name-prettify-json', 'Prettify JSON'),
-        category,
-        description: '',
-        defaultValue: false,
-      });
-    }
+    builder.addBooleanSwitch({
+      path: 'prettifyLogMessage',
+      name: t('logs.name-prettify-json', 'Prettify JSON'),
+      category,
+      description: t('logs.description-prettify-json', 'Format JSON log entries with indentation and line breaks.'),
+      showIf: (currentOptions) => !config.featureToggles.newLogsPanel || Boolean(currentOptions.wrapLogMessage),
+      defaultValue: config.featureToggles.newLogsPanel ? true : false,
+    });
 
     if (config.featureToggles.newLogsPanel) {
       builder.addBooleanSwitch({
@@ -109,12 +121,13 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: true,
     });
 
-    if (config.featureToggles.newLogsPanel && context.options?.enableLogDetails) {
+    if (config.featureToggles.newLogsPanel) {
       builder.addRadio({
         path: 'detailsMode',
         name: t('logs.name-details-mode', 'Log details panel mode'),
         category,
         description: '',
+        showIf: (currentOptions) => Boolean(currentOptions.enableLogDetails),
         settings: {
           options: [
             { value: 'inline', label: t('logs.name-details-options.label-inline', 'Inline') },
@@ -165,33 +178,24 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
     }
 
     if (config.featureToggles.newLogsPanel) {
-      builder
-        .addBooleanSwitch({
-          path: 'showControls',
-          name: t('logs.name-show-controls', 'Show controls'),
-          category,
-          description: t(
-            'logs.description-show-controls',
-            'Display controls to jump to the last or first log line, and filters by log level'
-          ),
-          defaultValue: false,
-        })
-        .addRadio({
-          path: 'fontSize',
-          name: t('logs.name-font-size', 'Font size'),
-          category,
-          description: '',
-          settings: {
-            options: [
-              { value: 'default', label: t('logs.font-size-options.label-default', 'Default') },
-              {
-                value: 'small',
-                label: t('logs.font-size-options.label-small', 'Small'),
-              },
-            ],
-          },
-        });
+      builder.addBooleanSwitch({
+        path: 'showControls',
+        name: t('logs.name-show-controls', 'Show controls'),
+        category,
+        description: t(
+          'logs.description-show-controls',
+          'Display controls to jump to the last or first log line, and filters by log level'
+        ),
+        defaultValue: false,
+      });
     }
+
+    builder.addBooleanSwitch({
+      path: 'showLabels',
+      name: t('logs.name-unique-labels', 'Unique labels'),
+      category,
+      description: '',
+    });
 
     builder
       .addRadio({
@@ -229,7 +233,10 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         path: 'sortOrder',
         name: t('logs.name-order', 'Order'),
         category,
-        description: '',
+        description: t(
+          'logs.description-order',
+          'Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.'
+        ),
         settings: {
           options: [
             { value: LogsSortOrder.Descending, label: t('logs.order-options.label-newest-first', 'Newest first') },
