@@ -60,10 +60,10 @@ func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([
 
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
 func (st DBstore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return st.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
+	return st.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(models.AlertConfiguration) error { return nil })
 }
 
-type SaveCallback func() error
+type SaveCallback func(models.AlertConfiguration) error
 
 // SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
 // If the callback results in error it rolls back the transaction.
@@ -99,7 +99,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			st.Logger.Warn("Failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
-		if err := callback(); err != nil {
+		if err := callback(config); err != nil {
 			return err
 		}
 

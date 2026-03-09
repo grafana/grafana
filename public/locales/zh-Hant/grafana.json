@@ -9482,6 +9482,7 @@
       "log-base": "日誌基礎"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "軸",
         "color-label": "色彩",
@@ -9771,6 +9772,7 @@
     },
     "field-value-matcher": {
       "operator-label": "比較運算子",
+      "reducer-value-label": "",
       "select-field-placeholder": "選擇欄位還原程式"
     },
     "file-dropzone": {
@@ -11688,7 +11690,7 @@
       "dialog-label": "",
       "dock": "快速存取功能表",
       "list-label": "導覽",
-      "open": "開啟選單",
+      "open": "",
       "undock": "取消快速存取功能表"
     },
     "megamenu-item": {
@@ -12570,6 +12572,7 @@
       "error-connection-required": "連線為必填",
       "error-fetch-branches": "",
       "error-required": "此為必填欄位。",
+      "error-save-failed": "",
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
       "label-connection": "GitHub 應用程式連線",
@@ -12584,9 +12587,11 @@
       "placeholder-my-config": "我的設定"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>設定 webhook</0>，以便在提交變更時在 Grafana 中即時取得更新。在變更上線之前，使用拉取請求來檢查並核准變更。",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub 功能",
-      "label-realtime-feedback": "即時意見回饋"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12734,11 +12739,14 @@
       "description-preview-requirements": "（需要<2>圖片轉譯</2>並啟用公開存取權）",
       "description-read-only": "無法透過 Grafana 修改資源。",
       "description-sync-interval": "從儲存庫同步變更的頻率",
+      "description-webhook-url": "",
       "error-sync-interval-required": "同步間隔為必填",
       "label-enable-previews": "在拉取請求中啟用儀表板預覽",
       "label-generate-dashboard-previews": "產生儀表板預覽",
       "label-read-only": "唯讀",
-      "label-sync-interval": "同步間隔（秒）"
+      "label-sync-interval": "同步間隔（秒）",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13129,6 +13137,10 @@
       "make-sure": ""
     },
     "warning-title-default": "警告",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "請注意以下限制。如需更多詳細資訊，請參閱 <2>Git 同步文件</2>。",
       "alert-point-1": "在此過程中，仍可建立、編輯或刪除資源，但可能無法匯出變更。",
