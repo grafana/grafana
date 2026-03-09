@@ -6473,9 +6473,15 @@
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TeamBindingspecSubject": {
         "type": "object",
         "required": [
+          "kind",
           "name"
         ],
         "properties": {
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
           "name": {
             "description": "uid of the identity",
             "type": "string",
