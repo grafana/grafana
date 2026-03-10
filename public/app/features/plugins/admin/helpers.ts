@@ -401,19 +401,6 @@ export function isManagedPlugin(id: string, remote?: RemotePlugin) {
   return pluginCatalogManagedPlugins?.includes(id) || remoteManaged;
 }
 
-/**
- * isCloudManagedPlugin considers the info returned by grafana-com to determine if a plugin is managed in cloud.
- * Since it also affects plugins not owned by grafana it's valid only in cloud.
- * @param plugin - The plugin to check.
- * @returns True if the plugin is managed by grafana in cloud environment.
- */
-export function isCloudManagedPlugin(plugin?: RemotePlugin) {
-  if (!plugin) {
-    return false;
-  }
-  return Boolean(plugin.managed.enabled) && config.pluginAdminExternalManageEnabled;
-}
-
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
   const { pluginCatalogPreinstalledPlugins } = config;
 
