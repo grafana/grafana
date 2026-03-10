@@ -1,4 +1,4 @@
-import { ResourceAction } from '../hooks/usePullRequestParam';
+export type ResourceAction = 'create' | 'delete';
 
 type ResourceBranchUrlOptions = {
   baseUrl?: string;

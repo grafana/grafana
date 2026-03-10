@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 
 import { textUtil } from '@grafana/data';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
-import { ResourceAction, usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isValidRepoType } from '../../guards';
+import { ResourceAction } from '../../utils/redirect';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 

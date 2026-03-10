@@ -3,8 +3,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
-import { ResourceAction, usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
+import { ResourceAction } from '../../utils/redirect';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
