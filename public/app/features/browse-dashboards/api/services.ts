@@ -25,6 +25,17 @@ async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   });
 }
 
+const virtualFolderBase = {
+  kind: 'folder',
+  url: '',
+  panel_type: '',
+  tags: [],
+  location: '',
+  ds_uid: [],
+  score: 0,
+  explain: {},
+};
+
 async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
   const searcher = getGrafanaSearcher();
   const foldersResults = await searcher.search({
@@ -42,16 +53,9 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   // picker for now. In the future we could to additional request to see if there are any children in it.
   if (!parentUID && config.sharedWithMeFolderUID) {
     folders.unshift({
-      kind: 'folder',
-      name: t('browse-dashboards.shared-with-me', 'Shared with me'),
+      ...virtualFolderBase,
       uid: config.sharedWithMeFolderUID,
-      url: '',
-      panel_type: '',
-      tags: [],
-      location: '',
-      ds_uid: [],
-      score: 0,
-      explain: {},
+      name: t('browse-dashboards.shared-with-me', 'Shared with me'),
     });
   }
 
@@ -59,16 +63,9 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   if (!parentUID && config.featureToggles.teamFolders) {
     const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
     folders.splice(insertIndex, 0, {
-      kind: 'folder',
-      name: t('browse-dashboards.team-folders', 'Team folders'),
+      ...virtualFolderBase,
+      name: t('browse-dashboards.my-team-folders', 'My team folders'),
       uid: TEAM_FOLDERS_UID,
-      url: '',
-      panel_type: '',
-      tags: [],
-      location: '',
-      ds_uid: [],
-      score: 0,
-      explain: {},
     });
   }
 
@@ -96,18 +93,21 @@ export async function listFolders(
     }
   }
 
-  return folders.map((item) => ({
-    kind: 'folder',
-    uid: item.uid,
-    title: item.title,
-    parentTitle,
-    parentUID,
-    managedBy: extractManagerKind(item.managedBy),
-    // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
-    url: isSharedWithMe(item.uid) || isTeamFolders(item.uid) || isTeamFolderItem(item.uid)
-      ? undefined
-      : getFolderURL(item.uid),
-  }));
+  return folders.map(({ uid, title, managedBy }) => {
+    const noUrl = isSharedWithMe(uid) || isTeamFolders(uid) || isTeamFolderItem(uid);
+    return {
+      kind: 'folder',
+      uid,
+      title,
+      parentTitle,
+      parentUID,
+      managedBy: extractManagerKind(managedBy),
+      url: noUrl
+        ? undefined
+        : // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
+          getFolderURL(uid),
+    };
+  });
 }
 
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {
@@ -143,13 +143,6 @@ function parseTeamUID(uid: string): string {
   return uid.slice(TEAM_FOLDER_PREFIX.length);
 }
 
-// Stores team avatar URLs keyed by virtual folder UID (e.g. "teamfolder-team-{uid}")
-const teamAvatarsByUID = new Map<string, string>();
-
-export function getTeamAvatarUrl(uid: string): string | undefined {
-  return teamAvatarsByUID.get(uid);
-}
-
 /**
  * Fetches the user's teams and returns a virtual folder item per team that owns at least one folder.
  */
@@ -181,18 +174,13 @@ export async function listTeamFolders(dispatch: ThunkDispatch): Promise<Dashboar
   // Return one virtual folder per team that has folders
   return teams
     .filter((team) => teamsWithFolders.has(team.uid!))
-    .map((team) => {
-      const uid = teamFolderUID(team.uid!);
-      if (team.avatarUrl) {
-        teamAvatarsByUID.set(uid, team.avatarUrl);
-      }
-      return {
-        kind: 'folder' as const,
-        uid,
-        title: team.name!,
-        parentUID: TEAM_FOLDERS_UID,
-      };
-    });
+    .map((team) => ({
+      kind: 'folder' as const,
+      uid: teamFolderUID(team.uid!),
+      title: team.name!,
+      parentUID: TEAM_FOLDERS_UID,
+      avatarUrl: team.avatarUrl,
+    }));
 }
 
 /**

@@ -10,10 +10,9 @@ import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
-import { getTeamAvatarUrl } from '../api/services';
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { DashboardsTreeCellProps } from '../types';
-import { isTeamFolderItem, makeRowID } from '../utils/dashboards';
+import { makeRowID } from '../utils/dashboards';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -29,7 +28,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
-  const teamAvatarUrl = item.kind !== 'ui' ? getTeamAvatarUrl(item.uid) : undefined;
+  const avatarUrl = item.kind !== 'ui' ? item.avatarUrl : undefined;
 
   if (item.kind === 'ui') {
     return (
@@ -89,8 +88,8 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
       <div className={styles.iconNameContainer}>
         {isLoading && <Spinner size={ICON_SIZE} />}
-        {!isLoading && teamAvatarUrl && <Avatar src={teamAvatarUrl} alt={item.title} width={2} height={2} />}
-        {!isLoading && !teamAvatarUrl && <Icon size={ICON_SIZE} name={iconName} />}
+        {!isLoading && avatarUrl && <Avatar src={avatarUrl} alt={item.title} width={2} height={2} />}
+        {!isLoading && !avatarUrl && <Icon size={ICON_SIZE} name={iconName} />}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
