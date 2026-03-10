@@ -12,32 +12,6 @@ labels:
 title: Configure the Grafana Pyroscope data source
 menuTitle: Configure Pyroscope
 weight: 200
-refs:
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-  flame-graph:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-  configure-tempo-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
-    - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
-  explore-profiles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
 ---
 
 # Configure the Grafana Pyroscope data source
@@ -50,7 +24,7 @@ This page explains how to set up and enable the data source capabilities using G
 If you make any changes, select **Save & test** to preserve those changes.
 
 If you're using your own installation of Grafana, you can provision the Pyroscope data source using a YAML configuration file.
-For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources).
 
 ## Before you begin
 
@@ -104,7 +78,7 @@ If you are running a self-managed Grafana instance or need to configure an addit
 The connection URL for a self-managed Pyroscope backend depends on how Pyroscope is deployed.
 Refer to the steps under [Query profiles in Grafana](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/deploy-kubernetes/helm/#query-profiles-in-grafana) for more information on how to configure the data source.
 
-If you plan to use the [Profiles Drilldown](ref:explore-profiles) application and you are running a self-managed Pyroscope backend in microservices mode, the data source connection URL should point to a gateway or proxy that routes requests to the corresponding Pyroscope service.
+If you plan to use the [Profiles Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/) application and you are running a self-managed Pyroscope backend in microservices mode, the data source connection URL should point to a gateway or proxy that routes requests to the corresponding Pyroscope service.
 Refer to the [Helm ingress configuration](https://github.com/grafana/pyroscope/blob/main/operations/pyroscope/helm/pyroscope/templates/ingress.yaml) for specific routing requirements.
 
 ## Authentication

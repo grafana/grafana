@@ -9,17 +9,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	// Create a test repository with a malformed dashboard file
 	const repo = "job-warning-test-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -57,7 +58,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 
 	// Verify that the warning message mentions the malformed resource
 	found := false
-	expectedWarningMsg := "writing resource from file dashboard1.json: failed to parse file: resource validation failed: file does not contain a valid resource: unable to read file (file: dashboard1.json, name: , action: created)"
+	expectedWarningMsg := "writing resource from file dashboard1.json: failed to parse file: resource validation failed: file does not contain a valid resource: unable to read file (file: dashboard1.json, action: created)"
 	for _, warningMsg := range jobObj.Status.Warnings {
 		fmt.Println(warningMsg)
 		if warningMsg == expectedWarningMsg {
@@ -72,11 +73,11 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	// Create a test repository with a dashboard file missing the name field
 	const repo = "job-warning-missing-name-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -120,11 +121,11 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	// Create a test repository with a dashboard file with refresh interval too low
 	const repo = "job-warning-refresh-interval-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -168,12 +169,12 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 
 	// Create a test repository with two dashboard files that share the same metadata.name.
 	// The second file processed should trigger a "duplicate resource name" validation warning.
 	const repo = "job-warning-duplicate-name-repo"
-	testRepo := TestRepo{
+	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{

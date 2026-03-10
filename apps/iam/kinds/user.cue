@@ -25,6 +25,7 @@ userv0alpha1: userKind & {
 	routes: {
 		"/teams": {
 			"GET": {
+				name: "getUserTeams",
 				response: {
 					#UserTeam: {
 						user: string

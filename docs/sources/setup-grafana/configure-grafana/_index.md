@@ -370,6 +370,10 @@ Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
 
+{{< admonition type="caution" >}}
+SQLite isn't recommended for production environments; use MySQL or PostgreSQL for production deployments.
+{{< /admonition >}}
+
 #### `type`
 
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
@@ -507,8 +511,9 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
-Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
+Example connection string: `network=tcp,addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
+- `network` (optional) can be `tcp` or `unix`.
 - `addr` is the host `:` port of the Redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to Redis.
 - `db` (optional) is the number identifier of the Redis database you want to use.
@@ -1918,6 +1923,18 @@ The interval between gossip full state syncs. Setting this interval lower (more 
 The default value is `60s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
+
+#### `ha_single_node_evaluation`
+
+Enable single-node evaluation mode for alerting in high availability. When enabled, only one Grafana instance in the cluster evaluates alert rules instead of all instances evaluating all rules. This reduces query load on data sources from N times to 1. The default value is `false`.
+
+Requires high availability clustering to be configured (either Memberlist or Redis).
+
+For more information, refer to [Single-node evaluation mode](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#single-node-evaluation-mode).
+
+#### `ha_single_evaluation_alert_broadcast_queue_size`
+
+The size of the message queue used to broadcast alerts from the primary instance to other instances in single-node evaluation mode. Increase this value if you have many alert rules and see broadcast messages being dropped. The default value is `200`. Only used when `ha_single_node_evaluation` is `true`.
 
 #### `execute_alerts`
 

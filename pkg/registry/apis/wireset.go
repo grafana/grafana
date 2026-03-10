@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -51,6 +52,7 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
+	extras.ProvideQuotaGetter,
 )
 
 var WireSet = wire.NewSet(
@@ -79,4 +81,5 @@ var WireSet = wire.NewSet(
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
+	appplugin.RegisterAPIService,
 )
