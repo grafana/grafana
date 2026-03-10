@@ -322,13 +322,12 @@ test.describe('Scope Redirect Functionality', () => {
       await expect(page).not.toHaveURL(/scopes=/);
 
       // Re-apply the same scope — now that edit mode is off, redirect should fire.
-      // Skip waiting for network responses: both the tree and individual scope data are
-      // already cached in ScopesSelectorService state from the first open, so no new
-      // requests will be made for those. applyScopes still mocks the bindings/navigations
-      // endpoints which use scope-specific URLs and won't be cached.
+      // Skip waiting for all network responses: the tree, scope data, and dashboard
+      // bindings/navigations are all either cached or cancelled by the redirect navigation
+      // itself. The routes from the first apply are still registered so mocks still work.
       await openScopesSelector(page);
       await selectScope(page, 'sn-redirect-fallback');
-      await applyScopes(page, [scopes[1]]);
+      await applyScopes(page);
 
       // Should now redirect from cuj-dashboard-3 to cuj-dashboard-2
       await expect(page).toHaveURL(/\/d\/cuj-dashboard-2/);
