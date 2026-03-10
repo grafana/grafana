@@ -9,30 +9,28 @@ const setup = (jsx: JSX.Element) => {
     user: userEvent.setup({
       // Ensure that user events correctly advance timers:
       // https://github.com/testing-library/react-testing-library/issues/1197
-      advanceTimers: jest.advanceTimersByTime,
+      advanceTimers: vi.advanceTimersByTime,
     }),
     ...render(jsx),
   };
 };
 
 describe('ClipboardButton', () => {
-  const originalWindow = { ...window };
+  const originalIsSecureContext = window.isSecureContext;
 
   beforeAll(() => {
-    jest.useFakeTimers();
-    Object.assign(window, {
-      isSecureContext: true,
-    });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(window, 'isSecureContext', { value: true, writable: true });
   });
 
   afterAll(() => {
-    Object.assign(window, originalWindow);
-    jest.useRealTimers();
+    Object.defineProperty(window, 'isSecureContext', { value: originalIsSecureContext, writable: true });
+    vi.useRealTimers();
   });
 
   it('should copy text to clipboard when clicked', async () => {
     const textToCopy = 'Copy me!';
-    const onClipboardCopy = jest.fn();
+    const onClipboardCopy = vi.fn();
 
     const { user } = setup(
       <ClipboardButton getText={() => textToCopy} onClipboardCopy={onClipboardCopy}>
@@ -45,7 +43,7 @@ describe('ClipboardButton', () => {
     expect(await screen.findByText('Copied')).toBeInTheDocument();
 
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
 
     expect(screen.queryByText('Copied')).not.toBeInTheDocument();

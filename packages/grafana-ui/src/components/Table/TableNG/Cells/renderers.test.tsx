@@ -59,9 +59,9 @@ describe('TableNG Cells renderers', () => {
         values,
         config: {},
         state: {},
-        display: jest.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
+        display: vi.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
         // @ts-ignore: this mock works fine for this test.
-        getLinks: jest.fn(() => [
+        getLinks: vi.fn(() => [
           {
             title: 'example',
             href: 'http://example.com',
@@ -88,10 +88,8 @@ describe('TableNG Cells renderers', () => {
           cellOptions={cellOptions}
           cellInspect={false}
           showFilters={false}
-          getActions={jest.fn(() => [
-            { title: 'Action', onClick: jest.fn(() => {}), confirmation: jest.fn(), style: {} },
-          ])}
-          getTextColorForBackground={jest.fn(() => '#000000')}
+          getActions={vi.fn(() => [{ title: 'Action', onClick: vi.fn(() => {}), confirmation: vi.fn(), style: {} }])}
+          getTextColorForBackground={vi.fn(() => '#000000')}
         />
       );
     };
@@ -110,7 +108,7 @@ describe('TableNG Cells renderers', () => {
             height={100}
             width={100}
             theme={createTheme()}
-            getTextColorForBackground={jest.fn(() => '#000000')}
+            getTextColorForBackground={vi.fn(() => '#000000')}
             cellOptions={cellOptions}
             cellInspect={false}
             showFilters={false}

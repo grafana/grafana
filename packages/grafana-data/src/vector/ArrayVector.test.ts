@@ -7,7 +7,7 @@ import { ArrayVector } from './ArrayVector';
 
 describe('ArrayVector', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'warn').mockImplementation();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   it('should init 150k with 65k Array.push() chonking', () => {

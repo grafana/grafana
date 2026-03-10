@@ -15,8 +15,8 @@ const createMockXAxis = () => {
 
 const createMockConfigBuilder = () => {
   return {
-    setState: jest.fn(),
-    getState: jest.fn(() => ({ isPanning: false })),
+    setState: vi.fn(),
+    getState: vi.fn<UPlotConfigBuilder['getState']>(() => ({ isPanning: false })),
   } satisfies Partial<UPlotConfigBuilder>;
 };
 
@@ -40,13 +40,13 @@ const createMockUPlot = (xAxisElement: HTMLElement) => {
         range: () => [1000, 2000],
       },
     },
-    setScale: jest.fn(),
+    setScale: vi.fn(),
   } satisfies Partial<uPlot>;
 };
 
 describe('XAxisInteractionAreaPlugin', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('calculatePanRange', () => {
@@ -72,13 +72,13 @@ describe('XAxisInteractionAreaPlugin', () => {
   });
 
   describe('setupXAxisPan', () => {
-    let mockQueryZoom: jest.Mock;
+    let mockQueryZoom: (range: { from: number; to: number }) => void;
     let mockConfigBuilder: ReturnType<typeof createMockConfigBuilder>;
     let xAxisElement: HTMLElement;
     let mockUPlot: ReturnType<typeof createMockUPlot>;
 
     beforeEach(() => {
-      mockQueryZoom = jest.fn();
+      mockQueryZoom = vi.fn<(range: { from: number; to: number }) => void>();
       mockConfigBuilder = createMockConfigBuilder();
       xAxisElement = createMockXAxis();
       mockUPlot = createMockUPlot(xAxisElement);
@@ -87,7 +87,7 @@ describe('XAxisInteractionAreaPlugin', () => {
 
     afterEach(() => {
       document.body.innerHTML = '';
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should handle missing x-axis element gracefully', () => {

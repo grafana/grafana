@@ -84,7 +84,7 @@ describe('FieldCache', () => {
 
       // Because we're using duplicate field names in the test case, we need to disable the warning,
       // so it doesn't show up in the test output
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       fieldCache = new FieldCache(frame);
       consoleWarnSpy.mockRestore();
     });

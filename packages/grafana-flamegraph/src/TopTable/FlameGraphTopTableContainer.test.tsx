@@ -14,13 +14,13 @@ describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
-    const onSearch = jest.fn();
-    const onSandwich = jest.fn();
+    const onSearch = vi.fn();
+    const onSandwich = vi.fn();
 
     const renderResult = render(
       <FlameGraphTopTableContainer
         data={container}
-        onSymbolClick={jest.fn()}
+        onSymbolClick={vi.fn()}
         onSearch={onSearch}
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
@@ -33,7 +33,7 @@ describe('FlameGraphTopTableContainer', () => {
   it('should render correctly', async () => {
     // Needed for AutoSizer to work in test
     Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
+      value: vi.fn(() => ({
         width: 500,
         height: 500,
       })),
@@ -65,7 +65,7 @@ describe('FlameGraphTopTableContainer', () => {
   it('should render search and sandwich buttons', async () => {
     // Needed for AutoSizer to work in test
     Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
+      value: vi.fn(() => ({
         width: 500,
         height: 500,
         left: 0,

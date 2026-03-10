@@ -8,7 +8,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     label: 'Test',
     labelWidth: 11,
     value: 10,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   Object.assign(props, propOverrides);

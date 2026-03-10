@@ -194,7 +194,7 @@ describe('Slider', () => {
 
   // the rest of the tests are uncontrolled already, don't need to separately test that
   it('can be a controlled input', async () => {
-    const mockOnChange = jest.fn();
+    const mockOnChange = vi.fn();
     const props: SliderProps = {
       ...sliderProps,
       onChange: mockOnChange,

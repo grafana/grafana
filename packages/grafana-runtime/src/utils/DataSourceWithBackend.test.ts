@@ -47,7 +47,7 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
   }
 }
 
-const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
+const mockDatasourceRequest = vi.fn();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
@@ -55,28 +55,26 @@ const backendSrv = {
   },
 } as unknown as BackendSrv;
 
-jest.mock('../services', () => ({
-  ...jest.requireActual('../services'),
+vi.mock('../services', async (importOriginal) => ({
+  ...(await importOriginal()),
   getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: (ref?: DataSourceRef) => ({
-        type: ref?.type ?? '<mocktype>',
-        uid: ref?.uid ?? '<mockuid>',
-      }),
-    };
-  },
+  getDataSourceSrv: () => ({
+    getInstanceSettings: (ref?: DataSourceRef) => ({
+      type: ref?.type ?? '<mocktype>',
+      uid: ref?.uid ?? '<mockuid>',
+    }),
+  }),
 }));
-jest.mock('./publicDashboardQueryHandler');
+vi.mock('./publicDashboardQueryHandler');
 
 describe('DataSourceWithBackend', () => {
   beforeEach(async () => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2023-10-13'));
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2023-10-13'));
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test('check the executed queries', () => {
@@ -342,7 +340,7 @@ describe('DataSourceWithBackend', () => {
 
   test('should apply template variables only for the current data source', () => {
     const { mock, ds } = createMockDatasource();
-    ds.applyTemplateVariables = jest.fn();
+    ds.applyTemplateVariables = vi.fn();
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,

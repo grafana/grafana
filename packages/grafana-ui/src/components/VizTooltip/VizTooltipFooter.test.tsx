@@ -9,7 +9,7 @@ import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
 
 describe('VizTooltipFooter', () => {
   it('should fire onclick', async () => {
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const field: Field = {
       name: '',
       type: FieldType.string,
@@ -25,7 +25,7 @@ describe('VizTooltipFooter', () => {
       target: undefined,
     };
     //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     render(
       <MemoryRouter>
@@ -34,11 +34,11 @@ describe('VizTooltipFooter', () => {
     );
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
-    jest.spyOn(console, 'warn').mockRestore();
+    vi.spyOn(console, 'warn').mockRestore();
   });
 
   it('should render ad hoc filter button and fire onclick', async () => {
-    const onFilterClick = jest.fn();
+    const onFilterClick = vi.fn();
     const adHocFilter: AdHocFilterModel = {
       key: 'testKey',
       operator: '=',
@@ -60,8 +60,8 @@ describe('VizTooltipFooter', () => {
   });
 
   it('should not render ad hoc filter button when there are one-click links', () => {
-    const onFilterClick = jest.fn();
-    const onClick = jest.fn();
+    const onFilterClick = vi.fn();
+    const onClick = vi.fn();
     const field: Field = {
       name: '',
       type: FieldType.string,
@@ -95,8 +95,8 @@ describe('VizTooltipFooter', () => {
   });
 
   it('should render filter by grouping buttons and fire onclick', async () => {
-    const onForClick = jest.fn();
-    const onOutClick = jest.fn();
+    const onForClick = vi.fn();
+    const onOutClick = vi.fn();
 
     const filterByGroupedLabels = {
       onFilterForGroupedLabels: onForClick,
@@ -124,11 +124,11 @@ describe('VizTooltipFooter', () => {
 
   it('should not render filter by grouping buttons when there are one-click links', () => {
     const filterByGroupedLabels = {
-      onFilterForGroupedLabels: jest.fn(),
-      onFilterOutGroupedLabels: jest.fn(),
+      onFilterForGroupedLabels: vi.fn(),
+      onFilterOutGroupedLabels: vi.fn(),
     };
 
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const field: Field = {
       name: '',
       type: FieldType.string,

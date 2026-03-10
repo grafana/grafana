@@ -19,7 +19,7 @@ beforeEach(() => {
 
 beforeAll(() => {
   // @TODO remove or move this, required for testing combobox 😮‍💨
-  const mockGetBoundingClientRect = jest.fn(() => ({
+  const mockGetBoundingClientRect = vi.fn(() => ({
     width: 120,
     height: 120,
     top: 0,
@@ -34,7 +34,7 @@ beforeAll(() => {
 
 describe('listing contact points', () => {
   it('should show a sorted list of contact points', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     // render the contact point selector with includeUnusable=true to show all
     const { user } = render(<ContactPointSelector onChange={onChangeHandler} includeUnusable />);
@@ -64,7 +64,7 @@ describe('filtering out unusable contact points', () => {
   });
 
   it('should filter out unusable contact points by default', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     // Default behavior: filter out unusable contact points
     const { user } = render(<ContactPointSelector onChange={onChangeHandler} />);
@@ -92,7 +92,7 @@ describe('filtering out unusable contact points', () => {
   });
 
   it('should show all contact points when includeUnusable is true', async () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
 
     const { user } = render(<ContactPointSelector onChange={onChangeHandler} includeUnusable />);
     await user.click(screen.getByRole('combobox'));

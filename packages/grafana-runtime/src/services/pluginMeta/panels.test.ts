@@ -17,14 +17,14 @@ import { initPluginMetas, refetchPluginMetas } from './plugins';
 import { panel, panels } from './test-fixtures/config.panels';
 import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 
-jest.mock('./plugins', () => ({
-  ...jest.requireActual('./plugins'),
-  initPluginMetas: jest.fn(),
-  refetchPluginMetas: jest.fn(),
+vi.mock('./plugins', async (importOriginal) => ({
+  ...(await importOriginal()),
+  initPluginMetas: vi.fn(),
+  refetchPluginMetas: vi.fn(),
 }));
 
-const initPluginMetasMock = jest.mocked(initPluginMetas);
-const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
+const initPluginMetasMock = vi.mocked(initPluginMetas);
+const refetchPluginMetasMock = vi.mocked(refetchPluginMetas);
 
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
@@ -38,7 +38,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and panels is not initialized', () => {
     beforeEach(() => {
       setPanelPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [] });
     });
 
@@ -95,7 +95,7 @@ describe('when useMTPlugins flag is enabled', () => {
   describe('and panels is initialized', () => {
     beforeEach(() => {
       setPanelPluginMetas({ 'grafana-test-panel': panel });
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -205,18 +205,18 @@ describe('when useMTPlugins flag is enabled', () => {
     let backendSrv: BackendSrv;
     beforeEach(() => {
       setPanelPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       refetchPluginMetasMock.mockResolvedValue(v0alpha1Response);
       backendSrv = {
-        chunked: jest.fn(),
-        delete: jest.fn(),
-        fetch: jest.fn(),
-        patch: jest.fn(),
-        post: jest.fn(),
-        put: jest.fn(),
-        get: jest.fn().mockResolvedValue({ panels }),
-        request: jest.fn(),
-        datasourceRequest: jest.fn(),
+        chunked: vi.fn(),
+        delete: vi.fn(),
+        fetch: vi.fn(),
+        patch: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        get: vi.fn().mockResolvedValue({ panels }),
+        request: vi.fn(),
+        datasourceRequest: vi.fn(),
       };
       setBackendSrv(backendSrv);
     });
@@ -272,7 +272,7 @@ describe('when useMTPlugins flag is disabled', () => {
   describe('and panels is not initialized', () => {
     beforeEach(() => {
       setPanelPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -328,7 +328,7 @@ describe('when useMTPlugins flag is disabled', () => {
   describe('and panels is initialized', () => {
     beforeEach(() => {
       setPanelPluginMetas({ 'grafana-test-panel': panel });
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it('getPanelPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -408,18 +408,18 @@ describe('when useMTPlugins flag is disabled', () => {
     let backendSrv: BackendSrv;
     beforeEach(() => {
       setPanelPluginMetas({});
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       refetchPluginMetasMock.mockResolvedValue({ items: [] });
       backendSrv = {
-        chunked: jest.fn(),
-        delete: jest.fn(),
-        fetch: jest.fn(),
-        patch: jest.fn(),
-        post: jest.fn(),
-        put: jest.fn(),
-        get: jest.fn().mockResolvedValue({ panels }),
-        request: jest.fn(),
-        datasourceRequest: jest.fn(),
+        chunked: vi.fn(),
+        delete: vi.fn(),
+        fetch: vi.fn(),
+        patch: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        get: vi.fn().mockResolvedValue({ panels }),
+        request: vi.fn(),
+        datasourceRequest: vi.fn(),
       };
       setBackendSrv(backendSrv);
     });
@@ -445,7 +445,7 @@ describe('when useMTPlugins flag is disabled', () => {
     });
 
     it('should return the last result for concurrent calls', async () => {
-      backendSrv.get = jest
+      backendSrv.get = vi
         .fn()
         .mockResolvedValueOnce({ panels })
         .mockResolvedValue({ panels: { alertlist: panels.alertlist } });
@@ -468,7 +468,7 @@ describe('when useMTPlugins flag is disabled', () => {
 describe('immutability', () => {
   beforeEach(() => {
     setPanelPluginMetas({ 'grafana-test-panel': panel });
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('getPanelPluginMetas should return a deep clone', async () => {

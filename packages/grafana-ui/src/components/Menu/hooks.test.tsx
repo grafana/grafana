@@ -94,7 +94,7 @@ describe('useMenuFocus', () => {
 
   it('calls close on ArrowLeft and unfocuses all items', async () => {
     const ref = createRef<HTMLDivElement>();
-    const close = jest.fn();
+    const close = vi.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref, close }));
     const [handleKeys] = result.current;
     const { rerender } = render(getMenuElement(ref, handleKeys));
@@ -118,8 +118,8 @@ describe('useMenuFocus', () => {
 
   it('forwards keydown and open events', async () => {
     const ref = createRef<HTMLDivElement>();
-    const onOpen = jest.fn();
-    const onKeyDown = jest.fn();
+    const onOpen = vi.fn();
+    const onKeyDown = vi.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref, onOpen, onKeyDown }));
     const [handleKeys] = result.current;
 
@@ -144,7 +144,7 @@ describe('useMenuFocus', () => {
 
   it('clicks focused item when Enter key is pressed', async () => {
     const ref = createRef<HTMLDivElement>();
-    const onClick = jest.fn();
+    const onClick = vi.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
     const [handleKeys] = result.current;
     const { rerender } = render(getMenuElement(ref, handleKeys, undefined, onClick));
@@ -161,7 +161,7 @@ describe('useMenuFocus', () => {
 
   it('calls onClose on Tab or Escape', async () => {
     const ref = createRef<HTMLDivElement>();
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref, onClose }));
     const [handleKeys] = result.current;
 

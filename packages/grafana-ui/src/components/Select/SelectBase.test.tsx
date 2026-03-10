@@ -13,7 +13,7 @@ const selectOptionInTest = async (input: HTMLElement, optionOrOptions: string | 
   await waitFor(() => select(input, optionOrOptions, { container: document.body }));
 
 describe('SelectBase', () => {
-  const onChangeHandler = jest.fn();
+  const onChangeHandler = vi.fn();
   const options: Array<SelectableValue<number>> = [
     {
       label: 'Option 1',
@@ -199,7 +199,7 @@ describe('SelectBase', () => {
     });
 
     it('call onChange handler when option is selected', async () => {
-      const spy = jest.fn();
+      const spy = vi.fn();
 
       render(<SelectBase onChange={spy} options={options} aria-label="My select" />);
 
@@ -214,7 +214,7 @@ describe('SelectBase', () => {
     });
 
     it('hideSelectedOptions prop - when false does not hide selected', async () => {
-      render(<SelectBase onChange={jest.fn()} options={options} aria-label="My select" hideSelectedOptions={false} />);
+      render(<SelectBase onChange={vi.fn()} options={options} aria-label="My select" hideSelectedOptions={false} />);
 
       const selectEl = screen.getByLabelText('My select');
 

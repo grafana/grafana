@@ -6,7 +6,7 @@ import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../ser
 
 import { usePluginUserStorage, _clearStorageCache } from './userStorage';
 
-const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
+const request = vi.fn();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
@@ -14,28 +14,23 @@ const backendSrv = {
   },
 } as unknown as BackendSrv;
 
-jest.mock('../services', () => ({
-  ...jest.requireActual('../services'),
+vi.mock('../services', async (importOriginal) => ({
+  ...(await importOriginal()),
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('@grafana/data', () => {
-  const storeMocks = {
-    get: jest.fn(),
-    set: jest.fn(),
-  };
-  return {
-    ...jest.requireActual('@grafana/data'),
-    usePluginContext: jest.fn().mockReturnValue({ meta: { id: 'plugin-id' } }),
-    store: storeMocks,
-  };
-});
+const storeMocks = vi.hoisted(() => ({
+  get: vi.fn(),
+  set: vi.fn(),
+}));
 
-// Get reference to the mocked store for use in tests
-const getStoreMocks = () => {
-  const { store } = require('@grafana/data');
-  return store;
-};
+vi.mock('@grafana/data', async (importOriginal) => ({
+  ...(await importOriginal()),
+  usePluginContext: vi.fn().mockReturnValue({ meta: { id: 'plugin-id' } }),
+  store: storeMocks,
+}));
+
+const getStoreMocks = () => storeMocks;
 
 describe('userStorage', () => {
   const originalConfig = cloneDeep(config);

@@ -34,7 +34,7 @@ describe('<SecretInput />', () => {
   });
 
   it('should be possible to reset a configured secret', async () => {
-    const onReset = jest.fn();
+    const onReset = vi.fn();
 
     render(<SecretInput isConfigured={true} onChange={() => {}} onReset={onReset} placeholder={PLACEHOLDER_TEXT} />);
 
@@ -49,7 +49,7 @@ describe('<SecretInput />', () => {
   });
 
   it('should be possible to change the value of the secret', async () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     render(<SecretInput isConfigured={false} onChange={onChange} onReset={() => {}} placeholder={PLACEHOLDER_TEXT} />);
 

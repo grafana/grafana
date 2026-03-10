@@ -4,20 +4,20 @@ import { useState } from 'react';
 
 import { ConfirmModal } from './ConfirmModal';
 
-jest.useFakeTimers();
+vi.useFakeTimers({ shouldAdvanceTime: true });
 
 describe('ConfirmModal', () => {
-  const mockOnConfirm = jest.fn();
+  const mockOnConfirm = vi.fn();
 
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should render correct title, body, dismiss-, alternative- and confirm-text', () => {
@@ -168,7 +168,7 @@ describe('ConfirmModal', () => {
       expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
     });
 
-    jest.runAllTimers();
+    vi.runAllTimers();
     await waitFor(() => {
       return expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeEnabled();
     });
@@ -211,14 +211,14 @@ describe('ConfirmModal', () => {
 
     // Ensure React processes the state update and calls useEffect in ConfirmModal
     await act(() => {
-      jest.advanceTimersByTime(0);
+      vi.advanceTimersByTime(0);
     });
 
     expect(confirmButton).toBeDisabled();
 
     // Fast-forward time by 4 seconds
     await act(() => {
-      jest.advanceTimersByTime(4000);
+      vi.advanceTimersByTime(4000);
     });
 
     await waitFor(() => {

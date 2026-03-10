@@ -4,12 +4,12 @@ import { TemporaryAlert } from './TemporaryAlert';
 
 describe('TemporaryAlert', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('full component life cycle', async () => {
@@ -20,7 +20,7 @@ describe('TemporaryAlert', () => {
     expect(screen.getByTestId('data-testid Alert error')).toBeInTheDocument();
     expect(screen.getByText('Error message')).toBeInTheDocument();
 
-    act(() => jest.runAllTimers());
+    act(() => vi.runAllTimers());
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
     expect(screen.queryByText('Error message')).not.toBeInTheDocument();
   });

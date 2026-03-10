@@ -5,34 +5,34 @@ import { DatePicker } from './DatePicker';
 
 describe('DatePicker', () => {
   it('does not render calendar when isOpen is false', () => {
-    render(<DatePicker isOpen={false} onChange={jest.fn()} onClose={jest.fn()} />);
+    render(<DatePicker isOpen={false} onChange={vi.fn()} onClose={vi.fn()} />);
 
     expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
   });
 
   it('renders calendar when isOpen is true', () => {
-    render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={jest.fn()} />);
+    render(<DatePicker isOpen={true} onChange={vi.fn()} onClose={vi.fn()} />);
 
     expect(screen.getByTestId('date-picker')).toBeInTheDocument();
   });
 
   it('renders calendar with default date', () => {
-    render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={jest.fn()} value={new Date(1400000000000)} />);
+    render(<DatePicker isOpen={true} onChange={vi.fn()} onClose={vi.fn()} value={new Date(1400000000000)} />);
 
     expect(screen.getByText('May 2014')).toBeInTheDocument();
   });
 
   it('renders calendar with date passed in', () => {
-    render(<DatePicker isOpen={true} value={new Date(1607431703363)} onChange={jest.fn()} onClose={jest.fn()} />);
+    render(<DatePicker isOpen={true} value={new Date(1607431703363)} onChange={vi.fn()} onClose={vi.fn()} />);
 
     expect(screen.getByText('December 2020')).toBeInTheDocument();
   });
 
   it('calls onChange when date is selected', async () => {
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     const user = userEvent.setup();
 
-    render(<DatePicker isOpen={true} onChange={onChange} onClose={jest.fn()} />);
+    render(<DatePicker isOpen={true} onChange={onChange} onClose={vi.fn()} />);
 
     expect(onChange).not.toHaveBeenCalled();
 
@@ -43,10 +43,10 @@ describe('DatePicker', () => {
   });
 
   it('calls onClose when outside of wrapper is clicked', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const user = userEvent.setup();
 
-    render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={onClose} />);
+    render(<DatePicker isOpen={true} onChange={vi.fn()} onClose={onClose} />);
 
     expect(onClose).not.toHaveBeenCalled();
 

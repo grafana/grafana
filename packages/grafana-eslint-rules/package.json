@@ -8,7 +8,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+    "test": "vitest --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts --maxWorkers ${TEST_MAX_WORKERS:-100%} --shard=${TEST_SHARD:-1}/${TEST_SHARD_TOTAL:-1}"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,9 @@
     "@typescript-eslint/types": "^8.54.0",
     "eslint": "9.32.0",
     "jest": "29.7.0",
-    "tslib": "2.8.1"
+    "tslib": "2.8.1",
+    "vitest": "^4.0.18",
+    "vitest-fail-on-console": "^0.10.1"
   },
   "private": true
 }

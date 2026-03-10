@@ -39,10 +39,6 @@ describe('DataLinksCell', () => {
         { href: 'http://asdasd2.com', title: 'Test Title2' } as LinkModel,
       ];
 
-      jest.mock('../utils', () => ({
-        getCellLinks: () => linksForField,
-      }));
-
       const field = getFieldWithLinks(linksForField);
 
       render(<DataLinksCell field={field} rowIdx={0} />);
@@ -57,10 +53,6 @@ describe('DataLinksCell', () => {
         { href: 'http://asdasd.com', title: 'Test Title' } as LinkModel,
         { title: 'Test Title2' } as LinkModel,
       ];
-
-      jest.mock('../utils', () => ({
-        getCellLinks: () => linksForField,
-      }));
 
       const field = getFieldWithLinks(linksForField);
 

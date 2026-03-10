@@ -8,7 +8,7 @@ import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
+    const mockGetBoundingClientRect = vi.fn(() => ({
       width: 120,
       height: 120,
       top: 0,
@@ -34,7 +34,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+    render(<MultiCombobox options={options} value={[]} onChange={vi.fn()} />);
     const input = screen.getByRole('combobox');
     user.click(input);
     expect(await screen.findByText('A')).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} />);
+    render(<MultiCombobox options={options} value={['a']} onChange={vi.fn()} />);
     expect(screen.getByText('A')).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} placeholder="Select" />);
+    render(<MultiCombobox options={options} value={[]} onChange={vi.fn()} placeholder="Select" />);
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
@@ -68,7 +68,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} placeholder="Select" />);
+    render(<MultiCombobox options={options} value={['a']} onChange={vi.fn()} placeholder="Select" />);
     const input = screen.getByRole('combobox');
     expect(input).toHaveAttribute('placeholder', '');
   });
@@ -82,7 +82,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: second },
       { label: 'C', value: third },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     const ControlledMultiCombobox = (props: MultiComboboxProps<string | number>) => {
       const [value, setValue] = React.useState<string[] | number[]>([]);
@@ -125,7 +125,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
 
     const ControlledMultiCombobox = (props: MultiComboboxProps<string>) => {
       const [value, setValue] = React.useState<string[]>(['a']);
@@ -157,7 +157,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
+    render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={vi.fn()} />);
     await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
@@ -168,7 +168,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<MultiCombobox options={options} value={[]} onChange={onChange} createCustomValue />);
     const input = screen.getByRole('combobox');
     await user.click(input);
@@ -183,7 +183,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<MultiCombobox options={options} value={['a', 'c']} onChange={onChange} createCustomValue />);
     const input = screen.getByRole('combobox');
     await user.click(input);
@@ -202,7 +202,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} />);
     const fistPillRemoveButton = await screen.findByRole('button', { name: 'Remove A' });
     await user.click(fistPillRemoveButton);
@@ -215,7 +215,7 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const onChange = jest.fn();
+    const onChange = vi.fn();
     render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} isClearable />);
     const clearAllButton = await screen.findByTitle('Clear all');
     await user.click(clearAllButton);
@@ -229,7 +229,7 @@ describe('MultiCombobox', () => {
         { label: 'B', value: 'b' },
         { label: 'C', value: 'c' },
       ];
-      render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={vi.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
       expect(await screen.findByRole('option', { name: 'All' })).toBeInTheDocument();
@@ -241,7 +241,7 @@ describe('MultiCombobox', () => {
         { label: 'B', value: 'b' },
         { label: 'C', value: 'c' },
       ];
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<MultiCombobox width={200} options={options} value={['a']} onChange={onChange} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
@@ -260,7 +260,7 @@ describe('MultiCombobox', () => {
         { label: 'B', value: 'b' },
         { label: 'C', value: 'c' },
       ];
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(
         <MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} enableAllOption />
       );
@@ -276,7 +276,7 @@ describe('MultiCombobox', () => {
         { label: 'B', value: 'b' },
         { label: 'C', value: 'c' },
       ];
-      render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={vi.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
       await user.type(input, 'b');
@@ -285,7 +285,7 @@ describe('MultiCombobox', () => {
 
     it('should not render All when only one option is available and enableAll is true', async () => {
       const options = [{ label: 'A', value: 'a' }];
-      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      render(<MultiCombobox width={200} options={options} onChange={vi.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
       expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument();
@@ -293,7 +293,7 @@ describe('MultiCombobox', () => {
 
     it('should not select option when only one option is available and enableAll is true', async () => {
       const options = [{ label: 'A', value: 'a' }];
-      render(<MultiCombobox width={200} options={options} onChange={jest.fn()} enableAllOption />);
+      render(<MultiCombobox width={200} options={options} onChange={vi.fn()} enableAllOption />);
       const input = screen.getByRole('combobox');
       await user.click(input);
 
@@ -304,19 +304,16 @@ describe('MultiCombobox', () => {
   });
 
   describe('async', () => {
-    const onChangeHandler = jest.fn();
+    const onChangeHandler = vi.fn();
     let user: ReturnType<typeof userEvent.setup>;
 
-    beforeAll(() => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       user = userEvent.setup({ delay: null });
-      jest.useFakeTimers();
-    });
-
-    afterAll(() => {
-      jest.useRealTimers();
     });
 
     afterEach(() => {
+      vi.useRealTimers();
       onChangeHandler.mockReset();
     });
 
@@ -324,20 +321,20 @@ describe('MultiCombobox', () => {
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
 
     it('should allow async options', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={[]} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+      await act(async () => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
 
     it('should allow async options and select value', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={[]} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
@@ -350,7 +347,7 @@ describe('MultiCombobox', () => {
     });
 
     it('should retain values not returned by the async function', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={[{ value: 'Option 69' }]} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
@@ -363,7 +360,7 @@ describe('MultiCombobox', () => {
     });
 
     it('should ignore late responses', async () => {
-      const asyncOptions = jest.fn(async (searchTerm: string) => {
+      const asyncOptions = vi.fn(async (searchTerm: string) => {
         if (searchTerm === 'a') {
           return promiseResolvesWith([{ value: 'first' }], 1500);
         } else if (searchTerm === 'ab') {
@@ -381,33 +378,33 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       await user.keyboard('a');
-      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
+      act(() => vi.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('b');
-      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
+      act(() => vi.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
 
       await user.keyboard('c');
-      act(() => jest.advanceTimersByTime(500)); // Resolve the second request, should be ignored
+      act(() => vi.advanceTimersByTime(500)); // Resolve the second request, should be ignored
 
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'third' })).not.toBeInTheDocument();
 
-      jest.advanceTimersByTime(800); // Resolve the third request, should be shown
+      vi.advanceTimersByTime(800); // Resolve the third request, should be shown
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
       expect(await screen.findByRole('option', { name: 'third' })).toBeInTheDocument();
 
-      jest.advanceTimersByTime(1500); // Resolve the first request, should be ignored
+      vi.advanceTimersByTime(1500); // Resolve the first request, should be ignored
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
 
-      jest.clearAllTimers();
+      vi.clearAllTimers();
     });
 
     it('should debounce requests', async () => {
-      const asyncOptions = jest.fn(async () => {
+      const asyncOptions = vi.fn(async () => {
         return promiseResolvesWith([{ value: 'Option 3' }], 1);
       });
 
@@ -417,13 +414,13 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       await user.keyboard('a');
-      act(() => jest.advanceTimersByTime(10));
+      act(() => vi.advanceTimersByTime(10));
 
       await user.keyboard('b');
-      act(() => jest.advanceTimersByTime(10));
+      act(() => vi.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+      act(() => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
       expect(item).toBeInTheDocument();
@@ -433,14 +430,14 @@ describe('MultiCombobox', () => {
     });
 
     it('should allow deselecting items', async () => {
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
       await user.click(input);
 
       // Debounce
-      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+      await act(async () => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       // Click on Option 1 to deselect it (it should already be selected via value prop)
       const item = await screen.findByRole('option', { name: 'Option 1' });
@@ -459,7 +456,7 @@ describe('MultiCombobox', () => {
         { label: 'Integration C', value: 'c' },
       ];
 
-      const asyncOptions = jest.fn(() => Promise.resolve(asyncOptionsData));
+      const asyncOptions = vi.fn(() => Promise.resolve(asyncOptionsData));
 
       // Use a controlled component to simulate the user's scenario
       const ControlledComponent = () => {
@@ -485,7 +482,7 @@ describe('MultiCombobox', () => {
       await user.click(input);
 
       // Wait for async options to load
-      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+      await act(async () => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       // Integration A should be selected (shown as pill)
       const pillRemoveButton = screen.getByRole('button', { name: 'Remove Integration A' });
@@ -504,17 +501,17 @@ describe('MultiCombobox', () => {
 
     it('shows loading message', async () => {
       const loadingMessage = 'Loading options...';
-      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      const asyncOptions = vi.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<MultiCombobox options={asyncOptions} value={['Option 1']} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
       await user.click(input);
 
-      await act(async () => jest.advanceTimersByTime(0));
+      await act(async () => vi.advanceTimersByTime(0));
 
       expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
 
-      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+      await act(async () => vi.advanceTimersByTime(DEBOUNCE_TIME_MS));
 
       expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
     });

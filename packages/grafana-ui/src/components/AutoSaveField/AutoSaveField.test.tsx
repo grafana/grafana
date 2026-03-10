@@ -13,8 +13,8 @@ import { TextArea } from '../TextArea/TextArea';
 
 import { AutoSaveField, Props } from './AutoSaveField';
 
-const mockOnFinishChange = jest.fn().mockImplementation(() => Promise.resolve());
-const mockOnFinishChangeError = jest.fn().mockImplementation(() => Promise.reject());
+const mockOnFinishChange = vi.fn().mockImplementation(() => Promise.resolve());
+const mockOnFinishChangeError = vi.fn().mockImplementation(() => Promise.reject());
 const options: Array<SelectableValue<string>> = [
   {
     label: 'Light',
@@ -180,13 +180,13 @@ describe('AutoSaveField ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders with an Input as a children', () => {
@@ -205,7 +205,7 @@ describe('AutoSaveField ', () => {
     await user.type(inputField, 'This is a test text');
     expect(inputField).toHaveValue('This is a test text');
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChange).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
@@ -216,13 +216,13 @@ describe('Input, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('shows an error message if there was any problem with the request', async () => {
@@ -233,7 +233,7 @@ describe('Input, as AutoSaveField child, ', () => {
     await user.type(inputField, 'This is a test text');
     expect(inputField).toHaveValue('This is a test text');
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
@@ -248,7 +248,7 @@ describe('Input, as AutoSaveField child, ', () => {
     await user.type(inputField, 'This is a test text');
     expect(inputField).toHaveValue('This is a test text');
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).not.toHaveBeenCalled();
     expect(inputField).toHaveStyle(`border: 1px solid ${theme.colors.error.border};`);
@@ -259,13 +259,13 @@ describe('TextArea, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders itself', () => {
@@ -285,7 +285,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
     await user.type(textArea, 'This is a test text');
     expect(textArea).toHaveValue('This is a test text');
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
 
     expect(mockOnFinishChange).toHaveBeenCalledWith('This is a test text');
@@ -300,7 +300,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
     await user.type(textArea, 'This is a test text');
     expect(textArea).toHaveValue('This is a test text');
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith('This is a test text');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
@@ -316,7 +316,7 @@ describe('TextArea, as AutoSaveField child, ', () => {
     expect(textArea).toHaveValue('This is a test text');
 
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).not.toHaveBeenCalled();
     expect(textArea).toHaveStyle(`border-color: ${theme.colors.error.border}`);
@@ -327,13 +327,13 @@ describe('Checkbox, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders itself', () => {
@@ -353,7 +353,7 @@ describe('Checkbox, as AutoSaveField child, ', () => {
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChange).toHaveBeenCalledWith(true);
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
@@ -367,7 +367,7 @@ describe('Checkbox, as AutoSaveField child, ', () => {
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith(true);
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
@@ -378,13 +378,13 @@ describe('Switch, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders itself', () => {
@@ -405,7 +405,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     await user.click(switchInput);
     expect(switchInput).toBeChecked();
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChange).toHaveBeenCalledWith(true);
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
@@ -419,7 +419,7 @@ describe('Switch, as AutoSaveField child, ', () => {
     await user.click(switchInput);
     expect(switchInput).toBeChecked();
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith(true);
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
@@ -430,13 +430,13 @@ describe('RadioButtonGroup, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders itself', () => {
@@ -450,7 +450,7 @@ describe('RadioButtonGroup, as AutoSaveField child, ', () => {
     });
     await user.click(radioOption);
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChange).toHaveBeenCalledWith('light');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
@@ -463,7 +463,7 @@ describe('RadioButtonGroup, as AutoSaveField child, ', () => {
     });
     await user.click(radioOption);
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith('light');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();
@@ -474,13 +474,13 @@ describe('Select, as AutoSaveField child, ', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     user = userEvent.setup({ delay: null });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('renders itself', async () => {
@@ -497,7 +497,7 @@ describe('Select, as AutoSaveField child, ', () => {
     const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
     await user.click(selectOptions[1]);
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChange).toHaveBeenCalledWith('dark');
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
@@ -510,7 +510,7 @@ describe('Select, as AutoSaveField child, ', () => {
     const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
     await user.click(selectOptions[1]);
     act(() => {
-      jest.runAllTimers();
+      vi.runAllTimers();
     });
     expect(mockOnFinishChangeError).toHaveBeenCalledWith('dark');
     expect(await screen.findByText('There was an error')).toBeInTheDocument();

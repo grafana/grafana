@@ -7,10 +7,11 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": ["vitest/globals", "systemjs", "mdx"]
   },
   "exclude": ["dist/**/*"],
-  "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"],
+  "include": ["../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"],
   "ts-node": {
     "compilerOptions": {
       "module": "NodeNext",

@@ -10,7 +10,7 @@ import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 // If this flag is deleted, this mock also should be, and the additional tests for when
 // the flag was disabled.
 type LocaleFormatPreferenceType = FeatureToggles['localeFormatPreference'];
-jest.mock('../commonFormat', () => {
+vi.mock('../commonFormat', () => {
   const format = 'YYYY-MM-DD HH:mm:ss' as const;
   const moduleObject = {
     __esModule: true,

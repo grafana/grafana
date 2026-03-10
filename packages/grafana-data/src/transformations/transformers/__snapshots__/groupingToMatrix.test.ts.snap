@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Grouping to Matrix generates Matrix ignoring special value when value type is frame 1`] = `
+exports[`Grouping to Matrix > generates Matrix ignoring special value when value type is frame 1`] = `
 [
   {
     "config": {},

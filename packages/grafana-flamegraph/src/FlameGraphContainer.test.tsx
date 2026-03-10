@@ -9,17 +9,17 @@ import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
-jest.mock('@grafana/assistant', () => ({
-  useAssistant: jest.fn().mockReturnValue({
+vi.mock('@grafana/assistant', () => ({
+  useAssistant: vi.fn().mockReturnValue({
     isAvailable: false,
     openAssistant: undefined,
   }),
-  createAssistantContextItem: jest.fn(),
+  createAssistantContextItem: vi.fn(),
   OpenAssistantButton: () => <div>OpenAssistantButton</div>,
 }));
 
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
+vi.mock('react-use', async (originalImport) => ({
+  ...(await originalImport()),
   useMeasure: () => {
     const ref = useRef(null);
     return [ref, { width: 1600 }];
@@ -29,7 +29,7 @@ jest.mock('react-use', () => ({
 describe('FlameGraphContainer', () => {
   // Needed for AutoSizer to work in test
   Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
+    value: vi.fn(() => ({
       width: 500,
       height: 500,
       left: 0,

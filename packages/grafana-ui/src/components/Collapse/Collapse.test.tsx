@@ -40,7 +40,7 @@ describe('Collapse', () => {
 
   it('should call onToggle when clicked', async () => {
     const contentText = 'Toggleable content';
-    const onToggle = jest.fn();
+    const onToggle = vi.fn();
 
     const { user } = setup(
       <Collapse label={TEST_LABEL} onToggle={onToggle}>

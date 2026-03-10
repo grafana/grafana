@@ -132,7 +132,7 @@ describe('Table utils', () => {
   });
 
   describe('filterByValue', () => {
-    describe('happy path', () => {
+    it('happy path', () => {
       const field = { values: ['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c'] } as unknown as Field;
       const rows = [
         { index: 0, values: { 0: 'a' } },
@@ -254,7 +254,7 @@ describe('Table utils', () => {
           values: [1, 2, 2, 1, 3, 5, 6],
           name: 'value',
           type: FieldType.number,
-          display: jest.fn().mockImplementation((value) => ({
+          display: vi.fn().mockImplementation((value) => ({
             numeric: 1,
             percent: 0.01,
             color: '',
@@ -318,7 +318,7 @@ describe('Table utils', () => {
 
   describe('rowToFieldValue', () => {
     describe('happy paths', () => {
-      describe('field without field display', () => {
+      it('field without field display', () => {
         const field: Field = {
           name: 'value',
           type: FieldType.string,
@@ -332,13 +332,13 @@ describe('Table utils', () => {
         expect(result).toEqual('b');
       });
 
-      describe('field with display processor', () => {
+      it('field with display processor', () => {
         const field: Field = {
           config: {},
           values: [1, 2, 2, 1, 3, 5, 6],
           name: 'value',
           type: FieldType.number,
-          display: jest.fn().mockImplementation((value) => ({
+          display: vi.fn().mockImplementation((value) => ({
             numeric: 1,
             percent: 0.01,
             color: '',
@@ -355,7 +355,7 @@ describe('Table utils', () => {
     });
 
     describe('quick exist paths', () => {
-      describe('field is missing', () => {
+      it('field is missing', () => {
         const field = undefined;
         const row = { index: 0 };
 
@@ -363,7 +363,7 @@ describe('Table utils', () => {
 
         expect(result).toEqual('');
       });
-      describe('row is missing', () => {
+      it('row is missing', () => {
         const field = {
           name: 'value',
           type: FieldType.string,

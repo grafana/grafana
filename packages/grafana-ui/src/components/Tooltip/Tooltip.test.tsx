@@ -1,4 +1,4 @@
-﻿import { render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MutableRefObject } from 'react';
 
@@ -19,7 +19,7 @@ describe('Tooltip', () => {
   });
 
   it('forwards the function ref', () => {
-    const refFn = jest.fn();
+    const refFn = vi.fn();
 
     render(
       <Tooltip content="Cooltip content" ref={refFn}>

@@ -32,7 +32,7 @@ describe('useOptions', () => {
   });
 
   it('should handle asynchronous options', async () => {
-    const asyncOptions = jest.fn().mockResolvedValue([
+    const asyncOptions = vi.fn().mockResolvedValue([
       { label: 'Async Option 1', value: '1' },
       { label: 'Async Option 2', value: '2' },
     ]);
@@ -101,9 +101,9 @@ describe('useOptions', () => {
   });
 
   it('should handle errors in asynchronous options', async () => {
-    jest.spyOn(console, 'error').mockImplementation();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const asyncOptions = jest.fn().mockRejectedValue(new Error('Async error'));
+    const asyncOptions = vi.fn().mockRejectedValue(new Error('Async error'));
     const { result } = renderHook(() => useOptions(asyncOptions, false));
 
     act(() => {

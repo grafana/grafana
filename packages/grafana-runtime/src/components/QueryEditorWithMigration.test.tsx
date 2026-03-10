@@ -16,12 +16,12 @@ const backendSrv = {
   },
 } as unknown as BackendSrv;
 
-jest.mock('../services', () => ({
-  ...jest.requireActual('../services'),
+vi.mock('../services', async (originalImport) => ({
+  ...(await originalImport),
   getBackendSrv: () => backendSrv,
 }));
 
-let mockDatasourcePost = jest.fn();
+let mockDatasourcePost = vi.fn();
 
 interface MyQuery extends DataQuery {}
 
@@ -72,13 +72,13 @@ describe('QueryEditorWithMigration', () => {
     const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
     const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
 
-    mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
+    mockDatasourcePost = vi.fn().mockImplementation((args: { url: string; data: unknown }) => {
       expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
       expect(args.data).toMatchObject({ queries: [originalQuery] });
       return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
     });
 
-    render(<WithMigration datasource={ds} query={originalQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
+    render(<WithMigration datasource={ds} query={originalQuery} onChange={vi.fn()} onRunQuery={vi.fn()} />);
 
     await waitFor(() => {
       // Check that migratedQuery is rendered
@@ -91,12 +91,12 @@ describe('QueryEditorWithMigration', () => {
     const ds = createMockDatasource();
     const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
 
-    mockDatasourcePost = jest.fn().mockImplementation(async (args: { url: string; data: unknown }) => {
+    mockDatasourcePost = vi.fn().mockImplementation(async (args: { url: string; data: unknown }) => {
       await waitFor(() => {}, { timeout: 5000 });
       return Promise.resolve({ queries: [{ JSON: originalQuery }] });
     });
 
-    render(<WithMigration datasource={ds} query={originalQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
+    render(<WithMigration datasource={ds} query={originalQuery} onChange={vi.fn()} onRunQuery={vi.fn()} />);
     expect(screen.getByTestId('react-loading-skeleton-testid')).toBeInTheDocument();
   });
 });

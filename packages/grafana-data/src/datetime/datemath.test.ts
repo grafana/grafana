@@ -55,11 +55,11 @@ describe('DateMath', () => {
   describe('with fiscal quarters', () => {
     beforeEach(() => {
       const fixedTime = dateTime('2023-07-05T06:06:06.666Z').valueOf();
-      jest.useFakeTimers({ now: fixedTime });
+      vi.useFakeTimers({ now: fixedTime });
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should parse current fiscal quarter correctly', () => {
@@ -104,7 +104,7 @@ describe('DateMath', () => {
     let anchored: DateTime;
 
     beforeEach(() => {
-      jest.useFakeTimers({ now: unix });
+      vi.useFakeTimers({ now: unix });
       now = dateTime();
       anchored = dateTime(anchor);
     });
@@ -123,7 +123,7 @@ describe('DateMath', () => {
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 
@@ -131,7 +131,7 @@ describe('DateMath', () => {
     let now: DateTime;
 
     beforeEach(() => {
-      jest.useFakeTimers({ now: unix });
+      vi.useFakeTimers({ now: unix });
       now = dateTime();
     });
 
@@ -146,7 +146,7 @@ describe('DateMath', () => {
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 

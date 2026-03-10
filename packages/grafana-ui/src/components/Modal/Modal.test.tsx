@@ -24,7 +24,7 @@ describe('Modal', () => {
   });
 
   it('pressing escape calls onDismiss correctly', async () => {
-    const onDismiss = jest.fn();
+    const onDismiss = vi.fn();
 
     render(
       <Modal title="Some Title" isOpen onDismiss={onDismiss}>

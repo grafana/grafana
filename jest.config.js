@@ -80,6 +80,16 @@ module.exports = {
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   testPathIgnorePatterns: [
     '/node_modules/',
+    // Packages run vitest
+    '<rootDir>/packages/grafana-alerting',
+    '<rootDir>/packages/grafana-data',
+    '<rootDir>/packages/grafana-eslint-rules',
+    '<rootDir>/packages/grafana-flamegraph',
+    '<rootDir>/packages/grafana-i18n',
+    '<rootDir>/packages/grafana-o11y-ds-frontend',
+    '<rootDir>/packages/grafana-runtime',
+    '<rootDir>/packages/grafana-test-utils',
+    '<rootDir>/packages/grafana-ui',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/cloud-monitoring',

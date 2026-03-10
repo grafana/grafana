@@ -418,11 +418,11 @@ describe('Range Utils', () => {
   });
 
   describe('describeTimeRange - localeFormatPreference enabled', () => {
-    let mockGetFeatureToggle: jest.SpyInstance;
+    let mockGetFeatureToggle: ReturnType<typeof vi.spyOn>;
 
     beforeAll(() => {
       initRegionalFormatForTests('en-AU');
-      mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
+      mockGetFeatureToggle = vi.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
         return featureName === 'localeFormatPreference';
       });
     });

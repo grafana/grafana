@@ -42,14 +42,14 @@ const multiSeriesWithSingleField = [
   }),
 ];
 
-let spyConsoleWarn: jest.SpyInstance;
+let spyConsoleWarn: ReturnType<typeof vi.spyOn>;
 describe('FilterByValue transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([filterByValueTransformer]);
   });
 
   beforeEach(() => {
-    spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   it('should exclude values', async () => {

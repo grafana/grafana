@@ -748,7 +748,7 @@ describe('TableNG utils', () => {
         {
           title: 'Internal Link',
           href: '', // Empty href for internal links
-          onClick: jest.fn(),
+          onClick: vi.fn(),
           target: '_self',
           origin: { datasourceUid: 'test' },
         },
@@ -773,7 +773,7 @@ describe('TableNG utils', () => {
     });
 
     it('should bind the onClick handlers', () => {
-      const onClickHandler = jest.fn();
+      const onClickHandler = vi.fn();
       // Create links with different valid configurations
       const mockLinks: LinkModel[] = [
         // Internal link with onClick handler
@@ -798,7 +798,7 @@ describe('TableNG utils', () => {
 
       const link = links?.[0];
       const event = new MouseEvent('click', { bubbles: true });
-      jest.spyOn(event, 'preventDefault');
+      vi.spyOn(event, 'preventDefault');
 
       link?.onClick?.(event);
 
@@ -813,7 +813,7 @@ describe('TableNG utils', () => {
     ])(
       'should allow open a link in a new tab when $keyName clicked instead of using the handler',
       ({ eventOverride }) => {
-        const onClickHandler = jest.fn();
+        const onClickHandler = vi.fn();
         // Create links with different valid configurations
         const mockLinks: LinkModel[] = [
           // Internal link with onClick handler
@@ -838,7 +838,7 @@ describe('TableNG utils', () => {
 
         const link = links?.[0];
         const event = new MouseEvent('click', { bubbles: true, ...eventOverride });
-        jest.spyOn(event, 'preventDefault');
+        vi.spyOn(event, 'preventDefault');
 
         link?.onClick?.(event);
 
@@ -995,12 +995,12 @@ describe('TableNG utils', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
     it('wraps the uwrap count function', () => {
-      const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(vi.fn(() => 2));
       expect(measureHeight('test string', 100, field, 0, 20)).toBe(40);
     });
 
     it("returns a single line's height for null or undefined values", () => {
-      const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(vi.fn(() => 2));
       expect(measureHeight(null, 100, field, 0, 20)).toBe(20);
       expect(measureHeight(undefined, 100, field, 0, 20)).toBe(20);
     });
@@ -1031,7 +1031,7 @@ describe('TableNG utils', () => {
             {
               title: 'Link w',
               url: 'asdf',
-              onClick: jest.fn(() => {}),
+              onClick: vi.fn(() => {}),
             },
           ],
         },
@@ -1045,23 +1045,23 @@ describe('TableNG utils', () => {
 
   describe('getPillCellHeightMeasurer', () => {
     it('counts up the number of lines using the pill measuring method', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(vi.fn((str) => str.length * 5));
       expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(vi.fn((str) => str.length * 5));
       expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(vi.fn((str) => str.length * 5));
       expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
-      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const widthMeasurement = vi.fn((str) => str.length * 5);
       const measurer = getPillCellHeightMeasurer(widthMeasurement);
       measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       measurer('tag1,tag2', 100, {} as Field, 0, 20);
@@ -1076,10 +1076,10 @@ describe('TableNG utils', () => {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 2),
+      count: vi.fn(() => 2),
       avgCharWidth: 7,
-      measureHeight: jest.fn(() => 2),
-      estimateHeight: jest.fn(() => 2),
+      measureHeight: vi.fn(() => 2),
+      estimateHeight: vi.fn(() => 2),
     };
 
     it('returns an array of measurers for each column', () => {
@@ -1118,8 +1118,8 @@ describe('TableNG utils', () => {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
-      measureHeight: jest.fn(() => 2),
-      estimateHeight: jest.fn(() => 2),
+      measureHeight: vi.fn(() => 2),
+      estimateHeight: vi.fn(() => 2),
       avgCharWidth: 7,
     };
 
@@ -1177,7 +1177,7 @@ describe('TableNG utils', () => {
           type: FieldType.string,
           values: ['http://example.com/1', 'http://example.com/2'],
           config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.DataLinks } } },
-          getLinks: jest.fn((): LinkModel[] => [
+          getLinks: vi.fn((): LinkModel[] => [
             { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
             { title: 'Link 2', href: 'http://example.com/2', target: '_self', origin: { datasourceUid: 'test' } },
           ]),
@@ -1253,13 +1253,11 @@ describe('TableNG utils', () => {
       rows = frameToRecords(frame);
       measurers = [
         {
-          measure: jest.fn(
-            (value, _length, _field, _rowIdx, lineHeight) => String(value).split(' ').length * lineHeight
-          ),
+          measure: vi.fn((value, _length, _field, _rowIdx, lineHeight) => String(value).split(' ').length * lineHeight),
           fieldIdxs: [0],
         }, // Mocked to count words as lines
         {
-          measure: jest.fn(
+          measure: vi.fn(
             (value, _length, _field, _rowIdx, lineHeight) => Math.ceil(String(value).length / 3) * lineHeight
           ),
           fieldIdxs: [1],
@@ -1313,16 +1311,16 @@ describe('TableNG utils', () => {
       beforeEach(() => {
         measurers = [
           {
-            measure: jest.fn(
+            measure: vi.fn(
               (value, _length, _field, _rowIdx, lineHeight) => String(value).split(' ').length * lineHeight
             ),
             fieldIdxs: [0],
           }, // Mocked to count words as lines
           {
-            measure: jest.fn(
+            measure: vi.fn(
               (value, _length, _field, _rowIdx, lineHeight) => Math.ceil(String(value).length / 3) * lineHeight
             ),
-            estimate: jest.fn((value, _length, _field, _rowIdx, lineHeight) => String(value).length * lineHeight), // Mocked to return a line for every digits of a number
+            estimate: vi.fn((value, _length, _field, _rowIdx, lineHeight) => String(value).length * lineHeight), // Mocked to return a line for every digits of a number
             fieldIdxs: [1],
           }, // Mocked to return a line for every 3 digits of a number
         ];
@@ -1336,8 +1334,8 @@ describe('TableNG utils', () => {
       });
 
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
-        jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
-        jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
+        vi.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        vi.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(36);
 
@@ -1350,8 +1348,8 @@ describe('TableNG utils', () => {
         const thresholdOffset = 1;
         expect(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset).toBeLessThan(TABLE.LINE_HEIGHT);
 
-        jest.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - thresholdOffset);
-        jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
+        vi.mocked(measurers[0].measure).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - thresholdOffset);
+        vi.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
@@ -1883,13 +1881,13 @@ describe('TableNG utils', () => {
     });
 
     it('returns void and does not throw if this is invalid JSON (but it does console.error)', () => {
-      jest.spyOn(console, 'error').mockImplementation();
+      vi.spyOn(console, 'error').mockImplementation(() => {});
       expect(parseStyleJson('{"mal": "formed}')).toBeUndefined();
       expect(console.error).toHaveBeenCalled();
     });
 
     it('only calls console.error once for a given malformed style', () => {
-      jest.spyOn(console, 'error').mockImplementation();
+      vi.spyOn(console, 'error').mockImplementation(() => {});
       for (let i = 0; i < 100; i++) {
         parseStyleJson('{"mal": "formed-in-a-new-way}');
       }

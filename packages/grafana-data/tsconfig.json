@@ -9,7 +9,8 @@
     "isolatedModules": true,
     "rootDirs": ["."],
     "moduleResolution": "bundler",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "systemjs", "jquery"]
   },
   "exclude": ["dist/**/*"],
   "include": [

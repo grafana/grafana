@@ -9,7 +9,7 @@ import { Card } from './Card';
 describe('Card', () => {
   it('should execute callback when clicked', async () => {
     const user = userEvent.setup();
-    const callback = jest.fn();
+    const callback = vi.fn();
     render(
       <Card noMargin onClick={callback}>
         <Card.Heading>Test Heading</Card.Heading>

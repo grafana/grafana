@@ -49,7 +49,7 @@ describe('Date time picker', () => {
 
   it.each(TEST_TIMEZONES)('should update date onblur (timezone: %)', async (timeZone) => {
     setTimeZoneResolver(() => timeZone);
-    const onChangeInput = jest.fn();
+    const onChangeInput = vi.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
     await userEvent.clear(dateTimeInput);
@@ -61,7 +61,7 @@ describe('Date time picker', () => {
 
   it.each(TEST_TIMEZONES)('should not update onblur if invalid date (timezone: %s)', async (timeZone) => {
     setTimeZoneResolver(() => timeZone);
-    const onChangeInput = jest.fn();
+    const onChangeInput = vi.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
     await userEvent.clear(dateTimeInput);
@@ -75,7 +75,7 @@ describe('Date time picker', () => {
     'should not change the day at times near the day boundary (timezone: %s)',
     async (timeZone) => {
       setTimeZoneResolver(() => timeZone);
-      const onChangeInput = jest.fn();
+      const onChangeInput = vi.fn();
       render(<DateTimePicker date={dateTime('2021-05-05 12:34:56')} onChange={onChangeInput} />);
 
       // Click the calendar button
@@ -106,7 +106,7 @@ describe('Date time picker', () => {
     'should not reset the time when selecting a different day (timezone: %s)',
     async (timeZone) => {
       setTimeZoneResolver(() => timeZone);
-      const onChangeInput = jest.fn();
+      const onChangeInput = vi.fn();
       render(<DateTimePicker date={dateTime('2021-05-05 12:34:56')} onChange={onChangeInput} />);
 
       // Click the calendar button
@@ -124,7 +124,7 @@ describe('Date time picker', () => {
     'should always show the correct matching day in the calendar (timezone: %s)',
     async (timeZone) => {
       setTimeZoneResolver(() => timeZone);
-      const onChangeInput = jest.fn();
+      const onChangeInput = vi.fn();
       render(<DateTimePicker date={dateTime('2021-05-05T23:59:41.000000Z')} onChange={onChangeInput} />);
 
       const dateTimeInputValue = screen.getByTestId(Components.DateTimePicker.input).getAttribute('value')!;
@@ -146,7 +146,7 @@ describe('Date time picker', () => {
     'should always show the correct matching day when selecting a date in the calendar (timezone: %s)',
     async (timeZone) => {
       setTimeZoneResolver(() => timeZone);
-      const onChangeInput = jest.fn();
+      const onChangeInput = vi.fn();
       render(<DateTimePicker date={dateTime('2021-05-05T23:59:41.000000Z')} onChange={onChangeInput} />);
 
       // Click the calendar button
@@ -165,7 +165,7 @@ describe('Date time picker', () => {
 
   it.each(TEST_TIMEZONES)('should not alter a UTC time when blurring (timezone: %s)', async (timeZone) => {
     setTimeZoneResolver(() => timeZone);
-    const onChangeInput = jest.fn();
+    const onChangeInput = vi.fn();
 
     // render with a UTC value
     const { rerender } = render(

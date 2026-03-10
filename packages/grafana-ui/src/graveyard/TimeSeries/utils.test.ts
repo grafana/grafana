@@ -13,11 +13,11 @@ describe('when fill below to option is used', () => {
 
   beforeEach(() => {
     eventBus = {
-      publish: jest.fn(),
-      getStream: jest.fn(),
-      subscribe: jest.fn(),
-      removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
+      publish: vi.fn(),
+      getStream: vi.fn(),
+      subscribe: vi.fn(),
+      removeAllListeners: vi.fn(),
+      newScopedBus: vi.fn(),
     };
     renderers = [];
 
@@ -204,9 +204,9 @@ describe('when fill below to option is used', () => {
         //@ts-ignore
         theme: getTheme(),
         timeZones: ['browser'],
-        getTimeRange: jest.fn(),
+        getTimeRange: vi.fn(),
         eventBus,
-        sync: jest.fn(),
+        sync: vi.fn(),
         allFrames: test.allFrames,
         renderers,
       });
@@ -232,9 +232,9 @@ describe('when fill below to option is used', () => {
         //@ts-ignore
         theme: getTheme(),
         timeZones: ['browser'],
-        getTimeRange: jest.fn(),
+        getTimeRange: vi.fn(),
         eventBus,
-        sync: jest.fn(),
+        sync: vi.fn(),
         allFrames: test.allFrames,
         renderers,
       });
@@ -261,9 +261,9 @@ describe('when fill below to option is used', () => {
         //@ts-ignore
         theme: getTheme(),
         timeZones: ['browser'],
-        getTimeRange: jest.fn(),
+        getTimeRange: vi.fn(),
         eventBus,
-        sync: jest.fn(),
+        sync: vi.fn(),
         allFrames: test.allFrames,
         renderers,
       });

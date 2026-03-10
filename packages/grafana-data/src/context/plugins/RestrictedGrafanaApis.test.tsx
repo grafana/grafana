@@ -8,13 +8,13 @@ import {
 
 // Mock schema for testing
 const mockAlertRuleFormSchema = {
-  parse: jest.fn((data: unknown) => data),
-  safeParse: jest.fn((data: unknown) => ({ success: true, data })),
+  parse: vi.fn((data: unknown) => data),
+  safeParse: vi.fn((data: unknown) => ({ success: true, data })),
 };
 
 const mockDashboardMutationAPI = {
-  execute: jest.fn(async () => ({ success: true, changes: [] })),
-  getPayloadSchema: jest.fn(() => null),
+  execute: vi.fn(async () => ({ success: true, changes: [] })),
+  getPayloadSchema: vi.fn(() => null),
 };
 
 describe('RestrictedGrafanaApis', () => {
@@ -24,7 +24,7 @@ describe('RestrictedGrafanaApis', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should share an API if the plugin is allowed', () => {

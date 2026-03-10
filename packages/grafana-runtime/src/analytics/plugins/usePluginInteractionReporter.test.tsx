@@ -16,11 +16,13 @@ import { reportInteraction } from '../utils';
 
 import { usePluginInteractionReporter } from './usePluginInteractionReporter';
 
-jest.mock('../utils', () => ({ reportInteraction: jest.fn() }));
-const reportInteractionMock = jest.mocked(reportInteraction);
+vi.mock('../utils', () => ({ reportInteraction: vi.fn() }));
+const reportInteractionMock = vi.mocked(reportInteraction);
 
 describe('usePluginInteractionReporter', () => {
-  beforeEach(() => jest.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
   describe('within a panel plugin', () => {
     it('should report interaction with plugin context info for internal panel', () => {

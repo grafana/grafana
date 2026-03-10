@@ -12,7 +12,7 @@ const setup = (jsx: JSX.Element) => {
   };
 };
 
-const onChangeTab = jest.fn();
+const onChangeTab = vi.fn();
 
 describe('Tabs', () => {
   beforeEach(() => {
