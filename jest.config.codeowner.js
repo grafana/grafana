@@ -25,7 +25,13 @@ if (!fs.existsSync(codeownersFilePath)) {
 }
 
 const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
-const teamFiles = codeownersData[codeownerName] || [];
+const allTeamFiles = codeownersData[codeownerName] || [];
+
+const pathGlobs = JSON.parse(process.env.CODEOWNER_PATHS || '[]');
+const teamFiles =
+  pathGlobs.length > 0
+    ? allTeamFiles.filter((file) => pathGlobs.some((glob) => path.matchesGlob(file, glob)))
+    : allTeamFiles;
 
 if (teamFiles.length === 0) {
   console.error(`ERROR: No files found for team "${codeownerName}"`);
