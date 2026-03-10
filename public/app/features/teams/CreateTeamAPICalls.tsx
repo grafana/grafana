@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
 import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { CreateTeamApiArg, useCreateTeamMutation, useSetTeamRolesMutation } from '@grafana/api-clients/rtkq/legacy';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, AlertVariant, Link, Stack, Text } from '@grafana/ui';
+import { Alert, AlertVariant, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Role } from 'app/types/accessControl';
 
@@ -35,15 +36,33 @@ interface ResultCardLink {
  * @constructor
  */
 export function StepResultAlert({ severity, description, link }: CardProps) {
+  const styles = useStyles2(getStyles);
+
   return (
     <Alert severity={severity} title="">
       <Stack direction="row" justifyContent={'space-between'}>
         <Text>{description}</Text>
-        {link && <Link href={link.href}>{link.text}</Link>}
+        {link && (
+          <Link href={link.href} className={styles.link}>
+            {link.text}
+            <Icon name="external-link-alt" size="md" aria-hidden={true} className={styles.linkIcon} />
+          </Link>
+        )}
       </Stack>
     </Alert>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  link: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  linkIcon: css({
+    flexShrink: 0,
+  }),
+});
 
 /**
  * Each step is in one of these states.
