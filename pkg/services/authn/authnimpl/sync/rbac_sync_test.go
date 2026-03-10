@@ -35,6 +35,10 @@ func TestRBACSync_SyncPermission(t *testing.T) {
 			expectedPermissions: map[string][]string{
 				accesscontrol.ActionUsersRead:  {accesscontrol.ScopeUsersAll},
 				accesscontrol.ActionUsersWrite: {accesscontrol.ScopeUsersAll},
+				"dashboards:read":              {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:write":             {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:delete":            {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:create":            {"dashboards:uid:*", "folders:uid:*"},
 			},
 		},
 		{
@@ -160,6 +164,69 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			expectedPermissions: map[string][]string{
 				"dashboards:read":              {"dashboards:uid:*", "folders:uid:*"},
 				accesscontrol.ActionTeamsWrite: {accesscontrol.ScopeTeamsAll},
+			},
+		},
+		{
+			name: "empty restricted actions results in no permissions",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{},
+		},
+		{
+			name: "restrict permissions with K8s format",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:get"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read": {"dashboards:uid:*", "folders:uid:*"},
+			},
+		},
+		{
+			name: "restrict permissions with mixed K8s and Grafana formats",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:get"},
+						RestrictedActions:    []string{accesscontrol.ActionUsersRead},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read":             {"dashboards:uid:*", "folders:uid:*"},
+				accesscontrol.ActionUsersRead: {accesscontrol.ScopeUsersAll},
+			},
+		},
+		{
+			name: "restrict permissions with K8s wildcard verb",
+			identity: &authn.Identity{
+				ID: "2", Type: claims.TypeUser, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						K8sRestrictedActions: []string{"dashboard.grafana.app/dashboards:*"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read":   {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:write":  {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:delete": {"dashboards:uid:*", "folders:uid:*"},
+				"dashboards:create": {"dashboards:uid:*", "folders:uid:*"},
 			},
 		},
 	}
@@ -557,6 +624,14 @@ func setupTestEnv(t *testing.T) *RBACSync {
 			return []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead, Scope: accesscontrol.ScopeUsersAll},
 				{Action: accesscontrol.ActionUsersWrite, Scope: accesscontrol.ScopeUsersAll},
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+				{Action: "dashboards:read", Scope: "folders:uid:*"},
+				{Action: "dashboards:write", Scope: "dashboards:uid:*"},
+				{Action: "dashboards:write", Scope: "folders:uid:*"},
+				{Action: "dashboards:delete", Scope: "dashboards:uid:*"},
+				{Action: "dashboards:delete", Scope: "folders:uid:*"},
+				{Action: "dashboards:create", Scope: "dashboards:uid:*"},
+				{Action: "dashboards:create", Scope: "folders:uid:*"},
 			}, nil
 		},
 		GetRoleByNameFunc: func(ctx context.Context, i int64, s string) (*accesscontrol.RoleDTO, error) {
@@ -582,6 +657,14 @@ func setupTestEnv(t *testing.T) *RBACSync {
 	require.NoError(t, permRegistry.RegisterPermission("folders:delete", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:read", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:write", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:read", "dashboards:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:read", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:write", "dashboards:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:write", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:create", "dashboards:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:create", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "dashboards:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("dashboards:delete", "folders:uid:"))
 
 	s := &RBACSync{
 		ac:           acMock,

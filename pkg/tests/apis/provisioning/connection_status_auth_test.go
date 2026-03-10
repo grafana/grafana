@@ -10,13 +10,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -42,15 +43,17 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			},
 		},
 	}}
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
+
+	connectionName := c.GetName()
 
 	t.Run("admin can GET connection status", func(t *testing.T) {
 		var statusCode int
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -63,7 +66,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 		result := helper.EditorREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -77,7 +80,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 		result := helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-status-test").
+			Name(connectionName).
 			SubResource("status").
 			Do(ctx).StatusCode(&statusCode)
 

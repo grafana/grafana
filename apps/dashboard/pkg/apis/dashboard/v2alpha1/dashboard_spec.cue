@@ -215,7 +215,7 @@ FieldConfig: {
 	filterable?: bool
 
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.

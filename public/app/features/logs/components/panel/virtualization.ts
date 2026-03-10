@@ -182,8 +182,9 @@ export class LogLineVirtualization {
   calculateFieldDimensions = (
     logs: LogListModel[],
     displayedFields: string[] = [],
-    timestampResolution: LogLineTimestampResolution,
-    showUniqueLabels?: boolean
+    timestampResolution?: LogLineTimestampResolution,
+    showUniqueLabels?: boolean,
+    showLevel?: boolean
   ) => {
     if (!logs.length) {
       return [];
@@ -192,32 +193,43 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
-      if (width > timestampWidth) {
-        timestampWidth = Math.round(width);
+      let width = 0;
+      if (timestampResolution) {
+        width = this.measureTextWidth(timestampResolution === 'ms' ? logs[i].timestamp : logs[i].timestampNs);
+        if (width > timestampWidth) {
+          timestampWidth = Math.round(width);
+        }
       }
-      width = this.measureTextWidth(logs[i].displayLevel);
-      if (width > levelWidth) {
-        levelWidth = Math.round(width);
+      if (showLevel) {
+        width = this.measureTextWidth(logs[i].displayLevel);
+        if (width > levelWidth) {
+          levelWidth = Math.round(width);
+        }
       }
       for (const field of displayedFields) {
         width = this.measureTextWidth(logs[i].getDisplayedFieldValue(field, true));
         fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
       }
     }
-    const dimensions: LogFieldDimension[] = [
-      {
+    const dimensions: LogFieldDimension[] = [];
+    if (timestampResolution) {
+      dimensions.push({
         field: 'timestamp',
+        internal: true,
         width: timestampWidth,
-      },
-      {
+      });
+    }
+    if (showLevel) {
+      dimensions.push({
         field: 'level',
+        internal: true,
         width: levelWidth,
-      },
-    ];
+      });
+    }
     if (showUniqueLabels) {
       dimensions.push({
         field: 'unique-labels',
+        internal: true,
         width: 0,
       });
     }
@@ -322,6 +334,7 @@ export function getLogLineSize(
 }
 
 export interface LogFieldDimension {
+  internal?: boolean;
   field: string;
   width: number;
 }

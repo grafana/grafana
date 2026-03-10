@@ -89,10 +89,6 @@ func Build(
 
 	ldflags := LDFlagsDynamic(vcsinfo)
 
-	if opts.Static && opts.CGOEnabled {
-		ldflags = LDFlagsStatic(vcsinfo)
-	}
-
 	cmd := []string{
 		"grafana",
 		"grafana-server",

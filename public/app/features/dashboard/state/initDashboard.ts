@@ -18,7 +18,7 @@ import { updateNavModel } from 'app/features/dashboard-scene/pages/utils';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { toStateKey } from 'app/features/variables/utils';
+import { toStateKey } from 'app/features/variables/toStateKey';
 import {
   DASHBOARD_FROM_LS_KEY,
   DashboardDTO,
@@ -74,7 +74,7 @@ async function fetchDashboard(
 
         // if user specified a custom home dashboard redirect to that
         if (isRedirectResponse(dashDTO)) {
-          const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
+          const newUrl = locationUtil.processRedirectUri(dashDTO.redirectUri, locationService.getLocation());
           locationService.replace(newUrl);
           return null;
         }

@@ -1,7 +1,7 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { toStateKey } from '../utils';
+import { toStateKey } from '../toStateKey';
 
 import { getTemplatingReducers, TemplatingState } from './reducers';
 import { variablesInitTransaction } from './transactionReducer';

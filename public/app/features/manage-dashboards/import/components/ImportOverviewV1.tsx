@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -11,7 +11,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { applyV1Inputs } from '../utils/inputs';
+import { applyV1Inputs, stripExportMetadata } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportForm } from './ImportForm';
@@ -60,8 +60,10 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         }
       }
 
+      const cleanDashboard = stripExportMetadata(dashboardWithDataSources);
+
       const dashboardK8SPayload: SaveDashboardCommand<Dashboard> = {
-        dashboard: dashboardWithDataSources,
+        dashboard: cleanDashboard,
         k8s: {
           annotations: {
             'grafana.app/folder': form.folder.uid,

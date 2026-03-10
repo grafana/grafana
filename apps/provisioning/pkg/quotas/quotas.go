@@ -3,6 +3,7 @@ package quotas
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -21,11 +22,21 @@ type QuotaLimits struct {
 	MaxRepositories int64
 }
 
-// EvaluateCondition creates a Quota condition based on current stats and limits.
+type Usage struct {
+	TotalResources int64
+}
+
+func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
+	return Usage{
+		TotalResources: calculateTotalResources(stats),
+	}
+}
+
+// EvaluateCondition creates a Quota condition based on current stats and quota status.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
-func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav1.Condition {
+func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.Condition {
 	// Check if any limits are configured
-	if q.MaxResources == 0 {
+	if quota.MaxResourcesPerRepository == 0 {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
@@ -34,31 +45,60 @@ func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav
 		}
 	}
 
-	total := calculateTotalResources(stats)
+	total := quotaUsage.TotalResources
 
 	switch {
-	case total > q.MaxResources:
+	case total > quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonQuotaExceeded,
-			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
-	case total == q.MaxResources:
+	case total == quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonQuotaReached,
-			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeResourceQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("Within quota: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Within quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	}
+}
+
+// IsQuotaExceeded checks if the resource quota condition indicates the quota has been exceeded.
+func IsQuotaExceeded(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionFalse &&
+				conditions[i].Reason == provisioning.ReasonQuotaExceeded
+		}
+	}
+	return false
+}
+
+// IsQuotaReached checks if the resource quota condition indicates the quota has been reached (at limit).
+func IsQuotaReached(conditions []metav1.Condition) bool {
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeResourceQuota {
+			return conditions[i].Status == metav1.ConditionTrue &&
+				conditions[i].Reason == provisioning.ReasonQuotaReached
+		}
+	}
+	return false
+}
+
+func WouldStayWithinQuota(quota provisioning.QuotaStatus, usage Usage, netChange int64) bool {
+	if quota.MaxResourcesPerRepository == 0 {
+		return true
+	}
+	return usage.TotalResources+netChange <= quota.MaxResourcesPerRepository
 }
 
 // calculateTotalResources sums up all resource counts from the stats.
@@ -75,30 +115,50 @@ type QuotaGetter interface {
 	// GetQuotaStatus returns the quota status to be set on repositories.
 	// It takes a context and namespace to allow for future implementations
 	// that may need to fetch quota information dynamically.
-	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
 }
 
 // FixedQuotaGetter returns fixed quota values from static configuration.
 type FixedQuotaGetter struct {
-	maxRepositories           int64
-	maxResourcesPerRepository int64
+	quotaStatus atomic.Value // stores provisioning.QuotaStatus
 }
 
-// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
-func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
-	return &FixedQuotaGetter{
-		maxRepositories:           limits.MaxRepositories,
-		maxResourcesPerRepository: limits.MaxResources,
-	}
+// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaStatus.
+func NewFixedQuotaGetter(quotaStatus provisioning.QuotaStatus) *FixedQuotaGetter {
+	f := &FixedQuotaGetter{}
+	f.quotaStatus.Store(quotaStatus)
+	return f
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
-	return provisioning.QuotaStatus{
-		MaxRepositories:           f.maxRepositories,
-		MaxResourcesPerRepository: f.maxResourcesPerRepository,
-	}
+func (f *FixedQuotaGetter) GetQuotaStatus(_ context.Context, _ string) (provisioning.QuotaStatus, error) {
+	return f.quotaStatus.Load().(provisioning.QuotaStatus), nil
 }
 
-// Ensure FixedQuotaGetter implements QuotaGetter interface.
+// SetQuotaStatus updates the quota status, allowing runtime changes (primarily for testing).
+func (f *FixedQuotaGetter) SetQuotaStatus(status provisioning.QuotaStatus) {
+	f.quotaStatus.Store(status)
+}
+
 var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+func NewQuotaExceededError(err error) *QuotaExceededError {
+	return &QuotaExceededError{Err: err}
+}
+
+type QuotaExceededError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *QuotaExceededError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "quota exceeded"
+}
+
+// Unwrap implements error unwrapping to support errors.Is and errors.As
+func (e *QuotaExceededError) Unwrap() error {
+	return e.Err
+}

@@ -106,16 +106,11 @@ type GrafanaMetaAccessor interface {
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
-	// Deprecated: This will be removed in Grafana 13
+	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
 	GetDeprecatedInternalID() int64
 
-	// Deprecated: This will be removed in Grafana 13
+	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
 	SetDeprecatedInternalID(id int64)
-
-	GetFullpath() string
-	SetFullpath(path string)
-	GetFullpathUIDs() string
-	SetFullpathUIDs(uids string)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -338,22 +333,6 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
-}
-
-func (m *grafanaMetaAccessor) GetFullpath() string {
-	return m.GetAnnotation(AnnoKeyFullpath)
-}
-
-func (m *grafanaMetaAccessor) SetFullpath(path string) {
-	m.SetAnnotation(AnnoKeyFullpath, path)
-}
-
-func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
-	return m.GetAnnotation(AnnoKeyFullpathUIDs)
-}
-
-func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
-	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.

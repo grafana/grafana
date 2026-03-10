@@ -27,7 +27,7 @@ import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options } from './types';
+import { Options } from './panelcfg.gen';
 import { calculateYSizeDivisor, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}

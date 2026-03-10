@@ -26,9 +26,10 @@ const (
 var metOnce sync.Once
 
 type accessMetrics struct {
-	checkDuration   *prometheus.HistogramVec
-	compileDuration *prometheus.HistogramVec
-	errorsTotal     *prometheus.CounterVec
+	checkDuration      *prometheus.HistogramVec
+	compileDuration    *prometheus.HistogramVec
+	batchCheckDuration *prometheus.HistogramVec
+	errorsTotal        *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
@@ -47,6 +48,13 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				Name:      "compile_duration_seconds",
 				Help:      "duration of the access compile calls going through the authz service",
 			}, []string{"group", "resource", "verb"}),
+		batchCheckDuration: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Name:      "batch_check_duration_seconds",
+				Help:      "duration of the batch access check calls going through the authz service",
+			}, []string{"check_count"}),
 		errorsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
@@ -60,6 +68,7 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 		metOnce.Do(func() {
 			reg.MustRegister(m.checkDuration)
 			reg.MustRegister(m.compileDuration)
+			reg.MustRegister(m.batchCheckDuration)
 			reg.MustRegister(m.errorsTotal)
 		})
 	}
@@ -110,23 +119,8 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		attribute.String("name", req.Name),
 		attribute.String("verb", req.Verb),
 		attribute.String("folder", folder),
-		attribute.Bool("fallback_used", FallbackUsed(ctx)),
 	))
 	defer span.End()
-
-	if FallbackUsed(ctx) {
-		if req.Namespace == "" {
-			// cross namespace queries are not allowed when fallback is used
-			span.SetAttributes(attribute.Bool("allowed", false))
-			span.SetStatus(codes.Error, "Namespace empty")
-			err := fmt.Errorf("namespace empty")
-			span.RecordError(err)
-			return claims.CheckResponse{Allowed: false}, err
-		}
-
-		span.SetAttributes(attribute.Bool("allowed", true))
-		return claims.CheckResponse{Allowed: true}, nil
-	}
 
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
@@ -155,28 +149,14 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 // Compile implements claims.AccessClient.
 func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	t := time.Now()
-	fallbackUsed := FallbackUsed(ctx)
 	ctx, span := tracer.Start(ctx, "resource.authzLimitedClient.Compile", trace.WithAttributes(
 		attribute.String("group", req.Group),
 		attribute.String("resource", req.Resource),
 		attribute.String("namespace", req.Namespace),
 		attribute.String("verb", req.Verb),
-		attribute.Bool("fallback_used", fallbackUsed),
 	))
 	defer span.End()
-	if fallbackUsed {
-		if req.Namespace == "" {
-			// cross namespace queries are not allowed when fallback is used
-			span.SetAttributes(attribute.Bool("allowed", false))
-			span.SetStatus(codes.Error, "Namespace empty")
-			err := fmt.Errorf("namespace empty")
-			span.RecordError(err)
-			return nil, claims.NoopZookie{}, err
-		}
-		return func(name, folder string) bool {
-			return true
-		}, claims.NoopZookie{}, nil
-	}
+
 	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
 		span.SetAttributes(attribute.Bool("allowed", false))
 		span.SetStatus(codes.Error, "Namespace mismatch")
@@ -212,17 +192,62 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 }
 
 func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
-	return claims.BatchCheckResponse{}, fmt.Errorf("not implemented")
+	t := time.Now()
+	ctx, span := tracer.Start(ctx, "resource.authzLimitedClient.BatchCheck", trace.WithAttributes(
+		attribute.String("namespace", req.Namespace),
+		attribute.String("subject", id.GetSubject()),
+		attribute.Int("check_count", len(req.Checks)),
+	))
+	defer span.End()
+
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+
+	// Validate namespace matches
+	if !claims.NamespaceMatches(id.GetNamespace(), req.Namespace) {
+		span.SetStatus(codes.Error, "Namespace mismatch")
+		span.RecordError(claims.ErrNamespaceMismatch)
+		return claims.BatchCheckResponse{}, claims.ErrNamespaceMismatch
+	}
+
+	// Build a separate request for items that need to be checked by the underlying client
+	var itemsToCheck []claims.BatchCheckItem
+	for _, item := range req.Checks {
+		if !c.IsCompatibleWithRBAC(item.Group, item.Resource) {
+			// Not compatible with RBAC, allow by default
+			results[item.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+		} else {
+			// Will be checked by underlying client
+			itemsToCheck = append(itemsToCheck, item)
+		}
+	}
+
+	// If all items were allowed by default, return early
+	if len(itemsToCheck) == 0 {
+		return claims.BatchCheckResponse{Results: results}, nil
+	}
+
+	// Forward to the underlying client
+	batchReq := claims.BatchCheckRequest{
+		Namespace: req.Namespace,
+		Checks:    itemsToCheck,
+		SkipCache: req.SkipCache,
+	}
+	resp, err := c.client.BatchCheck(ctx, id, batchReq)
+	if err != nil {
+		c.logger.FromContext(ctx).Error("BatchCheck", "error", err, "duration", time.Since(t))
+		c.metrics.errorsTotal.WithLabelValues("", "", "batch_check").Inc()
+		span.SetStatus(codes.Error, fmt.Sprintf("batch check failed: %v", err))
+		span.RecordError(err)
+		return claims.BatchCheckResponse{}, err
+	}
+
+	// Merge results from underlying client
+	for correlationID, result := range resp.Results {
+		results[correlationID] = result
+	}
+
+	c.metrics.batchCheckDuration.WithLabelValues(fmt.Sprintf("%d", len(req.Checks))).Observe(time.Since(t).Seconds())
+	return claims.BatchCheckResponse{Results: results}, nil
 }
 
 var _ claims.AccessClient = &authzLimitedClient{}
-
-type contextFallbackKey struct{}
-
-func WithFallback(ctx context.Context) context.Context {
-	return context.WithValue(ctx, contextFallbackKey{}, true)
-}
-
-func FallbackUsed(ctx context.Context) bool {
-	return ctx.Value(contextFallbackKey{}) != nil
-}

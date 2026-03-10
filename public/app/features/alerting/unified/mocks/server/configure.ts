@@ -17,7 +17,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, AlertmanagerChoice, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types/folders';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -243,6 +243,31 @@ export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[
 export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
+
+/**
+ * Makes the mock server respond with a custom resolver for fetching a single silence by ID
+ */
+export const setSilenceGetResolver = (
+  resolver: HttpResponseResolver<{ datasourceUid: string; uuid: string }, Silence, undefined>
+) => {
+  server.use(
+    http.get<{ datasourceUid: string; uuid: string }, Silence, undefined>(
+      '/api/alertmanager/:datasourceUid/api/v2/silence/:uuid',
+      resolver
+    )
+  );
+};
+
+/**
+ * Makes the mock server respond with a specific list of alertmanager alerts
+ */
+export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
+  const handler = http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => {
+    return HttpResponse.json(alerts);
+  });
+  server.use(handler);
+  return handler;
+};
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {

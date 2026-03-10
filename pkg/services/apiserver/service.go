@@ -243,6 +243,9 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
+	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
+		registrar.RegisterHTTPRoutes(s.rr)
+	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
@@ -448,7 +451,9 @@ func (s *service) start(ctx context.Context) error {
 	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
-		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
+		aggregatorServer, err := s.aggregatorRunner.Configure(
+			s.options, serverConfig, &aggregatorrunner.ExtraConfig{}, delegate, s.scheme, builders,
+		)
 		if err != nil {
 			return err
 		}

@@ -36,7 +36,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setValue,
     watch,
     getValues,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useFormContext<WizardFormData>();
 
   const selectedTarget = watch('repository.sync.target');
@@ -49,7 +49,9 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isLoading: isRepositoryStatusLoading,
     hasError: repositoryStatusError,
     refetch: retryRepositoryStatus,
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
+    healthStatusNotReady,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -57,10 +59,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     fileCountString,
     resourceCount,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, selectedTarget, undefined, {
-    enableRepositoryStatus: false,
-    isHealthy: isRepositoryHealthy,
-  });
+  } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const isQuotaExceeded = Boolean(
     isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
@@ -70,15 +69,18 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
 
   useEffect(() => {
-    // Pick a name nice name based on type+settings
-    const repository = getValues('repository');
-    const title = generateRepositoryTitle(repository);
-    setValue('repository.title', title);
-  }, [getValues, setValue]);
+    // Pick a nice name based on type+settings, but only if user hasn't modified it
+    if (!dirtyFields.repository?.title) {
+      const repository = getValues('repository');
+      const title = generateRepositoryTitle(repository);
+      setValue('repository.title', title);
+    }
+  }, [getValues, setValue, dirtyFields.repository?.title]);
 
   useEffect(() => {
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
-    if (repositoryStatusError || isRepositoryHealthy === false) {
+    // Only show error if: query error, OR unhealthy (already reconciled)
+    if (repositoryStatusError || isUnhealthy) {
       setStepStatusInfo({
         status: 'error',
         error: {
@@ -121,9 +123,9 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
-    isRepositoryHealthy,
     isQuotaExceeded,
     resourceCount,
+    isUnhealthy,
   ]);
 
   useEffect(() => {
@@ -140,7 +142,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  if (repositoryStatusError || isRepositoryHealthy === false || isQuotaExceeded) {
+  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded
+  if (repositoryStatusError || isUnhealthy || isQuotaExceeded) {
     // error message and retry will be set in above step status
     return null;
   }
@@ -199,7 +202,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             label={t('provisioning.bootstrap-step.label-display-name', 'Display name')}
             description={t(
               'provisioning.bootstrap-step.description-clear-repository-connection',
-              'Add a clear name for this repository connection'
+              'This name will be used for the repository connection and the folder displayed in the UI'
             )}
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}

@@ -21,7 +21,6 @@ const repeatOptions = [1, 2, 3, 4];
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
@@ -318,7 +317,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        'Auto-grid repeats - move repeated panels 2',
+        'Auto-grid repeats - view repeated panels 2',
         JSON.stringify(testV2DashWithRepeats)
       );
 

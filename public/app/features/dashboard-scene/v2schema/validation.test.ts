@@ -4,7 +4,7 @@ import {
   defaultPanelQueryKind,
   defaultVizConfigKind,
   defaultGridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { isGridLayoutItemKind, isPanelKindV2 } from './validation';
 

@@ -105,7 +105,7 @@ type GetGotoRequest struct {
 	Headers http.Header
 }
 
-func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identifier, request GetGotoRequest) (*GetGoto, error) {
+func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identifier, request GetGotoRequest) (*GetGotoResponse, error) {
 	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
 		Path:    "/goto",
 		Verb:    "GET",
@@ -114,10 +114,10 @@ func (c *ShortURLClient) GetGoto(ctx context.Context, identifier resource.Identi
 	if err != nil {
 		return nil, err
 	}
-	cast := GetGoto{}
+	cast := GetGotoResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGoto: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetGotoResponse: %w", err)
 	}
 	return &cast, nil
 }

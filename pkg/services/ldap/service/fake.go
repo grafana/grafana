@@ -19,10 +19,6 @@ func NewLDAPFakeService() *LDAPFakeService {
 	return &LDAPFakeService{}
 }
 
-func (s *LDAPFakeService) ReloadConfig() error {
-	return s.ExpectedError
-}
-
 func (s *LDAPFakeService) Enabled() bool {
 	return s.ExpectedEnabled
 }

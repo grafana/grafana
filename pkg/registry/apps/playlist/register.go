@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -72,17 +73,30 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 // GetLegacyStorage returns the legacy storage for the playlist app.
+// v0alpha1 and v1 use the same storage implementation since they share the same schema
 func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
-	gvr := playlistv0alpha1.PlaylistKind().GroupVersionResource()
-	if requested.String() != gvr.String() {
+	gvrV0alpha1 := playlistv0alpha1.PlaylistKind().GroupVersionResource()
+	gvrV1 := playlistv1.PlaylistKind().GroupVersionResource()
+
+	// check if the requested GVR matches either v0alpha1 or v1
+	var gvk schema.GroupVersionKind
+	switch requested.String() {
+	case gvrV0alpha1.String():
+		gvk = playlistv0alpha1.PlaylistKind().GroupVersionKind()
+	case gvrV1.String():
+		gvk = playlistv1.PlaylistKind().GroupVersionKind()
+	default:
 		return nil
 	}
+
 	legacyStore := &legacyStorage{
 		service:    p.service,
 		namespacer: request.GetNamespaceMapper(p.cfg),
+		gvk:        gvk,
 	}
+
 	legacyStore.tableConverter = utils.NewTableConverter(
-		gvr.GroupResource(),
+		requested.GroupResource(),
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -91,9 +105,9 @@ func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) g
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*playlistv0alpha1.Playlist)
+				m, ok := obj.(*playlistv1.Playlist)
 				if !ok {
-					return nil, fmt.Errorf("expected playlist")
+					return nil, fmt.Errorf("expected playlist, got %T", obj)
 				}
 				return []interface{}{
 					m.Name,

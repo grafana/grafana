@@ -18,6 +18,7 @@ const (
 	DataSection           = "unified/data"
 	EventsSection         = "unified/events"
 	LastImportTimeSection = "unified/lastimport"
+	PendingDeleteSection  = "unified/pendingdelete"
 )
 
 var _ KV = &SqlKV{}
@@ -57,6 +58,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "resource_events"
 	case DataSection:
 		tableName = "resource_history"
+	case PendingDeleteSection:
+		tableName = "pending_tenant_deletions"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -114,22 +117,23 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			yield("", err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			if err := rows.Scan(&key); err != nil {
-				yield("", fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
-			if !yield(strings.TrimPrefix(key, section+"/"), nil) {
+			if shouldYield = yield(strings.TrimPrefix(key, section+"/"), nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield("", fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -178,13 +182,14 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			yield(KeyValue{}, err)
 			return
 		}
-		defer closeRows(rows, yield)
+		shouldYield := true
+		defer func() { closeRows(rows, yield, shouldYield) }()
 
 		for rows.Next() {
 			var key string
 			var value []byte
 			if err := rows.Scan(&key, &value); err != nil {
-				yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
+				shouldYield = yield(KeyValue{}, fmt.Errorf("error reading row: %w", err))
 				return
 			}
 
@@ -192,13 +197,13 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 				Key:   strings.TrimPrefix(key, section+"/"),
 				Value: io.NopCloser(bytes.NewReader(value)),
 			}
-			if !yield(kv, nil) {
+			if shouldYield = yield(kv, nil); !shouldYield {
 				return
 			}
 		}
 
 		if err := rows.Err(); err != nil {
-			yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
+			shouldYield = yield(KeyValue{}, fmt.Errorf("failed to read rows: %w", err))
 		}
 	}
 }
@@ -213,7 +218,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if section == LastImportTimeSection {
 		return k.saveLastImportTime(ctx, key)
 	}
-	if section != DataSection && section != EventsSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -264,8 +269,8 @@ func (w *sqlWriteCloser) Close() error {
 	keyPath := getKeyPath(w.section, w.key)
 
 	// do regular kv save: simple key_path + value insert with conflict check.
-	// can only do this on resource_events for now, until we drop the columns in resource_history
-	if w.section == EventsSection {
+	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
+	if w.section == EventsSection || w.section == PendingDeleteSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.db.ExecContext(w.ctx, query, args...)
 		if err != nil {
@@ -384,8 +389,8 @@ func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
 
-func closeRows[T any](rows *sql.Rows, yield func(T, error) bool) {
-	if err := rows.Close(); err != nil {
+func closeRows[T any](rows *sql.Rows, yield func(T, error) bool, shouldYield bool) {
+	if err := rows.Close(); err != nil && shouldYield {
 		var zero T
 		yield(zero, fmt.Errorf("error closing rows: %w", err))
 	}

@@ -2,22 +2,23 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -30,10 +31,11 @@ import (
 
 // TODO: it does not support folders yet
 type DualReadWriter struct {
-	repo    repository.ReaderWriter
-	parser  Parser
-	folders *FolderManager
-	access  auth.AccessChecker
+	repo                  repository.ReaderWriter
+	parser                Parser
+	folders               *FolderManager
+	authorizer            Authorizer
+	folderMetadataEnabled bool
 }
 
 type DualWriteOptions struct {
@@ -49,8 +51,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -78,17 +80,16 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
-	// Authorize based on the existing resource
-	if err = r.authorize(ctx, parsed, utils.VerbGet); err != nil {
-		return nil, err
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
+		return nil, fmt.Errorf("authorize read resource: %w", err)
 	}
 
 	return parsed, nil
 }
 
 func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
-		return nil, err
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if safepath.IsDir(opts.Path) {
@@ -113,8 +114,8 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("parse file: %w", err)
 	}
 
-	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
-		return nil, err
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
+		return nil, fmt.Errorf("authorize delete resource: %w", err)
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -151,16 +152,16 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 // CreateFolder creates a new folder in the repository
 // FIXME: fix signature to return ParsedResource
 func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
-		return nil, err
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if !safepath.IsDir(opts.Path) {
 		return nil, fmt.Errorf("not a folder path")
 	}
 
-	if err := r.authorizeCreateFolder(ctx, opts.Path); err != nil {
-		return nil, err
+	if err := r.authorizer.AuthorizeCreateFolder(ctx, opts.Path); err != nil {
+		return nil, fmt.Errorf("authorize create folder: %w", err)
 	}
 
 	// Always use the provisioning identity when writing
@@ -169,9 +170,46 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// Now actually create the folder
-	if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
-		return nil, fmt.Errorf("failed to create folder: %w", err)
+	// When the feature flag is enabled, write folder metadata for every path segment
+	// (ancestor and leaf), skipping any segment that already has one.
+	var stableUID string
+	if r.folderMetadataEnabled {
+		leafPath := strings.TrimSuffix(opts.Path, "/")
+		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
+			folderPath := segPath + "/"
+			existing, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			if readErr == nil {
+				if segPath == leafPath {
+					return apierrors.NewAlreadyExists(
+						provisioning.RepositoryResourceInfo.GroupResource(),
+						opts.Path,
+					)
+				}
+				// Ancestor already has folder metadata; reuse its UID
+				stableUID = existing.Name
+				return nil
+			}
+			if !errors.Is(readErr, repository.ErrFileNotFound) {
+				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
+			}
+			// Not found: write a new folder metadata file
+			uid := util.GenerateShortUID()
+			manifest := NewFolderManifest(uid, safepath.Base(folderPath))
+			var writeErr error
+			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
+			if writeErr != nil {
+				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Existing behavior: git layer creates .keep when data is nil and path ends with /
+		if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
+			return nil, fmt.Errorf("failed to create folder: %w", err)
+		}
 	}
 
 	cfg := r.repo.Config()
@@ -196,17 +234,25 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	wrap.URLs = urls
 
 	if r.shouldUpdateGrafanaDB(opts, nil) {
-		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
-		if err != nil {
+		var folderID string
+		if stableUID != "" {
+			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+				return nil, err
+			}
+			folderID = stableUID
+		} else {
+			var err error
+			folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		current, err := r.folders.GetFolder(ctx, folderID)
+		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err
 		}
-
-		current, err := r.folders.GetFolder(ctx, folderName)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err // unable to check if the folder exists
-		}
-		wrap.Resource.Upsert = v0alpha1.Unstructured{
-			Object: current.Object,
+		if current != nil {
+			wrap.Resource.Upsert = v0alpha1.Unstructured{Object: current.Object}
 		}
 	}
 
@@ -225,8 +271,8 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, opts DualWriteOptio
 
 // Create or updates a resource in the repository
 func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
-		return nil, err
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	info := &repository.FileInfo{
@@ -260,8 +306,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	if parsed.Action == provisioning.ResourceActionCreate {
 		verb = utils.VerbCreate
 	}
-	if err = r.authorize(ctx, parsed, verb); err != nil {
-		return nil, err
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
+		return nil, fmt.Errorf("authorize %s resource: %w", verb, err)
 	}
 
 	data, err := parsed.ToSaveBytes()
@@ -312,8 +358,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 
 // MoveResource moves a resource from one path to another in the repository
 func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
-		return nil, err
+	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if opts.OriginalPath == "" {
@@ -349,6 +395,10 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 				Message: "directory move operations are not available for configured branch. Use bulk move operations via the jobs API instead",
 			},
 		}
+	}
+
+	if err := r.authorizer.AuthorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
+		return nil, fmt.Errorf("authorize move folder: %w", err)
 	}
 
 	// For branch operations, we just perform the repository move without updating Grafana DB
@@ -402,8 +452,8 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Authorize delete on the original path
-	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
-		return nil, fmt.Errorf("not authorized to delete original file: %w", err)
+	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
+		return nil, fmt.Errorf("authorize delete original file: %w", err)
 	}
 
 	// Determine the content to use for the destination
@@ -445,8 +495,8 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	if newParsed.Action == provisioning.ResourceActionUpdate {
 		verb = utils.VerbUpdate
 	}
-	if err = r.authorize(ctx, newParsed, verb); err != nil {
-		return nil, fmt.Errorf("not authorized to create new file: %w", err)
+	if err = r.authorizer.AuthorizeResource(ctx, newParsed, verb); err != nil {
+		return nil, fmt.Errorf("authorize %s new file: %w", verb, err)
 	}
 
 	data, err := newParsed.ToSaveBytes()
@@ -504,43 +554,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	return newParsed, nil
 }
 
-func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	var name string
-	if parsed.Existing != nil {
-		name = parsed.Existing.GetName()
-	} else {
-		name = parsed.Obj.GetName()
-	}
-
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    parsed.GVR.Group,
-		Resource: parsed.GVR.Resource,
-		Name:     name,
-		Verb:     verb,
-	}, parsed.Meta.GetFolder())
-}
-
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
-	// Determine parent folder from path
-	parentFolder := ""
-	if path != "" {
-		parentPath := safepath.Dir(path)
-		if parentPath != "" {
-			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
-		} else {
-			parentFolder = RootFolder(r.repo.Config())
-		}
-	}
-
-	// For folder create operations, use empty name to check parent folder permissions
-	return r.access.Check(ctx, authlib.CheckRequest{
-		Group:    FolderResource.Group,
-		Resource: FolderResource.Resource,
-		Name:     "", // Empty name for create operations
-		Verb:     utils.VerbCreate,
-	}, parentFolder)
-}
-
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// Reject directory delete operations for configured branch - use bulk operations instead
 	if r.isConfiguredBranch(opts) {
@@ -552,6 +565,10 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 				Message: "directory delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
 			},
 		}
+	}
+
+	if err := r.authorizer.AuthorizeDeleteFolder(ctx, opts.Path); err != nil {
+		return nil, fmt.Errorf("authorize delete folder: %w", err)
 	}
 
 	// Always use the provisioning identity when writing
@@ -629,6 +646,11 @@ func (r *DualReadWriter) isConfiguredBranch(opts DualWriteOptions) bool {
 // or if the ref matches the configured branch
 func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *ParsedResource) bool {
 	if parsed != nil && parsed.Client == nil {
+		return false
+	}
+
+	// Only dual write if sync is enabled
+	if !r.repo.Config().Spec.Sync.Enabled {
 		return false
 	}
 

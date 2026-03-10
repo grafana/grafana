@@ -73,7 +73,7 @@ The `apps` directory structure is Grafana's intended future for defining APIs an
 
 - `(plugin)/kinds/playlist.cue`: CUE schema for the `Playlist` resource kind and its `spec`.
 - `(plugin)/kinds/manifest.cue`: App and resource kind metadata.
-- `(plugin)/pkg/apis/playlist/v0alpha1/`: Generated Go types from the CUE schema.
+- `(plugin)/pkg/apis/playlist/v1/`: Generated Go types from the CUE schema.
 - `(plugin)/pkg/reconcilers/reconciler_playlist.go`: Reconciler acting on `Playlist` resources.
 - `(root)/pkg/registry/apps/playlist/register.go`: Registers the `Playlist` kind and API endpoints using the App SDK.
 

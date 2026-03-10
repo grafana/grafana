@@ -252,6 +252,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
+            createdBy: queryArg.createdBy,
             explain: queryArg.explain,
             panelTitleSearch: queryArg.panelTitleSearch,
           },
@@ -688,8 +689,10 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
-  /** filter by owner reference in the format {Group}/{Kind}/{Name} */
-  ownerReference?: string;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
+  ownerReference?: string[];
+  /** filter by the user who created the resource (format: user:<uid>) */
+  createdBy?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */
@@ -1040,7 +1043,7 @@ export type GridPos = {
   x: number;
   y: number;
 };
-export type DataQuery = {
+export type DataResponse = {
   /** The datasource */
   datasource?: {
     /** The apiserver version */
@@ -1131,7 +1134,7 @@ export type LibraryPanelSpec = {
   /** The panel type */
   pluginVersion?: string;
   /** The datasource queries */
-  targets?: DataQuery[];
+  targets?: DataResponse[];
   /** The title of the library panel */
   title?: string;
   /** Whether the panel is transparent */

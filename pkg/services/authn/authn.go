@@ -69,8 +69,11 @@ type ClientParams struct {
 }
 
 type FetchPermissionsParams struct {
-	// RestrictedActions will restrict the permissions to only these actions
+	// RestrictedActions will restrict the permissions to only these Grafana-style actions
 	RestrictedActions []string
+	// K8sRestrictedActions will restrict the permissions to only the Grafana actions
+	// that the Kubernetes-style permission strings translate to
+	K8sRestrictedActions []string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
 	// Note: Kept for backwards compatibility, use K8s style instead
@@ -257,7 +260,7 @@ func ClientWithPrefix(name string) string {
 	return fmt.Sprintf("auth.client.%s", name)
 }
 
-type RedirectValidator func(url string) error
+type RedirectValidator func(url string) (string, error)
 
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
 func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.NormalResponse {
@@ -283,22 +286,30 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 	redirectURL := cfg.AppSubURL + "/"
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
-		if redirectToCookieName != "" {
-			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
-			if err == nil {
-				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
-				if redirectTo != "" && validator(cfg.AppSubURL+redirectTo) == nil {
-					redirectURL = cfg.AppSubURL + redirectTo
-				}
-				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))
-			}
+		if redirectToCookieName == "" {
+			return redirectURL
+		}
+
+		scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
+		if err != nil {
+			return redirectURL
+		}
+		cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))
+
+		// We never want to redirect to an external URL. We always redirect to a relative URL within the application.
+		redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
+		if redirectTo == "" {
+			return redirectURL
+		}
+
+		if redirectTo, err = validator(cfg.AppSubURL + redirectTo); err == nil {
+			return redirectTo
 		}
 		return redirectURL
 	}
 
-	redirectURL = cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
-		if validator(redirectTo) == nil {
+		if redirectTo, err := validator(redirectTo); err == nil {
 			redirectURL = redirectTo
 		}
 		cookies.DeleteCookie(w, defaultRedirectToCookieKey, cookieOptions(cfg))

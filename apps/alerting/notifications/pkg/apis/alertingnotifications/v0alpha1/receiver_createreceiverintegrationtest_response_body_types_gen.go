@@ -14,6 +14,11 @@ func NewCreateReceiverIntegrationTestBody() *CreateReceiverIntegrationTestBody {
 	return &CreateReceiverIntegrationTestBody{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestBody.
+func (CreateReceiverIntegrationTestBody) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestBody"
+}
+
 // +k8s:openapi-gen=true
 type CreateReceiverIntegrationTestBodyStatus string
 
@@ -21,3 +26,8 @@ const (
 	CreateReceiverIntegrationTestBodyStatusSuccess CreateReceiverIntegrationTestBodyStatus = "success"
 	CreateReceiverIntegrationTestBodyStatusFailure CreateReceiverIntegrationTestBodyStatus = "failure"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for CreateReceiverIntegrationTestBodyStatus.
+func (CreateReceiverIntegrationTestBodyStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.CreateReceiverIntegrationTestBodyStatus"
+}
