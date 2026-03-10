@@ -551,6 +551,42 @@ function replaceElementDatasources(
   );
 }
 
+/**
+ * Replace ${DS_...} placeholders in a library panel model's datasource references
+ * using the user-selected datasources from the import form.
+ */
+export function interpolateLibraryPanelDatasources(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  model: any,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const result = { ...model };
+
+  if (result.datasource?.uid && typeof result.datasource.uid === 'string' && result.datasource.uid.startsWith('$')) {
+    const userInput = checkUserInputMatch(result.datasource.uid, inputs.dataSources, form.dataSources);
+    if (userInput) {
+      result.datasource = { ...result.datasource, uid: userInput.uid };
+    }
+  }
+
+  if (Array.isArray(result.targets)) {
+    result.targets = result.targets.map((target: Record<string, unknown>) => {
+      const ds = target.datasource;
+      if (isRecord(ds) && typeof ds.uid === 'string' && ds.uid.startsWith('$')) {
+        const userInput = checkUserInputMatch(ds.uid, inputs.dataSources, form.dataSources);
+        if (userInput) {
+          return { ...target, datasource: { ...ds, uid: userInput.uid } };
+        }
+      }
+      return target;
+    });
+  }
+
+  return result;
+}
+
 function checkUserInputMatch(
   templateizedUid: string,
   datasourceInputs: DataSourceInput[],
