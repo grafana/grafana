@@ -1,4 +1,4 @@
-package provisioning
+package quota
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
@@ -85,8 +85,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Target: "folder",
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 root folder will exceed the limit of 2
-				"testdata/all-panels.json":   "dashboard1.json",
-				"testdata/text-options.json": "dashboard2.json",
+				"../testdata/all-panels.json":   "dashboard1.json",
+				"../testdata/text-options.json": "dashboard2.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Target: "folder",
 			Copies: map[string]string{
 				// Adding 1 dashboard, well under the limit of 10
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
@@ -243,7 +243,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
@@ -303,7 +303,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
