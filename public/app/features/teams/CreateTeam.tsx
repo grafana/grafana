@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { locationUtil, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Checkbox, Field, FieldSet, Input, Stack } from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
@@ -22,6 +23,7 @@ const pageNav: NavModelItem = {
 
 const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
+  const styles = useStyles2(getStyles);
 
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const [autocreateTeamFolder, setAutocreateTeamFolder] = useState(false);
@@ -36,9 +38,10 @@ const CreateTeam = (): JSX.Element => {
     autocreateTeamFolder
   );
 
-  // TODO: should we allow to click create again after error?
-  const showCreateButton = !teamCreationStatus || teamCreationStatus?.state === 'error';
-  const formLocked = !showCreateButton;
+  // We allow re-submitting the form if a team create step failed. This probably means nothing happened yet and the user
+  // can try again. Also, the error can be that the team with a specific name already exists.
+  const allowResubmit = !teamCreationStatus || teamCreationStatus?.state === 'error';
+  const formDisabled = !allowResubmit;
 
   return (
     <Page navId="teams" pageNav={pageNav}>
@@ -53,14 +56,14 @@ const CreateTeam = (): JSX.Element => {
                 invalid={!!errors.name}
                 error="Team name is required"
               >
-                <Input {...register('name', { required: true })} id="team-name" disabled={formLocked} />
+                <Input {...register('name', { required: true })} id="team-name" disabled={formDisabled} />
               </Field>
               {contextSrv.licensedAccessControlEnabled() && (
                 <Field noMargin label={t('teams.create-team.label-role', 'Role')}>
                   <TeamRolePicker
                     teamId={0}
                     roleOptions={roleOptions}
-                    disabled={formLocked}
+                    disabled={formDisabled}
                     apply={true}
                     onApplyRoles={setPendingRoles}
                     pendingRoles={pendingRoles}
@@ -80,7 +83,7 @@ const CreateTeam = (): JSX.Element => {
                   {...register('email')}
                   type="email"
                   id="team-email"
-                  disabled={formLocked}
+                  disabled={formDisabled}
                   // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="email@test.com"
                 />
@@ -90,48 +93,53 @@ const CreateTeam = (): JSX.Element => {
                   value={autocreateTeamFolder}
                   label={t('teams.create-team.autocreate-team-folder', 'autocreate team folder')}
                   onChange={(event) => setAutocreateTeamFolder(event.currentTarget.checked)}
-                  disabled={formLocked}
+                  disabled={formDisabled}
                 />
               </Field>
             </Stack>
           </FieldSet>
-          <Stack direction="column" gap={2}>
-            {showCreateButton && (
-              <Button type="submit" variant="primary">
-                <Trans i18nKey="teams.create-team.create">Create</Trans>
-              </Button>
-            )}
+          <Button type="submit" variant="primary" disabled={formDisabled}>
+            <Trans i18nKey="teams.create-team.create">Create</Trans>
+          </Button>
+          <div className={styles.statusSection}>
+            <Stack direction="column" gap={2}>
+              {/* Report team creation progress */}
+              <Stack direction="column" gap={1}>
+                {teamCreationStatus && (
+                  <StepResultAlert
+                    {...getStatusCardProps(
+                      teamCreationStatus,
+                      'createTeam',
+                      'data' in teamCreationStatus ? `/org/teams/edit/${teamCreationStatus.data}` : undefined
+                    )}
+                  />
+                )}
+                {rolesCreationStatus && <StepResultAlert {...getStatusCardProps(rolesCreationStatus, 'createRoles')} />}
+                {folderCreationStatus && (
+                  <StepResultAlert
+                    {...getStatusCardProps(
+                      folderCreationStatus,
+                      'createFolder',
 
-            {/* Report team creation progress */}
-            <Stack direction="column" gap={1}>
-              {teamCreationStatus && (
-                <StepResultAlert
-                  {...getStatusCardProps(
-                    teamCreationStatus,
-                    'createFolder',
-                    'data' in teamCreationStatus ? `/org/teams/edit/${teamCreationStatus.data}` : undefined
-                  )}
-                />
-              )}
-              {rolesCreationStatus && <StepResultAlert {...getStatusCardProps(rolesCreationStatus, 'createRoles')} />}
-              {folderCreationStatus && (
-                <StepResultAlert
-                  {...getStatusCardProps(
-                    folderCreationStatus,
-                    'createFolder',
-
-                    'data' in folderCreationStatus && folderCreationStatus.data
-                      ? locationUtil.stripBaseFromUrl(folderCreationStatus.data)
-                      : undefined
-                  )}
-                />
-              )}
+                      'data' in folderCreationStatus && folderCreationStatus.data
+                        ? locationUtil.stripBaseFromUrl(folderCreationStatus.data)
+                        : undefined
+                    )}
+                  />
+                )}
+              </Stack>
             </Stack>
-          </Stack>
+          </div>
         </form>
       </Page.Contents>
     </Page>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  statusSection: css({
+    marginTop: theme.spacing(2),
+  }),
+});
 
 export default CreateTeam;

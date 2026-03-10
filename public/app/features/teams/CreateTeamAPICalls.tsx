@@ -26,6 +26,14 @@ interface ResultCardLink {
   text: string;
 }
 
+/**
+ * Alert that just shows the message and optional link. Link should point to some resource that the step successfully
+ * created.
+ * @param severity
+ * @param description
+ * @param link
+ * @constructor
+ */
 export function StepResultAlert({ severity, description, link }: CardProps) {
   return (
     <Alert severity={severity} title="">
@@ -37,7 +45,10 @@ export function StepResultAlert({ severity, description, link }: CardProps) {
   );
 }
 
-export type CallStatus =
+/**
+ * Each step is in one of these states.
+ */
+export type CallState =
   | {
       state: 'loading';
     }
@@ -50,20 +61,23 @@ export type CallStatus =
       error: unknown;
     };
 
+/**
+ * The calls we are orchestrating here.
+ */
 type CallTypes = 'createTeam' | 'createRoles' | 'createFolder';
 
-export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFolder: boolean) {
-  const [createTeamTrigger] = useCreateTeamMutation();
-  const [createFolderTrigger] = useCreateFolder();
-  const [setTeamRoles] = useSetTeamRolesMutation();
-
-  const [teamCreationStatus, setTeamCreationStatus] = useState<CallStatus | undefined>(undefined);
-  const [folderCreationStatus, setFolderCreationStatus] = useState<CallStatus | undefined>(undefined);
-  const [rolesCreationStatus, setRolesCreationStatus] = useState<CallStatus | undefined>(undefined);
+/**
+ * Creates a reportState function which either saves the state of a step in the local state so it can be returned and
+ * showed inline, or reports it through app events if the current component using this is unmounted.
+ */
+function useReportState() {
+  const [teamCreationStatus, setTeamCreationStatus] = useState<CallState | undefined>(undefined);
+  const [folderCreationStatus, setFolderCreationStatus] = useState<CallState | undefined>(undefined);
+  const [rolesCreationStatus, setRolesCreationStatus] = useState<CallState | undefined>(undefined);
 
   const isMounted = useMountedState();
 
-  function reportState(status: CallStatus, call: CallTypes) {
+  function reportState(status: CallState, call: CallTypes) {
     if (isMounted()) {
       if (call === 'createTeam') {
         setTeamCreationStatus(status);
@@ -95,12 +109,28 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     }
   }
 
+  return { teamCreationStatus, folderCreationStatus, rolesCreationStatus, reportState };
+}
+
+/**
+ * Hook that creates a trigger that will run all the necessary calls to create a team. It also reports back status,
+ * either inline or using global app events depending on the mounted status of the component using it.
+ * @param pendingRoles
+ * @param autocreateTeamFolder
+ */
+export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFolder: boolean) {
+  const [createTeamTrigger] = useCreateTeamMutation();
+  const [createFolderTrigger] = useCreateFolder();
+  const [setTeamRoles] = useSetTeamRolesMutation();
+
+  const { teamCreationStatus, folderCreationStatus, rolesCreationStatus, reportState } = useReportState();
+
   // Trigger to create a team and optionally also roles and folder. Each one has its own state to inform user about the
   // progress or an error.
   const createTeam = async (formModel: TeamDTO) => {
-    //
+    //////////////////////
     // Create a team first
-    //
+    //////////////////////
     reportState({ state: 'loading' }, 'createTeam');
     const mutationArg: CreateTeamApiArg & { showSuccessAlert?: boolean } = {
       createTeamCommand: { email: formModel.email || '', name: formModel.name },
@@ -117,10 +147,12 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
 
     reportState({ state: 'success', data: teamData.uid }, 'createTeam');
 
-    //
+    ////////////////////////////
     // Create roles if requested
-    //
+    ////////////////////////////
     if (pendingRoles && pendingRoles.length) {
+      // TODO: this fetch can fail or user just don't have permissions and this is skipped silently
+      //  Maybe we should just do that in the form itself and disable the input if user does not have permissions
       await contextSrv.fetchUserPermissions();
       if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
         reportState({ state: 'loading' }, 'createRoles');
@@ -139,9 +171,9 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
       }
     }
 
-    //
-    // Create folder if requested
-    //
+    ///////////////////////////////
+    // Create a folder if requested
+    ///////////////////////////////
     if (autocreateTeamFolder) {
       reportState({ state: 'loading' }, 'createFolder');
       const { data: folderData, error: folderError } = await createFolderTrigger({
@@ -166,7 +198,7 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
  * @param type
  * @param href
  */
-export function getStatusCardProps(status: CallStatus, type: CallTypes, href?: string): CardProps {
+export function getStatusCardProps(status: CallState, type: CallTypes, href?: string): CardProps {
   const messages = getMessages()[type];
   if (status.state === 'error') {
     return {
