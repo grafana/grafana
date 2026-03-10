@@ -696,29 +696,31 @@ const FlameGraphCallTreeContainer = memo(
           <div className={styles.toolbarRight}></div>
         </div>
 
-        <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
-          {({ width, height }) => (
-            <CallTreeTable
-              width={width}
-              height={height}
-              compactModeThreshold={compactModeThreshold}
-              isCompact={isCompact}
-              setIsCompact={setIsCompact}
-              getFunctionColumnWidth={getFunctionColumnWidth}
-              getTableProps={getTableProps}
-              getTableBodyProps={getTableBodyProps}
-              headerGroups={headerGroups}
-              rows={rows}
-              prepareRow={prepareRow}
-              styles={styles}
-              currentSearchMatchId={currentSearchMatchId}
-              searchMatchRowRef={searchMatchRowRef}
-              scrollContainerRef={scrollContainerRef}
-              focusedNodeId={focusedNodeId}
-              callersNodeLabel={callersNodeLabel}
-            />
-          )}
-        </AutoSizer>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <AutoSizer>
+            {({ width, height }) => (
+              <CallTreeTable
+                width={width}
+                height={height}
+                compactModeThreshold={compactModeThreshold}
+                isCompact={isCompact}
+                setIsCompact={setIsCompact}
+                getFunctionColumnWidth={getFunctionColumnWidth}
+                getTableProps={getTableProps}
+                getTableBodyProps={getTableBodyProps}
+                headerGroups={headerGroups}
+                rows={rows}
+                prepareRow={prepareRow}
+                styles={styles}
+                currentSearchMatchId={currentSearchMatchId}
+                searchMatchRowRef={searchMatchRowRef}
+                scrollContainerRef={scrollContainerRef}
+                focusedNodeId={focusedNodeId}
+                callersNodeLabel={callersNodeLabel}
+              />
+            )}
+          </AutoSizer>
+        </div>
       </div>
     );
   }
