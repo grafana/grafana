@@ -247,7 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(0.75),
     padding: theme.spacing(1),
     borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z1,
     position: 'relative',
