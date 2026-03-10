@@ -62,12 +62,14 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
-  } else if (item && (isTeamFolders(item.uid) || isTeamFolderItem(item.uid))) {
-    return 'users-alt';
-  } else {
-    return getIconForKind(item.kind, isOpen);
+    return 'user-arrows';
   }
+
+  if (item && (isTeamFolders(item.uid) || isTeamFolderItem(item.uid))) {
+    return 'users-alt';
+  }
+
+  return getIconForKind(item.kind, isOpen);
 }
 
 function parseKindString(kind: string): DashboardViewItemKind {
