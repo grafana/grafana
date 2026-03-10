@@ -4,6 +4,7 @@ import { major, compare, gt } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useStyles2, Badge } from '@grafana/ui';
 
 import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
@@ -214,7 +215,7 @@ function shouldDisableVersionInstallation({
   installedVersion,
   updateStrategy,
 }: ShouldDisableVersionInstallationArgs) {
-  if (!installedVersion) {
+  if (Boolean(config.featureToggles.managedPluginsV2) || !installedVersion) {
     return false;
   }
 

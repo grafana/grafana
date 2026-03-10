@@ -141,7 +141,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
-    isManaged: isManagedPlugin(id) || isCloudManagedPlugin(plugin),
+    isManaged: isManagedPlugin(id, plugin),
     isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
@@ -154,7 +154,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     latestVersion: plugin.version,
     url,
     managed: {
-      enabled: isManagedPlugin(id) || isCloudManagedPlugin(plugin),
+      enabled: isManagedPlugin(id, plugin),
       strategy: plugin.managed.strategy,
     },
   };
@@ -251,7 +251,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
-    isManaged: isManagedPlugin(id) || isCloudManagedPlugin(remote),
+    isManaged: isManagedPlugin(id, remote),
     isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
@@ -275,7 +275,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
     managed: {
-      enabled: isManagedPlugin(id) || isCloudManagedPlugin(remote),
+      enabled: isManagedPlugin(id, remote),
       strategy: remote?.managed.strategy,
     },
   };
@@ -385,10 +385,20 @@ function isNotHiddenByConfig(id: string) {
   return !pluginCatalogHiddenPlugins.includes(id);
 }
 
-export function isManagedPlugin(id: string) {
+export function isManagedPlugin(id: string, remote?: RemotePlugin) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
-  return pluginCatalogManagedPlugins?.includes(id);
+  let remoteManaged = false;
+  if (remote) {
+    remoteManaged =
+      remote.managed.enabled &&
+      config.pluginAdminExternalManageEnabled &&
+      Boolean(config.featureToggles.managedPluginsV2);
+  }
+
+  // pluginCatalogManagedPlugins considers the instance config as source of truth
+  // while remoteManaged considers the grafana-com as source of truth
+  return pluginCatalogManagedPlugins?.includes(id) || remoteManaged;
 }
 
 /**
