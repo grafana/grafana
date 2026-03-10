@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -18,15 +19,17 @@ export function AddVariable({
   dashboardScene: DashboardScene;
   selectedElement: SceneObject | undefined;
 }) {
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+
   const onAddVariableClick = useCallback(() => {
-    const sectionOwner = findSectionOwner(selectedElement);
+    const sectionOwner = sectionVariablesEnabled ? findSectionOwner(selectedElement) : undefined;
     if (sectionOwner) {
       openAddSectionVariablePane(dashboardScene, sectionOwner);
     } else {
       openAddVariablePane(dashboardScene);
     }
     DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
-  }, [dashboardScene, selectedElement]);
+  }, [dashboardScene, selectedElement, sectionVariablesEnabled]);
 
   return (
     <AddButton
