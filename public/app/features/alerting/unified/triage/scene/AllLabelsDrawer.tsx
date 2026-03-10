@@ -114,7 +114,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
                   }
                   onClick={() => toggleKey(label.key, isOpen)}
                 />
-                <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
+                <Stack direction="row" gap={0.5} alignItems="center">
+                  <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
+                  <span className={styles.valueCount}>{label.values.length}</span>
+                </Stack>
               </Stack>
               <Stack alignItems="center" gap={0.5} shrink={0}>
                 {label.pending > 0 ? <PendingCount count={label.pending} /> : null}
@@ -254,7 +257,6 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
   }),
   labelHeaderKey: css({
     minWidth: 0,
-    flex: 1,
     display: 'flex',
     alignItems: 'center',
     overflow: 'hidden',
@@ -276,6 +278,13 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.medium}`,
   }),
+  valueCount: css({
+    flexShrink: 0,
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.disabled,
+    fontVariantNumeric: 'tabular-nums',
+  }),
+
   valueButton: css({
     flex: 1,
     minWidth: 0,
