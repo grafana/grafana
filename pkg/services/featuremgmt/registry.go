@@ -483,8 +483,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourceDisableIdApi",
-			Description:     "Does not register datasource apis that use the numeric id",
+			Name:            "datasourceEnableIdApi",
+			Description:     "Register the datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // affects the routes at startup

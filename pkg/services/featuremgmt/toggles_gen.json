@@ -1487,10 +1487,25 @@
       "metadata": {
         "name": "datasourceDisableIdApi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-10T10:56:11Z"
       },
       "spec": {
         "description": "Does not register datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceEnableIdApi",
+        "resourceVersion": "1773140171379",
+        "creationTimestamp": "2026-03-10T10:56:11Z"
+      },
+      "spec": {
+        "description": "Register the datasource apis that use the numeric id",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true,
