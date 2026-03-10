@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Erro ao carregar a regra para este evento.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrar por:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "O período selecionado tem demasiados eventos para mostrar. A mostrar os últimos 5000 eventos. Tente utilizar um período mais curto.",
         "title": "Não é possível exibir todos os eventos"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Painel de controlo",
         "element": "Elemento",
+        "link-set": "",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
         "multiple-elements-delete-text": "Tem a certeza de que pretende eliminar estes elementos?",
@@ -5402,6 +5411,12 @@
         "tabs": "Separadores",
         "variable": "Variável {{type}}",
         "variable-set": "Variáveis"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Utilizar dimensões de chave estática",
       "name-allow-custom-values": "Permitir valores personalizados"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Não foi possível navegar para o painel de controlo selecionado. Tente novamente.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} por <person />",
       "usage-count_one": "Utilizado em {{count}} painéis de controlo",
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Gerido por: Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
-    "description-enable-logs-highlighting": "Utilizar um esquema de coloração predefinido para destacar as partes relevantes das linhas de registo",
-    "description-show-controls": "Mostrar controlos para aceder à última ou primeira linha de registo e filtrar por nível de registo",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Experimental. Quando os registos OTel são exibidos, adicionar um campo exibido extra com pares de chave-valor relevantes de etiquetas e metadados.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ícone de arrastar e largar",
       "clear-button": "Limpar",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "Iniciar {{title}}",
       "description-customize-dashboard-elements-visibility": "Personalizar a visibilidade dos elementos do painel de controlo",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "As alturas do painel serão ajustadas ao tamanho do ecrã",
       "label-autofit": "Ajuste automático",
       "label-dashboard-links": "Links do painel de controlo",
       "label-display-dashboard-controls": "Mostrar os controlos do painel de controlo",
+      "label-hide-logo": "",
       "label-mode": "Modo",
       "label-time-and-refresh": "Tempo e atualização",
       "label-variables": "Variáveis",

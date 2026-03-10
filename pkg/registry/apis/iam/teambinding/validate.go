@@ -19,6 +19,10 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.TeamBinding) error {
 		return apierrors.NewBadRequest("invalid permission")
 	}
 
+	if obj.Spec.Subject.Kind != "User" {
+		return apierrors.NewBadRequest("subject kind must be User")
+	}
+
 	if obj.Spec.Subject.Name == "" {
 		return apierrors.NewBadRequest("subject is required")
 	}
@@ -38,6 +42,10 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.TeamBinding) er
 
 	if obj.Spec.TeamRef.Name != old.Spec.TeamRef.Name {
 		return apierrors.NewBadRequest("teamRef is immutable")
+	}
+
+	if obj.Spec.Subject.Kind != "User" {
+		return apierrors.NewBadRequest("subject kind must be User")
 	}
 
 	if obj.Spec.Subject.Name != old.Spec.Subject.Name {

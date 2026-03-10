@@ -323,3 +323,7 @@ export function validateVariableName(
 
   return { isValid: true };
 }
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system' && variable.state.origin === undefined;
+}
