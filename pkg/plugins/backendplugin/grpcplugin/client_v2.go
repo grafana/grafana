@@ -226,7 +226,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		if errorSource, ok := backend.ErrorSourceFromGrpcStatusError(ctx, err); ok {
 			return handleGrpcStatusError(ctx, errorSource, err)
 		}
-		return fmt.Errorf("%v: %w", "Failed to query data", err)
+		return fmt.Errorf("%v: %w", "Failed to QueryChunkedData", err)
 	}
 
 	for {
@@ -265,9 +265,6 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 }
 
 func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
-	raw, isRaw := w.(chunked.RawChunkReceiver)
-
-	// Execute a regular QueryData non-chunked request (using JSON encoding if raw)
 	protoResp, err := c.queryData(ctx,
 		&backend.QueryDataRequest{
 			PluginContext: req.PluginContext,
@@ -280,6 +277,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 	}
 
 	// The raw handler can skip decode and then re-encode
+	raw, isRaw := w.(chunked.RawChunkReceiver)
 	if isRaw {
 		return chunked.ProcessRawResponse(ctx, req.Format, protoResp, raw)
 	}

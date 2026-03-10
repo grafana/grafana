@@ -107,7 +107,8 @@ func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryCh
 
 	if cp.QueryChunkedDataHandler != nil {
 		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
-	} else if cp.QueryDataHandler == nil {
+	}
+	if cp.QueryDataHandler == nil {
 		return plugins.ErrMethodNotImplemented
 	}
 
