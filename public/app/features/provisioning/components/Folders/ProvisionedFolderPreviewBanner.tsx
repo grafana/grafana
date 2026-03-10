@@ -9,22 +9,22 @@ import { PROVISIONING_URL } from '../../constants';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
   const provisioningEnabled = config.featureToggles.provisioning;
-  const { prURL, newPrURL, repoURL, resourcePushedTo } = usePullRequestParam();
+  const { prURL, newPrURL, repoURL, resourcePushedTo, action } = usePullRequestParam();
 
   if (!provisioningEnabled || 'kiosk' in queryParams) {
     return null;
   }
 
   if (prURL) {
-    return <PreviewBannerViewPR prURL={prURL} />;
+    return <PreviewBannerViewPR prURL={prURL} action={action} />;
   }
 
   if (newPrURL) {
-    return <PreviewBannerViewPR prURL={newPrURL} isNewPr />;
+    return <PreviewBannerViewPR prURL={newPrURL} isNewPr action={action} />;
   }
 
   if (repoURL) {
-    return <PreviewBannerViewPR repoUrl={repoURL} behindBranch />;
+    return <PreviewBannerViewPR repoUrl={repoURL} behindBranch action={action} />;
   }
 
   if (resourcePushedTo) {

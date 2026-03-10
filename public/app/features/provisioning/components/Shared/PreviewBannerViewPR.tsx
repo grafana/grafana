@@ -3,7 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
-import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { ResourceAction, usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
@@ -15,6 +15,7 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
+  action?: ResourceAction;
 }
 
 export type PreviewBranchInfo = {
@@ -43,29 +44,16 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 }
 
 /**
- * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in repo.
+ * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
-  const { repoType } = usePullRequestParam();
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action }: Props) {
+  const { repoType, action: urlAction } = usePullRequestParam();
+  const resolvedAction = action ?? urlAction;
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
 
-  const titleText = isNewPr
-    ? t(
-        'provisioned-resource-preview-banner.title-created-branch-in-repo',
-        'A new resource has been created in a branch in {{repoType}}.',
-        {
-          repoType: capitalizedRepoType,
-        }
-      )
-    : t(
-        'provisioned-resource-preview-banner.title-loaded-pull-request-in-repo',
-        'This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you',
-        {
-          repoType: capitalizedRepoType,
-        }
-      );
+  const titleText = getTitleText(isNewPr, resolvedAction, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -120,10 +108,16 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       }
       onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
-      <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
-        The rest of Grafana users in your organization will still see the current version saved to configured default
-        branch until this branch is merged
-      </Trans>
+      {resolvedAction === 'delete' ? (
+        <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-deleted">
+          The rest of Grafana users in your organization will still see this resource until this branch is merged
+        </Trans>
+      ) : (
+        <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
+          The rest of Grafana users in your organization will still see the current version saved to configured default
+          branch until this branch is merged
+        </Trans>
+      )}
 
       {/* when the repo type is a valid provider, we show branch information */}
       {showBranchInfo(repoType, branchInfo) && (
@@ -137,6 +131,36 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       )}
     </Alert>
   );
+}
+
+function getTitleText(isNewPr: boolean | undefined, action: ResourceAction | undefined, repoType: string): string {
+  if (action === 'delete') {
+    return isNewPr
+      ? t(
+          'provisioned-resource-preview-banner.title-deleted-resource-in-branch',
+          'A resource has been deleted in a branch in {{repoType}}.',
+          { repoType }
+        )
+      : t(
+          'provisioned-resource-preview-banner.title-loaded-deleted-pull-request-in-repo',
+          'This resource deletion is loaded from the branch you just created in {{repoType}} and it is only visible to you',
+          { repoType }
+        );
+  }
+
+  return isNewPr
+    ? t(
+        'provisioned-resource-preview-banner.title-created-branch-in-repo',
+        'A new resource has been created in a branch in {{repoType}}.',
+        {
+          repoType,
+        }
+      )
+    : t(
+        'provisioned-resource-preview-banner.title-loaded-pull-request-in-repo',
+        'This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you',
+        { repoType }
+      );
 }
 
 function showBranchInfo(
