@@ -64,7 +64,6 @@ func TestIntegrationDataSourceGetByUID(t *testing.T) {
 
 	for _, mode := range getTestModes() {
 		t.Run(mode.name, func(t *testing.T) {
-
 			provider.UsingFlags(t, mode.featureToggles)
 
 			// set up Grafana and a database
