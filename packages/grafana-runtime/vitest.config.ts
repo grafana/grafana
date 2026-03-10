@@ -15,7 +15,10 @@ export default defineConfig({
     conditions: ['@grafana-app/source', 'import', 'module', 'default'],
     alias: [
       { find: /.*\.(svg|png|jpg)$/, replacement: path.resolve(__dirname, '../../public/test/mocks/images.ts') },
-      { find: 'react-inlinesvg', replacement: path.resolve(__dirname, '../../public/test/mocks/react-inlinesvg.tsx') },
+      {
+        find: 'react-inlinesvg',
+        replacement: path.resolve(import.meta.dirname, '../../public/test/mocks/react-inlinesvg.tsx'),
+      },
     ],
   },
   plugins: [tsconfigPaths()],

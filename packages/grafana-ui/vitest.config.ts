@@ -16,7 +16,10 @@ export default defineConfig({
   resolve: {
     conditions: ['@grafana-app/source', 'import', 'module', 'default'],
     alias: [
-      { find: 'react-inlinesvg', replacement: path.resolve(__dirname, '../../public/test/mocks/react-inlinesvg.tsx') },
+      {
+        find: 'react-inlinesvg',
+        replacement: path.resolve(import.meta.dirname, '../../public/test/mocks/react-inlinesvg.tsx'),
+      },
       { find: 'uwrap', replacement: 'uwrap/dist/uWrap.mjs' },
     ],
   },
