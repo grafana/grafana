@@ -86,7 +86,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 
 	if v.FullpathUIDs != "" {
-		meta.SetAnnotation(utils.AnnoKeyFullpath, v.FullpathUIDs)
+		meta.SetAnnotation(utils.AnnoKeyFullpathUIDs, v.FullpathUIDs)
 	}
 
 	if v.CreatedBy != 0 {
