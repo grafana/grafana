@@ -55,6 +55,8 @@ import (
 	secretmutator "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
+	datasourcemigration "github.com/grafana/grafana/pkg/registry/apis/datasource"
+	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
@@ -250,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -592,10 +595,12 @@ func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+	dataSourceMigrator dsmigrator.DataSourceMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	r.Register(datasourcemigration.DataSourceMigration(dataSourceMigrator))
 	return r
 }
