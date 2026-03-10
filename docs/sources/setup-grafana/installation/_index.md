@@ -57,7 +57,7 @@ This sizing guidance covers the Grafana server process only, meaning the UI, dat
 Four factors most directly drive resource needs for Grafana:
 
 - **Concurrent users:** active, concurrent browser sessions issuing queries or causing panels to refresh. This is the primary driver of CPU and memory load. Users who have Grafana open but are not actively viewing dashboards contribute little load, unless those dashboards have auto-refresh enabled.
-- **Alert rules:** background evaluation load on the alert scheduler. High rule counts with short evaluation intervals can saturate CPU independently of user activity. In Grafana OSS, the alert engine runs in the same process as the UI and data source proxy, so alert CPU saturation directly competes with dashboard query performance. This is why isolating alert evaluation to dedicated instances matters at Large scale. Refer to [Performance considerations and limitations](../../alerting/set-up/performance-limitations/) for details.
+- **Alert rules:** background evaluation load on the alert scheduler. High rule counts with short evaluation intervals can saturate CPU independently of user activity. In Grafana OSS, the alert engine runs in the same process as the UI and data source proxy, so alert CPU saturation directly competes with dashboard query performance. This is why isolating alert evaluation to dedicated instances matters at Large scale. Refer to [Performance considerations and limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/performance-limitations/) for details.
 - **Data sources:** while the number of proxied data source connections matters, type matters more. Plugins that use the Grafana backend data source proxy — most SQL sources such as MySQL, PostgreSQL, and Microsoft SQL Server — hold an open connection per query on the server. Pull-based metric sources such as Prometheus or Graphite are queried more efficiently and place less load on the Grafana process. Some plugins, such as certain public API or Infinity sources, execute queries directly in the browser and may place no server-side load — depending on plugin configuration and authentication requirements. A deployment with five heavily-queried proxied SQL data sources can exceed the resource needs of one with twenty Prometheus sources.
 - **Dashboards and panels:** panel count and refresh interval together determine query throughput. A dashboard with 30 panels refreshing every 10 seconds generates roughly six times the query load of the same dashboard refreshing every minute. Dashboards with many panels and short refresh intervals should be treated as a tier higher than their raw dashboard count suggests. Note that Grafana Enterprise includes query caching, which can significantly reduce this multiplier when many users view the same dashboard simultaneously and may shift a deployment down a tier.
 
@@ -90,7 +90,7 @@ Small deployments suit small teams, internal tooling, and low-traffic environmen
 
 **Database:** SQLite works for local development and small evaluation instances, but isn't recommended for production environments. For production use, consider an external MySQL or PostgreSQL instance for higher reliability and growth capacity. For more information, refer to [Supported databases](#supported-databases).
 
-**Image rendering:** optional; can run on the same host for light use. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
+**Image rendering:** optional; can run on the same host for light use. Refer to [Set up image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/).
 
 #### Medium
 
@@ -105,9 +105,9 @@ Medium deployments suit shared team environments and departmental observability 
 
 **Database:** SQLite isn't recommended for production environments and isn't suitable at this tier. Use an external MySQL or PostgreSQL database. Refer to [Supported databases](#supported-databases) for guidance on choosing an external database.
 
-**Image rendering:** run the image renderer as a separate process or container. Each renderer worker uses approximately 1 GB of memory; size your renderer host accordingly. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
+**Image rendering:** run the image renderer as a separate process or container. Each renderer worker uses approximately 1 GB of memory; size your renderer host accordingly. Refer to [Set up image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/).
 
-**High availability:** if you run two or more Grafana instances, configure a Redis session store or enable sticky sessions at the load balancer to prevent users from being signed out between requests. Refer to [Set up Grafana for high availability](../../setup-grafana/set-up-for-high-availability/).
+**High availability:** if you run two or more Grafana instances, configure a Redis session store or enable sticky sessions at the load balancer to prevent users from being signed out between requests. Refer to [Set up Grafana for high availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-for-high-availability/).
 
 #### Large
 
@@ -123,15 +123,15 @@ Large deployments suit organization-wide platforms and high-traffic production e
 
 **Database:** SQLite isn't recommended for production environments and isn't suitable at this tier. A highly available MySQL or PostgreSQL cluster is strongly advised. Refer to [Supported databases](#supported-databases).
 
-**Image rendering:** run a dedicated renderer fleet with multiple workers, isolated from Grafana instances. Each renderer worker uses approximately 1 GB of memory. Refer to [Server-side image rendering](/grafana/plugins/grafana-image-renderer#requirements).
+**Image rendering:** run a dedicated renderer fleet with multiple workers, isolated from Grafana instances. Each renderer worker uses approximately 1 GB of memory. Refer to [Set up image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/).
 
-**Alert evaluation:** with more than 1,000 alert rules or short evaluation intervals of under one minute, alert evaluation can saturate CPU and degrade dashboard query performance on the same instance. Isolate alert evaluation to one or more dedicated Grafana instances in [remote evaluation mode](../../alerting/) to prevent this. Refer to [Performance considerations and limitations](../../alerting/set-up/performance-limitations/).
+**Alert evaluation:** with more than 1,000 alert rules or short evaluation intervals of under one minute, alert evaluation can saturate CPU and degrade dashboard query performance on the same instance. Isolate alert evaluation to one or more dedicated Grafana instances in [remote evaluation mode](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) to prevent this. Refer to [Performance considerations and limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/performance-limitations/).
 
-**High availability:** sticky sessions or a shared Redis session store are required. Refer to [Set up Grafana for high availability](../../setup-grafana/set-up-for-high-availability/).
+**High availability:** sticky sessions or a shared Redis session store are required. Refer to [Set up Grafana for high availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-for-high-availability/).
 
 **Data source latency:** minimize network hops between Grafana instances and data sources. Low-latency links to your database and data sources are important at this scale.
 
-**Deployment model:** managing three or more Grafana instances alongside a Redis cluster, renderer fleet, and highly available database becomes operationally complex on bare metal. Kubernetes reduces this operational burden significantly at this tier. Refer to [Deploy Grafana on Kubernetes](../kubernetes/) and the [Grafana Helm chart](../helm/) for guidance.
+**Deployment model:** managing three or more Grafana instances alongside a Redis cluster, renderer fleet, and highly available database becomes operationally complex on bare metal. Kubernetes reduces this operational burden significantly at this tier. Refer to [Deploy Grafana on Kubernetes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/installation/kubernetes/) and the [Grafana Helm chart](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/installation/helm/) for guidance.
 
 ## Supported databases
 
@@ -146,7 +146,7 @@ Grafana supports the following databases:
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location. If you need to migrate to a different database later, note that database schema and data migrations are customer-managed operations and fall outside the scope of Grafana Support.
 
 {{< admonition type="caution" >}}
-SQLite isn't recommended for production environments. It works well for local development and small evaluation instances, but it doesn't scale for production workloads. If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
+SQLite isn't recommended for production environments. It works well for local development and small evaluation instances, but it doesn't scale for production workloads. If you want [high availability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-for-high-availability/), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#database).
 {{< /admonition >}}
 
 Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.
