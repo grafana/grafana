@@ -6,7 +6,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { QueryVariable } from '@grafana/scenes';
-import { Alert, Button, Drawer, getPortalContainer, Spinner, Stack, Tab, TabsBar, useSplitter, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Drawer,
+  getPortalContainer,
+  Spinner,
+  Stack,
+  Tab,
+  TabsBar,
+  useSplitter,
+  useStyles2,
+} from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 import {
   QueryVariableStaticOptions,
@@ -260,7 +271,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(1, 0),
     }),
     tabContent: css({
-      marginTop: theme.spacing(4),
+      padding: theme.spacing(3, 1),
     }),
     noOptions: css({
       display: 'flex',
