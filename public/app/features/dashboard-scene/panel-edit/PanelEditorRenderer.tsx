@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, useSceneObjectState, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -171,6 +171,10 @@ interface VizWrapperProps {
 function VizWrapper({ panel, tableView, dashboard }: VizWrapperProps) {
   const styles = useStyles2(getStyles);
   const soloPanelContext = useDefineSoloPanelContext(panel.getPathId());
+
+  // This is to make sure the panel always remains active even when tableView is
+  // rendered as the queries tab and other things subscribe / update panel state
+  useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
 
   if (tableView) {
     return (

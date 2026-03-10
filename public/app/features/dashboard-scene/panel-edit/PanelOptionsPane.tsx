@@ -31,7 +31,6 @@ import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicke
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
@@ -71,7 +70,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
-    const editor = sceneGraph.getAncestor(this, PanelEditor);
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
@@ -123,13 +121,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     if (!options.withModKey) {
       this.onToggleVizPicker();
     }
-
-    // Disable table view if enabled
-    if (editor.state.tableView) {
-      editor.setState({ tableView: undefined });
-    }
-
-    editor.waitForPlugin();
   };
 
   onSetSearchQuery = (searchQuery: string) => {

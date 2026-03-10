@@ -105,6 +105,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
+    // Listen for panel plugin changes
+    this._subs.add(
+      panel.subscribeToState((n, p) => {
+        if (n.pluginId !== p.pluginId) {
+          this.waitForPlugin();
+        }
+      })
+    );
+
     this.waitForPlugin();
 
     return () => {
@@ -222,14 +231,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         isNewPanel: this.state.isNewPanel,
       });
 
-      this.setState({
-        optionsPane,
-        isInitializing: false,
-      });
+      this.setState({ optionsPane, isInitializing: false });
     } else {
       // plugin changed after first time initialization
       // Just update data pane
       this._updateDataPane(plugin);
+    }
+
+    // If switching plugin when tableView is enabled, then disable it
+    if (this.state.tableView) {
+      this.setState({ tableView: undefined });
     }
   }
 
