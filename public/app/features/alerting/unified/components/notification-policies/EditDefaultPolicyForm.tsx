@@ -19,6 +19,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import { validateRbacEntityName } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 
 import { PromDurationInput } from './PromDurationInput';
@@ -81,18 +82,15 @@ export const AmRootRouteForm = ({
           >
             <Input
               {...register('name', {
-                required: true,
-                validate: (value) => {
-                  if (!value || value.trim().length === 0) {
-                    return t('alerting.am-root-route-form.validate-name', 'Name is required');
-                  }
-                  if (existingPolicyNames?.includes(value.trim())) {
-                    return t(
-                      'alerting.am-root-route-form.validate-name-duplicate',
-                      'A notification policy with this name already exists'
-                    );
-                  }
-                  return true;
+                validate: {
+                  format: (value) => validateRbacEntityName(value)?.message ?? true,
+                  duplicate: (value) =>
+                    existingPolicyNames?.includes((value ?? '').trim())
+                      ? t(
+                          'alerting.am-root-route-form.validate-name-duplicate',
+                          'A notification policy with this name already exists'
+                        )
+                      : true,
                 },
               })}
               className={styles.input}

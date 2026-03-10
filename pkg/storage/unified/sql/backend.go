@@ -967,7 +967,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 

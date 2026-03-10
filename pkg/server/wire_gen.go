@@ -306,7 +306,11 @@ import (
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	routeRegisterImpl := routing.ProvideRegister()
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -412,10 +416,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService()
-	configProvider, err := configprovider.ProvideService(cfg)
-	if err != nil {
-		return nil, err
-	}
 	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -938,13 +938,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory)
+	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
 	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
@@ -1000,7 +1000,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	mock.TestingT
 }, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	routeRegisterImpl := routing.ProvideRegister()
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,10 +1110,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	postgresService := postgres.ProvideService()
 	mysqlService := mysql.ProvideService()
 	mssqlService := mssql.ProvideService()
-	configProvider, err := configprovider.ProvideService(cfg)
-	if err != nil {
-		return nil, err
-	}
 	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -1634,13 +1634,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder)
+	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory)
+	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
 	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
@@ -1698,7 +1698,11 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	}
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return Runner{}, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return Runner{}, err
 	}
@@ -1732,10 +1736,6 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	secretsMigrator := migrator4.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	configProvider, err := configprovider.ProvideService(cfg)
-	if err != nil {
-		return Runner{}, err
-	}
 	quotaService := quotaimpl.ProvideService(ctx, sqlStore, configProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	if err != nil {
@@ -1812,7 +1812,11 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
 	gatherer := metrics.ProvideGatherer()
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1847,7 +1851,11 @@ func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSuppl
 	}
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
-	tracingConfig, err := tracing.ProvideTracingConfig(cfg)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
