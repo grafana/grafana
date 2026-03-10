@@ -483,11 +483,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _getLayoutForDropTarget = (
     dropTarget: DashboardDropTarget | null
   ): DashboardScene | AutoGridLayoutManager | DefaultGridLayoutManager => {
-    if (dropTarget) {
-      return getLayoutForObject(dropTarget) ?? this._getDashboard();
-    }
-    // if no root row or layout element, add the item into the dashboard directly
-    return this._getDashboard();
+    const dashboard = this._getDashboard();
+    return getLayoutForObject(dropTarget ?? dashboard) ?? dashboard;
   };
 
   private _addNewPanelToLayout = (dropTarget: DashboardDropTarget | null) => {

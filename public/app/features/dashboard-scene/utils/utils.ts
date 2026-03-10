@@ -428,20 +428,18 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
 }
 
 export const getLayoutForObject = (
-  object?: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene | null
+  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene
 ): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
-  if (object) {
-    const gridManagerForObject = sceneGraph.findObject(
-      object,
-      (currentSceneObject) =>
-        currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
-    );
-    if (
-      gridManagerForObject instanceof AutoGridLayoutManager ||
-      gridManagerForObject instanceof DefaultGridLayoutManager
-    ) {
-      return gridManagerForObject;
-    }
+  const gridManagerForObject = sceneGraph.findObject(
+    object,
+    (currentSceneObject) =>
+      currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
+  );
+  if (
+    gridManagerForObject instanceof AutoGridLayoutManager ||
+    gridManagerForObject instanceof DefaultGridLayoutManager
+  ) {
+    return gridManagerForObject;
   }
   return null;
 };
