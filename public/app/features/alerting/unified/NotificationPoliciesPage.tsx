@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSet } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -158,22 +158,41 @@ function PolicyTreeTab() {
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
-  // Expand/collapse state uses the XOR model from Policy.tsx:
-  // `defaultExpanded` is the baseline; `expandedOverrides` holds route IDs (hash-based) that are
-  // toggled opposite to the baseline. Individual toggle receives the route's hash-based id from Policy.
-  // "Expand all" / "Collapse all" flip the baseline and clear overrides.
+  /**
+   * Expand / collapse state
+   * `defaultExpanded` is the baseline; `expandedOverrides` holds route IDs (hash-based) that are
+   * toggled opposite to the baseline. Individual toggle receives the route's hash-based id from Policy.
+   * "Expand all" / "Collapse all" flip the baseline and clear overrides.
+   */
   const [expandedOverrides, { toggle: handleTogglePolicyExpanded, clear }] = useSet<string>(new Set());
   const [manualDefaultExpanded, setManualDefaultExpanded] = useState<boolean | undefined>(undefined);
 
-  // Reset manual override when filters change, so auto-expand kicks in again for new filter state
-  const handleChangeContactPoint = useCallback((value: string | undefined) => {
-    setContactPointFilter(value);
+  // Resets the expand/collapse state back to auto-expand mode
+  const resetExpandState = useCallback(() => {
     setManualDefaultExpanded(undefined);
-  }, []);
-  const handleChangeLabelMatchers = useCallback((value: ObjectMatcher[]) => {
-    setLabelMatchersFilter(value);
-    setManualDefaultExpanded(undefined);
-  }, []);
+    clear();
+  }, [clear]);
+
+  const handleChangeContactPoint = useCallback(
+    (value: string | undefined) => {
+      setContactPointFilter(value);
+      resetExpandState();
+    },
+    [resetExpandState]
+  );
+
+  const handleChangeLabelMatchers = useCallback(
+    (value: ObjectMatcher[]) => {
+      setLabelMatchersFilter(value);
+      resetExpandState();
+    },
+    [resetExpandState]
+  );
+
+  // Reset expand state when the policy-tree selector filter changes
+  useEffect(() => {
+    resetExpandState();
+  }, [selectedPolicyTreeNames, resetExpandState]);
 
   const sortedPolicies = useMemo(() => sortPoliciesDefaultFirst(allPolicies), [allPolicies]);
 
