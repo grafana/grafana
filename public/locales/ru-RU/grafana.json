@@ -749,6 +749,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Ошибка при загрузке правила для этого события.",
         "header": {
@@ -786,6 +790,10 @@
         }
       },
       "filterBy": "Фильтр по:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Поскольку в выбранном периоде слишком много событий, отображаются только последние 5000. Попробуйте указать более короткий период.",
         "title": "Невозможно отобразить все события"
@@ -5444,6 +5452,7 @@
         "annotation-set": "",
         "dashboard": "Дашборд",
         "element": "Элемент",
+        "link-set": "",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
         "multiple-elements-delete-text": "Действительно удалить элементы?",
@@ -5458,6 +5467,12 @@
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
         "variable-set": "Переменные"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6508,6 +6523,11 @@
       "label-use-static-key-dimensions": "Использовать измерения статического ключа",
       "name-allow-custom-values": "Разрешить пользовательские значения"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Не удалось перейти к выбранному дашборду. Повторите попытку.",
@@ -6929,6 +6949,34 @@
       "usage-count_few": "Используется на {{count}} дашбордах",
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Управляется Kubectl",
@@ -10798,9 +10846,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Экспериментальная функция. Запросите больше результатов, прокрутив список журналов до конца.",
-    "description-enable-logs-highlighting": "Используйте стандартную цветовую схему для выделения необходимых строк журнала",
-    "description-show-controls": "Отображать элементы управления для перехода к последней или первой строке журнала и фильтры по уровню журнала",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Экспериментальная функция. При отображении журналов OTel вы можете добавить дополнительное поле с соответствующими парами «ключ — значение» из меток и метаданных.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Значок перетаскивания",
       "clear-button": "Очистить",
@@ -12259,10 +12311,12 @@
     "start-modal": {
       "button-start": "Пуск {{title}}",
       "description-customize-dashboard-elements-visibility": "Настроить видимость элементов дашборда.",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Высота панелей регулируется в соответствии с размером экрана.",
       "label-autofit": "Автоподгонка",
       "label-dashboard-links": "Ссылки на дашборд",
       "label-display-dashboard-controls": "Показать элементы управления дашбордом",
+      "label-hide-logo": "",
       "label-mode": "Режим",
       "label-time-and-refresh": "Время и обновление",
       "label-variables": "Переменные",

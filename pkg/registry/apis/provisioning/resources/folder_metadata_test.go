@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestIsFolderMetadataFile(t *testing.T) {
@@ -96,4 +96,340 @@ func TestWriteFolderMetadata(t *testing.T) {
 
 		require.Error(t, err)
 	})
+}
+
+func TestParseFolderResource(t *testing.T) {
+	ctx := context.Background()
+	testPath := "team-a/project-x/"
+	testRef := "main"
+
+	// Create a test repo config
+	testRepoConfig := newTestRepoConfig("test-repo")
+
+	// Create test folder metadata
+	testFolder := NewFolderManifest("stable-uid-123", "project-x")
+	metadataBytes, err := json.Marshal(testFolder)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name                  string
+		path                  string
+		folderMetadataEnabled bool
+		setupMock             func(*repository.MockReader)
+		expectedFolderID      string
+		expectedAction        string
+		expectedTitle         string
+		expectedParentFolder  string
+		expectedErr           bool
+		description           string
+	}{
+		{
+			name:                  "metadata enabled and exists - returns stable UID with Update action",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{
+						Data: metadataBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				// Parent folder metadata read
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentBytes, _ := json.Marshal(parentFolder)
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: parentBytes}, nil)
+			},
+			expectedFolderID:     "stable-uid-123",
+			expectedAction:       "update",
+			expectedTitle:        "project-x",
+			expectedParentFolder: "parent-uid-456",
+			expectedErr:          false,
+			description:          "When metadata exists, use stable UID and set Action to Update",
+		},
+		{
+			name:                  "metadata enabled but not found, folder exists - returns hash-based ID with Update",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				// Config calls (may be called multiple times)
+				reader.On("Config").Return(testRepoConfig).Maybe()
+				// Folder metadata read (not found)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+				// Folder exists check
+				reader.On("Read", mock.Anything, testPath, testRef).
+					Return(&repository.FileInfo{Path: testPath}, nil).Once()
+				// Parent folder metadata read (not found) - GetFolderID only reads metadata, not existence
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+			},
+			expectedFolderID:     ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedAction:       "update",
+			expectedTitle:        "project-x",
+			expectedParentFolder: ParseFolder("team-a/", testRepoConfig.Name).ID,
+			expectedErr:          false,
+			description:          "When metadata not found but folder exists, use hash-based ID with Update",
+		},
+		{
+			name:                  "metadata enabled but not found, folder doesn't exist - returns hash-based ID with Create",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				// Config calls (may be called multiple times)
+				reader.On("Config").Return(testRepoConfig).Maybe()
+				// Folder metadata read (not found)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+				// Folder doesn't exist check
+				reader.On("Read", mock.Anything, testPath, testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+				// Parent folder metadata read (not found) - GetFolderID only reads metadata, not existence
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+			},
+			expectedFolderID:     ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedAction:       "create",
+			expectedTitle:        "project-x",
+			expectedParentFolder: ParseFolder("team-a/", testRepoConfig.Name).ID,
+			expectedErr:          false,
+			description:          "When metadata and folder not found, use hash-based ID with Create",
+		},
+		{
+			name:                  "metadata disabled, folder exists - returns hash-based ID with Update",
+			path:                  testPath,
+			folderMetadataEnabled: false,
+			setupMock: func(reader *repository.MockReader) {
+				// Config calls (may be called multiple times)
+				reader.On("Config").Return(testRepoConfig).Maybe()
+				// Folder exists check
+				reader.On("Read", mock.Anything, testPath, testRef).
+					Return(&repository.FileInfo{Path: testPath}, nil).Once()
+			},
+			expectedFolderID:     ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedAction:       "update",
+			expectedTitle:        "project-x",
+			expectedParentFolder: ParseFolder("team-a/", testRepoConfig.Name).ID,
+			expectedErr:          false,
+			description:          "When metadata disabled and folder exists, use hash-based ID with Update",
+		},
+		{
+			name:                  "metadata disabled, folder doesn't exist - returns hash-based ID with Create",
+			path:                  testPath,
+			folderMetadataEnabled: false,
+			setupMock: func(reader *repository.MockReader) {
+				// Config calls (may be called multiple times)
+				reader.On("Config").Return(testRepoConfig).Maybe()
+				// Folder doesn't exist check
+				reader.On("Read", mock.Anything, testPath, testRef).
+					Return(nil, repository.ErrFileNotFound).Once()
+			},
+			expectedFolderID:     ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedAction:       "create",
+			expectedTitle:        "project-x",
+			expectedParentFolder: ParseFolder("team-a/", testRepoConfig.Name).ID,
+			expectedErr:          false,
+			description:          "When metadata disabled and folder doesn't exist, use hash-based ID with Create",
+		},
+		{
+			name:                  "metadata read error (not NotFound) - returns error",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(nil, fmt.Errorf("permission denied"))
+			},
+			expectedErr: true,
+			description: "When metadata read fails with non-NotFound error, propagate error",
+		},
+		{
+			name:                  "folder existence check error (not NotFound) - returns error",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(nil, repository.ErrFileNotFound)
+				// Folder existence check fails with real error
+				reader.On("Read", mock.Anything, testPath, testRef).
+					Return(nil, fmt.Errorf("permission denied"))
+			},
+			expectedErr: true,
+			description: "When folder existence check fails with non-NotFound error, propagate error",
+		},
+		{
+			name:                  "root-level folder with metadata - no parent folder",
+			path:                  "root-folder/",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				rootFolder := NewFolderManifest("root-uid-789", "root-folder")
+				rootBytes, _ := json.Marshal(rootFolder)
+				reader.On("Read", mock.Anything, "root-folder/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: rootBytes}, nil)
+			},
+			expectedFolderID:     "root-uid-789",
+			expectedAction:       "update",
+			expectedTitle:        "root-folder",
+			expectedParentFolder: "", // Root has no parent
+			expectedErr:          false,
+			description:          "Root-level folder has empty parent folder ID",
+		},
+		{
+			name:                  "parent folder ID error propagates",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: metadataBytes}, nil)
+				// Parent folder metadata read fails
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(nil, fmt.Errorf("permission denied"))
+			},
+			expectedErr: true,
+			description: "When parent folder ID resolution fails, propagate error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := repository.NewMockReader(t)
+			tt.setupMock(reader)
+
+			result, err := ParseFolderResource(ctx, reader, tt.path, testRef, tt.folderMetadataEnabled)
+
+			if tt.expectedErr {
+				assert.Error(t, err, tt.description)
+				return
+			}
+
+			require.NoError(t, err, tt.description)
+			require.NotNil(t, result)
+
+			// Verify folder ID
+			assert.Equal(t, tt.expectedFolderID, result.Meta.GetName(), "folder ID should match")
+
+			// Verify action
+			assert.Equal(t, tt.expectedAction, string(result.Action), "action should match")
+
+			// Verify title from folder object
+			assert.Equal(t, tt.expectedTitle, result.Obj.Object["spec"].(map[string]interface{})["title"], "title should be derived from path")
+
+			// Verify parent folder context
+			assert.Equal(t, tt.expectedParentFolder, result.Meta.GetFolder(), "parent folder ID should match")
+
+			// Verify GVK and GVR
+			assert.Equal(t, "folder.grafana.app", result.GVK.Group)
+			assert.Equal(t, "v1beta1", result.GVK.Version)
+			assert.Equal(t, "Folder", result.GVK.Kind)
+		})
+	}
+}
+
+func TestGetFolderID(t *testing.T) {
+	ctx := context.Background()
+	testPath := "team-a/project-x/"
+	testRef := ""
+
+	// Create a test repo config
+	testRepoConfig := newTestRepoConfig("test-repo")
+
+	// Create test folder metadata
+	testFolder := NewFolderManifest("stable-uid-123", "Test Folder")
+	metadataBytes, err := json.Marshal(testFolder)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name                  string
+		folderMetadataEnabled bool
+		setupMock             func(*repository.MockReader)
+		expectedID            string
+		expectedErr           bool
+		description           string
+	}{
+		{
+			name:                  "metadata enabled and exists - returns stable UID",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+					Return(&repository.FileInfo{
+						Data: metadataBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				// Config() should not be called when metadata is found
+			},
+			expectedID:  "stable-uid-123",
+			expectedErr: false,
+			description: "When metadata is enabled and _folder.json exists with a valid UID, return the stable UID",
+		},
+		{
+			name:                  "metadata enabled but file not found - returns hash-based ID",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+					Return(nil, repository.ErrFileNotFound)
+			},
+			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
+			description: "When metadata is enabled but _folder.json doesn't exist, fall back to hash-based ID",
+		},
+		{
+			name:                  "metadata enabled but read fails - returns error",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+					Return(nil, fmt.Errorf("permission denied"))
+			},
+			expectedID:  "",
+			expectedErr: true,
+			description: "When metadata read fails with non-NotFound error, propagate the error",
+		},
+		{
+			name:                  "metadata enabled but empty UID - returns hash-based ID",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				emptyFolder := NewFolderManifest("", "Empty UID Folder")
+				emptyBytes, _ := json.Marshal(emptyFolder)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+					Return(&repository.FileInfo{
+						Data: emptyBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+			},
+			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
+			description: "When metadata exists but UID is empty, fall back to hash-based ID",
+		},
+		{
+			name:                  "metadata disabled - returns hash-based ID",
+			folderMetadataEnabled: false,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				// Should not call Read when metadata is disabled
+			},
+			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
+			description: "When metadata is disabled, return hash-based ID without attempting to read metadata",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := repository.NewMockReader(t)
+			tt.setupMock(reader)
+
+			result, err := GetFolderID(ctx, reader, testPath, testRef, tt.folderMetadataEnabled)
+
+			if tt.expectedErr {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.Equal(t, tt.expectedID, result, tt.description)
+			}
+		})
+	}
 }
