@@ -58,6 +58,15 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
   };
 }
 
+export type TabDragState = {
+  tab: TabItem;
+  /** Width of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  width: number;
+  /** Height of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  height: number;
+  index: number;
+};
+
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
   public static Component = DragPreviewRenderer;
 
@@ -88,12 +97,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
-  private _draggedTab: TabItem | undefined;
-  /** Width of the dragged tab header in pixels (for cross-manager placeholder sizing) */
-  private _draggedTabWidth: number | null = null;
-  /** Height of the dragged tab header in pixels (for cross-manager placeholder sizing) */
-  private _draggedTabHeight: number | null = null;
-  private _tabPlaceholderIndex: number | undefined;
+  private _tabDragState: TabDragState | undefined;
 
   public constructor() {
     super({});
@@ -267,19 +271,21 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   public startTabDrag(sourceTabsManagerId: string, draggedTabId: string): void {
     this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
 
-    this._draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
+    const draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
     if (this._sourceDropTarget instanceof TabsLayoutManager) {
       this._sourceDropTarget.forceSelectTab(draggedTabId);
     }
 
     // Calculate dimensions of the dragged tab header and cache for cross-manager placeholder sizing
-    this._draggedTabWidth = null;
-    this._draggedTabHeight = null;
-    const draggedHeaderEl = this._draggedTab?.containerRef?.current ?? undefined;
+    const draggedHeaderEl = draggedTab?.containerRef?.current ?? undefined;
     if (draggedHeaderEl) {
       const rect = draggedHeaderEl.getBoundingClientRect();
-      this._draggedTabWidth = rect.width;
-      this._draggedTabHeight = rect.height;
+      this._tabDragState = {
+        tab: draggedTab,
+        width: rect.width,
+        height: rect.height,
+        index: 0,
+      };
     }
 
     document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
@@ -290,6 +296,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Note this will never be the same as source - _getDropTargetUnderMouse prevents it.
     const dropTarget = this._getDropTargetUnderMouse(evt);
 
+    if (!this._tabDragState) {
+      return;
+    }
+
     // Tabs can be dropped only to TabsLayoutManager
     if (dropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget = dropTarget;
@@ -299,17 +309,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     dropTarget.setIsDropTarget(true);
-    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._draggedTab!.state.key);
+    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._tabDragState.tab.state.key);
     const targetTabIndex = dropTarget?.getTabsIncludingRepeats().findIndex((t) => t.state.key === tabUnderMouse);
-
     // move placeholder only when hovering over a tab, if not we may be outside of the drop area or over a placeholder
     if (targetTabIndex !== -1) {
-      this._tabPlaceholderIndex = targetTabIndex === this._tabPlaceholderIndex ? targetTabIndex + 1 : targetTabIndex;
-      dropTarget.setPlaceholder({
-        width: this._draggedTabWidth!, // guaranteed as it's calculated on mousedown
-        height: this._draggedTabHeight!, // guaranteed as it's calculated on mousedown
-        index: this._tabPlaceholderIndex,
-      });
+      this._tabDragState.index = targetTabIndex === this._tabDragState.index ? targetTabIndex + 1 : targetTabIndex;
+      dropTarget.setPlaceholder(this._tabDragState);
     }
   }
 
@@ -330,12 +335,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    if (!this._draggedTab) {
+    if (!this._tabDragState?.tab) {
       return;
     }
 
     const sourceManager = this._sourceDropTarget;
-    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === this._draggedTab);
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === this._tabDragState?.tab);
 
     // targetIndex !== undefined => dropped in the same manager, target index provided by hello-pangea
     if (targetIndex !== undefined) {
@@ -349,11 +354,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // dropped in a different manager => handled by the orchestrator
     if (this._lastDropTarget instanceof TabsLayoutManager) {
       const destinationManager = this._lastDropTarget;
-      targetIndex = this._tabPlaceholderIndex ?? destinationManager.getTabsIncludingRepeats().length;
+      targetIndex = this._tabDragState.index ?? destinationManager.getTabsIncludingRepeats().length;
 
       const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
-      this._moveTabBetweenManagers(this._draggedTab, sourceManager, destinationManager, realDestinationIndex);
+      this._moveTabBetweenManagers(this._tabDragState.tab, sourceManager, destinationManager, realDestinationIndex);
       this.cleanUpTabDrag();
     }
   }
@@ -367,7 +372,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private cleanUpTabDrag() {
     this.cleanUpTabDropTarget();
-    this._draggedTab = undefined;
+    this._tabDragState = undefined;
   }
 
   private _moveTabBetweenManagers(
