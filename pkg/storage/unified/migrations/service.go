@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -55,11 +56,24 @@ func ProvideUnifiedStorageMigrationService(
 	}
 }
 
+func isTargetEligibleForMigrations(targets []string) bool {
+	return slices.Contains(targets, "all") || slices.Contains(targets, "core")
+}
+
+func (p *UnifiedStorageMigrationServiceImpl) shouldSkipMigrations() bool {
+	return p.cfg.DisableDataMigrations ||
+		p.cfg.UnifiedStorageType() != "unified" ||
+		!isTargetEligibleForMigrations(p.cfg.Target)
+}
+
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// skip migrations if disabled in config or storage type is not "unified"
-	if p.cfg.DisableDataMigrations || p.cfg.UnifiedStorageType() != "unified" {
+	if p.shouldSkipMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
-		logger.Info("Data migrations are disabled, skipping", "disableDataMigrations", p.cfg.DisableDataMigrations, "unifiedStorageType", p.cfg.UnifiedStorageType())
+		logger.Info("Data migrations are disabled, skipping",
+			"disableDataMigrations", p.cfg.DisableDataMigrations,
+			"unifiedStorageType", p.cfg.UnifiedStorageType(),
+			"target", p.cfg.Target,
+		)
 		return nil
 	}
 
