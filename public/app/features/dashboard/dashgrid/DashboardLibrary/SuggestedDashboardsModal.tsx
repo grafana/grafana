@@ -16,6 +16,7 @@ import { InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
   initialMappingContext?: MappingContext | null;
+  entryPoint?: 'datasource-page' | string;
   defaultTab?: 'datasource' | 'community';
 }
 
@@ -35,6 +36,7 @@ export interface MappingContext {
 
 export const SuggestedDashboardsModal = ({
   initialMappingContext,
+  entryPoint,
   defaultTab = 'datasource',
 }: SuggestedDashboardsModalProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -153,9 +155,13 @@ export const SuggestedDashboardsModal = ({
       )}
 
       <TabContent className={styles.tabContent}>
-        {activeView === 'datasource' && <DashboardLibrarySection />}
+        {activeView === 'datasource' && <DashboardLibrarySection suggestedBanner={entryPoint === 'datasource-page'} />}
         {showCommunityTab && activeView === 'community' && (
-          <CommunityDashboardSection onShowMapping={handleShowMapping} datasourceType={datasourceInfo.type} />
+          <CommunityDashboardSection
+            onShowMapping={handleShowMapping}
+            datasourceType={datasourceInfo.type}
+            suggestedBanner={entryPoint === 'datasource-page'}
+          />
         )}
         {activeView === 'mapping' && mappingContext && (
           <CommunityDashboardMappingForm

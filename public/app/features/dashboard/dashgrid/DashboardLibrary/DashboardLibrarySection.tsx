@@ -20,7 +20,7 @@ import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHel
 // Constants for datasource-provided dashboards pagination
 const PAGE_SIZE = 9;
 
-export const DashboardLibrarySection = () => {
+export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggestedBanner?: boolean }) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
 
@@ -92,7 +92,7 @@ export const DashboardLibrarySection = () => {
       title: dashboard.title || 'Template',
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      fromDatasource: 'true',
+      renderBanner: suggestedBanner ? 'true' : 'false',
       // tracking event purpose values
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
