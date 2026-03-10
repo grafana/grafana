@@ -398,11 +398,6 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		}
 	}
 
-	// Authorization check: verify user has update permission on the source folder
-	// and create permission on the target parent folder.
-	// For folder operations (by path), we only check the top-level folder being moved,
-	// not recursively checking every nested resource. This follows the permission model where
-	// folder-level operations check the folder, and individual resource operations check the resource.
 	if err := r.authorizer.AuthorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
 		return nil, err
 	}
