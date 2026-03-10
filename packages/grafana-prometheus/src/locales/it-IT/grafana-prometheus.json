@@ -184,7 +184,7 @@
         "tooltip-cache-level": "Imposta il livello di memorizzazione nella cache del browser per le query dell'editor. Si consigliano impostazioni della cache più elevate per origini dati ad alta cardinalità.",
         "tooltip-custom-query-parameters": "Aggiungi parametri personalizzati all'URL della query Prometheus. Ad esempio {{example1}}, {{example2}}, {{example3}} o {{example4}}. Più parametri devono essere concatenati insieme a {{concatenationChar}}.",
         "tooltip-default-editor": "Imposta l'opzione editor predefinita per tutti gli utenti di questa origine dati.",
-        "tooltip-disable-metrics-lookup": "Selezionando questa opzione, il selettore di metriche e il supporto di metriche/etichette nel completamento automatico del campo di query verranno disabilitati. Questo è utile se hai problemi di prestazioni con istanze Prometheus più grandi.",
+        "tooltip-disable-metrics-lookup": "Selezionando questa opzione, il selettore di metriche e il supporto di metriche/etichette nel completamento automatico del campo di query verranno disabilitati. Questo è utile se hai problemi di prestazioni con istanze Prometheus più grandi. ",
         "tooltip-disable-recording-rules-beta": "Questa funzionalità disabiliterà le regole di registrazione. Attiva questa opzione per migliorare le prestazioni della dashboard",
         "tooltip-http-method": "Puoi utilizzare il metodo POST o GET HTTP per eseguire query sull'origine dati di Prometheus. POST è il metodo consigliato in quanto consente query più grandi. Usa GET se hai una versione di Prometheus precedente alla 2.1 o se le richieste POST sono limitate nella tua rete.",
         "tooltip-incremental-querying-beta": "Questa funzionalità modificherà il comportamento predefinito delle query relative per richiedere sempre dati aggiornati dall'istanza di Prometheus, mentre i risultati delle query verranno memorizzati nella cache e verranno richiesti solo i nuovi record. Attiva questa opzione per ridurre il carico del database e della rete.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "selettore"
       },
       "results-table": {
-        "content-descriptive-type": "Quando si crea un {{descriptiveType}}, Prometheus mostra più serie con il contatore di tipo.",
+        "content-descriptive-type": "Quando si crea un {{descriptiveType}}, Prometheus mostra più serie con il contatore di tipo. ",
         "description": "Descrizione",
         "message-expand-label-filters": "Non sono state trovate metriche. Prova ad espandere i filtri delle etichette.",
         "message-expand-search": "Non sono state trovate metriche. Prova ad espandere la ricerca e i filtri.",
