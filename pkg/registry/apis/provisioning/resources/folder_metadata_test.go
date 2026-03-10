@@ -98,6 +98,95 @@ func TestWriteFolderMetadata(t *testing.T) {
 	})
 }
 
+func TestMissingFolderMetadata_SentinelError(t *testing.T) {
+	t.Run("errors.Is matches ErrMissingFolderMetadata", func(t *testing.T) {
+		err := &MissingFolderMetadata{Path: "x/"}
+		assert.True(t, errors.Is(err, ErrMissingFolderMetadata))
+	})
+
+	t.Run("errors.Is does not match unrelated error", func(t *testing.T) {
+		assert.False(t, errors.Is(errors.New("other"), ErrMissingFolderMetadata))
+	})
+
+	t.Run("errors.As extracts MissingFolderMetadata from wrapped error", func(t *testing.T) {
+		original := &MissingFolderMetadata{Path: "x/"}
+		wrapped := fmt.Errorf("wrap: %w", original)
+
+		var target *MissingFolderMetadata
+		require.True(t, errors.As(wrapped, &target))
+		assert.Equal(t, "x/", target.Path)
+	})
+
+	t.Run("errors.Is matches through fmt.Errorf wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("wrap: %w", &MissingFolderMetadata{Path: "y/"})
+		assert.True(t, errors.Is(wrapped, ErrMissingFolderMetadata))
+	})
+}
+
+func TestFindFoldersMissingMetadata(t *testing.T) {
+	tests := []struct {
+		name     string
+		source   []repository.FileTreeEntry
+		expected []string
+	}{
+		{
+			name:     "empty tree",
+			source:   nil,
+			expected: nil,
+		},
+		{
+			name: "no directories",
+			source: []repository.FileTreeEntry{
+				{Path: "dashboard.json", Blob: true},
+			},
+			expected: nil,
+		},
+		{
+			name: "directory with _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder", Blob: false},
+				{Path: "myfolder/_folder.json", Blob: true},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: nil,
+		},
+		{
+			name: "directory missing _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder", Blob: false},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: []string{"myfolder/"},
+		},
+		{
+			name: "mixed: some with and some without _folder.json",
+			source: []repository.FileTreeEntry{
+				{Path: "withMeta", Blob: false},
+				{Path: "withMeta/_folder.json", Blob: true},
+				{Path: "withMeta/dashboard.json", Blob: true},
+				{Path: "noMeta", Blob: false},
+				{Path: "noMeta/dashboard.json", Blob: true},
+			},
+			expected: []string{"noMeta/"},
+		},
+		{
+			name: "directory path already has trailing slash",
+			source: []repository.FileTreeEntry{
+				{Path: "myfolder/", Blob: false},
+				{Path: "myfolder/dashboard.json", Blob: true},
+			},
+			expected: []string{"myfolder/"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FindFoldersMissingMetadata(tt.source)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestParseFolderResource(t *testing.T) {
 	ctx := context.Background()
 	testPath := "team-a/project-x/"
