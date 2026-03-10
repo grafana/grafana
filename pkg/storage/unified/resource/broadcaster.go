@@ -279,7 +279,7 @@ func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
 	// main event loop. Buffer size matches cache size to handle burst scenarios,
 	// plus extra capacity for read operations which can happen concurrently during
 	// rolling deployments.
-	c.add = make(chan T, size*2)  // 2x cache size for burst capacity
+	c.add = make(chan T, size*2)   // 2x cache size for burst capacity
 	c.read = make(chan chan T, 20) // Support up to 20 concurrent subscriptions
 
 	go c.run()
