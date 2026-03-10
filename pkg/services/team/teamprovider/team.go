@@ -40,10 +40,9 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, restConfi
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	// TODO enable Kubernetes team service for CreateTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.CreateTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.CreateTeam(ctx, cmd)
+	}
 
 	return s.legacyService.CreateTeam(ctx, cmd)
 }

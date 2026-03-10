@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type TeamK8sService struct {
@@ -68,7 +69,38 @@ func (s *TeamK8sService) initK8sClients(ctx context.Context, logger log.Logger) 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	s.initK8sClients(ctx, s.logger)
 
-	return team.Team{}, errors.New("not implemented")
+	if s.teamClient == nil {
+		return team.Team{}, errors.New("team client not initialized")
+	}
+
+	uid := util.GenerateShortUID()
+	namespace := s.namespaceMapper(cmd.OrgID)
+
+	k8sTeam := iamv0alpha1.NewTeam()
+	k8sTeam.Name = uid
+	k8sTeam.Namespace = namespace
+	k8sTeam.Spec = iamv0alpha1.TeamSpec{
+		Title:       cmd.Name,
+		Email:       cmd.Email,
+		ExternalUID: cmd.ExternalUID,
+		Provisioned: cmd.IsProvisioned,
+	}
+
+	created, err := s.teamClient.Create(ctx, k8sTeam, resource.CreateOptions{})
+	if err != nil {
+		return team.Team{}, err
+	}
+
+	return team.Team{
+		UID:           created.Name,
+		OrgID:         cmd.OrgID,
+		Name:          created.Spec.Title,
+		Email:         created.Spec.Email,
+		ExternalUID:   created.Spec.ExternalUID,
+		IsProvisioned: created.Spec.Provisioned,
+		Created:       created.CreationTimestamp.Time,
+		Updated:       created.GetUpdateTimestamp(),
+	}, nil
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
