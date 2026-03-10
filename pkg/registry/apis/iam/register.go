@@ -889,14 +889,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ExternalGroupMapping:
 		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
-		if err := ValidateRoleSpec(typedObj); err != nil {
-			return err
-		}
 		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.GlobalRole:
-		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
-			return err
-		}
 		return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.TeamLBACRule:
 		return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
@@ -932,17 +926,11 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Role, got %T", oldObj)
 		}
-		if err := ValidateRoleSpec(typedObj); err != nil {
-			return err
-		}
 		return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
 	case *iamv0.GlobalRole:
 		oldGlobalRoleObj, ok := oldObj.(*iamv0.GlobalRole)
 		if !ok {
 			return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldObj)
-		}
-		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
-			return err
 		}
 		return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
 	case *iamv0.TeamLBACRule:

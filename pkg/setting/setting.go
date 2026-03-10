@@ -669,6 +669,7 @@ type Cfg struct {
 
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
+	SearchLookback       time.Duration
 
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
