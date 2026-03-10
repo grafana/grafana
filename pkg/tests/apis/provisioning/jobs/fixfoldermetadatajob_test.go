@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/all-panels.json": "dashboard1.json",
+			"../testdata/all-panels.json": "dashboard1.json",
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1,

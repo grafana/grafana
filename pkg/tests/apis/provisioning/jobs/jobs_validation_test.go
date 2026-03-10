@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
-		Template:           "testdata/local-readonly.json.tmpl",
+		Template:           "../testdata/local-readonly.json.tmpl",
 		Target:             "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
