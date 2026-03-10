@@ -13,6 +13,7 @@ import { LibraryElementExport } from '../../../dashboard/components/DashExportMo
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
+  DashboardInput,
   DashboardInputs,
   DataSourceInput,
   ImportDashboardDTO,
@@ -172,7 +173,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
 /**
  * Extract inputs from a v2 dashboard spec
  */
-export function extractV2Inputs(dashboard: unknown): DashboardInputs {
+export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInputs> {
   const inputs: DashboardInputs = {
     dataSources: [],
     constants: [],
@@ -235,6 +236,15 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
   }
 
   for (const [label, dsType] of Object.entries(dsTypes)) {
+    try {
+      const datasource = await getDataSourceSrv().get({ type: dsType });
+      if (datasource.meta?.builtIn) {
+        continue;
+      }
+    } catch {
+      // datasource not found, still add it as an input so the user can pick one
+    }
+
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
     inputs.dataSources.push({
       name: label,
@@ -266,7 +276,7 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
  */
 export function applyV1Inputs(
   dashboard: Dashboard,
-  inputs: { dataSources: DataSourceInput[] },
+  inputs: { dataSources: DataSourceInput[]; constants?: DashboardInput[] },
   form: ImportDashboardDTO
 ): Dashboard {
   const annotations = (dashboard.annotations?.list ?? []).map((annotation: AnnotationQuery) => {
@@ -526,46 +536,67 @@ function processAnnotation(
 }
 
 function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, form: ImportDashboardDTO): Panel {
-  if (panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources);
-
-    const queries = panel.targets?.map((target) => {
-      if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
-        const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
-        if (userInput) {
-          return {
-            ...target,
-            datasource: {
-              ...target.datasource,
-              uid: userInput.uid,
-            },
-          };
-        }
+  const queries = panel.targets?.map((target) => {
+    if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
+      const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
+      if (userInput) {
+        return {
+          ...target,
+          datasource: {
+            ...target.datasource,
+            uid: userInput.uid,
+          },
+        };
       }
-      return target;
-    });
-
-    if (userInput) {
-      return {
-        ...panel,
-        targets: queries,
-        datasource: {
-          ...panel.datasource,
-          uid: userInput.uid,
-        },
-      };
     }
-  }
+    return target;
+  });
 
-  return panel;
+  const panelDs =
+    panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')
+      ? checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources)
+      : undefined;
+
+  return {
+    ...panel,
+    ...(queries && { targets: queries }),
+    ...(panelDs && {
+      datasource: {
+        ...panel.datasource,
+        uid: panelDs.uid,
+      },
+    }),
+  };
 }
 
 function processVariable(
   variable: VariableModel,
-  inputs: { dataSources: DataSourceInput[] },
+  inputs: { dataSources: DataSourceInput[]; constants?: DashboardInput[] },
   form: ImportDashboardDTO
 ) {
   const variableType = variable.type;
+
+  if (variableType === 'constant' && 'query' in variable && typeof variable.query === 'string' && inputs.constants) {
+    for (let i = 0; i < inputs.constants.length; i++) {
+      const placeholder = '${' + inputs.constants[i].name + '}';
+      if (variable.query === placeholder) {
+        const resolved = form.constants[i] ?? inputs.constants[i].value;
+        const current = 'current' in variable && isRecord(variable.current) ? variable.current : {};
+        const option =
+          'options' in variable && Array.isArray(variable.options) && isRecord(variable.options[0])
+            ? variable.options[0]
+            : {};
+
+        return {
+          ...variable,
+          query: resolved,
+          current: { ...current, text: resolved, value: resolved },
+          options: [{ ...option, text: resolved, value: resolved }],
+        };
+      }
+    }
+  }
+
   if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
     const datasourceUid = variable.datasource.uid;
     if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
