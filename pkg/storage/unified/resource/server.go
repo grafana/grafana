@@ -134,7 +134,12 @@ type StorageBackend interface {
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
-	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+	// Implementations may return events shortly before sinceRv; callers should filter out
+	// events older than `sinceRv` if necessary.
+	//
+	// lastCalledWithSinceRv is an optional timestamp of the last time the caller called
+	// ListModifiedSince with the same sinceRv value.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error])
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -226,6 +231,12 @@ type SearchOptions struct {
 	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
 	// that subsequent search will observe the effect of the writing.
 	IndexMinUpdateInterval time.Duration
+
+	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
+	IndexModificationCacheTTL time.Duration
+
+	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
+	InjectFailuresPercent int
 }
 
 type ResourceServerOptions struct {
@@ -503,6 +514,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if kvBackend, ok := s.backend.(KVBackend); ok {
+		kvBackend.Stop()
 	}
 
 	// Stops the streaming
@@ -1709,6 +1724,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		MaxBackoff: s.queueConfig.MaxBackoff,
 		MaxRetries: s.queueConfig.MaxRetries,
 	})
+
+	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	if tenantID == "" {
+		tenantID = clusterScopeNamespace
+	}
 
 	for {
 		err := s.queue.Enqueue(queueCtx, tenantID, wrappedRunnable)

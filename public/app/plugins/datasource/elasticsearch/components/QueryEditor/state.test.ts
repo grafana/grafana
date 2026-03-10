@@ -7,9 +7,10 @@ import {
   changeAliasPattern,
   changeEditorTypeAndResetQuery,
   changeQuery,
+  changeQueryType,
   initQuery,
   queryReducer,
-  rawDSLQueryReducer,
+  queryTypeReducer,
 } from './state';
 
 describe('Query Reducer', () => {
@@ -62,6 +63,46 @@ describe('Query Reducer', () => {
         .thenStateShouldEqual('');
     });
   });
+
+  describe('When switching query type', () => {
+    it('Should clear query when switching from lucene to dsl', () => {
+      const initialQuery: ElasticsearchDataQuery['query'] = 'field:value';
+
+      reducerTester<ElasticsearchDataQuery['query']>()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(changeQueryType('dsl'))
+        .thenStateShouldEqual('');
+    });
+
+    it('Should clear query when switching from dsl to lucene', () => {
+      const initialQuery: ElasticsearchDataQuery['query'] = '{"query": {"match_all": {}}}';
+
+      reducerTester<ElasticsearchDataQuery['query']>()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(changeQueryType('lucene'))
+        .thenStateShouldEqual('');
+    });
+  });
+
+  describe('When switching metric type', () => {
+    it('Should clear query when switching from logs to metrics', () => {
+      const initialQuery: ElasticsearchDataQuery['query'] = '{"query": {"match_all": {}}}';
+
+      reducerTester<ElasticsearchDataQuery['query']>()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(changeMetricType({ id: '1', type: 'avg' }))
+        .thenStateShouldEqual('');
+    });
+
+    it('Should clear query when switching to raw_data', () => {
+      const initialQuery: ElasticsearchDataQuery['query'] = 'field:value';
+
+      reducerTester<ElasticsearchDataQuery['query']>()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(changeMetricType({ id: '1', type: 'raw_data' }))
+        .thenStateShouldEqual('');
+    });
+  });
 });
 
 describe('Alias Pattern Reducer', () => {
@@ -95,42 +136,49 @@ describe('Alias Pattern Reducer', () => {
   });
 });
 
-describe('Raw DSL Query Reducer', () => {
-  it('Should clear raw DSL query when switching editor types', () => {
-    const initialRawQuery: ElasticsearchDataQuery['rawDSLQuery'] = '{"query": {"match_all": {}}}';
+describe('Query Type Reducer', () => {
+  it('Should correctly set queryType', () => {
+    const expectedQueryType: ElasticsearchDataQuery['queryType'] = 'dsl';
 
-    reducerTester<ElasticsearchDataQuery['rawDSLQuery']>()
-      .givenReducer(rawDSLQueryReducer, initialRawQuery)
-      .whenActionIsDispatched(changeEditorTypeAndResetQuery('builder'))
-      .thenStateShouldEqual('');
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, 'lucene')
+      .whenActionIsDispatched(changeQueryType(expectedQueryType))
+      .thenStateShouldEqual(expectedQueryType);
   });
 
-  describe('When switching query types', () => {
-    it('Should clear raw DSL query when switching from metrics to logs', () => {
-      const initialRawQuery: ElasticsearchDataQuery['rawDSLQuery'] = '{"aggs": {"1": {"avg": {"field": "bytes"}}}}';
+  it('Should set to lucene when switching to builder editor', () => {
+    const initialQueryType: ElasticsearchDataQuery['queryType'] = 'dsl';
 
-      reducerTester<ElasticsearchDataQuery['rawDSLQuery']>()
-        .givenReducer(rawDSLQueryReducer, initialRawQuery)
-        .whenActionIsDispatched(changeMetricType({ id: '1', type: 'logs' }))
-        .thenStateShouldEqual('');
-    });
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, initialQueryType)
+      .whenActionIsDispatched(changeEditorTypeAndResetQuery('builder'))
+      .thenStateShouldEqual('lucene');
+  });
 
-    it('Should clear raw DSL query when switching from logs to metrics', () => {
-      const initialRawQuery: ElasticsearchDataQuery['rawDSLQuery'] = '{"query": {"match_all": {}}}';
+  it('Should set to dsl when switching to code editor', () => {
+    const initialQueryType: ElasticsearchDataQuery['queryType'] = 'lucene';
 
-      reducerTester<ElasticsearchDataQuery['rawDSLQuery']>()
-        .givenReducer(rawDSLQueryReducer, initialRawQuery)
-        .whenActionIsDispatched(changeMetricType({ id: '1', type: 'avg' }))
-        .thenStateShouldEqual('');
-    });
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, initialQueryType)
+      .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+      .thenStateShouldEqual('dsl');
+  });
 
-    it('Should clear raw DSL query when switching to raw_data', () => {
-      const initialRawQuery: ElasticsearchDataQuery['rawDSLQuery'] = '{"aggs": {"1": {"avg": {"field": "bytes"}}}}';
+  it('Should default to lucene on init if not set', () => {
+    const initialQueryType: ElasticsearchDataQuery['queryType'] = undefined;
 
-      reducerTester<ElasticsearchDataQuery['rawDSLQuery']>()
-        .givenReducer(rawDSLQueryReducer, initialRawQuery)
-        .whenActionIsDispatched(changeMetricType({ id: '1', type: 'raw_data' }))
-        .thenStateShouldEqual('');
-    });
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, initialQueryType)
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual('lucene');
+  });
+
+  it('Should maintain queryType on init if already set', () => {
+    const initialQueryType: ElasticsearchDataQuery['queryType'] = 'dsl';
+
+    reducerTester<ElasticsearchDataQuery['queryType']>()
+      .givenReducer(queryTypeReducer, initialQueryType)
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual('dsl');
   });
 });

@@ -2,10 +2,17 @@ package annotation
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -54,22 +62,41 @@ func RegisterAppInstaller(
 		cfg: cfg,
 	}
 
-	var tagHandler func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
-	if service != nil {
-		mapper := grafrequest.GetNamespaceMapper(cfg)
+	mapper := grafrequest.GetNamespaceMapper(cfg)
 
-		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
-		sqlAdapter := NewSQLAdapter(service, cleaner, mapper, cfg)
-
-		// Layer 2→3: Wrap Store interface with K8s REST adapter
-		installer.k8sAdapter = &k8sRESTAdapter{
-			store:  sqlAdapter,
-			mapper: mapper,
+	// Choose storage backend based on configuration
+	var store Store
+	var err error
+	switch cfg.AnnotationAppPlatform.StoreBackend {
+	case "grpc":
+		store, err = newGRPCStore(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-
-		// Create the tags handler using the sqlAdapter (which implements TagProvider)
-		tagHandler = newTagsHandler(sqlAdapter)
+	case "sql":
+		// sql is the default, but we allow explicitly specifying it for clarity
+		fallthrough
+	default:
+		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
+		store = NewSQLAdapter(service, cleaner, mapper, cfg)
 	}
+
+	// Layer 2→3: Wrap Store interface with K8s REST adapter
+	installer.k8sAdapter = &k8sRESTAdapter{
+		store:  store,
+		mapper: mapper,
+	}
+
+	// Create the tags handler
+	tagProvider, ok := store.(TagProvider)
+	if !ok {
+		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
+		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
+	}
+	tagHandler := newTagsHandler(tagProvider)
+
+	// Create the search handler
+	searchHandler := newSearchHandler(store)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -77,7 +104,8 @@ func RegisterAppInstaller(
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: &annotationapp.AnnotationConfig{
-			TagHandler: tagHandler,
+			TagHandler:    tagHandler,
+			SearchHandler: searchHandler,
 		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
@@ -87,6 +115,51 @@ func RegisterAppInstaller(
 	installer.AppInstaller = i
 
 	return installer, nil
+}
+
+func newGRPCStore(cfg *setting.Cfg) (Store, error) {
+	var dialOpts []grpc.DialOption
+	if cfg.AnnotationAppPlatform.GRPCUseTLS {
+		tlsConfig, err := loadTLSConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS config: %w", err)
+		}
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	grpcConn, err := grpc.NewClient(
+		cfg.AnnotationAppPlatform.GRPCAddress,
+		dialOpts...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
+			cfg.AnnotationAppPlatform.GRPCAddress, err)
+	}
+	return NewStoreGRPC(grpcConn), nil
+}
+
+func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+	if cfg.AnnotationAppPlatform.GRPCTLSCAFile != "" {
+		caCert, err := os.ReadFile(cfg.AnnotationAppPlatform.GRPCTLSCAFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to append CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if cfg.AnnotationAppPlatform.GRPCTLSSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	return tlsConfig, nil
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
@@ -266,6 +339,17 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
+
+	// Validate either name or generateName is provided
+	if resource.Name == "" && resource.GenerateName == "" {
+		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+
+	// If a name is empty and generateName is not, generate a unique name using the provided prefix
+	if resource.Name == "" && resource.GenerateName != "" {
+		resource.Name = resource.GenerateName + util.GenerateShortUID()
+	}
+
 	return s.store.Create(ctx, resource)
 }
 

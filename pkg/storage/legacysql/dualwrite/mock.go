@@ -57,3 +57,6 @@ func (m *mockService) Status(ctx context.Context, gr schema.GroupResource) (Stor
 func (m *mockService) Update(ctx context.Context, status StorageStatus) (StorageStatus, error) {
 	return m.status, fmt.Errorf("not implemented")
 }
+
+// LogStorageModeComparison implements Service.
+func (m *mockService) LogStorageModeComparison(_ schema.GroupResource, _ rest.DualWriterMode) {}

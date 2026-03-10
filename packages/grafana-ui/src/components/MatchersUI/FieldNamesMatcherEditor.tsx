@@ -10,7 +10,7 @@ import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { useSelectOptions, frameHasName, useAllFieldDisplayNames } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
-  const { series, annotations = [], options, onChange: onChangeFromProps } = props;
+  const { id, series, annotations = [], options, onChange: onChangeFromProps } = props;
   const { readOnly, prefix } = options;
   const names = useAllFieldDisplayNames(series, annotations);
   const selectOptions = useSelectOptions(names, undefined);
@@ -37,10 +37,10 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
 
   if (readOnly) {
     const displayNames = (options.names ?? []).join(', ');
-    return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
+    return <Input id={id} value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
   }
 
-  return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
+  return <MultiSelect inputId={id} value={options.names} options={selectOptions} onChange={onChange} />;
 });
 FieldNamesMatcherEditor.displayName = 'FieldNameMatcherEditor';
 

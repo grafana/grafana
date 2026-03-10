@@ -13,13 +13,8 @@ import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { DashboardLibraryInteractions } from './interactions';
 import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -308,10 +303,10 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
-              title={t('dashboard-library.community-error-title', 'Error loading community dashboards')}
+              title={t('dashboard-library.multi-community-error-title', 'Error loading community dashboards')}
               severity="error"
             >
-              <Trans i18nKey="dashboard-library.community-error">
+              <Trans i18nKey="dashboard-library.multi-community-error">
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>

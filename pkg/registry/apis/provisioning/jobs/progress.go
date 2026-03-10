@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	resultReasons       map[string]struct{}
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -62,6 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
+		resultReasons:       make(map[string]struct{}),
 	}
 }
 
@@ -110,6 +112,10 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
 
+		if reason := result.WarningReason(); reason != "" {
+			r.resultReasons[reason] = struct{}{}
+		}
+
 		shouldLogWarning = true
 		logWarning = result.Warning()
 	}
@@ -148,6 +154,10 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 		}
 	}
 	r.summaries = summaries
+
+	if !keepWarnings {
+		r.resultReasons = make(map[string]struct{})
+	}
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -226,12 +236,18 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		r.summaries[key] = summary
 	}
 
+	fileInfo := fmt.Sprintf("(file: %s", result.Path())
+	if result.Name() != "" {
+		fileInfo = fmt.Sprintf("%s, name: %s", fileInfo, result.Name())
+	}
+	fileInfo = fmt.Sprintf("%s, action: %s)", fileInfo, result.Action())
+
 	if result.Error() != nil {
-		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error().Error(), result.Path(), result.Name(), result.Action())
+		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else if result.Warning() != nil {
-		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning().Error(), result.Path(), result.Name(), result.Action())
+		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
 		summary.Warning++
 	} else {
@@ -343,6 +359,20 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	return jobStatus
+}
+
+func (r *jobProgressRecorder) ResultReasons() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.resultReasons) == 0 {
+		return nil
+	}
+	reasons := make([]string, 0, len(r.resultReasons))
+	for reason := range r.resultReasons {
+		reasons = append(reasons, reason)
+	}
+	return reasons
 }
 
 // HasDirPathFailedCreation checks if a path is nested under any failed folder creation

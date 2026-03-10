@@ -5,12 +5,7 @@ generate: do-generate post-generate-cleanup
 
 .PHONY: do-generate
 do-generate: install-app-sdk update-app-sdk
-	@$(APP_SDK_BIN) generate \
-		--source=./kinds/ \
-		--gogenpath=./pkg/apis \
-		--grouping=group \
-		--genoperatorstate=false \
-		--defencoding=none
+	@$(APP_SDK_BIN) generate --source=./kinds/
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Fix TargetSpec OpenAPI schema

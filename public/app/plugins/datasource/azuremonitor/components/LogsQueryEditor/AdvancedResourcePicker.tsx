@@ -45,7 +45,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
     <>
       <Label>
         <h6>
-          <Trans i18nKey="components.advanced-resource-picker.label-resource-uri">Resource URI(s) </Trans>
+          <Trans i18nKey="components.advanced-resource-picker.label-resource-uri">Resource URI(s)</Trans>
           <Tooltip
             content={
               <Trans i18nKey="components.advanced-resource-picker.tooltip-resource-uri">

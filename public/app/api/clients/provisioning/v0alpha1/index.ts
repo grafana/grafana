@@ -15,7 +15,11 @@ import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
 import { ThunkDispatch } from 'app/types/store';
 
-import { createErrorNotification, createSuccessNotification } from '../../../../core/copy/appNotification';
+import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
@@ -75,14 +79,42 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/repositories`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
+      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
     },
     listConnection: {
       query: ({ watch, ...queryArg }) => ({
         url: `/connections`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections'),
+      onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
       providesTags: (result) =>
         result
           ? [
@@ -167,9 +199,8 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
-          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          if (showMsg) {
+          if (jobSpec.action === 'pull' || jobSpec.action === 'migrate') {
             dispatch(
               notifyApp(
                 createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))

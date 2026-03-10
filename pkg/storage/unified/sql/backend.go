@@ -115,6 +115,7 @@ func NewStorageBackend(
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
+			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			DisableStorageServices:  disableStorageServices,
 		})
 	}
@@ -142,6 +143,17 @@ func NewStorageBackend(
 		Log:                  log.New("storage-backend"),
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+		GarbageCollection: resource.GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+		EventRetentionPeriod: cfg.EventRetentionPeriod,
+		EventPruningInterval: cfg.EventPruningInterval,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
@@ -187,6 +199,9 @@ type BackendOptions struct {
 
 	DisableStorageServices bool
 
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	MigrationParquetBuffer bool
+
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
 
@@ -219,6 +234,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
 	}
@@ -273,6 +289,9 @@ type backend struct {
 	historyPruner resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
+
+	// When true, bulk migrations buffer data through a temporary Parquet file
+	migrationParquetBuffer bool
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
@@ -948,7 +967,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 

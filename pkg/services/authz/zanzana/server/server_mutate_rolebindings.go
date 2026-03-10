@@ -2,16 +2,14 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	zanzana "github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-func (s *Server) mutateRoleBindings(ctx context.Context, store *storeInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateRoleBindings(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateRoleBindings")
 	defer span.End()
 
@@ -22,14 +20,14 @@ func (s *Server) mutateRoleBindings(ctx context.Context, store *storeInfo, opera
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateRoleBinding:
 			r := op.CreateRoleBinding
-			tuple, err := GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
+			tuple, err := zanzana.GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteRoleBinding:
 			r := op.DeleteRoleBinding
-			tuple, err := GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
+			tuple, err := zanzana.GetRoleBindingTuple(r.SubjectKind, r.SubjectName, r.RoleName)
 			if err != nil {
 				return err
 			}
@@ -51,32 +49,4 @@ func (s *Server) mutateRoleBindings(ctx context.Context, store *storeInfo, opera
 	}
 
 	return nil
-}
-
-func GetRoleBindingTuple(subjectKind string, subjectName string, roleName string) (*openfgav1.TupleKey, error) {
-	zanzanaType := ""
-	subjectRelation := ""
-
-	switch subjectKind {
-	case string(iamv0.RoleBindingSpecSubjectKindUser):
-		zanzanaType = zanzana.TypeUser
-	case string(iamv0.RoleBindingSpecSubjectKindTeam):
-		zanzanaType = zanzana.TypeTeam
-		subjectRelation = zanzana.RelationTeamMember
-	case string(iamv0.RoleBindingSpecSubjectKindServiceAccount):
-		zanzanaType = zanzana.TypeServiceAccount
-	case string(iamv0.RoleBindingSpecSubjectKindBasicRole):
-		zanzanaType = zanzana.TypeRole
-		subjectRelation = zanzana.RelationAssignee
-	default:
-		return nil, fmt.Errorf("invalid subject kind: %s", subjectKind)
-	}
-
-	tuple := &openfgav1.TupleKey{
-		User:     zanzana.NewTupleEntry(zanzanaType, subjectName, subjectRelation),
-		Relation: zanzana.RelationAssignee,
-		Object:   zanzana.NewTupleEntry(zanzana.TypeRole, roleName, ""),
-	}
-
-	return tuple, nil
 }

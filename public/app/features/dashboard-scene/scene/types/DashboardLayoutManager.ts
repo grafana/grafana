@@ -2,6 +2,8 @@ import { SceneObject, VizPanel } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+
 import { LayoutRegistryItem } from './LayoutRegistryItem';
 
 /**
@@ -20,7 +22,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   /**
    * Serializer for layout
    */
-  serialize(): DashboardV2Spec['layout'];
+  serialize(isSnapshot?: boolean): DashboardV2Spec['layout'];
 
   /**
    * Adds a new panel to the layout
@@ -73,9 +75,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
 
   /**
-   * Duplicate, like clone but with new keys
+   * Duplicate, like clone but with new keys.
+   * @param panelIdGenerator Optional sequential ID generator shared across
+   *   sibling layouts to prevent duplicate panel IDs.
    */
-  duplicate(): DashboardLayoutManager;
+  duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager;
 
   /**
    * Paste a panel from the clipboard
