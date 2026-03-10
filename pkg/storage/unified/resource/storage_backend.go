@@ -1834,7 +1834,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
 		if b.rvManager != nil {
-			microRV := rvmanager.RVFromSnowflake(dataKey.ResourceVersion)
+			microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
 			generation := obj.GetGeneration()
 			if action == DataActionDeleted {
 				generation = 0

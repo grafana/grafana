@@ -1029,7 +1029,7 @@ func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer d
 }
 
 // updateLegacyResourceHistoryBulk fills in all legacy columns on a resource_history row identified by key_path.
-// During non-BC bulk import, the row is inserted with only key_path and value set; this UPDATE fills in
+// During non Backwards Compatible bulk import, the row is inserted with only key_path and value set; this UPDATE fills in
 // group, resource, namespace, name, action, folder, resource_version, previous_resource_version, and generation.
 // TODO: remove when backwards compatibility is no longer needed.
 func (d *dataStore) updateLegacyResourceHistoryBulk(ctx context.Context, execer db.ContextExecer, dataKey DataKey, microRV int64, previousRV int64, generation int64) error {
