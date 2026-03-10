@@ -30,7 +30,6 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     toolbar: css({
       display: 'flex',
-      justifyContent: 'space-between',
       alignItems: 'center',
       paddingTop: theme.spacing(1),
       paddingBottom: theme.spacing(1),

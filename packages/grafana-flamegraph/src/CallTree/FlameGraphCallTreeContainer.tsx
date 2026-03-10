@@ -653,47 +653,45 @@ const FlameGraphCallTreeContainer = memo(
                 {searchError && <span className={styles.searchError}>{searchError}</span>}
               </div>
             )}
+
+            {focusedNode && (
+              <Tooltip content={focusedNode.label} placement="top">
+                <div className={styles.focusedItem}>
+                  <Icon size="sm" name="compress-arrows" />
+                  <span className={styles.focusedItemLabel}>
+                    {focusedNode.label.substring(focusedNode.label.lastIndexOf('/') + 1)}
+                  </span>
+                  <IconButton
+                    className={styles.modePillCloseButton}
+                    name="times"
+                    size="sm"
+                    onClick={() => handleSetFocusMode(undefined)}
+                    tooltip="Clear callees view"
+                    aria-label="Clear callees view"
+                  />
+                </div>
+              </Tooltip>
+            )}
+
+            {callersNode && (
+              <Tooltip content={callersNodeLabel || ''} placement="top">
+                <div className={styles.callersItem}>
+                  <Icon size="sm" name="expand-arrows-alt" />
+                  <span className={styles.callersItemLabel}>
+                    {(callersNodeLabel || '').substring((callersNodeLabel || '').lastIndexOf('/') + 1)}
+                  </span>
+                  <IconButton
+                    className={styles.modePillCloseButton}
+                    name="times"
+                    size="sm"
+                    onClick={() => handleSetCallersMode(undefined)}
+                    tooltip="Clear callers view"
+                    aria-label="Clear callers view"
+                  />
+                </div>
+              </Tooltip>
+            )}
           </div>
-
-          {focusedNode && (
-            <Tooltip content={focusedNode.label} placement="top">
-              <div className={styles.focusedItem}>
-                <Icon size="sm" name="compress-arrows" />
-                <span className={styles.focusedItemLabel}>
-                  {focusedNode.label.substring(focusedNode.label.lastIndexOf('/') + 1)}
-                </span>
-                <IconButton
-                  className={styles.modePillCloseButton}
-                  name="times"
-                  size="sm"
-                  onClick={() => handleSetFocusMode(undefined)}
-                  tooltip="Clear callees view"
-                  aria-label="Clear callees view"
-                />
-              </div>
-            </Tooltip>
-          )}
-
-          {callersNode && (
-            <Tooltip content={callersNodeLabel || ''} placement="top">
-              <div className={styles.callersItem}>
-                <Icon size="sm" name="expand-arrows-alt" />
-                <span className={styles.callersItemLabel}>
-                  {(callersNodeLabel || '').substring((callersNodeLabel || '').lastIndexOf('/') + 1)}
-                </span>
-                <IconButton
-                  className={styles.modePillCloseButton}
-                  name="times"
-                  size="sm"
-                  onClick={() => handleSetCallersMode(undefined)}
-                  tooltip="Clear callers view"
-                  aria-label="Clear callers view"
-                />
-              </div>
-            </Tooltip>
-          )}
-
-          <div className={styles.toolbarRight}></div>
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
