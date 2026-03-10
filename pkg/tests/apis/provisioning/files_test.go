@@ -1285,6 +1285,35 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 		uid, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
 		require.NotEmpty(t, uid)
 	})
+
+	rootFolderBody := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
+
+	for _, tc := range []struct {
+		name   string
+		method string
+		body   []byte
+	}{
+		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootFolderBody},
+		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootFolderBody},
+		{name: "DELETE of root _folder.json is blocked", method: http.MethodDelete},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var bodyReader io.Reader
+			if tc.body != nil {
+				bodyReader = bytes.NewReader(tc.body)
+			}
+			req, err := http.NewRequest(tc.method, filesURL("_folder.json"), bodyReader)
+			require.NoError(t, err)
+			if tc.body != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+			require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		})
+	}
 }
 
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
