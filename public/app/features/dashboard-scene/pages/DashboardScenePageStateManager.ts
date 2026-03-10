@@ -999,7 +999,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
+          if (config.featureToggles.reloadDashboardsOnParamsChange) {
+            const queryParamsObject = processQueryParamsForDashboardLoad();
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+          } else {
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
+          }
 
           if (route === DashboardRoutes.Embedded) {
             rsp.metadata.annotations = rsp.metadata.annotations || {};
@@ -1147,7 +1152,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
-    return this.withVersionHandling((manager) => manager.reloadDashboard.call(this, queryParams));
+    return this.withVersionHandling((manager) => {
+      // sync active manager state first to trigger reload properly
+      manager.setState(this.state);
+      return manager.reloadDashboard(queryParams);
+    });
   }
 
   public getDashboardFromCache(uid: string) {

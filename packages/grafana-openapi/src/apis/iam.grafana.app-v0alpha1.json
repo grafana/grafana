@@ -5982,8 +5982,13 @@
       },
       "TeamBindingspecSubject": {
         "type": "object",
-        "required": ["name"],
+        "required": ["kind", "name"],
         "properties": {
+          "kind": {
+            "description": "kind of the identity",
+            "type": "string",
+            "default": ""
+          },
           "name": {
             "description": "uid of the identity",
             "type": "string",
