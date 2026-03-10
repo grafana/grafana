@@ -747,11 +747,11 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
+	s.inflight.Add(1)
+	defer s.inflight.Done()
 	if s.stopping.Load() {
 		return nil, errStopping
 	}
-	s.inflight.Add(1)
-	defer s.inflight.Done()
 
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
@@ -865,11 +865,11 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
 
+	s.inflight.Add(1)
+	defer s.inflight.Done()
 	if s.stopping.Load() {
 		return nil, errStopping
 	}
-	s.inflight.Add(1)
-	defer s.inflight.Done()
 
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -945,11 +945,11 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
 
+	s.inflight.Add(1)
+	defer s.inflight.Done()
 	if s.stopping.Load() {
 		return nil, errStopping
 	}
-	s.inflight.Add(1)
-	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
 	if req.ResourceVersion < 0 {
