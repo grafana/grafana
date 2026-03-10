@@ -13012,10 +13012,16 @@
       }
     },
     "quota-limit": {
-      "message-both": "Your account is limited to {{maxRepositories}} connected repositories and {{maxResourcesPerRepository}} synced resources per repository.",
-      "message-repositories-info": "Your account is limited to {{maxRepositories}} connected repositories",
-      "message-repository": "Your account is limited to {{maxRepositories}} connected repositories. To add more repositories,",
-      "message-resource": "Your account is limited to {{maxResourcesPerRepository}} synced resources per repository. To add more resources,",
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_other": "and {{count}} synced resources per repository.",
+      "message-repositories-info_one": "Your account is limited to {{count}} connected repository",
+      "message-repositories-info_other": "Your account is limited to {{count}} connected repositories",
+      "message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
+      "message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "message-resource_one": "Your account is limited to {{count}} synced resource per repository. To add more resources,",
+      "message-resource_other": "Your account is limited to {{count}} synced resources per repository. To add more resources,",
       "note": "Note:",
       "upgrade-link": "upgrade your account"
     },

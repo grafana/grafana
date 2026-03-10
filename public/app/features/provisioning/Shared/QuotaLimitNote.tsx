@@ -27,18 +27,19 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
       <Text variant="bodySmall">
         <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>{' '}
         {hasRepoLimit && hasResourceLimit ? (
-          <Trans
-            i18nKey="provisioning.quota-limit.message-both"
-            values={{ maxRepositories, maxResourcesPerRepository }}
-          >
-            Your account is limited to {{ maxRepositories }} connected repositories and {{ maxResourcesPerRepository }}{' '}
-            synced resources per repository.
-          </Trans>
+          <>
+            <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories
+            </Trans>{' '}
+            <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+              and {{ count: maxResourcesPerRepository }} synced resources per repository.
+            </Trans>
+          </>
         ) : hasResourceLimit ? (
           <>
-            <Trans i18nKey="provisioning.quota-limit.message-resource" values={{ maxResourcesPerRepository }}>
-              Your account is limited to {{ maxResourcesPerRepository }} synced resources per repository. To add more
-              resources,
+            <Trans i18nKey="provisioning.quota-limit.message-resource" count={maxResourcesPerRepository}>
+              Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add
+              more resources,
             </Trans>{' '}
             <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
               <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>{' '}
@@ -48,8 +49,8 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
           </>
         ) : (
           <>
-            <Trans i18nKey="provisioning.quota-limit.message-repository" values={{ maxRepositories }}>
-              Your account is limited to {{ maxRepositories }} connected repositories. To add more repositories,
+            <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
             </Trans>{' '}
             <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
               <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>{' '}

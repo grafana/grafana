@@ -33,8 +33,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
 
   const status = repo.status;
+  const { conditions, quota } = status ?? {};
   const webhookURL = getWebhookURL(repo);
-  const { lgColumn, xxlColumn } = getColumnCount(Boolean(repo.status?.webhook));
+  const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
   const resourceColumns = useMemo(
     () => [
@@ -70,16 +71,16 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
               <Card.Description>
-                {repo.status?.stats ? (
+                {status?.stats ? (
                   <InteractiveTable
                     columns={resourceColumns}
-                    data={repo.status.stats}
+                    data={status.stats}
                     getRowId={(r: ResourceCount) => `${r.group}-${r.resource}`}
                   />
                 ) : null}
-                {isQuotaReachedOrExceeded(repo.status?.conditions, 'ResourceQuota') && (
+                {isQuotaReachedOrExceeded(conditions, 'ResourceQuota') && (
                   <Box paddingTop={2}>
-                    <QuotaLimitNote maxResourcesPerRepository={repo.status?.quota?.maxResourcesPerRepository} />
+                    <QuotaLimitNote maxResourcesPerRepository={quota?.maxResourcesPerRepository} />
                   </Box>
                 )}
               </Card.Description>
@@ -91,14 +92,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </Card>
           </div>
 
-          {repo.status?.health && (
+          {status?.health && (
             <div className={styles.cardContainer}>
               <RepositoryHealthCard repo={repo} />
             </div>
           )}
 
           {/* Webhook */}
-          {repo.status?.webhook && (
+          {status?.webhook && (
             <div className={styles.cardContainer}>
               <Card noMargin className={styles.card}>
                 <Card.Heading>
@@ -147,7 +148,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           <div
             className={cx(
               styles.pullStatusCard,
-              repo.status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
+              status?.webhook ? styles.pullStatusCardLgSpan3 : styles.pullStatusCardLgSpan2
             )}
           >
             <RepositoryPullStatusCard repo={repo} />

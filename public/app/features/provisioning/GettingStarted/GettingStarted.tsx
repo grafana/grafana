@@ -129,8 +129,8 @@ export default function GettingStarted({ items }: Props) {
   });
   const connectionCount = settingsQuery.data?.items?.length ?? 0;
   const hasItems = connectionCount > 0;
-  const maxRepositories = settingsQuery.data?.maxRepositories ?? 0;
-  const isConnectionLimitExceeded = maxRepositories > 0 && connectionCount >= maxRepositories;
+  const maxRepositories = settingsQuery.data?.maxRepositories;
+  const isConnectionLimitExceeded = !!maxRepositories && connectionCount >= maxRepositories;
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);

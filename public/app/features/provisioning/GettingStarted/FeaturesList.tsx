@@ -41,10 +41,10 @@ export const FeaturesList = ({
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
-        {maxRepositories > 0 && (
+        {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" values={{ maxRepositories }}>
-              Your account is limited to {{ maxRepositories }} connected repositories
+            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories
             </Trans>
           </li>
         )}

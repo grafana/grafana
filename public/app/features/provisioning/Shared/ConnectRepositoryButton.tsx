@@ -15,8 +15,7 @@ interface Props {
 export function ConnectRepositoryButton({ items }: Props) {
   const navigate = useNavigate();
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
-  const maxRepositories = frontendSettings?.maxRepositories ?? 0;
-  const state = checkSyncSettings(items, maxRepositories);
+  const state = checkSyncSettings(items, frontendSettings?.maxRepositories);
 
   const isButtonDisabled = state.instanceConnected || state.maxReposReached;
 

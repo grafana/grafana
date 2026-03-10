@@ -19,9 +19,9 @@ export function RepositoryList({ items }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
   const { resourceCount, managedCount, unmanagedCount } = useResourceStats(items[0]?.metadata?.name);
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
-  const maxRepositories = frontendSettings?.maxRepositories ?? 0;
-  const maxResourcesPerRepository = items[0]?.status?.quota?.maxResourcesPerRepository ?? 0;
-  const isRepoLimitHit = maxRepositories > 0 && items.length >= maxRepositories;
+  const maxRepositories = frontendSettings?.maxRepositories;
+  const maxResourcesPerRepository = items[0]?.status?.quota?.maxResourcesPerRepository;
+  const isRepoLimitHit = !!maxRepositories && items.length >= maxRepositories;
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const isEmpty = items.length === 0;
   if (isEmpty) {
@@ -67,15 +67,14 @@ export function RepositoryList({ items }: Props) {
                 </Trans>
               </>
             )}
-            {isRepoLimitHit && (maxRepositories > 0 || maxResourcesPerRepository > 0) && (
+            {isRepoLimitHit && (!!maxRepositories || !!maxResourcesPerRepository) && (
               <>
                 {' '}
-                <Trans
-                  i18nKey="provisioning.quota-limit.message-both"
-                  values={{ maxRepositories, maxResourcesPerRepository }}
-                >
-                  Your account is limited to {{ maxRepositories }} connected repositories and{' '}
-                  {{ maxResourcesPerRepository }} synced resources per repository.
+                <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+                  Your account is limited to {{ count: maxRepositories }} connected repositories
+                </Trans>{' '}
+                <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+                  and {{ count: maxResourcesPerRepository }} synced resources per repository.
                 </Trans>{' '}
                 <TextLink href={UPGRADE_URL} external>
                   <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
