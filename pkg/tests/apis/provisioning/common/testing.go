@@ -587,7 +587,10 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	_, thisFile, _, _ := runtime.Caller(0)
+	var thisFile string
+	if _, file, _, ok := runtime.Caller(0); ok {
+		thisFile = file
+	}
 	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template

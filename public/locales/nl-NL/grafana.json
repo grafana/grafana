@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Fout bij laden van regel voor dit evenement.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filteren op:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Er zijn te veel gebeurtenissen in de geselecteerde periode om weer te geven. De laatste 5.000 gebeurtenissen worden nu getoond. Probeer een kortere periode te kiezen.",
         "title": "Kan niet alle gebeurtenissen weergeven"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Dashboard",
         "element": "Element",
+        "link-set": "",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
         "multiple-elements-delete-text": "Weet je zeker dat je deze elementen wilt verwijderen?",
@@ -5402,6 +5411,12 @@
         "tabs": "Tabbladen",
         "variable": "{{type}}variabele",
         "variable-set": "Variabelen"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Gebruik statische sleutelafmetingen",
       "name-allow-custom-values": "Aangepaste waarden toestaan"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Kon niet naar het geselecteerde dashboard navigeren. Probeer het opnieuw.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} door <person />",
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Beheerd door: Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
-    "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren",
-    "description-show-controls": "Weergavebesturingselementen om naar de laatste of eerste logregel te gaan en filters op logniveau",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Experimenteel. Wanneer OTel-logboeken worden weergegeven, voegt u een extra weergegeven veld toe met relevante sleutel-waardeparen van labels en metadata.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Pictogram slepen en neerzetten",
       "clear-button": "Wissen",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "{{title}} starten",
       "description-customize-dashboard-elements-visibility": "Zichtbaarheid van dashboardelementen aanpassen",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Paneelhoogtes worden aangepast aan schermgrootte",
       "label-autofit": "Automatisch aanpassen",
       "label-dashboard-links": "Dashboardlinks",
       "label-display-dashboard-controls": "Besturingselementen van dashboard weergeven",
+      "label-hide-logo": "",
       "label-mode": "Modus",
       "label-time-and-refresh": "Tijd en vernieuwen",
       "label-variables": "Variabelen",
