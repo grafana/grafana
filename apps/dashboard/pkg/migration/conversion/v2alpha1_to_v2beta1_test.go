@@ -289,7 +289,7 @@ func TestV2alpha1ToV2beta1(t *testing.T) {
 				assert.Equal(t, "byName", overrideMatcher.Id)
 				require.NotNil(t, overrideMatcher.Scope)
 				assert.Equal(t, dashv2beta1.DashboardMatcherScopeNested, *overrideMatcher.Scope)
-				assert.Equal(t, map[string]interface{}{"names": []string{"Field1"}}, overrideMatcher.Options)
+				assert.Equal(t, map[string]interface{}{"name": "Field1"}, overrideMatcher.Options)
 			},
 		},
 	}
