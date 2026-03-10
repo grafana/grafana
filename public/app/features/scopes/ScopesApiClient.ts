@@ -203,11 +203,13 @@ export class ScopesApiClient {
     options?: NavigationFetchOptions
   ): Promise<ScopeDashboardBinding[]> => {
     const subscription = dispatch(
-      // Note: `name` is required by generated types but ignored by the query builder (codegen bug).
-      // Object.assign merges NavigationFetchOptions (depth, rootScope) into the arg without
-      // a type assertion — the enhanceEndpoints override in index.ts reads them at runtime.
+      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
-        Object.assign({ name: '', scope: scopeNames }, options),
+        {
+          name: '',
+          scope: scopeNames,
+          ...options,
+        },
         { subscribe: false }
       )
     );
@@ -241,11 +243,13 @@ export class ScopesApiClient {
     options?: NavigationFetchOptions
   ): Promise<ScopeNavigation[]> => {
     const subscription = dispatch(
-      // Note: `name` is required by generated types but ignored by the query builder (codegen bug).
-      // Object.assign merges NavigationFetchOptions (depth, rootScope) into the arg without
-      // a type assertion — the enhanceEndpoints override in index.ts reads them at runtime.
+      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
       scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
-        Object.assign({ name: '', scope: scopeNames }, options),
+        {
+          name: '',
+          scope: scopeNames,
+          ...options,
+        },
         { subscribe: false }
       )
     );
