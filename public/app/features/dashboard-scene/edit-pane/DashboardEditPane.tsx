@@ -9,11 +9,10 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardEditActionEvent, DashboardEditActionEventPayload } from './DashboardEditActionEvent';
 import { ElementSelection } from './ElementSelection';
 import {
   ConditionalRenderingChangedEvent,
-  DashboardEditActionEvent,
-  DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,

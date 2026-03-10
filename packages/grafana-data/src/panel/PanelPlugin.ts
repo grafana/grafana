@@ -118,6 +118,7 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
+  private _quickEditPaths?: string[];
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -274,6 +275,68 @@ export class PanelPlugin<
    */
   getPanelOptionsSupplier(): PanelOptionsSupplier<TOptions> {
     return this.optionsSupplier ?? (() => {});
+  }
+
+  /**
+   * Define which panel options should appear in the dashboard edit pane
+   * for quick editing without entering the full panel editor.
+   *
+   * This allows users to quickly adjust common settings directly from the
+   * dashboard edit view, reducing the number of clicks needed for frequent
+   * configuration changes.
+   *
+   * @param paths - Array of option paths (max 5) that should be shown in quick edit.
+   *                Paths should match those defined in setPanelOptions.
+   *                Supports nested paths using dot notation for options with categories
+   *                (e.g., 'legend.displayMode' for options defined with `category: ['Legend']`).
+   *
+   * @remarks
+   * **Limitations:**
+   * - Options defined via `addNestedOptions()` are not currently supported.
+   *   Only top-level options added directly to the builder are discoverable.
+   * - Field configuration options (defined via `useFieldConfig`) are not supported.
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *   .setPanelOptions((builder) => {
+   *     builder
+   *       .addSelect({ path: 'displayMode', name: 'Display mode', ... })
+   *       .addRadio({ path: 'orientation', name: 'Orientation', ... })
+   *       .addBooleanSwitch({ path: 'showLegend', name: 'Show legend', ... });
+   *   })
+   *   .setQuickEditPaths(['displayMode', 'orientation']);
+   * ```
+   *
+   * @alpha
+   */
+  setQuickEditPaths(paths: Array<keyof TOptions & string> | string[]) {
+    const MAX_QUICK_EDIT_PATHS = 5;
+
+    // Deduplicate while preserving order
+    const uniquePaths = [...new Set(paths)];
+
+    if (uniquePaths.length > MAX_QUICK_EDIT_PATHS) {
+      console.warn(
+        `PanelPlugin [${this.meta?.id ?? 'unknown'}]: setQuickEditPaths received ${uniquePaths.length} unique paths, ` +
+          `but only ${MAX_QUICK_EDIT_PATHS} are allowed. Extra paths will be ignored.`
+      );
+      this._quickEditPaths = uniquePaths.slice(0, MAX_QUICK_EDIT_PATHS);
+    } else {
+      this._quickEditPaths = uniquePaths;
+    }
+
+    return this;
+  }
+
+  /**
+   * Get the quick edit paths defined for this plugin.
+   *
+   * @returns Array of option paths for quick edit, or undefined if not set.
+   * @alpha
+   */
+  getQuickEditPaths(): string[] | undefined {
+    return this._quickEditPaths ? [...this._quickEditPaths] : undefined;
   }
 
   /**
