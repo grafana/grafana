@@ -67,12 +67,15 @@ export function getFrameFieldsDisplayNames(
       const disp = getFieldDisplayName(field, frame, parentData);
       names.display.add(disp);
       names.fields.set(disp, field);
+      if (scope) {
+        names.scopes.set(disp, scope);
+      }
       if (field.name && disp !== field.name) {
         names.raw.add(field.name);
         names.fields.set(field.name, field);
-      }
-      if (scope) {
-        names.scopes.set(disp, scope);
+        if (scope) {
+          names.scopes.set(field.name, scope);
+        }
       }
     }
   }

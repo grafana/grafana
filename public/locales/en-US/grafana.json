@@ -9816,11 +9816,11 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Override scope"
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
-      "reducer-value-label": "Reducer value",
       "select-field-placeholder": "Select field reducer"
     },
     "file-dropzone": {
