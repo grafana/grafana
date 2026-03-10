@@ -19,15 +19,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
-import {
-  QueryVariableStaticOptions,
-  StaticOptionsOrderType,
-  StaticOptionsType,
-} from 'app/features/variables/query/QueryVariableStaticOptions';
+import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { Editor } from './QueryVariableEditor';
+import { VariableOptionsSpreadsheet } from './VariableOptionsSpreadsheet';
 
 type ModalEditorProps = {
   variable: QueryVariable;
@@ -92,11 +89,11 @@ export function ModalEditor(props: ModalEditorProps) {
       <div className={styles.wrapper}>
         <div className={styles.buttonsRow}>
           <Stack direction="row" gap={1} justifyContent="space-between">
-            <h5>
+            <div className={styles.previewTitle}>
               <Trans i18nKey="dashboard-scene.modal-editor.preview-of-values" values={{ optionsCount: options.length }}>
                 Preview of values ({'{{ optionsCount }}'})
               </Trans>
-            </h5>
+            </div>
             <Button
               variant="secondary"
               onClick={previewValues}
@@ -117,8 +114,7 @@ export function ModalEditor(props: ModalEditorProps) {
                 {!options.length ? (
                   <div className={styles.noOptions}>
                     <Trans i18nKey="dashboard-scene.modal-editor.no-options-hint">
-                      Provide a valid query and click the &quot;Run query&quot; button to see a preview of the variable
-                      options.
+                      Provide a valid query and click the &quot;Run query&quot; button to see the preview.
                     </Trans>
                   </div>
                 ) : (
@@ -153,13 +149,12 @@ export function ModalEditor(props: ModalEditorProps) {
                     </>
                   )}
                   {activeTab === 'staticOptions' && (
-                    <QueryVariableStaticOptions
+                    <VariableOptionsSpreadsheet
                       options={options}
                       staticOptions={staticOptions}
                       staticOptionsOrder={staticOptionsOrder}
                       onStaticOptionsChange={onStaticOptionsChange}
                       onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-                      hideTitle
                     />
                   )}
                 </div>
@@ -282,11 +277,13 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
     }),
     buttonsRow: css({
-      marginBottom: theme.spacing(1),
       flexShrink: 0,
     }),
     variableName: css({
       fontSize: theme.typography.h4.fontSize,
+    }),
+    previewTitle: css({
+      fontSize: '16px',
     }),
   };
 }

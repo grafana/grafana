@@ -1778,9 +1778,6 @@
   "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {

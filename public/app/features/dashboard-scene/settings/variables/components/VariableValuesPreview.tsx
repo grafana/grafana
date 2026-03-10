@@ -120,7 +120,6 @@ function VariableValuesWithPropsPreview({
       columns: properties.map((id) => ({
         id,
         header: unsanitizeKey(id), // see https://github.com/TanStack/table/issues/1671
-        sortType: 'alphanumeric' as const,
       })),
     };
   }, [options, properties]);

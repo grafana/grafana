@@ -6899,7 +6899,7 @@
       "apply": "Apply",
       "discard": "Discard",
       "label-static-options": "Static options ({{staticOptionsCount}})",
-      "no-options-hint": "Provide a valid query and click the \"Run query\" button to see a preview of the variable options.",
+      "no-options-hint": "Provide a valid query and click the \"Run query\" button to see the preview.",
       "preview-of-values": "Preview of values ({{ optionsCount }})",
       "run-query": "Run query"
     },
