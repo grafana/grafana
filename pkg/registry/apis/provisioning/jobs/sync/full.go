@@ -82,6 +82,8 @@ func FullSync(
 				WithWarning(&resources.MissingFolderMetadata{Path: p})
 			if action, ok := changeActions[p]; ok {
 				builder = builder.WithAction(action)
+			} else {
+				builder = builder.WithAction(repository.FileActionIgnored)
 			}
 			progress.Record(ctx, builder.Build())
 		}
