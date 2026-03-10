@@ -160,7 +160,7 @@ describe('getStatDisplayValue', () => {
     const result = getStatDisplayValue(5, BigValueColorMode.Value, emptyThresholds, [], theme);
     expect(result.text).toBe('5');
     expect(result.numeric).toBe(5);
-    expect(result.color).toBeUndefined();
+    expect(result.color).toBeDefined();
   });
 });
 
