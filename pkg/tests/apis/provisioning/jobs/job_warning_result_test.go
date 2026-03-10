@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/invalid.json": "dashboard1.json",
+			"../testdata/invalid.json": "dashboard1.json",
 		},
 		SkipSync:               true, // Skip initial sync so we can add the malformed file first
 		SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
@@ -81,7 +81,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/dashboard-missing-name.json": "dashboard-no-name.json",
+			"../testdata/dashboard-missing-name.json": "dashboard-no-name.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
@@ -129,7 +129,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
+			"../testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
@@ -178,8 +178,8 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
-			"testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
+			"../testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
+			"../testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
