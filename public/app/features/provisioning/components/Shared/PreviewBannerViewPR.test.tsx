@@ -33,7 +33,6 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
-    action: options.action,
   };
 
   mockUsePullRequestParam.mockReturnValue({

@@ -15,7 +15,6 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
-  action?: ResourceAction;
 }
 
 export type PreviewBranchInfo = {
@@ -46,14 +45,13 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action }: Props) {
-  const { repoType, action: urlAction } = usePullRequestParam();
-  const resolvedAction = action ?? urlAction;
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
+  const { repoType, action } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
 
-  const titleText = getTitleText(isNewPr, resolvedAction, capitalizedRepoType);
+  const titleText = getTitleText(isNewPr, action, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -108,7 +106,7 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       }
       onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
-      {resolvedAction === 'delete' ? (
+      {action === 'delete' ? (
         <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-deleted">
           The rest of Grafana users in your organization will still see this resource until this branch is merged
         </Trans>
