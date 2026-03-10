@@ -7014,6 +7014,9 @@
         }
       }
     },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": "Filter is not applicable"
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Back"

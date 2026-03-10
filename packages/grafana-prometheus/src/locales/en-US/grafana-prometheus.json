@@ -197,6 +197,16 @@
         "tooltip-use-series-endpoint": "Checking this option will favor the series endpoint with {{exampleParameter}} parameter over the label values endpoint with {{exampleParameter}} parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method."
       }
     },
+    "datasource": {
+      "drilldowns-applicability": {
+        "filter-label-not-found": "Label \"{{label}}\" not found in the queried metrics",
+        "filter-no-valid-values": "None of the selected values exist for label \"{{label}}\"",
+        "filter-overridden": "Overridden by another filter with the same key",
+        "filter-value-not-found": "Value \"{{value}}\" not found for label \"{{label}}\"",
+        "group-by-label-not-found": "Label \"{{label}}\" not found in the queried metrics",
+        "group-by-overridden": "Overridden by another group-by with the same key"
+      }
+    },
     "metrics-browser": {
       "disabled-label": "(Disabled)",
       "enabled-label": "Metrics browser"
