@@ -295,14 +295,26 @@ func (c *localCache[T]) Add(item T) {
 	// Non-blocking send to prevent deadlock in broadcaster.stream().
 	// If cache is busy processing ReadInto operations, this allows Add to
 	// drop the event rather than block the broadcaster's main loop.
-	// This is acceptable because slow consumers already drop events.
 	select {
 	case c.add <- item:
 		// Successfully queued
 	default:
-		// Cache channel full or run loop busy - drop event
-		// This prevents deadlock at the cost of potentially losing this event,
-		// which is consistent with the slow consumer behavior elsewhere
+		// Cache channel full or run loop busy - drop event to prevent deadlock.
+		//
+		// CONSEQUENCES OF DROPPING:
+		// - This event won't be stored in the cache's circular buffer
+		// - New subscribers connecting after this drop won't receive this event
+		//   in their initial backfill (via ReadInto)
+		// - Existing subscribers are NOT affected - they already received it
+		//   from broadcaster.stream() before this Add() call
+		//
+		// WHEN THIS HAPPENS:
+		// - Buffer (200 events for default cache) is full AND
+		// - cache.run is stuck in the read case processing a ReadInto AND
+		// - More events keep arriving faster than cache.run can process
+		//
+		// This is consistent with slow consumer behavior elsewhere in the system.
+		// TODO: Add metrics/logging to track drop rate (would require logger param)
 	}
 }
 
