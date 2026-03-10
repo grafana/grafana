@@ -4,7 +4,6 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -15,75 +14,60 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import {
-  EditableVariableType,
-  FILTER_VARIABLE_TYPES,
-  getNextAvailableId,
-  getVariableScene,
-  getVariableTypeSelectOptions,
-} from './utils';
+import { EditableVariableType, getFilterTypeSelectOptions, getNextAvailableId, getVariableScene } from './utils';
 
-export function openAddVariablePane(dashboard: DashboardScene) {
-  const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
+export function openAddFilterPane(dashboard: DashboardScene) {
+  const element = new FilterAdd({ dashboardRef: dashboard.getRef() });
   dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
 }
 
-export interface VariableAddState extends SceneObjectState {
+export interface FilterAddState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
-export class VariableAdd extends SceneObjectBase<VariableAddState> {}
+export class FilterAdd extends SceneObjectBase<FilterAddState> {}
 
-function useEditPaneOptions(
-  this: VariableAddEditableElement,
-  variableAdd: VariableAdd
-): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(this: FilterAddEditableElement, filterAdd: FilterAdd): OptionsPaneCategoryDescriptor[] {
   const id = useId();
   const options = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'filters' }).addItem(
       new OptionsPaneItemDescriptor({
         title: '',
         id,
         skipField: true,
-        render: () => <VariableTypeSelection variableAdd={variableAdd} />,
+        render: () => <FilterTypeSelection filterAdd={filterAdd} />,
       })
     );
-  }, [variableAdd, id]);
+  }, [filterAdd, id]);
 
   return [options];
 }
 
-export class VariableAddEditableElement implements EditableDashboardElement {
+export class FilterAddEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
-  public readonly typeName = 'Variable';
+  public readonly typeName = 'Filter';
 
-  public constructor(private variableAdd: VariableAdd) {}
+  public constructor(private filterAdd: FilterAdd) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
-      icon: 'x',
-      instanceName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
+      typeName: t('dashboard.edit-pane.elements.filters', 'Filters'),
+      icon: 'filter',
+      instanceName: t('dashboard.edit-pane.elements.filters', 'Filters'),
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.variableAdd);
+  public useEditPaneOptions = useEditPaneOptions.bind(this, this.filterAdd);
 }
 
 /** @internal Exported for testing */
-export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
-  const options = useMemo(() => {
-    const allOptions = getVariableTypeSelectOptions();
-    if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return allOptions.filter((option) => !FILTER_VARIABLE_TYPES.includes(option.value!));
-    }
-    return allOptions;
-  }, []);
+export function FilterTypeSelection({ filterAdd }: { filterAdd: FilterAdd }) {
+  const options = useMemo(() => getFilterTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
-  const onAddVariable = useCallback(
+  const onAddFilter = useCallback(
     (type: EditableVariableType) => {
-      const dashboard = variableAdd.state.dashboardRef.resolve();
+      const dashboard = filterAdd.state.dashboardRef.resolve();
       const variablesSet = sceneGraph.getVariables(dashboard);
 
       if (!(variablesSet instanceof SceneVariableSet)) {
@@ -92,24 +76,25 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
 
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
       DashboardInteractions.newVariableTypeSelected({ type });
     },
-    [variableAdd]
+    [filterAdd]
   );
 
   return (
     <Stack direction="column" gap={0}>
       <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
+        <Trans i18nKey="dashboard.edit-pane.filters.select-type">Choose filter type</Trans>
       </Box>
       <Stack direction="column" gap={1}>
         {options.map((option) => (
           <Card
             noMargin
             isCompact
-            onClick={() => onAddVariable(option.value!)}
+            onClick={() => onAddFilter(option.value!)}
             key={option.value}
-            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+            title={t('dashboard.edit-pane.filters.select-type-card-tooltip', 'Click to select type')}
             data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
           >
             <Card.Heading>{option.label}</Card.Heading>

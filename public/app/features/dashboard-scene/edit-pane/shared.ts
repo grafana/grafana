@@ -20,6 +20,7 @@ import { EditableDashboardElement, isEditableDashboardElement } from '../scene/t
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
+import { FilterAdd, FilterAddEditableElement } from '../settings/variables/FilterAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
@@ -68,6 +69,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof VariableAdd) {
     return new VariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof FilterAdd) {
+    return new FilterAddEditableElement(sceneObj);
   }
 
   if (sceneObj instanceof LinkEdit) {
