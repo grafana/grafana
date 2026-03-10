@@ -464,8 +464,11 @@ type server struct {
 
 	// Graceful shutdown: tracks in-flight write operations so Stop can wait
 	// for them to complete before tearing down the backend.
+	// stopMu serialises the transition to "stopping" with new Add(1) calls
+	// so that Add never races with Wait on a zero counter.
+	stopMu   sync.Mutex
 	inflight sync.WaitGroup
-	stopping atomic.Bool
+	stopping bool
 
 	// init checking
 	once    sync.Once
@@ -508,13 +511,30 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
+// trackWrite atomically checks the stopping flag and increments the in-flight
+// counter. It returns true if the write was accepted (caller must defer
+// s.inflight.Done()), or false if the server is shutting down.
+func (s *server) trackWrite() bool {
+	s.stopMu.Lock()
+	defer s.stopMu.Unlock()
+	if s.stopping {
+		return false
+	}
+	s.inflight.Add(1)
+	return true
+}
+
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
 	// Signal that no new write operations should be accepted.
-	s.stopping.Store(true)
+	// The lock ensures no goroutine is between its stopping check and Add(1).
+	s.stopMu.Lock()
+	s.stopping = true
+	s.stopMu.Unlock()
 
 	// Wait for in-flight write operations to finish, respecting the context deadline.
+	// After the unlock above, no new Add(1) can happen, so Wait is safe.
 	done := make(chan struct{})
 	go func() {
 		s.inflight.Wait()
@@ -747,11 +767,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
-	s.inflight.Add(1)
-	defer s.inflight.Done()
-	if s.stopping.Load() {
+	if !s.trackWrite() {
 		return nil, errStopping
 	}
+	defer s.inflight.Done()
 
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
@@ -865,11 +884,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
 
-	s.inflight.Add(1)
-	defer s.inflight.Done()
-	if s.stopping.Load() {
+	if !s.trackWrite() {
 		return nil, errStopping
 	}
+	defer s.inflight.Done()
 
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -945,11 +963,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
 
-	s.inflight.Add(1)
-	defer s.inflight.Done()
-	if s.stopping.Load() {
+	if !s.trackWrite() {
 		return nil, errStopping
 	}
+	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
 	if req.ResourceVersion < 0 {

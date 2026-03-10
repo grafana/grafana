@@ -106,11 +106,10 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()
 
-	s.inflight.Add(1)
-	defer s.inflight.Done()
-	if s.stopping.Load() {
+	if !s.trackWrite() {
 		return errStopping
 	}
+	defer s.inflight.Done()
 
 	sendAndClose := func(rsp *resourcepb.BulkResponse) error {
 		span.AddEvent("sendAndClose", trace.WithAttributes(attribute.String("msg", rsp.String())))
