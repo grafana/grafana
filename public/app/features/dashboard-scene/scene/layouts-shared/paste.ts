@@ -110,8 +110,8 @@ export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridIte
   });
 }
 
-// Always uses gridCell for positioning so pasting behaves like adding a new panel via findSpaceForNewPanel,
-// rather than reusing the clipboard's original coordinates which could overlap existing panels.
+// Uses gridCell for placement to avoid overlaps with existing panels.
+// If the deserialized item is a DashboardGridItem (GridLayoutItem in clipboard), preserve its width/height.
 export function getDashboardGridItemFromClipboard(scene: DashboardScene, gridCell: GridCell | null): DashboardGridItem {
   const deserializedGridItem = getGridItemFromClipboard(scene);
 
