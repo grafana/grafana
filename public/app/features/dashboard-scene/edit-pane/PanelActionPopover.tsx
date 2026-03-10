@@ -6,7 +6,8 @@ import { createPortal } from 'react-dom';
 import { createAssistantContextItem } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { Icon, RadioButtonGroup, UnitPicker, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -16,6 +17,12 @@ import { findPanelDomElement } from './PanelProcessingOverlay';
 type PopoverMode = 'ai' | 'edit';
 
 const AI_SUGGESTIONS = ['Analyse the spike', 'Summarise trends', 'Explain high values', 'Change series colors'];
+
+const LEGEND_MODE_OPTIONS = [
+  { label: 'List', value: LegendDisplayMode.List },
+  { label: 'Table', value: LegendDisplayMode.Table },
+  { label: 'Hidden', value: LegendDisplayMode.Hidden },
+];
 
 // ---- Hover hint: small AI icon shown when hovering a panel ----
 
@@ -126,6 +133,8 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
   const [mode, setMode] = useState<PopoverMode>('ai');
   const [aiInput, setAiInput] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
+  const [editingUnit, setEditingUnit] = useState(false);
+  const [editingLegend, setEditingLegend] = useState(false);
   const [titleValue, setTitleValue] = useState(panel.state.title ?? '');
   const titleInputRef = useRef<HTMLInputElement>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
@@ -201,6 +210,37 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
     panel.setState({ title: titleValue });
     setEditingTitle(false);
   }, [panel, titleValue, ensureEditMode]);
+
+  const handleUnitChange = useCallback(
+    (unit?: string) => {
+      ensureEditMode();
+      const fieldConfig = panel.state.fieldConfig ?? { defaults: {}, overrides: [] };
+      panel.onFieldConfigChange({
+        ...fieldConfig,
+        defaults: { ...fieldConfig.defaults, unit: unit || undefined },
+      }, true);
+      setEditingUnit(false);
+    },
+    [panel, ensureEditMode]
+  );
+
+  const hasLegend = hasLegendOptions(panel.state.options);
+  const currentLegendMode = hasLegend
+    ? (panel.state.options as OptionsWithLegend).legend.displayMode
+    : undefined;
+
+  const handleLegendModeChange = useCallback(
+    (value: LegendDisplayMode) => {
+      ensureEditMode();
+      panel.onOptionsChange({
+        legend: {
+          displayMode: value,
+          showLegend: value !== LegendDisplayMode.Hidden,
+        },
+      });
+    },
+    [panel, ensureEditMode]
+  );
 
   const buildPanelContext = useCallback(() => {
     const panelKey = panel.state.key;
@@ -285,7 +325,7 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
       <div
         className={cx(
           styles.widthTransitionWrapper,
-          (mode === 'ai' || editingTitle) && styles.widthTransitionWrapperWithInput
+          (mode === 'ai' || editingTitle || editingUnit || editingLegend) && styles.widthTransitionWrapperWithInput
         )}
         style={{
           width: animatedWidth != null ? animatedWidth : 'auto',
@@ -295,7 +335,7 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
       >
       <div
         ref={contentRef}
-        className={cx(styles.card, (mode === 'ai' || editingTitle) && styles.cardWithInput)}
+        className={cx(styles.card, (mode === 'ai' || editingTitle || editingUnit || editingLegend) && styles.cardWithInput)}
       >
         <div className={styles.toolbar}>
           <div className={styles.modeToggle}>
@@ -338,22 +378,47 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
           {/* Edit mode: action buttons */}
           {mode === 'edit' && (
             <div className={styles.actions}>
-              <button className={styles.actionBtn} aria-label="Panel options" title="Panel options">
-                <Icon name="clipboard-alt" size="lg" />
-              </button>
               <button
-                className={styles.actionBtn}
+                className={cx(styles.actionBtn, editingTitle && styles.actionBtnActive)}
                 aria-label="Edit title"
                 title="Edit title"
                 onClick={() => {
                   setTitleValue(panel.state.title ?? '');
                   setEditingTitle(true);
+                  setEditingUnit(false);
+                  setEditingLegend(false);
                 }}
               >
                 <span className={styles.actionLetter}>T</span>
               </button>
-              <button className={styles.actionBtn} aria-label="Move panel" title="Move panel">
-                <Icon name="corner-down-right-alt" size="lg" />
+              {hasLegend && (
+                <button
+                  className={cx(styles.actionBtn, editingLegend && styles.actionBtnActive)}
+                  aria-label="Legend mode"
+                  title={`Legend: ${currentLegendMode ?? 'list'}`}
+                  onClick={() => {
+                    setEditingLegend(!editingLegend);
+                    setEditingTitle(false);
+                    setEditingUnit(false);
+                  }}
+                >
+                  <Icon
+                    name={currentLegendMode === LegendDisplayMode.Hidden ? 'legend-hide' : 'legend-show'}
+                    size="lg"
+                  />
+                </button>
+              )}
+              <button
+                className={cx(styles.actionBtn, editingUnit && styles.actionBtnActive)}
+                aria-label="Change unit"
+                title="Change unit"
+                onClick={() => {
+                  setEditingUnit(!editingUnit);
+                  setEditingTitle(false);
+                  setEditingLegend(false);
+                }}
+              >
+                <Icon name="calculator-alt" size="lg" />
               </button>
               <button className={styles.actionBtn} aria-label="Change colors" title="Change colors">
                 <Icon name="palette" size="lg" />
@@ -400,6 +465,35 @@ export function PanelActionPopover({ panel, editPane, dashboard }: Props) {
                 }
               }}
               onBlur={handleTitleSubmit}
+            />
+          </div>
+        )}
+
+        {/* Unit picker row */}
+        {editingUnit && mode === 'edit' && (
+          <div className={styles.inputRow}>
+            <Icon name="calculator-alt" size="md" className={styles.inputIcon} />
+            <UnitPicker
+              value={panel.state.fieldConfig?.defaults?.unit}
+              onChange={handleUnitChange}
+              width={24}
+            />
+          </div>
+        )}
+
+        {/* Legend mode picker row */}
+        {editingLegend && mode === 'edit' && hasLegend && (
+          <div className={styles.inputRow}>
+            <Icon
+              name={currentLegendMode === LegendDisplayMode.Hidden ? 'legend-hide' : 'legend-show'}
+              size="md"
+              className={styles.inputIcon}
+            />
+            <RadioButtonGroup
+              size="sm"
+              value={currentLegendMode ?? LegendDisplayMode.List}
+              options={LEGEND_MODE_OPTIONS}
+              onChange={handleLegendModeChange}
             />
           </div>
         )}
@@ -636,6 +730,11 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.action.hover,
       },
     }),
+    actionBtnActive: css({
+      color: theme.colors.text.maxContrast,
+      background: theme.colors.action.selected,
+      boxShadow: theme.shadows.z1,
+    }),
     actionLetter: css({
       fontSize: 20,
       fontWeight: theme.typography.fontWeightMedium,
@@ -688,4 +787,8 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
   };
+}
+
+function hasLegendOptions(options: unknown): options is OptionsWithLegend {
+  return options != null && typeof options === 'object' && 'legend' in options;
 }

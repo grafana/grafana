@@ -214,31 +214,35 @@ export function DashboardBuilderPrompt({
         </div>
       </form>
 
-      <div className={styles.suggestions}>
-        <button className={styles.actionPill} onClick={onAddPanel}>
-          <Icon name="graph-bar" size="md" />
-          <Trans i18nKey="dashboard.ai-builder.add-panel-title">Add a panel</Trans>
-        </button>
-        {onPreviewTemplates && (
-          <button className={styles.actionPill} onClick={onPreviewTemplates}>
-            <Icon name="apps" size="md" />
-            <Trans i18nKey="dashboard.ai-builder.preview-templates-title">Preview templates</Trans>
+      <div className={styles.suggestionsWrapper}>
+        <div className={styles.suggestions}>
+          <button className={styles.actionPill} onClick={onAddPanel}>
+            <Icon name="graph-bar" size="md" />
+            <Trans i18nKey="dashboard.ai-builder.add-panel-title">Add a panel</Trans>
           </button>
-        )}
-        {onImportDashboard && (
-          <button className={styles.actionPill} onClick={onImportDashboard}>
-            <Icon name="upload" size="md" />
-            <Trans i18nKey="dashboard.ai-builder.import-dashboard-title">Import a dashboard</Trans>
-          </button>
-        )}
-        <span className={styles.suggestionsLabel}>
-          <Trans i18nKey="dashboard.ai-builder.suggestions-label">Try:</Trans>
-        </span>
-        {EXAMPLE_PROMPTS.slice(0, 3).map((suggestion) => (
-          <button key={suggestion} className={styles.suggestionChip} onClick={() => handleSuggestionClick(suggestion)}>
-            {suggestion}
-          </button>
-        ))}
+          {onPreviewTemplates && (
+            <button className={styles.actionPill} onClick={onPreviewTemplates}>
+              <Icon name="apps" size="md" />
+              <Trans i18nKey="dashboard.ai-builder.preview-templates-title">Preview templates</Trans>
+            </button>
+          )}
+          {onImportDashboard && (
+            <button className={styles.actionPill} onClick={onImportDashboard}>
+              <Icon name="upload" size="md" />
+              <Trans i18nKey="dashboard.ai-builder.import-dashboard-title">Import a dashboard</Trans>
+            </button>
+          )}
+        </div>
+        <div className={styles.suggestions}>
+          <span className={styles.suggestionsLabel}>
+            <Trans i18nKey="dashboard.ai-builder.suggestions-label">Try:</Trans>
+          </span>
+          {EXAMPLE_PROMPTS.slice(0, 3).map((suggestion) => (
+            <button key={suggestion} className={styles.suggestionChip} onClick={() => handleSuggestionClick(suggestion)}>
+              {suggestion}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -389,6 +393,14 @@ function getStyles(theme: GrafanaTheme2) {
 
     submitButtonActive: css({
       opacity: 1,
+    }),
+
+    suggestionsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(3),
+      alignItems: 'center',
+      width: '100%',
     }),
 
     suggestions: css({
