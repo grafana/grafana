@@ -174,8 +174,5 @@ func (c *Grafana) writeGroupsHashCookie(ctx context.Context, groupsHash string) 
 	}
 
 	maxAge := c.cfg.AuthProxy.SyncTTL * 60
-	if maxAge <= 0 {
-		maxAge = -1
-	}
 	cookies.WriteCookie(reqCtx.Resp, proxyGroupsCookie, groupsHash, maxAge, cookies.NewCookieOptions)
 }

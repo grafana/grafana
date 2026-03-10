@@ -318,20 +318,4 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 
 		assert.Empty(t, rec.Result().Cookies())
 	})
-
-	t.Run("cookie MaxAge is negative when SyncTTL is 0", func(t *testing.T) {
-		cfg := newCfg()
-		cfg.AuthProxy.SyncTTL = 0
-		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
-
-		reqCtx, rec := newTestReqContext(t)
-		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
-		req := &authn.Request{HTTPRequest: &http.Request{}}
-		_, err := c.AuthenticateProxy(ctx, req, "user", additional)
-		require.NoError(t, err)
-
-		cookies := rec.Result().Cookies()
-		require.Len(t, cookies, 1)
-		assert.Less(t, cookies[0].MaxAge, 0)
-	})
 }
