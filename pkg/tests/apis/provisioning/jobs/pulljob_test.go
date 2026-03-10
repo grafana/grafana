@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Path:   path.Join(helper.ProvisioningPath, "repo1"),
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
 		})
@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Path:   path.Join(helper.ProvisioningPath, "repo2"),
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/timeline-demo.json": "dashboard2.json",
+				"../testdata/timeline-demo.json": "dashboard2.json",
 			},
 			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
 		})
@@ -92,7 +92,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 
 		// Copy the same file (same UID) to repo2's directory to create ownership conflict
 		conflictingFilePath := "repo2/conflicting-dashboard.json"
-		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", conflictingFilePath)
+		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", conflictingFilePath)
 		common.PrintFileTree(t, helper.ProvisioningPath)
 
 		// Step 2: Try to pull repo2 - should fail due to ownership conflict
