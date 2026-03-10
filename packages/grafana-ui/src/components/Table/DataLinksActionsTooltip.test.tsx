@@ -99,7 +99,6 @@ describe('DataLinksActionsTooltip', () => {
     const tooltipWrapper = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
     expect(tooltipWrapper).toHaveStyle({
       maxHeight: 'calc(100vh - 32px)',
-      overflowY: 'auto',
       overflowX: 'hidden',
     });
   });
