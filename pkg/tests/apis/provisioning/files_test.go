@@ -1299,7 +1299,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var helper *common.K8sTestHelper
+			var helper *common.ProvisioningTestHelper
 			if tt.folderMetadataEnabled {
 				helper = common.RunGrafana(t, withProvisioningFolderMetadata)
 			} else {
