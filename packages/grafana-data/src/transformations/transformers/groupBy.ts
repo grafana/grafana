@@ -185,10 +185,9 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
 
       if (!valuesByField[fieldName]) {
         valuesByField[fieldName] = {
-          name: field.name,
+          name: fieldName,
           type: field.type,
-          config: { ...field.config, displayName: fieldName },
-          state: { ...field.state, displayName: fieldName },
+          config: { ...field.config },
           values: [],
         };
       }

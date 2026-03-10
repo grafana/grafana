@@ -55,30 +55,8 @@ describe('GroupToSubframe transformer', () => {
                 meta: { custom: { noHeader: false } },
                 length: 1,
                 fields: [
-                  {
-                    name: 'time',
-                    type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
-                    values: [3000],
-                  },
-                  {
-                    name: 'values',
-                    type: 'string',
-                    config: {
-                      displayName: 'values',
-                    },
-                    state: {
-                      displayName: 'values',
-                      multipleFrames: false,
-                    },
-                    values: [1],
-                  },
+                  { name: 'time', type: 'time', config: {}, values: [3000] },
+                  { name: 'values', type: 'string', config: {}, values: [1] },
                 ],
               },
             ],
@@ -90,25 +68,13 @@ describe('GroupToSubframe transformer', () => {
                   {
                     name: 'time',
                     type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [4000, 5000],
                   },
                   {
                     name: 'values',
                     type: 'string',
-                    config: {
-                      displayName: 'values',
-                    },
-                    state: {
-                      displayName: 'values',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [2, 2],
                   },
                 ],
@@ -122,25 +88,13 @@ describe('GroupToSubframe transformer', () => {
                   {
                     name: 'time',
                     type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [6000, 7000, 8000],
                   },
                   {
                     name: 'values',
                     type: 'string',
-                    config: {
-                      displayName: 'values',
-                    },
-                    state: {
-                      displayName: 'values',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [3, 3, 3],
                   },
                 ],
@@ -193,9 +147,9 @@ describe('GroupToSubframe transformer', () => {
         },
         {
           name: 'values (sum)',
+          values: [1, 4, 9],
           type: FieldType.number,
           config: {},
-          values: [1, 4, 9],
         },
         {
           config: {},
@@ -210,37 +164,19 @@ describe('GroupToSubframe transformer', () => {
                   {
                     name: 'time',
                     type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [3000],
                   },
                   {
                     name: 'intVal',
                     type: 'number',
-                    config: {
-                      displayName: 'intVal',
-                    },
-                    state: {
-                      displayName: 'intVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [1],
                   },
                   {
                     name: 'floatVal',
                     type: 'number',
-                    config: {
-                      displayName: 'floatVal',
-                    },
-                    state: {
-                      displayName: 'floatVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [1.1],
                   },
                 ],
@@ -254,37 +190,19 @@ describe('GroupToSubframe transformer', () => {
                   {
                     name: 'time',
                     type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [4000, 5000],
                   },
                   {
                     name: 'intVal',
                     type: 'number',
-                    config: {
-                      displayName: 'intVal',
-                    },
-                    state: {
-                      displayName: 'intVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [2, 3],
                   },
                   {
                     name: 'floatVal',
                     type: 'number',
-                    config: {
-                      displayName: 'floatVal',
-                    },
-                    state: {
-                      displayName: 'floatVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [2.3, 3.6],
                   },
                 ],
@@ -298,37 +216,19 @@ describe('GroupToSubframe transformer', () => {
                   {
                     name: 'time',
                     type: 'time',
-                    config: {
-                      displayName: 'time',
-                    },
-                    state: {
-                      displayName: 'time',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [6000, 7000, 8000],
                   },
                   {
                     name: 'intVal',
                     type: 'number',
-                    config: {
-                      displayName: 'intVal',
-                    },
-                    state: {
-                      displayName: 'intVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [4, 5, 6],
                   },
                   {
                     name: 'floatVal',
                     type: 'number',
-                    config: {
-                      displayName: 'floatVal',
-                    },
-                    state: {
-                      displayName: 'floatVal',
-                      multipleFrames: false,
-                    },
+                    config: {},
                     values: [4.8, 5.7, 6.9],
                   },
                 ],
