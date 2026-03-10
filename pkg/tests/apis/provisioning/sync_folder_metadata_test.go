@@ -49,12 +49,12 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 
 	found := false
 	for _, w := range jobObj.Status.Warnings {
-		if strings.Contains(w, "_folder.json") {
+		if strings.Contains(w, "missing folder metadata") {
 			found = true
 			break
 		}
 	}
-	require.True(t, found, "a warning should mention _folder.json; warnings: %v", jobObj.Status.Warnings)
+	require.True(t, found, "a warning should mention missing folder metadata; warnings: %v", jobObj.Status.Warnings)
 
 	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
 }
@@ -91,8 +91,8 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 		"job should succeed when flag is disabled (no _folder.json check)")
 
 	for _, w := range jobObj.Status.Warnings {
-		require.NotContains(t, w, "_folder.json",
-			"no warning about _folder.json should appear when flag is disabled")
+		require.NotContains(t, w, "missing folder metadata",
+			"no warning about missing folder metadata should appear when flag is disabled")
 	}
 
 	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)

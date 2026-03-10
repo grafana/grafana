@@ -24,7 +24,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -35,7 +35,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -50,7 +50,7 @@ func TestChanges(t *testing.T) {
 				{Path: "", Resource: "dashboard", Group: "dashboard.grafana.app"},
 			},
 		}
-		_, _, err := Changes(context.Background(), source, target, false)
+		_, err := Changes(context.Background(), source, target)
 		require.EqualError(t, err, "empty path on a non folder")
 	})
 
@@ -62,7 +62,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -74,7 +74,7 @@ func TestChanges(t *testing.T) {
 		}
 
 		target := &provisioning.ResourceList{}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 2)
 
@@ -100,7 +100,7 @@ func TestChanges(t *testing.T) {
 				{Path: "other/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -117,7 +117,7 @@ func TestChanges(t *testing.T) {
 				{Path: "alsocommon/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -140,7 +140,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -171,7 +171,7 @@ func TestChanges(t *testing.T) {
 				{Path: "short/file.yml"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 
 		order := make([]string, len(changes))
@@ -203,7 +203,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -228,7 +228,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains hidden files")
 	})
@@ -242,7 +242,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains invalid hidden paths")
 	})
@@ -256,7 +256,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains hidden folders")
 	})
@@ -270,7 +270,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes, "hidden file should not be unhidden")
 	})
@@ -285,7 +285,7 @@ func TestChanges(t *testing.T) {
 				Path:   "one/two/",
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes)
 	})
@@ -300,7 +300,7 @@ func TestChanges(t *testing.T) {
 				Path:   "one/two/",
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes)
 	})
@@ -310,7 +310,7 @@ func TestChanges(t *testing.T) {
 		}
 
 		target := &provisioning.ResourceList{}
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -334,7 +334,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes, "Expected diff to correctly include nested folder contents")
 	})
@@ -349,7 +349,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty path on a non folder")
 		require.Nil(t, changes)
@@ -372,7 +372,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 2)
 		require.Equal(t, "root/folder1/subfolder/", changes[0].Path)
@@ -395,7 +395,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Empty(t, changes, "Should handle folder paths with and without trailing slash")
 	})
@@ -410,7 +410,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 3)
 
@@ -432,7 +432,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		require.Len(t, changes, 3) // Only non-blob entries should create changes
 
@@ -460,7 +460,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		// Only the folder and the dashboard — _folder.json must not appear
 		require.Len(t, changes, 2)
@@ -485,7 +485,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, _, err := Changes(context.Background(), source, target, false)
+		changes, err := Changes(context.Background(), source, target)
 		require.NoError(t, err)
 		// 2 folders and 1 file, so 3 changes in total
 		require.Len(t, changes, 3)
@@ -513,6 +513,7 @@ func TestCompare(t *testing.T) {
 		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
 		expectedError   string
 		expectedChanges []ResourceFileChange
+		expectedMissing []string
 		description     string
 	}{
 		{
@@ -577,96 +578,18 @@ func TestCompare(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources)
 
-			changes, _, err := Compare(context.Background(), repo, repoResources, "current-ref", false)
+			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref")
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 				require.Nil(t, changes)
+				require.Nil(t, missing)
 			} else {
 				require.NoError(t, err, tt.description)
 				require.Equal(t, tt.expectedChanges, changes, tt.description)
+				require.Equal(t, tt.expectedMissing, missing, tt.description)
 			}
 		})
 	}
 }
 
-func TestChanges_MissingFolderMetadata(t *testing.T) {
-	tests := []struct {
-		name        string
-		source      []repository.FileTreeEntry
-		flagEnabled bool
-		expected    []string
-	}{
-		{
-			name:        "empty tree",
-			source:      nil,
-			flagEnabled: true,
-			expected:    nil,
-		},
-		{
-			name: "no directories",
-			source: []repository.FileTreeEntry{
-				{Path: "dashboard.json", Blob: true},
-			},
-			flagEnabled: true,
-			expected:    nil,
-		},
-		{
-			name: "directory with _folder.json",
-			source: []repository.FileTreeEntry{
-				{Path: "myfolder", Blob: false},
-				{Path: "myfolder/_folder.json", Blob: true},
-				{Path: "myfolder/dashboard.json", Blob: true},
-			},
-			flagEnabled: true,
-			expected:    nil,
-		},
-		{
-			name: "directory missing _folder.json",
-			source: []repository.FileTreeEntry{
-				{Path: "myfolder", Blob: false},
-				{Path: "myfolder/dashboard.json", Blob: true},
-			},
-			flagEnabled: true,
-			expected:    []string{"myfolder/"},
-		},
-		{
-			name: "mixed: some with and some without _folder.json",
-			source: []repository.FileTreeEntry{
-				{Path: "withMeta", Blob: false},
-				{Path: "withMeta/_folder.json", Blob: true},
-				{Path: "withMeta/dashboard.json", Blob: true},
-				{Path: "noMeta", Blob: false},
-				{Path: "noMeta/dashboard.json", Blob: true},
-			},
-			flagEnabled: true,
-			expected:    []string{"noMeta/"},
-		},
-		{
-			name: "directory path already has trailing slash",
-			source: []repository.FileTreeEntry{
-				{Path: "myfolder/", Blob: false},
-				{Path: "myfolder/dashboard.json", Blob: true},
-			},
-			flagEnabled: true,
-			expected:    []string{"myfolder/"},
-		},
-		{
-			name: "flag disabled: directory missing _folder.json returns nil",
-			source: []repository.FileTreeEntry{
-				{Path: "myfolder", Blob: false},
-				{Path: "myfolder/dashboard.json", Blob: true},
-			},
-			flagEnabled: false,
-			expected:    nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, missing, err := Changes(context.Background(), tt.source, &provisioning.ResourceList{}, tt.flagEnabled)
-			require.NoError(t, err)
-			require.Equal(t, tt.expected, missing)
-		})
-	}
-}
