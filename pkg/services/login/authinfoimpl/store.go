@@ -219,10 +219,10 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		updQuery := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type")
-		if cmd.UserUID != "" {
-			updQuery = updQuery.And("user_uid = ? AND auth_module = ?", cmd.UserUID, cmd.AuthModule)
-		} else {
+		if cmd.UserId > 0 {
 			updQuery = updQuery.And("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule)
+		} else {
+			updQuery = updQuery.And("user_uid = ? AND auth_module = ?", cmd.UserUID, cmd.AuthModule)
 		}
 
 		upd, err := updQuery.Update(authUser)
@@ -230,7 +230,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "user_uid", cmd.UserUID, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
 		// Clean up duplicated entries
-		if upd > 1 {
+		if upd > 1 && cmd.UserId > 0 {
 			var id int64
 			ok, err := sess.SQL(
 				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
