@@ -36,6 +36,9 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
+// errStopping is returned when a write operation is rejected because the server is shutting down.
+var errStopping = apierrors.NewServiceUnavailable("server is stopping")
+
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	SearchServer
@@ -459,6 +462,11 @@ type server struct {
 	cancel      context.CancelFunc
 	broadcaster Broadcaster[*WrittenEvent]
 
+	// Graceful shutdown: tracks in-flight write operations so Stop can wait
+	// for them to complete before tearing down the backend.
+	inflight sync.WaitGroup
+	stopping atomic.Bool
+
 	// init checking
 	once    sync.Once
 	initErr error
@@ -502,6 +510,22 @@ func (s *server) Init(ctx context.Context) error {
 
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
+
+	// Signal that no new write operations should be accepted.
+	s.stopping.Store(true)
+
+	// Wait for in-flight write operations to finish, respecting the context deadline.
+	done := make(chan struct{})
+	go func() {
+		s.inflight.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		s.log.Debug("all in-flight write operations completed")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for in-flight write operations to complete")
+	}
 
 	var stopFailed bool
 
@@ -723,6 +747,12 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
+	if s.stopping.Load() {
+		return nil, errStopping
+	}
+	s.inflight.Add(1)
+	defer s.inflight.Done()
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -835,6 +865,12 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
 
+	if s.stopping.Load() {
+		return nil, errStopping
+	}
+	s.inflight.Add(1)
+	defer s.inflight.Done()
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -908,6 +944,12 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
+
+	if s.stopping.Load() {
+		return nil, errStopping
+	}
+	s.inflight.Add(1)
+	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
 	if req.ResourceVersion < 0 {
