@@ -270,8 +270,17 @@ func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
 	c.size = size
 	c.cache = make([]T, c.size)
 
-	c.add = make(chan T)
-	c.read = make(chan chan T)
+	// Use buffered channels to prevent deadlock when broadcaster.stream() calls
+	// both Add() and ReadInto() concurrently. With unbuffered channels, if
+	// cache.run is processing a ReadInto operation, Add() will block trying to
+	// send to c.add, and vice versa, creating a deadlock.
+	//
+	// Buffering allows operations to queue up instead of blocking the broadcaster's
+	// main event loop. Buffer size matches cache size to handle burst scenarios,
+	// plus extra capacity for read operations which can happen concurrently during
+	// rolling deployments.
+	c.add = make(chan T, size*2)  // 2x cache size for burst capacity
+	c.read = make(chan chan T, 20) // Support up to 20 concurrent subscriptions
 
 	go c.run()
 
@@ -283,7 +292,18 @@ func (c *localCache[T]) Len() int {
 }
 
 func (c *localCache[T]) Add(item T) {
-	c.add <- item
+	// Non-blocking send to prevent deadlock in broadcaster.stream().
+	// If cache is busy processing ReadInto operations, this allows Add to
+	// drop the event rather than block the broadcaster's main loop.
+	// This is acceptable because slow consumers already drop events.
+	select {
+	case c.add <- item:
+		// Successfully queued
+	default:
+		// Cache channel full or run loop busy - drop event
+		// This prevents deadlock at the cost of potentially losing this event,
+		// which is consistent with the slow consumer behavior elsewhere
+	}
 }
 
 func (c *localCache[T]) run() {
@@ -352,7 +372,20 @@ func (c *localCache[T]) Slice() []T {
 
 func (c *localCache[T]) ReadInto(dst chan T) error {
 	r := make(chan T, c.size)
-	c.read <- r
+
+	// Non-blocking send to prevent deadlock when Add() operations are in flight.
+	// If cache.run is busy processing Add operations, this allows ReadInto to
+	// fail fast rather than block indefinitely.
+	select {
+	case c.read <- r:
+		// Successfully queued - proceed with reading
+	case <-c.ctx.Done():
+		return c.ctx.Err()
+	default:
+		// Cache busy - fail fast
+		return fmt.Errorf("cache busy, cannot read at this time")
+	}
+
 	for item := range r {
 		select {
 		case dst <- item:
