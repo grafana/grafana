@@ -56,7 +56,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       }
 
       const currentLayers = dataLayerSet.state.annotationLayers;
-      const lists: Record<string, SceneDataLayerProvider[]> = {
+      const lists: Record<string, DashboardAnnotationsDataLayer[]> = {
         [ID_VISIBLE_LIST]: [...visible],
         [ID_CONTROLS_MENU_LIST]: [...controlsMenu],
         [ID_HIDDEN_LIST]: [...hidden],
@@ -68,8 +68,18 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       const [moved] = sourceList.splice(source.index, 1);
       destList.splice(destination.index, 0, moved);
 
-      const oldState = { isHidden: moved.state.isHidden, placement: moved.state.placement };
-      const newState = DROPPABLE_TO_PLACEMENT[destination.droppableId];
+      const oldState = {
+        isHidden: moved.state.isHidden,
+        placement: moved.state.placement,
+        query: { ...moved.state.query },
+      };
+
+      const { isHidden, placement } = DROPPABLE_TO_PLACEMENT[destination.droppableId];
+      const newState = {
+        isHidden,
+        placement,
+        query: { ...moved.state.query, hide: isHidden, placement },
+      };
 
       dashboardEditActions.edit({
         source: dataLayerSet,
