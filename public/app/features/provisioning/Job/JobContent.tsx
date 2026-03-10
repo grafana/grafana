@@ -22,59 +22,56 @@ export interface JobContentProps {
 }
 
 export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
-  const errorSetRef = useRef(false);
+  const lastReportedStateRef = useRef<string>();
 
   const { state, message, progress, summary } = job?.status || {};
   const repoName = job?.metadata?.labels?.['provisioning.grafana.app/repository'];
   const pullRequestURL = job?.status?.url?.newPullRequestURL;
 
-  // Update step status based on job state
+  // Update step status based on job state.
+  // Guard with lastReportedStateRef to avoid re-reporting the same state,
+  // which would create new objects on each call and trigger infinite re-render loops.
   useEffect(() => {
-    if (!state) {
+    if (!state || state === lastReportedStateRef.current) {
       return;
     }
+    lastReportedStateRef.current = state;
 
     switch (state) {
       case 'success':
         onStatusChange?.({ status: 'success' });
         break;
       case 'warning': {
-        if (!errorSetRef.current) {
-          const messages = getJobMessages(job?.status ?? {});
-          onStatusChange?.({
-            status: 'warning',
-            warning: {
-              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-              message: messages.warning,
-            },
-          });
-          errorSetRef.current = true;
-        }
+        const messages = getJobMessages(job?.status ?? {});
+        onStatusChange?.({
+          status: 'warning',
+          warning: {
+            title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+            message: messages.warning,
+          },
+        });
         break;
       }
       case 'error': {
-        if (!errorSetRef.current) {
-          const messages = getJobMessages(job?.status ?? {});
-          const warningInfo = messages.warning
-            ? {
-                title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-                message: messages.warning,
-              }
-            : undefined;
-          onStatusChange?.({
-            status: 'error',
-            error: {
-              title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
-              message: messages.error,
-            },
-            warning: warningInfo,
-            action: onRetry && {
-              label: t('provisioning.job-status.retry-action', 'Retry'),
-              onClick: onRetry,
-            },
-          });
-          errorSetRef.current = true;
-        }
+        const messages = getJobMessages(job?.status ?? {});
+        const warningInfo = messages.warning
+          ? {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: messages.warning,
+            }
+          : undefined;
+        onStatusChange?.({
+          status: 'error',
+          error: {
+            title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
+            message: messages.error,
+          },
+          warning: warningInfo,
+          action: onRetry && {
+            label: t('provisioning.job-status.retry-action', 'Retry'),
+            onClick: onRetry,
+          },
+        });
         break;
       }
       case 'working':
