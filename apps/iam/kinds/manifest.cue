@@ -26,7 +26,7 @@ v0alpha1: {
 	]
 
 	routes: {
-		namespaced: {
+		namespaced: accessRoutes & {
 			"/searchUsers": {
 				"GET": {
 					name: "getSearchUsers",

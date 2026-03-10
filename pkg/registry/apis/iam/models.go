@@ -5,7 +5,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -97,6 +96,9 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
+
+	// support: POST /access/check
+	accessHandler *AccessCheckHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.

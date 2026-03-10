@@ -3,9 +3,10 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 type GetSearchTeamsRequestParamsObject struct {
