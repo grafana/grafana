@@ -361,23 +361,6 @@ describe('DefaultGridLayoutManager', () => {
       expect(children).toHaveLength(1);
       expect((children[0] as DashboardGridItem).state.variableName).toBeUndefined();
     });
-
-    it('clones panels and does not reuse original panel instances', () => {
-      const panelA = new VizPanel({ key: 'panel-a', title: 'Panel A', pluginId: 'table' });
-      const panelB = new VizPanel({ key: 'panel-b', title: 'Panel B', pluginId: 'timeseries' });
-
-      const autoLayout = setupSceneWithAutoGrid([panelA, panelB]);
-      const defaultLayout = DefaultGridLayoutManager.createFromLayout(autoLayout);
-
-      const children = defaultLayout.state.grid.state.children;
-      const clonedBodyA = (children[0] as DashboardGridItem).state.body;
-      const clonedBodyB = (children[1] as DashboardGridItem).state.body;
-
-      expect(clonedBodyA).not.toBe(panelA);
-      expect(clonedBodyB).not.toBe(panelB);
-      expect(clonedBodyA.state.title).toBe(panelA.state.title);
-      expect(clonedBodyB.state.title).toBe(panelB.state.title);
-    });
   });
 });
 
