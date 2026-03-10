@@ -2591,11 +2591,6 @@
       "count": 3
     }
   },
-  "public/app/features/playlist/StartModal.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2863,11 +2858,6 @@
   },
   "public/app/features/transformers/editors/FilterByNameTransformerEditor.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 )
 
@@ -20,9 +19,6 @@ func newTestClient(t *testing.T, handler http.Handler) *Client {
 	cfg := rest.Config{
 		Host:    srv.URL,
 		APIPath: "/apis",
-		ContentConfig: rest.ContentConfig{
-			NegotiatedSerializer: &fakeNegotiatedSerializer{},
-		},
 	}
 	client, err := NewClient(cfg, "test-ns")
 	require.NoError(t, err)
@@ -61,14 +57,4 @@ func TestHistorianClient_NotificationsQueryAlerts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "POST", gotMethod)
 	require.Equal(t, "/apis/historian.alerting.grafana.app/v0alpha1/namespaces/test-ns/notifications/queryalerts", gotPath)
-}
-
-type fakeNegotiatedSerializer struct{}
-
-func (f *fakeNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerInfo { return nil }
-func (f *fakeNegotiatedSerializer) EncoderForVersion(serializer runtime.Encoder, gv runtime.GroupVersioner) runtime.Encoder {
-	return serializer
-}
-func (f *fakeNegotiatedSerializer) DecoderToVersion(serializer runtime.Decoder, gv runtime.GroupVersioner) runtime.Decoder {
-	return serializer
 }

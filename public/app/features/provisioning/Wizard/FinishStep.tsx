@@ -130,6 +130,22 @@ export const FinishStep = memo(function FinishStep() {
           />
         </Field>
       )}
+
+      {isGithub && (
+        <Field
+          noMargin
+          label={t('provisioning.finish-step.label-webhook-url', 'Webhook URL')}
+          description={t(
+            'provisioning.finish-step.description-webhook-url',
+            'Overrides the auto-detected URL for registering webhooks.'
+          )}
+        >
+          <Input
+            {...register('repository.webhook.baseUrl')}
+            placeholder={t('provisioning.finish-step.placeholder-webhook-url', 'https://grafana.example.com')}
+          />
+        </Field>
+      )}
     </Stack>
   );
 });
