@@ -79,20 +79,20 @@ jobs:
         run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts fetch
 
       - name: Process teams and send reports
+        if: steps.fetch-prs.outputs.external_prs == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           OPENAI_API_KEY: ${{ env.OPENAI_API_KEY }}
           STALE_DAYS: ${{ env.STALE_THRESHOLD_DAYS }}
           REPO: ${{ github.repository }}
-          ALL_PRS: ${{ steps.fetch-prs.outputs.all_prs }}
-          EXTERNAL_PRS: ${{ steps.fetch-prs.outputs.external_prs }}
+          DATA_FILE: ${{ steps.fetch-prs.outputs.data_file }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
         run: node --experimental-strip-types .github/workflows/scripts/pr-digest.mts process
 
       - name: No PRs summary
-        if: steps.fetch-prs.outputs.external_prs == '[]'
+        if: steps.fetch-prs.outputs.external_prs != 'true'
         run: |
           echo "No open external PRs found."
           echo "Skipping Slack notification."
