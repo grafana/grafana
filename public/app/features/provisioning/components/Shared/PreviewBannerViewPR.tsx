@@ -5,7 +5,6 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { ResourceAction } from '../../utils/redirect';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
@@ -132,7 +131,10 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   );
 }
 
-function getTitleText(isNewPr: boolean | undefined, action: ResourceAction | undefined, repoType: string): string {
+/*
+ * @param action -'create' or 'delete'
+ */
+function getTitleText(isNewPr: boolean | undefined, action: string | undefined, repoType: string): string {
   if (action === 'delete') {
     return isNewPr
       ? t(

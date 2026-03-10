@@ -6,7 +6,6 @@ import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isValidRepoType } from '../../guards';
-import { ResourceAction } from '../../utils/redirect';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 
@@ -26,7 +25,7 @@ const mockTextUtil = jest.mocked(textUtil);
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: ResourceAction } = {
+  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string } = {
     prURL: 'test-url',
     repoType: 'github',
   }
