@@ -271,14 +271,22 @@ func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
 	c.cache = make([]T, c.size)
 
 	// Use buffered channels to prevent deadlock when broadcaster.stream() calls
-	// both Add() and ReadInto() concurrently. With unbuffered channels, if
-	// cache.run is processing a ReadInto operation, Add() will block trying to
-	// send to c.add, and vice versa, creating a deadlock.
+	// both Add() and ReadInto() concurrently.
 	//
-	// Buffering allows operations to queue up instead of blocking the broadcaster's
-	// main event loop. Buffer size matches cache size to handle burst scenarios,
-	// plus extra capacity for read operations which can happen concurrently during
-	// rolling deployments.
+	// PROBLEM: With unbuffered channels, Add() blocks the broadcaster's main loop:
+	// - cache.run processes ReadInto (sending 100 items, ~50ms)
+	// - Meanwhile, broadcaster calls Add() for new events
+	// - Add() tries to send on unbuffered c.add but cache.run is busy (not listening)
+	// - Broadcaster's main loop FREEZES in Add() - can't process subscriptions or events
+	// - System deadlock occurs BEFORE any interaction with subscribers
+	//
+	// SOLUTION: Buffering allows Add() to queue and return immediately, keeping
+	// broadcaster responsive. Combined with non-blocking send (select/default) to
+	// prevent blocking even if buffer fills under extreme load.
+	//
+	// Buffer sizes:
+	// - c.add: size*2 (200 for default) handles burst scenarios
+	// - c.read: 20 supports concurrent subscriptions during rolling deployments
 	c.add = make(chan T, size*2)   // 2x cache size for burst capacity
 	c.read = make(chan chan T, 20) // Support up to 20 concurrent subscriptions
 
@@ -293,27 +301,47 @@ func (c *localCache[T]) Len() int {
 
 func (c *localCache[T]) Add(item T) {
 	// Non-blocking send to prevent deadlock in broadcaster.stream().
-	// If cache is busy processing ReadInto operations, this allows Add to
-	// drop the event rather than block the broadcaster's main loop.
+	//
+	// THE DEADLOCK SCENARIO (with unbuffered channels):
+	// 1. cache.run is processing ReadInto() - sending 100 cached items (~50ms)
+	// 2. Meanwhile, events keep arriving: broadcaster calls cache.Add(item)
+	// 3. Add() tries to send on unbuffered c.add channel
+	// 4. But cache.run is BUSY in read case, not listening to c.add
+	// 5. Add() BLOCKS waiting for cache.run to return to select
+	// 6. Broadcaster's main loop is now FROZEN in Add() - can't process anything
+	// 7. New subscriptions pile up, events can't be sent to subscribers
+	// 8. Complete system deadlock
+	//
+	// THE FIX: Buffered channels (size*2) + non-blocking send
+	// - Normal case: Add() queues to buffer, returns immediately
+	// - Extreme case: Buffer full → drop event rather than freeze entire system
+	//
+	// NOTE: This deadlock is UPSTREAM of subscriber handling. Even with fast
+	// subscribers (or no subscribers at all), the deadlock occurs because the
+	// broadcaster itself gets blocked in Add() before it can send to anyone.
 	select {
 	case c.add <- item:
-		// Successfully queued
+		// Successfully queued in buffer
 	default:
-		// Cache channel full or run loop busy - drop event to prevent deadlock.
+		// Buffer full - drop event to prevent freezing broadcaster.
 		//
 		// CONSEQUENCES OF DROPPING:
 		// - This event won't be stored in the cache's circular buffer
-		// - New subscribers connecting after this drop won't receive this event
-		//   in their initial backfill (via ReadInto)
-		// - Existing subscribers are NOT affected - they already received it
-		//   from broadcaster.stream() before this Add() call
+		// - New subscribers connecting later won't receive this event in their
+		//   initial backfill, creating GAPS in the event stream
+		// - For operators processing create/update/delete events, missing events
+		//   can cause incorrect reconciliation (e.g., missing a finalizer update)
 		//
 		// WHEN THIS HAPPENS:
-		// - Buffer (200 events for default cache) is full AND
-		// - cache.run is stuck in the read case processing a ReadInto AND
-		// - More events keep arriving faster than cache.run can process
+		// - Buffer (200 events) is full AND
+		// - cache.run is busy processing ReadInto AND
+		// - Events arriving faster than cache.run can process
+		// - This is extremely rare in practice (requires sustained >2000 events/sec)
 		//
-		// This is consistent with slow consumer behavior elsewhere in the system.
+		// TRADE-OFF: System availability over guaranteed delivery
+		// - Better to drop events than deadlock the entire system
+		// - Consistent with slow consumer drops elsewhere (broadcaster.go:234, :405)
+		//
 		// TODO: Add metrics/logging to track drop rate (would require logger param)
 	}
 }
