@@ -12,11 +12,11 @@ import (
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
 
-// WithMetadataIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
+// WithOriginalIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
 // context identity is overridden (e.g. by the store wrapper using service identity). Storage
 // that sets these annotations (e.g. unistore prepare) should call MetadataIdentityUIDFrom
 // and use it when present so the real acting user is recorded.
-func WithMetadataIdentityUID(ctx context.Context, uid string) context.Context {
+func WithOriginalIdentityUID(ctx context.Context, uid string) context.Context {
 	return context.WithValue(ctx, metadataIdentityUIDKey{}, uid)
 }
 

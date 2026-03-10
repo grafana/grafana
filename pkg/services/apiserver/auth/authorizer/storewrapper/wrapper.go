@@ -33,7 +33,7 @@ type ResourceStorageAuthorizer interface {
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
 // It overrides the identity in the context to use service identity for the underlying store operations so the
 // store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
-// user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithMetadataIdentityUID).
+// user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithOriginalIdentityUID).
 type Wrapper struct {
 	inner      K8sStorage
 	authorizer ResourceStorageAuthorizer
@@ -59,11 +59,11 @@ func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
 }
 
 // storeCtx returns the context for inner store calls: service identity so the store's authorization
-// succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithMetadataIdentityUID).
+// succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithOriginalIdentityUID).
 func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
 	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
-		srvCtx = identity.WithMetadataIdentityUID(srvCtx, user.GetUID())
+		srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
 	}
 	return srvCtx
 }
