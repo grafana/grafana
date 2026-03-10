@@ -114,7 +114,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
                   }
                   onClick={() => toggleKey(label.key, isOpen)}
                 />
-                <Stack direction="row" gap={0.5} alignItems="center">
+                <Stack direction="row" gap={0.5} alignItems="center" minWidth={0}>
                   <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
                   <span className={styles.valueCount}>{label.values.length}</span>
                 </Stack>
