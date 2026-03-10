@@ -1092,6 +1092,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/trigger_windows_build.sh @grafana/grafana-developer-enablement-squad
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
+/scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
 /scripts/levitate-show-affected-plugins.js @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
