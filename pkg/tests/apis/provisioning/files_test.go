@@ -1290,74 +1290,112 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-	ctx := context.Background()
-
-	const repo = "folder-auth-metadata-repo"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:                   repo,
-		Target:                 "instance",
-		SkipResourceAssertions: true,
-	})
-
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-
-	// Grant permissions to Editor for a specific folder
-	// Note: This test validates that authorization checks use stable UIDs from _folder.json
-	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+	tests := []struct {
+		name                  string
+		folderMetadataEnabled bool
+		repoName              string
+		folderPathPrefix      string
+	}{
 		{
-			Actions:           []string{"folders:read", "folders:write", "folders:delete", "folders:create"},
-			Resource:          "folders",
-			ResourceAttribute: "uid",
-			ResourceID:        "*", // Grant to all folders for simplicity
+			name:                  "with folder metadata enabled",
+			folderMetadataEnabled: true,
+			repoName:              "folder-auth-metadata-enabled-repo",
+			folderPathPrefix:      "parent-with-metadata",
 		},
 		{
-			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
-			Resource:          "dashboards",
-			ResourceAttribute: "uid",
-			ResourceID:        "*",
+			name:                  "without folder metadata (hash-based IDs)",
+			folderMetadataEnabled: false,
+			repoName:              "folder-auth-hash-repo",
+			folderPathPrefix:      "parent-hash",
 		},
-	})
+	}
 
-	// Test that authorization checks use stable UIDs from _folder.json when creating folders
-	// Note: We test folder creation because:
-	// 1. It validates that parent folder permissions are checked using stable UIDs
-	// 2. Folder deletion on the configured branch is intentionally disabled (returns 405)
-	// 3. Testing deletion on feature branches requires git repositories with BranchWorkflow
-	t.Run("create folder with metadata - authorization checks stable UID", func(t *testing.T) {
-		// Create a parent folder as admin
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/parent-auth/", addr, repo)
-		req, err := http.NewRequest(http.MethodPost, url, nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode, "admin should create parent folder")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var helper *common.K8sTestHelper
+			if tt.folderMetadataEnabled {
+				helper = common.RunGrafana(t, withProvisioningFolderMetadata)
+			} else {
+				helper = common.RunGrafana(t)
+			}
+			ctx := context.Background()
 
-		// Verify _folder.json was created with stable UID
-		parentMeta, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-auth/_folder.json")
-		require.NoError(t, err, "parent _folder.json should exist")
-		parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, parentUID, "parent should have stable UID")
+			helper.CreateRepo(t, common.TestRepo{
+				Name:                   tt.repoName,
+				Target:                 "instance",
+				SkipResourceAssertions: true,
+			})
 
-		// Editor should be able to create a child folder
-		// This validates that authorization uses the stable UID from parent's _folder.json
-		// instead of the hash-based ID
-		childURL := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/parent-auth/child-auth/", addr, repo)
-		childReq, err := http.NewRequest(http.MethodPost, childURL, nil)
-		require.NoError(t, err)
-		childResp, err := http.DefaultClient.Do(childReq)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer childResp.Body.Close()
-		require.Equal(t, http.StatusOK, childResp.StatusCode, "editor should create child folder using parent stable UID for authorization")
+			// Grant permissions to Editor for folders and dashboards
+			helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:read", "folders:write", "folders:delete", "folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*", // Grant to all folders
+				},
+				{
+					Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			})
 
-		// Verify child _folder.json was created with its own stable UID
-		childMeta, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "parent-auth/child-auth/_folder.json")
-		require.NoError(t, err, "child _folder.json should exist")
-		childUID, _, _ := unstructured.NestedString(childMeta.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child should have stable UID")
-		require.NotEqual(t, parentUID, childUID, "parent and child should have different UIDs")
-	})
+			// Test folder creation with proper authorization
+			// Note: We test folder creation because:
+			// 1. It validates that parent folder permissions are checked correctly
+			// 2. Folder deletion on the configured branch is intentionally disabled (returns 405)
+			// 3. Testing deletion on feature branches requires git repositories with BranchWorkflow
+			t.Run("Admin and Editor can create folders", func(t *testing.T) {
+				// Admin creates a parent folder
+				parentPath := tt.folderPathPrefix + "/"
+				var statusCode int
+				result := helper.AdminREST.Post().
+					Namespace("default").
+					Resource("repositories").
+					Name(tt.repoName).
+					SubResource("files", parentPath).
+					Do(ctx).StatusCode(&statusCode)
+				require.NoError(t, result.Error(), "Admin should be able to create parent folder")
+				require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+				if tt.folderMetadataEnabled {
+					// When metadata is enabled, verify _folder.json was created with stable UID
+					parentMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/_folder.json")
+					require.NoError(t, err, "parent _folder.json should exist when metadata is enabled")
+					parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
+					require.NotEmpty(t, parentUID, "parent should have stable UID")
+				}
+
+				// Editor should be able to create a child folder
+				// With metadata: validates authorization uses stable UID from parent's _folder.json
+				// Without metadata: validates authorization uses hash-based parent ID
+				childPath := tt.folderPathPrefix + "/child/"
+				var childStatusCode int
+				childResult := helper.EditorREST.Post().
+					Namespace("default").
+					Resource("repositories").
+					Name(tt.repoName).
+					SubResource("files", childPath).
+					Do(ctx).StatusCode(&childStatusCode)
+				require.NoError(t, childResult.Error(), "Editor should be able to create child folder")
+				require.Equal(t, http.StatusOK, childStatusCode, "should return 200 OK")
+
+				if tt.folderMetadataEnabled {
+					// Verify child _folder.json was created with its own stable UID
+					childMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/child/_folder.json")
+					require.NoError(t, err, "child _folder.json should exist when metadata is enabled")
+					childUID, _, _ := unstructured.NestedString(childMeta.Object, "resource", "file", "metadata", "name")
+					require.NotEmpty(t, childUID, "child should have stable UID")
+
+					// Get parent UID to verify they're different
+					parentMeta, err := helper.Repositories.Resource.Get(ctx, tt.repoName, metav1.GetOptions{}, "files", tt.folderPathPrefix+"/_folder.json")
+					require.NoError(t, err)
+					parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
+					require.NotEqual(t, parentUID, childUID, "parent and child should have different UIDs")
+				}
+			})
+		})
+	}
 }
