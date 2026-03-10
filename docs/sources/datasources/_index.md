@@ -66,11 +66,38 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  query-caching:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  correlations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/correlations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/correlations/
+  troubleshoot-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/troubleshooting/
 ---
 
 # Data sources
 
-Grafana comes with built-in support for many _data sources_.
+A _data source_ in Grafana is a connection to a storage backend that holds your data, such as a Prometheus server, a Loki instance, a SQL database, or a cloud monitoring service. Grafana queries data sources to retrieve the metrics, logs, traces, and profiles that it then visualizes in dashboards and Explore.
+
+Grafana comes with built-in support for many data sources.
 If you need other data sources, you can also install one of the many data source plugins.
 If the plugin you need doesn't exist, you can develop a custom plugin.
 
@@ -98,6 +125,8 @@ To access data source management tools in Grafana as an administrator, navigate 
 
 For details on data source management, including instructions on how to configure user permissions for queries, refer to the [administration documentation](ref:data-source-management).
 
+By default, any user in an organization can query any data source in that organization. With [Grafana Enterprise](ref:grafana-enterprise) or Grafana Cloud, you can configure **data source permissions** to restrict query, edit, and admin access to specific users, teams, or roles. Refer to the [data source management documentation](ref:data-source-management) for details.
+
 ## Add a data source
 
 Before you can create your first dashboard, you need to add your data source.
@@ -112,6 +141,8 @@ Only users with the organization admin role can add data sources.
 1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
 1. Click the data source you want to add.
 1. Configure the data source following instructions specific to that data source.
+
+You can mark one data source as the **Default** by toggling the option on its configuration page. The default data source is pre-selected when you create new panels or navigate to Explore.
 
 ## Query editors
 
@@ -196,6 +227,32 @@ Grafana ships with the following core data sources, organized by their primary u
 
 - [Testdata](testdata/)
 
+### Supported features
+
+The following table summarizes the features each built-in core data source supports. Plugin data sources may support different features; refer to the plugin's documentation in the [plugin catalog](/grafana/plugins/?type=datasource) for details.
+
+| Data source | Metrics | Logs | Traces | Profiles | Alerting | Annotations |
+|---|---|---|---|---|---|---|
+| [Alertmanager](alertmanager/) | No | No | No | No | No | No |
+| [AWS CloudWatch](aws-cloudwatch/) | Yes | Yes | No | No | Yes | Yes |
+| [Azure Monitor](azure-monitor/) | Yes | Yes | Yes | No | Yes | Yes |
+| [Elasticsearch](elasticsearch/) | Yes | Yes | No | No | Yes | Yes |
+| [Google Cloud Monitoring](google-cloud-monitoring/) | Yes | Yes | No | No | Yes | Yes |
+| [Graphite](graphite/) | Yes | No | No | No | Yes | Yes |
+| [InfluxDB](influxdb/) | Yes | Yes | No | No | Yes | Yes |
+| [Jaeger](jaeger/) | No | No | Yes | No | No | No |
+| [Loki](loki/) | Yes | Yes | No | No | Yes | Yes |
+| [Microsoft SQL Server (MSSQL)](mssql/) | Yes | No | No | No | Yes | Yes |
+| [MySQL](mysql/) | Yes | No | No | No | Yes | Yes |
+| [OpenTSDB](opentsdb/) | Yes | No | No | No | Yes | Yes |
+| [Parca](parca/) | No | No | No | Yes | No | No |
+| [PostgreSQL](postgres/) | Yes | Yes | No | No | Yes | Yes |
+| [Prometheus](prometheus/) | Yes | No | No | No | Yes | Yes |
+| [Pyroscope](pyroscope/) | No | No | No | Yes | No | No |
+| [Tempo](tempo/) | No | No | Yes | No | Yes | No |
+| [Testdata](testdata/) | Yes | Yes | No | No | Yes | Yes |
+| [Zipkin](zipkin/) | No | No | Yes | No | No | No |
+
 ## Add additional data source plugins
 
 You can add additional data sources as plugins (that aren't available in core Grafana), which you can install or create yourself.
@@ -214,6 +271,21 @@ For more documentation on a specific data source plugin's features, including it
 
 To build your own data source plugin, refer to the [Build a data source plugin](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and [Plugin tools](/developers/plugin-tools).
 
+## Correlate data across data sources
+
+Grafana lets you link related data across different data sources so you can jump from one signal to another during investigations. For example, you can navigate from a trace span to related logs, or from a log line to metrics for the same service.
+
+You can set up these links in two ways:
+
+- **Data source configuration:** Tracing data sources like Tempo, Jaeger, and Zipkin include built-in settings for trace-to-logs, trace-to-metrics, and trace-to-profiles links.
+- **Correlations:** A more flexible, general-purpose feature that lets you define rules to link data between any data sources. Refer to [Correlations](ref:correlations) for details.
+
+## Troubleshoot data sources
+
+If you run into issues with a data source, refer to [Troubleshoot data sources](ref:troubleshoot-data-sources) for solutions to common problems like connection errors, authentication failures, and empty query results.
+
+Each built-in data source also has its own troubleshooting page with data-source-specific guidance.
+
 ## Next steps
 
 After you've configured a data source, you can:
@@ -221,4 +293,7 @@ After you've configured a data source, you can:
 - **Build a dashboard:** Click the **Build a dashboard** button on the data source configuration page, or refer to [Create a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/).
 - **Explore your data:** Use [Explore](ref:explore) to run ad-hoc queries without creating a dashboard.
 - **Set up alerts:** Create [alert rules](ref:alerts) to get notified when your data meets certain conditions.
+- **Use template variables:** Create dynamic, reusable dashboards with [template variables](ref:template-variables).
+- **Add annotations:** Overlay [annotations](ref:annotate-visualizations) on your graphs to mark events and correlate them with metrics.
 - **Transform query results:** Apply [transformations](ref:query-transform-data) to manipulate and combine data from multiple sources.
+- **Enable query caching:** Improve dashboard performance and reduce backend load with [query and resource caching](ref:query-caching) (available in Grafana Enterprise and Grafana Cloud).
