@@ -42,7 +42,12 @@ const GRAPHQL_QUERY = `
           createdAt
           labels(first: 20) { nodes { name } }
           reactions(content: THUMBS_UP) { totalCount }
-          comments { totalCount }
+          comments(first: 100) {
+            nodes {
+              author { login }
+              authorAssociation
+            }
+          }
         }
       }
     }
@@ -72,6 +77,13 @@ function queryFeatureRequests(areaLabels: string[]): FeatureRequest[] {
     })
     .map((node): FeatureRequest => {
       const labelNodes = (node.labels as { nodes?: { name: string }[] })?.nodes ?? [];
+      const commentNodes = (node.comments as { nodes?: { author?: { login?: string }; authorAssociation?: string }[] })?.nodes ?? [];
+      const externalComments = commentNodes.filter((c) => {
+        const assoc = c.authorAssociation ?? '';
+        const login = c.author?.login ?? '';
+        if (login.endsWith('[bot]')) return false;
+        return assoc === 'NONE' || assoc === 'CONTRIBUTOR';
+      });
       return {
         number: node.number as number,
         title: (node.title as string) ?? '',
@@ -80,7 +92,7 @@ function queryFeatureRequests(areaLabels: string[]): FeatureRequest[] {
         createdAt: (node.createdAt as string) ?? '',
         labels: labelNodes.map((l) => l.name),
         thumbs_up: (node.reactions as { totalCount?: number })?.totalCount ?? 0,
-        comments: (node.comments as { totalCount?: number })?.totalCount ?? 0,
+        comments: externalComments.length,
       };
     })
     .sort((a, b) => b.number - a.number);
@@ -352,7 +364,7 @@ async function main(): Promise<void> {
     console.log(`Found ${staleFrs.length} stale feature requests`);
 
     const engagedFrs = frs
-      .filter((fr) => fr.thumbs_up >= 1 || fr.comments >= 2)
+      .filter((fr) => fr.thumbs_up >= 1 || fr.comments >= 1)
       .sort((a, b) => (b.thumbs_up + b.comments) - (a.thumbs_up + a.comments))
       .slice(0, 10);
     console.log(`Found ${engagedFrs.length} engaged feature requests`);
