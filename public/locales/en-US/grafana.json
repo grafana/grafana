@@ -13519,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Add filter",
+      "disable": "Disable {{type}}",
       "duplicate": "Duplicate {{type}}",
+      "enable": "Enable {{type}}",
       "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
