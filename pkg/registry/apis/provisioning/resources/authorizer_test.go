@@ -559,11 +559,106 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "target-parent-stable-uid").Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, rw, mockAccess, true)
-		err := authorizer.AuthorizeMoveFolder(context.Background(), "source/", "target-parent/moved/")
+	authorizer := NewAuthorizer(repo, rw, mockAccess, true)
+	err := authorizer.AuthorizeMoveFolder(context.Background(), "source/", "target-parent/moved/")
+
+	assert.NoError(t, err)
+	mockAccess.AssertExpectations(t)
+	rw.AssertExpectations(t)
+	})
+}
+
+func TestAuthorizeExport(t *testing.T) {
+	t.Run("folder sync target - checks reads at root + create on target folder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbGet
+			}), "").Return(nil).Once()
+		}
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbCreate
+		}), "my-repo").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeExport(context.Background())
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
-		rw.AssertExpectations(t)
+	})
+
+	t.Run("instance sync target - checks reads at root only", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbGet
+			}), "").Return(nil).Once()
+		}
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeExport(context.Background())
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized on read - returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeExport(context.Background())
+
+		assert.Error(t, err)
+	})
+
+	t.Run("unauthorized on target folder create - returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbGet
+		}), "").Return(nil)
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), "my-repo").Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeExport(context.Background())
+
+		assert.Error(t, err)
 	})
 }

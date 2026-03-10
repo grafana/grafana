@@ -78,6 +78,16 @@ type Authorizer interface {
 	//   - Does NOT check permissions on contents of "old-project"
 	AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error
 
+	// AuthorizeExport checks if the current user has the required permissions to
+	// export resources from Grafana into the repository.
+	//
+	// Two checks are performed:
+	//  1. Read permission on all supported resource types at root level, because
+	//     export reads all unmanaged dashboards and folders from the Grafana instance.
+	//  2. If the repository targets a folder, create permission on that folder,
+	//     because export writes resources into the repository's provisioned folder.
+	AuthorizeExport(ctx context.Context) error
+
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
@@ -290,6 +300,38 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 
 	// Check create permission on the target parent folder
 	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
+}
+
+// AuthorizeExport checks if the current user has the required permissions for an
+// export operation.
+//
+// Export reads all unmanaged resources from the Grafana instance and writes them
+// into the repository's target folder. The checks are:
+//  1. Read (get) permission on every supported resource type at root level.
+//  2. If the repository syncs to a folder, create permission on that folder.
+func (a *ProvisioningAuthorizer) AuthorizeExport(ctx context.Context) error {
+	for _, kind := range SupportedProvisioningResources {
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    kind.Group,
+			Resource: kind.Resource,
+			Verb:     utils.VerbGet,
+		}, ""); err != nil {
+			return err
+		}
+	}
+
+	targetFolder := RootFolder(a.repo)
+	if targetFolder != "" {
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    FolderResource.Group,
+			Resource: FolderResource.Resource,
+			Verb:     utils.VerbCreate,
+		}, targetFolder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // AuthorizeWrite checks if writes are allowed to the specified ref.
