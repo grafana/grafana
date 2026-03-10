@@ -135,7 +135,7 @@ func TestTranslateTeamBindingToTuples(t *testing.T) {
 			tb := &iamv0.TeamBinding{
 				ObjectMeta: metav1.ObjectMeta{Name: "tb-test"},
 				Spec: iamv0.TeamBindingSpec{
-					Subject:    iamv0.TeamBindingspecSubject{Name: "user1"},
+					Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
 					TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
 					Permission: tt.permission,
 				},
@@ -742,7 +742,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 				tb := &iamv0.TeamBinding{
 					ObjectMeta: metav1.ObjectMeta{Name: "tb-schema-test"},
 					Spec: iamv0.TeamBindingSpec{
-						Subject:    iamv0.TeamBindingspecSubject{Name: "user1"},
+						Subject:    iamv0.TeamBindingspecSubject{Kind: "User", Name: "user1"},
 						TeamRef:    iamv0.TeamBindingTeamRef{Name: "teamA"},
 						Permission: perm,
 					},

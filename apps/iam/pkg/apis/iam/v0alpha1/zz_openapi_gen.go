@@ -2315,6 +2315,14 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref common.ReferenceCal
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "kind of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "uid of the identity",
@@ -2324,7 +2332,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"name"},
+				Required: []string{"kind", "name"},
 			},
 		},
 	}
