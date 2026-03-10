@@ -1,18 +1,13 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import {
-  LocalValueVariable,
-  MultiValueVariable,
-  SceneVariableSet,
-  sceneGraph,
-  VariableValueSingle,
-} from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { getSectionBaseVariables } from '../../variables/utils';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -95,7 +90,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const clonedRows: RowItem[] = [];
-  const baseSectionVariables = getRowSectionBaseVariables(row);
+  const baseSectionVariables = getSectionBaseVariables(row);
 
   // Loop through variable values and create repeats
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
@@ -133,20 +128,6 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   row.setState({ repeatedRows: clonedRows });
-}
-
-function getRowSectionBaseVariables(row: RowItem): SceneVariableSet | undefined {
-  const variableSet = row.state.$variables;
-  if (!variableSet || !(variableSet instanceof SceneVariableSet)) {
-    return undefined;
-  }
-
-  const baseVariables = variableSet.state.variables.filter((v) => !(v instanceof LocalValueVariable));
-  if (baseVariables.length === 0) {
-    return undefined;
-  }
-
-  return new SceneVariableSet({ variables: baseVariables });
 }
 
 /**

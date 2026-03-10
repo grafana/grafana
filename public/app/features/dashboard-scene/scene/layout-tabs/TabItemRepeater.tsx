@@ -3,18 +3,13 @@ import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
-import {
-  LocalValueVariable,
-  MultiValueVariable,
-  SceneVariableSet,
-  sceneGraph,
-  VariableValueSingle,
-} from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { getSectionBaseVariables } from '../../variables/utils';
 
 import { TabItem } from './TabItem';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -150,7 +145,7 @@ export function createTabRepeats({
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const repeats: TabItem[] = [];
-  const baseSectionVariables = getTabSectionBaseVariables(tab);
+  const baseSectionVariables = getSectionBaseVariables(tab);
 
   // Loop through variable values and create repeats
   for (let tabIndex = 0; tabIndex < variableValues.length; tabIndex++) {
@@ -187,20 +182,6 @@ export function createTabRepeats({
     }
   }
   return repeats;
-}
-
-function getTabSectionBaseVariables(tab: TabItem): SceneVariableSet | undefined {
-  const variableSet = tab.state.$variables;
-  if (!variableSet || !(variableSet instanceof SceneVariableSet)) {
-    return undefined;
-  }
-
-  const baseVariables = variableSet.state.variables.filter((v) => !(v instanceof LocalValueVariable));
-  if (baseVariables.length === 0) {
-    return undefined;
-  }
-
-  return new SceneVariableSet({ variables: baseVariables });
 }
 
 const getStyles = () => ({
