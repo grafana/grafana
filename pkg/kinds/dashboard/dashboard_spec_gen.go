@@ -382,6 +382,7 @@ const (
 	MatcherScopeSeries     MatcherScope = "series"
 	MatcherScopeNested     MatcherScope = "nested"
 	MatcherScopeAnnotation MatcherScope = "annotation"
+	MatcherScopeExemplar   MatcherScope = "exemplar"
 )
 
 // A library panel is a reusable panel that you can use in any dashboard.

@@ -380,6 +380,7 @@ const (
 	DashboardMatcherScopeSeries     DashboardMatcherScope = "series"
 	DashboardMatcherScopeNested     DashboardMatcherScope = "nested"
 	DashboardMatcherScopeAnnotation DashboardMatcherScope = "annotation"
+	DashboardMatcherScopeExemplar   DashboardMatcherScope = "exemplar"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardMatcherScope.

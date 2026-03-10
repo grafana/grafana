@@ -737,7 +737,7 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
-		#MatcherScope: "series" | "nested" | "annotation" @cuetsy(kind="type")
+		#MatcherScope: "series" | "nested" | "annotation" | "exemplar" @cuetsy(kind="type")
 
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
