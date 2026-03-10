@@ -67,7 +67,7 @@ function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boole
           render: () => <AnnotationPanelFilterPicker layer={this.layer} />,
         })
       );
-  }, [annotationCategoryId, annotationNameId, enabledId, colorId, displayId, showInId]);
+  }, [annotationCategoryId, annotationNameId, enabledId, colorId, displayId, showInId, isNewElement]);
 
   const queryEditorId = useId();
 
