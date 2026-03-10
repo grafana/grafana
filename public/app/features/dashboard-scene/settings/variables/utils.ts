@@ -294,10 +294,13 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
 export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
 export const WORD_CHARACTERS_REGEX = /^\w+$/;
 
-export function validateVariableName(
-  variable: SceneVariable,
-  name: string
-): { isValid: boolean; errorMessage?: string } {
+export interface VariableNameValidationResult {
+  isValid: boolean;
+  errorMessage?: string;
+  warningMessage?: string;
+}
+
+export function validateVariableName(variable: SceneVariable, name: string): VariableNameValidationResult {
   const set = variable.parent;
   if (!(set instanceof SceneVariableSet)) {
     throw new Error('Variable parent is not a SceneVariableSet');
@@ -320,29 +323,31 @@ export function validateVariableName(
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
   }
 
-  // Check ancestor variable sets to prevent section variables from shadowing global variables
+  // Check ancestor variable sets — section variable shadows a dashboard-level variable
   let ancestor: SceneObject | undefined = set.parent;
   while (ancestor) {
     const ancestorVars = ancestor.state.$variables;
-    if (ancestorVars instanceof SceneVariableSet) {
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
       const ancestorVar = ancestorVars.getByName(name);
       if (ancestorVar) {
         return {
-          isValid: false,
-          errorMessage: 'A variable with this name already exists at the dashboard level',
+          isValid: true,
+          warningMessage:
+            'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
         };
       }
     }
     ancestor = ancestor.parent;
   }
 
-  // Check descendant variable sets to prevent global variables from colliding with section variables
+  // Check descendant variable sets — dashboard variable collides with a section variable
   if (set.parent) {
     const conflict = findNameInDescendantSets(set.parent, name, set);
     if (conflict) {
       return {
-        isValid: false,
-        errorMessage: 'A variable with this name already exists in a section',
+        isValid: true,
+        warningMessage:
+          'A variable with this name already exists in a section. This variable will be ignored in that section.',
       };
     }
   }

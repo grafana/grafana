@@ -12,7 +12,7 @@ import {
   SceneVariableSet,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
+import { Input, TextArea, Button, Field, Box, Stack, Alert } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -165,12 +165,16 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const { name } = variable.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const [nameError, setNameError] = useState<string>();
+  const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
     const result = validateVariableName(variable, e.currentTarget.value);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
+    }
+    if (result.warningMessage !== nameWarning) {
+      setNameWarning(result.warningMessage);
     }
 
     variable.setState({ name: e.currentTarget.value });
@@ -179,44 +183,50 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const oldName = useRef(name);
 
   return (
-    <Field
-      label={t('dashboard.edit-pane.variable.name', 'Name')}
-      invalid={!!nameError}
-      error={nameError}
-      noMargin={false}
-    >
-      <Input
-        id={id}
-        ref={ref}
-        value={name}
-        onFocus={() => {
-          oldName.current = name;
-        }}
-        onChange={onChange}
-        onBlur={(e) => {
-          const labelUnchanged = oldName.current === name;
-          const shouldSkip = labelUnchanged;
+    <>
+      <Field
+        label={t('dashboard.edit-pane.variable.name', 'Name')}
+        invalid={!!nameError}
+        error={nameError}
+        noMargin={false}
+      >
+        <Input
+          id={id}
+          ref={ref}
+          value={name}
+          onFocus={() => {
+            oldName.current = name;
+          }}
+          onChange={onChange}
+          onBlur={(e) => {
+            const labelUnchanged = oldName.current === name;
+            const shouldSkip = labelUnchanged;
 
-          if (nameError) {
-            setNameError(undefined);
-            variable.setState({ name: oldName.current });
-            return;
-          }
+            if (nameError) {
+              setNameError(undefined);
+              variable.setState({ name: oldName.current });
+              return;
+            }
 
-          if (shouldSkip) {
-            return;
-          }
+            if (shouldSkip) {
+              return;
+            }
 
-          dashboardEditActions.changeVariableName({
-            source: variable,
-            oldValue: oldName.current,
-            newValue: name,
-          });
-        }}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
-        required
-      />
-    </Field>
+            dashboardEditActions.changeVariableName({
+              source: variable,
+              oldValue: oldName.current,
+              newValue: name,
+            });
+          }}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
+          required
+        />
+      </Field>
+      {/* Show warning message if the variable name is already used in the dashboard
+        Unfortunately <Field> component only supports error messages, not warning messages.
+      */}
+      {nameWarning && <Alert title={nameWarning} severity="warning" topSpacing={0} bottomSpacing={1} />}
+    </>
   );
 }
 
