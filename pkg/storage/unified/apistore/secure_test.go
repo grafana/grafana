@@ -184,7 +184,7 @@ func TestSecureLifecycle(t *testing.T) {
 		// Previous values must exist for remove to execute
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
-		require.NotNil(t, err, "should noop when previous value does not exist")
+		require.Nil(t, err, "should noop when previous value does not exist")
 		secureStore.AssertExpectations(t)
 	})
 
