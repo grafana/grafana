@@ -154,8 +154,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
-		// Even with the flag enabled, _folder.json must not be created for a
-		// pre-existing folder directory (folderMetadataForExisting=false).
+		// _folder.json must not be created for a pre-existing folder directory.
 		metadataPath := filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")
 		_, err = os.Stat(metadataPath)
 		require.True(t, os.IsNotExist(err), "_folder.json must not be written for a pre-existing folder directory")
