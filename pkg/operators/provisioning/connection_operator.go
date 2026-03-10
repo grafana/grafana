@@ -82,9 +82,11 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}
 
 	informerFactory.Start(ctx.Done())
-	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+	if err := connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("connection operator is ready")
 		deps.HealthNotifier.SetReady()
-	}, func() {})
+	}, func() {}); err != nil {
+		return fmt.Errorf("connection controller failed: %w", err)
+	}
 	return nil
 }

@@ -112,7 +112,7 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
 // all workers have been launched, before blocking on ctx.Done().
-func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
+func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) error {
 	defer utilruntime.HandleCrash()
 	defer cc.queue.ShutDown()
 
@@ -122,7 +122,8 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down ConnectionController")
 
 	if !cache.WaitForCacheSync(ctx.Done(), cc.connSynced) {
-		return
+		logger.Error("cache not synced, shutting down")
+		return fmt.Errorf("cache sync failed")
 	}
 
 	logger.Info("Starting workers", "count", workerCount)
@@ -150,6 +151,8 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStar
 		logger.Warn("Drain timeout exceeded, forcing shutdown")
 		cc.queue.ShutDown()
 	}
+
+	return nil
 }
 
 func (cc *ConnectionController) runWorker(ctx context.Context) {
