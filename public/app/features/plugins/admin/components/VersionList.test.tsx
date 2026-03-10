@@ -203,6 +203,9 @@ describe('VersionList', () => {
     const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
     config.featureToggles.managedPluginsV2 = true;
 
+    const pluginAdminExternalManageEnabledOriginal = config.pluginAdminExternalManageEnabled;
+    config.pluginAdminExternalManageEnabled = true;
+
     const plugin = getCatalogPluginMock({
       details: {
         grafanaDependency: '>=8.0.0',
@@ -220,6 +223,7 @@ describe('VersionList', () => {
     expect(enabledButtons).toHaveLength(2);
 
     config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+    config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
   });
 });
 
