@@ -3,7 +3,6 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import classNames from 'classnames';
 import { ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -153,7 +152,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   tableContainer: css({
     overflow: 'auto',
   }),
