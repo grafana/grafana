@@ -66,7 +66,12 @@ const sourceFiles = teamFiles.filter((file) => {
 
 const testFiles = teamFiles.filter((file) => {
   const ext = path.extname(file);
-  return ['.ts', '.tsx', '.js', '.jsx'].includes(ext) && (file.includes('.test.') || file.includes('.spec.'));
+  return (
+    ['.ts', '.tsx', '.js', '.jsx'].includes(ext) &&
+    (file.includes('.test.') || file.includes('.spec.')) &&
+    // exclude scenario files – these are test fixture/helper modules, not test suites
+    !file.includes('.scenario.')
+  );
 });
 
 if (testFiles.length === 0) {

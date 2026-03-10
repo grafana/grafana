@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 
+const { OwnershipEngine } = require('github-codeowners');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const { access } = require('node:fs/promises');
+const readline = require('node:readline');
 
 const { CODEOWNERS_FILE_PATH, CODEOWNERS_MANIFEST_DIR, RAW_AUDIT_JSONL_PATH } = require('./constants.js');
 
 /**
- * Generate raw CODEOWNERS audit data using github-codeowners CLI
+ * Generate raw CODEOWNERS audit data by streaming `git ls-files` and resolving
+ * ownership for each file via OwnershipEngine.
+ *
  * @param {string} codeownersPath - Path to CODEOWNERS file
  * @param {string} outputPath - Path to write audit JSONL file
  */
@@ -18,14 +22,16 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
     throw new Error(`CODEOWNERS file not found at: ${codeownersPath}`);
   }
 
-  return new Promise((resolve, reject) => {
-    const outputStream = fs.createWriteStream(outputPath);
+  const engine = OwnershipEngine.FromCodeownersFile(codeownersPath);
+  const outputStream = fs.createWriteStream(outputPath);
 
-    const child = spawn('yarn', ['github-codeowners', 'audit', '--output', 'jsonl'], {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', ['ls-files'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: process.cwd(),
-      shell: true,
     });
+
+    const rl = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
 
     let stderrData = '';
     child.stderr.on('data', (data) => {
@@ -37,14 +43,25 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
       reject(new Error(`Failed to write to output file: ${error.message}`));
     });
 
-    child.stdout.pipe(outputStream);
+    rl.on('line', (filePath) => {
+      if (!filePath) {
+        return;
+      }
+      const owners = engine.calcFileOwnership(filePath);
+      outputStream.write(JSON.stringify({ path: filePath, owners, lines: 0 }) + '\n');
+    });
+
+    rl.on('close', () => {
+      outputStream.end();
+    });
+
+    outputStream.on('finish', () => {
+      resolve();
+    });
 
     child.on('close', (code) => {
-      outputStream.end();
-      if (code === 0) {
-        resolve();
-      } else {
-        const error = new Error(`github-codeowners process exited with code ${code}`);
+      if (code !== 0) {
+        const error = new Error(`git ls-files exited with code ${code}`);
         if (stderrData) {
           error.message += `\nStderr: ${stderrData.trim()}`;
         }
@@ -54,11 +71,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
 
     child.on('error', (err) => {
       outputStream.end();
-      if (err.code === 'ENOENT') {
-        reject(new Error('yarn command not found. Please ensure yarn and github-codeowners are available'));
-      } else {
-        reject(err);
-      }
+      reject(err);
     });
   });
 }
