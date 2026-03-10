@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Bu etkinlik için kural yüklenirken hata oluştu.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtre ölçütü:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Seçilen zaman aralığında görüntülenemeyecek kadar çok olay var. En son 5000 olay görüntüleniyor. Daha kısa bir zaman aralığı kullanmayı deneyin.",
         "title": "Tüm etkinlikler görüntülenemiyor"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Pano",
         "element": "Bileşen",
+        "link-set": "",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
         "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
@@ -5402,6 +5411,12 @@
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
         "variable-set": "Değişkenler"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Statik anahtar boyutları kullan",
       "name-allow-custom-values": "Özel değer girişine izin ver"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Seçilen panoya gidilemedi. Lütfen tekrar deneyin.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} önce, <person /> tarafından",
       "usage-count_one": "{{count}} panoda kullanılıyor",
       "usage-count_other": "{{count}} panoda kullanılıyor"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Yöneten: Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
-    "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili bölümlerini vurgulamak için önceden tanımlanmış bir renklendirme düzeni kullanın",
-    "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Deneysel. OTel günlükleri görüntülendiğinde, etiketler ve meta verilerden alınan ilgili anahtar-değer çiftleriyle ekstra bir alan gösterilir.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Sürükle ve bırak simgesi",
       "clear-button": "Temizle",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "{{title}} ögesini başlat",
       "description-customize-dashboard-elements-visibility": "Pano ögelerinin görünürlüğünü özelleştir",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Panel yükseklikleri ekran boyutuna uyacak şekilde ayarlanacaktır",
       "label-autofit": "Otomatik sığdır",
       "label-dashboard-links": "Pano bağlantıları",
       "label-display-dashboard-controls": "Pano kontrollerini göster",
+      "label-hide-logo": "",
       "label-mode": "Mod",
       "label-time-and-refresh": "Zaman ve yenileme",
       "label-variables": "Değişkenler",

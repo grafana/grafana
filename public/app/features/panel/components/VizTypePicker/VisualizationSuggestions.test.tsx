@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LoadingState, PanelData, PanelModel, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import * as getAllSuggestionsModule from '../../suggestions/getAllSuggestions';
@@ -511,6 +512,147 @@ describe('VisualizationSuggestions', () => {
     expect(VizSuggestionsInteractions.suggestionApplied).toHaveBeenCalledWith(
       expect.objectContaining({ panelState: PANEL_STATES.NEW_PANEL })
     );
+  });
+
+  it('should filter suggestions by pluginId when name does not match the search query', async () => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Line', hash: 'line-hash', options: {} },
+        { pluginId: 'bargauge', name: 'Gauge', hash: 'gauge-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="time" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggestion-card-line-hash')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('suggestion-card-gauge-hash')).not.toBeInTheDocument();
+  });
+
+  it('should filter suggestions by description when name and pluginId do not match', async () => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        {
+          pluginId: 'barchart',
+          name: 'Bar chart',
+          hash: 'bar-hash',
+          options: {},
+          description: 'shows trends',
+        },
+        { pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="trends" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggestion-card-bar-hash')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('suggestion-card-table-hash')).not.toBeInTheDocument();
+  });
+
+  it('should group suggestions of the same viz type under a header', async () => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Time series', hash: 'ts-hash-1', options: {} },
+        { pluginId: 'timeseries', name: 'Time series (lines)', hash: 'ts-hash-2', options: {} },
+        { pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggestion-card-ts-hash-1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('suggestion-card-ts-hash-2')).toBeInTheDocument();
+    expect(screen.getByTestId('suggestion-card-table-hash')).toBeInTheDocument();
+
+    const timeseriesHeaders = screen
+      .queryAllByText('Time series')
+      .filter((el) => el.closest('[role="button"]') === null);
+    expect(timeseriesHeaders).toHaveLength(1);
+
+    expect(screen.getByText('Unknown visualization type')).toBeInTheDocument();
+  });
+
+  it('should not render groups when newVizSuggestions feature toggle is disabled', async () => {
+    config.featureToggles.newVizSuggestions = false;
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggestion-card-test-hash')).toBeInTheDocument();
+    });
+
+    const allTimeSeries = screen.queryAllByText('Time series');
+    const groupHeaders = allTimeSeries.filter((el) => el.closest('[role="button"]') === null);
+    expect(groupHeaders).toHaveLength(0);
+
+    config.featureToggles.newVizSuggestions = true;
   });
 
   describe('no-data panel list', () => {

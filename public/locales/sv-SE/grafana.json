@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Fel vid laddning av regel för den här händelsen.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrera efter: ",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Den valda tidsperioden har för många händelser att visa. Visar de senaste 5 000 händelserna. Prova att använda en kortare tidsperiod.",
         "title": "Det gick inte att visa alla händelser"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Instrumentpanel",
         "element": "Element",
+        "link-set": "",
         "local-variable": "Lokal variabel",
         "multiple-elements": "Flera element",
         "multiple-elements-delete-text": "Är du säker på att du vill radera dessa element?",
@@ -5402,6 +5411,12 @@
         "tabs": "Flikar",
         "variable": "{{type}}-variabel",
         "variable-set": "Variabler"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Använd dimensioner för statiska nycklar",
       "name-allow-custom-values": "Tillåt anpassade värden"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Det gick inte att navigera till den valda instrumentpanelen. Försök igen.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} av <person />",
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Hanteras av: Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
-    "description-enable-logs-highlighting": "Använd ett fördefinierat färgschema för att markera relevanta delar av loggraderna",
-    "description-show-controls": "Visa kontroller för att hoppa till den sista eller första loggraden och filtrera efter loggnivå",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Experimentellt. När OTel-loggar visas lägger du till ett extra visningsfält med relevanta nyckelvärdespar från etiketter och metadata.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ikonen dra och släpp",
       "clear-button": "Rensa",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "Start {{title}}",
       "description-customize-dashboard-elements-visibility": "Anpassa synlighet för instrumentpanelelement",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Panelhöjden kommer att justeras för att passa skärmstorleken",
       "label-autofit": "Anpassa",
       "label-dashboard-links": "Instrumentpanellänkar",
       "label-display-dashboard-controls": "Visa instrumentpanelkontroller",
+      "label-hide-logo": "",
       "label-mode": "Läge",
       "label-time-and-refresh": "Tid och uppdatering",
       "label-variables": "Variabler",
