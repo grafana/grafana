@@ -1,3 +1,4 @@
+import { getFieldDisplayName } from '../field/fieldState';
 import { Labels } from '../types/data';
 import { DataFrame, FieldType } from '../types/dataFrame';
 
@@ -159,15 +160,15 @@ describe('resolveFacetedFilterNames()', () => {
   ];
 
   it('returns null when selection is empty', () => {
-    expect(resolveFacetedFilterNames(frames, {})).toBeNull();
+    expect(resolveFacetedFilterNames(frames, {}, getFieldDisplayName)).toBeNull();
   });
 
   it('returns null when all selected arrays are empty', () => {
-    expect(resolveFacetedFilterNames(frames, { host: [], region: [] })).toBeNull();
+    expect(resolveFacetedFilterNames(frames, { host: [], region: [] }, getFieldDisplayName)).toBeNull();
   });
 
   it('applies OR within a single key', () => {
-    const result = resolveFacetedFilterNames(frames, { host: ['a', 'b'] });
+    const result = resolveFacetedFilterNames(frames, { host: ['a', 'b'] }, getFieldDisplayName);
     expect(result).toEqual([
       'cpu {host="a", region="us"}',
       'cpu {host="b", region="eu"}',
@@ -177,26 +178,30 @@ describe('resolveFacetedFilterNames()', () => {
   });
 
   it('applies AND across different keys', () => {
-    const result = resolveFacetedFilterNames(frames, { host: ['a'], region: ['eu'] });
+    const result = resolveFacetedFilterNames(frames, { host: ['a'], region: ['eu'] }, getFieldDisplayName);
     expect(result).toEqual([]);
   });
 
   it('matches fields using the __name__ facet', () => {
-    const result = resolveFacetedFilterNames(frames, { [FIELD_NAME_FACET_KEY]: ['cpu'] });
+    const result = resolveFacetedFilterNames(frames, { [FIELD_NAME_FACET_KEY]: ['cpu'] }, getFieldDisplayName);
     expect(result).toEqual(['cpu {host="a", region="us"}', 'cpu {host="b", region="eu"}']);
   });
 
   it('combines __name__ and label filters with AND', () => {
-    const result = resolveFacetedFilterNames(frames, {
-      [FIELD_NAME_FACET_KEY]: ['mem'],
-      host: ['b'],
-    });
+    const result = resolveFacetedFilterNames(
+      frames,
+      {
+        [FIELD_NAME_FACET_KEY]: ['mem'],
+        host: ['b'],
+      },
+      getFieldDisplayName
+    );
     expect(result).toEqual(['mem {host="b", region="eu"}']);
   });
 
   it('excludes fields without the selected label key', () => {
     const mixedFrames = [makeFrame([{ name: 'cpu', labels: { host: 'a' } }, { name: 'unlabeled' }])];
-    const result = resolveFacetedFilterNames(mixedFrames, { host: ['a'] });
+    const result = resolveFacetedFilterNames(mixedFrames, { host: ['a'] }, getFieldDisplayName);
     expect(result).toHaveLength(1);
     expect(result![0]).toContain('cpu');
     expect(result).not.toContainEqual(expect.stringContaining('unlabeled'));

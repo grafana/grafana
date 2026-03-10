@@ -1,6 +1,5 @@
-import { getFieldDisplayName } from '../field/fieldState';
 import { Labels } from '../types/data';
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../types/dataFrame';
 
 /**
  * Synthetic facet key representing the field/metric name as a filterable dimension.
@@ -120,7 +119,11 @@ export function extractFacetedLabels(frames: DataFrame[]): Record<string, string
  * Returns display names of fields matching the faceted selection (OR within key, AND across keys).
  * Returns null when selection is empty.
  */
-export function resolveFacetedFilterNames(frames: DataFrame[], selected: Record<string, string[]>): string[] | null {
+export function resolveFacetedFilterNames(
+  frames: DataFrame[],
+  selected: Record<string, string[]>,
+  getDisplayName: (field: Field, frame: DataFrame, allFrames: DataFrame[]) => string
+): string[] | null {
   const activeKeys = Object.entries(selected).filter(([, values]) => values.length > 0);
 
   if (activeKeys.length === 0) {
@@ -143,7 +146,7 @@ export function resolveFacetedFilterNames(frames: DataFrame[], selected: Record<
       });
 
       if (matches) {
-        names.push(getFieldDisplayName(field, frame, frames));
+        names.push(getDisplayName(field, frame, frames));
       }
     }
   }

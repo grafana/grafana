@@ -118,7 +118,7 @@ export const PlotLegend = memo(function PlotLegend({
       return false;
     }
 
-    const expectedVisible = resolveFacetedFilterNames(data, selectedLabels);
+    const expectedVisible = resolveFacetedFilterNames(data, selectedLabels, getFieldDisplayName);
     if (!expectedVisible) {
       return false;
     }
@@ -135,7 +135,7 @@ export const PlotLegend = memo(function PlotLegend({
   const handleLabelsChange = useCallback(
     (selected: Record<string, string[]>) => {
       setSelectedLabels(selected);
-      const visibleNames = resolveFacetedFilterNames(data, selected);
+      const visibleNames = resolveFacetedFilterNames(data, selected, getFieldDisplayName);
       onToggleSeriesVisibility?.(visibleNames, SeriesVisibilityChangeMode.SetExactly);
     },
     [data, onToggleSeriesVisibility]
