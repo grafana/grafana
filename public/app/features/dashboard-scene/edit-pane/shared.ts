@@ -4,6 +4,7 @@ import { useSessionStorage } from 'react-use';
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  dataLayers,
   LocalValueVariable,
   SceneGridRow,
   SceneObject,
@@ -12,17 +13,21 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
+import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
+import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
@@ -63,6 +68,18 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof VariableAdd) {
     return new VariableAddEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof LinkEdit) {
+    return new LinkEditEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof DashboardDataLayerSet) {
+    return new AnnotationSetEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof dataLayers.AnnotationsDataLayer) {
+    return new AnnotationEditableElement(sceneObj);
   }
 
   return undefined;
@@ -304,7 +321,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

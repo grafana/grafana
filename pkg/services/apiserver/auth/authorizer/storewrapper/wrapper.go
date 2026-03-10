@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -48,6 +49,7 @@ type K8sStorage interface {
 }
 
 var _ rest.Storage = (*Wrapper)(nil)
+var _ k8srest.Watcher = (*Wrapper)(nil)
 
 func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
 	return &Wrapper{inner: store, authorizer: authz}
@@ -190,4 +192,64 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	return updatedObj, nil
+}
+
+func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	if watcher, ok := w.inner.(k8srest.Watcher); ok {
+		// Override the identity to use service identity for the watch operation
+		srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+		return watcher.Watch(srvCtx, options)
+	}
+	return nil, fmt.Errorf("watch is not supported on the underlying storage")
+}
+
+// NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
+// Use this when authorization is handled at the API level and no additional
+// storage-level authorization is needed.
+// This will be used if a service wants to tackle Cluster-scoped resources.
+type NoopAuthorizer struct{}
+
+func (b *NoopAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	return list, nil
+}
+
+// DenyAuthorizer denies all storage operations.
+// Use this as a safe default when no explicit authorizer is provided
+// for cluster-scoped resources. This ensures fail-closed behavior.
+type DenyAuthorizer struct{}
+
+func (d *DenyAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	return ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+	return ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	return ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	return ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	return nil, ErrUnauthorized
 }

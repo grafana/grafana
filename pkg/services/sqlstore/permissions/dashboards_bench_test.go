@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -44,14 +45,14 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 	}}
 
 	features := featuremgmt.WithFeatures()
-	store := setupBenchMark(b, usr, features, numUsers, numDashboards, numFolders, nestingLevel)
+	store, cfg := setupBenchMark(b, usr, features, numUsers, numDashboards, numFolders, nestingLevel)
 
 	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 	require.NoError(b, err)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported, store.GetDialect())
+		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported, store.GetDialect(), cfg.MaxNestedFolderDepth)
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
@@ -65,17 +66,17 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 	}
 }
 
-func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) db.DB {
-	if nestingLevel > folder.MaxNestedFolderDepth {
-		nestingLevel = folder.MaxNestedFolderDepth
-	}
-
+func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.FeatureToggles, numUsers, numDashboards, numFolders, nestingLevel int) (db.DB, *setting.Cfg) {
 	store, cfg := db.InitTestDBWithCfg(b)
+
+	if nestingLevel > cfg.MaxNestedFolderDepth {
+		nestingLevel = cfg.MaxNestedFolderDepth
+	}
 
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store))
 	require.NoError(b, err)
 
-	fStore := folderimpl.ProvideStore(store)
+	fStore := folderimpl.ProvideStore(store, cfg)
 	folderSvc := folderimpl.ProvideService(
 		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore,
 		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
@@ -210,7 +211,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	})
 
 	require.NoError(b, err)
-	return store
+	return store, cfg
 }
 
 func BenchmarkDashboardPermissionFilter_100_100_0_0(b *testing.B) {

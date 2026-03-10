@@ -13,13 +13,20 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 // Templates setup for backward-compatibility queries
@@ -560,7 +567,7 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 		}
 
 		keys = keys[len(batch):]
-		stringKeys := make([]string, len(batch))
+		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())
 		}
@@ -878,10 +885,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		})
 
 		if err != nil {
+			if isRowAlreadyExistsError(err) {
+				return ErrResourceAlreadyExists
+			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
 	case DataActionUpdated:
-		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			GUID:        key.GUID,
 			Group:       key.Group,
@@ -896,31 +906,74 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
+		}
 	case DataActionDeleted:
-		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
 			Name:        key.Name,
+			PreviousRV:  previousRV,
 		})
 
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
-// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
-// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
-// to dates in the future if interpreted as a microsecond timestamp.
-func isSnowflake(rv int64) bool {
-	ts := time.UnixMicro(rv)
-	oneHourFromNow := time.Now().Add(time.Hour)
-	isMicroSecRV := ts.Before(oneHourFromNow)
+func checkLegacyCASConflict(res db.Result, key DataKey) error {
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+	}
+	if rows == 1 {
+		return nil
+	}
+	if rows > 1 {
+		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
+	}
 
-	return !isMicroSecRV
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
+}
+
+func isRowAlreadyExistsError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
+	}
+
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) {
+		return pg.Code == "23505"
+	}
+
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		return pqerr.Code == "23505"
+	}
+
+	var mysqlerr *mysql.MySQLError
+	if errors.As(err, &mysqlerr) {
+		return mysqlerr.Number == 1062
+	}
+
+	return false
+}
+
+// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
+// to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
+func isSnowflake(rv int64) bool {
+	return rv >= 1e18
 }

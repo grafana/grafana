@@ -15,6 +15,11 @@ func NewRoleBindingspecSubject() *RoleBindingspecSubject {
 	return &RoleBindingspecSubject{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingspecSubject.
+func (RoleBindingspecSubject) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecSubject"
+}
+
 // +k8s:openapi-gen=true
 type RoleBindingspecRoleRef struct {
 	// kind of role
@@ -26,6 +31,11 @@ type RoleBindingspecRoleRef struct {
 // NewRoleBindingspecRoleRef creates a new RoleBindingspecRoleRef object.
 func NewRoleBindingspecRoleRef() *RoleBindingspecRoleRef {
 	return &RoleBindingspecRoleRef{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingspecRoleRef.
+func (RoleBindingspecRoleRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingspecRoleRef"
 }
 
 // +k8s:openapi-gen=true
@@ -42,6 +52,11 @@ func NewRoleBindingSpec() *RoleBindingSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpec.
+func (RoleBindingSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpec"
+}
+
 // +k8s:openapi-gen=true
 type RoleBindingSpecSubjectKind string
 
@@ -52,6 +67,11 @@ const (
 	RoleBindingSpecSubjectKindBasicRole      RoleBindingSpecSubjectKind = "BasicRole"
 )
 
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpecSubjectKind.
+func (RoleBindingSpecSubjectKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpecSubjectKind"
+}
+
 // +k8s:openapi-gen=true
 type RoleBindingSpecRoleRefKind string
 
@@ -60,3 +80,8 @@ const (
 	RoleBindingSpecRoleRefKindCoreRole   RoleBindingSpecRoleRefKind = "CoreRole"
 	RoleBindingSpecRoleRefKindGlobalRole RoleBindingSpecRoleRefKind = "GlobalRole"
 )
+
+// OpenAPIModelName returns the OpenAPI model name for RoleBindingSpecRoleRefKind.
+func (RoleBindingSpecRoleRefKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.RoleBindingSpecRoleRefKind"
+}

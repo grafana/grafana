@@ -16,3 +16,7 @@ export interface PanelDataPaneTab extends SceneObject {
   getTabLabel(): string;
   tabId: TabId;
 }
+
+export interface PanelEditorInterface {
+  onToggleQueryEditorVersion: () => void;
+}

@@ -124,10 +124,17 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 // Run implements registry.BackgroundService
 func (r *ZanzanaReconciler) Run(ctx context.Context) error {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return r.Reconcile(ctx)
+	if !r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return nil
 	}
-	return nil
+
+	if r.cfg.ZanzanaReconciler.Mode != setting.ZanzanaReconcilerModeLegacy {
+		r.log.Info("Legacy RBAC reconciler is disabled",
+			"mode", r.cfg.ZanzanaReconciler.Mode)
+		return nil
+	}
+
+	return r.Reconcile(ctx)
 }
 
 // Reconcile schedules as job that will run and reconcile resources between
@@ -140,7 +147,7 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 
 	// FIXME:
 	// We should be a bit graceful about reconciliations so we are not hammering dbs
-	ticker := time.NewTicker(r.cfg.RBAC.ZanzanaReconciliationInterval)
+	ticker := time.NewTicker(r.cfg.ZanzanaReconciler.Interval)
 	for {
 		select {
 		case <-ticker.C:

@@ -1,12 +1,12 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneGridItemLike } from '@grafana/scenes';
+import { isTemplateDashboardAssistantEnabled } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
 
@@ -34,19 +34,6 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 }
 
-export const trackDeleteDashboardElement = (element: EditableDashboardElementInfo) => {
-  switch (element?.typeName) {
-    case 'Row':
-      DashboardInteractions.trackRemoveRowClick();
-      break;
-    case 'Tab':
-      DashboardInteractions.trackRemoveTabClick();
-      break;
-    default:
-      break;
-  }
-};
-
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
     outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
@@ -54,7 +41,7 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   });
 };
 
-export function trackDashboardSceneCreatedOrSaved(
+export async function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
   initialProperties: {
@@ -64,16 +51,6 @@ export function trackDashboardSceneCreatedOrSaved(
     expression_counts?: Record<string, number>;
   }
 ) {
-  // url values for dashboard library experiment
-  const urlParams = new URLSearchParams(window.location.search);
-  const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
-  // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
-  const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
-  const creationOrigin = urlParams.get('creationOrigin') || undefined;
-
-  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
-  const datasourceTypes = getDatasourceTypes(dashboard);
-
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
 
@@ -85,18 +62,7 @@ export function trackDashboardSceneCreatedOrSaved(
       return acc;
     }, {});
 
-  const dashboardLibraryProperties =
-    config.featureToggles.dashboardLibrary ||
-    config.featureToggles.dashboardTemplates ||
-    config.featureToggles.suggestedDashboards
-      ? {
-          isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
-          datasourceTypes,
-          sourceEntryPoint,
-          libraryItemId,
-          creationOrigin,
-        }
-      : {};
+  const dashboardLibraryProperties = await getDashboardLibraryTrackingProperties(dashboard);
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
@@ -130,4 +96,38 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
       isCrossLayout: true,
     });
   }
+}
+
+async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
+  const isDashboardLibraryEnabled =
+    config.featureToggles.dashboardLibrary ||
+    config.featureToggles.dashboardTemplates ||
+    config.featureToggles.suggestedDashboards;
+
+  if (!isDashboardLibraryEnabled) {
+    return {};
+  }
+
+  // url values for dashboard library experiment
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceEntryPoint = urlParams.get('sourceEntryPoint') || undefined;
+  // For community dashboards, use gnetId as libraryItemId if libraryItemId is not present
+  const libraryItemId = urlParams.get('libraryItemId') || urlParams.get('gnetId') || undefined;
+  const creationOrigin = urlParams.get('creationOrigin') || undefined;
+  const assistantSource = urlParams.get('assistantSource') || undefined;
+
+  // Extract datasourceTypes from URL params (supports both community and provisioned dashboards) or dashboard panels
+  const datasourceTypes = getDatasourceTypes(dashboard);
+
+  const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
+
+  return {
+    isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
+    isDashboardTemplatesAssistantEnabled,
+    datasourceTypes,
+    sourceEntryPoint,
+    libraryItemId,
+    creationOrigin,
+    ...(assistantSource && { assistantSource }),
+  };
 }

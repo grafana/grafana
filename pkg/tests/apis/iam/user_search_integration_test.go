@@ -41,8 +41,8 @@ func TestIntegrationUserSearch(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -90,8 +90,8 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -102,22 +102,22 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 
 			tests := []struct {
 				field     string
-				extractor func(iamv0.UserHit) string
+				extractor func(iamv0.GetSearchUsersUserHit) string
 				expected  []string
 			}{
 				{
 					field:     "title",
-					extractor: func(h iamv0.UserHit) string { return h.Title },
+					extractor: func(h iamv0.GetSearchUsersUserHit) string { return h.Title },
 					expected:  []string{"TestUser Alice", "TestUser Bob", "TestUser Charlie", "TestUser Editor", "TestUser Viewer"},
 				},
 				{
 					field:     "login",
-					extractor: func(h iamv0.UserHit) string { return h.Login },
+					extractor: func(h iamv0.GetSearchUsersUserHit) string { return h.Login },
 					expected:  []string{"alice", "bob", "charlie", "testuser-editor", "testuser-viewer"},
 				},
 				{
 					field:     "email",
-					extractor: func(h iamv0.UserHit) string { return h.Email },
+					extractor: func(h iamv0.GetSearchUsersUserHit) string { return h.Email },
 					expected:  []string{"alice@example.com", "bob@example.com", "charlie@example.com", "testuser-editor@example.com", "testuser-viewer@example.com"},
 				},
 			}
@@ -161,11 +161,11 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				// lastSeenAt ASC means oldest date first to match legacy behavior
 				res := searchUsersWithSort(t, helper, "TestUser", "lastSeenAt")
 				require.GreaterOrEqual(t, len(res.Hits), 5)
-				verifyOrder(t, res.Hits, []string{"charlie", "testuser-viewer", "testuser-editor", "alice", "bob"}, func(h iamv0.UserHit) string { return h.Login })
+				verifyOrder(t, res.Hits, []string{"charlie", "testuser-viewer", "testuser-editor", "alice", "bob"}, func(h iamv0.GetSearchUsersUserHit) string { return h.Login })
 
 				res = searchUsersWithSort(t, helper, "TestUser", "-lastSeenAt")
 				require.GreaterOrEqual(t, len(res.Hits), 5)
-				verifyOrder(t, res.Hits, []string{"bob", "alice", "testuser-editor", "testuser-viewer", "charlie"}, func(h iamv0.UserHit) string { return h.Login })
+				verifyOrder(t, res.Hits, []string{"bob", "alice", "testuser-editor", "testuser-viewer", "charlie"}, func(h iamv0.GetSearchUsersUserHit) string { return h.Login })
 			})
 		})
 	}
@@ -189,8 +189,8 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -256,8 +256,8 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -333,6 +333,62 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 					seen[h.Login] = true
 				}
 				require.Len(t, seen, 5)
+			})
+		})
+	}
+}
+
+func TestIntegrationUserSearch_AccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
+				},
+			})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			setupUsers(t, helper)
+
+			t.Run("accesscontrol=true includes permissions on hits", func(t *testing.T) {
+				res := searchUsersWithAccessControl(t, helper, "TestUser", true)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.NotNil(t, hit.AccessControl, "expected AccessControl map on hit %s", hit.Login)
+					require.True(t, hit.AccessControl["org.users:read"], "admin should have org.users:read on %s", hit.Login)
+				}
+			})
+
+			t.Run("accesscontrol absent omits permissions from hits", func(t *testing.T) {
+				res := searchUsers(t, helper, "TestUser")
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param absent", hit.Login)
+				}
+			})
+
+			t.Run("accesscontrol=false omits permissions from hits", func(t *testing.T) {
+				res := searchUsersWithAccessControl(t, helper, "TestUser", false)
+				require.GreaterOrEqual(t, len(res.Hits), 1)
+				for _, hit := range res.Hits {
+					require.Empty(t, hit.AccessControl, "expected no AccessControl on hit %s when param is false", hit.Login)
+				}
 			})
 		})
 	}
@@ -415,11 +471,11 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	time.Sleep(2 * time.Second)
 }
 
-func searchUsers(t *testing.T, helper *apis.K8sTestHelper, query string) *iamv0.GetSearchUsers {
+func searchUsers(t *testing.T, helper *apis.K8sTestHelper, query string) *iamv0.GetSearchUsersResponse {
 	return searchUsersWithSort(t, helper, query, "")
 }
 
-func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) *iamv0.GetSearchUsers {
+func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	if sort != "" {
@@ -429,7 +485,7 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
-	res := &iamv0.GetSearchUsers{}
+	res := &iamv0.GetSearchUsersResponse{}
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
@@ -440,7 +496,26 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 	return res
 }
 
-func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query string, page, limit int) *iamv0.GetSearchUsers {
+func searchUsersWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, query string, accessControl bool) *iamv0.GetSearchUsersResponse {
+	q := url.Values{}
+	q.Set("query", query)
+	q.Set("limit", "100")
+	q.Set("accesscontrol", fmt.Sprintf("%t", accessControl))
+
+	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
+
+	res := &iamv0.GetSearchUsersResponse{}
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: "GET",
+		Path:   path,
+	}, res)
+
+	require.Equal(t, 200, rsp.Response.StatusCode)
+	return res
+}
+
+func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query string, page, limit int) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	q.Set("page", fmt.Sprintf("%d", page))
@@ -450,7 +525,7 @@ func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query strin
 
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
-	res := &iamv0.GetSearchUsers{}
+	res := &iamv0.GetSearchUsersResponse{}
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
@@ -461,7 +536,7 @@ func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query strin
 	return res
 }
 
-func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query string, offset, limit int) *iamv0.GetSearchUsers {
+func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query string, offset, limit int) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	q.Set("offset", fmt.Sprintf("%d", offset))
@@ -471,7 +546,7 @@ func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query strin
 
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
-	res := &iamv0.GetSearchUsers{}
+	res := &iamv0.GetSearchUsersResponse{}
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
@@ -518,7 +593,7 @@ func searchUsersLegacy(t *testing.T, helper *apis.K8sTestHelper, query string, s
 // verifyOrder checks that the extracted values from hits are in the expected order.
 // It filters hits to only include those with expected values, because search returns more results than just the test users.
 // Like other users in the system that have been created by the test framework.
-func verifyOrder(t *testing.T, hits []iamv0.UserHit, expectedValues []string, extractor func(iamv0.UserHit) string) {
+func verifyOrder(t *testing.T, hits []iamv0.GetSearchUsersUserHit, expectedValues []string, extractor func(iamv0.GetSearchUsersUserHit) string) {
 	// Filter hits to only include expected values
 	var actualValues []string
 	expectedSet := make(map[string]bool)

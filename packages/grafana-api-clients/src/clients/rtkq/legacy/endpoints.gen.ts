@@ -28,7 +28,6 @@ export const addTagTypes = [
   'invites',
   'preferences',
   'orgs',
-  'playlists',
   'query_history',
   'recording_rules',
   'reports',
@@ -883,7 +882,12 @@ const injectedRtkApi = api
         providesTags: ['datasources'],
       }),
       getDataSourceCacheConfig: build.query<GetDataSourceCacheConfigApiResponse, GetDataSourceCacheConfigApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache` }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache`,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         providesTags: ['enterprise'],
       }),
       setDataSourceCacheConfig: build.mutation<SetDataSourceCacheConfigApiResponse, SetDataSourceCacheConfigApiArg>({
@@ -891,6 +895,9 @@ const injectedRtkApi = api
           url: `/datasources/${queryArg.dataSourceUid}/cache`,
           method: 'POST',
           body: queryArg.cacheConfigSetter,
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
         }),
         invalidatesTags: ['enterprise'],
       }),
@@ -899,11 +906,23 @@ const injectedRtkApi = api
         invalidatesTags: ['enterprise'],
       }),
       disableDataSourceCache: build.mutation<DisableDataSourceCacheApiResponse, DisableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/disable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/disable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       enableDataSourceCache: build.mutation<EnableDataSourceCacheApiResponse, EnableDataSourceCacheApiArg>({
-        query: (queryArg) => ({ url: `/datasources/${queryArg.dataSourceUid}/cache/enable`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/datasources/${queryArg.dataSourceUid}/cache/enable`,
+          method: 'POST',
+          params: {
+            dataSourceType: queryArg.dataSourceType,
+          },
+        }),
         invalidatesTags: ['enterprise'],
       }),
       queryMetricsWithExpressions: build.mutation<
@@ -1247,40 +1266,6 @@ const injectedRtkApi = api
           body: queryArg.updateOrgUserCommand,
         }),
         invalidatesTags: ['orgs'],
-      }),
-      searchPlaylists: build.query<SearchPlaylistsApiResponse, SearchPlaylistsApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists`,
-          params: {
-            query: queryArg.query,
-            limit: queryArg.limit,
-          },
-        }),
-        providesTags: ['playlists'],
-      }),
-      createPlaylist: build.mutation<CreatePlaylistApiResponse, CreatePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists`, method: 'POST', body: queryArg.createPlaylistCommand }),
-        invalidatesTags: ['playlists'],
-      }),
-      deletePlaylist: build.mutation<DeletePlaylistApiResponse, DeletePlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylist: build.query<GetPlaylistApiResponse, GetPlaylistApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}` }),
-        providesTags: ['playlists'],
-      }),
-      updatePlaylist: build.mutation<UpdatePlaylistApiResponse, UpdatePlaylistApiArg>({
-        query: (queryArg) => ({
-          url: `/playlists/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.updatePlaylistCommand,
-        }),
-        invalidatesTags: ['playlists'],
-      }),
-      getPlaylistItems: build.query<GetPlaylistItemsApiResponse, GetPlaylistItemsApiArg>({
-        query: (queryArg) => ({ url: `/playlists/${queryArg.uid}/items` }),
-        providesTags: ['playlists'],
       }),
       viewPublicDashboard: build.query<ViewPublicDashboardApiResponse, ViewPublicDashboardApiArg>({
         query: (queryArg) => ({ url: `/public/dashboards/${queryArg.accessToken}` }),
@@ -2762,10 +2747,12 @@ export type CallDatasourceResourceWithUidApiArg = {
 export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
 export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
@@ -2775,10 +2762,12 @@ export type CleanDataSourceCacheApiArg = {
 export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | QueryDataResponseContainsTheResultsFromAQueryDataRequest
@@ -3088,34 +3077,6 @@ export type UpdateOrgUserApiArg = {
   orgId: number;
   userId: number;
   updateOrgUserCommand: UpdateOrgUserCommand;
-};
-export type SearchPlaylistsApiResponse = /** status 200 (empty) */ Playlists;
-export type SearchPlaylistsApiArg = {
-  query?: string;
-  /** in:limit */
-  limit?: number;
-};
-export type CreatePlaylistApiResponse = /** status 200 (empty) */ Playlist;
-export type CreatePlaylistApiArg = {
-  createPlaylistCommand: CreatePlaylistCommand;
-};
-export type DeletePlaylistApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type DeletePlaylistApiArg = {
-  uid: string;
-};
-export type GetPlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type GetPlaylistApiArg = {
-  uid: string;
-};
-export type UpdatePlaylistApiResponse = /** status 200 (empty) */ PlaylistDto;
-export type UpdatePlaylistApiArg = {
-  uid: string;
-  updatePlaylistCommand: UpdatePlaylistCommand;
-};
-export type GetPlaylistItemsApiResponse = /** status 200 (empty) */ PlaylistItemDto[];
-export type GetPlaylistItemsApiArg = {
-  uid: string;
 };
 export type ViewPublicDashboardApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type ViewPublicDashboardApiArg = {
@@ -4090,6 +4051,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5344,58 +5306,6 @@ export type SearchOrgUsersQueryResult = {
   perPage?: number;
   totalCount?: number;
 };
-export type Playlist = {
-  id?: number;
-  interval?: string;
-  name?: string;
-  uid?: string;
-};
-export type Playlists = Playlist[];
-export type PlaylistItem = {
-  Id?: number;
-  PlaylistId?: number;
-  order?: number;
-  title?: string;
-  type?: string;
-  value?: string;
-};
-export type CreatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-};
-export type PlaylistItemDto = {
-  /** Title is an unused property -- it will be removed in the future */
-  title?: string;
-  /** Type of the item. */
-  type?: string;
-  /** Value depends on type and describes the playlist item.
-    
-    dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
-    is not portable as the numerical identifier is non-deterministic between different instances.
-    Will be replaced by dashboard_by_uid in the future. (deprecated)
-    dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
-    dashboards behind the tag will be added to the playlist.
-    dashboard_by_uid: The value is the dashboard UID */
-  value?: string;
-};
-export type PlaylistDto = {
-  /** Interval sets the time between switching views in a playlist. */
-  interval?: string;
-  /** The ordered list of items that the playlist will iterate over. */
-  items?: PlaylistItemDto[];
-  /** Name of the playlist. */
-  name?: string;
-  /** Unique playlist identifier. Generated on creation, either by the
-    creator of the playlist of by the application. */
-  uid?: string;
-};
-export type UpdatePlaylistCommand = {
-  interval?: string;
-  items?: PlaylistItem[];
-  name?: string;
-  uid?: string;
-};
 export type DataSourceRef = {
   /** The plugin type-id */
   type?: string;
@@ -5740,20 +5650,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  RawFragment?: string;
-  RawPath?: string;
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5898,7 +5795,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5920,7 +5817,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey
@@ -6721,15 +6618,6 @@ export const {
   useLazySearchOrgUsersQuery,
   useRemoveOrgUserMutation,
   useUpdateOrgUserMutation,
-  useSearchPlaylistsQuery,
-  useLazySearchPlaylistsQuery,
-  useCreatePlaylistMutation,
-  useDeletePlaylistMutation,
-  useGetPlaylistQuery,
-  useLazyGetPlaylistQuery,
-  useUpdatePlaylistMutation,
-  useGetPlaylistItemsQuery,
-  useLazyGetPlaylistItemsQuery,
   useViewPublicDashboardQuery,
   useLazyViewPublicDashboardQuery,
   useGetPublicAnnotationsQuery,

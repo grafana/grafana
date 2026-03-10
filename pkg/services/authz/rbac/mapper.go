@@ -27,6 +27,8 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
+	// Resource returns the K8s resource name for this mapping.
+	Resource() string
 }
 
 type translation struct {
@@ -86,13 +88,23 @@ func (t translation) SkipScope(verb string) bool {
 	return false
 }
 
+func (t translation) Resource() string {
+	return t.resource
+}
+
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource string) (Mapping, bool)
+	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
+	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
+	// Returns ("", false) if no translation is found.
+	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
+	// GetGroups returns all registered group names
+	GetGroups() []string
 }
 
 type mapper map[string]map[string]translation
@@ -291,6 +303,17 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"datasource.grafana.app": { // duplicate the query group here
+			"query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
+		},
 		"*.datasource.grafana.app": {
 			"datasources": newResourceTranslation("datasources", "uid", false, nil),
 		},
@@ -354,6 +377,23 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	return &t, true
 }
 
+func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	groupKey, ok := m.findGroupKey(group)
+	if !ok {
+		return "", false
+	}
+	resources := m[groupKey]
+	if _, ok := resources[resource]; ok {
+		return resource, true
+	}
+	for apiResource, t := range resources {
+		if t.Resource() == resource {
+			return apiResource, true
+		}
+	}
+	return "", false
+}
+
 func (m mapper) GetAll(group string) []Mapping {
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
@@ -368,4 +408,12 @@ func (m mapper) GetAll(group string) []Mapping {
 	}
 
 	return translations
+}
+
+func (m mapper) GetGroups() []string {
+	groups := make([]string, 0, len(m))
+	for group := range m {
+		groups = append(groups, group)
+	}
+	return groups
 }

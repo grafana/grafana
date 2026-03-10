@@ -7,6 +7,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   getDataSourceByUid,
   convertK8sDatasourceSettingsToLegacyDatasourceSettings,
+  convertLegacyDatasourceSettingsToK8sDatasourceSettings,
   DataSourceSettingsK8s,
   K8sMetadata,
   DatasourceInstanceK8sSpec,
@@ -42,6 +43,62 @@ describe('Datasources / API', () => {
     });
   });
   describe('convertK8sDatasourceSettingsToLegacyDatasourceSettings()', () => {
+    it('should convert k8s datasource to legacy datasource', () => {
+      let dsLegacySettings: DataSourceSettings = {
+        id: 42,
+        uid: 'fortytwo',
+        orgId: 1,
+        name: 'slartybartfast',
+        typeLogoUrl: '',
+        type: 'marvin',
+        typeName: '',
+        access: 'all areas',
+        url: 'example.com',
+        user: '',
+        database: '',
+        basicAuth: true,
+        basicAuthUser: 'zaphod',
+        isDefault: true,
+        jsonData: { authType: 'bar' },
+        secureJsonFields: {
+          basicAuthPassword: true,
+        },
+        readOnly: true,
+        withCredentials: false,
+      };
+
+      let k8sMetadata: K8sMetadata = {
+        name: 'fortytwo',
+        namespace: 'default',
+        uid: 'fortytwo',
+        resourceVersion: '',
+        generation: 42,
+        creationTimestamp: '1234',
+        labels: { 'grafana.app/deprecatedInternalID': '42' },
+        annotations: {},
+      };
+      let k8sSpec: DatasourceInstanceK8sSpec = {
+        access: 'all areas',
+        jsonData: { authType: 'bar' },
+        title: 'slartybartfast',
+        url: 'example.com',
+        basicAuth: true,
+        basicAuthUser: 'zaphod',
+        isDefault: true,
+        readOnly: true,
+      };
+      let dsK8sSettings: DataSourceSettingsK8s = {
+        kind: 'DataSource',
+        metadata: k8sMetadata,
+        spec: k8sSpec,
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+        secure: { basicAuthPassword: { foo: 'bar' } },
+      };
+      expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
+    });
+  });
+
+  describe('convertLegacyDatasourceSettingsToK8sDatasourceSettings()', () => {
     it('should convert legacy datasource to k8s datasource', () => {
       let dsLegacySettings: DataSourceSettings = {
         id: 42,
@@ -60,17 +117,13 @@ describe('Datasources / API', () => {
         isDefault: true,
         jsonData: { authType: 'bar' },
         secureJsonFields: {},
-        readOnly: false,
+        readOnly: true,
         withCredentials: false,
       };
-
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
-        uid: 'fortytwo',
-        resourceVersion: 'fortytwo',
-        generation: 42,
-        creationTimestamp: '1234',
+        resourceVersion: '',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
         annotations: {},
       };
@@ -82,14 +135,19 @@ describe('Datasources / API', () => {
         basicAuth: true,
         basicAuthUser: 'zaphod',
         isDefault: true,
+        readOnly: true,
       };
       let dsK8sSettings: DataSourceSettingsK8s = {
-        kind: 'thingie',
+        kind: 'DataSource',
         metadata: k8sMetadata,
         spec: k8sSpec,
         apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
       };
-      expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
+      let k8sNamespace = 'default';
+      let k8sVersion = 'v0alpha1';
+      expect(
+        convertLegacyDatasourceSettingsToK8sDatasourceSettings(dsLegacySettings, k8sNamespace, k8sVersion)
+      ).toEqual(dsK8sSettings);
     });
   });
 });

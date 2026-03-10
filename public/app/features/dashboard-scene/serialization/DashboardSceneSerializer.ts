@@ -1,6 +1,6 @@
 import { logWarning } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -216,7 +216,6 @@ export class V1DashboardSerializer
   onSaveComplete(saveModel: Dashboard, result: SaveDashboardResponseDTO): void {
     this.initialSaveModel = {
       ...saveModel,
-      id: result.id,
       uid: result.uid,
       version: result.version,
     };

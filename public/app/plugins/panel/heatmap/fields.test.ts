@@ -1,14 +1,43 @@
-import { createTheme } from '@grafana/data';
+import { createTheme, dateTime, FieldType } from '@grafana/data';
 
-import { Options } from './types';
+import { prepareHeatmapData } from './fields';
+import { Options } from './panelcfg.gen';
 
 const theme = createTheme();
 
 describe('Heatmap data', () => {
   const options: Options = {} as Options;
 
-  it('simple test stub', () => {
-    expect(theme).toBeDefined();
-    expect(options).toBeDefined();
+  const tpl = {
+    frames: [],
+    annotations: [],
+    options,
+    palette: [],
+    theme,
+    replaceVariables: undefined,
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+  };
+
+  it('omit empty series array', () => {
+    const info = prepareHeatmapData({
+      ...tpl,
+      frames: [],
+    });
+
+    expect(info).toEqual({});
+  });
+
+  it('omit frame.length: 0', () => {
+    const info = prepareHeatmapData({
+      ...tpl,
+      frames: [
+        {
+          fields: [{ name: '', config: {}, type: FieldType.time, values: [] }],
+          length: 0,
+        },
+      ],
+    });
+
+    expect(info).toEqual({});
   });
 });

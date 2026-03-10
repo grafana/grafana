@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,12 +21,14 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrati
 var logger = log.New("storage.unified.migrations")
 
 type UnifiedStorageMigrationServiceImpl struct {
-	migrator UnifiedMigrator
-	cfg      *setting.Cfg
-	sqlStore db.DB
-	kv       kvstore.KVStore
-	client   resource.ResourceClient
-	registry *MigrationRegistry
+	migrator     UnifiedMigrator
+	tableLocker  MigrationTableLocker
+	tableRenamer MigrationTableRenamer
+	cfg          *setting.Cfg
+	sqlStore     db.DB
+	kv           kvstore.KVStore
+	client       resource.ResourceClient
+	registry     *MigrationRegistry
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -33,6 +36,7 @@ var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationService
 // ProvideUnifiedStorageMigrationService is a Wire provider that creates the migration service.
 func ProvideUnifiedStorageMigrationService(
 	migrator UnifiedMigrator,
+	sql legacysql.LegacyDatabaseProvider,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
@@ -40,31 +44,45 @@ func ProvideUnifiedStorageMigrationService(
 	registry *MigrationRegistry,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
-		migrator: migrator,
-		cfg:      cfg,
-		sqlStore: sqlStore,
-		kv:       kv,
-		client:   client,
-		registry: registry,
+		migrator:     migrator,
+		tableLocker:  newTableLocker(sqlStore, sql),
+		tableRenamer: newTableRenamer(string(sqlStore.GetDBType()), logger, cfg.RenameWaitDeadline),
+		cfg:          cfg,
+		sqlStore:     sqlStore,
+		kv:           kv,
+		client:       client,
+		registry:     registry,
 	}
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// skip migrations if disabled in config
-	if p.cfg.DisableDataMigrations {
+	// skip migrations if disabled in config or storage type is not "unified"
+	if p.cfg.DisableDataMigrations || p.cfg.UnifiedStorageType() != "unified" {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
-		logger.Info("Data migrations are disabled, skipping")
+		logger.Info("Data migrations are disabled, skipping", "disableDataMigrations", p.cfg.DisableDataMigrations, "unifiedStorageType", p.cfg.UnifiedStorageType())
 		return nil
 	}
 
 	logger.Info("Running migrations for unified storage")
 	metrics.MUnifiedStorageMigrationStatus.Set(3)
-	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client, p.registry)
+	return RegisterMigrations(ctx, p.migrator, p.tableLocker, p.tableRenamer, p.cfg, p.sqlStore, p.client, p.registry)
+}
+
+// EnsureMigrationLogTable creates the unifiedstorage_migration_log table if it doesn't exist.
+func EnsureMigrationLogTable(ctx context.Context, sqlStore db.DB, cfg *setting.Cfg) error {
+	mg := sqlstoremigrator.NewScopedMigrator(sqlStore.GetEngine(), cfg, "unifiedstorage")
+	mg.AddCreateMigration()
+	sec := cfg.Raw.Section("database")
+	return mg.RunMigrations(ctx,
+		sec.Key("migration_locking").MustBool(true),
+		sec.Key("locking_attempt_timeout_sec").MustInt())
 }
 
 func RegisterMigrations(
 	ctx context.Context,
 	migrator UnifiedMigrator,
+	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	client resource.ResourceClient,
@@ -83,7 +101,7 @@ func RegisterMigrations(
 		return err
 	}
 
-	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore, registry); err != nil {
+	if err := registerMigrations(cfg, mg, migrator, tableLocker, tableRenamer, client, registry); err != nil {
 		return err
 	}
 
@@ -91,9 +109,19 @@ func RegisterMigrations(
 	sec := cfg.Raw.Section("database")
 	db := mg.DBEngine.DB().DB
 	maxOpenConns := db.Stats().MaxOpenConnections
-	if maxOpenConns <= 2 {
-		// migrations require at least 3 connections due to extra GRPC connections
-		db.SetMaxOpenConns(3)
+	maxConcurrentRenameConns := 0
+	if mg.Dialect.DriverName() == sqlstoremigrator.MySQL {
+		for _, m := range registry.All() {
+			maxConcurrentRenameConns = max(maxConcurrentRenameConns, len(m.RenameTables))
+		}
+	}
+	// Migrations require multiple concurrent connections:
+	// 1 for advisory lock session, 1 for migration session,
+	// 1 for READ lock (MySQL), 1 for legacy table reads (migrators),
+	// and 1 per concurrent RENAME connection on MySQL
+	neededConns := 4 + maxConcurrentRenameConns
+	if maxOpenConns < neededConns {
+		db.SetMaxOpenConns(neededConns)
 		defer db.SetMaxOpenConns(maxOpenConns)
 	}
 	err := mg.RunMigrations(ctx,

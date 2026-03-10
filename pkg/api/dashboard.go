@@ -12,6 +12,10 @@ import (
 	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	claims "github.com/grafana/authlib/types"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -19,8 +23,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -83,7 +89,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	c.Req = c.Req.WithContext(ctx)
 
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -250,7 +256,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
 }
 
@@ -300,19 +305,11 @@ func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) stri
 	return ident.GetLogin()
 }
 
-func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
+func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, response.Response) {
 	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
 	defer span.End()
 
-	var query dashboards.GetDashboardQuery
-
-	if len(uid) > 0 {
-		query = dashboards.GetDashboardQuery{UID: uid, ID: id, OrgID: orgID}
-	} else {
-		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
-	}
-
-	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: orgID})
 	if err != nil {
 		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
 	}
@@ -344,7 +341,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	uid := web.Params(c.Req)[":uid"]
 
 	var rsp response.Response
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -411,6 +408,48 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for saving folders.", nil)
 	}
 
+	spec, err := cmd.Dashboard.Map()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to read dashboard", err)
+	}
+
+	// Check for v2 schema elements without a k8s style wrapper
+	if dashboards.LooksLikeV2Spec(spec) {
+		return response.Error(http.StatusBadRequest, dashboards.LooksLikeV2SpecMessage+
+			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
+	}
+
+	// Items with metadata, spec, etc
+	if dashboards.LooksLikeK8sResource(spec) {
+		obj := &unstructured.Unstructured{Object: spec}
+		apiVersion := obj.GetAPIVersion()
+		switch {
+		case strings.HasPrefix(apiVersion, dashboardsV1.GROUP):
+			if _, ok, err := unstructured.NestedInt64(spec, "id"); ok || err != nil {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must not include an id on the root element", nil)
+			}
+			if _, ok := spec["spec"]; !ok {
+				return response.Error(http.StatusBadRequest, "The k8s style dashboard must include the dashboard contents in the spec property", nil)
+			}
+			uid, ok, _ := unstructured.NestedString(spec, "uid")
+			if ok {
+				delete(obj.Object, "uid")
+				obj.SetName(uid) // overwrite the incoming name -- this might happen from TF providers
+			}
+			hs.log.Warn("DEPRECATION WARNING: Accepting k8s style dashboard in legacy /api/dashboards/db.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", "dashboard", obj.GetName())
+			return hs.saveDashboardViaK8s(c, cmd, obj)
+
+		case apiVersion == "":
+			return response.Error(http.StatusBadRequest, "Dashboard appears to be a k8s style resource, but is missing an explicit apiVersion.", nil)
+		}
+		return response.Error(http.StatusBadRequest, "The dashboard payload references a non dashboard apiVersion.  This should be sent to the requested api directly", nil)
+	}
+
+	_, found := spec["title"]
+	if !found {
+		return response.Error(http.StatusBadRequest, "Dashboard is missing required title property", nil)
+	}
+
 	ctx = c.Req.Context()
 
 	var userID int64
@@ -466,7 +505,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"status":    "success",
 		"slug":      dashboard.Slug,
@@ -476,6 +514,153 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		"url":       dashboard.GetURL(),
 		"folderUid": dashboard.FolderUID,
 	})
+}
+
+func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand, obj *unstructured.Unstructured) response.Response {
+	gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Dashboard appears to be a full k8s style resource.  Please use the /apis/dashboard.grafana.app/ API to manage this resource", err)
+	}
+
+	title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+	if title == "" {
+		return response.Error(http.StatusBadRequest, "Dashboard spec is missing required title property", nil)
+	}
+
+	ctx := c.Req.Context()
+	namespace := hs.namespacer(c.GetOrgID())
+	tmp, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create k8s client", err)
+	}
+	client := tmp.Resource(gv.WithResource(dashboardsV1.DASHBOARD_RESOURCE)).Namespace(namespace)
+
+	obj.SetKind("Dashboard") // Writing to the dashboard API
+	obj.SetNamespace(namespace)
+	obj.SetAnnotations(map[string]string{}) // clear any annotations
+	obj.SetLabels(map[string]string{})      // clear any labels
+	delete(obj.Object, "status")
+	delete(obj.Object, "access") // can exist if you copied a /dto object
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to read grafana metadata", err)
+	}
+	meta.SetResourceVersionInt64(0) // remove
+	meta.SetFolder(cmd.FolderUID)
+	meta.SetMessage(cmd.Message)
+	meta.SetUID("")
+	meta.SetResourceVersion("") // remove
+	meta.SetFinalizers(nil)
+	meta.SetManagedFields(nil)
+
+	name := obj.GetName()
+	if name == "" {
+		name, _, _ = unstructured.NestedString(obj.Object, "spec", "uid")
+	}
+
+	// Check (and remove) any legacy internal IDs
+	var old *unstructured.Unstructured
+	internalID, err := nestedInternalID(obj.Object)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	if internalID > 0 && name == "" {
+		found, err := client.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, internalID),
+			Limit:         2,
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "unable to lookup previous version", err)
+		}
+		if len(found.Items) == 0 {
+			return response.Error(http.StatusBadRequest,
+				fmt.Sprintf("The payload includes an internal identifier (%d) that is not found", internalID), nil)
+		}
+
+		old = &found.Items[0]
+		name = old.GetName()
+		meta.SetName(name)
+		if !cmd.Overwrite {
+			return response.Error(http.StatusConflict,
+				"Dashboard with the same internal ID already exists. Use overwrite flag to update.", nil)
+		}
+	}
+
+	// Never send internal ID or UID in the body
+	unstructured.RemoveNestedField(obj.Object, "spec", "id")
+	unstructured.RemoveNestedField(obj.Object, "spec", "uid")
+
+	isCreate := name == ""
+	if isCreate {
+		obj.SetGenerateName("a") // prefix
+	} else if old == nil {
+		// Read the old value first
+		old, err = client.Get(ctx, name, metav1.GetOptions{})
+		if err == nil && old != nil {
+			if !cmd.Overwrite {
+				return response.Error(http.StatusConflict,
+					"Dashboard already exists. Use overwrite flag to update.", nil)
+			}
+		} else if err != nil && k8serrors.IsNotFound(err) {
+			isCreate = true // but name exists
+		} else {
+			return response.Error(http.StatusInternalServerError,
+				"Failed to read existing dashboard", err)
+		}
+	}
+
+	validation := "Strict"
+	if strings.HasPrefix(gv.Version, "v0") {
+		validation = "Ignore" // v0 can be anything
+	}
+	var dash *unstructured.Unstructured
+	if isCreate {
+		dash, err = client.Create(ctx, obj, metav1.CreateOptions{
+			FieldValidation: validation,
+		})
+	} else {
+		dash, err = client.Update(ctx, obj, metav1.UpdateOptions{
+			FieldValidation: validation,
+		})
+	}
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+	}
+
+	meta, err = utils.MetaAccessor(dash)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed get meta accessor", err)
+	}
+
+	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
+	slug := slugify.Slugify(title)
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"status":    "success",
+		"slug":      slug,
+		"version":   meta.GetGeneration(),
+		"id":        meta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":       meta.GetName(),
+		"url":       dashboards.GetDashboardFolderURL(false, meta.GetName(), slug),
+		"folderUid": meta.GetFolder(),
+	})
+}
+
+func nestedInternalID(obj map[string]interface{}) (int64, error) {
+	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
+	if !found || err != nil {
+		return 0, nil
+	}
+	i, ok := val.(int64)
+	if ok {
+		return i, nil
+	}
+	n, ok := val.(json.Number)
+	if ok {
+		return n.Int64()
+	}
+	return 0, fmt.Errorf("unsupported ID type: %T", val)
 }
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
@@ -584,21 +769,6 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	dash.Set("panels", panels)
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions dashboards versions getDashboardVersionsByID
-//
-// Gets all existing versions for the dashboard.
-//
-// Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionsResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
 // swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID
 //
 // Gets all existing versions for the dashboard using UID.
@@ -613,20 +783,13 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboardVersions")
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
-
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
-
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -694,21 +857,6 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	})
 }
 
-// swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByID
-//
-// Get a specific dashboard version.
-//
-// Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: dashboardVersionResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-
 // swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboards versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
@@ -724,20 +872,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var dashID int64
-
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 
 	var dash *dashboards.Dashboard
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
 	if rsp != nil {
 		return rsp
 	}

@@ -319,7 +319,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
 
-				teamIds := make([]int64, 0)
+				teamIds := make([]int64, 0, len(allTeamsQueryResult.Teams))
 				for _, team := range allTeamsQueryResult.Teams {
 					teamIds = append(teamIds, team.ID)
 				}
@@ -331,6 +331,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+			})
+
+			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
+				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+				require.NoError(t, err)
+				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+				teamUIDs := make([]string, 0, len(allTeamsQueryResult.Teams))
+				for _, tm := range allTeamsQueryResult.Teams {
+					teamUIDs = append(teamUIDs, tm.UID)
+				}
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: teamUIDs}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Len(t, queryResult.Teams, 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
+				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {

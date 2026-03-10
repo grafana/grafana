@@ -333,8 +333,7 @@ export const withinQueryHistory = () => {
 };
 
 export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: /Drawer title/ });
-  within(container).getByText('Query library');
+  const container = screen.getByRole('dialog', { name: /Query library/ });
   return within(container);
 };
 

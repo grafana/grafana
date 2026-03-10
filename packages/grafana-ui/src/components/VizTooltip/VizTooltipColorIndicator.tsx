@@ -38,7 +38,6 @@ export const VizTooltipColorIndicator = ({
       <SeriesIcon
         color={color}
         lineStyle={lineStyle}
-        noMargin
         className={cx(
           position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
           styles.seriesIndicator

@@ -494,11 +494,5 @@
         }
       }
     ]
-  },
-  "status": {
-    "conversion": {
-      "failed": false,
-      "storedVersion": "v2beta1"
-    }
   }
 }
