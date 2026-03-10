@@ -384,6 +384,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     : { Wrapper: React.Fragment };
 
+  const icon = selectedItem?.icon ?? prefixIcon;
   return (
     <Wrapper {...wrapperProps}>
       <InputComponent
@@ -391,7 +392,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         onBlur={onBlur}
-        prefix={prefixIcon && <Icon name={prefixIcon} />}
+        prefix={icon && <Icon name={icon} />}
         disabled={disabled}
         invalid={invalid}
         className={styles.input}

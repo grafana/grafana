@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -267,7 +268,7 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	Receiver                  = config.Receiver
+	Receiver                  = definition.Receiver
 	Regexp                    = config.Regexp
 	Matchers                  = config.Matchers
 	MatchRegexps              = config.MatchRegexps
@@ -770,7 +771,7 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 
 	for _, receiver := range prometheusConfig.Receivers {
 		config.Receivers = append(config.Receivers, &PostableApiReceiver{
-			Receiver: receiver,
+			Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver),
 		})
 	}
 

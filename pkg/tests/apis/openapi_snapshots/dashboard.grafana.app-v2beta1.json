@@ -1119,6 +1119,13 @@
             "type": "string",
             "default": ""
           },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "spec": {
             "default": {},
             "allOf": [
@@ -1192,6 +1199,9 @@
           "name": {
             "type": "string",
             "default": ""
+          },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           },
           "skipUrlSync": {
             "type": "boolean",
@@ -1672,6 +1682,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "query": {
             "type": "string",
             "default": ""
@@ -1793,6 +1806,9 @@
               ]
             }
           },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "query": {
             "type": "string",
             "default": ""
@@ -1840,6 +1856,14 @@
             "description": "If true, includes current time range in the link as query params",
             "type": "boolean",
             "default": false
+          },
+          "origin": {
+            "description": "The source that registered the link (if any)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+              }
+            ]
           },
           "placement": {
             "description": "Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.",
@@ -1924,6 +1948,13 @@
             "type": "string",
             "default": ""
           },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "spec": {
             "type": "object",
             "additionalProperties": {
@@ -1968,6 +1999,25 @@
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef": {
+        "description": "Source information for controls (e.g. variables or links)",
+        "type": "object",
+        "required": [
+          "type",
+          "group"
+        ],
+        "properties": {
+          "group": {
+            "description": "The plugin type-id",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -2057,6 +2107,9 @@
                 }
               ]
             }
+          },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           },
           "pluginId": {
             "type": "string",
@@ -2471,6 +2524,13 @@
             "type": "string",
             "default": ""
           },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "spec": {
             "default": {},
             "allOf": [
@@ -2532,6 +2592,9 @@
                 }
               ]
             }
+          },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           },
           "skipUrlSync": {
             "type": "boolean",
@@ -2668,6 +2731,9 @@
                 }
               ]
             }
+          },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           },
           "query": {
             "type": "string",
@@ -3186,6 +3252,9 @@
               ]
             }
           },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "placeholder": {
             "type": "string"
           },
@@ -3387,6 +3456,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
+            }
           }
         }
       },
@@ -3633,6 +3708,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -3734,6 +3812,12 @@
           },
           "title": {
             "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind"
+            }
           }
         }
       },
@@ -3791,6 +3875,9 @@
           "name": {
             "type": "string",
             "default": ""
+          },
+          "origin": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDatasourceControlSourceRef"
           },
           "query": {
             "type": "string",

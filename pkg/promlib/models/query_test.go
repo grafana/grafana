@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -153,31 +154,12 @@ func TestParse(t *testing.T) {
 			"intervalMs": 60000,
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
+		q.MaxDataPoints = 2110
 
 		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
-		require.Equal(t, 120*time.Second, res.Step)
-	})
-
-	t.Run("parsing query model with ${__interval} variable", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(48 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "rate(ALERTS{job=\"test\" [${__interval}]})",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"interval": "1m",
-			"intervalMs": 60000,
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", res.Expr)
+		require.Equal(t, 60*time.Second, res.Step)
 	})
 
 	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {

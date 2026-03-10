@@ -28,6 +28,10 @@ const (
 	// This is an aggregated condition that can track multiple quota types (e.g., dashboards synced by repository).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
 	ConditionTypeResourceQuota = "ResourceQuota"
+
+	// ConditionTypePullStatus indicates the outcome of the last completed pull operation.
+	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
+	ConditionTypePullStatus = "PullStatus"
 )
 
 // Condition reasons for the Ready condition
@@ -53,6 +57,18 @@ const (
 	// User may need to take action (upgrade plan, reduce load). Automation should retry with
 	// longer backoff and respect Retry-After headers.
 	ReasonRateLimited = "RateLimited"
+)
+
+// Condition reasons for the PullStatus condition
+const (
+	// ReasonSuccess indicates the operation completed successfully.
+	ReasonSuccess = "Success"
+	// ReasonFailure indicates the operation failed due to an error.
+	ReasonFailure = "Failure"
+	// ReasonCompletedWithWarnings indicates the operation completed but with non-critical issues.
+	ReasonCompletedWithWarnings = "CompletedWithWarnings"
+	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
+	ReasonResourceInvalid = "ResourceInvalid"
 )
 
 // Condition reasons for the Quota condition

@@ -48,45 +48,11 @@ jobs:
         # We don't need more than this since it has to wait for the other tests.
         shard: [
           1/4, 2/4, 3/4, 4/4,
-        ]
-      fail-fast: false
-
-    name: Sqlite (${{ matrix.shard }})
-    runs-on: ubuntu-x64-large-io
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Run tests
-        env:
-          SHARD: ${{ matrix.shard }}
-        run: |
-          set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
-
-  sqlite_nocgo:
-    # Run this workflow only for PRs from forks
-    needs: detect-changes
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
-    strategy:
-      matrix:
-        # We don't need more than this since it has to wait for the other tests.
-        shard: [
-          1/4, 2/4, 3/4, 4/4,
           profiled,
         ]
       fail-fast: false
 
-    name: Sqlite Without CGo (${{ matrix.shard }})
+    name: Sqlite (${{ matrix.shard }})
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
@@ -113,7 +79,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -139,7 +105,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
+            go test -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -165,7 +131,7 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
         with:
-          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
+          name: integration-test-profiles-sqlite-${{ github.run_number }}
           path: profiles/
           retention-days: 7
           if-no-files-found: ignore
@@ -220,7 +186,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -265,7 +234,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -281,50 +253,11 @@ jobs:
         # We don't need more than this since it has to wait for the other tests.
         shard: [
           1/4, 2/4, 3/4, 4/4,
-        ]
-      fail-fast: false
-
-    name: Sqlite Enterprise (${{ matrix.shard }})
-    runs-on: ubuntu-x64-large-io
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Setup Enterprise
-        uses: ./.github/actions/setup-enterprise
-        with:
-          github-app-name: 'grafana-ci-bot'
-      - name: Run tests
-        env:
-          SHARD: ${{ matrix.shard }}
-        run: |
-          set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
-
-  sqlite_nocgo-enterprise:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    needs: detect-changes
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
-    strategy:
-      matrix:
-        # We don't need more than this since it has to wait for the other tests.
-        shard: [
-          1/4, 2/4, 3/4, 4/4,
           profiled,
         ]
       fail-fast: false
 
-    name: Sqlite Without CGo Enterprise (${{ matrix.shard }})
+    name: Sqlite Enterprise (${{ matrix.shard }})
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
@@ -356,7 +289,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -382,7 +315,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' \
+            go test -tags=enterprise -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -408,7 +341,7 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
         if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
         with:
-          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
+          name: integration-test-profiles-sqlite-${{ github.run_number }}
           path: profiles/
           retention-days: 7
           if-no-files-found: ignore
@@ -468,7 +401,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -518,7 +454,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |

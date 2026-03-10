@@ -10,11 +10,8 @@ import {
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
-import {
-  CONTENT_KINDS,
-  DashboardLibraryInteractions,
-  SOURCE_ENTRY_POINTS,
-} from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
 import { CommandPaletteAction } from '../types';

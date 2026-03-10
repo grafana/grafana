@@ -243,6 +243,9 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
+	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
+		registrar.RegisterHTTPRoutes(s.rr)
+	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {

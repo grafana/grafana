@@ -14,13 +14,15 @@ import (
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-const UserDefinedRoutingTreeName = "user-defined"
-const NamedRouteMatcher = "__grafana_managed_route__"
+const UserDefinedRoutingTreeName = models.DefaultRoutingTreeName
+const NamedRouteMatcher = models.NamedRouteLabel
 
 type ManagedRoute struct {
 	Name    string
@@ -59,6 +61,10 @@ func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
 		amRoute.ObjectMatchers = definitions.ObjectMatchers{managedRouteMatcher(r.Name)}
 	}
 	return &amRoute
+}
+
+func (r *ManagedRoute) GetUID() string {
+	return r.Name
 }
 
 func (r *ManagedRoute) ResourceType() string {
@@ -174,9 +180,27 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 	delete(rev.Config.ManagedRoutes, name)
 }
 
+// validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
+func validateManagedRouteName(name string) error {
+	if name = strings.TrimSpace(name); name == "" {
+		return fmt.Errorf("route name is required")
+	}
+	// Colon in names confuses RBAC. Make sure we do not allow that.
+	if strings.Contains(name, ":") {
+		return fmt.Errorf("managed route name cannot contain invalid character ':'")
+	}
+	if len(name) > ualert.UIDMaxLength {
+		return fmt.Errorf("managed route name cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return fmt.Errorf("managed route name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
+}
+
 func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.Route) (*ManagedRoute, error) {
-	if name == "" {
-		return nil, fmt.Errorf("route name is required")
+	if err := validateManagedRouteName(name); err != nil {
+		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
 	if name == UserDefinedRoutingTreeName {
