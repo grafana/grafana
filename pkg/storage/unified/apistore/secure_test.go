@@ -178,14 +178,13 @@ func TestSecureLifecycle(t *testing.T) {
 	t.Run("remove invalid secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
-			"b": common.InlineSecureValue{Remove: true},
+			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
 		})
 
 		// Previous values must exist for remove to execute
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
-		require.Error(t, err, "should error when previous secure values does not exist")
-		require.Equal(t, "cannot remove secure value 'b', it did not exist in the previous value", err.Error())
+		require.Nil(t, err, "should noop when previous value does not exist")
 		secureStore.AssertExpectations(t)
 	})
 

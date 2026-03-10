@@ -367,3 +367,7 @@ function findNameInDescendantSets(sceneObject: SceneObject, name: string, exclud
   });
   return found;
 }
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system' && variable.state.origin === undefined;
+}
