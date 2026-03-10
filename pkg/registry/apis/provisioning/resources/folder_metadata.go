@@ -143,9 +143,15 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		folderID = ParseFolder(path, config.Name).ID
 	}
 
+	// Determine the folder title from the path (last part of the path)
+	folderTitle := safepath.Base(path)
+
 	// If no metadata object exists, create a minimal folder object
 	if folderObj == nil {
-		folderObj = NewFolderManifest(folderID, safepath.Base(path))
+		folderObj = NewFolderManifest(folderID, folderTitle)
+	} else {
+		// Update the title to match the path, even if metadata exists
+		folderObj.Spec.Title = folderTitle
 	}
 
 	// Convert to unstructured
