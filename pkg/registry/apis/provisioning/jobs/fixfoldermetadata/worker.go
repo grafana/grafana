@@ -75,35 +75,38 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			return fmt.Errorf("read repository tree: %w", err)
 		}
 
-		// Build set of directory paths (with trailing slash) that already contain _folder.json.
-		hasMetadata := make(map[string]struct{}, len(entries))
-		for _, entry := range entries {
-			if entry.Blob && resources.IsFolderMetadataFile(entry.Path) {
-				hasMetadata[safepath.Dir(entry.Path)] = struct{}{}
-			}
-		}
-
 		repoName := rw.Config().GetName()
 
+		// Collect dirs with existing metadata and parse all folder entries.
+		hasMetadata := make(map[string]struct{}, len(entries))
+		folders := make([]resources.Folder, 0, len(entries))
 		for _, entry := range entries {
 			if entry.Blob {
+				if resources.IsFolderMetadataFile(entry.Path) {
+					hasMetadata[safepath.Dir(entry.Path)] = struct{}{}
+				}
 				continue
 			}
-
 			dirPath := entry.Path
 			if !safepath.IsDir(dirPath) {
 				dirPath += "/"
 			}
-			folder := resources.ParseFolder(dirPath, repoName)
+			folders = append(folders, resources.ParseFolder(dirPath, repoName))
+		}
 
+		missing := 0
+		for _, folder := range folders {
+			if _, ok := hasMetadata[folder.Path]; !ok {
+				missing++
+			}
+		}
+		progress.SetTotal(ctx, missing)
+
+		for _, folder := range folders {
 			if _, ok := hasMetadata[folder.Path]; ok {
-				progress.Record(ctx, jobs.NewFolderResult(folder.Path).
-					WithName(folder.ID).
-					WithAction(repository.FileActionIgnored).Build())
 				continue
 			}
 
-			// Not found: write a new folder metadata file
 			uid := util.GenerateShortUID()
 			manifest := resources.NewFolderManifest(uid, safepath.Base(folder.Path))
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,

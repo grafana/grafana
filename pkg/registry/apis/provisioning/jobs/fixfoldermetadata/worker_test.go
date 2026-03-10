@@ -129,6 +129,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Create(mock.Anything, "parent/child/_folder.json", "feature-branch", mock.Anything, mock.Anything).Return(nil)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on branch feature-branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 2).Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Name() == parentFolder.ID
 		})).Return()
@@ -159,8 +160,6 @@ func TestWorker_Process(t *testing.T) {
 			treeEntry("myfolder/_folder.json", true),
 		}
 
-		folder := resources.ParseFolder("myfolder/", "test-repo")
-
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
 
 		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
@@ -168,9 +167,7 @@ func TestWorker_Process(t *testing.T) {
 		// No Create expected — the file already exists
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
-		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Action() == repository.FileActionIgnored && r.Name() == folder.ID
-		})).Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
@@ -196,7 +193,6 @@ func TestWorker_Process(t *testing.T) {
 			treeEntry("no-meta", false),
 		}
 
-		hasMetaFolder := resources.ParseFolder("has-meta/", "test-repo")
 		noMetaFolder := resources.ParseFolder("no-meta/", "test-repo")
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
@@ -206,9 +202,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Create(mock.Anything, "no-meta/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
-		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Action() == repository.FileActionIgnored && r.Name() == hasMetaFolder.ID
-		})).Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 1).Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Name() == noMetaFolder.ID
 		})).Return()
@@ -245,6 +239,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(createErr)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 2).Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Error() != nil
 		})).Return()
@@ -282,6 +277,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
@@ -359,6 +355,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, fmt.Sprintf("Writing folder metadata files on branch %s", customRef)).Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, fmt.Sprintf("Folder metadata fixed on branch %s", customRef)).Return()
 
 		mockRepo.MockRepositoryWithURLs.EXPECT().RefURLs(mock.Anything, customRef).Return(expectedURLs, nil)
@@ -390,6 +387,7 @@ func TestWorker_Process(t *testing.T) {
 		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
