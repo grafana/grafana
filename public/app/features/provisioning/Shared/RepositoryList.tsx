@@ -67,15 +67,24 @@ export function RepositoryList({ items }: Props) {
                 </Trans>
               </>
             )}
-            {isRepoLimitHit && (!!maxRepositories || !!maxResourcesPerRepository) && (
+            {isRepoLimitHit && (
               <>
                 {' '}
-                <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
-                  Your account is limited to {{ count: maxRepositories }} connected repositories
-                </Trans>{' '}
-                <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
-                  and {{ count: maxResourcesPerRepository }} synced resources per repository.
-                </Trans>{' '}
+                {!!maxResourcesPerRepository ? (
+                  <>
+                    <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+                      Your account is limited to {{ count: maxRepositories }} connected repositories
+                    </Trans>{' '}
+                    <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+                      and {{ count: maxResourcesPerRepository }} synced resources per repository.
+                    </Trans>
+                  </>
+                ) : (
+                  <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
+                    Your account is limited to {{ count: maxRepositories }} connected repositories. To add more
+                    repositories,
+                  </Trans>
+                )}{' '}
                 <TextLink href={UPGRADE_URL} external>
                   <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
                 </TextLink>
