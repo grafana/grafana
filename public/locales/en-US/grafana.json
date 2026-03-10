@@ -897,11 +897,13 @@
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
       "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
+      "button-history": "History",
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
+      "tooltip-history": "View the history of notification attempts made to this contact point",
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
@@ -6995,6 +6997,11 @@
         }
       },
       "title-close": "Close"
+    },
+    "provisioned-controls-section": {
+      "label": "Provisioned by data source",
+      "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
