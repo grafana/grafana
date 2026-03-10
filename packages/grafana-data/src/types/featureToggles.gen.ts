@@ -1667,4 +1667,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Automatically sync Mimir Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * @default false
+  */
+  alertingDatasourceSync?: boolean;
 }
