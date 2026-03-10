@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,13 +20,63 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	folderMetadataFileName = "_folder.json"
+)
+
+// ErrMissingFolderMetadata is a sentinel error for missing _folder.json files.
+var ErrMissingFolderMetadata = errors.New("missing folder metadata")
+
+// MissingFolderMetadata is returned when a folder in the repository does not
+// have a _folder.json file and thus has an unstable hash-derived UID.
+type MissingFolderMetadata struct {
+	Path string
+}
+
+func (e *MissingFolderMetadata) Error() string {
+	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
+}
+
+// Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
+func (e *MissingFolderMetadata) Unwrap() error {
+	return ErrMissingFolderMetadata
+}
+
+// FindFoldersMissingMetadata returns folder paths from source that do not have
+// a corresponding _folder.json metadata file.
+func FindFoldersMissingMetadata(source []repository.FileTreeEntry) []string {
+	seenFolders := make([]string, 0)
+	foldersWithMeta := make(map[string]struct{})
+
+	for _, file := range source {
+		path := file.Path
+		if !file.Blob {
+			if !strings.HasSuffix(path, "/") {
+				path += "/"
+			}
+			seenFolders = append(seenFolders, path)
+		} else if IsFolderMetadataFile(path) {
+			parent := safepath.Dir(path)
+			if parent != "" {
+				foldersWithMeta[parent] = struct{}{}
+			}
+		}
+	}
+
+	var missing []string
+	for _, f := range seenFolders {
+		if _, ok := foldersWithMeta[f]; !ok {
+			missing = append(missing, f)
+		}
+	}
+	return missing
+}
+
 // IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
 func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
 	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
 	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
-
-const folderMetadataFileName = "_folder.json"
 
 // IsFolderMetadataFile reports whether path refers to a _folder.json file.
 func IsFolderMetadataFile(path string) bool {
