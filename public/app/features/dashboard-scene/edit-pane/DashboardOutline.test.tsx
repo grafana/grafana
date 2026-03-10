@@ -114,10 +114,10 @@ describe('DashboardOutline', () => {
           </WrapSidebar>
         </ElementSelectionContext.Provider>
       );
-      // select Row lvl 1 (index 2 because Annotations section is at index 1)
+      // select Row lvl 1 (index 3 because Variables is at 0, Annotations at 1, Links at 2)
       await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
-        index: 2,
+        index: 3,
         depth: 1,
       });
       // click on caret to expand Row lvl 1

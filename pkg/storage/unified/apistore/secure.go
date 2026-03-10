@@ -69,7 +69,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 			}
 			if val.Remove {
 				if before.Name == "" {
-					return fmt.Errorf("cannot remove secure value '%s', it did not exist in the previous value", k)
+					continue // no-op
 				}
 				delete(secure, k)
 				v.hasChanged = true
