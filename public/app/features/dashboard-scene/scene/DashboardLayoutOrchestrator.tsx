@@ -294,7 +294,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     if (dropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget = dropTarget;
     } else {
-      this._lastDropTarget = null;
+      this.cleanUpTabDropTarget();
       return;
     }
 
@@ -358,12 +358,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
   }
 
-  private cleanUpTabDrag() {
+  private cleanUpTabDropTarget() {
     if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
       this._lastDropTarget.setIsDropTarget?.(false);
     }
-    this._draggedTab = undefined;
     this._lastDropTarget = null;
+  }
+
+  private cleanUpTabDrag() {
+    this.cleanUpTabDropTarget();
+    this._draggedTab = undefined;
   }
 
   private _moveTabBetweenManagers(
