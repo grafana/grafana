@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { OwnershipEngine } = require('github-codeowners');
+const { OwnershipEngine } = require('github-codeowners/dist/lib/ownership');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const { access } = require('node:fs/promises');
