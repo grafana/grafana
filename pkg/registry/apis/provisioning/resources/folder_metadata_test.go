@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -116,6 +117,7 @@ func TestGetFolderID(t *testing.T) {
 		folderMetadataEnabled bool
 		setupMock             func(*repository.MockReader)
 		expectedID            string
+		expectedErr           bool
 		description           string
 	}{
 		{
@@ -130,6 +132,7 @@ func TestGetFolderID(t *testing.T) {
 				// Config() should not be called when metadata is found
 			},
 			expectedID:  "stable-uid-123",
+			expectedErr: false,
 			description: "When metadata is enabled and _folder.json exists with a valid UID, return the stable UID",
 		},
 		{
@@ -141,7 +144,19 @@ func TestGetFolderID(t *testing.T) {
 					Return(nil, repository.ErrFileNotFound)
 			},
 			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
 			description: "When metadata is enabled but _folder.json doesn't exist, fall back to hash-based ID",
+		},
+		{
+			name:                  "metadata enabled but read fails - returns error",
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+					Return(nil, fmt.Errorf("permission denied"))
+			},
+			expectedID:  "",
+			expectedErr: true,
+			description: "When metadata read fails with non-NotFound error, propagate the error",
 		},
 		{
 			name:                  "metadata enabled but empty UID - returns hash-based ID",
@@ -157,6 +172,7 @@ func TestGetFolderID(t *testing.T) {
 					}, nil)
 			},
 			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
 			description: "When metadata exists but UID is empty, fall back to hash-based ID",
 		},
 		{
@@ -167,6 +183,7 @@ func TestGetFolderID(t *testing.T) {
 				// Should not call Read when metadata is disabled
 			},
 			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
+			expectedErr: false,
 			description: "When metadata is disabled, return hash-based ID without attempting to read metadata",
 		},
 	}
@@ -176,9 +193,14 @@ func TestGetFolderID(t *testing.T) {
 			reader := repository.NewMockReader(t)
 			tt.setupMock(reader)
 
-			result := GetFolderID(ctx, reader, testPath, testRef, tt.folderMetadataEnabled)
+			result, err := GetFolderID(ctx, reader, testPath, testRef, tt.folderMetadataEnabled)
 
-			assert.Equal(t, tt.expectedID, result, tt.description)
+			if tt.expectedErr {
+				assert.Error(t, err, tt.description)
+			} else {
+				assert.NoError(t, err, tt.description)
+				assert.Equal(t, tt.expectedID, result, tt.description)
+			}
 		})
 	}
 }

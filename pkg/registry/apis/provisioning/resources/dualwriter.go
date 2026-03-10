@@ -80,7 +80,6 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
-	// Authorize based on the existing resource
 	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
 		return nil, err
 	}

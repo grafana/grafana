@@ -161,7 +161,10 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 // Otherwise, it falls back to hash-based ID.
 func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path string, verb string) error {
 	// Get the folder's ID
-	folderID := GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	folderID, err := GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+	if err != nil {
+		return fmt.Errorf("get folder ID: %w", err)
+	}
 
 	// Determine the folder context based on the verb
 	var folderContext string
@@ -173,7 +176,10 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path strin
 			// Root-level folder
 			folderContext = ""
 		} else {
-			folderContext = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
+			folderContext, err = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
+			if err != nil {
+				return fmt.Errorf("get parent folder ID: %w", err)
+			}
 		}
 	default:
 		// For update and other verbs, use the folder's own ID as context
