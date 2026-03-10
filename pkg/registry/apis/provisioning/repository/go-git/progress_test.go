@@ -47,7 +47,7 @@ func TestProgressParsing(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.EventuallyWithT(t, func(c *assert.CollectT) {
-				assert.NotEmpty(c, lines)
+				require.GreaterOrEqual(c, len(lines), 1)
 				assert.Equal(c, lastLine, lines[len(lines)-1])
 
 				// Compare the results
