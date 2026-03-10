@@ -94,7 +94,7 @@ describe('TraceToLogsSettings', () => {
   });
 
   it('transforms old format to new on change', async () => {
-    const changeMock = jest.fn();
+    const changeMock = vi.fn();
     render(<TraceToLogsSettings options={defaultOptionsOldFormat} onOptionsChange={changeMock} />);
     const checkBox = screen.getByLabelText('Filter by trace ID');
     await userEvent.click(checkBox);

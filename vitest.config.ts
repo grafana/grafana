@@ -23,6 +23,7 @@ export default defineConfig({
       'packages/grafana-eslint-rules/**/*.test.{ts,tsx}',
       'packages/grafana-flamegraph/**/*.test.{ts,tsx}',
       'packages/grafana-i18n/**/*.test.{ts,tsx}',
+      'packages/grafana-o11y-ds-frontend/**/*.test.{ts,tsx}',
       'packages/grafana-runtime/**/*.test.{ts,tsx}',
       'packages/grafana-ui/**/*.test.{ts,tsx}',
       'public/app/plugins/datasource/azuremonitor/**',
