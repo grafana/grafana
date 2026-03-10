@@ -1286,39 +1286,34 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 		require.NotEmpty(t, uid)
 	})
 
-	t.Run("POST to root _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
-		req, err := http.NewRequest(http.MethodPost, filesURL("_folder.json"), bytes.NewReader(body))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "direct POST to root _folder.json must be blocked")
-	})
+	rootFolderBody := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
 
-	t.Run("PUT to root _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
-		req, err := http.NewRequest(http.MethodPut, filesURL("_folder.json"), bytes.NewReader(body))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "PUT to root _folder.json must be blocked")
-	})
-
-	t.Run("DELETE of root _folder.json is blocked", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodDelete, filesURL("_folder.json"), nil)
-		require.NoError(t, err)
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		// nolint:errcheck
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusForbidden, resp.StatusCode, "DELETE of root _folder.json must be blocked")
-	})
+	for _, tc := range []struct {
+		name   string
+		method string
+		body   []byte
+	}{
+		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootFolderBody},
+		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootFolderBody},
+		{name: "DELETE of root _folder.json is blocked", method: http.MethodDelete},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var bodyReader io.Reader
+			if tc.body != nil {
+				bodyReader = bytes.NewReader(tc.body)
+			}
+			req, err := http.NewRequest(tc.method, filesURL("_folder.json"), bodyReader)
+			require.NoError(t, err)
+			if tc.body != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+			require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		})
+	}
 }
 
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
