@@ -26,7 +26,7 @@ export function QueriesAndTransformationsView() {
   const expandQueries = useCallback(() => setQueriesOpen(true), []);
   const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
 
-  if (isLoading) {
+  if (isLoading && queries.length === 0) {
     return (
       <LoadingBar
         width={400}
