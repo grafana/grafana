@@ -32,6 +32,8 @@ jest.mock('@grafana/scenes', () => ({
   sceneGraph: { getData: jest.fn() },
 }));
 
+// Mocked to prevent the real component's collapse behavior and hook dependencies (useLocalStorage,
+// useQueryParams) from interfering with the tests
 jest.mock('app/features/dashboard/components/PanelEditor/OptionsPaneCategory', () => ({
   OptionsPaneCategory: ({ children, renderTitle }: { children: ReactNode; renderTitle?: () => ReactNode }) => (
     <div>
@@ -41,6 +43,9 @@ jest.mock('app/features/dashboard/components/PanelEditor/OptionsPaneCategory', (
   ),
 }));
 
+// VisualizationCardGrid renders panel previews via PanelRenderer, which requires the full
+// plugin loading and rendering pipeline. The mock replaces cards with simple buttons so we can test
+// PanelStylesSection's selection and click handling
 jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', () => ({
   VisualizationCardGrid: ({
     items,
@@ -105,19 +110,12 @@ const mockData: PanelData = {
 
 const mockFieldConfig: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
 
-function buildPanel(fieldConfig: FieldConfigSource = mockFieldConfig) {
+function buildPanel(
+  fieldConfig: FieldConfigSource = mockFieldConfig,
+  getPlugin: () => PanelPlugin | undefined = jest.fn(() => fakePlugin)
+) {
   return {
-    getPlugin: () => fakePlugin,
-    get state() {
-      return { fieldConfig };
-    },
-    onFieldConfigChange: jest.fn(),
-  } as unknown as VizPanel;
-}
-
-function buildPanelWithoutPlugin(fieldConfig: FieldConfigSource = mockFieldConfig) {
-  return {
-    getPlugin: () => undefined,
+    getPlugin,
     get state() {
       return { fieldConfig };
     },
@@ -140,7 +138,13 @@ describe('PanelStylesSection', () => {
 
   it('renders null when plugin is not yet loaded', () => {
     const { container } = render(
-      <PanelStylesSection panel={buildPanelWithoutPlugin()} onApplyPreset={onApplyPreset} />
+      <PanelStylesSection
+        panel={buildPanel(
+          mockFieldConfig,
+          jest.fn(() => undefined)
+        )}
+        onApplyPreset={onApplyPreset}
+      />
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -238,13 +242,7 @@ describe('PanelStylesSection', () => {
     ];
 
     let currentPlugin: PanelPlugin | undefined = fakePlugin;
-    const panel = {
-      getPlugin: () => currentPlugin,
-      get state() {
-        return { fieldConfig: mockFieldConfig };
-      },
-      onFieldConfigChange: jest.fn(),
-    } as unknown as VizPanel;
+    const panel = buildPanel(mockFieldConfig, () => currentPlugin);
 
     const { rerender } = render(<PanelStylesSection panel={panel} onApplyPreset={onApplyPreset} />);
     expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument();

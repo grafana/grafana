@@ -66,11 +66,12 @@ function getDisplayFormatForLanguage(language: string) {
  * Given a list of logs, return a list of suggested fields to display for the user.
  */
 export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
+  const suggestedFields = getSuggestedFieldsForAnyLogs();
+
   const languages = identifyOTelLanguages(logs);
-  if (!languages.length) {
-    return [];
-  }
-  const fields = getSuggestedOTelDisplayFormat();
+  const otelFields = languages.length ? getSuggestedOTelDisplayFormat() : [];
+
+  const fields = [...new Set([...suggestedFields, ...otelFields])];
 
   return fields.filter(
     (field) =>
@@ -78,6 +79,10 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
       field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
       logs.some((log) => log.labels[field] !== undefined)
   );
+}
+
+export function getSuggestedFieldsForAnyLogs() {
+  return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
 }
 
 export function getSuggestedOTelDisplayFormat() {
