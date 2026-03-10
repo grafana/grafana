@@ -167,9 +167,8 @@ func shouldSyncTeams(r *authn.Request, groupsHash string) bool {
 }
 
 func (c *Grafana) writeGroupsHashCookie(ctx context.Context, groupsHash string) {
-	// contexthandler.FromContext() is inlined here to avoid import loop.
-	type reqContextKey = ctxkey.Key
-	reqCtx, ok := ctx.Value(reqContextKey{}).(*contextmodel.ReqContext)
+	// contexthandler.FromContext() is inlined here to avoid an import loop.
+	reqCtx, ok := ctx.Value(ctxkey.Key{}).(*contextmodel.ReqContext)
 	if !ok {
 		return
 	}
