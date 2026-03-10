@@ -116,22 +116,21 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
       })
-    );
-
-  descriptor.addCategory(
-    new OptionsPaneCategoryDescriptor({
-      title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-      id: 'Panel links',
-      isOpenDefault: false,
-      itemsCount: links?.length,
-    }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
-        id: 'panel-frame-options-panel-links',
-        render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
-      })
     )
-  );
+    .addCategory(
+      new OptionsPaneCategoryDescriptor({
+        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+        id: 'Panel links',
+        isOpenDefault: false,
+        itemsCount: links?.length,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
+          id: 'panel-frame-options-panel-links',
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+        })
+      )
+    );
 
   if (isDashboardLayoutItem(layoutElement)) {
     layoutElement.getOptions?.().forEach((category) => descriptor.addCategory(category));

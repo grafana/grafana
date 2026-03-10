@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
@@ -146,10 +147,13 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
       };
 
       if (input.type === InputType.DataSource) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        (inputModel as DataSourceInput).description = getDataSourceDescription(input);
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        inputs.dataSources.push(inputModel as DataSourceInput);
+        // Expression datasources do not need user input
+        if (inputModel.pluginId !== ExpressionDatasourceRef.type) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          (inputModel as DataSourceInput).description = getDataSourceDescription(input);
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          inputs.dataSources.push(inputModel as DataSourceInput);
+        }
       } else if (input.type === InputType.Constant) {
         if (!inputModel.info) {
           inputModel.info = 'Specify a string constant';

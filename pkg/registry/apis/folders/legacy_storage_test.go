@@ -214,7 +214,7 @@ func TestLegacyStorage_List_LabelSelector(t *testing.T) {
 		require.NoError(t, err)
 
 		// make sure the annotations are set
-		require.Equal(t, "/Folder 1", meta.GetFullpath())
-		require.Equal(t, "/folder-1", meta.GetFullpathUIDs())
+		require.Equal(t, "/Folder 1", meta.GetAnnotation(utils.AnnoKeyFullpath))
+		require.Equal(t, "/folder-1", meta.GetAnnotation(utils.AnnoKeyFullpathUIDs))
 	})
 }
