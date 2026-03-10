@@ -374,6 +374,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/snapshots/${queryArg.name}/dashboard` }),
         providesTags: ['Snapshot'],
       }),
+      getSnapshotDeletekey: build.query<GetSnapshotDeletekeyApiResponse, GetSnapshotDeletekeyApiArg>({
+        query: (queryArg) => ({ url: `/snapshots/${queryArg.name}/deletekey` }),
+        providesTags: ['Snapshot'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -925,6 +929,11 @@ export type GetSnapshotDashboardApiArg = {
   /** name of the Dashboard */
   name: string;
 };
+export type GetSnapshotDeletekeyApiResponse = /** status 200 OK */ DashboardSnapshotWithDeleteKey;
+export type GetSnapshotDeletekeyApiArg = {
+  /** name of the DashboardSnapshotWithDeleteKey */
+  name: string;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1368,6 +1377,8 @@ export type SnapshotSpec = {
   dashboard?: {
     [key: string]: object;
   };
+  /** Snapshot delete key */
+  deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */
   expires?: number;
   /** When set to true, the snapshot exists in a remote server */
@@ -1397,6 +1408,17 @@ export type SnapshotList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
+};
+export type DashboardSnapshotWithDeleteKey = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** The delete key is only returned when the item is created.  It is not returned from a get request */
+  deleteKey?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Snapshot */
+  spec: SnapshotSpec;
 };
 export const {
   useGetApiResourcesQuery,
@@ -1439,4 +1461,6 @@ export const {
   useUpdateSnapshotMutation,
   useGetSnapshotDashboardQuery,
   useLazyGetSnapshotDashboardQuery,
+  useGetSnapshotDeletekeyQuery,
+  useLazyGetSnapshotDeletekeyQuery,
 } = injectedRtkApi;
