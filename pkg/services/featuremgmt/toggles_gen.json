@@ -2717,6 +2717,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamsApi",
+        "resourceVersion": "1773147333794",
+        "creationTimestamp": "2026-03-10T12:55:33Z"
+      },
+      "spec": {
+        "description": "Enables team APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountsApi",
         "resourceVersion": "1773060933794",
         "creationTimestamp": "2026-03-09T12:55:33Z"

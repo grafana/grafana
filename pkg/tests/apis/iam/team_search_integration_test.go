@@ -35,7 +35,7 @@ func TestIntegrationTeamSearch(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 				},
 			})
 			doTeamSearchTests(t, helper)

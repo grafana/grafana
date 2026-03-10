@@ -2468,6 +2468,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamsApi",
+			Description:  "Enables team APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesServiceAccountsApi",
 			Description:  "Enables service account APIs in the app platform",
 			Stage:        FeatureStageExperimental,

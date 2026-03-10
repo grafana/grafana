@@ -95,9 +95,6 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller)
 	registerMetrics(reg)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
-
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewLocalConfigProvider(restConfig.GetRestConfig),
 		iamauthorizer.Versions,
@@ -107,8 +104,8 @@ func RegisterAPIService(
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
 		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, tracing),
-		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
-		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
+		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing),
+		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:                  coreRolesStorage,
 		roleApiInstaller:                  roleApiInstaller,
@@ -165,9 +162,6 @@ func NewAPIService(
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	registerMetrics(reg)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enableAuthnMutation := features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation)
-
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
@@ -182,7 +176,7 @@ func NewAPIService(
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
-		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracingService),
+		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
 		display:                    user.NewLegacyDisplayREST(store),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
@@ -337,6 +331,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
+	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
@@ -350,12 +345,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 
-	if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
-		return err
+	if enableTeamsApi {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi); err != nil {
+			return err
+		}
 	}
 
-	if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
-		return err
+	if enableTeamsApi {
+		if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+			return err
+		}
 	}
 
 	if enableUserApi {
@@ -831,6 +830,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
+	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 
@@ -839,7 +839,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if b.teamSearch != nil {
+	if enableTeamsApi && b.teamSearch != nil {
 		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
 	}
 
