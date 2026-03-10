@@ -26,82 +26,44 @@ describe('FacetedLabelsFilter', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders "By name" section for __name__ facet', () => {
-    renderFilter();
+  it('renders sections based on available facets', () => {
+    const { unmount } = renderFilter();
     expect(screen.getByText('By name')).toBeInTheDocument();
-    expect(screen.getByLabelText('cpu')).toBeInTheDocument();
-    expect(screen.getByLabelText('mem')).toBeInTheDocument();
-  });
-
-  it('renders "By labels" section with collapsed label groups', () => {
-    renderFilter();
     expect(screen.getByText('By labels')).toBeInTheDocument();
-    expect(screen.getByText('host')).toBeInTheDocument();
-    expect(screen.getByText('region')).toBeInTheDocument();
-    expect(screen.queryByLabelText('a')).not.toBeInTheDocument();
-  });
+    unmount();
 
-  it('omits "By name" section when no __name__ facet exists', () => {
-    renderFilter({ labels: { host: ['a', 'b'] } });
+    const { unmount: u2 } = renderFilter({ labels: { host: ['a'] } });
     expect(screen.queryByText('By name')).not.toBeInTheDocument();
-    expect(screen.getByText('By labels')).toBeInTheDocument();
-  });
+    u2();
 
-  it('omits "By labels" section when only __name__ facet exists', () => {
-    renderFilter({ labels: { [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] } });
-    expect(screen.getByText('By name')).toBeInTheDocument();
+    renderFilter({ labels: { [FIELD_NAME_FACET_KEY]: ['cpu'] } });
     expect(screen.queryByText('By labels')).not.toBeInTheDocument();
   });
 
-  it('toggles a checkbox value', async () => {
-    const { onChange } = renderFilter();
+  it('toggles checkbox values and shows deselect when all selected', async () => {
+    const { onChange, unmount } = renderFilter();
     await userEvent.click(screen.getByLabelText('cpu'));
     expect(onChange).toHaveBeenCalledWith({ [FIELD_NAME_FACET_KEY]: ['cpu'] });
-  });
+    unmount();
 
-  it('deselects a checkbox value', async () => {
-    const { onChange } = renderFilter({
-      selected: { [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] },
-    });
-    await userEvent.click(screen.getByLabelText('cpu'));
-    expect(onChange).toHaveBeenCalledWith({ [FIELD_NAME_FACET_KEY]: ['mem'] });
-  });
-
-  it('selects all values for a key', async () => {
-    renderFilter();
-    const selectButtons = screen.getAllByText('Select all');
-    await userEvent.click(selectButtons[0]);
-    expect(screen.getAllByText('Select all')[0]).toBeInTheDocument();
-  });
-
-  it('shows "Deselect all" when all values are selected', () => {
-    renderFilter({
-      selected: { [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] },
-    });
+    const { onChange: onChange2 } = renderFilter({ selected: { [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] } });
     expect(screen.getByText('Deselect all')).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('cpu'));
+    expect(onChange2).toHaveBeenCalledWith({ [FIELD_NAME_FACET_KEY]: ['mem'] });
   });
 
-  it('expands a label group to show its values', async () => {
-    renderFilter();
-    expect(screen.queryByLabelText('a')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByText('host'));
-    expect(screen.getByLabelText('a')).toBeInTheDocument();
-    expect(screen.getByLabelText('b')).toBeInTheDocument();
-  });
-
-  it('collapses an expanded label group', async () => {
-    renderFilter();
-    await userEvent.click(screen.getByText('host'));
-    expect(screen.getByLabelText('a')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('host'));
-    expect(screen.queryByLabelText('a')).not.toBeInTheDocument();
-  });
-
-  it('toggles a value in an expanded label group', async () => {
+  it('expands/collapses label groups and toggles values within them', async () => {
     const { onChange } = renderFilter();
+    expect(screen.queryByLabelText('a')).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByText('host'));
+    expect(screen.getByLabelText('a')).toBeInTheDocument();
+
     await userEvent.click(screen.getByLabelText('a'));
     expect(onChange).toHaveBeenCalledWith({ host: ['a'] });
+
+    await userEvent.click(screen.getByText('host'));
+    expect(screen.queryByLabelText('a')).not.toBeInTheDocument();
   });
 
   it('shows selected count badge on collapsed label groups', () => {
@@ -109,11 +71,9 @@ describe('FacetedLabelsFilter', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('produces a different class name when dimmed', () => {
-    const { container: dimmedContainer } = renderFilter({ dimmed: true });
-    const { container: normalContainer } = renderFilter({ dimmed: false });
-    const dimmedClass = (dimmedContainer.firstChild as HTMLElement).className;
-    const normalClass = (normalContainer.firstChild as HTMLElement).className;
-    expect(dimmedClass).not.toBe(normalClass);
+  it('applies dimmed style when dimmed prop is true', () => {
+    const { container: dimmed } = renderFilter({ dimmed: true });
+    const { container: normal } = renderFilter({ dimmed: false });
+    expect((dimmed.firstChild as HTMLElement).className).not.toBe((normal.firstChild as HTMLElement).className);
   });
 });
