@@ -89,6 +89,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     th: css({
       padding: '4px 6px',
+      height: '36px',
       textAlign: 'left',
       fontWeight: theme.typography.fontWeightMedium,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -200,9 +201,8 @@ export function getStyles(theme: GrafanaTheme2) {
       whiteSpace: 'nowrap',
       flexShrink: 0,
     }),
-    sortIndicator: css({
-      marginLeft: '4px',
-      fontSize: '10px',
+    sortIcon: css({
+      marginLeft: theme.spacing(0.5),
     }),
     colorBarContainer: css({
       width: '100%',

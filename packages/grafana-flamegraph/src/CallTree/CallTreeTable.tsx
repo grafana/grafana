@@ -2,6 +2,8 @@ import { cx } from '@emotion/css';
 import { useEffect } from 'react';
 import { Row, HeaderGroup, TablePropGetter, TableBodyPropGetter, TableProps, TableBodyProps } from 'react-table';
 
+import { Icon } from '@grafana/ui';
+
 import { Styles } from './styles';
 import { CallTreeNode } from './utils';
 
@@ -86,9 +88,13 @@ export function CallTreeTable({
                       }}
                     >
                       {column.render('Header')}
-                      <span className={styles.sortIndicator}>
-                        {column.isSorted ? (column.isSortedDesc ? ' ▼' : ' ▲') : ''}
-                      </span>
+                      {column.isSorted && (
+                        <Icon
+                          name={column.isSortedDesc ? 'arrow-down' : 'arrow-up'}
+                          size="lg"
+                          className={styles.sortIcon}
+                        />
+                      )}
                     </th>
                   );
                 })}
