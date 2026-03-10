@@ -9,19 +9,25 @@ import (
 )
 
 const (
-	PlaylistResource  = "playlists.playlist.grafana.app"
-	FolderResource    = "folders.folder.grafana.app"
-	DashboardResource = "dashboards.dashboard.grafana.app"
-	ShortURLResource  = "shorturls.shorturl.grafana.app"
+	PlaylistResource   = "playlists.playlist.grafana.app"
+	FolderResource     = "folders.folder.grafana.app"
+	DashboardResource  = "dashboards.dashboard.grafana.app"
+	ShortURLResource   = "shorturls.shorturl.grafana.app"
+	PrometheusResource = "prometheus.datasource.grafana.app"
+	GTDResource        = "grafana-testdata-datasource.datasource.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true, // enabled by default
-	FolderResource:    true,
-	DashboardResource: true,
-	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
+	PlaylistResource:   true, // enabled by default
+	FolderResource:     true,
+	DashboardResource:  true,
+	ShortURLResource:   false, // Requires kubernetesShortURLs to be enabled by default
+	PrometheusResource: false,
+	GTDResource:        false,
 }
+
+// TODO: fill in datasource keys here dynamically.
 
 // read storage configs from ini file. They look like:
 // [unified_storage.<group>.<resource>]
