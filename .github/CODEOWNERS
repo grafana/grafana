@@ -364,7 +364,6 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
-/pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/oss-big-tent
 /pkg/tsdb/tempo/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/oss-big-tent
@@ -698,7 +697,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-frontend-navigation
 /packages/grafana-schema/src/**/datagrid @grafana/dataviz-squad
 /packages/grafana-schema/src/**/debug @ryantxu
-/packages/grafana-schema/src/**/elasticsearch @grafana/partner-datasources
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
 /packages/grafana-schema/src/**/geomap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/googlecloudmonitoring @grafana/partner-datasources
@@ -1113,7 +1111,6 @@ eslint-suppressions.json @grafanabot
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
