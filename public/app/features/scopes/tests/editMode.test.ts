@@ -116,7 +116,6 @@ describe('setReadOnly', () => {
 
 describe('setRedirectEnabled', () => {
   let dashboardScene: DashboardScene;
-  let scopesService: ScopesService;
   let scopesSelectorService: ScopesSelectorService;
 
   beforeAll(() => {
@@ -127,7 +126,6 @@ describe('setRedirectEnabled', () => {
   beforeEach(async () => {
     const renderResult = await renderDashboard();
     dashboardScene = renderResult.scene;
-    scopesService = renderResult.scopesService;
     scopesSelectorService = renderResult.scopesSelectorService;
   });
 
@@ -135,11 +133,7 @@ describe('setRedirectEnabled', () => {
     await resetScenes();
   });
 
-  it('Disables redirects when entering edit mode via DashboardSceneRenderer useEffect', async () => {
-    // The DashboardSceneRenderer calls scopesService.setRedirectEnabled(!isEditing).
-    // Entering edit mode should trigger setRedirectEnabled(false).
-    // Verify by spying on the selector service method — if the facade delegates correctly,
-    // the spy should be called with false after entering edit mode.
+  it('Disables redirects when entering edit mode', async () => {
     const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
 
     await enterEditMode(dashboardScene);
@@ -151,29 +145,8 @@ describe('setRedirectEnabled', () => {
     const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
 
     await enterEditMode(dashboardScene);
-
-    // Simulate exiting edit mode by calling setRedirectEnabled(true) on the facade,
-    // as DashboardSceneRenderer does when isEditing becomes false.
     act(() => {
-      scopesService.setRedirectEnabled(true);
-    });
-
-    expect(spy).toHaveBeenCalledWith(true);
-  });
-
-  it('Delegates setRedirectEnabled calls from ScopesService facade to ScopesSelectorService', async () => {
-    // Verify the facade method delegates to the selector service by spying on it.
-    const spy = jest.spyOn(scopesSelectorService, 'setRedirectEnabled');
-
-    act(() => {
-      scopesService.setRedirectEnabled(false);
-    });
-
-    expect(spy).toHaveBeenCalledWith(false);
-    spy.mockClear();
-
-    act(() => {
-      scopesService.setRedirectEnabled(true);
+      dashboardScene.exitEditMode({ skipConfirm: true });
     });
 
     expect(spy).toHaveBeenCalledWith(true);

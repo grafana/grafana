@@ -32,7 +32,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
   useEffect(() => {
-    scopesServices?.scopesService.setRedirectEnabled(!isEditing);
+    scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
   }, [scopesServices, isEditing]);
 
   const { type } = useParams();
