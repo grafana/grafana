@@ -3,19 +3,24 @@ package clients
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestGrafana_AuthenticateProxy(t *testing.T) {
@@ -182,4 +187,151 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})
 	}
+}
+
+func newTestReqContext(t *testing.T) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	return &contextmodel.ReqContext{
+		Context: &web.Context{
+			Resp: web.NewResponseWriter("GET", rec),
+		},
+	}, rec
+}
+
+func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
+	newCfg := func() *setting.Cfg {
+		cfg := setting.NewCfg()
+		cfg.AuthProxy.HeaderProperty = "username"
+		cfg.AuthProxy.AutoSignUp = true
+		return cfg
+	}
+
+	additional := map[string]string{
+		proxyFieldGroups: "grp1,grp2",
+	}
+
+	t.Run("SyncTeams is true when no cookie is present", func(t *testing.T) {
+		c := ProvideGrafana(newCfg(), usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+		req := &authn.Request{HTTPRequest: &http.Request{}}
+		identity, err := c.AuthenticateProxy(context.Background(), req, "user", additional)
+		require.NoError(t, err)
+		assert.True(t, identity.ClientParams.SyncTeams)
+	})
+
+	t.Run("SyncTeams is false when a matching cookie is present", func(t *testing.T) {
+		cfg := newCfg()
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		// Pre-compute the hash for the groups using a throwaway request to get the hash.
+		req := &authn.Request{HTTPRequest: &http.Request{}}
+		identity, err := c.AuthenticateProxy(context.Background(), req, "user", additional)
+		require.NoError(t, err)
+		groupsHash := hashGroups(cfg.SecretKey, identity.Groups)
+
+		// Now make a request with the matching cookie.
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: groupsHash})
+		req2 := &authn.Request{HTTPRequest: httpReq}
+		identity2, err := c.AuthenticateProxy(context.Background(), req2, "user", additional)
+		require.NoError(t, err)
+		assert.False(t, identity2.ClientParams.SyncTeams)
+	})
+
+	t.Run("SyncTeams is true when cookie has a stale hash", func(t *testing.T) {
+		c := ProvideGrafana(newCfg(), usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: "stalehash"})
+		req := &authn.Request{HTTPRequest: httpReq}
+		identity, err := c.AuthenticateProxy(context.Background(), req, "user", additional)
+		require.NoError(t, err)
+		assert.True(t, identity.ClientParams.SyncTeams)
+	})
+
+	t.Run("SyncTeams is true when no groups are provided regardless of cookie", func(t *testing.T) {
+		c := ProvideGrafana(newCfg(), usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: "anyhash"})
+		req := &authn.Request{HTTPRequest: httpReq}
+		identity, err := c.AuthenticateProxy(context.Background(), req, "user", map[string]string{})
+		require.NoError(t, err)
+		// SyncTeams defaults to true (set in the initial ClientParams) and is only
+		// overridden when the groups field is present.
+		assert.True(t, identity.ClientParams.SyncTeams)
+	})
+
+	t.Run("group order does not affect whether team sync is skipped", func(t *testing.T) {
+		cfg := newCfg()
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		// Authenticate once with groups in one order to get the hash written.
+		req1 := &authn.Request{HTTPRequest: &http.Request{}}
+		identity1, err := c.AuthenticateProxy(context.Background(), req1, "user", map[string]string{proxyFieldGroups: "grp1,grp2"})
+		require.NoError(t, err)
+		require.True(t, identity1.ClientParams.SyncTeams)
+		groupsHash := hashGroups(cfg.SecretKey, identity1.Groups)
+
+		// Now authenticate with the same groups in a different order and the stored cookie.
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: groupsHash})
+		req2 := &authn.Request{HTTPRequest: httpReq}
+		identity2, err := c.AuthenticateProxy(context.Background(), req2, "user", map[string]string{proxyFieldGroups: "grp2,grp1"})
+		require.NoError(t, err)
+		assert.False(t, identity2.ClientParams.SyncTeams)
+	})
+
+	t.Run("writes groups hash cookie to the response when team sync is not skipped", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.AuthProxy.SyncTTL = 60
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		reqCtx, rec := newTestReqContext(t)
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+		req := &authn.Request{HTTPRequest: &http.Request{}}
+		identity, err := c.AuthenticateProxy(ctx, req, "user", additional)
+		require.NoError(t, err)
+		require.True(t, identity.ClientParams.SyncTeams)
+
+		cookies := rec.Result().Cookies()
+		require.Len(t, cookies, 1)
+		assert.Equal(t, proxyGroupsCookie, cookies[0].Name)
+		assert.Equal(t, hashGroups(cfg.SecretKey, identity.Groups), cookies[0].Value)
+		assert.Equal(t, 60*60, cookies[0].MaxAge) // SyncTTL minutes → seconds
+	})
+
+	t.Run("does not write a new cookie when groups are unchanged", func(t *testing.T) {
+		cfg := newCfg()
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		groupsHash := hashGroups(cfg.SecretKey, []string{"grp1", "grp2"})
+		httpReq := &http.Request{Header: http.Header{}}
+		httpReq.AddCookie(&http.Cookie{Name: proxyGroupsCookie, Value: groupsHash})
+
+		reqCtx, rec := newTestReqContext(t)
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+		req := &authn.Request{HTTPRequest: httpReq}
+		identity, err := c.AuthenticateProxy(ctx, req, "user", additional)
+		require.NoError(t, err)
+		require.False(t, identity.ClientParams.SyncTeams)
+
+		assert.Empty(t, rec.Result().Cookies())
+	})
+
+	t.Run("cookie MaxAge is negative when SyncTTL is 0", func(t *testing.T) {
+		cfg := newCfg()
+		cfg.AuthProxy.SyncTTL = 0
+		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+		reqCtx, rec := newTestReqContext(t)
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+		req := &authn.Request{HTTPRequest: &http.Request{}}
+		_, err := c.AuthenticateProxy(ctx, req, "user", additional)
+		require.NoError(t, err)
+
+		cookies := rec.Result().Cookies()
+		require.Len(t, cookies, 1)
+		assert.Less(t, cookies[0].MaxAge, 0)
+	})
 }
