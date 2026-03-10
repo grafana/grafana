@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
@@ -13,7 +15,6 @@ import { CallTreeTable } from './CallTreeTable';
 import { ColorBarCell } from './ColorBarCell';
 import { DiffCell } from './DiffCell';
 import { FunctionCellWithExpander } from './FunctionCellWithExpander';
-import { getStyles } from './styles';
 import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
 
 type Props = {
@@ -447,7 +448,6 @@ const FlameGraphCallTreeContainer = memo(
               rowIndex={rowIndex}
               rows={tableInstanceRef.current.rows}
               onSymbolClick={onSymbolClick}
-              styles={styles}
               compact={isCompact}
               toggleRowExpanded={tableInstanceRef.current.toggleRowExpanded}
             />
@@ -487,7 +487,6 @@ const FlameGraphCallTreeContainer = memo(
                 data={data}
                 colorScheme={ColorSchemeDiff.Default}
                 theme={theme}
-                styles={styles}
                 focusedNode={focusedNode}
               />
             ),
@@ -539,7 +538,6 @@ const FlameGraphCallTreeContainer = memo(
                   data={data}
                   colorScheme={ColorScheme.PackageBased}
                   theme={theme}
-                  styles={styles}
                   focusedNode={focusedNode}
                 />
               ),
@@ -709,7 +707,6 @@ const FlameGraphCallTreeContainer = memo(
                 headerGroups={headerGroups}
                 rows={rows}
                 prepareRow={prepareRow}
-                styles={styles}
                 currentSearchMatchId={currentSearchMatchId}
                 searchMatchRowRef={searchMatchRowRef}
                 scrollContainerRef={scrollContainerRef}
@@ -727,3 +724,125 @@ const FlameGraphCallTreeContainer = memo(
 FlameGraphCallTreeContainer.displayName = 'FlameGraphCallTreeContainer';
 
 export default FlameGraphCallTreeContainer;
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      width: '100%',
+      height: '100%',
+      backgroundColor: theme.colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    toolbar: css({
+      display: 'flex',
+      alignItems: 'center',
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+      gap: theme.spacing(1),
+      flexWrap: 'wrap',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:not(:has(> :not(:empty)))': {
+        display: 'none',
+      },
+    }),
+    toolbarLeft: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    searchContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      flexWrap: 'wrap',
+    }),
+    searchNavigation: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    searchCounter: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+    }),
+    searchNoResults: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontStyle: 'italic',
+    }),
+    searchError: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.error.text,
+    }),
+    actionsCell: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '20px',
+    }),
+    valueCell: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '8px',
+      fontVariantNumeric: 'tabular-nums',
+      height: '20px',
+    }),
+    valueNumber: css({
+      flex: '1 1 auto',
+      textAlign: 'right',
+      whiteSpace: 'nowrap',
+      minWidth: '60px',
+    }),
+    percentNumber: css({
+      flex: '0 0 60px',
+      width: '60px',
+      textAlign: 'right',
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+    }),
+    focusedItem: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    focusedItemLabel: css({
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      marginLeft: theme.spacing(0.5),
+    }),
+    callersItem: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    callersItemLabel: css({
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      marginLeft: theme.spacing(0.5),
+    }),
+    modePillCloseButton: css({
+      verticalAlign: 'text-bottom',
+      margin: theme.spacing(0, 0.5),
+    }),
+  };
+}

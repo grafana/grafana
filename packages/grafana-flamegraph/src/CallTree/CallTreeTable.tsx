@@ -1,10 +1,10 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 import { Row, HeaderGroup, TablePropGetter, TableBodyPropGetter, TableProps, TableBodyProps } from 'react-table';
 
-import { Icon } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
-import { Styles } from './styles';
 import { CallTreeNode } from './utils';
 
 type CallTreeTableProps = {
@@ -19,7 +19,6 @@ type CallTreeTableProps = {
   headerGroups: Array<HeaderGroup<CallTreeNode>>;
   rows: Array<Row<CallTreeNode>>;
   prepareRow: (row: Row<CallTreeNode>) => void;
-  styles: Styles;
   currentSearchMatchId?: string;
   searchMatchRowRef: (node: HTMLTableRowElement | null) => void;
   scrollContainerRef: { current: HTMLDivElement | null };
@@ -39,13 +38,13 @@ export function CallTreeTable({
   headerGroups,
   rows,
   prepareRow,
-  styles,
   currentSearchMatchId,
   searchMatchRowRef,
   scrollContainerRef,
   focusedNodeId,
   callersNodeLabel,
 }: CallTreeTableProps) {
+  const styles = useStyles2(getStyles);
   const SCROLLBAR_WIDTH = 16;
   const availableWidth = width - SCROLLBAR_WIDTH;
   const shouldBeCompact = availableWidth > 0 && availableWidth < compactModeThreshold;
@@ -162,4 +161,98 @@ export function CallTreeTable({
       </div>
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    scrollContainer: css({
+      '&::-webkit-scrollbar': {
+        width: '8px',
+      },
+      '&::-webkit-scrollbar-track': {
+        background: theme.colors.background.secondary,
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: theme.colors.text.disabled,
+        borderRadius: theme.shape.radius.default,
+      },
+      '&::-webkit-scrollbar-thumb:hover': {
+        background: theme.colors.text.secondary,
+      },
+    }),
+    table: css({
+      width: '100%',
+      tableLayout: 'fixed',
+      borderCollapse: 'collapse',
+      fontSize: theme.typography.fontSize,
+      color: theme.colors.text.primary,
+    }),
+    thead: css({
+      backgroundColor: theme.colors.background.secondary,
+    }),
+    th: css({
+      padding: '4px 6px',
+      height: '36px',
+      textAlign: 'left',
+      fontWeight: theme.typography.fontWeightMedium,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      cursor: 'pointer',
+      userSelect: 'none',
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
+    }),
+    tbody: css({
+      backgroundColor: theme.colors.background.primary,
+    }),
+    tr: css({
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      },
+    }),
+    focusedRow: css({
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      borderLeft: `3px solid ${theme.colors.primary.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+      },
+    }),
+    callersTargetRow: css({
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      borderLeft: `3px solid ${theme.colors.info.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+      },
+    }),
+    searchMatchRow: css({
+      backgroundColor: theme.colors.warning.transparent,
+      borderLeft: `3px solid ${theme.colors.warning.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
+      },
+    }),
+    td: css({
+      padding: '0px 6px',
+      borderBottom: 'none',
+      height: '20px',
+      verticalAlign: 'middle',
+      overflow: 'hidden',
+    }),
+    sortIcon: css({
+      marginLeft: theme.spacing(0.5),
+    }),
+    actionsColumnCell: css({
+      backgroundColor: theme.colors.background.secondary,
+      '&:hover': {
+        backgroundColor: theme.colors.background.secondary,
+      },
+    }),
+    valueColumnCell: css({
+      overflow: 'visible',
+      textAlign: 'right',
+    }),
+  };
 }

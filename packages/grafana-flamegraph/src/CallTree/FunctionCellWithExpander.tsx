@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { Row, UseExpandedRowProps } from 'react-table';
 
-import { Button } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
 
-import { Styles } from './styles';
 import { CallTreeNode } from './utils';
 
 export function FunctionCellWithExpander({
@@ -13,7 +14,6 @@ export function FunctionCellWithExpander({
   rowIndex,
   rows,
   onSymbolClick,
-  styles,
   compact = false,
   toggleRowExpanded,
 }: {
@@ -24,10 +24,11 @@ export function FunctionCellWithExpander({
   rowIndex?: number;
   rows: Array<Row<CallTreeNode>>;
   onSymbolClick: (symbol: string) => void;
-  styles: Styles;
   compact?: boolean;
   toggleRowExpanded: (id: string[], value?: boolean) => void;
 }) {
+  const styles = useStyles2(getStyles);
+
   const expandSingleChildChain = (node: CallTreeNode) => {
     if (node.children?.length === 1) {
       const childNode = node.children[0];
@@ -142,4 +143,51 @@ export function FunctionCellWithExpander({
       </span>
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    functionCellContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2px',
+      height: '20px',
+      lineHeight: '1',
+      overflow: 'hidden',
+      minWidth: 0,
+    }),
+    treeConnector: css({
+      color: theme.colors.text.secondary,
+      fontSize: '16px',
+      lineHeight: '1',
+      fontFamily: 'monospace',
+      whiteSpace: 'pre',
+      display: 'inline-block',
+      verticalAlign: 'middle',
+      flexShrink: 0,
+    }),
+    functionNameWrapper: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
+    }),
+    functionButton: css({
+      padding: 0,
+      fontSize: theme.typography.fontSize,
+      textAlign: 'left',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
+      flexShrink: 1,
+    }),
+    nodeBadge: css({
+      marginLeft: theme.spacing(0.5),
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+    }),
+  };
 }

@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from '../types';
 
-import { Styles } from './styles';
 import { CallTreeNode, getRowBarColor } from './utils';
 
 export function ColorBarCell({
@@ -11,16 +13,15 @@ export function ColorBarCell({
   data,
   colorScheme,
   theme,
-  styles,
   focusedNode,
 }: {
   node: CallTreeNode;
   data: FlameGraphDataContainer;
   colorScheme: ColorScheme | ColorSchemeDiff;
   theme: GrafanaTheme2;
-  styles: Styles;
   focusedNode?: CallTreeNode;
 }) {
+  const styles = useStyles2(getStyles);
   const barColor = getRowBarColor(node, data, colorScheme, theme);
 
   let barWidth: string;
@@ -41,4 +42,20 @@ export function ColorBarCell({
       <div className={styles.colorBar} style={{ width: barWidth, backgroundColor: barColor }} />
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    colorBarContainer: css({
+      width: '100%',
+      height: '20px',
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    colorBar: css({
+      height: '16px',
+      minWidth: '2px',
+      borderRadius: theme.shape.radius.default,
+    }),
+  };
 }
