@@ -47,6 +47,10 @@ describe('transformToV2TypesUtils', () => {
       expect(transformSortVariableToEnum(2)).toBe('alphabeticalDesc');
       expect(transformSortVariableToEnum(3)).toBe('numericalAsc');
       expect(transformSortVariableToEnum(4)).toBe('numericalDesc');
+      expect(transformSortVariableToEnum(5)).toBe('alphabeticalCaseInsensitiveAsc');
+      expect(transformSortVariableToEnum(6)).toBe('alphabeticalCaseInsensitiveDesc');
+      expect(transformSortVariableToEnum(7)).toBe('naturalAsc');
+      expect(transformSortVariableToEnum(8)).toBe('naturalDesc');
       expect(transformSortVariableToEnum(undefined)).toBe(defaultVariableSort());
     });
   });
