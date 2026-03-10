@@ -31,7 +31,7 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
   MockDataSourceSrv,
-} from './mocks/useCorrelations.mocks';
+} from './__mocks__/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
 
 // Set app events up, otherwise plugin modules will fail to load
@@ -212,7 +212,7 @@ afterAll(() => {
   jest.restoreAllMocks();
 });
 
-describe('CorrelationsPage', () => {
+describe('CorrelationsPage - Legacy', () => {
   describe('With no correlations', () => {
     beforeEach(async () => {
       await renderWithContext({
