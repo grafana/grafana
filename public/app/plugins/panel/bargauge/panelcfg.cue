@@ -30,9 +30,9 @@ composableKinds: PanelCfg: {
 
 					//// trying to set nested default, not working
 					//common.OptionsWithLegend | *{
-					// legend: common.VizLegendOptions | *{
-					//  showLegend: false
-					// }
+					//	legend: common.VizLegendOptions | *{
+					//		showLegend: false
+					//	}
 					//}
 					common.SingleStatBaseOptions
 					displayMode:   common.BarGaugeDisplayMode & (*"gradient" | _)

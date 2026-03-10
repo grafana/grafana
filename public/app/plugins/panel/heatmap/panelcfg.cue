@@ -131,7 +131,7 @@ composableKinds: PanelCfg: lineage: {
 				// Controls tick alignment and value name when not calculating from data
 				rowsFrame?: RowsHeatmapOptions
 				// | *{
-				//  layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+				// 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 				// }
 				// Controls the display of the value in the cell
 				showValue: ui.VisibilityMode & (*"auto" | _)
@@ -144,7 +144,7 @@ composableKinds: PanelCfg: lineage: {
 				// Controls yAxis placement
 				yAxis: YAxisConfig
 				// | *{
-				//  axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+				// 	axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 				// }
 				// Controls legend options
 				legend: HeatmapLegend | *{

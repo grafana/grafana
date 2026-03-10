@@ -146,12 +146,10 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
-				#LogsMode:              "Insights" | "Anomalies"                                                                                                                                                                                 @cuetsy(kind="enum")
-				#LogsQueryLanguage:     "CWLI" | "SQL" | "PPL"                                                                                                                                                                                   @cuetsy(kind="enum")
-
+				#LogsMode: "Insights" | "Anomalies" @cuetsy(kind="enum")
+				#LogsQueryLanguage: "CWLI" | "SQL" | "PPL" @cuetsy(kind="enum")
 				// Log group selection scope - determines how log groups are selected for the query
 				#LogsQueryScope: "logGroupName" | "namePrefix" | "allLogGroups" @cuetsy(kind="type")
-
 				// Log group class filter
 				#LogGroupClass: "STANDARD" | "INFREQUENT_ACCESS" @cuetsy(kind="type")
 
@@ -191,7 +189,7 @@ composableKinds: DataQuery: {
 				// Shape of a Cloudwatch Log Anomalies query
 				#CloudWatchLogsAnomaliesQuery: {
 					common.DataQuery
-					id: string
+					id:        string
 					// AWS region to query for the logs
 					region: string
 					// Whether a query is a Metrics, Logs or Annotations query
