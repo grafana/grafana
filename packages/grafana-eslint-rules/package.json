@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "test": "vitest --config vitest.config.ts",
-    "test:ci": "vitest run --config vitest.config.ts"
+    "test:ci": "vitest run --config vitest.config.ts --maxWorkers ${TEST_MAX_WORKERS:-100%} --shard=${TEST_SHARD:-1}/${TEST_SHARD_TOTAL:-1}"
   },
   "repository": {
     "type": "git",

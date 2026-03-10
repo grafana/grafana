@@ -166,6 +166,8 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run packages:test:ci
+      env:
+        TEST_MAX_WORKERS: 4
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.

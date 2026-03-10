@@ -55,7 +55,7 @@
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "storybook:test": "test-storybook --url http://localhost:9001",
     "test": "vitest --config vitest.config.ts",
-    "test:ci": "vitest run --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts --maxWorkers ${TEST_MAX_WORKERS:-100%}",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"

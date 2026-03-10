@@ -15,7 +15,7 @@
   "types": "src/index.ts",
   "scripts": {
     "test": "vitest --config vitest.config.ts",
-    "test:ci": "vitest run --config vitest.config.ts",
+    "test:ci": "vitest run --config vitest.config.ts --maxWorkers ${TEST_MAX_WORKERS:-100%}",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
