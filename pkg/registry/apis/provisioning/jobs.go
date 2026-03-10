@@ -229,9 +229,9 @@ var (
 // is still in the request context, since the export job executes later as the
 // provisioning service identity with full access.
 //
-// Delegates to the resources.Authorizer.AuthorizeExport method which checks:
+// Delegates to the resources.Authorizer which checks:
 //  1. Read permission on all supported resource types at root level.
-//  2. Create permission on the repository's target folder (if folder-scoped).
+//  2. Create permission on all supported resource types in the target folder (if folder-scoped).
 func (c *jobsConnector) authorizeExportJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
 	if spec.Push == nil {
 		return nil
@@ -243,7 +243,10 @@ func (c *jobsConnector) authorizeExportJob(ctx context.Context, repo repository.
 	}
 
 	authorizer := resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled)
-	return authorizer.AuthorizeExport(ctx)
+	if err := authorizer.AuthorizeReadAllSupported(ctx); err != nil {
+		return err
+	}
+	return authorizer.AuthorizeCreateAllSupported(ctx)
 }
 
 // ValidUUID ensures the ID is valid for a blob.

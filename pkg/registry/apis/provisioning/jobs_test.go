@@ -86,7 +86,7 @@ func TestAuthorizeExportJob(t *testing.T) {
 		}), "").Return(nil)
 		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbCreate
-		}), rootFolder).Return(apierrors.NewForbidden(schema.GroupResource{}, "", nil))
+		}), rootFolder).Return(apierrors.NewForbidden(schema.GroupResource{}, "", nil)).Once()
 
 		mockReader := repository.NewMockReader(t)
 
@@ -116,8 +116,9 @@ func TestAuthorizeExportJob(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("checks all supported resource types for read", func(t *testing.T) {
+	t.Run("checks all supported resource types for read and create", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
+		rootFolder := resources.RootFolder(cfg)
 
 		for _, kind := range resources.SupportedProvisioningResources {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -126,11 +127,13 @@ func TestAuthorizeExportJob(t *testing.T) {
 					req.Verb == utils.VerbGet
 			}), "").Return(nil).Once()
 		}
-		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-			return req.Verb == utils.VerbCreate &&
-				req.Group == resources.FolderResource.Group &&
-				req.Resource == resources.FolderResource.Resource
-		}), resources.RootFolder(cfg)).Return(nil).Once()
+		for _, kind := range resources.SupportedProvisioningResources {
+			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbCreate
+			}), rootFolder).Return(nil).Once()
+		}
 
 		mockReader := repository.NewMockReader(t)
 

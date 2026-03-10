@@ -78,15 +78,16 @@ type Authorizer interface {
 	//   - Does NOT check permissions on contents of "old-project"
 	AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error
 
-	// AuthorizeExport checks if the current user has the required permissions to
-	// export resources from Grafana into the repository.
-	//
-	// Two checks are performed:
-	//  1. Read permission on all supported resource types at root level, because
-	//     export reads all unmanaged dashboards and folders from the Grafana instance.
-	//  2. If the repository targets a folder, create permission on that folder,
-	//     because export writes resources into the repository's provisioned folder.
-	AuthorizeExport(ctx context.Context) error
+	// AuthorizeReadAllSupported checks if the current user has read (get) permission
+	// on every supported provisioning resource type at the root level.
+	// This is used before operations that enumerate all resources (e.g. full export).
+	AuthorizeReadAllSupported(ctx context.Context) error
+
+	// AuthorizeCreateAllSupported checks if the current user has create permission
+	// on every supported provisioning resource type within the repository's target
+	// folder. If the repository targets the whole instance (no folder), this is a
+	// no-op because there is no single folder scope to check against.
+	AuthorizeCreateAllSupported(ctx context.Context) error
 
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
@@ -302,14 +303,9 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
-// AuthorizeExport checks if the current user has the required permissions for an
-// export operation.
-//
-// Export reads all unmanaged resources from the Grafana instance and writes them
-// into the repository's target folder. The checks are:
-//  1. Read (get) permission on every supported resource type at root level.
-//  2. If the repository syncs to a folder, create permission on that folder.
-func (a *ProvisioningAuthorizer) AuthorizeExport(ctx context.Context) error {
+// AuthorizeReadAllSupported checks if the current user has read (get) permission
+// on every supported provisioning resource type at the root level.
+func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
 	for _, kind := range SupportedProvisioningResources {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
 			Group:    kind.Group,
@@ -319,18 +315,28 @@ func (a *ProvisioningAuthorizer) AuthorizeExport(ctx context.Context) error {
 			return err
 		}
 	}
+	return nil
+}
 
+// AuthorizeCreateAllSupported checks if the current user has create permission
+// on every supported provisioning resource type within the repository's target
+// folder. If the repository targets the whole instance (no folder), this is a
+// no-op.
+func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
-	if targetFolder != "" {
+	if targetFolder == "" {
+		return nil
+	}
+
+	for _, kind := range SupportedProvisioningResources {
 		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    FolderResource.Group,
-			Resource: FolderResource.Resource,
+			Group:    kind.Group,
+			Resource: kind.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
