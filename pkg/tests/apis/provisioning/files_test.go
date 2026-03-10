@@ -951,62 +951,49 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	})
 
 	t.Run("folder operations", func(t *testing.T) {
-		t.Run("viewer cannot create folders", func(t *testing.T) {
-			// Create a folder by POSTing to a directory path
-			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-			url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/test-folder/", addr, repo)
-			req, err := http.NewRequest(http.MethodPost, url, nil)
-			require.NoError(t, err)
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer resp.Body.Close()
+		t.Run("Viewer cannot create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "viewer-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
 
-			require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to create folders")
+			require.Error(t, result.Error(), "Viewer should not be able to create folders")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
 		})
 
-		t.Run("editor can create folders", func(t *testing.T) {
-			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-			url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/editor-folder/", addr, repo)
-			req, err := http.NewRequest(http.MethodPost, url, nil)
-			require.NoError(t, err)
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer resp.Body.Close()
+		t.Run("Editor can create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
 
-			require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to create folders")
+			require.NoError(t, result.Error(), "Editor should be able to create folders")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
-			// Clean up - delete folder
-			deleteURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/editor-folder/", addr, repo)
-			deleteReq, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
-			require.NoError(t, err)
-			deleteResp, err := http.DefaultClient.Do(deleteReq)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer deleteResp.Body.Close()
+			// Note: Folder deletion on configured branch is disabled (returns 405)
+			// so we don't attempt cleanup here
 		})
 
-		t.Run("admin can create folders", func(t *testing.T) {
-			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-			url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/admin-folder/", addr, repo)
-			req, err := http.NewRequest(http.MethodPost, url, nil)
-			require.NoError(t, err)
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer resp.Body.Close()
+		t.Run("Admin can create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "admin-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
 
-			require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to create folders")
+			require.NoError(t, result.Error(), "Admin should be able to create folders")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
-			// Clean up - delete folder
-			deleteURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/admin-folder/", addr, repo)
-			deleteReq, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
-			require.NoError(t, err)
-			deleteResp, err := http.DefaultClient.Do(deleteReq)
-			require.NoError(t, err)
-			// nolint:errcheck
-			defer deleteResp.Body.Close()
+			// Note: Folder deletion on configured branch is disabled (returns 405)
+			// so we don't attempt cleanup here
 		})
 	})
 
