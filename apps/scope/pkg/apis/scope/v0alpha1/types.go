@@ -103,6 +103,29 @@ func (ScopeDashboardBindingList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ScopeDashboardBindingList"
 }
 
+// ScopeNavigationOptions documents the optional query parameters accepted by
+// the /find/scope_dashboard_bindings and /find/scope_navigations connect
+// endpoints. This type is not a runtime.Object — it defines the API contract
+// for backends (including external implementations) to support as query params.
+// The Grafana connect handlers do not currently consume these via
+// NewConnectOptions; they parse query params from the request URL directly.
+type ScopeNavigationOptions struct {
+	// Extra levels of sub-scope items to include beyond the direct scope.
+	// 0 or omitted returns items for the requested scopes only.
+	// 1 returns items for the requested scopes plus their immediate sub-scopes.
+	Depth int32 `json:"depth,omitempty"`
+	// Root scope for hierarchical navigation context. When navigating into
+	// sub-scopes, this identifies the original top-level scope the user
+	// started from, allowing the backend to optimize response payloads
+	// (e.g., skipping expensive dashboard resolution for deep sub-nodes).
+	// If omitted, no root scope context is applied.
+	RootScope string `json:"rootScope,omitempty"`
+}
+
+func (ScopeNavigationOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigationOptions"
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FindScopeDashboardBindingsResults struct {
 	metav1.TypeMeta `json:",inline"`
