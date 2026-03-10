@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2, minColumnWidth = MIN_MULTI_COLUMN_SIZE,
   cardContainer: css({
     position: 'relative',
     width: '100%',
-    maxWidth: maxCardWidth ? `${maxCardWidth}px` : undefined,
+    maxWidth: maxCardWidth,
     justifySelf: 'start',
   }),
   vizTypeHeader: css({
