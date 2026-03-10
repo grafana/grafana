@@ -573,10 +573,6 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		}
 	}
 
-	// Authorization check: verify user has delete permission on the folder itself.
-	// For folder operations (by path), we only check the top-level folder being operated on,
-	// not recursively checking every nested resource. This follows the permission model where
-	// folder-level operations check the folder, and individual resource operations check the resource.
 	if err := r.authorizer.AuthorizeDeleteFolder(ctx, opts.Path); err != nil {
 		return nil, err
 	}
