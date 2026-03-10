@@ -63,7 +63,7 @@ func TestReadFolderMetadata(t *testing.T) {
 }
 
 func TestWriteFolderMetadata(t *testing.T) {
-	t.Run("creates _folder.json and returns stable UID", func(t *testing.T) {
+	t.Run("writes _folder.json and returns stable UID", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 
 		const uid = "my-stable-uid"
