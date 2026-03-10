@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock } from '../mocks/mockHelpers';
@@ -199,6 +200,9 @@ describe('VersionList', () => {
 
     const installedVersion = '2.0.0';
 
+    const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+    config.featureToggles.managedPluginsV2 = true;
+
     const plugin = getCatalogPluginMock({
       details: {
         grafanaDependency: '>=8.0.0',
@@ -214,6 +218,8 @@ describe('VersionList', () => {
     const buttons = screen.getAllByRole('button');
     const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
     expect(enabledButtons).toHaveLength(2);
+
+    config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
   });
 });
 
