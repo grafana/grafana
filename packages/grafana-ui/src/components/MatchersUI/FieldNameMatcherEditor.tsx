@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, FieldType, fieldMatchers } from '@grafana/data';
+import { DataTopic, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';
@@ -10,21 +10,28 @@ import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 import { frameHasName, useFieldDisplayNames, useSelectOptions } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id, allowedScopes } = props;
+  const { series, annotations = [], options, onChange: onChangeFromProps, id, allowedScopes } = props;
   const areNestedFieldsAllowed = allowedScopes?.includes('nested');
-  const names = useFieldDisplayNames(data, (field) => areNestedFieldsAllowed || field.type !== FieldType.nestedFrames);
-  const selectOptions: ComboboxOption[] = useSelectOptions(names, options);
+  const areAnnotationFieldsAllowed = allowedScopes?.includes('annotation');
+
+  const seriesNames = useFieldDisplayNames(
+    [...series, ...annotations],
+    (field) => areNestedFieldsAllowed || field.type !== FieldType.nestedFrames,
+    (frame) => areAnnotationFieldsAllowed || frame.meta?.dataTopic !== DataTopic.Annotations
+  );
+
+  const selectOptions = useSelectOptions(seriesNames, options);
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
-      if (!frameHasName(selection.value, names)) {
+      if (!frameHasName(selection.value, seriesNames)) {
         return;
       }
 
-      const scope = names.scopes.get(selection.value!);
-      return onChangeFromProps(selection.value!, scope);
+      const scope = seriesNames.scopes.get(selection.value);
+      return onChangeFromProps(selection.value, scope);
     },
-    [names, onChangeFromProps]
+    [seriesNames, onChangeFromProps]
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);

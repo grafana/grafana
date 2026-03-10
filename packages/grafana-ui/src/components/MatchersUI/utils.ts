@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  DataTopic,
+  Field,
+  FieldNamePickerBaseNameMode,
+  FieldType,
+  getFieldDisplayName,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { MatcherScope } from '@grafana/schema';
 
@@ -39,7 +46,8 @@ export function frameHasName(name: string | undefined, names: FrameFieldsDisplay
  */
 export function getFrameFieldsDisplayNames(
   data: DataFrame[],
-  filter?: (field: Field) => boolean,
+  fieldFilter?: (field: Field) => boolean,
+  frameFilter?: (frame: DataFrame) => boolean,
   existingNames?: FrameFieldsDisplayNames,
   parentData: DataFrame[] = data,
   scope?: MatcherScope
@@ -54,33 +62,57 @@ export function getFrameFieldsDisplayNames(
     } satisfies FrameFieldsDisplayNames);
 
   for (const frame of data) {
+    if (frameFilter && !frameFilter(frame)) {
+      continue;
+    }
+    let localScope = scope;
+    if (frame.meta?.dataTopic === DataTopic.Annotations) {
+      localScope = 'annotation';
+    }
     for (const field of frame.fields) {
-      if (filter && !filter(field)) {
+      if (fieldFilter && !fieldFilter(field)) {
         continue;
       }
       if (field.type === FieldType.nestedFrames) {
         field.values.forEach((nestedData) =>
-          getFrameFieldsDisplayNames(nestedData, filter, names, parentData, 'nested')
+          getFrameFieldsDisplayNames(nestedData, fieldFilter, frameFilter, names, parentData, 'nested')
         );
         continue;
       }
       const disp = getFieldDisplayName(field, frame, parentData);
       names.display.add(disp);
       names.fields.set(disp, field);
-      if (scope) {
-        names.scopes.set(disp, scope);
+      if (localScope) {
+        names.scopes.set(disp, localScope);
       }
       if (field.name && disp !== field.name) {
         names.raw.add(field.name);
         names.fields.set(field.name, field);
-        if (scope) {
-          names.scopes.set(field.name, scope);
+        if (localScope) {
+          names.scopes.set(field.name, localScope);
         }
       }
     }
   }
   return names;
 }
+
+/**
+ * @internal
+ * Gets field names for annotation and series frames
+ */
+// export function useAllFieldDisplayNames(series: DataFrame[], annotations: DataFrame[]) {
+//   const seriesNames = useFieldDisplayNames(series);
+//   const annoNames = useFieldDisplayNames(annotations);
+//
+//   return useMemo<FrameFieldsDisplayNames>(() => {
+//     return {
+//       display: new Set([...seriesNames.display, ...annoNames.display]),
+//       raw: new Set([...seriesNames.raw, ...annoNames.raw]),
+//       fields: new Map([...seriesNames.fields.entries(), ...annoNames.fields.entries()]),
+//     };
+//   }, [seriesNames, annoNames]);
+// }
 
 /**
  * @internal
@@ -116,10 +148,14 @@ export function getGroupDescriptionForScope(scope: MatcherScope): string | undef
 /**
  * @internal
  */
-export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
+export function useFieldDisplayNames(
+  data: DataFrame[],
+  fieldFilter?: (field: Field) => boolean,
+  frameFilter?: (frame: DataFrame) => boolean
+): FrameFieldsDisplayNames {
   return useMemo(() => {
-    return getFrameFieldsDisplayNames(data, filter);
-  }, [data, filter]);
+    return getFrameFieldsDisplayNames(data, fieldFilter, frameFilter);
+  }, [data, fieldFilter, frameFilter]);
 }
 
 /**

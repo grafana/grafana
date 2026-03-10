@@ -45,9 +45,9 @@ function isBooleanReducer(r: ReducerID) {
   return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
 }
 
-export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope, allowedScopes }: Props) => {
+export const FieldValueMatcherEditor = ({ id, options, onChange, series, scope, allowedScopes }: Props) => {
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
-  const names = useFieldDisplayNames(data);
+  const names = useFieldDisplayNames(series);
   const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
 
   const onSetReducer = useCallback(

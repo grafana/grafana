@@ -2221,6 +2221,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "annotationFramesFieldOverrides",
+			Description:  "Enable field overrides for FieldType.annotation fields",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,

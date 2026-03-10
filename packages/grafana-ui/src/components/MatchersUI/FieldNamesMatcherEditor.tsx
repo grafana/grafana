@@ -10,10 +10,13 @@ import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
-  const { id, data, options, onChange: onChangeFromProps, allowedScopes } = props;
+  const { id, series, options, onChange: onChangeFromProps, allowedScopes } = props;
   const areNestedFieldsAllowed = allowedScopes?.includes('nested');
   const { readOnly, prefix } = options;
-  const names = useFieldDisplayNames(data, (field) => areNestedFieldsAllowed || field.type !== FieldType.nestedFrames);
+  const names = useFieldDisplayNames(
+    series,
+    (field) => areNestedFieldsAllowed || field.type !== FieldType.nestedFrames
+  );
   const selectOptions = useSelectOptions(names, undefined);
 
   const onChange = useCallback(

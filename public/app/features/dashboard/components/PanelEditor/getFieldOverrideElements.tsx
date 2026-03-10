@@ -30,14 +30,18 @@ if (config.featureToggles.nestedFramesFieldOverrides) {
   ALLOWED_SCOPES.push('nested');
 }
 
+if (config.featureToggles.annotationFramesFieldOverrides) {
+  ALLOWED_SCOPES.push('annotation');
+}
 // [FIXME] Is there something else we need to do in here?
 
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
   registry: FieldConfigOptionsRegistry,
-  data: DataFrame[],
+  series: DataFrame[],
   searchQuery: string,
-  onFieldConfigsChange: (config: FieldConfigSource) => void
+  onFieldConfigsChange: (config: FieldConfigSource) => void,
+  annotations?: DataFrame[]
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -74,8 +78,8 @@ export function getFieldOverrideCategories(
   };
 
   const context = {
-    data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+    data: series,
+    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(series, scope),
     isOverride: true,
   };
 
@@ -137,9 +141,10 @@ export function getFieldOverrideCategories(
         render: function renderMatcherUI() {
           return (
             <matcherUi.component
+              annotations={annotations}
               id={htmlId}
               matcher={matcherUi.matcher}
-              data={data ?? []}
+              series={series ?? []}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
               scope={override.matcher.scope}

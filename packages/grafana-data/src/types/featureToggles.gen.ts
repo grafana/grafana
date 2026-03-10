@@ -1408,6 +1408,11 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
+  * Enable field overrides for FieldType.annotation fields
+  * @default false
+  */
+  annotationFramesFieldOverrides?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */

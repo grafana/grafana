@@ -1,4 +1,4 @@
-import { cloneDeep, isEqual } from 'lodash';
+import { cloneDeep, isEqual, partition } from 'lodash';
 import { forkJoin, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
@@ -190,12 +190,53 @@ export class PanelQueryRunner {
                   }),
                 };
                 if (processedData.annotations) {
+                  const [exemplarFrames, annotationFrames] = partition<DataFrame>(
+                    processedData.annotations,
+                    (df) => df.meta?.custom?.resultType === 'exemplar'
+                  );
+
+                  let allAnnoFrames: DataFrame[] = [];
+
+                  // Annotation overrides
+                  if (allAnnoFrames.length) {
+                    allAnnoFrames.push(
+                      ...applyFieldOverrides({
+                        data: annotationFrames,
+                        ...fieldConfig!,
+                        fieldConfig: {
+                          defaults: {},
+                          overrides: [
+                            ...fieldConfig.fieldConfig.overrides.filter((ov) => ov.matcher.scope === 'annotation'),
+                          ],
+                        },
+                      })
+                    );
+                  }
+
+                  // Exemplar overrides
+                  if (exemplarFrames.length) {
+                    allAnnoFrames.push(
+                      ...applyFieldOverrides({
+                        data: annotationFrames,
+                        ...fieldConfig!,
+                        fieldConfig: {
+                          defaults: {},
+                          overrides: [
+                            ...fieldConfig.fieldConfig.overrides.filter((ov) => ov.matcher.scope === 'exemplar'),
+                          ],
+                        },
+                      })
+                    );
+                  }
+
                   processedData.annotations = applyFieldOverrides({
                     data: processedData.annotations,
                     ...fieldConfig!,
                     fieldConfig: {
                       defaults: {},
-                      overrides: [],
+                      overrides: [
+                        ...fieldConfig.fieldConfig.overrides.filter((ov) => ov.matcher.scope === 'annotation'),
+                      ],
                     },
                   });
                 }

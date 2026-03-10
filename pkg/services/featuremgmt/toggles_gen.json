@@ -869,6 +869,20 @@
     },
     {
       "metadata": {
+        "name": "annotationFramesFieldOverrides",
+        "resourceVersion": "1773163303389",
+        "creationTimestamp": "2026-03-10T17:21:43Z"
+      },
+      "spec": {
+        "description": "Enable field overrides for FieldType.annotation fields",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-10-31T13:30:13Z"

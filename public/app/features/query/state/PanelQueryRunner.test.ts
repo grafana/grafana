@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
+import { ConfigOverrideRule, DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
 import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
@@ -93,6 +93,28 @@ const defaultPanelConfig: grafanaData.DataConfigSource = {
   getTransformations: () => undefined,
   getDataSupport: () => ({ annotations: false, alertStates: false }),
 };
+
+const annotationOverrides: ConfigOverrideRule[] = [
+  {
+    matcher: {
+      id: 'byName',
+      options: 'color',
+      scope: 'annotation',
+    },
+    properties: [
+      {
+        id: 'links',
+        value: [
+          {
+            targetBlank: true,
+            title: 'Test2',
+            url: 'https://googole.com',
+          },
+        ],
+      },
+    ],
+  },
+];
 
 function describeQueryRunnerScenario(
   description: string,
@@ -302,6 +324,116 @@ describe('PanelQueryRunner', () => {
   );
 
   describeQueryRunnerScenario(
+    'annotation field overrides',
+    (ctx) => {
+      it('applies overrides when withFieldConfig is set', async () => {
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: true }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            return data;
+          },
+        });
+
+        expect(applyFieldOverridesMock).toBeCalledTimes(4);
+
+        // series 1
+        expect(applyFieldOverridesMock).nthCalledWith(
+          1,
+          expect.objectContaining({
+            fieldConfig: {
+              defaults: {
+                unit: 'm/s',
+              },
+              overrides: annotationOverrides,
+            },
+          })
+        );
+        // annotation 1
+        expect(applyFieldOverridesMock).nthCalledWith(
+          2,
+          expect.objectContaining({
+            fieldConfig: {
+              // no defaults
+              defaults: {},
+              overrides: annotationOverrides,
+            },
+          })
+        );
+        // series 2
+        expect(applyFieldOverridesMock).nthCalledWith(
+          3,
+          expect.objectContaining({
+            fieldConfig: {
+              defaults: {
+                unit: 'm/s',
+              },
+              overrides: annotationOverrides,
+            },
+          })
+        );
+        // annotation 2
+        expect(applyFieldOverridesMock).nthCalledWith(
+          4,
+          expect.objectContaining({
+            fieldConfig: {
+              // no defaults
+              defaults: {},
+              overrides: annotationOverrides,
+            },
+          })
+        );
+      });
+
+      it('applies overrides once when withFieldConfig is false', async () => {
+        ctx.runner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            return data;
+          },
+        });
+
+        expect(applyFieldOverridesMock).toBeCalledTimes(2);
+
+        // series 1
+        expect(applyFieldOverridesMock).nthCalledWith(
+          1,
+          expect.objectContaining({
+            fieldConfig: {
+              defaults: {
+                unit: 'm/s',
+              },
+              overrides: annotationOverrides,
+            },
+          })
+        );
+
+        // Annotations
+        expect(applyFieldOverridesMock).nthCalledWith(
+          2,
+          expect.objectContaining({
+            fieldConfig: {
+              defaults: {},
+              overrides: annotationOverrides,
+            },
+          })
+        );
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          overrides: annotationOverrides,
+        },
+        replaceVariables: (v) => v,
+        theme: grafanaData.createTheme(),
+      }),
+      getTransformations: () => undefined,
+      getDataSupport: () => ({ annotations: true, alertStates: false }),
+    }
+  );
+
+  describeQueryRunnerScenario(
     'transformations',
     (ctx) => {
       it('should apply when transformations are set', async () => {
@@ -353,7 +485,68 @@ describe('PanelQueryRunner', () => {
       });
     },
     {
-      getFieldOverrideOptions: () => undefined,
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          // @ts-ignore
+          overrides: [],
+        },
+        replaceVariables: (v) => v,
+        theme: grafanaData.createTheme(),
+      }),
+      getTransformations: () => [
+        {
+          id: DataTransformerID.convertFrameType,
+          topic: grafanaData.DataTopic.Series,
+          options: {
+            targetType: FrameType.Exemplar,
+          },
+        },
+      ],
+      getDataSupport: () => ({ annotations: true, alertStates: false }),
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'annotations',
+    (ctx) => {
+      it('should re-categorize any anno frames returned by series transformations', async () => {
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            try {
+              expect(data.series).toEqual([]);
+              expect(data.annotations).toEqual([
+                {
+                  name: 'exemplar',
+                  meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
+                  length: 2,
+                  fields: [
+                    { config: {}, name: 'Time', state: null, type: 'time', values: [1000, 2000] },
+                    { config: {}, name: 'Value', state: null, type: 'number', values: [1, 2] },
+                  ],
+                },
+              ]);
+              return data;
+            } catch (e) {
+              return Promise.reject(e instanceof Error ? e.message : e);
+            }
+          },
+        });
+      });
+    },
+    {
+      getFieldOverrideOptions: () => ({
+        fieldConfig: {
+          defaults: {
+            unit: 'm/s',
+          },
+          overrides: annotationOverrides,
+        },
+        replaceVariables: (v) => v,
+        theme: grafanaData.createTheme(),
+      }),
       getTransformations: () => [
         {
           id: DataTransformerID.convertFrameType,
