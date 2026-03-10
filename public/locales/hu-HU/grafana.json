@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Hiba történt az esemény szabályának betöltésekor.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Szűrési mód:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "A kiválasztott időszak túl sok eseményt tartalmaz, így a teljes lista nem jeleníthető meg. A legutóbbi 5000 esemény látható. Próbáljon rövidebb időszakot megadni.",
         "title": "Nem lehet megjeleníteni az összes eseményt"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Irányítópult",
         "element": "Elem",
+        "link-set": "",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
         "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
@@ -5402,6 +5411,12 @@
         "tabs": "Lapok",
         "variable": "{{type}} változó",
         "variable-set": "Változók"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Statikus kulcsméretek használata",
       "name-allow-custom-values": "Egyéni értékek engedélyezése"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nem sikerült a kiválasztott irányítópulthoz navigálni. Próbálkozzon újra.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}}, <person />",
       "usage-count_one": "{{count}} irányítópulton használatos",
       "usage-count_other": "{{count}} irányítópulton használatos"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Felügyeli: Kubectl",
@@ -9530,6 +9578,7 @@
       "log-base": "Naplóbázis"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Tengely",
         "color-label": "Szín",
@@ -9819,6 +9868,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Összehasonlítás műveleti jele",
+      "reducer-value-label": "",
       "select-field-placeholder": "Mezőkijelölési szűkítés"
     },
     "file-dropzone": {
@@ -10690,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
-    "description-enable-logs-highlighting": "Használjon előre definiált színsémát a naplósorok releváns részeinek kiemeléséhez",
-    "description-show-controls": "Vezérlők megjelenítése az utolsó vagy az első naplósorra ugráshoz és szűrés naplószint szerint",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Kísérleti. Amikor az OTel-naplók megjelennek, hozzáadhat egy további megjelenített mezőt a címkék és a metaadatok releváns kulcs-érték párjaival.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ikon áthúzása",
       "clear-button": "Törlés",
@@ -11744,7 +11798,7 @@
       "dialog-label": "",
       "dock": "Menü dokkolása",
       "list-label": "Navigáció",
-      "open": "Menü megnyitása",
+      "open": "",
       "undock": "Menü dokkolásának feloldása"
     },
     "megamenu-item": {
@@ -12139,10 +12193,12 @@
     "start-modal": {
       "button-start": "{{title}} indítása",
       "description-customize-dashboard-elements-visibility": "Irányítópult-elemek láthatóságának testreszabása",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Panelmagasság igazítása a képernyő méretéhez",
       "label-autofit": "Automatikus illesztés",
       "label-dashboard-links": "Irányítópult-hivatkozások",
       "label-display-dashboard-controls": "Irányítópult-vezérlők megjelenítése",
+      "label-hide-logo": "",
       "label-mode": "Üzemmód",
       "label-time-and-refresh": "Idő és frissítés",
       "label-variables": "Változók",
@@ -12632,6 +12688,7 @@
       "error-connection-required": "A kapcsolat megadása kötelező",
       "error-fetch-branches": "",
       "error-required": "A mező kitöltése kötelező.",
+      "error-save-failed": "",
       "error-save-repository": "Az adattár beállításainak mentése sikertelen volt",
       "label-automatic-pulling": "Automatikus lekérés",
       "label-connection": "GitHub-alkalmazáskapcsolat",
@@ -12646,9 +12703,11 @@
       "placeholder-my-config": "Saját konfiguráció"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Konfigurálja a webkapcsokat</0>, hogy azonnali frissítéseket kapjon a Grafanában, amint a változások végrehajtása megtörténik. Tekintse át és hagyja jóvá a módosításokat a lekérések használatával, mielőtt életbe lépnének.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "GitHub-funkciók",
-      "label-realtime-feedback": "Valós idejű visszajelzés"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12856,14 @@
       "description-preview-requirements": "(<2>képalkotás</2> és nyilvános hozzáférés engedélyezése szükséges)",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
       "description-sync-interval": "Az adattárbeli változások szinkronizálásának gyakorisága",
+      "description-webhook-url": "",
       "error-sync-interval-required": "A szinkronizálási intervallum megadása kötelező",
       "label-enable-previews": "Az irányítópult előnézeteinek engedélyezése a lekérésekben",
       "label-generate-dashboard-previews": "Irányítópult-előnézetek generálása",
       "label-read-only": "Csak olvasható",
-      "label-sync-interval": "Szinkronizálási intervallum (másodperc)"
+      "label-sync-interval": "Szinkronizálási intervallum (másodperc)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13256,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Figyelmeztetés",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Kérjük, vegye figyelembe a következő korlátozásokat. További részletekért tekintse meg a <2>Git-szinkronizálás dokumentációját</2>.",
       "alert-point-1": "A folyamat során továbbra is létrehozhatók, szerkeszthetők vagy törölhetők erőforrások, de a módosítások nem exportálhatók.",

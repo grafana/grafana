@@ -1,4 +1,4 @@
-package provisioning
+package quota
 
 import (
 	"context"
@@ -27,11 +27,11 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards directly in Grafana
-		dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create first dashboard")
 
-		dashboard2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+		dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
 		_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create second dashboard")
 
@@ -72,11 +72,11 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards — these alone will exceed the quota of 1
-		dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create first dashboard")
 
-		dashboard2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+		dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
 		_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create second dashboard")
 
@@ -124,7 +124,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		ctx := context.Background()
 
 		// Create 1 unmanaged dashboard (alone would fit in quota of 2)
-		dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+		dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create dashboard")
 

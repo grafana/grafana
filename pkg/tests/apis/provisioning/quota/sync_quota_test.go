@@ -1,4 +1,4 @@
-package provisioning
+package quota
 
 import (
 	"os"
@@ -32,8 +32,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json":   "dashboard1.json",
-				"testdata/text-options.json": "dashboard2.json",
+				"../testdata/all-panels.json":   "dashboard1.json",
+				"../testdata/text-options.json": "dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
 
 		// Add a second dashboard (still within limit of 5)
-		dashboard2Content := helper.LoadFile("testdata/text-options.json")
+		dashboard2Content := helper.LoadFile("../testdata/text-options.json")
 		err := os.WriteFile(filepath.Join(repoPath, "dashboard2.json"), dashboard2Content, 0o600)
 		require.NoError(t, err, "should be able to write dashboard2.json")
 
@@ -123,8 +123,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json":   "dashboard1.json",
-				"testdata/text-options.json": "dashboard2.json",
+				"../testdata/all-panels.json":   "dashboard1.json",
+				"../testdata/text-options.json": "dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -150,7 +150,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		require.True(t, quotas.IsQuotaExceeded(typedRepo.Status.Conditions), "quota should be exceeded")
 
 		// Now add a 3rd dashboard - this should be blocked by quota on the next full sync
-		dashboard3Content := helper.LoadFile("testdata/timeline-demo.json")
+		dashboard3Content := helper.LoadFile("../testdata/timeline-demo.json")
 		err = os.WriteFile(filepath.Join(repoPath, "dashboard3.json"), dashboard3Content, 0o600)
 		require.NoError(t, err, "should be able to write dashboard3.json")
 
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "dashboard1.json",
+				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -204,8 +204,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		for _, file := range []struct {
 			src, dst string
 		}{
-			{"testdata/text-options.json", "dashboard2.json"},
-			{"testdata/timeline-demo.json", "dashboard3.json"},
+			{"../testdata/text-options.json", "dashboard2.json"},
+			{"../testdata/timeline-demo.json", "dashboard3.json"},
 		} {
 			content := helper.LoadFile(file.src)
 			err := os.WriteFile(filepath.Join(repoPath, file.dst), content, 0o600)
@@ -275,8 +275,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json":   "subfolder/dashboard1.json",
-				"testdata/text-options.json": "subfolder/nested/dashboard2.json",
+				"../testdata/all-panels.json":   "subfolder/dashboard1.json",
+				"../testdata/text-options.json": "subfolder/nested/dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -301,13 +301,13 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Step 2: Add 2 dashboards in new subfolders (each creates a folder + a dashboard).
 		// This would bring total to 9 (5 existing + 2 folders + 2 dashboards), exceeding limit of 6.
-		newDash1Content := helper.LoadFile("testdata/timeline-demo.json")
+		newDash1Content := helper.LoadFile("../testdata/timeline-demo.json")
 		err = os.MkdirAll(filepath.Join(repoPath, "new_a"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_a", "dashboard_new1.json"), newDash1Content, 0o600)
 		require.NoError(t, err, "should be able to write new_a/dashboard_new1.json")
 
-		newDash2Content := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "quota-nested-extra"`, 1)
+		newDash2Content := strings.Replace(string(helper.LoadFile("../testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "quota-nested-extra"`, 1)
 		err = os.MkdirAll(filepath.Join(repoPath, "new_b"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_b", "dashboard_new2.json"), []byte(newDash2Content), 0o600)
@@ -391,9 +391,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json":    "dashboard1.json",
-				"testdata/text-options.json":  "dashboard2.json",
-				"testdata/timeline-demo.json": "dashboard3.json",
+				"../testdata/all-panels.json":    "dashboard1.json",
+				"../testdata/text-options.json":  "dashboard2.json",
+				"../testdata/timeline-demo.json": "dashboard3.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -439,9 +439,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			Path:   repoPath,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json":    "dashboard1.json",
-				"testdata/text-options.json":  "dashboard2.json",
-				"testdata/timeline-demo.json": "dashboard3.json",
+				"../testdata/all-panels.json":    "dashboard1.json",
+				"../testdata/text-options.json":  "dashboard2.json",
+				"../testdata/timeline-demo.json": "dashboard3.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,

@@ -224,6 +224,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,kubernetesAuthZHandlerRedirect,deprecated,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
+2026-03-06,kubernetesAuthZRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-08-01,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
@@ -274,6 +275,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-03,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
+2026-03-07,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
@@ -303,6 +305,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamsHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-26,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
+2026-03-09,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
+2026-03-09,kubernetesServiceAccountTokensApi,experimental,@grafana/identity-access-team,false,false,false
 2026-02-19,kubernetesExternalGroupMappingsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-02-19,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
@@ -318,4 +322,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-25,managedPluginsV2,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-02-25,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
 2026-02-23,dsAbstractionApp,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
