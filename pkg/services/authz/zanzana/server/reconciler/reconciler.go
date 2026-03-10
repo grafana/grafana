@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -26,6 +27,8 @@ type Reconciler struct {
 	cfg           Config
 	logger        log.Logger
 	tracer        tracing.Tracer
+	metrics       *reconcilerMetrics
+	leaderElector LeaderElector
 
 	workQueue chan string
 
@@ -66,6 +69,8 @@ func NewReconciler(
 	cfg Config,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+	leaderElector LeaderElector,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -73,6 +78,8 @@ func NewReconciler(
 		cfg:           cfg,
 		logger:        logger,
 		tracer:        tracer,
+		metrics:       newReconcilerMetrics(reg),
+		leaderElector: leaderElector,
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
 }
@@ -89,8 +96,15 @@ func (r *Reconciler) getGlobalRolePerms() map[string][]*authzextv1.RolePermissio
 	return r.globalRolePerms
 }
 
-// Run starts the reconciler's main loop and worker goroutines.
+// Run starts leader election and delegates to runLoop when leadership is acquired.
 func (r *Reconciler) Run(ctx context.Context) error {
+	r.logger.Info("Starting MT reconciler")
+	return r.leaderElector.Run(ctx, r.runLoop)
+}
+
+// runLoop contains the main reconciliation loop, started when this instance
+// acquires leadership (or immediately for NoopLeaderElector).
+func (r *Reconciler) runLoop(ctx context.Context) {
 	r.logger.Info("Starting Unistore to Zanzana reconciler",
 		"workers", r.cfg.Workers,
 		"interval", r.cfg.Interval,
@@ -117,9 +131,8 @@ func (r *Reconciler) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			r.logger.Info("Reconciler shutting down")
-			close(r.workQueue) // Signal workers to stop
-			wg.Wait()          // Wait for all workers to finish
-			return ctx.Err()
+			wg.Wait() // Workers exit via ctx.Done(); do not close the shared channel (it may be reused on re-election)
+			return
 		case <-ticker.C:
 			r.queueAllNamespaces(ctx)
 		}
@@ -128,6 +141,9 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // queueAllNamespaces lists all OpenFGA stores and queues them for reconciliation.
 func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.queueAllNamespaces")
+	defer span.End()
+
 	// Fetch global role permissions once per tick and cache them for all namespaces.
 	globalPerms, err := r.fetchGlobalRolePerms(ctx)
 	if err != nil {
@@ -149,6 +165,7 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 		namespace := store.Name
 		select {
 		case r.workQueue <- namespace:
+			r.metrics.workQueueDepth.Inc()
 			r.logger.Debug("Queued namespace for reconciliation", "namespace", namespace)
 		case <-ctx.Done():
 			return
@@ -170,23 +187,36 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 				return
 			}
 
+			r.metrics.workQueueDepth.Dec()
 			r.logger.Info("Reconciling namespace", "namespace", namespace, "workerID", workerID)
 			start := time.Now()
 
-			if err := r.reconcileNamespace(ctx, namespace); err != nil {
-				r.logger.Error("Failed to reconcile namespace",
-					"namespace", namespace,
-					"workerID", workerID,
-					"error", err,
-					"duration", time.Since(start),
-				)
+			err := r.reconcileNamespace(ctx, namespace)
+			elapsed := time.Since(start)
+			status := "success"
+			if err != nil {
+				status = "error"
+				if ctx.Err() != nil {
+					r.logger.Warn("Reconciler shutdown during namespace reconciliation",
+						"namespace", namespace,
+						"workerID", workerID,
+					)
+				} else {
+					r.logger.Error("Failed to reconcile namespace",
+						"namespace", namespace,
+						"workerID", workerID,
+						"error", err,
+						"duration", elapsed,
+					)
+				}
 			} else {
 				r.logger.Info("Successfully reconciled namespace",
 					"namespace", namespace,
 					"workerID", workerID,
-					"duration", time.Since(start),
+					"duration", elapsed,
 				)
 			}
+			r.metrics.namespaceDurationSeconds.WithLabelValues(status).Observe(elapsed.Seconds())
 		}
 	}
 }
@@ -247,6 +277,11 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	return nil
 }
 
+// EnsureNamespace is not gated by leader election: it is called inline from
+// the authorization request path and must complete before the caller can
+// proceed. It only creates stores for new namespaces. Any overlap with the
+// leader's background reconciliation loop is safe because reconcileNamespace
+// is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
 	defer span.End()

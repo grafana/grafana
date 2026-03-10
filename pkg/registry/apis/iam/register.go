@@ -106,7 +106,7 @@ func RegisterAPIService(
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
-		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, tracing),
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
@@ -124,6 +124,8 @@ func RegisterAPIService(
 		authorizer:                        authorizer,
 		legacyAccessClient:                legacyAccessClient,
 		accessClient:                      accessClient,
+		ac:                                ac,
+		roleConfigProvider:                restConfig.GetRestConfig,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
 		display:                           user.NewLegacyDisplayREST(store),
@@ -336,6 +338,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
+	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
+	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
@@ -360,8 +364,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
-	if err := b.UpdateServiceAccountsAPIGroup(opts, storage); err != nil {
-		return err
+	if enableServiceAccountsApi {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi); err != nil {
+			return err
+		}
 	}
 
 	// SSO settings apis
@@ -404,7 +410,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableRoleBindingsApi {
-		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync, enableRolesApi); err != nil {
 			return err
 		}
 	}
@@ -544,7 +550,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
@@ -560,7 +566,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 		storage[saResource.StoragePath()] = dw
 	}
 
-	storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+	if enableServiceAccountTokensApi {
+		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+	}
 
 	return nil
 }
@@ -614,6 +622,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 	opts builder.APIGroupOptions,
 	storage map[string]rest.Storage,
 	enableZanzanaSync bool,
+	enableRolesApi bool,
 ) error {
 	uniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, iamv0.RoleBindingInfo, opts.OptsGetter)
 	if err != nil {
@@ -648,7 +657,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
 		}
 	}
 
-	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
+	var rbAuthorizer storewrapper.ResourceStorageAuthorizer
+	if enableRolesApi && b.ac != nil && b.roleConfigProvider != nil {
+		validator := iamauthorizer.NewRolePermissionValidator(b.accessClient, b.ac)
+		roleRefResolver := iamauthorizer.RoleRefResolverFromConfigProvider(b.roleConfigProvider)
+		rbAuthorizer = iamauthorizer.NewRoleBindingAuthorizer(validator, roleRefResolver)
+	} else {
+		// roles API disabled, then deny bindings
+		rbAuthorizer = iamauthorizer.NewDenyCustomRoleRefsAuthorizer()
+	}
+	storage[iamv0.RoleBindingInfo.StoragePath()] = storewrapper.New(roleBindingStore, rbAuthorizer)
 	return nil
 }
 
@@ -871,8 +889,14 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ExternalGroupMapping:
 		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
+		if err := ValidateRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.GlobalRole:
+		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.TeamLBACRule:
 		return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
@@ -908,11 +932,17 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Role, got %T", oldObj)
 		}
+		if err := ValidateRoleSpec(typedObj); err != nil {
+			return err
+		}
 		return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
 	case *iamv0.GlobalRole:
 		oldGlobalRoleObj, ok := oldObj.(*iamv0.GlobalRole)
 		if !ok {
 			return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldObj)
+		}
+		if err := ValidateGlobalRoleSpec(typedObj); err != nil {
+			return err
 		}
 		return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
 	case *iamv0.TeamLBACRule:

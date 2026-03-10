@@ -364,7 +364,7 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
-	KubernetesAnnotationsAppEnabled    bool
+	AnnotationAppPlatform              AnnotationAppPlatformSettings
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -568,6 +568,9 @@ type Cfg struct {
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
 
+	// DatabaseRegisterDeprecatedMetrics decides whether to register the deprecated `grafana_database_conn_*` and `go_sql_stats_*` metrics.
+	DatabaseRegisterDeprecatedMetrics bool
+
 	// Public dashboards
 	PublicDashboardsEnabled bool
 
@@ -605,6 +608,8 @@ type Cfg struct {
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
 	DisableDataMigrations bool
+	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
+	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
 	// Larger values reduce lock contention. Default: 1000000 (~1GB).
 	MigrationCacheSizeKB int
@@ -612,7 +617,10 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
-	MaxPageSizeBytes       int
+	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
+	// statements to appear in the processlist. Default: 1 minute.
+	RenameWaitDeadline time.Duration
+	MaxPageSizeBytes   int
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
@@ -623,6 +631,7 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
@@ -855,7 +864,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	cfg.KubernetesAnnotationsAppEnabled = section.Key("kubernetes_annotations_app_enabled").MustBool(false)
+	cfg.AnnotationAppPlatform = loadAnnotationAppPlatformSettings(cfg.Raw)
 
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
@@ -915,6 +924,27 @@ func (cfg *Cfg) readExpressionsSettings() {
 type AnnotationCleanupSettings struct {
 	MaxAge   time.Duration
 	MaxCount int64
+}
+
+type AnnotationAppPlatformSettings struct {
+	Enabled           bool
+	StoreBackend      string // "sql" (default) or "grpc"
+	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
+	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
+	GRPCTLSCAFile     string // Path to CA certificate file (optional)
+	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+}
+
+func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
+	appPlatformSection := cfg.Section("annotations.app_platform")
+	return AnnotationAppPlatformSettings{
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
+		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
+		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
+		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+	}
 }
 
 func EnvKey(sectionName string, keyName string) string {
@@ -1501,6 +1531,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
