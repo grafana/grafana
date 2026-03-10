@@ -749,6 +749,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Chyba při načítání pravidla pro tuto událost.",
         "header": {
@@ -786,6 +790,10 @@
         }
       },
       "filterBy": "Filtrovat dle:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Vybrané časové období má příliš mnoho událostí k zobrazení. Zobrazuje se posledních 5 000 událostí. Zkuste použít kratší časové období.",
         "title": "Všechny události nejde zobrazit"
@@ -5444,6 +5452,7 @@
         "annotation-set": "",
         "dashboard": "Nástěnka",
         "element": "Prvek",
+        "link-set": "",
         "local-variable": "Lokální proměnná",
         "multiple-elements": "Více prvků",
         "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
@@ -5458,6 +5467,12 @@
         "tabs": "Karty",
         "variable": "{{type}} proměnná",
         "variable-set": "Proměnné"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6508,6 +6523,11 @@
       "label-use-static-key-dimensions": "Použít dimenze statického klíče",
       "name-allow-custom-values": "Povolit vlastní hodnoty"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nelze přejít na vybranou nástěnku. Zkuste to znovu.",
@@ -6929,6 +6949,34 @@
       "usage-count_few": "Použito na {{count}} nástěnkách",
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Spravuje: Kubectl",
@@ -10798,9 +10846,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
-    "description-enable-logs-highlighting": "Použijte předdefinované barevné schéma pro zvýraznění příslušných částí řádků protokolu",
-    "description-show-controls": "Zobrazit ovládací prvky pro přechod na poslední nebo první řádek protokolu a filtry podle úrovně protokolu",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Experimentální. Když se zobrazí protokoly OTel, přidejte další zobrazené pole s relevantními páry klíč-hodnota ze štítků a metadat.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ikona přetažení",
       "clear-button": "Vymazat",
@@ -12259,10 +12311,12 @@
     "start-modal": {
       "button-start": "Spustit {{title}}",
       "description-customize-dashboard-elements-visibility": "Přizpůsobit viditelnost prvků nástěnky",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Výška panelu bude upravena tak, aby odpovídala velikosti obrazovky",
       "label-autofit": "Automaticky přizpůsobit",
       "label-dashboard-links": "Propojení nástěnek",
       "label-display-dashboard-controls": "Zobrazit ovládací prvky nástěnky",
+      "label-hide-logo": "",
       "label-mode": "Režim",
       "label-time-and-refresh": "Načasovat a obnovit",
       "label-variables": "Proměnné",

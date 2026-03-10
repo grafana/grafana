@@ -223,10 +223,10 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20260306155606-142355827498 h1:o3MSVQnl4XPpX9WplVChKL6pmDBHTbiMtRL+/5I1Uyc=
 github.com/grafana/alerting v0.0.0-20260306155606-142355827498/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
-github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d h1:9cE/YVzudTOdWRf+nv1LFSOnEMl4tM+aTp+juBd0eU8=
-github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d/go.mod h1:TZHiNIUlZa3p1ElRPnSQaHK1fIm/nPdJvlvdWqThggU=
-github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d h1:SMC55BzMlSKP29X7Op41MtdbCxmpENE+6TUFMLaO0Jg=
-github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
+github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 h1:73MsCpj8uoFfHOHaH1aZPxQL2uMuINarW+QwOg+hkak=
+github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22/go.mod h1:83u3gnUElNU3PZeBRWdsKC711MzBlqAcAMeHuiskx1g=
+github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 h1:a+R8bVZBfqgSvkYmIjKNqq5rfL49CeSybMCnQ1K4cmM=
+github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
 github.com/grafana/dataplane/sdata v0.0.9/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e h1:zP30ZbtnWjy0KJxToqCLARauAtgFD+TAEB/sk4IBb9s=
@@ -348,8 +348,8 @@ github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D
 github.com/mattn/go-runewidth v0.0.19 h1:v++JhqYnZuu5jSKrk9RbgF5v4CGUjqRfBm05byFGLdw=
 github.com/mattn/go-runewidth v0.0.19/go.mod h1:XBkDxAl56ILZc9knddidhrOlY5R/pDhgLpndooCuJAs=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
-github.com/mdlayher/socket v0.4.1 h1:eM9y2/jlbs1M615oshPQOHZzj6R6wMT7bX5NPiQvn2U=
-github.com/mdlayher/socket v0.4.1/go.mod h1:cAqeGjoufqdxWkD7DkpyS+wcefOtmu5OQ8KuoJGIReA=
+github.com/mdlayher/socket v0.5.1 h1:VZaqt6RkGkt2OE9l3GcC6nZkqD3xKeQLyfleW/uBcos=
+github.com/mdlayher/socket v0.5.1/go.mod h1:TjPLHI1UgwEv5J1B5q0zTZq12A/6H7nKmtTanQE37IQ=
 github.com/mdlayher/vsock v1.2.1 h1:pC1mTJTvjo1r9n9fbm7S1j04rCgCzhCOS5DY0zqHlnQ=
 github.com/mdlayher/vsock v1.2.1/go.mod h1:NRfCibel++DgeMD8z/hP+PPTjlNJsdPOmxcnENvE+SE=
 github.com/miekg/dns v1.1.69 h1:Kb7Y/1Jo+SG+a2GtfoFUfDkG//csdRPwRLkCsxDG9Sc=

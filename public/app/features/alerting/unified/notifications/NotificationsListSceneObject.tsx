@@ -60,6 +60,7 @@ interface NotificationsListProps {
   statusFilter: string;
   outcomeFilter: string;
   receiverFilter: string;
+  ruleUID?: string;
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
@@ -69,9 +70,13 @@ export const NotificationsList = React.memo(function NotificationsList({
   statusFilter,
   outcomeFilter,
   receiverFilter,
+  ruleUID,
   onLabelClick,
 }: NotificationsListProps) {
   const [createNotificationQuery, { data, isLoading, isError, error }] = useCreateNotificationqueryMutation();
+
+  const fromUnix = timeRange?.from?.unix();
+  const toUnix = timeRange?.to?.unix();
 
   // Fetch notifications when filters change
   React.useEffect(() => {
@@ -103,6 +108,7 @@ export const NotificationsList = React.memo(function NotificationsList({
           status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
           outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
+          ruleUID: ruleUID,
           groupLabels,
         },
       });
@@ -111,7 +117,7 @@ export const NotificationsList = React.memo(function NotificationsList({
     }
     // Don't include createNotificationQuery in deps to avoid infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange?.from?.unix(), timeRange?.to?.unix(), statusFilter, outcomeFilter, receiverFilter, labelFilter]);
+  }, [fromUnix, toUnix, statusFilter, outcomeFilter, receiverFilter, labelFilter, ruleUID]);
 
   // Extract entries from API response (data is properly typed from the generated client)
   const entriesArray: NotificationEntry[] = React.useMemo(() => {
@@ -554,7 +560,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
 /**
  * This is a scene object that displays a list of notification events.
  */
-interface NotificationsListObjectState extends SceneObjectState {}
+interface NotificationsListObjectState extends SceneObjectState {
+  ruleUID?: string;
+}
 
 export class NotificationsListObject extends SceneObjectBase<NotificationsListObjectState> {
   public static Component = NotificationsListObjectRenderer;
@@ -565,7 +573,7 @@ export class NotificationsListObject extends SceneObjectBase<NotificationsListOb
 }
 
 export function NotificationsListObjectRenderer({ model }: SceneComponentProps<NotificationsListObject>) {
-  model.useState();
+  const { ruleUID } = model.useState();
 
   const timeRangeObj = sceneGraph.getTimeRange(model);
   const { value: timeRange } = timeRangeObj.useState();
@@ -622,6 +630,7 @@ export function NotificationsListObjectRenderer({ model }: SceneComponentProps<N
         statusFilter={statusFilterVariable.state.value.toString()}
         outcomeFilter={outcomeFilterVariable.state.value.toString()}
         receiverFilter={receiverFilterVariable.state.value.toString()}
+        ruleUID={ruleUID}
         onLabelClick={onLabelClick}
       />
     );

@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Error al cargar la regla para este evento.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrar por:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "El periodo de tiempo seleccionado tiene demasiados eventos que mostrar. Se muestran los últimos 5000 eventos. Prueba con un periodo de tiempo más corto.",
         "title": "No se pueden mostrar todos los eventos"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Panel de control",
         "element": "Elemento",
+        "link-set": "",
         "local-variable": "Variable local",
         "multiple-elements": "Múltiples elementos",
         "multiple-elements-delete-text": "¿Seguro que quieres eliminar estos elementos?",
@@ -5402,6 +5411,12 @@
         "tabs": "Pestañas",
         "variable": "{{type}} variable",
         "variable-set": "Variables"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Usar dimensiones de clave estática",
       "name-allow-custom-values": "Permitir valores personalizados"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "No se ha podido acceder al dashboard seleccionado. Vuelva a intentarlo.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} por <person />",
       "usage-count_one": "Utilizado en {{count}} dashboards",
       "usage-count_other": "Utilizado en {{count}} dashboards"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Administrado por: Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
-    "description-enable-logs-highlighting": "Utilizar un esquema de color predefinido para resaltar las partes relevantes de las líneas del log",
-    "description-show-controls": "Mostrar controles para saltar a la última o primera línea de log y filtra por nivel de log",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Experimental. Cuando se muestran los logs de OTel, añade un campo adicional con los pares clave-valor relevantes de las etiquetas y los metadatos.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Arrastrar y soltar icono",
       "clear-button": "Borrar",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "Iniciar {{title}}",
       "description-customize-dashboard-elements-visibility": "Personalizar la visibilidad de los elementos del dashboard",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "La altura del panel se ajustará para adecuarse al tamaño de la pantalla",
       "label-autofit": "Ajuste automático",
       "label-dashboard-links": "Enlaces del dashboard",
       "label-display-dashboard-controls": "Mostrar controles del dashboard",
+      "label-hide-logo": "",
       "label-mode": "Modo",
       "label-time-and-refresh": "Tiempo y actualización",
       "label-variables": "Variables",
