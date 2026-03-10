@@ -40,12 +40,12 @@ rolev0alpha1: roleKind & {
 
 corerolev0alpha1: coreroleKind & {
 	schema: {
-		spec:   v0alpha1.RoleSpec
+		spec:   v0alpha1.GlobalRoleSpec
 	}
 }
 
 globalrolev0alpha1: globalroleKind & {
 	schema: {
-		spec:   v0alpha1.RoleSpec
+		spec:   v0alpha1.GlobalRoleSpec
 	}
 }
