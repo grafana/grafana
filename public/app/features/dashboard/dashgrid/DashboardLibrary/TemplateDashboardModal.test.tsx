@@ -1,8 +1,11 @@
 import { http, HttpResponse } from 'msw';
+import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
@@ -41,18 +44,12 @@ jest.mock('@grafana/assistant', () => ({
     openAssistant: jest.fn(),
   })),
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
-}));
-
-const mockUseBooleanFlagValue = jest.fn();
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: (flagKey: string, defaultValue: boolean) => mockUseBooleanFlagValue(flagKey, defaultValue),
+  isAssistantAvailable: jest.fn(() => of(true)),
 }));
 
 describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseBooleanFlagValue.mockImplementation((_, defaultValue: boolean) => defaultValue);
     mockGetList.mockReturnValue([
       { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
     ]);
@@ -147,8 +144,10 @@ describe('TemplateDashboardModal', () => {
 
       await waitFor(() => {
         // Assert DashboardCard components are rendered by checking for their headings
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard 2' })).toBeInTheDocument();
+        const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+        expect(cardHeadings).toHaveLength(2);
+        expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+        expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
 
         // Assert DashboardCard components are rendered by checking for "View template" buttons
         const viewTemplateButtons = screen.getAllByRole('button', { name: 'View template' });
@@ -163,67 +162,57 @@ describe('TemplateDashboardModal', () => {
 
   describe('Assistant button', () => {
     describe('when feature flags are false', () => {
-      it('should not render Customize with Assistant button when both feature flags are false', async () => {
-        mockUseBooleanFlagValue.mockImplementation((key: string) => {
-          if (key === 'dashboardTemplatesAssistantButton') {
-            return false;
-          }
-          if (key === 'assistant.frontend.tools.dashboardTemplates') {
-            return false;
-          }
-          return false;
+      beforeEach(() => {
+        setTestFlags({
+          dashboardTemplatesAssistantButton: false,
+          'assistant.frontend.tools.dashboardTemplates': false,
         });
+      });
 
+      it('should not render Customize with Assistant button when both feature flags are false', async () => {
         render(<TemplateDashboardModal />, {
           historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
       });
 
       it('should not render Customize with Assistant button when dashboardTemplatesAssistantButton is false', async () => {
-        mockUseBooleanFlagValue.mockImplementation((key: string) => {
-          if (key === 'dashboardTemplatesAssistantButton') {
-            return false;
-          }
-          if (key === 'assistant.frontend.tools.dashboardTemplates') {
-            return true;
-          }
-          return false;
-        });
+        setTestFlags({ dashboardTemplatesAssistantButton: false, 'assistant.frontend.tools.dashboardTemplates': true });
 
         render(<TemplateDashboardModal />, {
           historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
       });
 
       it('should not render Customize with Assistant button when assistant.frontend.tools.dashboardTemplates is false', async () => {
-        mockUseBooleanFlagValue.mockImplementation((key: string) => {
-          if (key === 'dashboardTemplatesAssistantButton') {
-            return true;
-          }
-          if (key === 'assistant.frontend.tools.dashboardTemplates') {
-            return false;
-          }
-          return false;
-        });
+        setTestFlags({ dashboardTemplatesAssistantButton: true, 'assistant.frontend.tools.dashboardTemplates': false });
 
         render(<TemplateDashboardModal />, {
           historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -232,15 +221,7 @@ describe('TemplateDashboardModal', () => {
 
     describe('when feature flags are enabled', () => {
       beforeEach(() => {
-        mockUseBooleanFlagValue.mockImplementation((key: string) => {
-          if (key === 'dashboardTemplatesAssistantButton') {
-            return true;
-          }
-          if (key === 'assistant.frontend.tools.dashboardTemplates') {
-            return true;
-          }
-          return false;
-        });
+        setTestFlags({ dashboardTemplatesAssistantButton: true, 'assistant.frontend.tools.dashboardTemplates': true });
       });
 
       it('should redirect to template dashboard URL when Customize with Assistant is clicked with correct parameters', async () => {

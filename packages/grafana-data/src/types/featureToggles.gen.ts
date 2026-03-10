@@ -69,6 +69,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Sort alert rule groups by folder full path in the Prometheus rules API
+  * @default false
+  */
+  alertingRuleGroupSortByFolderFullpath?: boolean;
+  /**
   * Allow datasource to provide custom UI for context view
   * @default true
   */
@@ -380,12 +385,12 @@ export interface FeatureToggles {
   alertingProvenanceLockWrites?: boolean;
   /**
   * Enables the UI to use certain backend-side filters
-  * @default false
+  * @default true
   */
   alertingUIUseBackendFilters?: boolean;
   /**
   * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
-  * @default false
+  * @default true
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
@@ -458,6 +463,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingV2Layouts?: boolean;
+  /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false
@@ -584,6 +594,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Enables configuring default origin filters for ad-hoc filter variables
+  * @default false
+  */
+  adHocFilterDefaultValues?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -638,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+  * @default false
+  */
+  alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
   * @default false
@@ -1128,6 +1148,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthZRolesRedirect?: boolean;
   /**
+  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+  * @default false
+  */
+  kubernetesAuthZRoleBindingsRedirect?: boolean;
+  /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
   */
@@ -1183,6 +1208,11 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
+  * Enables the created by me search filter on the browse dashboards page
+  * @default false
+  */
+  createdByMeSearchFilter?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1222,11 +1252,6 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
-  /**
-  * Use fixed-width numbers globally in the UI
-  * @default false
-  */
-  tabularNumbers?: boolean;
   /**
   * Enables new design for the InfluxDB data source configuration page
   * @default false
@@ -1349,7 +1374,7 @@ export interface FeatureToggles {
   pluginInstallAPISync?: boolean;
   /**
   * Enable new gauge visualization
-  * @default false
+  * @default true
   */
   newGauge?: boolean;
   /**
@@ -1372,6 +1397,16 @@ export interface FeatureToggles {
   * @default false
   */
   externalVizSuggestions?: boolean;
+  /**
+  * Limit the number of legend items by default, with an option to show all
+  * @default false
+  */
+  vizLegendSeriesLimit?: boolean;
+  /**
+  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
+  * @default false
+  */
+  nestedFramesFieldOverrides?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
@@ -1468,6 +1503,11 @@ export interface FeatureToggles {
   */
   multiPropsVariables?: boolean;
   /**
+  * Enables support for section level variables (rows and tabs)
+  * @default false
+  */
+  dashboardSectionVariables?: boolean;
+  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1508,6 +1548,21 @@ export interface FeatureToggles {
   */
   kubernetesTeamsHandlerRedirect?: boolean;
   /**
+  * Enables user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersApi?: boolean;
+  /**
+  * Enables service account APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountsApi?: boolean;
+  /**
+  * Enables service account token APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountTokensApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1528,6 +1583,11 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
+  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * @default false
+  */
+  appPluginAPIServer?: boolean;
+  /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
   */
@@ -1543,6 +1603,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryGlobal?: boolean;
   /**
+  * Enables the notification history timeline in the triage instance details drawer
+  * @default false
+  */
+  alertingNotificationHistoryTriage?: boolean;
+  /**
   * Whether to use the new React 19 runtime
   * @default false
   */
@@ -1557,4 +1622,29 @@ export interface FeatureToggles {
   * @default false
   */
   functionalSharedPreferences?: boolean;
+  /**
+  * Enables managed plugins v2 (expanded rollout, community plugin coverage)
+  * @default false
+  */
+  managedPluginsV2?: boolean;
+  /**
+  * Remember the last viewed organization for users using SSO
+  * @default true
+  */
+  rememberUserOrgForSso?: boolean;
+  /**
+  * Registers the dsabstraction app for querying datasources via unified SQL
+  * @default false
+  */
+  dsAbstractionApp?: boolean;
+  /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
+  /**
+  * Enables new analytics framework
+  * @default false
+  */
+  analyticsFramework?: boolean;
 }

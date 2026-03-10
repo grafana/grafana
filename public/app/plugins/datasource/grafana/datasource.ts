@@ -30,6 +30,7 @@ import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/Dashboa
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { randomWalk } from './randomWalk';
 import { doTimeRegionQuery } from './timeRegions';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 
@@ -142,10 +143,14 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             buffer,
           })
         );
+      } else if (target.queryType === GrafanaQueryType.RandomWalk || !target.queryType) {
+        results.push(
+          of({
+            data: randomWalk(target, request),
+            state: LoadingState.Done,
+          })
+        );
       } else {
-        if (!target.queryType) {
-          target.queryType = GrafanaQueryType.RandomWalk;
-        }
         targets.push(target);
       }
     }

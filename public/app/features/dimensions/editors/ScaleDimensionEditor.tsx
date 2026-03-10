@@ -16,7 +16,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   const { settings } = item;
   const styles = useStyles2(getStyles);
 
-  const fixedValueOption: SelectableValue<string> = useMemo(
+  const fixedValueOption = useMemo(
     () => ({
       label: t('dimensions.scale-dimension-editor.fixed-value-option.label.fixed-value', 'Fixed value'),
       value: '_____fixed_____',

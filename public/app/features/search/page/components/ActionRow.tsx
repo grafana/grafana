@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -7,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { SearchLayout, SearchState } from '../../types';
 
@@ -36,6 +38,7 @@ interface ActionRowProps {
   onDatasourceChange: (ds?: string) => void;
   onPanelTypeChange: (pt?: string) => void;
   onSetIncludePanels: (v: boolean) => void;
+  onCreatedByChange?: (createdBy?: string) => void;
 }
 
 export function getValidQueryLayout(q: SearchState): SearchLayout {
@@ -43,7 +46,7 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort || q.starred || q.tag.length > 0) {
+    if (q.query || q.sort || q.starred || q.tag.length > 0 || q.createdBy) {
       return SearchLayout.List;
     }
   }
@@ -65,16 +68,23 @@ export const ActionRow = ({
   onDatasourceChange,
   onPanelTypeChange,
   onSetIncludePanels,
+  onCreatedByChange,
 }: ActionRowProps) => {
   const styles = useStyles2(getStyles);
 
   const layout = getValidQueryLayout(state);
+  const isCreatedByMeSearchFilterEnabled = useBooleanFlagValue('createdByMeSearchFilter', false);
+  // Created by me search filter is only available if the unified search is enabled
+  const showCreatedByMeSearchFilter = isCreatedByMeSearchFilterEnabled && config.featureToggles.unifiedStorageSearchUI;
 
   // Disabled folder layout option when query is present
   const disabledOptions =
-    state.tag.length || state.starred || state.query || state.datasource || state.panel_type
+    state.tag.length || state.starred || state.query || state.datasource || state.panel_type || state.createdBy
       ? [SearchLayout.Folders]
       : [];
+
+  const createdByMe = `user:${contextSrv.user.uid}`;
+  const isFilteredByMe = state.createdBy === createdByMe;
 
   return (
     <Stack justifyContent="space-between" alignItems="center">
@@ -96,6 +106,16 @@ export const ActionRow = ({
               label={t('search.actions.starred', 'Starred')}
               onChange={onStarredFilterChange}
               value={state.starred}
+            />
+          </div>
+        )}
+        {showCreatedByMeSearchFilter && onCreatedByChange && (
+          <div className={styles.checkboxWrapper}>
+            <Checkbox
+              label={t('search.actions.created-by-me', 'Created by me')}
+              // Make sure the checkbox is checked if the createdBy is the current user
+              value={state.createdBy === `user:${contextSrv.user.uid}`}
+              onChange={() => onCreatedByChange(isFilteredByMe ? undefined : createdByMe)}
             />
           </div>
         )}

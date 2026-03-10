@@ -37,7 +37,6 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
@@ -103,7 +102,6 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 					"kubernetesLibraryPanels",
 					"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
@@ -306,7 +304,6 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
@@ -526,7 +523,6 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 			EnableFeatureToggles: []string{
 				"kubernetesLibraryPanels",
 			},
-			UnifiedStorageEnableSearch: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: dualWriterMode,

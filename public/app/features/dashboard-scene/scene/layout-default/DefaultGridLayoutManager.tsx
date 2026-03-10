@@ -31,7 +31,7 @@ import {
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
@@ -325,25 +325,26 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
+  // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.grid.state.children;
     const hasGridItem = children.find((child) => child instanceof DashboardGridItem);
     const clonedChildren: SceneGridItemLike[] = [];
 
     if (children.length) {
-      let panelId = hasGridItem ? dashboardSceneGraph.getNextPanelId(hasGridItem.state.body) : 1;
+      const nextId =
+        panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(hasGridItem ? hasGridItem.state.body : this);
 
       children.forEach((child) => {
         if (child instanceof DashboardGridItem) {
           const clone = child.clone({
             key: undefined,
             body: child.state.body.clone({
-              key: getVizPanelKeyForPanelId(panelId),
+              key: getVizPanelKeyForPanelId(nextId()),
             }),
           });
 
           clonedChildren.push(clone);
-          panelId++;
         } else {
           clonedChildren.push(child.clone({ key: undefined }));
         }
@@ -567,6 +568,16 @@ export class DefaultGridLayoutManager
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
     return DefaultGridLayoutManager.fromVizPanels(panels);
+  }
+
+  public static createEmpty(): DefaultGridLayoutManager {
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [],
+        isDraggable: true,
+        isResizable: true,
+      }),
+    });
   }
 
   public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,13 +20,14 @@ import (
 
 // BenchmarkOptions configures the benchmark parameters
 type BenchmarkOptions struct {
-	NumResources       int // total number of resources to write
-	Concurrency        int // number of concurrent writers
-	NumNamespaces      int // number of different namespaces
-	NumGroups          int // number of different groups
-	NumResourceTypes   int // number of different resource types
-	NumHistoryVersions int // history depth per resource for list seed (default 10)
-	NumListIterations  int // number of List calls to measure (default 100)
+	NumResources           int           // total number of resources to write
+	Concurrency            int           // number of concurrent writers
+	NumNamespaces          int           // number of different namespaces
+	NumGroups              int           // number of different groups
+	NumResourceTypes       int           // number of different resource types
+	NumHistoryVersions     int           // history depth per resource for list seed (default 10)
+	NumListIterations      int           // number of List calls to measure (default 100)
+	IndexMinUpdateInterval time.Duration // minimum time between index updates (default 100ms)
 }
 
 // DefaultBenchmarkOptions returns the default benchmark options
@@ -42,21 +44,34 @@ func DefaultBenchmarkOptions(t *testing.T) *BenchmarkOptions {
 		return defaultVal
 	}
 
+	envOrDefaultDuration := func(name string, defaultVal time.Duration) time.Duration {
+		envVar := fmt.Sprintf("US_BACKEND_BENCH_%s", name)
+		if str := os.Getenv(envVar); str != "" {
+			dur, err := time.ParseDuration(str)
+			require.NoError(t, err)
+
+			return dur
+		}
+
+		return defaultVal
+	}
+
 	return &BenchmarkOptions{
-		NumResources:       envOrDefault("RESOURCES", 1000),
-		Concurrency:        envOrDefault("CONCURRENCY", 50),
-		NumNamespaces:      envOrDefault("NAMESPACES", 1),
-		NumGroups:          envOrDefault("GROUPS", 1),
-		NumResourceTypes:   envOrDefault("RESOURCE_TYPES", 1),
-		NumHistoryVersions: envOrDefault("HISTORY_VERSIONS", 10),
-		NumListIterations:  envOrDefault("LIST_ITERATIONS", 100),
+		NumResources:           envOrDefault("RESOURCES", 1000),
+		Concurrency:            envOrDefault("CONCURRENCY", 50),
+		NumNamespaces:          envOrDefault("NAMESPACES", 1),
+		NumGroups:              envOrDefault("GROUPS", 1),
+		NumResourceTypes:       envOrDefault("RESOURCE_TYPES", 1),
+		NumHistoryVersions:     envOrDefault("HISTORY_VERSIONS", 10),
+		NumListIterations:      envOrDefault("LIST_ITERATIONS", 100),
+		IndexMinUpdateInterval: envOrDefaultDuration("INDEX_MIN_UPDATE_INTERVAL", 100*time.Millisecond),
 	}
 }
 
 func (opts *BenchmarkOptions) String() string {
 	return fmt.Sprintf(
-		"Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d, History Versions=%d, List Iterations=%d",
-		opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes, opts.NumHistoryVersions, opts.NumListIterations,
+		"Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d, History Versions=%d, List Iterations=%d, Index Min Update Interval=%v",
+		opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes, opts.NumHistoryVersions, opts.NumListIterations, opts.IndexMinUpdateInterval,
 	)
 }
 
@@ -75,7 +90,7 @@ func (r BenchmarkResult) String() string {
 
 	fmt.Fprintf(&out, "Total Duration: %v\n", r.TotalDuration)
 	fmt.Fprintf(&out, "Req Count: %d\n", r.ReqCount)
-	fmt.Fprintf(&out, "Throughput: %.2f writes/sec\n", r.Throughput)
+	fmt.Fprintf(&out, "Throughput: %.2f reqs/sec\n", r.Throughput)
 	fmt.Fprintf(&out, "P50 Latency: %v\n", r.P50Latency)
 	fmt.Fprintf(&out, "P90 Latency: %v\n", r.P90Latency)
 	fmt.Fprintf(&out, "P99 Latency: %v\n", r.P99Latency)
@@ -441,6 +456,248 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 		P90Latency:    latencies[len(latencies)*90/100],
 		P99Latency:    latencies[len(latencies)*99/100],
 	}, nil
+}
+
+// StorageAndSearchBenchmarkResults aggregates results of a combined storage + search benchmark run.
+type StorageAndSearchBenchmarkResults struct {
+	WriteResults  BenchmarkResult
+	SearchResults BenchmarkResult
+}
+
+func (r StorageAndSearchBenchmarkResults) String() string {
+	return fmt.Sprintf(
+		"WRITES:\n%s\n\nSEARCHES:\n%s\n",
+		r.WriteResults, r.SearchResults,
+	)
+}
+
+// runStorageAndSearchBenchmark runs a benchmark that writes to storage while
+// periodically searching through an index kept up-to-date from that storage.
+// It also exercises our ability to search-after-write for every resource written
+// during the benchmark.
+func runStorageAndSearchBenchmark(
+	t *testing.T,
+	backend resource.StorageBackend,
+	searchOpts resource.SearchOptions,
+	opts *BenchmarkOptions,
+) *StorageAndSearchBenchmarkResults {
+	ctx := t.Context()
+
+	if opts.NumGroups != opts.NumResourceTypes {
+		t.Logf("WARNING: benchmark only supports NumGroups=NumResourceTypes, one resource type per group")
+	}
+
+	// Discover group/resource pairs from the configured document builders
+	builders, err := searchOpts.Resources.GetDocumentBuilders()
+	require.NoError(t, err)
+	require.NotEmpty(t, builders, "search options must have at least one document builder")
+
+	type groupResource struct {
+		group    string
+		resource string
+	}
+	pairs := make([]groupResource, len(builders))
+	for i, b := range builders {
+		t.Logf("using group=%s resource=%s", b.GroupResource.Group, b.GroupResource.Resource)
+		pairs[i] = groupResource{group: b.GroupResource.Group, resource: b.GroupResource.Resource}
+	}
+
+	searchServer, err := resource.NewSearchServer(resource.ResourceServerOptions{
+		Backend: backend,
+		Search:  searchOpts,
+	})
+	require.NoError(t, err)
+
+	type searchJob struct {
+		namespace string
+		group     string
+		resource  string
+		title     string
+		idx       int // index into searchLatencies
+	}
+
+	searchCh := make(chan searchJob, opts.NumResources)
+	searchLatencies := make([]time.Duration, opts.NumResources)
+
+	// Dispatcher goroutine: reads from searchCh and spawns a search goroutine per write.
+	var dispatcherDone sync.WaitGroup
+	searchG, searchCtx := errgroup.WithContext(ctx)
+	dispatcherDone.Go(func() {
+		for job := range searchCh {
+			req := &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: job.namespace,
+						Group:     job.group,
+						Resource:  job.resource,
+					},
+				},
+				Query: job.title,
+				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
+					{
+						Name: "title",
+						Type: resourcepb.QueryFieldType_KEYWORD,
+					},
+				},
+				Limit: 10,
+			}
+			idx := job.idx
+			searchG.Go(func() error {
+				start := time.Now()
+				resp, err := searchServer.Search(searchCtx, req)
+				searchLatencies[idx] = time.Since(start)
+				if err != nil {
+					return fmt.Errorf(
+						"search failed for %s/%s %s: %w",
+						req.Options.Key.Group, req.Options.Key.Resource, req.Options.Key.Name, err,
+					)
+				}
+				if resp.TotalHits != 1 {
+					return fmt.Errorf(
+						"expected 1 hit for %s/%s %s, got %d",
+						req.Options.Key.Group, req.Options.Key.Resource, req.Query, resp.TotalHits,
+					)
+				}
+				return nil
+			})
+		}
+	})
+
+	// Background goroutine: continuously issues wildcard searches across all
+	// group/resource pairs to exercise index updates while writes are in flight.
+	bgSearchCtx, bgSearchCancel := context.WithCancel(ctx)
+	defer bgSearchCancel()
+	var bgSearchDone sync.WaitGroup
+	bgSearchDone.Go(func() {
+		for i := 0; ; i++ {
+			select {
+			case <-bgSearchCtx.Done():
+				return
+			case <-time.After(50 * time.Millisecond):
+			}
+			pair := pairs[i%len(pairs)]
+			namespace := fmt.Sprintf("ns-%d", i%opts.NumNamespaces)
+			_, err := searchServer.Search(bgSearchCtx, &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: namespace,
+						Group:     pair.group,
+						Resource:  pair.resource,
+					},
+				},
+				Query: "*",
+				Limit: 10,
+			})
+			if err != nil && bgSearchCtx.Err() == nil {
+				t.Errorf("background search failed for %s/%s: %v", pair.group, pair.resource, err)
+				return
+			}
+		}
+	})
+
+	// Start write workers — distribute across group/resource pairs like the storage benchmark.
+	// After each write, send a search job through the channel.
+	jobs := make(chan int, opts.NumResources)
+	writeLatencies := make([]time.Duration, opts.NumResources)
+	for i := 0; i < opts.NumResources; i++ {
+		jobs <- i
+	}
+	close(jobs)
+
+	g, groupCtx := errgroup.WithContext(ctx)
+	writeStart := time.Now()
+	value := strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20) // ~1.21 KiB
+
+	for workerID := 0; workerID < opts.Concurrency; workerID++ {
+		g.Go(func() error {
+			for jobID := range jobs {
+				pair := pairs[jobID%len(pairs)]
+				namespace := fmt.Sprintf("ns-%d", jobID%opts.NumNamespaces)
+				name := fmt.Sprintf("item-%d", jobID)
+				title := fmt.Sprintf("%s %d", name, time.Now().Unix())
+				opStart := time.Now()
+				_, err := WriteEvent(groupCtx, backend, name, resourcepb.WatchEvent_ADDED,
+					WithGroup(pair.group),
+					WithResource(pair.resource),
+					WithNamespace(namespace),
+					WithValueAndTitle(value, title),
+				)
+				if err != nil {
+					return err
+				}
+				writeLatencies[jobID] = time.Since(opStart)
+				// Sleep to simulate what the resource server does to
+				// provide search-after-write guarantees to the caller.
+				if opts.IndexMinUpdateInterval > 0 {
+					time.Sleep(opts.IndexMinUpdateInterval)
+				}
+				// Make sure we are able to search the resource just created.
+				searchCh <- searchJob{
+					namespace: namespace,
+					group:     pair.group,
+					resource:  pair.resource,
+					title:     title,
+					idx:       jobID,
+				}
+			}
+			return nil
+		})
+	}
+
+	require.NoError(t, g.Wait())
+	writeDuration := time.Since(writeStart)
+
+	// Wait for dispatcher to finish spawning, then for all searches to complete
+	close(searchCh)
+	dispatcherDone.Wait()
+	require.NoError(t, searchG.Wait())
+	searchDuration := time.Since(writeStart)
+
+	// Stop background search goroutine
+	bgSearchCancel()
+	bgSearchDone.Wait()
+
+	// Compute write results
+	slices.Sort(writeLatencies)
+	writeResult := BenchmarkResult{
+		TotalDuration: writeDuration,
+		ReqCount:      opts.NumResources,
+		Throughput:    float64(opts.NumResources) / writeDuration.Seconds(),
+		P50Latency:    writeLatencies[len(writeLatencies)*50/100],
+		P90Latency:    writeLatencies[len(writeLatencies)*90/100],
+		P99Latency:    writeLatencies[len(writeLatencies)*99/100],
+	}
+
+	// Compute search results
+	slices.Sort(searchLatencies)
+	searchResult := BenchmarkResult{
+		TotalDuration: searchDuration,
+		ReqCount:      opts.NumResources,
+		Throughput:    float64(opts.NumResources) / searchDuration.Seconds(),
+		P50Latency:    searchLatencies[opts.NumResources*50/100],
+		P90Latency:    searchLatencies[opts.NumResources*90/100],
+		P99Latency:    searchLatencies[opts.NumResources*99/100],
+	}
+
+	return &StorageAndSearchBenchmarkResults{
+		WriteResults:  writeResult,
+		SearchResults: searchResult,
+	}
+}
+
+// RunStorageAndSearchBenchmark runs a benchmark that combines storage writes with search.
+func RunStorageAndSearchBenchmark(
+	t *testing.T,
+	backend resource.StorageBackend,
+	searchOpts resource.SearchOptions,
+	opts *BenchmarkOptions,
+) {
+	results := runStorageAndSearchBenchmark(t, backend, searchOpts, opts)
+
+	t.Logf("Benchmark Configuration: %s", opts)
+	t.Logf("")
+	t.Logf("Benchmark Results:")
+	t.Logf("\n%s", results)
 }
 
 // RunSearchBackendBenchmark runs a benchmark test for a search backend implementation

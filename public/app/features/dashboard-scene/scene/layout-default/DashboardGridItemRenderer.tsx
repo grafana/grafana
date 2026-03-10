@@ -1,8 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { RefObject, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { useElementSelection } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { useDashboardState } from '../../utils/utils';
@@ -16,18 +17,23 @@ interface PanelWrapperProps {
   panel: VizPanel;
   isLazy: boolean;
   containerRef?: RefObject<HTMLDivElement>;
+  isSelected?: boolean;
 }
 
-function PanelWrapper({ panel, isLazy, containerRef }: PanelWrapperProps) {
+function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   if (isLazy) {
     return (
-      <LazyLoader key={panel.state.key!} ref={containerRef} className={panelWrapper}>
+      <LazyLoader
+        key={panel.state.key!}
+        ref={containerRef}
+        className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
+      >
         <panel.Component model={panel} />
       </LazyLoader>
     );
   }
   return (
-    <div className={panelWrapper} ref={containerRef}>
+    <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
       <panel.Component model={panel} />
     </div>
   );
@@ -38,6 +44,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   const soloPanelContext = useSoloPanelContext();
   const { preload } = useDashboardState(model);
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
+  const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
     model.getChildCount(),
@@ -61,7 +68,7 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     <div className={layoutStyle} ref={model.containerRef}>
       <PanelWrapper panel={body} isLazy={isLazy} />
       {repeatedPanels.map((panel) => (
-        <PanelWrapper key={panel.state.key!} panel={panel} isLazy={isLazy} />
+        <PanelWrapper key={panel.state.key!} panel={panel} isLazy={isLazy} isSelected={isSourceSelected} />
       ))}
     </div>
   );
