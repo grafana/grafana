@@ -2,15 +2,23 @@ package clients
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"errors"
 	"net/mail"
+	"sort"
 	"strconv"
+	"strings"
 
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -88,6 +96,14 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 
 	if v, ok := additional[proxyFieldGroups]; ok {
 		identity.Groups = util.SplitString(v)
+
+		// Hash the list of groups and compare it to the hash stored in the client's
+		// cookie. If the hashes match, skip team sync because the teams haven't changed.
+		groupsHash := hashGroups(c.cfg.SecretKey, identity.Groups)
+		identity.ClientParams.SyncTeams = shouldSyncTeams(r, groupsHash)
+		if identity.ClientParams.SyncTeams {
+			c.writeGroupsHashCookie(ctx, groupsHash)
+		}
 	}
 
 	identity.ClientParams.LookUpParams.Email = &identity.Email
@@ -128,4 +144,39 @@ func comparePassword(password, salt, hash string) bool {
 	// It is ok to ignore the error here because util.EncodePassword can never return a error
 	hashedPassword, _ := util.EncodePassword(password, salt)
 	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
+}
+
+const proxyGroupsCookie = "grafana_proxy_groups_hash"
+
+// hashGroups sorts and hashes the list of groups supplied by the proxy. HMAC is
+// used here to prevent bypassing team sync with a forged hash in the cookie.
+func hashGroups(secretKey string, groups []string) string {
+	sorted := make([]string, len(groups))
+	copy(sorted, groups)
+	sort.Strings(sorted)
+
+	mac := hmac.New(sha256.New, []byte(secretKey))
+	_, _ = mac.Write([]byte(strings.Join(sorted, "\x00")))
+
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func shouldSyncTeams(r *authn.Request, groupsHash string) bool {
+	cookie, err := r.HTTPRequest.Cookie(proxyGroupsCookie)
+	return err != nil || cookie.Value != groupsHash
+}
+
+func (c *Grafana) writeGroupsHashCookie(ctx context.Context, groupsHash string) {
+	// contexthandler.FromContext() is inlined here to avoid import loop.
+	type reqContextKey = ctxkey.Key
+	reqCtx, ok := ctx.Value(reqContextKey{}).(*contextmodel.ReqContext)
+	if !ok {
+		return
+	}
+
+	maxAge := c.cfg.AuthProxy.SyncTTL * 60
+	if maxAge <= 0 {
+		maxAge = -1
+	}
+	cookies.WriteCookie(reqCtx.Resp, proxyGroupsCookie, groupsHash, maxAge, cookies.NewCookieOptions)
 }
