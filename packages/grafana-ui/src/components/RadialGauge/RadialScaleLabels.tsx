@@ -15,7 +15,6 @@ interface RadialScaleLabelsProps {
   thresholdsMode: ThresholdsMode;
   dimensions: RadialGaugeDimensions;
   startAngle: number;
-  endAngle: number;
   angleRange: number;
   neutral?: number;
 }
@@ -88,14 +87,15 @@ export const RadialScaleLabels = memo(
       if (isFullCircle) {
         // For full circle: nudge labels near the top at the end of the circle
         // counter-clockwise along the path to create extra space at 12 o'clock
-        const padding = measure.width / 1.5;
+        const paddingFactor = 0.375; // 3/8 of the label width - a bit of trial-and-error showed this was a good value to use.
+        const padding = measure.width * paddingFactor;
         if (isFirst) {
           offset += padding;
         } else if (isLast) {
           offset -= padding;
         }
       } else {
-        const halfWidth = measure.width / 2;
+        const halfWidth = measure.width * 0.5;
         // for non-circle, avoid clipping the bottom:
         // keep first label's start at least halfWidth from path start
         if (isFirst && offset - halfWidth < 0) {
