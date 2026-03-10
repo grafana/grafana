@@ -100,9 +100,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				progress.Record(ctx, jobs.NewFolderResult(folder.Path).
 					WithName(folder.ID).
 					WithAction(repository.FileActionIgnored).Build())
-				if err := progress.TooManyErrors(); err != nil {
-					return err
-				}
 				continue
 			}
 
@@ -116,13 +113,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				WithName(folder.ID).
 				WithAction(repository.FileActionCreated)
 			if writeErr != nil {
-				rb.WithError(fmt.Errorf("writing folder metadata for %s: %w", folder.Path, writeErr))
+				wrappedErr := fmt.Errorf("writing folder metadata for %s: %w", folder.Path, writeErr)
+				rb.WithError(wrappedErr)
+				progress.Record(ctx, rb.Build())
+				return wrappedErr
 			}
 			progress.Record(ctx, rb.Build())
-
-			if err := progress.TooManyErrors(); err != nil {
-				return err
-			}
 		}
 
 		return nil

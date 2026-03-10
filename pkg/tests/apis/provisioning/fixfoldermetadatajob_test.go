@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,7 +14,6 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t)
-	ctx := context.Background()
 
 	const repo = "fix-folder-metadata-test-repo"
 	testRepo := common.TestRepo{

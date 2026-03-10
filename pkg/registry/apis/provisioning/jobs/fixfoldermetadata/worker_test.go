@@ -132,11 +132,9 @@ func TestWorker_Process(t *testing.T) {
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Name() == parentFolder.ID
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Name() == childFolder.ID
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on branch feature-branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
@@ -173,7 +171,6 @@ func TestWorker_Process(t *testing.T) {
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionIgnored && r.Name() == folder.ID
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil)
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
@@ -212,11 +209,9 @@ func TestWorker_Process(t *testing.T) {
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionIgnored && r.Name() == hasMetaFolder.ID
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionCreated && r.Name() == noMetaFolder.ID
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil).Once()
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
 
 		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
@@ -226,7 +221,7 @@ func TestWorker_Process(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("records error when Create fails but continues", func(t *testing.T) {
+	t.Run("fails immediately when Create returns an error", func(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker()
 
@@ -239,60 +234,27 @@ func TestWorker_Process(t *testing.T) {
 
 		tree := []repository.FileTreeEntry{
 			treeEntry("myfolder", false),
+			treeEntry("other", false),
 		}
 
 		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
 
 		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
 		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		// Only the first folder is attempted; second is never reached.
 		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(createErr)
 
 		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
 		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-			return r.Error() != nil
+			return r.Action() == repository.FileActionCreated && r.Error() != nil
 		})).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(nil)
-		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
-
-		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
-		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
-
-		err := w.Process(ctx, mockRepo, job, mockProgress)
-		require.NoError(t, err)
-	})
-
-	t.Run("stops early when too many errors", func(t *testing.T) {
-		ctx := context.Background()
-		w := NewWorker()
-
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
-
-		job := makeTestJob("")
-		tooManyErr := fmt.Errorf("too many errors")
-
-		tree := []repository.FileTreeEntry{
-			treeEntry("first", false),
-			treeEntry("second", false),
-		}
-
-		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
-
-		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
-		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
-		mockStaged.EXPECT().Create(mock.Anything, "first/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
-		// second folder is never reached
-
-		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
-		mockProgress.EXPECT().Record(mock.Anything, mock.Anything).Return()
-		mockProgress.EXPECT().TooManyErrors().Return(tooManyErr)
 		mockProgress.EXPECT().SetFinalMessage(mock.Anything, mock.MatchedBy(func(s string) bool { return s != "" })).Return()
 
 		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 		err := w.Process(ctx, mockRepo, job, mockProgress)
-		require.ErrorIs(t, err, tooManyErr)
+		require.ErrorContains(t, err, "disk full")
+		require.ErrorContains(t, err, "myfolder")
 	})
 
 	t.Run("uses default branch when options are nil", func(t *testing.T) {
