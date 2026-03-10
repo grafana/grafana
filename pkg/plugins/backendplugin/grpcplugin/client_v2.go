@@ -204,11 +204,15 @@ func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest)
 }
 
 func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if c.DataClient == nil {
+		return plugins.ErrMethodNotImplemented
+	}
 	if c.chunkUnimplemented.Load() {
 		return c.queryChunkedDataFacade(ctx, req, w)
 	}
-	if c.DataClient == nil {
-		return plugins.ErrMethodNotImplemented
+	raw, isRaw := w.(chunked.RawChunkReceiver)
+	if !isRaw {
+		req.Format = backend.DataFrameFormat_ARROW // Require arrow for full frame decoding
 	}
 
 	protoReq := backend.ToProto().QueryChunkedDataRequest(req)
@@ -225,8 +229,6 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		return fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
-	raw, isRaw := w.(chunked.RawChunkReceiver)
-
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
@@ -240,10 +242,6 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			if err = raw.OnChunk(chunk); err != nil {
 				return err
 			}
-		}
-
-		if chunk.Format != pluginv2.DataFrameFormat_ARROW {
-			return fmt.Errorf("this client only accepts arrow format")
 		}
 
 		frame, err := data.UnmarshalArrowFrame(chunk.Frame)

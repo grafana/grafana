@@ -32,7 +32,7 @@ func ProcessTypedResponse(ctx context.Context, rsp *backend.QueryDataResponse, w
 func ProcessRawResponse(ctx context.Context, format backend.DataFrameFormat, rsp *pluginv2.QueryDataResponse, w RawChunkReceiver) (err error) {
 	for refId, res := range rsp.Responses {
 		for idx, frame := range res.Frames {
-			// TODO, verify response format
+			// Requesting JSON, but it arrived as arrow
 			if format == backend.DataFrameFormat_JSON && frame[0] != '{' {
 				f, err := data.UnmarshalArrowFrame(frame)
 				if err != nil {
