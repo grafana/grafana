@@ -40,98 +40,110 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, restConfi
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.CreateTeam(ctx, cmd)
-	}
+	// TODO enable Kubernetes team service for CreateTeam once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.CreateTeam(ctx, cmd)
+	// }
 
 	return s.legacyService.CreateTeam(ctx, cmd)
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.UpdateTeam(ctx, cmd)
-	}
+	// TODO enable Kubernetes team service for UpdateTeam once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.UpdateTeam(ctx, cmd)
+	// }
 
 	return s.legacyService.UpdateTeam(ctx, cmd)
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.DeleteTeam(ctx, cmd)
-	}
+	// TODO enable Kubernetes team service for DeleteTeam once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.DeleteTeam(ctx, cmd)
+	// }
 
 	return s.legacyService.DeleteTeam(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.SearchTeams(ctx, query)
-	}
+	// TODO enable Kubernetes team service for SearchTeams once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.SearchTeams(ctx, query)
+	// }
 
 	return s.legacyService.SearchTeams(ctx, query)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetTeamByID(ctx, query)
-	}
+	// TODO enable Kubernetes team service for GetTeamByID once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamByID(ctx, query)
+	// }
 
 	return s.legacyService.GetTeamByID(ctx, query)
 }
 
 func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetTeamsByUser(ctx, query)
-	}
+	// TODO enable Kubernetes team service for GetTeamsByUser once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamsByUser(ctx, query)
+	// }
 
 	return s.legacyService.GetTeamsByUser(ctx, query)
 }
 
 func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetTeamIDsByUser(ctx, query)
-	}
+	// TODO enable Kubernetes team service for GetTeamIDsByUser once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamIDsByUser(ctx, query)
+	// }
 
 	return s.legacyService.GetTeamIDsByUser(ctx, query)
 }
 
 func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
-	}
+	// TODO enable Kubernetes team service for IsTeamMember once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.IsTeamMember(ctx, orgId, teamId, userId)
+	// }
 
 	return s.legacyService.IsTeamMember(ctx, orgId, teamId, userId)
 }
 
 func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.RemoveUsersMemberships(ctx, userID)
-	}
+	// TODO enable Kubernetes team service for RemoveUsersMemberships once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.RemoveUsersMemberships(ctx, userID)
+	// }
 
 	return s.legacyService.RemoveUsersMemberships(ctx, userID)
 }
 
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
-	}
+	// TODO enable Kubernetes team service for GetUserTeamMemberships once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
+	// }
 
 	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.GetTeamMembers(ctx, query)
-	}
+	// TODO enable Kubernetes team service for GetTeamMembers once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.GetTeamMembers(ctx, query)
+	// }
 
 	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
 func (s *Service) RegisterDelete(query string) {
-	if s.isKubernetesTeamServiceEnabled(context.Background()) {
-		s.k8sService.RegisterDelete(query)
-		return
-	}
+	// TODO enable Kubernetes team service for RegisterDelete once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(context.Background()) {
+	// 	s.k8sService.RegisterDelete(query)
+	// 	return
+	// }
 
 	s.legacyService.RegisterDelete(query)
 }
