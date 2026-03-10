@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -71,7 +71,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	ctx := context.Background()
 
 	// Step 1: Create an unmanaged dashboard directly via the API.
-	unmanagedDash := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	unmanagedDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 	created, err := helper.DashboardsV1.Resource.Create(ctx, unmanagedDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should create unmanaged dashboard")
 	dashName := created.GetName()
@@ -157,13 +157,13 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	ctx := context.Background()
 
 	// Step 1: Create two unmanaged dashboards directly.
-	dash1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	dash1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 	created1, err := helper.DashboardsV1.Resource.Create(ctx, dash1, metav1.CreateOptions{})
 	require.NoError(t, err, "should create first unmanaged dashboard")
 	dashName1 := created1.GetName()
 	t.Logf("Created unmanaged dashboard 1: %s", dashName1)
 
-	dash2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	dash2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
 	created2, err := helper.DashboardsV2beta1.Resource.Create(ctx, dash2, metav1.CreateOptions{})
 	require.NoError(t, err, "should create second unmanaged dashboard")
 	dashName2 := created2.GetName()
@@ -245,11 +245,11 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	ctx := context.Background()
 
 	// Create two unmanaged dashboards.
-	dashboard1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 	_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
 	require.NoError(t, err, "should create first dashboard")
 
-	dashboard2 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
 	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
 	require.NoError(t, err, "should create second dashboard")
 
@@ -287,7 +287,7 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	})
 
 	// Create a third dashboard that is still unmanaged.
-	dashboard3 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+	dashboard3 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
 	_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard3, metav1.CreateOptions{})
 	require.NoError(t, err, "should create third dashboard")
 

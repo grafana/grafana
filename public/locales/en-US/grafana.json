@@ -9654,6 +9654,9 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "color-picker": {
+      "input-label": "RGBA value"
+    },
     "color-picker-popover": {
       "palette-tab": "Colors",
       "spectrum-tab": "Custom"

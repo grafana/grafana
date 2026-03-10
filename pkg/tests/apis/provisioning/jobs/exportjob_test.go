@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -23,20 +23,20 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	ctx := context.Background()
 
 	// Write dashboards at
-	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+	dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
 	_, err := helper.DashboardsV0.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v0 dashboard")
 
 	// FIXME: add helper and template for dashboards in different versions
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
 	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
 	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
 	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
@@ -126,7 +126,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	}{
 		{
 			name: "v0alpha1",
-			file: "exportunifiedtorepository/dashboard-test-v0.yaml",
+			file: "../exportunifiedtorepository/dashboard-test-v0.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV0.Resource.Create(ctx, dashboard, opts)
 			},
@@ -137,7 +137,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 		},
 		{
 			name: "v1beta1",
-			file: "exportunifiedtorepository/dashboard-test-v1.yaml",
+			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV1.Resource.Create(ctx, dashboard, opts)
 			},
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 		},
 		{
 			name: "v2alpha1",
-			file: "exportunifiedtorepository/dashboard-test-v2alpha1.yaml",
+			file: "../exportunifiedtorepository/dashboard-test-v2alpha1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, opts)
 			},
@@ -159,7 +159,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 		},
 		{
 			name: "v2beta1",
-			file: "exportunifiedtorepository/dashboard-test-v2beta1.yaml",
+			file: "../exportunifiedtorepository/dashboard-test-v2beta1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, opts)
 			},

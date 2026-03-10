@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -29,9 +29,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name: repo,
 		Copies: map[string]string{
-			"testdata/all-panels.json":    "dashboard1.json",
-			"testdata/text-options.json":  "dashboard2.json",
-			"testdata/timeline-demo.json": "folder/dashboard3.json",
+			"../testdata/all-panels.json":    "dashboard1.json",
+			"../testdata/text-options.json":  "dashboard2.json",
+			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    1,
@@ -110,9 +110,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// FIXME: do not create this on top of the other one. Isolate the cases
 		// Create modified test files with unique UIDs for ResourceRef testing
 		// Read and modify the testdata files to have unique UIDs that don't conflict with existing resources
-		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
-		textOptionsContent := helper.LoadFile("testdata/text-options.json")
-		timelineDemoContent := helper.LoadFile("testdata/timeline-demo.json")
+		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")
+		textOptionsContent := helper.LoadFile("../testdata/text-options.json")
+		timelineDemoContent := helper.LoadFile("../testdata/timeline-demo.json")
 
 		// FIXME: use generic objects
 		// Modify UIDs to be unique for ResourceRef tests
@@ -398,7 +398,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 	t.Run("delete non-existent file with successful deletion", func(t *testing.T) {
 		// First, create a new file to delete alongside the non-existent one
-		helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "test-delete-mixed.json")
+		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "test-delete-mixed.json")
 		helper.SyncAndWait(t, repo, nil)
 
 		spec := provisioning.JobSpec{
