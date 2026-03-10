@@ -5,6 +5,7 @@ import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
@@ -40,7 +41,7 @@ export const PlaylistPage = () => {
   return (
     <Page
       actions={
-        contextSrv.isEditor && showSearch ? (
+        contextSrv.hasPermission(AccessControlAction.PlaylistsWrite) && showSearch ? (
           <LinkButton href="/playlists/new">
             <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
           </LinkButton>
@@ -68,7 +69,12 @@ export const PlaylistPage = () => {
               <EmptyState
                 variant="call-to-action"
                 button={
-                  <LinkButton disabled={!contextSrv.isEditor} href="playlists/new" icon="plus" size="lg">
+                  <LinkButton
+                    disabled={!contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)}
+                    href="playlists/new"
+                    icon="plus"
+                    size="lg"
+                  >
                     <Trans i18nKey="playlist-page.empty.button">Create playlist</Trans>
                   </LinkButton>
                 }

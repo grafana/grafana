@@ -7,6 +7,7 @@ import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { Playlist } from '../../api/clients/playlist/v1';
 
@@ -43,7 +44,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
           <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
         </Button>
-        {contextSrv.isEditor && (
+        {contextSrv.hasPermission(AccessControlAction.PlaylistsWrite) && (
           <>
             <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
@@ -73,7 +74,7 @@ const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
       <Card.Actions>
         <Stack direction="row" wrap="wrap">
           <Skeleton containerClassName={skeletonStyles.button} width={142} height={32} />
-          {contextSrv.isEditor && (
+          {contextSrv.hasPermission(AccessControlAction.PlaylistsWrite) && (
             <>
               <Skeleton containerClassName={skeletonStyles.button} width={135} height={32} />
               <Skeleton containerClassName={skeletonStyles.button} width={153} height={32} />
