@@ -24,7 +24,6 @@ const defaultOption: UnifiedAlertListOptions = {
   statColorMode: BigValueColorMode.None,
   statThresholds: STAT_THRESHOLDS_DEFAULT,
   statValueMappings: [],
-  datasourceRef: null,
 };
 
 const alerts: Alert[] = [
@@ -161,6 +160,7 @@ describe('getStatDisplayValue', () => {
     const result = getStatDisplayValue(5, BigValueColorMode.Value, emptyThresholds, [], theme);
     expect(result.text).toBe('5');
     expect(result.numeric).toBe(5);
+    expect(result.color).toBeUndefined();
   });
 });
 

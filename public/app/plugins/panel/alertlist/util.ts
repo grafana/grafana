@@ -77,8 +77,11 @@ export function getStatDisplayValue(
   }
 
   if (!displayValue.color) {
-    const activeStep = getActiveThreshold(count, thresholds.steps);
-    return { ...displayValue, color: activeStep.color };
+    if (thresholds.steps.length > 0) {
+      const activeStep = getActiveThreshold(count, thresholds.steps);
+      return { ...displayValue, color: activeStep.color };
+    }
+    return displayValue;
   }
 
   return displayValue;
@@ -124,10 +127,6 @@ export function buildAlertingListUrl(options: UnifiedAlertListOptions, dashboard
 
   if (options.dashboardAlerts && dashboardUid) {
     filters.push(['dashboard', dashboardUid]);
-  }
-
-  if (filters.length === 0) {
-    return createListFilterLink([]);
   }
 
   return createListFilterLink(filters);

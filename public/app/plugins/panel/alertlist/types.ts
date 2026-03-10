@@ -46,7 +46,6 @@ export interface UnifiedAlertListOptions {
   statColorMode: BigValueColorMode;
   statThresholds: ThresholdsConfig;
   statValueMappings: ValueMapping[];
-  datasourceRef: { type: string; uid: string } | null;
 }
 
 export const STAT_THRESHOLDS_DEFAULT: ThresholdsConfig = {

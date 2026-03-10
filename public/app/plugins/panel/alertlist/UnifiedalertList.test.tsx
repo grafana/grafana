@@ -127,7 +127,6 @@ const defaultOptions: UnifiedAlertListOptions = {
   statColorMode: BigValueColorMode.None,
   statThresholds: STAT_THRESHOLDS_DEFAULT,
   statValueMappings: [],
-  datasourceRef: null,
 };
 
 const defaultProps: PanelProps<UnifiedAlertListOptions> = {

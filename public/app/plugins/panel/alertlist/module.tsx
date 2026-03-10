@@ -4,7 +4,6 @@ import { config } from '@grafana/runtime';
 import { BigValueColorMode, Button, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import {
   GRAFANA_DATASOURCE_NAME,
@@ -285,22 +284,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     }
   })
   .setMigrationHandler((panel) => {
-    if (
-      config.featureToggles.alertingAlertListPanelEnhancements &&
-      panel.options.datasource &&
-      typeof panel.options.datasource === 'string' &&
-      !panel.options.datasourceRef
-    ) {
-      try {
-        const ds = getDatasourceSrv().getInstanceSettings(panel.options.datasource);
-        if (ds) {
-          panel.options.datasourceRef = { type: ds.type, uid: ds.uid };
-        }
-      } catch {
-        // datasource may not be resolvable at migration time
-      }
-    }
-
     if (!panel.options.statColorMode) {
       panel.options.statColorMode = BigValueColorMode.None;
     }
@@ -315,9 +298,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     }
     if (!panel.options.statValueMappings) {
       panel.options.statValueMappings = [];
-    }
-    if (panel.options.datasourceRef === undefined) {
-      panel.options.datasourceRef = null;
     }
 
     return panel.options;
