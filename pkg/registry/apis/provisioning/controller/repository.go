@@ -672,14 +672,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return err
 		}
 
-		start := time.Now()
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
-			rc.tokenMetrics.recordGenerationError()
 			logger.Error("generating token for repository", "error", err)
 			return err
 		}
-		rc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
@@ -851,7 +848,17 @@ func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) (common.RawSecureValue, []map[string]any, error) {
+) (_ common.RawSecureValue, _ []map[string]any, err error) {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start).Seconds()
+		if err != nil {
+			rc.tokenMetrics.recordGenerationError()
+		} else {
+			rc.tokenMetrics.recordGeneration(elapsed)
+		}
+	}()
+
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)

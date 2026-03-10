@@ -242,14 +242,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		start := time.Now()
 		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 		if err != nil {
-			cc.tokenMetrics.recordGenerationError()
 			logger.Error("failed to generate connection token", "error", err)
 			return err
 		}
-		cc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
@@ -345,8 +342,19 @@ func (cc *ConnectionController) generateConnectionToken(
 ) (string, []map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 
+	start := time.Now()
+	var failed bool
+	defer func() {
+		if failed {
+			cc.tokenMetrics.recordGenerationError()
+		} else {
+			cc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
+		}
+	}()
+
 	token, err := conn.GenerateConnectionToken(ctx)
 	if err != nil {
+		failed = true
 		logger.Error("failed to generate connection token", "error", err)
 		return "", nil, nil // Non-blocking: return empty patches
 	}
