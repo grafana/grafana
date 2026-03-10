@@ -1,5 +1,3 @@
-//go:build integration
-
 package provisioning
 
 import (
@@ -15,48 +13,96 @@ import (
 )
 
 // TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled verifies that when the
-// provisioningFolderMetadata feature flag is enabled, a full sync on a repository that has a folder
-// without a _folder.json produces a warning job state and a MissingFolderMetadata condition reason.
+// provisioningFolderMetadata feature flag is enabled, a full sync on a repository that has folders
+// without _folder.json produces a warning job state and a MissingFolderMetadata condition reason.
 func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	const repo = "missing-folder-meta-enabled"
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
-		Copies: map[string]string{
-			// Dashboard inside a folder that intentionally has no _folder.json
-			"testdata/all-panels.json": "myfolder/dashboard.json",
-		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
-	})
+	t.Run("single folder", func(t *testing.T) {
+		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		const repo = "missing-folder-meta-single"
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				// Dashboard inside a folder that intentionally has no _folder.json
+				"testdata/all-panels.json": "myfolder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
 
-	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
 
-	jobObj := &provisioning.Job{}
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-	require.NoError(t, err)
+		jobObj := &provisioning.Job{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
 
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-		"job should complete with warning state when a folder is missing _folder.json")
-	require.NotEmpty(t, jobObj.Status.Warnings, "job should have at least one warning")
-	require.Empty(t, jobObj.Status.Errors, "missing _folder.json should be a warning, not an error")
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"job should complete with warning state when a folder is missing _folder.json")
+		require.NotEmpty(t, jobObj.Status.Warnings, "job should have at least one warning")
+		require.Empty(t, jobObj.Status.Errors, "missing _folder.json should be a warning, not an error")
 
-	found := false
-	for _, w := range jobObj.Status.Warnings {
-		if strings.Contains(w, "missing folder metadata") {
-			found = true
-			break
+		found := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "missing folder metadata") {
+				found = true
+				break
+			}
 		}
-	}
-	require.True(t, found, "a warning should mention missing folder metadata; warnings: %v", jobObj.Status.Warnings)
+		require.True(t, found, "a warning should mention missing folder metadata; warnings: %v", jobObj.Status.Warnings)
 
-	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+	})
+
+	t.Run("multiple folders", func(t *testing.T) {
+		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		const repo = "missing-folder-meta-multi"
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				// Two dashboards in separate folders, neither has a _folder.json
+				"testdata/all-panels.json":    "folderA/dashboard1.json",
+				"testdata/timeline-demo.json": "folderB/dashboard2.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+
+		jobObj := &provisioning.Job{}
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
+		require.NoError(t, err)
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"job should complete with warning state when folders are missing _folder.json")
+		require.Empty(t, jobObj.Status.Errors, "missing _folder.json should be warnings, not errors")
+
+		// Count warnings that mention missing folder metadata
+		var metadataWarnings []string
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "missing folder metadata") {
+				metadataWarnings = append(metadataWarnings, w)
+			}
+		}
+		require.GreaterOrEqual(t, len(metadataWarnings), 2,
+			"expected at least 2 missing-folder-metadata warnings (one per folder); got: %v", metadataWarnings)
+
+		// Verify both folders are mentioned
+		joined := strings.Join(metadataWarnings, "\n")
+		require.Contains(t, joined, "folderA", "warning should mention folderA")
+		require.Contains(t, joined, "folderB", "warning should mention folderB")
+
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+	})
 }
 
 // TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled verifies that when the
