@@ -81,7 +81,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	}
 
 	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize read resource: %w", err)
 	}
 
 	return parsed, nil
@@ -89,7 +89,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if safepath.IsDir(opts.Path) {
@@ -115,7 +115,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize delete resource: %w", err)
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -153,7 +153,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 // FIXME: fix signature to return ParsedResource
 func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
 	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if !safepath.IsDir(opts.Path) {
@@ -161,7 +161,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	if err := r.authorizer.AuthorizeCreateFolder(ctx, opts.Path); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize create folder: %w", err)
 	}
 
 	// Always use the provisioning identity when writing
@@ -272,7 +272,7 @@ func (r *DualReadWriter) UpdateResource(ctx context.Context, opts DualWriteOptio
 // Create or updates a resource in the repository
 func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts DualWriteOptions) (*ParsedResource, error) {
 	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	info := &repository.FileInfo{
@@ -307,7 +307,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		verb = utils.VerbCreate
 	}
 	if err = r.authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize %s resource: %w", verb, err)
 	}
 
 	data, err := parsed.ToSaveBytes()
@@ -359,7 +359,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 // MoveResource moves a resource from one path to another in the repository
 func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	if err := r.authorizer.AuthorizeWrite(ctx, opts.Ref); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize write to ref: %w", err)
 	}
 
 	if opts.OriginalPath == "" {
@@ -398,7 +398,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 	}
 
 	if err := r.authorizer.AuthorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize move folder: %w", err)
 	}
 
 	// For branch operations, we just perform the repository move without updating Grafana DB
@@ -453,7 +453,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 
 	// Authorize delete on the original path
 	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbDelete); err != nil {
-		return nil, fmt.Errorf("not authorized to delete original file: %w", err)
+		return nil, fmt.Errorf("authorize delete original file: %w", err)
 	}
 
 	// Determine the content to use for the destination
@@ -496,7 +496,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		verb = utils.VerbUpdate
 	}
 	if err = r.authorizer.AuthorizeResource(ctx, newParsed, verb); err != nil {
-		return nil, fmt.Errorf("not authorized to create new file: %w", err)
+		return nil, fmt.Errorf("authorize %s new file: %w", verb, err)
 	}
 
 	data, err := newParsed.ToSaveBytes()
@@ -568,7 +568,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 	}
 
 	if err := r.authorizer.AuthorizeDeleteFolder(ctx, opts.Path); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authorize delete folder: %w", err)
 	}
 
 	// Always use the provisioning identity when writing
