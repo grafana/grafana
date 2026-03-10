@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { QUERY_EDITOR_COLORS, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
-import { trackCardAction } from './tracking';
+import { trackCardAction, CardActionSource } from './tracking';
 
 export interface ActionItem {
   name: string;
@@ -52,6 +52,7 @@ export function Actions({
   const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
   const typeLabel = config.getLabel();
   const requiresDeleteConfirmation = config.deleteConfirmation;
+  const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
 
   const labels = useMemo(
     () => ({
@@ -74,11 +75,11 @@ export function Actions({
       if (requiresDeleteConfirmation) {
         setShowDeleteConfirmation(true);
       } else {
-        trackCardAction('delete', item.type);
+        trackCardAction('delete', item.type, cardActionSource);
         onDelete();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type]
+    [requiresDeleteConfirmation, onDelete, handleResetFocus, item.type, cardActionSource]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -86,11 +87,11 @@ export function Actions({
       return;
     }
 
-    trackCardAction('delete', item.type);
+    trackCardAction('delete', item.type, cardActionSource);
     onDelete();
     setShowDeleteConfirmation(false);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus, item.type]);
+  }, [onDelete, handleResetFocus, item.type, cardActionSource]);
 
   const handleDismissModal = useCallback(() => {
     setShowDeleteConfirmation(false);
@@ -111,7 +112,7 @@ export function Actions({
         label: labels.duplicate,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('duplicate', item.type);
+          trackCardAction('duplicate', item.type, cardActionSource);
           onDuplicate();
         },
       },
@@ -127,7 +128,7 @@ export function Actions({
         label: item.isHidden ? labels.show : labels.hide,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          trackCardAction('toggle_hide', item.type);
+          trackCardAction('toggle_hide', item.type, cardActionSource);
           onToggleHide();
         },
       },
@@ -146,6 +147,7 @@ export function Actions({
     onDelete,
     handleDelete,
     order,
+    cardActionSource,
   ]);
 
   return (

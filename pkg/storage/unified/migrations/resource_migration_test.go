@@ -3,15 +3,20 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/mock"
@@ -492,6 +497,121 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 		require.Contains(t, err.Error(), "neither")
 		require.Contains(t, err.Error(), "manual intervention")
 	})
+}
+
+// TestIntegrationRun_SQLiteRetryReleasesLock verifies that MigrationRunner.Run's
+// SQLite retry path (parquet buffer fallback) works correctly when the first
+// migration attempt fails.
+func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("SQLite-only")
+	}
+
+	env := newTestEnv(t)
+
+	// Create a DB provider that shares the Grafana engine (required for SQLite tx sharing).
+	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+	require.NoError(t, err)
+
+	backend, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{
+		DBProvider: eDB,
+		IsHA:       false,
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+	svc, ok := backend.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	t.Cleanup(func() {
+		_ = services.StopAndAwaitTerminated(context.Background(), svc)
+	})
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend: backend,
+	})
+	require.NoError(t, err)
+
+	client := resource.NewLocalResourceClient(server)
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	var callCount int32
+
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "test-retry",
+		MigrationID: "test retry migration",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				n := atomic.AddInt32(&callCount, 1)
+				if n == 1 {
+					// First call: send a request to ensure the server enters its Recv()
+					// loop and holds the bulk lock, then fail to simulate a SQLite cache spill.
+					_ = stream.Send(&resourcepb.BulkRequest{
+						Key: &resourcepb.ResourceKey{
+							Namespace: opts.Namespace,
+							Group:     gr.Group,
+							Resource:  gr.Resource,
+							Name:      "test-item",
+						},
+						Action: resourcepb.BulkRequest_ADDED,
+						Value:  []byte(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"test-item","namespace":"` + opts.Namespace + `"},"spec":{"title":"Test"}}`),
+					})
+					return fmt.Errorf("simulated SQLite cache spill failure")
+				}
+				return nil
+			},
+		},
+	})
+
+	realMigrator := ProvideUnifiedMigrator(client, registry)
+	wrapped := &retryAwareMigrator{real: realMigrator}
+
+	def := MigrationDefinition{
+		ID:          "test-retry",
+		MigrationID: "test retry migration",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+		},
+	}
+
+	runnerCfg := setting.NewCfg()
+	runner := NewMigrationRunner(wrapped, noopLocker(), &transactionalTableRenamer{log: logger}, runnerCfg, def, nil)
+
+	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+	sess := env.engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+
+	err = runner.Run(context.Background(), sess, mg, RunOptions{DriverName: migrator.SQLite})
+	require.NoError(t, err)
+
+	// The migrator func should have been called twice: once for the failed first attempt,
+	// once for the successful retry.
+	require.Equal(t, int32(2), atomic.LoadInt32(&callCount))
+}
+
+// retryAwareMigrator delegates Migrate to a real UnifiedMigrator and stubs
+// RebuildIndexes. It waits briefly for the server to release the bulk lock.
+type retryAwareMigrator struct {
+	real      UnifiedMigrator
+	callCount int32
+}
+
+func (m *retryAwareMigrator) Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error) {
+	if atomic.AddInt32(&m.callCount, 1) > 1 {
+		// The context cancellation propagates asynchronously to the server goroutine.
+		// Wait briefly for it to release the bulk lock from the previous attempt.
+		time.Sleep(200 * time.Millisecond)
+	}
+	return m.real.Migrate(ctx, opts)
+}
+
+func (m *retryAwareMigrator) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	return nil
 }
 
 func TestIntegrationBuildRenamePairs(t *testing.T) {
