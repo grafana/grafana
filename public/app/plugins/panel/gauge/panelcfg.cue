@@ -26,9 +26,9 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				GaugePanelEffects: {
-					barGlow?: bool | *false
+					barGlow?:    bool | *false
 					centerGlow?: bool | *false
-					gradient?: bool | *true
+					gradient?:   bool | *true
 				} @cuetsy(kind="interface")
 
 				Options: {

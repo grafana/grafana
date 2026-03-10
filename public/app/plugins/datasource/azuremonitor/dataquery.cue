@@ -172,10 +172,10 @@ composableKinds: DataQuery: {
 				#ResultFormat:   "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
 				#LogsEditorMode: "builder" | "raw"                          @cuetsy(kind="enum", memberNames="Builder|Raw")
 
-				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
-				#BuilderQueryEditorPropertyType:   "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
-				#BuilderQueryEditorOrderByOptions: "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
-				#BuilderQueryEditorReduceParameterTypes: "generic" | "numeric"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorExpressionType:       "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
+				#BuilderQueryEditorPropertyType:         "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+				#BuilderQueryEditorOrderByOptions:       "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorReduceParameterTypes: "generic" | "numeric"                                                                              @cuetsy(kind="enum", memberNames:"Asc|Desc")
 
 				#BuilderQueryEditorProperty: {
 					type: #BuilderQueryEditorPropertyType
@@ -276,7 +276,7 @@ composableKinds: DataQuery: {
 					timeFilter?:  #BuilderQueryEditorWhereExpressionArray
 				} @cuetsy(kind="interface")
 
-				#ARGScope:   "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
+				#ARGScope: "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
 					query?: string

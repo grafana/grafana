@@ -26,12 +26,12 @@ composableKinds: PanelCfg: lineage: {
 				common.OptionsWithTimezones
 				common.OptionsWithAnnotations
 
-				legend:       common.VizLegendOptions
-				tooltip:      common.VizTooltipOptions
-				timeCompare?: common.TimeCompareOptions
-				orientation?: common.VizOrientation
-				annotations?: common.VizAnnotations
-        disableKeyboardEvents?: bool
+				legend:                 common.VizLegendOptions
+				tooltip:                common.VizTooltipOptions
+				timeCompare?:           common.TimeCompareOptions
+				orientation?:           common.VizOrientation
+				annotations?:           common.VizAnnotations
+				disableKeyboardEvents?: bool
 			} @cuetsy(kind="interface")
 
 			FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
