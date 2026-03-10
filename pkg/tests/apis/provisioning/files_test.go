@@ -1011,6 +1011,131 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_FilesAuthorization_WithFolderMetadata(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repo = "auth-test-repo-metadata"
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Path:   helper.ProvisioningPath,
+		Target: "instance",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	})
+
+	// Wait for initial sync to complete
+	var dashboardUID string
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 1 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 1)
+			return
+		}
+		assert.Len(collect, dashboards.Items, 1)
+		dashboardUID = dashboards.Items[0].GetName()
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "should have the expected dashboards after sync")
+
+	// Grant permissions to Editor user for all dashboards using wildcard
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+
+	// Grant view permission to Viewer role via HTTP API (for the initial dashboard)
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	setDashboardPermissions := func(permissions []map[string]interface{}) {
+		payload := map[string]interface{}{
+			"items": permissions,
+		}
+		payloadBytes, err := json.Marshal(payload)
+		require.NoError(t, err)
+		url := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s/permissions", addr, dashboardUID)
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.NoError(t, resp.Body.Close())
+	}
+
+	// Grant view permission to Viewer role for the initial dashboard
+	setDashboardPermissions([]map[string]interface{}{
+		{"role": "Viewer", "permission": 1}, // View permission
+	})
+
+	t.Run("folder operations with folder metadata enabled", func(t *testing.T) {
+		t.Run("Viewer cannot create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "viewer-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "Viewer should not be able to create folders")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+		})
+
+		t.Run("Editor can create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "Editor should be able to create folders")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Verify _folder.json was created with stable UID (not .keep)
+			wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "editor-test-folder/_folder.json")
+			require.NoError(t, err, "_folder.json should exist when folder metadata is enabled")
+			folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+			require.NotEmpty(t, folderUID, "_folder.json should contain a stable UID")
+
+			// Verify .keep does NOT exist
+			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "editor-test-folder/.keep")
+			require.Error(t, err, ".keep should not exist when folder metadata is enabled")
+		})
+
+		t.Run("Admin can create folders", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "admin-test-folder/").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "Admin should be able to create folders")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Verify _folder.json was created with stable UID
+			wrapObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "admin-test-folder/_folder.json")
+			require.NoError(t, err, "_folder.json should exist when folder metadata is enabled")
+			folderUID, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+			require.NotEmpty(t, folderUID, "_folder.json should contain a stable UID")
+		})
+	})
+}
+
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
