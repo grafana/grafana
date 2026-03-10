@@ -4,10 +4,12 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,11 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -515,25 +517,47 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// read playlists — this is the proper fix for the customer use case described in
 		// https://github.com/grafana/grafana/issues/115712.
 		//
-		// Note: we create a fresh user here rather than reusing helper.Org1.None because
-		// the previous sub-test already made requests as that user, causing the permission
-		// cache to store an empty result. A fresh user has no cache entry, so
-		// AddUserPermissionToDB is visible on the first request.
+		// Note: we create a fresh user and use a managed: role name so the permission is
+		// visible to GetUserPermissions (which filters by OSSRolesPrefixes = ["managed:", "extsvc:"]).
+		// AddUserPermissionToDB uses "test:role" which is silently filtered out.
 		t.Run("None role with explicit playlists:read can read but not write", func(t *testing.T) {
 			noneWithRead := helper.CreateUser("none-with-read", apis.Org1, org.RoleNone, nil)
 			noneUserID, err := noneWithRead.Identity.GetInternalID()
 			require.NoError(t, err)
 
 			orgID := noneWithRead.Identity.GetOrgID()
-			actest.AddUserPermissionToDB(t, helper.GetEnv().SQLStore, &user.SignedInUser{
-				UserID: noneUserID,
-				OrgID:  orgID,
-				Permissions: map[int64]map[string][]string{
-					orgID: {
-						playlistregistry.ActionPlaylistsRead: {playlistregistry.ScopeAllPlaylists},
-					},
-				},
+			err = helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				roleName := accesscontrol.ManagedUserRoleName(noneUserID)
+				role := &accesscontrol.Role{
+					OrgID:   orgID,
+					UID:     fmt.Sprintf("managed_user_%d_permissions", noneUserID),
+					Name:    roleName,
+					Updated: time.Now(),
+					Created: time.Now(),
+				}
+				if _, err := sess.Insert(role); err != nil {
+					return err
+				}
+				if _, err := sess.Insert(accesscontrol.UserRole{
+					OrgID:   orgID,
+					RoleID:  role.ID,
+					UserID:  noneUserID,
+					Created: time.Now(),
+				}); err != nil {
+					return err
+				}
+				perm := accesscontrol.Permission{
+					RoleID:  role.ID,
+					Action:  playlistregistry.ActionPlaylistsRead,
+					Scope:   playlistregistry.ScopeAllPlaylists,
+					Created: time.Now(),
+					Updated: time.Now(),
+				}
+				perm.Kind, perm.Attribute, perm.Identifier = perm.SplitScope()
+				_, err := sess.Insert(&perm)
+				return err
 			})
+			require.NoError(t, err)
 
 			clientNoneWithRead := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: noneWithRead,
