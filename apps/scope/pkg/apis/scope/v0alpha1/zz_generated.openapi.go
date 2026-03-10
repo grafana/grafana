@@ -26,6 +26,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ScopeList{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		ScopeNavigation{}.OpenAPIModelName():                   schema_pkg_apis_scope_v0alpha1_ScopeNavigation(ref),
 		ScopeNavigationList{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref),
+		ScopeNavigationOptions{}.OpenAPIModelName():            schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref),
 		ScopeNavigationSpec{}.OpenAPIModelName():               schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref),
 		ScopeNavigationStatus{}.OpenAPIModelName():             schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref),
 		ScopeNode{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
@@ -612,6 +613,33 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			ScopeNavigation{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeNavigationOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ScopeNavigationOptions documents the optional query parameters accepted by the /find/scope_dashboard_bindings and /find/scope_navigations connect endpoints. This type is not a runtime.Object — it defines the API contract for backends (including external implementations) to support as query params. The Grafana connect handlers do not currently consume these via NewConnectOptions; they parse query params from the request URL directly.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"depth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Extra levels of sub-scope items to include beyond the direct scope. 0 or omitted returns items for the requested scopes only. 1 returns items for the requested scopes plus their immediate sub-scopes.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"rootScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Root scope for hierarchical navigation context. When navigating into sub-scopes, this identifies the original top-level scope the user started from, allowing the backend to optimize response payloads (e.g., skipping expensive dashboard resolution for deep sub-nodes). If omitted, no root scope context is applied.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
