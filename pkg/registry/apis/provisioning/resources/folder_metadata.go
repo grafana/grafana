@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -101,7 +102,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 
 	if folderMetadataEnabled {
 		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
-		if err != nil && err != repository.ErrFileNotFound {
+		if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
 			return nil, fmt.Errorf("read folder metadata: %w", err)
 		}
 
