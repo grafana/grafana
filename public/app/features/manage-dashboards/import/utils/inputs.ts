@@ -22,6 +22,18 @@ import {
   LibraryPanelInputState,
 } from '../../types';
 
+/**
+ * Remove export-only metadata keys (__inputs, __elements, __requires)
+ * that should not be persisted when saving the dashboard.
+ */
+export function stripExportMetadata(dashboard: Dashboard): Dashboard {
+  const json = JSON.parse(JSON.stringify(dashboard));
+  delete json.__inputs;
+  delete json.__elements;
+  delete json.__requires;
+  return json;
+}
+
 /** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
 export type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
 
@@ -183,6 +195,20 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
     return inputs;
   }
 
+  if (dashboard.variables) {
+    for (const variable of dashboard.variables) {
+      if (variable.kind === 'ConstantVariable') {
+        inputs.constants.push({
+          name: variable.spec.name,
+          label: variable.spec.label || variable.spec.name,
+          info: variable.spec.description || 'Specify a string constant',
+          value: variable.spec.query,
+          type: InputType.Constant,
+        });
+      }
+    }
+  }
+
   const dsTypes: { [label: string]: string } = {};
 
   if (dashboard.variables) {
@@ -310,7 +336,29 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
       }
     }
   }
-  return replaceDatasourcesInDashboard(dashboard, mappings);
+
+  const variables = dashboard.variables?.map((variable) => {
+    if (variable.kind !== 'ConstantVariable') {
+      return variable;
+    }
+
+    const formKey = `constant-${variable.spec.name}`;
+    const userValue = form[formKey];
+    if (typeof userValue !== 'string') {
+      return variable;
+    }
+
+    return {
+      ...variable,
+      spec: {
+        ...variable.spec,
+        query: userValue,
+        current: { text: userValue, value: userValue },
+      },
+    };
+  });
+
+  return replaceDatasourcesInDashboard({ ...dashboard, variables }, mappings);
 }
 
 export function isVariableRef(dsName: string | undefined): boolean {

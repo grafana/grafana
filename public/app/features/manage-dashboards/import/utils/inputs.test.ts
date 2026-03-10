@@ -392,6 +392,88 @@ describe('extractV2Inputs', () => {
   ])('should skip %s', (_name, dashboard) => {
     expect(extractV2Inputs(dashboard).dataSources).toHaveLength(0);
   });
+
+  it('should extract constant variables', () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            label: 'Environment',
+            query: 'production',
+            description: 'Target environment',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = extractV2Inputs(dashboard);
+
+    expect(result.constants).toHaveLength(1);
+    expect(result.constants[0]).toEqual({
+      name: 'environment',
+      label: 'Environment',
+      info: 'Target environment',
+      value: 'production',
+      type: InputType.Constant,
+    });
+  });
+
+  it('should use variable name as label fallback', () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'my_const',
+            query: 'value',
+            current: { text: 'value', value: 'value' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = extractV2Inputs(dashboard);
+
+    expect(result.constants[0].label).toBe('my_const');
+    expect(result.constants[0].info).toBe('Specify a string constant');
+  });
+
+  it('should extract both datasource and constant inputs', () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'promvar', query: { group: 'prometheus', labels: { [ExportLabel]: 'prom-1' } } },
+        },
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'namespace',
+            query: 'default',
+            current: { text: 'default', value: 'default' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    };
+
+    const result = extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.constants).toHaveLength(1);
+    expect(result.constants[0].name).toBe('namespace');
+  });
 });
 
 describe('applyV1Inputs', () => {
@@ -597,6 +679,87 @@ describe('applyV2Inputs', () => {
     const secondSpec = secondQuery?.spec as any;
     expect(firstSpec?.query?.datasource?.name).toBe('ds-uid-1');
     expect(secondSpec?.query?.datasource?.name).toBe('ds-uid-2');
+  });
+
+  it('applies user-provided constant values to ConstantVariable specs', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'region',
+            query: 'us-east-1',
+            current: { text: 'us-east-1', value: 'us-east-1' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-environment': 'staging',
+      'constant-region': 'eu-west-1',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('staging');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.current).toEqual({
+      text: 'staging',
+      value: 'staging',
+    });
+
+    const regionVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'region');
+    expect(regionVar?.kind === 'ConstantVariable' && regionVar.spec.query).toBe('eu-west-1');
+  });
+
+  it('preserves constant values when no form value is provided', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('production');
   });
 
   it('preserves variable references and does not replace them', () => {
