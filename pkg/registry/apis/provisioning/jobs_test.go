@@ -149,7 +149,7 @@ func TestAuthorizeExportJob(t *testing.T) {
 		accessMock.AssertExpectations(t)
 	})
 
-	t.Run("instance sync target skips folder create check", func(t *testing.T) {
+	t.Run("instance sync target checks create at root", func(t *testing.T) {
 		instanceCfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-repo",
@@ -165,6 +165,11 @@ func TestAuthorizeExportJob(t *testing.T) {
 		for range resources.SupportedProvisioningResources {
 			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 				return req.Verb == utils.VerbGet
+			}), "").Return(nil).Once()
+		}
+		for range resources.SupportedProvisioningResources {
+			accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Verb == utils.VerbCreate
 			}), "").Return(nil).Once()
 		}
 

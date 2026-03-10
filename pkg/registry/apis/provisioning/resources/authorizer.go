@@ -85,8 +85,7 @@ type Authorizer interface {
 
 	// AuthorizeCreateAllSupported checks if the current user has create permission
 	// on every supported provisioning resource type within the repository's target
-	// folder. If the repository targets the whole instance (no folder), this is a
-	// no-op because there is no single folder scope to check against.
+	// folder. For instance-scoped repositories the check runs against the root folder.
 	AuthorizeCreateAllSupported(ctx context.Context) error
 
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
@@ -320,13 +319,9 @@ func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) 
 
 // AuthorizeCreateAllSupported checks if the current user has create permission
 // on every supported provisioning resource type within the repository's target
-// folder. If the repository targets the whole instance (no folder), this is a
-// no-op.
+// folder. For instance-scoped repositories the check runs against the root folder.
 func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
 	targetFolder := RootFolder(a.repo)
-	if targetFolder == "" {
-		return nil
-	}
 
 	for _, kind := range SupportedProvisioningResources {
 		if err := a.access.Check(ctx, authlib.CheckRequest{

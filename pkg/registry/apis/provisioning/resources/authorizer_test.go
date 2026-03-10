@@ -629,7 +629,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		mockAccess.AssertExpectations(t)
 	})
 
-	t.Run("instance sync target - no-op", func(t *testing.T) {
+	t.Run("instance sync target - checks create at root", func(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 			Spec: provisioning.RepositorySpec{
@@ -638,11 +638,19 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbCreate
+			}), "").Return(nil).Once()
+		}
+
 		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.NoError(t, err)
-		mockAccess.AssertNotCalled(t, "Check")
+		mockAccess.AssertExpectations(t)
 	})
 
 	t.Run("unauthorized on create - returns error", func(t *testing.T) {
