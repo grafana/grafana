@@ -230,6 +230,10 @@ function shouldDisableVersionInstallation({
     return true;
   }
 
+  if (updateStrategy === PluginUpdateStrategy.Assigned) {
+    return true;
+  }
+
   return false;
 }
 

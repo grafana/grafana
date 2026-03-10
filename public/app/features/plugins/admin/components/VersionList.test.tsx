@@ -225,6 +225,41 @@ describe('VersionList', () => {
     config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
     config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
   });
+
+  it('should disable all versions when plugin is managed and update strategy is "assigned"', () => {
+    const versions = [
+      ...generateVersionsForMajor('1', 3),
+      ...generateVersionsForMajor('2', 3),
+      ...generateVersionsForMajor('3', 3),
+    ];
+
+    const installedVersion = '2.0.0';
+
+    const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+    config.featureToggles.managedPluginsV2 = true;
+
+    const pluginAdminExternalManageEnabledOriginal = config.pluginAdminExternalManageEnabled;
+    config.pluginAdminExternalManageEnabled = true;
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: false, strategy: PluginUpdateStrategy.Assigned },
+      installedVersion,
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+    const buttons = screen.getAllByRole('button');
+    const disabledButtons = buttons.filter((btn) => (btn as HTMLButtonElement).disabled);
+    expect(disabledButtons).toHaveLength(versions.length - 1);
+
+    config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+    config.pluginAdminExternalManageEnabled = pluginAdminExternalManageEnabledOriginal;
+  });
 });
 
 function renderWithStore(component: JSX.Element) {
