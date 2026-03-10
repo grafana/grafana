@@ -6632,6 +6632,9 @@
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
     },
+    "dashboard-links-list": {
+      "add-link": "Add link"
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
     },
@@ -6910,6 +6913,12 @@
       "type-dashboards": "Dashboards",
       "type-link": "Link",
       "with-tags": "With tags"
+    },
+    "links-list": {
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})"
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
@@ -7259,6 +7268,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
