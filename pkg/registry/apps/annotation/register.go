@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"database/sql"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -73,7 +76,12 @@ func RegisterAppInstaller(
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-	case "sql":
+	case "postgres-partitioned":
+		store, err = newPostgresPartitionedStore(context.Background(), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create postgres-partitioned store: %w", err)
+		}
+	case "sql": // TODO: consider renaming to "legacy-sql"?
 		// sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
 	default:
@@ -160,6 +168,51 @@ func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+func newPostgresPartitionedStore(ctx context.Context, cfg *setting.Cfg) (Store, error) {
+	// Build connection string
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.AnnotationAppPlatform.PostgresHost,
+		cfg.AnnotationAppPlatform.PostgresPort,
+		cfg.AnnotationAppPlatform.PostgresUser,
+		cfg.AnnotationAppPlatform.PostgresPassword,
+		cfg.AnnotationAppPlatform.PostgresDatabase,
+		cfg.AnnotationAppPlatform.PostgresSSLMode,
+	)
+
+	// Open database connection
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open postgres connection: %w", err)
+	}
+
+	// Configure connection pool
+	db.SetMaxOpenConns(cfg.AnnotationAppPlatform.PostgresMaxOpenConns)
+	db.SetMaxIdleConns(cfg.AnnotationAppPlatform.PostgresMaxIdleConns)
+	db.SetConnMaxLifetime(time.Hour)
+
+	// Test connection
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to ping postgres: %w", err)
+	}
+
+	// Create store with config
+	retentionTTL := time.Duration(cfg.AnnotationAppPlatform.PostgresRetentionDays) * 24 * time.Hour
+	storeCfg := PostgreSQLStoreConfig{
+		DB:           db,
+		RetentionTTL: retentionTTL,
+		// Use defaults for cache settings
+	}
+
+	store, err := NewPostgreSQLStore(ctx, storeCfg)
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to create postgres store: %w", err)
+	}
+
+	return store, nil
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {

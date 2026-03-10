@@ -928,23 +928,45 @@ type AnnotationCleanupSettings struct {
 }
 
 type AnnotationAppPlatformSettings struct {
-	Enabled           bool
-	StoreBackend      string // "sql" (default) or "grpc"
-	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
-	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
-	GRPCTLSCAFile     string // Path to CA certificate file (optional)
-	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
+	Enabled               bool
+	StoreBackend          string // "sql" (default), "grpc", or "postgres-partitioned"
+	GRPCAddress           string // gRPC server address (e.g., "localhost:9090")
+	GRPCUseTLS            bool   // Enable TLS for gRPC connection (default: false)
+	GRPCTLSCAFile         string // Path to CA certificate file (optional)
+	GRPCTLSSkipVerify     bool   // Skip TLS verification (insecure, for testing)
+	PostgresHost          string // PostgreSQL host (default: "localhost")
+	PostgresPort          int    // PostgreSQL port (default: 5432)
+	PostgresUser          string // PostgreSQL user
+	PostgresPassword      string // PostgreSQL password
+	PostgresDatabase      string // PostgreSQL database name
+	PostgresSSLMode       string // SSL mode: disable, require, verify-ca, verify-full (default: "disable")
+	PostgresMaxOpenConns  int    // Max open connections (default: 10)
+	PostgresMaxIdleConns  int    // Max idle connections (default: 5)
+	PostgresRetentionDays int    // Retention period in days (default: 90)
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("sql"),
+		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend: appPlatformSection.Key("store_backend").MustString("sql"),
+
+		// gRPC settings
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
 		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
 		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
+
+		// postgres-partitioned settings
+		PostgresHost:          appPlatformSection.Key("postgres_host").MustString("localhost"),
+		PostgresPort:          appPlatformSection.Key("postgres_port").MustInt(5432),
+		PostgresUser:          appPlatformSection.Key("postgres_user").MustString("grafana"),
+		PostgresPassword:      appPlatformSection.Key("postgres_password").MustString(""),
+		PostgresDatabase:      appPlatformSection.Key("postgres_database").MustString("grafana"),
+		PostgresSSLMode:       appPlatformSection.Key("postgres_ssl_mode").MustString("disable"),
+		PostgresMaxOpenConns:  appPlatformSection.Key("postgres_max_open_conns").MustInt(10),
+		PostgresMaxIdleConns:  appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
+		PostgresRetentionDays: appPlatformSection.Key("postgres_retention_days").MustInt(90),
 	}
 }
 

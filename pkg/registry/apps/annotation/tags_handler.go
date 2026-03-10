@@ -24,7 +24,8 @@ func newTagsHandler(tagProvider TagProvider) func(ctx context.Context, writer ap
 		if namespace == "" {
 			namespace = "default"
 		}
-		tags, err := tagProvider.ListTags(ctx, namespace, TagListOptions{})
+		// TODO: implement prefix filtering and limiting
+		tags, err := tagProvider.ListTags(ctx, namespace, TagListOptions{Limit: 100})
 		if err != nil {
 			return err
 		}
