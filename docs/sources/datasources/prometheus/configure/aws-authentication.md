@@ -13,8 +13,9 @@ labels:
     - enterprise
     - oss
 menuTitle: Authenticating with SigV4
-title: Configure the Prometheus data source
+title: Connect to Amazon Managed Service for Prometheus
 weight: 200
+review_date: 2026-03-10
 ---
 
 # Connect to Amazon Managed Service for Prometheus

@@ -15,6 +15,7 @@ labels:
 menuTitle: Configure
 title: Configure the Prometheus data source
 weight: 200
+review_date: 2026-03-10
 ---
 
 # Configure the Prometheus data source

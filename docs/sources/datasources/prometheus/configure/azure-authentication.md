@@ -13,8 +13,9 @@ labels:
     - enterprise
     - oss
 menuTitle: Authenticating with Azure
-title: Configure the Prometheus data source
+title: Connect to Azure Monitor Managed Service for Prometheus
 weight: 200
+review_date: 2026-03-10
 ---
 
 # Connect to Azure Monitor Managed Service for Prometheus

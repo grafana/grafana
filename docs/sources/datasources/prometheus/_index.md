@@ -15,6 +15,7 @@ labels:
 menuTitle: Prometheus
 title: Prometheus data source
 weight: 1300
+review_date: 2026-03-10
 ---
 
 # Prometheus data source
@@ -23,14 +24,27 @@ Prometheus is an open source database that uses a telemetry collector agent to s
 
 Grafana provides native support for Prometheus, so you don't need to install a plugin.
 
-The following documentation will help you get started working with Prometheus and Grafana:
+## Supported features
+
+| Feature | Supported |
+|---------|-----------|
+| Metrics | Yes |
+| Alerting | Yes |
+| Annotations | Yes |
+| Exemplars | Yes |
+
+## Get started
+
+The following documentation helps you get started with Prometheus and Grafana:
 
 - [What is Prometheus?](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/)
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
-- [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
-- [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure)
+- [Getting started with Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/)
+- [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/)
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
+- [Annotations](annotations/)
+- [Alerting](alerting/)
 - [Troubleshooting](troubleshooting/)
 
 ## Exemplars
@@ -72,13 +86,14 @@ For details about these metrics, refer to [Internal Grafana metrics](https://gra
 
 Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
 
-## Get the most out of the Prometheus data source
+## Additional features
 
-After you install and configure Prometheus you can:
+After you configure Prometheus, you can:
 
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
-- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
-- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
-- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query data without building a dashboard
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
+- Configure [template variables](template-variables/) for dynamic dashboards
+- Add [annotations](annotations/) to overlay events on your graphs
+- Set up [alerting](alerting/) rules based on PromQL queries
 - Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/)
