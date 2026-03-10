@@ -321,8 +321,10 @@ test.describe('Scope Redirect Functionality', () => {
       // Verify scope was cleared from URL
       await expect(page).not.toHaveURL(/scopes=/);
 
-      // Re-apply the same scope — now that edit mode is off, redirect should fire
-      await openScopesSelector(page, scopes);
+      // Re-apply the same scope — now that edit mode is off, redirect should fire.
+      // Skip waiting for network response: the tree is already cached from the first open,
+      // so no new /find/scope_node_children request will be made.
+      await openScopesSelector(page);
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
 
