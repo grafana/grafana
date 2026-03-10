@@ -104,10 +104,12 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	config := reader.Config()
 
 	// Try to read existing folder metadata (single read for both metadata and ID)
-	var folderObj *folders.Folder
-	var folderID string
-	var err error
-	var folderExists bool
+	var (
+		folderObj    *folders.Folder
+		folderID     string
+		err          error
+		folderExists bool
+	)
 
 	if folderMetadataEnabled {
 		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
