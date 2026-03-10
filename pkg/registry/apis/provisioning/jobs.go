@@ -244,9 +244,12 @@ func (c *jobsConnector) authorizeExportJob(ctx context.Context, repo repository.
 
 	authorizer := resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled)
 	if err := authorizer.AuthorizeReadAllSupported(ctx); err != nil {
-		return err
+		return fmt.Errorf("authorize read all supported resources: %w", err)
 	}
-	return authorizer.AuthorizeCreateAllSupported(ctx)
+	if err := authorizer.AuthorizeCreateAllSupported(ctx); err != nil {
+		return fmt.Errorf("authorize create all supported resources: %w", err)
+	}
+	return nil
 }
 
 // ValidUUID ensures the ID is valid for a blob.
