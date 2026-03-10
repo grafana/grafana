@@ -559,12 +559,12 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "target-parent-stable-uid").Return(nil).Once()
 
-	authorizer := NewAuthorizer(repo, rw, mockAccess, true)
-	err := authorizer.AuthorizeMoveFolder(context.Background(), "source/", "target-parent/moved/")
+		authorizer := NewAuthorizer(repo, rw, mockAccess, true)
+		err := authorizer.AuthorizeMoveFolder(context.Background(), "source/", "target-parent/moved/")
 
-	assert.NoError(t, err)
-	mockAccess.AssertExpectations(t)
-	rw.AssertExpectations(t)
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+		rw.AssertExpectations(t)
 	})
 }
 
