@@ -1579,7 +1579,7 @@ export interface FeatureToggles {
   kubernetesTeamSync?: boolean;
   /**
   * Use the new team service that uses the app platform APIs
-  * @default true
+  * @default false
   */
   kubernetesTeamService?: boolean;
   /**

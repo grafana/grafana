@@ -2504,7 +2504,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "alertingMultiplePolicies",
