@@ -34,9 +34,11 @@ export interface AllLabelsContentProps {
   allLabels: LabelStats[];
   /** Optional callback fired after a filter is added (e.g. to close a drawer) */
   onFilterAdded?: () => void;
+  /** Optional text filter applied to label keys */
+  labelFilter?: string;
 }
 
-export function AllLabelsContent({ allLabels, onFilterAdded }: AllLabelsContentProps) {
+export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }: AllLabelsContentProps) {
   const styles = useStyles2(getContentStyles);
   const sceneContext = useSceneContext();
   const [showAll, setShowAll] = useState(false);
@@ -46,8 +48,12 @@ export function AllLabelsContent({ allLabels, onFilterAdded }: AllLabelsContentP
   const [forcedClosed, setForcedClosed] = useState<Set<string>>(new Set());
   const exactFilterKeys = useExactFilterKeys();
 
-  const visibleLabels = showAll ? allLabels : allLabels.slice(0, DEFAULT_VISIBLE_LABELS);
-  const hasMore = allLabels.length > DEFAULT_VISIBLE_LABELS;
+  const filteredLabels =
+    labelFilter.trim() === ''
+      ? allLabels
+      : allLabels.filter((label) => label.key.toLowerCase().includes(labelFilter.toLowerCase()));
+  const visibleLabels = showAll ? filteredLabels : filteredLabels.slice(0, DEFAULT_VISIBLE_LABELS);
+  const hasMore = filteredLabels.length > DEFAULT_VISIBLE_LABELS;
 
   const handleValueClick = (key: string, value: string) => {
     addOrReplaceFilter(sceneContext, key, '=', value);
@@ -123,7 +129,13 @@ export function AllLabelsContent({ allLabels, onFilterAdded }: AllLabelsContentP
         );
       })}
       {hasMore && !showAll && (
-        <Button variant="secondary" fill="text" className={styles.spanAllColumns} onClick={() => setShowAll(true)}>
+        <Button
+          variant="secondary"
+          size="sm"
+          fill="text"
+          className={styles.spanAllColumns}
+          onClick={() => setShowAll(true)}
+        >
           <Trans
             i18nKey="alerting.triage.show-all-labels"
             values={{ count: allLabels.length }}

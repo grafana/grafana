@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
+import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
-import { Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Input, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { AllLabelsContent } from './AllLabelsDrawer';
 import { countInstances } from './SummaryStats';
@@ -22,6 +23,7 @@ const COLLAPSED_WIDTH = 36;
 export function LabelsColumn() {
   const { labels, isLoading } = useLabelsBreakdown();
   const [open, toggleOpen] = useToggle(true);
+  const [labelFilter, setLabelFilter] = useState('');
   const styles = useStyles2(getStyles);
 
   return (
@@ -62,8 +64,16 @@ export function LabelsColumn() {
               <Text weight="medium" variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
               </Text>
+              <Input
+                prefix={<Icon name="search" size="sm" />}
+                placeholder={t('alerting.triage.filter-labels-placeholder', 'Filter')}
+                value={labelFilter}
+                onChange={(e) => setLabelFilter(e.currentTarget.value)}
+                aria-label={t('alerting.triage.filter-labels', 'Filter labels')}
+                className={styles.labelFilterInput}
+              />
             </div>
-            {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} />}
+            {!isLoading && labels.length > 0 && <AllLabelsContent allLabels={labels} labelFilter={labelFilter} />}
           </div>
         </ScrollContainer>
       )}
@@ -186,7 +196,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(1),
   }),
   section: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: theme.spacing(1, 1.5),
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.75),
@@ -197,15 +207,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
   }),
   labelsSectionHeader: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: theme.spacing(1, 0, 1, 1.5),
     flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.75),
+  }),
+  labelFilterInput: css({
+    width: '100%',
   }),
   stateButton: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
     width: '100%',
-    padding: `${theme.spacing(0.5)} ${theme.spacing(0.75)}`,
+    padding: theme.spacing(0.5, 0.75),
     background: 'none',
     border: `1px solid transparent`,
     borderRadius: theme.shape.radius.default,
