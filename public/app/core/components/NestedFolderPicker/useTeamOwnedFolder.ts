@@ -5,8 +5,6 @@ import { TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/r
 import { isFetchError } from '@grafana/runtime';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 
-export const TEAM_FOLDERS_UID = 'teamfolders';
-
 type FoldersByTeam = {
   team: TeamDto;
   folders: DashboardHit[];

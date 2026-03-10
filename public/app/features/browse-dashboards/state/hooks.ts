@@ -13,7 +13,7 @@ import {
   DashboardViewItemWithUIItems,
   UIDashboardViewItem,
 } from '../types';
-import { isSharedWithMe, isTeamFolders } from '../utils/dashboards';
+import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -184,26 +184,17 @@ export function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    // Add a divider after "Shared with me" only if "Team folders" doesn't follow it
-    if (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders) {
-      items.push({
-        item: {
-          kind: 'ui',
-          uiKind: 'divider',
-          uid: 'shared-with-me-divider',
-        },
-        parentUID,
-        level: level + 1,
-        isOpen: false,
-      });
-    }
+    // Add a divider after the last virtual folder (shared with me / team folders)
+    const isLastVirtualFolder =
+      isVirtualTeamFolder(thisItem.item.uid) ||
+      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders);
 
-    if (isTeamFolders(thisItem.item.uid)) {
+    if (isLastVirtualFolder) {
       items.push({
         item: {
           kind: 'ui',
           uiKind: 'divider',
-          uid: 'team-folders-divider',
+          uid: `${thisItem.item.uid}-divider`,
         },
         parentUID,
         level: level + 1,

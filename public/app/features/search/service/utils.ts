@@ -1,7 +1,7 @@
 import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe, isTeamFolders } from 'app/features/browse-dashboards/utils/dashboards';
+import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
@@ -65,7 +65,7 @@ export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: bool
     return 'user-arrows';
   }
 
-  if (item && isTeamFolders(item.uid)) {
+  if (item && isVirtualTeamFolder(item.uid)) {
     return 'users-alt';
   }
 

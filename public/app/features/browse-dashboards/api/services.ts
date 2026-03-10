@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
-import { TEAM_FOLDERS_UID } from 'app/core/components/NestedFolderPicker/useTeamOwnedFolder';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -12,7 +12,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ThunkDispatch } from 'app/types/store';
 
-import { getFolderURL, isSharedWithMe, isTeamFolders } from '../utils/dashboards';
+import { getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
 export const PAGE_SIZE = 50;
 
@@ -94,7 +94,7 @@ export async function listFolders(
   }
 
   return folders.map(({ uid, title, managedBy }) => {
-    const noUrl = isSharedWithMe(uid) || isTeamFolders(uid);
+    const noUrl = isSharedWithMe(uid) || isVirtualTeamFolder(uid);
     return {
       kind: 'folder',
       uid,

@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { TEAM_FOLDERS_UID } from 'app/core/components/NestedFolderPicker/useTeamOwnedFolder';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 
@@ -13,7 +13,7 @@ export function isSharedWithMe(uid: string) {
   return uid === config.sharedWithMeFolderUID;
 }
 
-export function isTeamFolders(uid: string) {
+export function isVirtualTeamFolder(uid: string) {
   return uid === TEAM_FOLDERS_UID;
 }
 
