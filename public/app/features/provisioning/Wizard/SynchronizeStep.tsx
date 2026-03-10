@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -81,12 +81,17 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 
   const isButtonDisabled = hasError || !isHealthy;
 
+  const createSyncJobRef = useRef(createSyncJob);
+  createSyncJobRef.current = createSyncJob;
+  const requiresMigrationRef = useRef(requiresMigration);
+  requiresMigrationRef.current = requiresMigration;
+
   const startSynchronization = useCallback(async () => {
-    const response = await createSyncJob(requiresMigration);
+    const response = await createSyncJobRef.current(requiresMigrationRef.current);
     if (response) {
       setJob(response);
     }
-  }, [createSyncJob, requiresMigration]);
+  }, []);
 
   const retryJob = useCallback(() => {
     setJob(undefined);
