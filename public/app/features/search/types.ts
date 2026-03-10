@@ -84,7 +84,12 @@ export interface DashboardViewItem {
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
 
-  avatarUrl?: string;
+  ownerReference?: {
+    kind: string;
+    uid: string;
+    title: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface SearchAction extends Action {

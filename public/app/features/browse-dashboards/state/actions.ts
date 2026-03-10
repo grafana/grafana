@@ -3,8 +3,7 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
-import { listDashboards, listFolders, listTeamFolderChildren, listTeamFolders, PAGE_SIZE } from '../api/services';
-import { isTeamFolderItem } from '../utils/dashboards';
+import { listDashboards, listFolders, listTeamFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
 import { findItem } from './utils';
@@ -63,11 +62,6 @@ export const refetchChildren = createAsyncThunk(
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
-    if (parentUID && isTeamFolderItem(parentUID)) {
-      const children = await listTeamFolderChildren(thunkAPI.dispatch, parentUID);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
-    }
-
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
@@ -106,16 +100,13 @@ export const fetchNextChildrenPage = createAsyncThunk(
     { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
-    if (parentUID === TEAM_FOLDERS_UID || (parentUID && isTeamFolderItem(parentUID))) {
+    if (parentUID === TEAM_FOLDERS_UID) {
       const state = thunkAPI.getState().browseDashboards;
-      const collection = parentUID ? state.childrenByParentUID[parentUID] : undefined;
+      const collection = state.childrenByParentUID[parentUID];
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children =
-        parentUID === TEAM_FOLDERS_UID
-          ? await listTeamFolders(thunkAPI.dispatch)
-          : await listTeamFolderChildren(thunkAPI.dispatch, parentUID!);
+      const children = await listTeamFolders(thunkAPI.dispatch);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 

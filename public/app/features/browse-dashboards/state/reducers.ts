@@ -4,7 +4,7 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { BrowseDashboardsState } from '../types';
-import { isSharedWithMe, isTeamFolders, isTeamFolderItem } from '../utils/dashboards';
+import { isSharedWithMe, isTeamFolders } from '../utils/dashboards';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
 import { findItem } from './utils';
@@ -92,7 +92,7 @@ export function setItemSelectionState(
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme/teamfolders from being selected
-  if (isSharedWithMe(item.uid) || isTeamFolders(item.uid) || isTeamFolderItem(item.uid)) {
+  if (isSharedWithMe(item.uid) || isTeamFolders(item.uid)) {
     return;
   }
 
@@ -145,7 +145,7 @@ export function setAllSelection(
 
   // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
-  if (folderUIDArg && (isSharedWithMe(folderUIDArg) || isTeamFolders(folderUIDArg) || isTeamFolderItem(folderUIDArg))) {
+  if (folderUIDArg && (isSharedWithMe(folderUIDArg) || isTeamFolders(folderUIDArg))) {
     return;
   }
 
@@ -161,7 +161,7 @@ export function setAllSelection(
     // Recursively select the children of the folder in view
     function selectChildrenOfFolder(folderUID: string | undefined) {
       // Don't descend into the sharedwithme or teamfolders folder
-      if (folderUID && (isSharedWithMe(folderUID) || isTeamFolders(folderUID) || isTeamFolderItem(folderUID))) {
+      if (folderUID && (isSharedWithMe(folderUID) || isTeamFolders(folderUID))) {
         return;
       }
 
@@ -174,7 +174,7 @@ export function setAllSelection(
 
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme or teamfolders folder
-        if (isSharedWithMe(child.uid) || isTeamFolders(child.uid) || isTeamFolderItem(child.uid)) {
+        if (isSharedWithMe(child.uid) || isTeamFolders(child.uid)) {
           continue;
         }
 

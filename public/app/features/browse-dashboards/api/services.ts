@@ -12,7 +12,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ThunkDispatch } from 'app/types/store';
 
-import { TEAM_FOLDER_PREFIX, getFolderURL, isSharedWithMe, isTeamFolderItem, isTeamFolders } from '../utils/dashboards';
+import { getFolderURL, isSharedWithMe, isTeamFolders } from '../utils/dashboards';
 
 export const PAGE_SIZE = 50;
 
@@ -94,7 +94,7 @@ export async function listFolders(
   }
 
   return folders.map(({ uid, title, managedBy }) => {
-    const noUrl = isSharedWithMe(uid) || isTeamFolders(uid) || isTeamFolderItem(uid);
+    const noUrl = isSharedWithMe(uid) || isTeamFolders(uid);
     return {
       kind: 'folder',
       uid,
@@ -135,16 +135,9 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
   });
 }
 
-function teamFolderUID(teamUID: string) {
-  return `${TEAM_FOLDER_PREFIX}${teamUID}`;
-}
-
-function parseTeamUID(uid: string): string {
-  return uid.slice(TEAM_FOLDER_PREFIX.length);
-}
-
 /**
- * Fetches the user's teams and returns a virtual folder item per team that owns at least one folder.
+ * Fetches the user's teams and returns actual folder items directly under "Team folders",
+ * with team owner info attached to each folder.
  */
 export async function listTeamFolders(dispatch: ThunkDispatch): Promise<DashboardViewItem[]> {
   const teams = await dispatch(legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined)).unwrap();
@@ -159,50 +152,39 @@ export async function listTeamFolders(dispatch: ThunkDispatch): Promise<Dashboar
     dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate({ ownerReference, type: 'folder' })
   ).unwrap();
 
-  // Build a set of team UIDs that actually own folders
-  const teamsWithFolders = new Set<string>();
+  // Build a map of team UID → team info
+  const teamsByUid = new Map(
+    teams.map((team) => [team.uid!, { name: team.name!, avatarUrl: team.avatarUrl }])
+  );
+
+  // Build a map of folder UID → owning team reference
+  const folderOwners = new Map<string, { kind: string; uid: string; title: string; avatarUrl?: string }>();
   for (const hit of result.hits ?? []) {
     for (const ref of hit.ownerReferences ?? []) {
       // ref format: iam.grafana.app/Team/{teamUID}
       const parts = ref.split('/');
       if (parts.length === 3 && parts[1] === 'Team') {
-        teamsWithFolders.add(parts[2]);
+        const teamUid = parts[2];
+        const team = teamsByUid.get(teamUid);
+        if (team) {
+          folderOwners.set(hit.name, {
+            kind: parts[1],
+            uid: teamUid,
+            title: team.name,
+            avatarUrl: team.avatarUrl,
+          });
+        }
       }
     }
   }
 
-  // Return one virtual folder per team that has folders
-  return teams
-    .filter((team) => teamsWithFolders.has(team.uid!))
-    .map((team) => ({
-      kind: 'folder' as const,
-      uid: teamFolderUID(team.uid!),
-      title: team.name!,
-      parentUID: TEAM_FOLDERS_UID,
-      avatarUrl: team.avatarUrl,
-    }));
-}
-
-/**
- * Fetches folders owned by a specific team.
- * @param teamFolderItemUID The virtual folder UID (e.g. `teamfolder-team-{teamUID}`)
- */
-export async function listTeamFolderChildren(
-  dispatch: ThunkDispatch,
-  teamFolderItemUID: string
-): Promise<DashboardViewItem[]> {
-  const teamUID = parseTeamUID(teamFolderItemUID);
-  const ownerReference = [`iam.grafana.app/Team/${teamUID}`];
-
-  const result = await dispatch(
-    dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate({ ownerReference, type: 'folder' })
-  ).unwrap();
-
+  // Return actual folders with owner reference info
   return (result.hits ?? []).map((hit) => ({
     kind: 'folder' as const,
     uid: hit.name,
     title: hit.title,
-    parentUID: teamFolderItemUID,
+    parentUID: TEAM_FOLDERS_UID,
     url: getFolderURL(hit.name),
+    ownerReference: folderOwners.get(hit.name),
   }));
 }

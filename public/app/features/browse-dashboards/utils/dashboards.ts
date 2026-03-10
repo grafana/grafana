@@ -17,12 +17,6 @@ export function isTeamFolders(uid: string) {
   return uid === TEAM_FOLDERS_UID;
 }
 
-export const TEAM_FOLDER_PREFIX = 'teamfolder-team-';
-
-export function isTeamFolderItem(uid: string) {
-  return uid.startsWith(TEAM_FOLDER_PREFIX);
-}
-
 // Construct folder URL and append orgId to it
 export function getFolderURL(uid: string) {
   const { orgId } = contextSrv.user;

@@ -28,7 +28,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
-  const avatarUrl = item.kind !== 'ui' ? item.avatarUrl : undefined;
+  const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
 
   if (item.kind === 'ui') {
     return (
@@ -87,9 +87,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
       )}
 
       <div className={styles.iconNameContainer}>
-        {isLoading && <Spinner size={ICON_SIZE} />}
-        {!isLoading && avatarUrl && <Avatar src={avatarUrl} alt={item.title} width={2} height={2} />}
-        {!isLoading && !avatarUrl && <Icon size={ICON_SIZE} name={iconName} />}
+        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
@@ -113,6 +111,15 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         </Text>
 
         <FolderRepo folder={item} />
+
+        {ownerReference && (
+          <div className={styles.ownerReference}>
+            {ownerReference.avatarUrl && <Avatar src={ownerReference.avatarUrl} alt={ownerReference.title} />}
+            <Text truncate color="secondary" variant="bodySmall">
+              {ownerReference.title}
+            </Text>
+          </div>
+        )}
       </div>
     </>
   );
@@ -142,6 +149,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         textDecoration: 'underline',
       },
+    }),
+    ownerReference: css({
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
     }),
   };
 };
