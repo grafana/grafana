@@ -335,6 +335,7 @@ export interface PickerContentProps extends DataSourcePickerProps {
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
   const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -347,7 +348,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer showScrollIndicators>
+      <ScrollContainer showScrollIndicators ref={scrollRef}>
         <DataSourceList
           {...props}
           favoriteDataSources={favoriteDataSources}
@@ -362,6 +363,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
           dataSources={dataSources}
+          scrollRef={scrollRef}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>

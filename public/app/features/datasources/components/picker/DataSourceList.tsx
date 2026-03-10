@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
@@ -15,6 +16,9 @@ import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './DataSourcePicker';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
+
+const VIRTUAL_OVERSCAN_ITEMS = 4;
+const ESTIMATED_ITEM_HEIGHT = 48;
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -46,20 +50,23 @@ export interface DataSourceListProps {
   enableKeyboardNavigation?: boolean;
   dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
+  /** Ref to the scroll container element, used by the virtualizer */
+  scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
-    keyboardEvents: props.keyboardEvents,
-    containerRef: containerRef,
-  });
-
   const theme = useTheme2();
-  const styles = getStyles(theme, selectedItemCssSelector);
+  const styles = getStyles(theme);
 
-  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA, favoriteDataSources } = props;
+  const {
+    className,
+    current,
+    onChange,
+    enableKeyboardNavigation,
+    onClickEmptyStateCTA,
+    favoriteDataSources,
+    scrollRef,
+  } = props;
   const dataSources = useDatasources(
     {
       alerting: props.alerting,
@@ -80,52 +87,111 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
-  return (
-    <div
-      ref={containerRef}
-      className={cx(className, styles.container)}
-      data-testid={selectors.components.DataSourcePicker.dataSourceList}
-    >
-      {filteredDataSources.length === 0 && (
-        <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
-      )}
-      {filteredDataSources
-        .sort(
-          getDataSourceCompareFn(
-            current,
-            recentlyUsedDataSources,
-            getDataSourceVariableIDs(),
-            favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-          )
+  const sortedDataSources = useMemo(
+    () =>
+      [...filteredDataSources].sort(
+        getDataSourceCompareFn(
+          current,
+          recentlyUsedDataSources,
+          getDataSourceVariableIDs(),
+          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
         )
-        .map((ds) => (
-          <DataSourceCard
-            data-testid="data-source-card"
-            key={ds.uid}
-            ds={ds}
-            onClick={() => {
-              pushRecentlyUsedDataSource(ds);
-              onChange(ds);
-            }}
-            selected={isDataSourceMatch(ds, current)}
-            isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
-            onToggleFavorite={
-              favoriteDataSources.enabled
-                ? () => {
-                    reportInteraction(INTERACTION_EVENT_NAME, {
-                      item: INTERACTION_ITEM.TOGGLE_FAVORITE,
-                      ds_type: ds.type,
-                      is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
-                    });
-                    favoriteDataSources.isFavoriteDatasource(ds.uid)
-                      ? favoriteDataSources.removeFavoriteDatasource(ds)
-                      : favoriteDataSources.addFavoriteDatasource(ds);
+      ),
+    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
+  );
+
+  const rowVirtualizer = useVirtualizer({
+    count: sortedDataSources.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ESTIMATED_ITEM_HEIGHT,
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
+  });
+
+  const virtualizerRef = useRef(rowVirtualizer);
+  virtualizerRef.current = rowVirtualizer;
+
+  const stableScrollToIndex = useCallback((index: number) => {
+    virtualizerRef.current?.scrollToIndex(index, { align: 'auto' });
+  }, []);
+
+  const handleSelect = useCallback(
+    (index: number) => {
+      const ds = sortedDataSources[index];
+      if (ds) {
+        pushRecentlyUsedDataSource(ds);
+        onChange(ds);
+      }
+    },
+    [sortedDataSources, onChange, pushRecentlyUsedDataSource]
+  );
+
+  const selectedIndex = useKeyboardNavigatableList({
+    keyboardEvents: enableKeyboardNavigation ? props.keyboardEvents : undefined,
+    itemCount: sortedDataSources.length,
+    scrollToIndex: stableScrollToIndex,
+    onSelect: handleSelect,
+  });
+
+  return (
+    <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
+      {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
+      {sortedDataSources.length > 0 && (
+        <div
+          style={{
+            height: rowVirtualizer.getTotalSize(),
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const ds = sortedDataSources[virtualRow.index];
+            const isSelected = enableKeyboardNavigation && virtualRow.index === selectedIndex;
+            return (
+              <div
+                key={ds.uid}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: virtualRow.size,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <DataSourceCard
+                  data-testid="data-source-card"
+                  {...(enableKeyboardNavigation && {
+                    'data-selecteditem': isSelected ? 'true' : 'false',
+                  })}
+                  ds={ds}
+                  onClick={() => {
+                    pushRecentlyUsedDataSource(ds);
+                    onChange(ds);
+                  }}
+                  selected={isDataSourceMatch(ds, current)}
+                  isFavorite={
+                    favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined
                   }
-                : undefined
-            }
-            {...(enableKeyboardNavigation ? navigatableProps : {})}
-          />
-        ))}
+                  onToggleFavorite={
+                    favoriteDataSources.enabled
+                      ? () => {
+                          reportInteraction(INTERACTION_EVENT_NAME, {
+                            item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+                            ds_type: ds.type,
+                            is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
+                          });
+                          favoriteDataSources.isFavoriteDatasource(ds.uid)
+                            ? favoriteDataSources.removeFavoriteDatasource(ds)
+                            : favoriteDataSources.addFavoriteDatasource(ds);
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -165,13 +231,13 @@ function getDataSourceVariableIDs() {
     .map((v) => `\${${v.id}}`);
 }
 
-function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(0.5),
-      [`${selectedItemCssSelector}`]: {
+      '[data-selecteditem="true"]': {
         backgroundColor: theme.colors.action.focus,
       },
     }),
