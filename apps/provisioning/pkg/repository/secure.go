@@ -31,7 +31,7 @@ type secureValues struct {
 	namespace string
 }
 
-func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st secretTypeLabel) (common.RawSecureValue, error) {
+func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st secretTypeLabel) (_ common.RawSecureValue, err error) {
 	if !sv.Create.IsZero() {
 		return sv.Create, nil // If this was called before the value is actually saved
 	}
@@ -40,25 +40,28 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 	}
 
 	start := time.Now()
-	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
-	elapsed := time.Since(start).Seconds()
+	defer func() {
+		elapsed := time.Since(start).Seconds()
+		if err != nil {
+			s.metrics.recordError(st)
+		} else {
+			s.metrics.recordSuccess(st, elapsed)
+		}
+	}()
 
+	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
 	if err != nil {
-		s.metrics.recordError(st)
 		return "", fmt.Errorf("failed to call decrypt service: %w", err)
 	}
 
 	v, found := results[sv.Name]
 	if !found {
-		s.metrics.recordError(st)
 		return "", fmt.Errorf("not found")
 	}
 	if v.Error() != nil {
-		s.metrics.recordError(st)
 		return "", v.Error()
 	}
 
-	s.metrics.recordSuccess(st, elapsed)
 	return common.RawSecureValue(*v.Value()), nil
 }
 
