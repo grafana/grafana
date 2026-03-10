@@ -1436,7 +1436,7 @@
         "must-enter-a-group-name": "Must enter a group name"
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "",
+      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -2029,7 +2029,7 @@
       }
     },
     "match-details": {
-      "matched": "",
+      "matched": "matched",
       "no-matchers-matched": "Policy matches all labels"
     },
     "matcher-filter": {
@@ -2291,7 +2291,7 @@
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expand policy route",
       "delivered-to": "Delivered to",
-      "instances": ""
+      "instances": "instances"
     },
     "notification-templates": {
       "duplicate": {
@@ -2908,7 +2908,7 @@
       }
     },
     "rule-health": {
-      "error": ""
+      "error": "error"
     },
     "rule-inspector": {
       "title-inspect-alert-rule": "Inspect Alert rule"
@@ -4785,7 +4785,7 @@
   },
   "configuration-tracker": {
     "config-card": {
-      "complete": ""
+      "complete": "complete"
     }
   },
   "connections": {
@@ -10566,7 +10566,7 @@
       "save-button": "Save",
       "test-button": "Test"
     },
-    "documentation": "",
+    "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
       "error": "Server host is a required field",
@@ -10951,7 +10951,7 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "",
+      "more": "more",
       "see-details": "See log details",
       "tooltip-error": "Error: {{errorMessage}}"
     },
@@ -14799,7 +14799,7 @@
       "backwards-time-aria-label": "Move time range backwards",
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
-      "to": "",
+      "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip": "Time range zoom out <br/> CTRL+Z",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
@@ -15542,7 +15542,7 @@
     },
     "query-validation-message": "One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.",
     "range-matcher-editor": {
-      "and": "",
+      "and": "and",
       "placeholder-from": "From",
       "placeholder-to": "To"
     },
