@@ -215,8 +215,8 @@ export function drawRadialArcPath(
   startAngle: number,
   endAngle: number,
   radius: number,
-  centerX = 0,
-  centerY = 0
+  xOffset = 0,
+  yOffset = 0
 ): string {
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
@@ -230,10 +230,10 @@ export function drawRadialArcPath(
 
   const MAX_DECIMALS = 2;
 
-  const x1 = centerX + parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
-  const y1 = centerY + parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
-  const x2 = centerX + parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
-  const y2 = centerY + parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
+  const x1 = xOffset + parseFloat((radius * Math.cos(startRadians)).toFixed(MAX_DECIMALS));
+  const y1 = yOffset + parseFloat((radius * Math.sin(startRadians)).toFixed(MAX_DECIMALS));
+  const x2 = xOffset + parseFloat((radius * Math.cos(endRadians)).toFixed(MAX_DECIMALS));
+  const y2 = yOffset + parseFloat((radius * Math.sin(endRadians)).toFixed(MAX_DECIMALS));
 
   return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 }
