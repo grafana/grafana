@@ -35,6 +35,7 @@ describe('PluginListItemBadges', () => {
     isPublished: true,
     isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
+    managed: { enabled: false, strategy: undefined },
   };
 
   afterEach(() => {

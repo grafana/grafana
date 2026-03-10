@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
-import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType, PluginSignatureType } from '@grafana/data';
+import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';

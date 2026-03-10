@@ -95,6 +95,10 @@ const mockPlugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   url: 'https://github.com/grafana/test-plugin',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockInfo = [

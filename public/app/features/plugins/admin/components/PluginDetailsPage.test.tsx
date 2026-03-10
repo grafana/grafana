@@ -63,6 +63,10 @@ const plugin: CatalogPlugin = {
   isFullyInstalled: true,
   accessControl: {},
   insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 jest.mock('../state/hooks', () => ({

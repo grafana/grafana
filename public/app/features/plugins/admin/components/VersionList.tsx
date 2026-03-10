@@ -205,7 +205,7 @@ interface ShouldDisableVersionInstallationArgs {
   version: Version;
   latestMajorVersions: Set<string>;
   installedVersion: string | undefined;
-  updateStrategy: PluginUpdateStrategy;
+  updateStrategy?: PluginUpdateStrategy;
 }
 
 function shouldDisableVersionInstallation({

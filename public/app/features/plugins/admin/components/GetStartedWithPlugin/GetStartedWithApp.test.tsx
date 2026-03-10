@@ -49,6 +49,10 @@ const mockPlugin: CatalogPlugin = {
   popularity: 0,
   publishedAt: '2021-01-01',
   updatedAt: '2021-01-01',
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 describe('GetStartedWithApp', () => {
