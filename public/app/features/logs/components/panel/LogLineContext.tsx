@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -351,7 +350,6 @@ export const LogLineContext = memo(
         setDefaultDisplayedFields(value);
       }
     }, []);
-    const logsContextDatasourceUi = useBooleanFlagValue('logsContextDatasourceUi', false);
 
     return (
       <Modal
@@ -361,7 +359,7 @@ export const LogLineContext = memo(
         className={styles.modal}
         onDismiss={handleClose}
       >
-        {logsContextDatasourceUi && getLogRowContextUi && <div>{getLogRowContextUi(log, updateResults)}</div>}
+        {getLogRowContextUi && <div>{getLogRowContextUi(log, updateResults)}</div>}
         <Collapse
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}

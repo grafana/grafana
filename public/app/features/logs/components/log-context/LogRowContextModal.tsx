@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as React from 'react';
@@ -221,7 +220,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const logsContextDatasourceUi = useBooleanFlagValue('logsContextDatasourceUi', false);
 
   const [sticky, setSticky] = useState(true);
 
@@ -501,9 +499,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       className={styles.modal}
       onDismiss={onClose}
     >
-      {logsContextDatasourceUi && getLogRowContextUi && (
-        <div className={styles.datasourceUi}>{getLogRowContextUi(row, updateResults)}</div>
-      )}
+      {getLogRowContextUi && <div className={styles.datasourceUi}>{getLogRowContextUi(row, updateResults)}</div>}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div>
           <LogContextButtons
