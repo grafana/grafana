@@ -5,7 +5,7 @@ import { EventBusSrv } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 
-import { DashboardEditActionEvent } from './shared';
+import { DashboardEditActionEvent } from './DashboardEditActionEvent';
 import { resetQuickEditWarnings, useQuickEditOptions } from './useQuickEditOptions';
 
 jest.mock('@grafana/runtime', () => ({
