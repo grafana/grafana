@@ -897,11 +897,13 @@
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
       "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
+      "button-history": "History",
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
+      "tooltip-history": "View the history of notification attempts made to this contact point",
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
