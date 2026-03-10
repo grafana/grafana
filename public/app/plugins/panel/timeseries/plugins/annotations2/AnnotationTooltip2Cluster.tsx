@@ -54,7 +54,7 @@ export const AnnotationTooltip2Cluster = ({
       const annotationId = annoVals.id?.[i];
 
       annotationTooltipComponents.push(
-        <React.Fragment key={i}>
+        <>
           <AnnotationTooltipHeader
             avatarImg={avatarImgSrc}
             alertState={alertState}
@@ -71,7 +71,7 @@ export const AnnotationTooltip2Cluster = ({
             }}
           />
           <AnnotationTooltipBody title={title} text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
-        </React.Fragment>
+        </>
       );
     }
   }
