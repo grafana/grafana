@@ -240,11 +240,14 @@ func ProvideDSKitService(
 	}
 
 	hs := newHealthService()
-	hs.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	hs.setServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpc_health_v1.RegisterHealthServer(grpcService.GetServer(), hs)
 
 	svc := &DSKitService{Provider: grpcService, Health: hs}
-	svc.BasicService = services.NewBasicService(nil, grpcService.Run, func(_ error) error {
+	svc.BasicService = services.NewBasicService(func(context.Context) error {
+		hs.start()
+		return nil
+	}, grpcService.Run, func(_ error) error {
 		hs.Shutdown()
 		grpcService.shutdown()
 		return nil

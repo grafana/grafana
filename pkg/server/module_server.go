@@ -209,7 +209,6 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		m.RegisterListener(s.grpcService.Health)
 		return s.grpcService, nil
 	})
 
@@ -238,7 +237,7 @@ func (s *ModuleServer) Run() error {
 		}
 		s.grpcService.Health.Register(
 			grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
-				return s.searchServerRing.State() == services.Running, nil
+				return svc.State() == services.Running, nil
 			}),
 			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
@@ -276,17 +275,25 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if probe, ok := svc.(grpcserver.HealthProbe); ok {
-			s.grpcService.Health.Register(probe,
-				resourcepb.ResourceStore_ServiceDesc.ServiceName,
-				resourcepb.ResourceIndex_ServiceDesc.ServiceName,
-				resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
-				resourcepb.BlobStore_ServiceDesc.ServiceName,
-				resourcepb.BulkStore_ServiceDesc.ServiceName,
-				resourcepb.Diagnostics_ServiceDesc.ServiceName,
-				resourcepb.Quotas_ServiceDesc.ServiceName,
-			)
-		}
+		probe, ok := svc.(grpcserver.HealthProbe)
+		s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+			if svc.State() != services.Running {
+				return false, nil
+			}
+			if ok {
+				return probe.CheckHealth(ctx)
+			}
+			return true, nil
+		}),
+			resourcepb.ResourceStore_ServiceDesc.ServiceName,
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+			resourcepb.BlobStore_ServiceDesc.ServiceName,
+			resourcepb.BulkStore_ServiceDesc.ServiceName,
+			resourcepb.Diagnostics_ServiceDesc.ServiceName,
+			resourcepb.Quotas_ServiceDesc.ServiceName,
+		)
+
 		return svc, nil
 	})
 
@@ -299,13 +306,20 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		if probe, ok := svc.(grpcserver.HealthProbe); ok {
-			s.grpcService.Health.Register(probe,
-				resourcepb.ResourceIndex_ServiceDesc.ServiceName,
-				resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
-				resourcepb.Diagnostics_ServiceDesc.ServiceName,
-			)
-		}
+		probe, ok := svc.(grpcserver.HealthProbe)
+		s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+			if svc.State() != services.Running {
+				return false, nil
+			}
+			if ok {
+				return probe.CheckHealth(ctx)
+			}
+			return true, nil
+		}),
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+			resourcepb.Diagnostics_ServiceDesc.ServiceName,
+		)
 		return svc, nil
 	})
 

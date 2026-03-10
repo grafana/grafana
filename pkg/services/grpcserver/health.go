@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -22,12 +21,6 @@ type HealthProbeFunc func(ctx context.Context) (bool, error)
 
 func (f HealthProbeFunc) CheckHealth(ctx context.Context) (bool, error) { return f(ctx) }
 
-// probeEntry associates a HealthProbe with the gRPC service names it covers.
-type probeEntry struct {
-	probe        HealthProbe
-	serviceNames []string
-}
-
 // HealthService implements GRPC Health Checking Protocol:
 // https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 // It tracks per-service health status and computes an aggregate status
@@ -39,9 +32,10 @@ type HealthService struct {
 	logger     log.Logger
 	runningCtx context.Context
 	cancel     context.CancelFunc
-
-	// probes contains registered health probes.
-	probes []probeEntry
+	// probes is the list of registered probes, each called once per poll cycle.
+	probes []HealthProbe
+	// serviceProbeIdx maps each gRPC service name to indices into the probes.
+	serviceProbeIdx map[string][]int
 
 	mu       sync.Mutex
 	statuses map[string]grpc_health_v1.HealthCheckResponse_ServingStatus
@@ -58,11 +52,12 @@ func ProvideHealthService(grpcServerProvider Provider) *HealthService {
 func newHealthService() *HealthService {
 	runningCtx, cancel := context.WithCancel(context.Background())
 	return &HealthService{
-		server:     health.NewServer(),
-		statuses:   make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
-		logger:     log.New("health-service"),
-		runningCtx: runningCtx,
-		cancel:     cancel,
+		server:          health.NewServer(),
+		statuses:        make(map[string]grpc_health_v1.HealthCheckResponse_ServingStatus),
+		serviceProbeIdx: make(map[string][]int),
+		logger:          log.New("health-service"),
+		runningCtx:      runningCtx,
+		cancel:          cancel,
 	}
 }
 
@@ -93,9 +88,9 @@ func (s *HealthService) Shutdown() {
 	s.server.Shutdown()
 }
 
-// SetServingStatus updates the status of a named service and recomputes the
+// setServingStatus updates the status of a named service and recomputes the
 // aggregate status on the "" key.
-func (s *HealthService) SetServingStatus(service string, st grpc_health_v1.HealthCheckResponse_ServingStatus) {
+func (s *HealthService) setServingStatus(service string, st grpc_health_v1.HealthCheckResponse_ServingStatus) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if service != "" {
@@ -118,39 +113,30 @@ func (s *HealthService) aggregateStatusLocked() grpc_health_v1.HealthCheckRespon
 }
 
 // Register maps a HealthProbe to one or more gRPC service names.
-// Register Must be called before the service manager starts (during module init).
-// All registered services start as NOT_SERVING until Healthy is called (by the service manager).
+// Register Must be called before Start.
+// All registered services start as NOT_SERVING until Start is called.
 func (s *HealthService) Register(probe HealthProbe, serviceNames ...string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.probes = append(s.probes, probeEntry{probe: probe, serviceNames: serviceNames})
+	idx := len(s.probes)
+	s.probes = append(s.probes, probe)
 	for _, name := range serviceNames {
+		s.serviceProbeIdx[name] = append(s.serviceProbeIdx[name], idx)
 		s.statuses[name] = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 		s.server.SetServingStatus(name, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	}
 	s.server.SetServingStatus("", s.aggregateStatusLocked())
 }
 
-// Healthy implements services.ManagerListener. Called when all managed services
-// reach Running state. Runs an immediate poll and starts the periodic poll loop.
-func (s *HealthService) Healthy() {
-	s.mu.Lock()
-	hasProbes := len(s.probes) > 0
-	s.mu.Unlock()
-
-	if !hasProbes {
+// start runs an immediate poll and starts the periodic poll loop.
+func (s *HealthService) start() {
+	if len(s.probes) == 0 {
 		return
 	}
 	s.logger.Info("Service manager reported healthy, starting health check loop", "probes", len(s.probes))
 	s.checkAll()
 	go s.pollLoop()
 }
-
-// Stopped implements services.ManagerListener. No-op
-func (s *HealthService) Stopped() {}
-
-// Failure implements services.ManagerListener. No-op
-func (s *HealthService) Failure(_ services.Service) {}
 
 func (s *HealthService) pollLoop() {
 	ticker := time.NewTicker(5 * time.Second)
@@ -167,25 +153,30 @@ func (s *HealthService) pollLoop() {
 }
 
 func (s *HealthService) checkAll() {
-	s.mu.Lock()
-	probes := s.probes
-	s.mu.Unlock()
-
-	for _, entry := range probes {
+	results := make([]bool, len(s.probes))
+	for i, probe := range s.probes {
 		pollCtx, cancel := context.WithTimeout(s.runningCtx, 5*time.Second)
-		healthy, err := entry.probe.CheckHealth(pollCtx)
+		healthy, err := probe.CheckHealth(pollCtx)
 		cancel()
-
 		if err != nil {
-			s.logger.Warn("Health probe failed", "services", entry.serviceNames, "error", err)
+			s.logger.Warn("Health probe failed", "error", err)
 		}
+		results[i] = healthy
+	}
 
+	// A service is SERVING only if all its probes are healthy.
+	for name, indices := range s.serviceProbeIdx {
+		healthy := true
+		for _, idx := range indices {
+			if !results[idx] {
+				healthy = false
+				break
+			}
+		}
 		st := grpc_health_v1.HealthCheckResponse_SERVING
 		if !healthy {
 			st = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 		}
-		for _, name := range entry.serviceNames {
-			s.SetServingStatus(name, st)
-		}
+		s.setServingStatus(name, st)
 	}
 }

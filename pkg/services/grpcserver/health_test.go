@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,37 +46,37 @@ func TestHealthCheck(t *testing.T) {
 		},
 		{
 			name:  "NOT_SERVING with empty service set",
-			setup: func(s *HealthService) { s.SetServingStatus("", notServing) },
+			setup: func(s *HealthService) { s.setServingStatus("", notServing) },
 			want:  notServing,
 		},
 		{
 			name: "SERVING when all services serving",
 			setup: func(s *HealthService) {
-				s.SetServingStatus("storage", serving)
-				s.SetServingStatus("search", serving)
+				s.setServingStatus("storage", serving)
+				s.setServingStatus("search", serving)
 			},
 			want: serving,
 		},
 		{
 			name: "NOT_SERVING if any service not serving",
 			setup: func(s *HealthService) {
-				s.SetServingStatus("storage", serving)
-				s.SetServingStatus("search", notServing)
+				s.setServingStatus("storage", serving)
+				s.setServingStatus("search", notServing)
 			},
 			want: notServing,
 		},
 		{
 			name: "SERVING for individual service while not serving overall",
 			setup: func(s *HealthService) {
-				s.SetServingStatus("storage", serving)
-				s.SetServingStatus("search", notServing)
+				s.setServingStatus("storage", serving)
+				s.setServingStatus("search", notServing)
 			},
 			query: "storage",
 			want:  serving,
 		},
 		{
 			name:  "individual service status",
-			setup: func(s *HealthService) { s.SetServingStatus("storage", serving) },
+			setup: func(s *HealthService) { s.setServingStatus("storage", serving) },
 			query: "storage",
 			want:  serving,
 		},
@@ -108,7 +107,7 @@ func TestHealthCheck(t *testing.T) {
 func TestHealthWatch(t *testing.T) {
 	t.Run("sends initial status on connect", func(t *testing.T) {
 		svc := newTestHealthService(t)
-		svc.SetServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
+		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -126,7 +125,7 @@ func TestHealthWatch(t *testing.T) {
 
 	t.Run("immediately notifies on status change", func(t *testing.T) {
 		svc := newTestHealthService(t)
-		svc.SetServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
+		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -138,7 +137,7 @@ func TestHealthWatch(t *testing.T) {
 		stream.waitForSends(t, 1)
 
 		// Push NOT_SERVING — Watch should be notified immediately
-		svc.SetServingStatus("storage", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 		stream.waitForSends(t, 2)
 
 		stream.mu.Lock()
@@ -160,7 +159,7 @@ func TestHealthWatch(t *testing.T) {
 
 	t.Run("sends NOT_SERVING on shutdown", func(t *testing.T) {
 		svc := newTestHealthService(t)
-		svc.SetServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
+		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -184,8 +183,8 @@ func TestHealthWatch(t *testing.T) {
 
 func TestHealthList(t *testing.T) {
 	svc := newTestHealthService(t)
-	svc.SetServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
-	svc.SetServingStatus("search", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
+	svc.setServingStatus("search", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 	res, err := svc.List(context.Background(), &grpc_health_v1.HealthListRequest{})
 	require.NoError(t, err)
@@ -262,56 +261,13 @@ func TestHealthService_Probes(t *testing.T) {
 		requireStatus(t, hs, "", notServing)
 	})
 
-	t.Run("Healthy starts poll loop", func(t *testing.T) {
+	t.Run("Starts poll loop", func(t *testing.T) {
 		hs := newTestHealthService(t)
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
-		hs.Healthy()
+		hs.start()
 		defer hs.Shutdown()
 		requireStatus(t, hs, "svc-a", serving)
 	})
-
-	t.Run("Stopped and Failure are no-ops", func(t *testing.T) {
-		hs := newTestHealthService(t)
-		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
-		hs.Healthy()
-		defer hs.Shutdown()
-
-		// Stopped/Failure are no-ops — Shutdown is the DSKitService
-		// stopping function's responsibility.
-		hs.Stopped()
-		hs.Failure(nil)
-		requireStatus(t, hs, "svc-a", serving) // still serving
-	})
-}
-
-func TestHealthService_ManagerListenerIntegration(t *testing.T) {
-	hs := newTestHealthService(t)
-	hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
-
-	svc := services.NewIdleService(nil, func(_ error) error {
-		hs.Shutdown()
-		return nil
-	}).WithName("test-svc")
-	mgr, err := services.NewManager(svc)
-	require.NoError(t, err)
-	mgr.AddListener(hs)
-
-	ctx := context.Background()
-	require.NoError(t, mgr.StartAsync(ctx))
-	require.NoError(t, mgr.AwaitHealthy(ctx))
-
-	// Healthy() triggers an immediate poll — services become SERVING.
-	require.Eventually(t, func() bool {
-		res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
-		return err == nil && res.Status == grpc_health_v1.HealthCheckResponse_SERVING
-	}, 20*time.Second, 50*time.Millisecond)
-
-	mgr.StopAsync()
-	require.NoError(t, mgr.AwaitStopped(ctx))
-
-	res, err := hs.Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
-	require.NoError(t, err)
-	assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Status)
 }
 
 type fakeHealthWatchServer struct {
