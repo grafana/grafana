@@ -68,10 +68,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				delete(previous, k)
 			}
 			if val.Remove {
+				delete(secure, k)
 				if before.Name == "" {
 					continue // no-op
 				}
-				delete(secure, k)
 				v.hasChanged = true
 				continue
 			}
