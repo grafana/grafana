@@ -44,7 +44,7 @@ jobs:
           - deuteranopia_protanopia_dark
           - tritanopia_light
           - tritanopia_dark
-    name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }})"
+    name: "Run Storybook a11y tests (${{ matrix.STORYBOOK_THEME }} theme)"
     steps:
     - uses: actions/checkout@v5
       with:
