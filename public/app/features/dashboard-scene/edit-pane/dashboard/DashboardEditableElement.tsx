@@ -9,6 +9,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
@@ -50,6 +51,7 @@ function useEditPaneOptions(
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
+  private _linksSet?: DashboardLinksSet;
 
   public constructor(private dashboard: DashboardScene) {}
 
@@ -61,12 +63,24 @@ export class DashboardEditableElement implements EditableDashboardElement {
     };
   }
 
+  private getLinksSet(): DashboardLinksSet {
+    if (!this._linksSet) {
+      this._linksSet = new DashboardLinksSet({ dashboardRef: this.dashboard.getRef() });
+    }
+    return this._linksSet;
+  }
+
   public getOutlineChildren(isEditing: boolean): SceneObject[] {
     const { $variables, body } = this.dashboard.state;
     if (!isEditing || !$variables) {
       return body.getOutlineChildren();
     }
-    return [$variables, dashboardSceneGraph.getDataLayers(this.dashboard), ...body.getOutlineChildren()];
+    return [
+      $variables,
+      dashboardSceneGraph.getDataLayers(this.dashboard),
+      this.getLinksSet(),
+      ...body.getOutlineChildren(),
+    ];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
