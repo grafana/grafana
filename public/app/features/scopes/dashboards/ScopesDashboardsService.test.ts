@@ -729,7 +729,10 @@ describe('ScopesDashboardsService', () => {
 
       expect(service.state.navigationScope).toBe('navScope1');
       expect(service.state.drawerOpened).toBe(true);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope1'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope1'], {
+        depth: 1,
+        rootScope: 'navScope1',
+      });
     });
 
     it('should clear navigation scope and use fallback scope names', async () => {
@@ -745,7 +748,10 @@ describe('ScopesDashboardsService', () => {
       await service.setNavigationScope('initialScope');
       expect(service.state.navigationScope).toBe('initialScope');
       expect(service.state.drawerOpened).toBe(true);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['initialScope'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['initialScope'], {
+        depth: 1,
+        rootScope: 'initialScope',
+      });
 
       await service.setNavigationScope(undefined, ['fallbackScope1', 'fallbackScope2']);
 
@@ -799,7 +805,10 @@ describe('ScopesDashboardsService', () => {
       await service.setNavigationScope('navScope2');
 
       expect(service.state.navigationScope).toBe('navScope2');
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['navScope2'], {
+        depth: 1,
+        rootScope: 'navScope2',
+      });
     });
 
     it('should update navigation scope when clearing an existing scope', async () => {

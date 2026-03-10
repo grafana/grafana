@@ -8,6 +8,7 @@ import { ScopeNavigation } from './dashboards/types';
 
 export interface NavigationFetchOptions {
   depth?: number;
+  rootScope?: string;
 }
 
 export class ScopesApiClient {
