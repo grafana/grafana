@@ -9,6 +9,7 @@ const mockUseAssistant = jest.fn().mockReturnValue({ isAvailable: true });
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => mockUseAssistant(),
+  useProvidePageContext: jest.fn(),
   OpenAssistantButton: ({ title }: { title: string }) => <button>{title}</button>,
   createAssistantContextItem: jest.fn((type: string, params: { title: string; data: unknown }) => ({
     type,

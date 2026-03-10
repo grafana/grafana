@@ -52,6 +52,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
   },
+  Card: {
+    heading: {
+      '13.0.0': 'data-testid Card heading',
+    },
+  },
   DashboardEditPaneSplitter: {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
@@ -559,6 +564,12 @@ export const versionedComponents = {
       Gauge: {
         Container: {
           '12.4.0': 'data-testid gauge container',
+        },
+        Track: {
+          '13.0.0': 'data-testid gauge track',
+        },
+        Bar: {
+          '13.0.0': 'data-testid gauge bar',
         },
       },
     },
