@@ -56,10 +56,10 @@ func ProvideUnifiedStorageMigrationService(
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
-	// skip migrations if disabled in config
-	if p.cfg.DisableDataMigrations {
+	// skip migrations if disabled in config or storage type is not "unified"
+	if p.cfg.DisableDataMigrations || p.cfg.UnifiedStorageType() != "unified" {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
-		logger.Info("Data migrations are disabled, skipping")
+		logger.Info("Data migrations are disabled, skipping", "disableDataMigrations", p.cfg.DisableDataMigrations, "unifiedStorageType", p.cfg.UnifiedStorageType())
 		return nil
 	}
 

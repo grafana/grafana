@@ -218,6 +218,13 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			}
 		}
 
+		if len(query.UIDs) > 0 {
+			sql.WriteString(` and team.uid IN (?` + strings.Repeat(",?", len(query.UIDs)-1) + ")")
+			for _, uid := range query.UIDs {
+				params = append(params, uid)
+			}
+		}
+
 		acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
 		if err != nil {
 			return err
