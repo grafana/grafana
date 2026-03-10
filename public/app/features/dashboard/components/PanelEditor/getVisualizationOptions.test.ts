@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   EventBusSrv,
   FieldConfigOptionsRegistry,
@@ -6,12 +8,26 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelPlugin,
+  PanelOptionsEditorBuilder,
   Registry,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    quickEditOptionChanged: jest.fn(),
+  },
+}));
 
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
@@ -221,6 +237,7 @@ describe('getVisualizationOptions', () => {
       const plugin = {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
 
@@ -283,6 +300,7 @@ describe('getVisualizationOptions', () => {
       const plugin = {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
 
@@ -334,6 +352,7 @@ describe('getVisualizationOptions', () => {
       return {
         meta: { skipDataQuery: false },
         getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
         fieldConfigRegistry: customFieldRegistry,
       } as unknown as PanelPlugin;
     };
@@ -396,6 +415,351 @@ describe('getVisualizationOptions', () => {
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
       expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
+    });
+
+    it('should call getItemsCount when property has it', () => {
+      const getItemsCountSpy = jest.fn().mockReturnValue(5);
+
+      const property1: FieldConfigPropertyItem = {
+        id: 'custom.property1',
+        path: 'property1',
+        isCustom: true,
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+        name: 'Property 1',
+        getItemsCount: getItemsCountSpy,
+      };
+
+      const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
+        return [property1];
+      });
+
+      const plugin = {
+        meta: { skipDataQuery: false, id: 'test-panel' },
+        getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
+        fieldConfigRegistry: customFieldRegistry,
+      } as unknown as PanelPlugin;
+
+      const vizPanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'test-panel',
+        key: 'panel-12',
+        fieldConfig: {
+          defaults: { custom: { property1: 'test-value' } },
+          overrides: [],
+        },
+      });
+
+      getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin: plugin,
+        instanceState: {},
+      });
+
+      expect(getItemsCountSpy).toHaveBeenCalledWith('test-value');
+    });
+
+    it('should render field config editor and return React element', () => {
+      const MockEditor = ({ value, onChange }: { value: unknown; onChange: (v: unknown) => void }) => {
+        return React.createElement('input', {
+          value: value as string,
+          onChange: (e: { target: { value: unknown } }) => onChange(e.target.value),
+        });
+      };
+
+      const property1: FieldConfigPropertyItem = {
+        id: 'custom.property1',
+        path: 'property1',
+        isCustom: true,
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: MockEditor as FieldConfigPropertyItem['editor'],
+        name: 'Property 1',
+      };
+
+      const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
+        return [property1];
+      });
+
+      const plugin = {
+        meta: { skipDataQuery: false, id: 'test-panel' },
+        getPanelOptionsSupplier: jest.fn,
+        getQuickEditPaths: () => [],
+        fieldConfigRegistry: customFieldRegistry,
+      } as unknown as PanelPlugin;
+
+      const vizPanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'test-panel',
+        key: 'panel-12',
+        fieldConfig: {
+          defaults: { custom: { property1: 'initial-value' } },
+          overrides: [],
+        },
+      });
+
+      vizPanel.onFieldConfigChange = jest.fn();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin: plugin,
+        instanceState: {},
+      });
+
+      const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Property 1'));
+      const item = category?.items.find((i) => i.props.title === 'Property 1');
+
+      // Call render to trigger the render function and get the React element
+      const rendered = item?.props.render(item);
+
+      // Verify it returns a React element
+      expect(rendered).toBeDefined();
+      expect(React.isValidElement(rendered)).toBe(true);
+
+      // Extract onChange from the rendered element's props and trigger it
+      const renderedElement = rendered as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      renderedElement.props.onChange('new-value');
+
+      expect(vizPanel.onFieldConfigChange).toHaveBeenCalled();
+    });
+
+    describe('timeCompare tracking', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      it('should track panel_setting_interaction when timeCompare is enabled', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { timeCompare: false },
+        });
+
+        panel.onOptionsChange = jest.fn();
+
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addBooleanSwitch({
+              path: 'timeCompare',
+              name: 'Time Compare',
+            });
+          },
+          getQuickEditPaths: () => [],
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Time Compare'));
+        const item = category?.items.find((i) => i.props.title === 'Time Compare');
+
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: boolean) => void }>;
+        rendered?.props.onChange(true);
+
+        expect(reportInteraction).toHaveBeenCalledWith('panel_setting_interaction', {
+          viz_type: 'test-panel',
+          feature_type: 'time_comparison',
+          option_type: 'toggle_enabled',
+        });
+      });
+
+      it('should track panel_setting_interaction when timeCompare is disabled', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { timeCompare: true },
+        });
+
+        panel.onOptionsChange = jest.fn();
+
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addBooleanSwitch({
+              path: 'timeCompare',
+              name: 'Time Compare',
+            });
+          },
+          getQuickEditPaths: () => [],
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Time Compare'));
+        const item = category?.items.find((i) => i.props.title === 'Time Compare');
+
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: boolean) => void }>;
+        rendered?.props.onChange(false);
+
+        expect(reportInteraction).toHaveBeenCalledWith('panel_setting_interaction', {
+          viz_type: 'test-panel',
+          feature_type: 'time_comparison',
+          option_type: 'toggle_disabled',
+        });
+      });
+    });
+
+    describe('quick edit telemetry', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      const createPluginWithQuickEdit = (quickEditPaths: string[]) => {
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addSelect({
+              path: 'testOption',
+              name: 'Test Option',
+              settings: { options: [] },
+            });
+            builder.addSelect({
+              path: 'otherOption',
+              name: 'Other Option',
+              settings: { options: [] },
+            });
+          },
+          getQuickEditPaths: () => quickEditPaths,
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        return plugin;
+      };
+
+      it('should track option change when path is in quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { testOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const plugin = createPluginWithQuickEdit(['testOption']);
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        // Find the testOption item and trigger onChange
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Test Option'));
+        const item = category?.items.find((i) => i.props.title === 'Test Option');
+
+        // Render the item to get the onChange handler
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).toHaveBeenCalledWith({
+          panelType: 'test-panel',
+          optionPath: 'testOption',
+          source: 'panel_editor',
+          dashboardUid: undefined,
+        });
+      });
+
+      it('should not track option change when path is not in quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { otherOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const plugin = createPluginWithQuickEdit(['testOption']); // otherOption is NOT in quickEditPaths
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        // Find the otherOption item and trigger onChange
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Other Option'));
+        const item = category?.items.find((i) => i.props.title === 'Other Option');
+
+        // Render the item to get the onChange handler
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).not.toHaveBeenCalled();
+      });
+
+      it('should not track when plugin has no quickEditPaths', () => {
+        const panel = new VizPanel({
+          title: 'Test Panel',
+          pluginId: 'test-panel',
+          key: 'panel-1',
+          options: { testOption: 'initial' },
+        });
+
+        // Mock onOptionsChange to avoid full plugin setup
+        panel.onOptionsChange = jest.fn();
+
+        const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => []);
+
+        const plugin = {
+          meta: { id: 'test-panel', skipDataQuery: false },
+          getPanelOptionsSupplier: () => (builder: PanelOptionsEditorBuilder<{}>) => {
+            builder.addSelect({
+              path: 'testOption',
+              name: 'Test Option',
+              settings: { options: [] },
+            });
+          },
+          getQuickEditPaths: () => undefined,
+          fieldConfigRegistry: customFieldRegistry,
+        } as unknown as PanelPlugin;
+
+        const vizOptions = getVisualizationOptions2({
+          panel,
+          eventBus: new EventBusSrv(),
+          plugin,
+          instanceState: {},
+        });
+
+        const category = vizOptions.find((c) => c.items.some((i) => i.props.title === 'Test Option'));
+        const item = category?.items.find((i) => i.props.title === 'Test Option');
+
+        const rendered = item?.props.render(item) as React.ReactElement<{ onChange: (value: string) => void }>;
+        rendered?.props.onChange('newValue');
+
+        expect(DashboardInteractions.quickEditOptionChanged).not.toHaveBeenCalled();
+      });
     });
   });
 });
