@@ -153,9 +153,7 @@ export async function listTeamFolders(dispatch: ThunkDispatch): Promise<Dashboar
   ).unwrap();
 
   // Build a map of team UID → team info
-  const teamsByUid = new Map(
-    teams.map((team) => [team.uid!, { name: team.name!, avatarUrl: team.avatarUrl }])
-  );
+  const teamsByUid = new Map(teams.map((team) => [team.uid!, { name: team.name!, avatarUrl: team.avatarUrl }]));
 
   // Build a map of folder UID → owning team reference
   const folderOwners = new Map<string, { kind: string; uid: string; title: string; avatarUrl?: string }>();
