@@ -25,44 +25,27 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
     <Stack direction="row" alignItems="flex-start">
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
-        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>
+        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>{' '}
         {hasRepoLimit && hasResourceLimit ? (
-          <>
-            <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories
-            </Trans>
-            <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
-              and {{ count: maxResourcesPerRepository }} synced resources per repository.
-            </Trans>
-            <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
-              <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-              <Icon name="external-link-alt" size="xs" />
-            </a>
-          </>
+          <Trans i18nKey="provisioning.quota-limit.note-message-both" count={maxRepositories}>
+            Your account is limited to {{ count: maxRepositories }} connected repositories and{' '}
+            {{ resourceLimit: maxResourcesPerRepository }} synced resources per repository. To increase limits,
+          </Trans>
         ) : hasResourceLimit ? (
-          <>
-            <Trans i18nKey="provisioning.quota-limit.message-resource" count={maxResourcesPerRepository}>
-              Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add
-              more resources,
-            </Trans>
-            <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
-              <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-              <Icon name="external-link-alt" size="xs" />
-            </a>
-            .
-          </>
+          <Trans i18nKey="provisioning.quota-limit.note-message-resource" count={maxResourcesPerRepository}>
+            Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add
+            more resources,
+          </Trans>
         ) : (
-          <>
-            <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
-            </Trans>
-            <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
-              <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-              <Icon name="external-link-alt" size="xs" />
-            </a>
-            .
-          </>
-        )}
+          <Trans i18nKey="provisioning.quota-limit.note-message-repository" count={maxRepositories}>
+            Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
+          </Trans>
+        )}{' '}
+        <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
+          <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>{' '}
+          <Icon name="external-link-alt" size="xs" />
+        </a>
+        .
       </Text>
     </Stack>
   );
