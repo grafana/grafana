@@ -1,0 +1,21 @@
+name: Setup Go
+description: Sets up a Go environment with cache-friendly defaults for the Grafana repository.
+
+inputs:
+  go-version-file:
+    description: Path to go.mod or go.work file for version detection.
+    required: false
+    default: 'go.mod'
+  cache:
+    description: Whether to cache Go modules and build cache.
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-go@v6.0.0
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        cache: ${{ inputs.cache == 'true' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.sum' || '' }}
