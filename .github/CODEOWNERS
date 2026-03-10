@@ -956,6 +956,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
+/public/app/features/dashboard-scene/panel-edit/PanelStylesSection*.tsx/ @grafana/dataviz-squad
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
@@ -1096,6 +1097,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
 /scripts/levitate-show-affected-plugins.js @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
+/scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
 
 /scripts/codeowners-manifest/ @grafana/dataviz-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
@@ -1103,7 +1105,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
-/scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
@@ -1232,6 +1233,7 @@ embed.go @grafana/grafana-as-code
 /.github/commands.json @torkelo
 /.github/dependabot.yml @grafana/frontend-ops
 /.github/issue-opened.json @grafana/grafana-community-support
+/.github/team-notifications-config.json @grafana/grafana-community-support
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
@@ -1241,6 +1243,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
+/.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
@@ -1269,6 +1272,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/external-fr-notify.yml @grafana/grafana-community-support
+/.github/workflows/external-fr-weekly-digest.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-notify-handler.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-notify-trigger.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-weekly-digest.yml @grafana/grafana-community-support
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-checks.yml @tolzhabayev
@@ -1284,6 +1292,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
+/.github/workflows/scripts/fr-digest.mts @grafana/grafana-community-support
+/.github/workflows/scripts/fr-notify.mts @grafana/grafana-community-support
+/.github/workflows/scripts/pr-digest.mts @grafana/grafana-community-support
+/.github/workflows/scripts/pr-notify.mts @grafana/grafana-community-support
+/.github/workflows/scripts/utils.mts @grafana/grafana-community-support
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
@@ -1332,6 +1345,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-test-docker.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
+/.github/workflows/pr-build-grafana.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

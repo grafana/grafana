@@ -9,13 +9,14 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
 
-export interface Props extends HTMLAttributes<HTMLButtonElement> {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   data: PanelData;
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
+  isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, width, className, ...restProps }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, width, className, isSelected, ...restProps }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
@@ -23,21 +24,20 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(className, styles.vizBox),
+    className: cx(className, styles.vizBox, isSelected && styles.selected),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
-    tabIndex: -1, // selection is handled by parent container
     ...restProps,
-  } satisfies HTMLAttributes<HTMLButtonElement> & { 'data-testid': string };
+  } satisfies HTMLAttributes<HTMLDivElement> & { 'data-testid': string };
 
   let content: ReactNode;
 
   if (cardOptions.imgSrc) {
     content = (
-      <button {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
+      <div {...commonButtonProps} className={cx(commonButtonProps.className, styles.imgBox)}>
         <div className={styles.name}>{suggestion.name}</div>
         <img className={styles.img} src={cardOptions.imgSrc} alt={suggestion.name} />
-      </button>
+      </div>
     );
   } else {
     let preview = suggestion;
@@ -47,7 +47,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     }
 
     content = (
-      <button {...commonButtonProps}>
+      <div {...commonButtonProps}>
         {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
         <div style={innerStyles} className={styles.renderContainer} {...{ inert: '' }}>
           <PanelRenderer
@@ -60,7 +60,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
             fieldConfig={preview.fieldConfig}
           />
         </div>
-      </button>
+      </div>
     );
   }
 
@@ -93,6 +93,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.background.secondary,
         borderColor: theme.colors.primary.border,
       },
+    }),
+    selected: css({
+      borderColor: theme.colors.primary.border,
+      background: theme.colors.background.secondary,
     }),
     imgBox: css({
       display: 'flex',
@@ -139,11 +143,21 @@ interface PreviewDimensionsAndStyles {
 
 function getPreviewDimensionsAndStyles(width: number): PreviewDimensionsAndStyles {
   const aspectRatio = 16 / 10;
-  const showWidth = width;
-  const showHeight = width * (1 / aspectRatio);
   const renderWidth = 350;
   const renderHeight = renderWidth * (1 / aspectRatio);
 
+  // width is 0 on the first render (before useMeasure)
+  if (width === 0) {
+    return {
+      renderWidth,
+      renderHeight,
+      outerStyles: { width: '100%', aspectRatio: `${aspectRatio}` },
+      innerStyles: { display: 'none' },
+    };
+  }
+
+  const showWidth = width;
+  const showHeight = width * (1 / aspectRatio);
   const padding = 6;
   const widthFactor = (showWidth - padding * 2) / renderWidth;
   const heightFactor = (showHeight - padding * 2) / renderHeight;

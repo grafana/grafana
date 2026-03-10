@@ -2,7 +2,6 @@
 set -e
 
 ERROR_COUNT="0"
-ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | grep -oP '\d+')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
@@ -16,7 +15,6 @@ CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found 
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
 echo -e "Typescript errors: $ERROR_COUNT"
-echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
@@ -58,7 +56,6 @@ echo "Metrics: {
   $ESLINT_STATS
   $I18N_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
-  \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",

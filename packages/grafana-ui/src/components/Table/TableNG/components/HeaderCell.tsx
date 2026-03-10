@@ -21,17 +21,14 @@ interface HeaderCellProps {
   direction?: SortDirection;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  crossFilterOrder: string[];
-  crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
+  parentIndex?: number;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
-  crossFilterOrder,
-  crossFilterRows,
   direction,
   disableKeyboardEvents,
   field,
@@ -40,6 +37,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   selectFirstCell,
   setFilter,
   showTypeIcons,
+  parentIndex,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -113,9 +111,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           filter={filter}
           setFilter={setFilter}
           field={field}
-          crossFilterOrder={crossFilterOrder}
-          crossFilterRows={crossFilterRows}
           iconClassName={styles.headerCellIcon}
+          parentIndex={parentIndex}
         />
       )}
     </Stack>

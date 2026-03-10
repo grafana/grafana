@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -67,7 +68,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -122,7 +123,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -195,9 +196,11 @@ func TestSyncer_Sync(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				false,
 			)
 
-			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress)
+			quotaTracker := quotas.NewMockQuotaTracker(t)
+			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress, quotaTracker)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {

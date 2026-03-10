@@ -124,7 +124,7 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 	return 0, nil
 }
 
-func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(yield func(*ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}
@@ -935,6 +935,24 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestMaybeInjectFailure(t *testing.T) {
+	t.Run("disabled when percent is 0", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 0}
+		for i := 0; i < 1000; i++ {
+			require.NoError(t, s.maybeInjectFailure())
+		}
+	})
+
+	t.Run("always fails when percent is 100", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 100}
+		for i := 0; i < 100; i++ {
+			err := s.maybeInjectFailure()
+			require.Error(t, err)
+			require.Equal(t, "injected search failure", err.Error())
+		}
+	})
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
