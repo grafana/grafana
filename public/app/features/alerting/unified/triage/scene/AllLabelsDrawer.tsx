@@ -17,7 +17,7 @@ interface AllLabelsDrawerProps {
   onClose: () => void;
 }
 
-export const DEFAULT_VISIBLE_LABELS = 24;
+export const DEFAULT_VISIBLE_LABELS = 25;
 export const DEFAULT_VISIBLE_VALUES = 12;
 
 export function AllLabelsDrawer({ allLabels, onClose }: AllLabelsDrawerProps) {
@@ -103,21 +103,24 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
         return (
           <Fragment key={label.key}>
             {index > 0 && <div className={styles.sectionSeparator} />}
-            {/* col 1: collapse toggle + label key */}
-            <Stack alignItems="center" gap={0}>
-              <IconButton
-                className={styles.collapseToggle}
-                name={isOpen ? 'angle-down' : 'angle-right'}
-                size="sm"
-                aria-label={isOpen ? t('alerting.triage.collapse', 'Collapse') : t('alerting.triage.expand', 'Expand')}
-                onClick={() => toggleKey(label.key, isOpen)}
-              />
-              <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
-            </Stack>
-            <Stack alignItems="center" justifyContent="flex-end">
-              {label.pending > 0 ? <PendingCount count={label.pending} /> : null}
-              {label.firing > 0 ? <FiringCount count={label.firing} /> : null}
-            </Stack>
+            <div className={styles.labelRow}>
+              <Stack alignItems="center" gap={0} minWidth={0} grow={1}>
+                <IconButton
+                  className={styles.collapseToggle}
+                  name={isOpen ? 'angle-down' : 'angle-right'}
+                  size="sm"
+                  aria-label={
+                    isOpen ? t('alerting.triage.collapse', 'Collapse') : t('alerting.triage.expand', 'Expand')
+                  }
+                  onClick={() => toggleKey(label.key, isOpen)}
+                />
+                <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
+              </Stack>
+              <Stack alignItems="center" gap={0.5} shrink={0}>
+                {label.pending > 0 ? <PendingCount count={label.pending} /> : null}
+                {label.firing > 0 ? <FiringCount count={label.firing} /> : null}
+              </Stack>
+            </div>
             {isOpen && (
               <LabelValuesList
                 labelKey={label.key}
@@ -129,13 +132,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
         );
       })}
       {hasMore && !showAll && (
-        <Button
-          variant="secondary"
-          size="sm"
-          fill="text"
-          className={styles.spanAllColumns}
-          onClick={() => setShowAll(true)}
-        >
+        <Button variant="secondary" size="sm" fill="text" onClick={() => setShowAll(true)}>
           <Trans
             i18nKey="alerting.triage.show-all-labels"
             values={{ count: allLabels.length }}
@@ -190,7 +187,7 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
   return (
     <>
       {visibleValues.map(({ value, firing, pending }) => (
-        <Fragment key={value}>
+        <div key={value} className={styles.valueRow}>
           <Button
             variant="secondary"
             fill="text"
@@ -200,14 +197,14 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
           >
             {value}
           </Button>
-          <Stack alignItems="center" gap={0.5} justifyContent="flex-end">
+          <Stack alignItems="center" gap={0.5} shrink={0}>
             {pending > 0 && <PendingCount count={pending} />}
             {firing > 0 && <FiringCount count={firing} />}
           </Stack>
-        </Fragment>
+        </div>
       ))}
       {hasMore && !expanded && (
-        <Button variant="secondary" fill="text" className={styles.spanAllColumns} onClick={() => setExpanded(true)}>
+        <Button variant="secondary" fill="text" size="sm" onClick={() => setExpanded(true)}>
           <Trans
             i18nKey="alerting.triage.show-all-values"
             values={{ count: values.length }}
@@ -216,7 +213,7 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
         </Button>
       )}
       {hasMore && expanded && (
-        <Button variant="secondary" fill="text" className={styles.spanAllColumns} onClick={() => setExpanded(false)}>
+        <Button variant="secondary" fill="text" size="sm" onClick={() => setExpanded(false)}>
           <Trans i18nKey="alerting.triage.show-fewer-values" defaults="Show fewer" />
         </Button>
       )}
@@ -228,27 +225,38 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
 
 const getContentStyles = (theme: GrafanaTheme2) => ({
   content: css({
-    display: 'grid',
-    gridTemplateColumns: `minmax(0, 1fr) max-content`,
-    alignItems: 'center',
-    columnGap: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'column',
     paddingLeft: theme.spacing(1),
   }),
   sectionSeparator: css({
-    gridColumn: '1 / -1',
-    justifySelf: 'stretch',
     borderTop: `1px solid ${theme.colors.border.weak}`,
     marginTop: theme.spacing(0.75),
     marginBottom: theme.spacing(0.75),
   }),
+  labelRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+  }),
+  valueRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+  }),
   collapseToggle: css({
     margin: 0,
+    flexShrink: 0,
   }),
   labelHeaderKey: css({
     minWidth: 0,
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
     overflow: 'hidden',
   }),
   labelKeyButton: css({
@@ -268,15 +276,10 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.medium}`,
   }),
-
-  spanAllColumns: css({
-    gridColumn: '1 / -1',
-    justifySelf: 'start',
-  }),
   valueButton: css({
-    gridColumn: '1',
-    justifySelf: 'stretch',
+    flex: 1,
     minWidth: 0,
+    justifySelf: 'stretch',
     '& > span': {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
