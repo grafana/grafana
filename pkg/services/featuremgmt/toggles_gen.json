@@ -271,6 +271,24 @@
     },
     {
       "metadata": {
+        "name": "alertingDatasourceSync",
+        "resourceVersion": "1773307469422",
+        "creationTimestamp": "2026-03-09T21:21:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 09:24:29.422931 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Automatically sync Mimir Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableDMAinUI",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1241,7 +1259,8 @@
       "metadata": {
         "name": "colorblindThemes",
         "resourceVersion": "1770395198316",
-        "creationTimestamp": "2026-02-06T16:26:38Z"
+        "creationTimestamp": "2026-02-06T16:26:38Z",
+        "deletionTimestamp": "2026-03-12T09:21:23Z"
       },
       "spec": {
         "description": "Enables the new colorblind-friendly themes",
@@ -1618,6 +1637,7 @@
         "name": "datasourcesApiServerEnableHealthEndpointFrontend",
         "resourceVersion": "1773063626484",
         "creationTimestamp": "2026-03-03T16:55:33Z",
+        "deletionTimestamp": "2026-03-12T09:21:23Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-09 13:40:26.484445 +0000 UTC"
         }
@@ -2006,7 +2026,8 @@
       "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1773162696077",
-        "creationTimestamp": "2026-03-10T17:11:36Z"
+        "creationTimestamp": "2026-03-10T17:11:36Z",
+        "deletionTimestamp": "2026-03-12T09:21:23Z"
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
@@ -2315,7 +2336,8 @@
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
         "resourceVersion": "1772636622548",
-        "creationTimestamp": "2026-03-04T15:03:42Z"
+        "creationTimestamp": "2026-03-04T15:03:42Z",
+        "deletionTimestamp": "2026-03-12T09:21:23Z"
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",

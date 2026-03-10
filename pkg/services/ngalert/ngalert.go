@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
+	datasourcesync "github.com/grafana/grafana/pkg/services/ngalert/datasource_sync"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -168,6 +169,7 @@ type AlertNG struct {
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
+	DatasourceSyncWorker *datasourcesync.Worker
 	accesscontrol        accesscontrol.AccessControl
 	AccesscontrolService accesscontrol.Service
 	ResourcePermissions  accesscontrol.ReceiverPermissionsService
@@ -325,6 +327,15 @@ func (ng *AlertNG) init() error {
 	}
 
 	ng.AlertsRouter = alertsRouter
+
+	ng.DatasourceSyncWorker = datasourcesync.New(
+		ng.store,
+		ng.MultiOrgAlertmanager,
+		ng.DataSourceService,
+		ng.SecretsService,
+		ng.FeatureToggles,
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
+	)
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
@@ -729,6 +740,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	})
 	children.Go(func() error {
 		return ng.AlertsRouter.Run(subCtx)
+	})
+	children.Go(func() error {
+		return ng.DatasourceSyncWorker.Run(subCtx)
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {

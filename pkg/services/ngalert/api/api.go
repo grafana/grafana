@@ -202,4 +202,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	}), m)
 
 	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(convertSrv), m)
+
+	api.registerDatasourceSyncEndpoints(&DatasourceSyncSrv{
+		store:             api.DatasourceSyncStore,
+		featureManager:    api.FeatureManager,
+		datasourceService: api.DatasourceService,
+	}, m)
 }
