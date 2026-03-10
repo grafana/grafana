@@ -380,7 +380,7 @@ func RVFromSnowflake(snowflakeID int64) int64 {
 func RVFromBulkSnowflake(snowflakeID int64) int64 {
 	totalLowBits := snowflake.NodeBits + snowflake.StepBits
 	subMilliFraction := snowflakeID & ((1 << totalLowBits) - 1)
-	return ((snowflakeID >> totalLowBits) + snowflake.Epoch) * 1000 + subMilliFraction
+	return ((snowflakeID>>totalLowBits)+snowflake.Epoch)*1000 + subMilliFraction
 }
 
 // helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
