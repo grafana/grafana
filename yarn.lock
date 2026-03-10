@@ -3884,7 +3884,6 @@ __metadata:
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/pluralize": "npm:^0.0.33"
@@ -3897,8 +3896,6 @@ __metadata:
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.25.8"
     i18next-cli: "npm:^1.48.0"
-    jest: "npm:29.7.0"
-    jest-environment-jsdom: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
@@ -3921,6 +3918,9 @@ __metadata:
     testing-library-selector: "npm:0.3.1"
     typescript: "npm:5.9.2"
     uuid: "npm:13.0.0"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
