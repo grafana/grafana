@@ -4098,18 +4098,18 @@ __metadata:
   dependencies:
     "@openfeature/react-sdk": "npm:^1.2.0"
     "@swc/core": "npm:1.13.3"
-    "@swc/jest": "npm:^0.2.26"
     "@types/chance": "npm:^1.1.7"
-    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     chance: "npm:^1.1.13"
-    jest: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     msw: "npm:2.10.4"
     rxjs: "npm:7.8.2"
     typescript: "npm:5.9.2"
+    vite-tsconfig-paths: "npm:^6.1.1"
+    vitest: "npm:^4.0.18"
+    vitest-fail-on-console: "npm:^0.10.1"
   languageName: unknown
   linkType: soft
 

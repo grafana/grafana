@@ -88,6 +88,7 @@ module.exports = {
     '<rootDir>/packages/grafana-i18n',
     '<rootDir>/packages/grafana-o11y-ds-frontend',
     '<rootDir>/packages/grafana-runtime',
+    '<rootDir>/packages/grafana-test-utils',
     '<rootDir>/packages/grafana-ui',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',

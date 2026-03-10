@@ -25,6 +25,7 @@ export default defineConfig({
       'packages/grafana-i18n/**/*.test.{ts,tsx}',
       'packages/grafana-o11y-ds-frontend/**/*.test.{ts,tsx}',
       'packages/grafana-runtime/**/*.test.{ts,tsx}',
+      'packages/grafana-test-utils/**/*.test.{ts,tsx}',
       'packages/grafana-ui/**/*.test.{ts,tsx}',
       'public/app/plugins/datasource/azuremonitor/**',
       'public/app/plugins/datasource/cloud-monitoring/**',
