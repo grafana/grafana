@@ -25,7 +25,8 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
     <Stack direction="row" alignItems="flex-start">
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
-        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>{' '}
+        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>
+        {/* Generic message about resource quota */}
         {hasRepoLimit && hasResourceLimit ? (
           <Trans i18nKey="provisioning.quota-limit.note-message-both" count={maxRepositories}>
             Your account is limited to {{ count: maxRepositories }} connected repositories and{' '}
@@ -40,12 +41,12 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
           <Trans i18nKey="provisioning.quota-limit.note-message-repository" count={maxRepositories}>
             Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
           </Trans>
-        )}{' '}
+        )}
+        {/* Upgrade Link */}
         <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
           <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>{' '}
           <Icon name="external-link-alt" size="xs" />
         </a>
-        .
       </Text>
     </Stack>
   );
