@@ -4,7 +4,13 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
-import { CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
+import {
+  CONNECTIONS_URL,
+  CONNECT_URL,
+  GETTING_STARTED_URL,
+  PROVISIONING_PREVIEW_URL,
+  PROVISIONING_URL,
+} from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   const featureToggles = config.featureToggles || {};
@@ -91,7 +97,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
+      path: PROVISIONING_PREVIEW_URL + '/:slug/dashboard/preview/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,
       component: SafeDynamicImport(
