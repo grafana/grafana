@@ -197,6 +197,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      DashboardInteractions.newSectionVariableTypeSelected({ type });
     },
     [sectionVariableAdd]
   );
