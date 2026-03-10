@@ -37,6 +37,9 @@ export function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexWrap: 'wrap',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:not(:has(> :not(:empty)))': {
+        display: 'none',
+      },
     }),
     toolbarLeft: css({
       display: 'flex',
