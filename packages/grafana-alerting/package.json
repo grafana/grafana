@@ -54,8 +54,8 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "test": "jest --config=packages/grafana-alerting/jest.config.js",
-    "test:ci": "jest --config=packages/grafana-alerting/jest.config.js --maxWorkers 4",
+    "test": "jest --config=jest.config.js",
+    "test:ci": "jest --config=jest.config.js --maxWorkers 4",
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
