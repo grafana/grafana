@@ -215,7 +215,7 @@ function shouldDisableVersionInstallation({
   installedVersion,
   updateStrategy,
 }: ShouldDisableVersionInstallationArgs) {
-  if (Boolean(config.featureToggles.managedPluginsV2) || !installedVersion) {
+  if (!Boolean(config.featureToggles.managedPluginsV2) || !installedVersion) {
     return false;
   }
 
