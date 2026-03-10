@@ -71,6 +71,19 @@ describe('FacetedLabelsFilter', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
+  it('select all / deselect all toggles all values for a key', async () => {
+    const { onChange, unmount } = renderFilter();
+    await userEvent.click(screen.getByText('Select all', { selector: 'button' }));
+    expect(onChange).toHaveBeenCalledWith({ [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] });
+    unmount();
+
+    const { onChange: onChange2 } = renderFilter({
+      selected: { [FIELD_NAME_FACET_KEY]: ['cpu', 'mem'] },
+    });
+    await userEvent.click(screen.getByText('Deselect all', { selector: 'button' }));
+    expect(onChange2).toHaveBeenCalledWith({ [FIELD_NAME_FACET_KEY]: [] });
+  });
+
   it('applies dimmed style when dimmed prop is true', () => {
     const { container: dimmed } = renderFilter({ dimmed: true });
     const { container: normal } = renderFilter({ dimmed: false });
