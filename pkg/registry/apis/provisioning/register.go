@@ -935,6 +935,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connHealthChecker,
 				b.connectionFactory,
 				informerFactoryResyncInterval,
+				b.registry,
 			)
 			if err != nil {
 				return err

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -49,6 +50,7 @@ type ConnectionController struct {
 	statusPatcher     ConnectionStatusPatcher
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
+	tokenMetrics      *connectionTokenMetrics
 
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
@@ -62,6 +64,7 @@ func NewConnectionController(
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
 	resyncInterval time.Duration,
+	registry prometheus.Registerer,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -76,6 +79,7 @@ func NewConnectionController(
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
+		tokenMetrics:      registerConnectionTokenMetrics(registry),
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
 	}
@@ -238,16 +242,18 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
+		start := time.Now()
 		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 		if err != nil {
+			cc.tokenMetrics.recordGenerationError()
 			logger.Error("failed to generate connection token", "error", err)
 			return err
 		}
+		cc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
 		}
-		// Substituting generated token for healthcheck
 		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
 
@@ -296,13 +302,13 @@ func (cc *ConnectionController) shouldGenerateToken(
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
 ) (bool, error) {
-	// In case the token is not there, we should always generate it.
 	if obj.Secure.Token.IsZero() {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
 		return true, nil
 	}
 
-	// In case the current token is not valid, then generate a new one.
 	if !c.TokenValid(ctx) {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonInvalid)
 		return true, nil
 	}
 
@@ -311,7 +317,6 @@ func (cc *ConnectionController) shouldGenerateToken(
 		return false, err
 	}
 
-	// If the token has been recently created, we should not refresh it.
 	if tokenRecentlyCreated(issuingTime) {
 		return false, nil
 	}
@@ -321,7 +326,14 @@ func (cc *ConnectionController) shouldGenerateToken(
 		return false, err
 	}
 
-	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval), nil
+	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
+
+	if shouldRefreshBeforeExpiration(expiration, cc.resyncInterval) {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
