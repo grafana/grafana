@@ -102,8 +102,9 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 	cc.queue.Add(&connectionQueueItem{key: key})
 }
 
-// Run starts the ConnectionController.
-func (cc *ConnectionController) Run(ctx context.Context, workerCount int) {
+// Run starts the ConnectionController. The onStarted callback is invoked once
+// all workers have been launched, before blocking on ctx.Done().
+func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func()) {
 	defer utilruntime.HandleCrash()
 	defer cc.queue.ShutDown()
 
@@ -112,6 +113,8 @@ func (cc *ConnectionController) Run(ctx context.Context, workerCount int) {
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
 	}
+
+	onStarted()
 
 	<-ctx.Done()
 	cc.logger.Info("shutting down connection controller")
@@ -129,7 +132,8 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	}
 	defer cc.queue.Done(item)
 
-	logger := logging.FromContext(ctx).With("work_key", item.key)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
+	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
 	err := cc.process(ctx, item)
@@ -180,7 +184,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	logger = logger.With("connection", conn.Name, "namespace", conn.Namespace)
+	logger = logger.With("namespace", namespace, "connection", name)
+	ctx = logging.Context(ctx, logger)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {
@@ -247,12 +252,22 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
 		return fmt.Errorf("update health status: %w", err)
 	}
-	patchOperations = append(patchOperations, healthPatchOps...)
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
+
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
+	}
 
 	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
 	fieldErrors := testResults.Errors

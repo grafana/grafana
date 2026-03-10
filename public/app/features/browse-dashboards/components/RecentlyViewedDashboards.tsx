@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
@@ -19,8 +19,8 @@ const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
   const styles = useStyles2(getStyles);
-  const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const [isOpen, setIsOpen] = useState(!isSmallScreen); // Default to closed on small screens
+  const isMediumScreen = !useMediaQueryMinWidth('md');
+  const [isOpen, setIsOpen] = useState(!isMediumScreen); // Default to closed on small screens
 
   const {
     value: recentDashboards = [],
@@ -44,6 +44,11 @@ export function RecentlyViewedDashboards() {
     });
     setIsOpen(!isOpen);
   };
+
+  useEffect(() => {
+    // Auto collapse on small screens and expand on larger screens
+    setIsOpen(!isMediumScreen);
+  }, [isMediumScreen]);
 
   if (recentDashboards.length === 0) {
     return null;

@@ -32,6 +32,7 @@ export function VizLegend<T>({
   itemRenderer,
   readonly,
   isSortable,
+  limit,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -100,10 +101,11 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           items={items}
+          limit={limit}
         />
       );
     },
-    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly]
+    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly, limit]
   );
 
   switch (displayMode) {
@@ -122,6 +124,7 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           isSortable={isSortable}
+          limit={limit}
         />
       );
     case LegendDisplayMode.List:

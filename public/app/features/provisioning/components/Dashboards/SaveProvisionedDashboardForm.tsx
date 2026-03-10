@@ -34,7 +34,7 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
 }
@@ -45,7 +45,7 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   readOnly,
   repository,
   saveAsCopy,
@@ -296,8 +296,7 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
           />
@@ -372,7 +371,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

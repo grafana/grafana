@@ -79,7 +79,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -117,7 +116,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -159,7 +157,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 
 	t.Cleanup(func() {
@@ -194,7 +191,7 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
-		DBMaxConns:            4,
+		DBMaxConns:            50,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
 				DualWriterMode: rest.Mode5,
@@ -208,7 +205,6 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch:    true,
 		ZanzanaReconciliationInterval: 100 * time.Millisecond,
 	})
 
@@ -243,7 +239,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 						DualWriterMode: dualWriterMode,
 					},
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -2222,10 +2217,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 							"spec": {
 								"title": "%s",
 								"schemaVersion": 42,
-								"layout": {
-									"kind": "GridLayout",
-									"items": []
-								}
+								"panels": []
 							}
 						}`, metadata, dashboardTitle)
 

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -51,18 +52,18 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore             *user.LegacyStore
-	saLegacyStore               *serviceaccount.LegacyStore
-	legacyTeamStore             *team.LegacyStore
-	teamBindingLegacyStore      *teambinding.LegacyBindingStore
-	ssoLegacyStore              *sso.LegacyStore
-	coreRolesStorage            CoreRoleStorageBackend
-	roleApiInstaller            RoleApiInstaller
-	globalRoleApiInstaller      GlobalRoleApiInstaller
-	teamLBACApiInstaller        TeamLBACApiInstaller
-	resourcePermissionsStorage  resource.StorageBackend
-	roleBindingsStorage         RoleBindingStorageBackend
-	externalGroupMappingStorage ExternalGroupMappingStorageBackend
+	userLegacyStore                  *user.LegacyStore
+	saLegacyStore                    *serviceaccount.LegacyStore
+	legacyTeamStore                  *team.LegacyStore
+	teamBindingLegacyStore           *teambinding.LegacyBindingStore
+	ssoLegacyStore                   *sso.LegacyStore
+	coreRolesStorage                 CoreRoleStorageBackend
+	roleApiInstaller                 RoleApiInstaller
+	globalRoleApiInstaller           GlobalRoleApiInstaller
+	teamLBACApiInstaller             TeamLBACApiInstaller
+	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
+	resourcePermissionsStorage       resource.StorageBackend
+	roleBindingsStorage              RoleBindingStorageBackend
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -97,11 +98,19 @@ type IdentityAccessManagementAPIBuilder struct {
 	// non-k8s api route
 	display *user.LegacyDisplayREST
 
+	// ac is used for legacy permission checks in role bindings.
+	// nil where only k8s-mapped permissions are supported.
+	ac accesscontrol.AccessControl
+
+	// roleConfigProvider provides the REST config for a dynamic client that fetches
+	// roles referenced by role bindings
+	roleConfigProvider iamauthorizer.ConfigProvider
+
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
 
-	tracing *tracing.TracingService
+	tracing tracing.Tracer
 }

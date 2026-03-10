@@ -1,25 +1,31 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Checkbox, Field, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
-import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { WizardFormData, WizardStep } from './types';
+import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {
   onCancel?: (repoName: string) => void;
+  goToStep: (stepId: WizardStep) => void;
   isCancelling?: boolean;
 }
 
-export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCancelling }: SynchronizeStepProps) {
+export const SynchronizeStep = memo(function SynchronizeStep({
+  onCancel,
+  isCancelling,
+  goToStep,
+}: SynchronizeStepProps) {
   const { watch, register } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', syncTarget, migrateResources] = watch([
@@ -29,18 +35,18 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   ]);
 
   const {
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    isUnhealthy,
     healthMessage: repositoryHealthMessages,
-    checked,
     healthStatusNotReady,
     hasError,
+    fieldErrors,
     isLoading,
-    refetch: refetchRepositoryStatus,
   } = useRepositoryStatus(repoName);
 
   const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
-    enableRepositoryStatus: false,
-    isHealthy: isRepositoryHealthy,
+    isHealthy,
+    healthStatusNotReady,
   });
 
   const { createSyncJob } = useCreateSyncJob({
@@ -49,7 +55,31 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
   });
   const [job, setJob] = useState<Job>();
 
-  const isButtonDisabled = hasError || (checked !== undefined && isRepositoryHealthy === false) || healthStatusNotReady;
+  useEffect(() => {
+    // This useEffect is used to update the step status info based on the repository status and the form errors
+    setStepStatusInfo(
+      getSyncStepStatus({
+        fieldErrors,
+        hasError,
+        isUnhealthy,
+        isLoading,
+        healthStatusNotReady,
+        repositoryHealthMessages,
+        goToStep,
+      })
+    );
+  }, [
+    fieldErrors,
+    hasError,
+    isUnhealthy,
+    isLoading,
+    healthStatusNotReady,
+    repositoryHealthMessages,
+    setStepStatusInfo,
+    goToStep,
+  ]);
+
+  const isButtonDisabled = hasError || !isHealthy;
 
   const startSynchronization = async () => {
     const response = await createSyncJob(requiresMigration);
@@ -58,11 +88,38 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     }
   };
 
-  if (isLoading) {
-    return <Spinner />;
+  const retryJob = () => {
+    setJob(undefined);
+    startSynchronization();
+  };
+
+  if (isLoading || healthStatusNotReady) {
+    return (
+      <Box padding={4}>
+        <LoadingPlaceholder
+          text={t('provisioning.synchronize-step.text-checking-repository', 'Checking repository status...')}
+        />
+      </Box>
+    );
+  }
+  if (hasError || isUnhealthy) {
+    // Error message is handled by status context, only show cancel button
+    return (
+      <Stack direction="column" gap={3}>
+        <Field noMargin>
+          <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
+            {isCancelling ? (
+              <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
+            ) : (
+              <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
+            )}
+          </Button>
+        </Field>
+      </Stack>
+    );
   }
   if (job) {
-    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" />;
+    return <JobStatus watch={job} onStatusChange={setStepStatusInfo} jobType="sync" onRetry={retryJob} />;
   }
 
   return (
@@ -73,29 +130,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
-      {hasError && (
-        <ProvisioningAlert
-          error={{
-            title: t('provisioning.synchronize-step.repository-error', 'Repository error'),
-            message: t(
-              'provisioning.synchronize-step.repository-error-message',
-              'Unable to check repository status. Please verify the repository configuration and try again.'
-            ),
-          }}
-        />
-      )}
-      {repositoryHealthMessages && !isRepositoryHealthy && !hasError && (
-        <ProvisioningAlert
-          error={{
-            title: t(
-              'provisioning.synchronize-step.repository-unhealthy',
-              'The repository cannot be synchronized. Cancel provisioning and try again once the issue has been resolved. See details below.'
-            ),
-            message: repositoryHealthMessages,
-          }}
-        />
-      )}
-      {isRepositoryHealthy && (
+      {isHealthy && (
         <Alert
           title={t('provisioning.wizard.alert-title', 'Important: Review Git Sync limitations before proceeding')}
           severity={'warning'}
@@ -176,61 +211,41 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
           </Stack>
         </Alert>
       )}
-      <Text element="h3">
-        <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
-      </Text>
-      <Field noMargin>
-        <Checkbox
-          {...register('migrate.migrateResources')}
-          id="migrate-resources"
-          label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
-          checked={syncTarget === 'instance' ? true : undefined}
-          disabled={syncTarget === 'instance'}
-          description={
-            syncTarget === 'instance' ? (
-              <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
-              </Trans>
-            ) : (
-              <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                Import existing dashboards from all folders into the new provisioned folder
-              </Trans>
-            )
-          }
-        />
-      </Field>
-      {healthStatusNotReady ? (
+      {/* Migration/export functionality is experimental and gated behind the provisioningExport feature flag */}
+      {config.featureToggles.provisioningExport && (
         <>
-          <Stack>
-            <Trans i18nKey="provisioning.wizard.check-status-message">
-              Repository connecting, synchronize will be ready soon.
-            </Trans>
-          </Stack>
-          <Stack>
-            <Stack>
-              <Button onClick={refetchRepositoryStatus} disabled={isLoading}>
-                <Trans i18nKey="provisioning.wizard.check-status-button">Check repository status</Trans>
-              </Button>
-            </Stack>
-          </Stack>
+          <Text element="h3">
+            <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
+          </Text>
+          <Field noMargin>
+            <Checkbox
+              {...register('migrate.migrateResources')}
+              id="migrate-resources"
+              label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+              checked={syncTarget === 'instance' ? true : undefined}
+              disabled={syncTarget === 'instance'}
+              description={
+                syncTarget === 'instance' ? (
+                  <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                    Instance sync requires all resources to be managed. Existing resources will be migrated
+                    automatically.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                    Import existing dashboards from connected external storage into the provisioning folder created in
+                    the previous step
+                  </Trans>
+                )
+              }
+            />
+          </Field>
         </>
-      ) : (
-        <Field noMargin>
-          {hasError || (checked !== undefined && isRepositoryHealthy === false) ? (
-            <Button variant="destructive" onClick={() => onCancel?.(repoName)} disabled={isCancelling}>
-              {isCancelling ? (
-                <Trans i18nKey="provisioning.wizard.button-cancelling">Cancelling...</Trans>
-              ) : (
-                <Trans i18nKey="provisioning.wizard.button-cancel">Cancel</Trans>
-              )}
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
-              <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
-            </Button>
-          )}
-        </Field>
       )}
+      <Field noMargin>
+        <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
+          <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>
+        </Button>
+      </Field>
     </Stack>
   );
 });

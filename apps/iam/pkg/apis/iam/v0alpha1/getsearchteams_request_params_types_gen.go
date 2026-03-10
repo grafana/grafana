@@ -13,3 +13,8 @@ type GetSearchTeamsRequestParams struct {
 func NewGetSearchTeamsRequestParams() *GetSearchTeamsRequestParams {
 	return &GetSearchTeamsRequestParams{}
 }
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchTeamsRequestParams.
+func (GetSearchTeamsRequestParams) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetSearchTeamsRequestParams"
+}

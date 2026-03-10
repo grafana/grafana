@@ -196,6 +196,20 @@ func TestIdentityQueries(t *testing.T) {
 						},
 					}),
 				},
+				{
+					Name: "users_email",
+					Data: listUsers(&ListUserQuery{
+						Email:      "test@example.com",
+						Pagination: common.Pagination{Limit: 5},
+					}),
+				},
+				{
+					Name: "users_login",
+					Data: listUsers(&ListUserQuery{
+						Login:      "testuser",
+						Pagination: common.Pagination{Limit: 5},
+					}),
+				},
 			},
 			sqlQueryDisplayTemplate: {
 				{
@@ -269,6 +283,17 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+				{
+					Name: "team_bindings_external_true",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
+						External: boolPtr(true),
 					}),
 				},
 			},
@@ -616,4 +641,8 @@ func TestIdentityQueries(t *testing.T) {
 			},
 		},
 	})
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

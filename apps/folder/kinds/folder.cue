@@ -10,4 +10,8 @@ foldersV1beta1: {
 			description?: string
 		}
 	}
+
+	selectableFields: [
+		"spec.title",
+	]
 }

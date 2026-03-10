@@ -2,10 +2,12 @@ import { omit } from 'lodash';
 
 import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
   QueryVariable,
+  sceneGraph,
   SceneDataQuery,
   SceneDataTransformer,
   SceneQueryRunner,
@@ -17,6 +19,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   Spec as DashboardV2Spec,
@@ -55,6 +58,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { djb2Hash } from '../utils/djb2Hash';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
@@ -93,19 +97,23 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
-    links: (sceneDash.links || []).map((link) => ({
-      title: link.title ?? defaultDashboardLink().title,
-      url: link.url ?? defaultDashboardLink().url,
-      type: link.type ?? defaultDashboardLinkType(),
-      icon: link.icon ?? defaultDashboardLink().icon,
-      tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
-      tags: link.tags ?? defaultDashboardLink().tags,
-      asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
-      keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
-      includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
-      targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
-      ...(link.placement !== undefined && { placement: link.placement }),
-    })),
+    links: (sceneDash.links || [])
+      // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them
+      // from generating the JSON model from the scenes object.
+      .filter((link) => link.origin === undefined)
+      .map((link) => ({
+        title: link.title ?? defaultDashboardLink().title,
+        url: link.url ?? defaultDashboardLink().url,
+        type: link.type ?? defaultDashboardLinkType(),
+        icon: link.icon ?? defaultDashboardLink().icon,
+        tooltip: link.tooltip ?? defaultDashboardLink().tooltip,
+        tags: link.tags ?? defaultDashboardLink().tags,
+        asDropdown: link.asDropdown ?? defaultDashboardLink().asDropdown,
+        keepTime: link.keepTime ?? defaultDashboardLink().keepTime,
+        includeVars: link.includeVars ?? defaultDashboardLink().includeVars,
+        targetBlank: link.targetBlank ?? defaultDashboardLink().targetBlank,
+        ...(link.placement !== undefined && { placement: link.placement }),
+      })),
     tags: sceneDash.tags ?? defaultDashboardV2Spec().tags,
     // EOF dashboard settings
 
@@ -137,7 +145,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: sceneDash.body.serialize(),
+    layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };
 
@@ -175,10 +183,65 @@ function getLiveNow(state: DashboardSceneState) {
 
 function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
-  const panelsArray = panels.map((vizPanel) => {
-    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
+
+  // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,
+  // not as layout children), otherwise the snapshot layout will reference elements that are missing.
+  if (isSnapshot) {
+    panels.push(...getRepeatedPanelsForSnapshot(scene));
+  }
+
+  return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
+    const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
+
+    // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
+    // Non-clone panels should keep their stable element identifier.
+    const elementKey =
+      isSnapshot && vizPanel.state.repeatSourceKey
+        ? (() => {
+            if (!vizPanel.state.key) {
+              throw new Error('Snapshot serialization expected repeat clone to have a key');
+            }
+            return vizPanel.state.key;
+          })()
+        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+
+    elements[elementKey] = element;
+    return elements;
+  }, {});
+}
+
+function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
+  const panels: VizPanel[] = [];
+
+  const repeaters = sceneGraph.findAllObjects(scene.getRoot(), (obj) => {
+    const state = obj.state;
+    if (state === null || typeof state !== 'object') {
+      return false;
+    }
+
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    return Array.isArray(repeatedPanels) && repeatedPanels.length > 0;
   });
-  return createElements(panelsArray, scene);
+
+  for (const repeater of repeaters) {
+    const state = repeater.state;
+    if (state === null || typeof state !== 'object') {
+      continue;
+    }
+
+    const repeatedPanels = Object.getOwnPropertyDescriptor(state, 'repeatedPanels')?.value;
+    if (!Array.isArray(repeatedPanels)) {
+      continue;
+    }
+
+    for (const panel of repeatedPanels) {
+      if (panel instanceof VizPanel) {
+        panels.push(panel);
+      }
+    }
+  }
+
+  return panels;
 }
 
 export function vizPanelToSchemaV2(
@@ -212,7 +275,12 @@ export function vizPanelToSchemaV2(
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
-      id: getPanelIdForVizPanel(vizPanel),
+      // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`),
+      // so snapshots must assign a stable unique id per clone.
+      id:
+        isSnapshot && vizPanel.state.repeatSourceKey && vizPanel.state.key
+          ? djb2Hash(vizPanel.state.key)
+          : getPanelIdForVizPanel(vizPanel),
       title: vizPanel.state.title,
       description: vizPanel.state.description ?? '',
       links: getPanelLinks(vizPanel),
@@ -358,7 +426,9 @@ export function getVizPanelQueries(
       const dataQuery: DataQueryKind = {
         kind: 'DataQuery',
         version: defaultDataQueryKind().version,
-        group: queryDatasource ? getDataQueryKind(query, queryRunner) : defaultDataQueryKind().group,
+        group: queryDatasource
+          ? queryDatasource.type || getDataQueryKind(query, queryRunner)
+          : defaultDataQueryKind().group,
         datasource: {
           name: queryDatasource?.uid,
         },
@@ -394,11 +464,6 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   if (typeof query === 'string') {
     const defaultDS = getDefaultDataSourceRef();
     return defaultDS?.type || '';
-  }
-
-  // Query has explicit datasource with type
-  if (query.datasource?.type) {
-    return query.datasource.type;
   }
 
   // If query has a datasource UID (even without type), check if it matches the queryRunner's datasource
@@ -889,40 +954,49 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
-  // Get the element identifier - refId for queries, name for variables
-  const elementId = getElementIdentifier(element, type);
+  let datasource: DataSourceRef | undefined;
 
-  // If the ds was autossigned, return the datasource initial ds value.
-  if (autoAssignedDsRef?.has(elementId)) {
-    const dsType = autoAssignedDsRef.get(elementId);
-    // If the ds type was not undefined means the datasource was autossigned, so return the datasource with only the type
-    return dsType ? { type: dsType } : undefined;
-  }
-
-  // Return appropriate datasource reference based on element type
+  // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
     if ('datasource' in element && element.datasource) {
-      // Check if datasource is empty object {} (no keys), treat it as missing
-      // and fall through to use panel datasource (matches backend behavior)
       const isEmptyDatasourceObject =
         typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
-
       if (!isEmptyDatasourceObject) {
-        // If element has its own datasource (and it's not empty), use that
-        return element.datasource;
+        datasource = element.datasource;
       }
     }
 
-    // For queries missing a datasource or with empty datasource object, use datasource from context (queryRunner)
-    return context?.state?.datasource;
+    const panelDS = context?.state?.datasource;
+    if (panelDS?.uid) {
+      const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
+      const notExpr =
+        !datasource ||
+        (datasource.uid !== ExpressionDatasourceRef.uid && datasource.type !== ExpressionDatasourceRef.type);
+
+      if (notMixed && (!datasource || (panelDS?.uid !== datasource.uid && notExpr))) {
+        datasource = panelDS;
+      }
+    }
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    return element.state.datasource || undefined;
+    datasource = element.state.datasource || undefined;
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    return element.datasource || undefined;
+    datasource = element.datasource || undefined;
+  }
+
+  // If a datasource was resolved from the element, use it
+  if (datasource) {
+    return datasource;
+  }
+
+  const elementId = getElementIdentifier(element, type);
+  if (autoAssignedDsRef?.has(elementId)) {
+    const dsType = autoAssignedDsRef.get(elementId);
+    // If the ds type was defined, return datasource with only the type; otherwise undefined
+    return dsType ? { type: dsType } : undefined;
   }
 
   return undefined;

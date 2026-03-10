@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaKeeper = resource.NewSimpleSchema("secret.grafana.app", "v1beta1", &Keeper{}, &KeeperList{}, resource.WithKind("Keeper"),
+	schemaKeeper = resource.NewSimpleSchema("secret.grafana.app", "v1beta1", NewKeeper(), &KeeperList{}, resource.WithKind("Keeper"),
 		resource.WithPlural("keepers"), resource.WithScope(resource.NamespacedScope))
 	kindKeeper = resource.Kind{
 		Schema: schemaKeeper,

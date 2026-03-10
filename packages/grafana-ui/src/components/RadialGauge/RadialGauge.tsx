@@ -1,7 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { useId, ReactNode } from 'react';
 
-import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
+import {
+  DisplayValueAlignmentFactors,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  GrafanaTheme2,
+  ThresholdsMode,
+  TimeRange,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -236,6 +243,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <RadialScaleLabels
               key="radial-scale-labels"
               thresholds={thresholds}
+              thresholdsMode={displayValue.field.thresholds?.mode ?? ThresholdsMode.Absolute}
               fieldDisplay={displayValue}
               angleRange={angleRange}
               theme={theme}
@@ -284,7 +292,13 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   const body = (
     <>
-      <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width={width}
+        height={height}
+        role="img"
+        aria-label={t('gauge.category-gauge', 'Gauge')}
+      >
         {defs.length > 0 && <defs>{defs}</defs>}
         {graphics}
       </svg>

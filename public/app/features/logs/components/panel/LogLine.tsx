@@ -118,6 +118,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showLevel,
       showUniqueLabels,
       timestampResolution,
       onLogLineHover,
@@ -260,6 +261,7 @@ const LogLineComponent = memo(
               collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
+              showLevel={showLevel}
               showTime={showTime}
               showUniqueLabels={showUniqueLabels}
               styles={styles}
@@ -315,6 +317,7 @@ interface LogProps {
   collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
+  showLevel: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   styles: LogLineStyles;
@@ -323,7 +326,16 @@ interface LogProps {
 }
 
 const Log = memo(
-  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+  ({
+    displayedFields,
+    log,
+    showLevel,
+    showTime,
+    showUniqueLabels,
+    styles,
+    timestampResolution,
+    wrapLogMessage,
+  }: LogProps) => {
     const handleLabelsToggle = useCallback(
       (expanded: boolean) => {
         log.uniqueLabelsExpanded = expanded;
@@ -340,7 +352,7 @@ const Log = memo(
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
-        {(log.displayLevel || !wrapLogMessage) && (
+        {showLevel && (log.displayLevel || !wrapLogMessage) && (
           <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
@@ -375,7 +387,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting } = useLogListContext();
+  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -388,32 +400,42 @@ const DisplayedFields = ({
     return searchWords;
   }, [log.searchWords, log.uid, matchingUids, search]);
 
-  return displayedFields.map((field) => {
-    if (field === LOG_LINE_BODY_FIELD_NAME) {
-      return <LogLineBody log={log} key={field} styles={styles} />;
-    }
-    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+  return displayedFields
+    .map((field) => {
+      if (field === LOG_LINE_BODY_FIELD_NAME) {
+        return <LogLineBody log={log} key={field} styles={styles} />;
+      }
+      if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        return (
+          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+            <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
+          </span>
+        );
+      }
+
+      const fieldValue = log.getDisplayedFieldValue(field);
+
+      // With wrapped logs, or without unwrapped columns, we skip empty values so they don't appear as an empty space
+      if ((wrapLogMessage || !unwrappedColumns) && !fieldValue) {
+        return null;
+      }
+
       return (
-        <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
+        <span className="field" title={getNormalizedFieldName(field)} key={field}>
+          {searchWords ? (
+            <Highlighter
+              textToHighlight={fieldValue}
+              searchWords={searchWords}
+              findChunks={findHighlightChunksInText}
+              highlightClassName={styles.matchHighLight}
+            />
+          ) : (
+            fieldValue
+          )}{' '}
         </span>
       );
-    }
-    return (
-      <span className="field" title={getNormalizedFieldName(field)} key={field}>
-        {searchWords ? (
-          <Highlighter
-            textToHighlight={log.getDisplayedFieldValue(field)}
-            searchWords={searchWords}
-            findChunks={findHighlightChunksInText}
-            highlightClassName={styles.matchHighLight}
-          />
-        ) : (
-          log.getDisplayedFieldValue(field)
-        )}{' '}
-      </span>
-    );
-  });
+    })
+    .filter((field) => field !== null);
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
@@ -459,9 +481,15 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   );
 };
 
-export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
+export function getGridTemplateColumns(
+  dimensions: LogFieldDimension[],
+  displayedFields: string[],
+  unwrappedColumns: boolean
+) {
   const columns = dimensions
-    .map((dimension) => (dimension.width > 0 ? `${dimension.width}px` : 'max-content'))
+    .map((dimension) =>
+      dimension.width > 0 && (unwrappedColumns || dimension.internal) ? `${dimension.width}px` : 'max-content'
+    )
     .join(' ');
   const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
   return `${columns}${logLineWidth}`;

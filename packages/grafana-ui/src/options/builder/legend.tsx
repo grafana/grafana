@@ -8,9 +8,11 @@ import { LegendDisplayMode, OptionsWithLegend, SortOrder } from '@grafana/schema
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,
-  showLegend = true
+  showLegend = true,
+  vizLegendSeriesLimit = false
 ) {
   const category = [t('grafana-ui.builder.legend.category', 'Legend')];
+
   builder
     .addBooleanSwitch({
       path: 'legend.showLegend',
@@ -80,6 +82,16 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     });
+
+  if (vizLegendSeriesLimit) {
+    builder.addNumberInput({
+      path: 'legend.limit',
+      name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
+      category,
+      description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
+      showIf: (c) => c.legend.showLegend,
+    });
+  }
 
   if (includeLegendCalcs) {
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({

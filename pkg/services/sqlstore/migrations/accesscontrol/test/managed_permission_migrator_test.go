@@ -283,7 +283,7 @@ func putTestPermissions(t *testing.T, x *xorm.Engine, rolePerms map[int64]map[st
 			require.Equal(t, int64(1), brCount)
 
 			if len(perms) > 0 {
-				permissions := []accesscontrol.Permission{}
+				permissions := make([]accesscontrol.Permission, 0, len(perms))
 				for _, p := range perms {
 					permissions = append(permissions, p.toPermission(role.ID, now))
 				}

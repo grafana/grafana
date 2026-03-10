@@ -7,7 +7,7 @@ import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
  * The presence of this field along log fields determines OTel origin.
  */
 export const OTEL_PROBE_FIELD = 'severity_number';
-const OTEL_LANGUAGE_UNKNOWN = 'unknown';
+export const OTEL_LANGUAGE_UNKNOWN = 'unknown';
 
 export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
   const languagesSet = new Set<string>();
@@ -66,11 +66,12 @@ function getDisplayFormatForLanguage(language: string) {
  * Given a list of logs, return a list of suggested fields to display for the user.
  */
 export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
+  const suggestedFields = getSuggestedFieldsForAnyLogs();
+
   const languages = identifyOTelLanguages(logs);
-  if (!languages.length) {
-    return [];
-  }
-  const fields = getSuggestedOTelDisplayFormat();
+  const otelFields = languages.length ? getSuggestedOTelDisplayFormat() : [];
+
+  const fields = [...new Set([...suggestedFields, ...otelFields])];
 
   return fields.filter(
     (field) =>
@@ -80,7 +81,11 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   );
 }
 
-function getSuggestedOTelDisplayFormat() {
+export function getSuggestedFieldsForAnyLogs() {
+  return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
+}
+
+export function getSuggestedOTelDisplayFormat() {
   return ['scope_name', ...getDefaultOTelDisplayFormat()];
 }
 

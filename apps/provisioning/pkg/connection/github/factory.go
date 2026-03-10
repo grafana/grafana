@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"

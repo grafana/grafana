@@ -1,0 +1,123 @@
+package metrics
+
+import (
+	"errors"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	namespace = "plugins_app"
+)
+
+var (
+	// Plugin reconciliation metrics
+	ChildReconciliationTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "plugin_child_reconciliation_total",
+			Help:      "Total number of child plugin reconciliation operations",
+		},
+		[]string{"status"},
+	)
+
+	ChildReconciliationDurationSeconds = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "plugin_child_reconciliation_duration_seconds",
+			Help:      "Duration of child plugin reconciliation operations in seconds",
+			Buckets:   prometheus.DefBuckets,
+		},
+	)
+
+	// Plugin registration metrics
+	RegistrationOperationsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "plugin_registration_operations_total",
+			Help:      "Total number of plugin registration operations",
+		},
+		[]string{"operation", "status"},
+	)
+
+	RegistrationDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "plugin_registration_duration_seconds",
+			Help:      "Duration of plugin registration operations in seconds",
+			Buckets:   prometheus.DefBuckets,
+		},
+		[]string{"operation"},
+	)
+
+	// Meta cache metrics
+	MetaCacheLookupTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_cache_lookup_total",
+			Help:      "Total number of cache lookups for plugin metadata",
+		},
+		[]string{"result"}, // "hit" or "miss"
+	)
+
+	MetaCacheSize = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "meta_cache_size",
+			Help:      "Current number of entries in the metadata cache",
+		},
+	)
+
+	MetaCacheEvictionsTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_cache_evictions_total",
+			Help:      "Total number of cache evictions due to expiration",
+		},
+	)
+
+	// Meta fetch metrics
+	MetaFetchDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "meta_fetch_duration_seconds",
+			Help:      "Duration of metadata fetch operations from providers in seconds",
+			Buckets:   prometheus.DefBuckets,
+		},
+		[]string{"provider", "status"}, // provider: "catalog", etc; status: "success", "error", "not_found"
+	)
+
+	// Meta request metrics
+	MetaRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_requests_total",
+			Help:      "Total number of metadata requests by plugin ID and version (useful for cache warming analysis)",
+		},
+		[]string{"plugin_id", "version"},
+	)
+)
+
+func MustRegister(registerer prometheus.Registerer) {
+	metricsToRegister := []prometheus.Collector{
+		ChildReconciliationTotal,
+		ChildReconciliationDurationSeconds,
+		RegistrationOperationsTotal,
+		RegistrationDurationSeconds,
+		MetaCacheLookupTotal,
+		MetaCacheSize,
+		MetaCacheEvictionsTotal,
+		MetaFetchDurationSeconds,
+		MetaRequestsTotal,
+	}
+
+	for _, metric := range metricsToRegister {
+		if err := registerer.Register(metric); err != nil {
+			var alreadyRegistered prometheus.AlreadyRegisteredError
+			if errors.As(err, &alreadyRegistered) {
+				continue
+			}
+			panic(err)
+		}
+	}
+}

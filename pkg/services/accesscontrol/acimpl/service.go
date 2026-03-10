@@ -165,12 +165,16 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	// permission assigned to user will be returned, only for org role.
 	userID, _ := identity.UserIdentifier(user.GetID())
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.GetOrgID(),
-		UserID:       userID,
-		Roles:        accesscontrol.GetOrgRoles(user),
-		TeamIDs:      user.GetTeams(),
-		RolePrefixes: OSSRolesPrefixes,
+		OrgID:                              user.GetOrgID(),
+		UserID:                             userID,
+		Roles:                              accesscontrol.GetOrgRoles(user),
+		TeamIDs:                            user.GetTeams(),
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 	if err != nil {
 		return nil, err
@@ -191,11 +195,15 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	}
 	s.rolesMu.RUnlock()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		Roles:        []string{role},
-		OrgID:        orgID,
-		RolePrefixes: OSSRolesPrefixes,
+		Roles:                              []string{role},
+		OrgID:                              orgID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 
 	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
@@ -206,10 +214,14 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getTeamsPermissions")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		TeamIDs:      teamIDs,
-		OrgID:        orgID,
-		RolePrefixes: OSSRolesPrefixes,
+		TeamIDs:                            teamIDs,
+		OrgID:                              orgID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 
 	for teamID, permissions := range teamPermissions {
@@ -233,10 +245,14 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		}
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	permissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.GetOrgID(),
-		UserID:       userID,
-		RolePrefixes: OSSRolesPrefixes,
+		OrgID:                              user.GetOrgID(),
+		UserID:                             userID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 	if err != nil {
 		return nil, err
@@ -332,13 +348,23 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 
 	span.AddEvent("cache miss")
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
-	permissions, err := getPermissionsFn(ctx)
-	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
-	if err != nil {
+
+	var permissions []accesscontrol.Permission
+	getValue := func() (any, error) {
+		var err error
+		permissions, err = getPermissionsFn(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+		return permissions, nil
+	}
+
+	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
 		return nil, err
 	}
 
-	s.cache.Set(key, permissions, cacheTTL)
 	return permissions, nil
 }
 
@@ -392,7 +418,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {

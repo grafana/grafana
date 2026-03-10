@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -14,9 +15,16 @@ type VersionsTableProps = {
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
+  isLoadingUserDisplayNames?: boolean;
 };
 
-export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {
+export const VersionHistoryTable = ({
+  versions,
+  canCompare,
+  onCheck,
+  onRestore,
+  isLoadingUserDisplayNames,
+}: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -60,7 +68,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
               </td>
               <td>{version.version}</td>
               <td>{version.createdDateString}</td>
-              <td>{version.createdBy}</td>
+              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (

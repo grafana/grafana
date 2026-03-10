@@ -26,7 +26,6 @@ var (
 
 // LDAP is the interface for the LDAP service.
 type LDAP interface {
-	ReloadConfig() error
 	Config() *ldap.ServersConfig
 	Enabled() bool
 	Client() multildap.IMultiLDAP
@@ -175,30 +174,6 @@ func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, ol
 			}
 		}
 	}
-
-	return nil
-}
-
-func (s *LDAPImpl) ReloadConfig() error {
-	if !s.cfg.Enabled {
-		return nil
-	}
-
-	s.loadingMutex.Lock()
-	defer s.loadingMutex.Unlock()
-
-	config, err := ldap.GetConfig(s.cfg)
-	if err != nil {
-		return err
-	}
-
-	client := multildap.New(config.Servers, s.cfg)
-	if client == nil {
-		return ErrUnableToCreateLDAPClient
-	}
-
-	s.ldapCfg = config
-	s.client = client
 
 	return nil
 }

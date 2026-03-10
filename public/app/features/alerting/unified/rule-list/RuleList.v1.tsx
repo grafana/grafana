@@ -25,6 +25,7 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
+import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
@@ -128,6 +129,7 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
+        <AlertsActivityBanner />
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (

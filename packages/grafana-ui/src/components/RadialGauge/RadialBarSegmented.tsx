@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -67,6 +68,11 @@ export const RadialBarSegmented = memo(
           glowFilter={glowFilter}
           shape={shape}
           startAngle={segmentStartAngle}
+          data-testid={
+            isTrack
+              ? selectors.components.Panels.Visualization.Gauge.Track
+              : selectors.components.Panels.Visualization.Gauge.Bar
+          }
           {...colorProps}
         />
       );

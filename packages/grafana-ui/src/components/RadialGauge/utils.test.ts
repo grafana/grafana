@@ -337,46 +337,20 @@ describe('RadialGauge utils', () => {
   });
 
   describe('drawRadialArcPath', () => {
-    const defaultDims = Object.freeze({
-      vizHeight: 220,
-      vizWidth: 220,
-      centerX: 100,
-      centerY: 100,
-      radius: 80,
-      barWidth: 20,
-      margin: 0,
-      barIndex: 0,
-      thresholdsBarWidth: 0,
-      thresholdsBarSpacing: 0,
-      thresholdsBarRadius: 0,
-      scaleLabelsFontSize: 0,
-      scaleLabelsSpacing: 0,
-      scaleLabelsRadius: 0,
-      gaugeBottomY: 0,
-    }) satisfies RadialGaugeDimensions;
-
     it.each([
       { description: 'quarter arc', startAngle: 0, endAngle: 90 },
       { description: 'half arc', startAngle: 0, endAngle: 180 },
       { description: 'three quarter arc', startAngle: 0, endAngle: 270 },
-      { description: 'wide bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 50 } },
-      { description: 'narrow bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 5 } },
-      { description: 'narrow radius', startAngle: 0, endAngle: 180, dimensions: { radius: 50 } },
-      {
-        description: 'center x and y',
-        startAngle: 0,
-        endAngle: 360,
-        dimensions: { centerX: 150, centerY: 200 },
-      },
-    ])(`should draw correct path for $description`, ({ startAngle, endAngle, dimensions }) => {
-      const path = drawRadialArcPath(startAngle, endAngle, { ...defaultDims, ...dimensions });
+      { description: 'narrow radius', startAngle: 0, endAngle: 180, radius: 50 },
+    ])(`should draw correct path for $description`, ({ startAngle, endAngle, radius = 80 }) => {
+      const path = drawRadialArcPath(startAngle, endAngle, radius);
       expect(path).toMatchSnapshot();
     });
 
     describe('edge cases', () => {
       it('should adjust 360deg or greater  arcs to avoid SVG rendering issues', () => {
-        expect(drawRadialArcPath(0, 360, defaultDims)).toEqual(drawRadialArcPath(0, 359.99, defaultDims));
-        expect(drawRadialArcPath(0, 380, defaultDims)).toEqual(drawRadialArcPath(0, 380, defaultDims));
+        expect(drawRadialArcPath(0, 360, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
+        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 380, 80));
       });
     });
   });

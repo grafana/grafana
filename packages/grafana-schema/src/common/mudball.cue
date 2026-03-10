@@ -268,6 +268,7 @@ VizLegendOptions: {
 	sortOrder?:   SortOrder
 	// Width of the legend in pixels (for right placement).
 	width?:       number
+  limit?: number;
 	// List of calculations to display in the legend (e.g., "mean", "lastNotNull").
 	calcs:        [...string]
 } @cuetsy(kind="interface")

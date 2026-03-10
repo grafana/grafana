@@ -81,6 +81,12 @@ export const alertingAlertRuleFormSchema = z.object({
   evaluateFor: z.string().optional().describe('Evaluation duration'),
   keepFiringFor: z.string().optional().describe('Keep firing duration'),
   isPaused: z.boolean().optional().default(false).describe('Whether the rule is paused'),
+  missingSeriesEvalsToResolve: z
+    .number()
+    .optional()
+    .describe(
+      'Number of consecutive evaluation intervals a dimension must be missing before the alert instance is resolved'
+    ),
 
   // Manual routing and contact points
   manualRouting: z

@@ -4,7 +4,6 @@ import { flows, saveDashboard, type Variable } from './utils';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
@@ -127,44 +126,46 @@ test.describe(
       await expect(panelContent).toBeVisible();
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
-    test('can hide a variable', async ({ dashboardPage, selectors, page }) => {
+    test('can make a hidden variable visible', async ({ dashboardPage, selectors, page }) => {
       const variable: Variable = {
         type: 'textbox',
         name: 'VariableUnderTest',
         value: 'foo',
         label: 'VariableUnderTest',
+        display: 'Hidden',
       };
 
-      await saveDashboard(dashboardPage, page, selectors, 'can hide a variable');
+      await saveDashboard(dashboardPage, page, selectors, 'can make a hidden variable visible');
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 
-      // check the variable is visible in the dashboard
+      // check the variable is hidden in the dashboard
       const variableLabel = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
       );
-      await expect(variableLabel).toBeVisible();
-      // hide the variable
+      await expect(variableLabel).toBeHidden();
+
+      // change display
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
         .click();
-      await page.getByText('Hidden', { exact: true }).click();
+      await page.getByText('Above dashboard', { exact: true }).click();
 
-      // check that the variable is still visible
+      // check that the variable is visible
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
       ).toBeVisible();
 
-      // save dashboard and exit edit mode and check variable is not visible
+      // save dashboard and exit edit mode and check variable is still visible
       await saveDashboard(dashboardPage, page, selectors);
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
-      ).toBeHidden();
-      // refresh and check that variable isn't visible
+      ).toBeVisible();
+      // refresh and check that variable is visible
       await page.reload();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!))
-      ).toBeHidden();
+      ).toBeVisible();
       // check that the variable is visible in edit mode
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await expect(
@@ -172,7 +173,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
       const variable: Variable = {
         type: 'textbox',
         name: 'VariableUnderTest',

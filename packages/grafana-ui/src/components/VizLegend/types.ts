@@ -27,6 +27,7 @@ export interface VizLegendBaseProps<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  limit?: number;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

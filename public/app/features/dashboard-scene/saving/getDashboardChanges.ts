@@ -1,14 +1,14 @@
 // @ts-ignore
 
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard, Panel, VariableOption } from '@grafana/schema';
+import { Dashboard, VariableOption } from '@grafana/schema';
 import {
   AdHocFilterWithLabels,
   AdhocVariableSpec,
   Spec as DashboardV2Spec,
   TextVariableSpec,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
@@ -282,17 +282,4 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
   }
 
   return hasVariableValueChanges;
-}
-
-export function getPanelChanges(saveModel: Panel, originalSaveModel: Panel) {
-  const diff = jsonDiff(originalSaveModel, saveModel);
-  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
-
-  return {
-    changedSaveModel: saveModel,
-    initialSaveModel: originalSaveModel,
-    diffs: diff,
-    diffCount,
-    hasChanges: diffCount > 0,
-  };
 }

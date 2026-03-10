@@ -1,5 +1,3 @@
-export * from './panelcfg.gen';
-
 import { AxisPlacement, HeatmapCellLayout } from '@grafana/schema';
 
 import { defaultOptions as defaultOptionsGen, HeatmapColorMode, HeatmapColorScale, Options } from './panelcfg.gen';

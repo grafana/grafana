@@ -28,7 +28,7 @@ refs:
 
 Gauges are single-value visualizations that allow you to quickly visualize where a value falls within a defined or calculated min and max range. With repeat options, you can display multiple gauges, each corresponding to a different series, column, or row.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-visualization-v11.4.png" alt="A gauge visualization">}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-visualization-v13.0.png" alt="A gauge visualization">}}
 
 You can use gauges if you need to track:
 
@@ -44,37 +44,25 @@ You can use gauges if you need to track:
 
 The following video provides beginner steps for creating gauge panels. You'll learn the data requirements and caveats, special customizations, and much more:
 
+<!-- FIXME: we should make a new video for G13 -->
+
 {{< youtube id="QwXj3y_YpnE" >}}
 
 {{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
 
 ## Supported data formats
 
-To create a gauge visualization you need a dataset containing at least one numeric field. These values are identified by the field name. Additional text fields aren’t required but can be used for identification and labeling.
-
-### Example - One value
-
-| GaugeName | GaugeValue |
-| --------- | ---------- |
-| MyGauge   | 5          |
-
-![Gauge with single numeric value](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example1.png)
-
-This dataset generates a visualization with one empty gauge showing the numeric value. This is because the gauge visualization automatically defines the upper and lower range from the minimum and maximum values in the dataset. This dataset has only one value, so it’s set as both minimum and maximum.
-
-If you only have one value, but you want to define a different minimum and maximum, you can set them manually in the [Standard options](#standard-options) settings to generate a more typical looking gauge.
-
-![Gauge with single numeric value and hardcoded max and min](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example2.png)
+To create a gauge visualization you need a dataset containing at least one numeric field. These values are identified by the field name. Additional text fields aren't required but can be used for identification and labeling.
 
 ### Example - One row, multiple values
 
 The gauge visualization can support multiple fields in a dataset. <!-- In this case, multiple gauges are displayed. -->
 
-| Identifier | value1 | value2 | value3 |
-| ---------- | ------ | ------ | ------ |
-| Gauges     | 5      | 3      | 10     |
+| value1 | value2 | value3 |
+| ------ | ------ | ------ |
+| 5      | 3      | 10     |
 
-![Gauge visualization with multiple numeric values in a single row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example3.png)
+![Gauge visualization with multiple numeric values in a single row](/media/docs/grafana/panels-visualizations/screenshot-gauge-1-row-many-vals-v13.0.png)
 
 When there are multiple values in the dataset, the visualization displays multiple gauges and automatically defines the minimum and maximum. In this case, those are 3 and 10. Because the minimum and maximum values are defined, each gauge is shaded in to show that value in relation to the minimum and maximum.
 
@@ -84,35 +72,36 @@ The gauge visualization can display datasets with multiple rows of data or even 
 
 | Identifier | value1 | value2 | value3 |
 | ---------- | ------ | ------ | ------ |
-| Gauges     | 5      | 3      | 10     |
-| Indicators | 6      | 9      | 15     |
-| Defaults   | 1      | 4      | 8      |
+| A          | 5      | 3      | 10     |
+| B          | 6      | 9      | 15     |
+| C          | 1      | 4      | 8      |
 
-![Gauge visualization with multiple rows and columns of numeric values showing the last row](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example6.png)
+![Gauge visualization with multiple rows and columns of numeric values showing the last row](/media/docs/grafana/panels-visualizations/screenshot-gauge-multi-rows-values-v13.0.png)
 
-By default, the visualization is configured to [calculate](#value-options) a single value per column or series and to display only the last row of data. However, it derives the minimum and maximum from the full dataset, even if those values aren’t visible.
+By default, the visualization [calculates](#value-options) a single value per column or series and displays only the last row of data. However, it derives the minimum and maximum from the full dataset, even if those values aren't visible.
 
-In this example, that means only the last row of data is displayed in the gauges and the minimum and maximum values are 1 and 10. The value 1 is displayed because it’s in the last row, while 10 is not.
+In this example, that means only the last row of data, row C, is displayed in the gauges and the minimum and maximum values are 1 and 15. The value 1 is displayed because it's in the last row, while 15 is not.
 
-If you want to show one gauge per table cell, you can change the **Show** setting from **Calculate** to **All values**, and each gauge is labeled by concatenating the text column with each value's column name.
+If you want to show one gauge per table cell, under **Value options**, change the **Show** setting from **Calculate** to **All values**. Each gauge label is a concatenation of the text column with each value's column name.
 
-![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example7.png)
+![Gauge visualization with multiple rows and columns of numeric values showing all the values](/media/docs/grafana/panels-visualizations/screenshot-multi-rows-values-show-all-v13.0.png)
 
-### Example - Defined min and max
+### Example - Control min and max
 
-You can also define minimum and maximum values as part of the dataset.
+You can control the minimum and maximum values by defining them directly in your dataset.
+This is an alternative to setting it manually in the field options.
 
-| Identifier | value | max | min |
-| ---------- | ----- | --- | --- |
-| Gauges     | 5     | 10  | 2   |
+| value | max | min |
+| ----- | --- | --- |
+| 5     | 10  | 2   |
 
-![Gauge visualization with numeric values defining max and minimum](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example4.png)
+![Gauge visualization with numeric values defining max and minimum](/media/docs/grafana/panels-visualizations/screenshot-gauge-defined-min-max-v13.0.png)
 
-If you don’t want to display gauges for the `min` and `max` values, you can configure only one field to be displayed as described in the [value options](#value-options) section.
+In this example, to hide the min and max fields, select the "value" field in **Value options > Fields**.
 
-![Gauge visualization with numeric values defining max and minimum but hidden](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example5.png)
+![Gauge visualization with numeric values defining max and minimum but hidden](/media/docs/grafana/panels-visualizations/screenshot-gauge-hidden-min-max-v13.0.png)
 
-Even when minimum and maximum values aren’t displayed, the visualization still pulls the range from them.
+Even when minimum and maximum values aren't displayed, the visualization still pulls the range from them.
 
 ## Configuration options
 
@@ -145,23 +134,51 @@ Adjust how the gauge is displayed.
 
 | Option | Description |
 | ------ | ----------- |
+| Style | Choose a gauge shape:<ul><li>**Circle** - Fills clockwise around a circle, starting from the 12 o'clock position.</li><li>**Arc** - Fills from left to right around an arc.</li></ul> |
 | Orientation | Choose a stacking direction:<ul><li>**Auto** - Gauges display in rows and columns.</li><li>**Horizontal** - Gauges display top to bottom.</li><li>**Vertical** - Gauges display left to right.</li></ul> |
-| Show threshold labels | Controls if threshold values are shown. |
-| [Show threshold markers](#show-threshold-markers) | Controls if a threshold band is shown outside the inner gauge value band. |
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Neutral | Set the starting value from which every gauge will be filled. |
+| Bar width | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |
+| Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option is only applies when the **Segments** value is more than `1`. |
+| Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
+| [Neutral value](#neutral-value) | Set the starting value from which every gauge will be filled. |
+| [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
+| [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
+| Show labels | Control whether threshold, neutral and min/max labels are shown outside of the gauge. |
+| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
-#### Show threshold markers
+#### Neutral value
 
-Controls if a threshold band is shown around the inner gauge value band.
+Set the starting value from which every gauge will be filled when it shouldn't be the minimum value.
+This option is especially useful in cases where the range of data values includes negative numbers.
 
-![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png)
+For example, you want to display the storage of several batteries and the power range is from -2.5 kW (discharging) to 2.5 kW.
+When the minimum value is used as the starting point for the gauges, the visualization looks like this:
 
-### Text size
+![Gauge using min as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-min-v13.0.png)
+
+If you enter a neutral value of `0`, the visualization looks like this and is easier to reason about:
+
+![Gauge with zero as neutral](/media/docs/grafana/panels-visualizations/screenshot-gauge-neutral-0-v13.0.png)
+
+#### Show sparkline
+
+If you want to visualize the list of values as a time series along with the calculated gauge value, toggle on the **Show sparkline** switch.
+Each gauge displays the sparkline inside the circle or arc:
+
+![Gauge with a sparkline](/media/docs/grafana/panels-visualizations/screenshot-gauge-w-sparkline-v12.4.png)
+
+#### Show thresholds {#show-threshold-markers}
+
+Control whether a threshold band is shown outside the inner gauge value band.
+
+![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-gauge-w-thresholds-v13.0.png)
+
+### Text size options {#text-size}
 
 Adjust the sizes of the gauge text.
 

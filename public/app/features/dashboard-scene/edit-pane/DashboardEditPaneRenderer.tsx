@@ -3,13 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
@@ -19,8 +20,8 @@ import { getDefaultVizPanel } from '../utils/utils';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -50,6 +51,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
     return undefined;
   }, [selection]);
+
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
   const onSetLayoutElement = useCallback(
     (obj: SceneObject<SceneObjectState> | undefined) => {
@@ -95,11 +100,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew
-            onAddPanel={onAddNewPanel}
-            dashboard={dashboard}
-            selectedElement={selectedLayoutElement}
-          />
+          <AddNewEditPane onAddPanel={onAddNewPanel} dashboard={dashboard} selectedElement={selectedLayoutElement} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (
@@ -107,19 +108,21 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           <DashboardOutline editPane={editPane} isEditing={isEditing} />
         </Sidebar.OpenPane>
       )}
+      {openPane === 'filters' && (
+        <Sidebar.OpenPane>
+          <DashboardFiltersOverviewPane
+            adhocFilters={adHocVar}
+            groupByVariable={groupByVar}
+            onClose={() => editPane.closePane()}
+          />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <>
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
             <Sidebar.Button
               icon="plus"
-              iconColor="primary"
-              iconSize="xl"
+              variant="primary"
               onClick={() => {
                 onSetLayoutElement(selectedObject);
                 editPane.openPane('add');
@@ -129,6 +132,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
               active={selectedObject === null || openPane === 'add'}
             />
+
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
@@ -137,7 +141,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            <Sidebar.Divider />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
               icon="comment-alt-message"
@@ -156,6 +159,14 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 'Give feedback on the new dashboard editing experience'
               )}
             />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <Sidebar.Divider />
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+                <Sidebar.Divider />
+              </>
+            )}
           </>
         )}
         {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
@@ -167,6 +178,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
           active={openPane === 'outline'}
         ></Sidebar.Button>
+        {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+          <Sidebar.Button
+            icon="filter"
+            onClick={() => editPane.openPane('filters')}
+            title={t('dashboards.filters-overview.filters', 'Filters')}
+            tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
+            active={openPane === 'filters'}
+          />
+        )}
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
         {renderEnterpriseItems()}
         {Boolean(meta.isSnapshot) && (

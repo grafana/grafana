@@ -56,7 +56,7 @@ describe('VariableControls', () => {
     expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
   });
 
-  it('should render regular hidden variables but not scopes variable in edit mode', async () => {
+  it('should not render hidden variables in edit mode', async () => {
     const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
     const hiddenVariable = new TextBoxVariable({ name: 'HiddenVar', hide: VariableHide.hideVariable });
     const variables = [scopesVariable, hiddenVariable];
@@ -66,7 +66,7 @@ describe('VariableControls', () => {
     dashboard.setState({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
-    expect(await screen.findByText('HiddenVar')).toBeInTheDocument();
+    expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 

@@ -6,7 +6,7 @@ import {
   defaultSpec,
   defaultGridLayoutKind,
   Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardInputs, DashboardSource, InputType } from '../../types';

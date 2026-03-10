@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 )
 
@@ -46,6 +47,21 @@ func New(cfg app.Config) (app.App, error) {
 		}
 	}
 
+	// shared for all versions
+	playlistMutator := &simple.Mutator{
+		MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
+			return &app.MutatingResponse{
+				UpdatedObject: req.Object,
+			}, nil
+		},
+	}
+
+	playlistValidator := &simple.Validator{
+		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+			return nil
+		},
+	}
+
 	simpleConfig := simple.AppConfig{
 		Name:       "playlist",
 		KubeConfig: cfg.KubeConfig,
@@ -60,20 +76,14 @@ func New(cfg app.Config) (app.App, error) {
 			{
 				Kind:       playlistv0alpha1.PlaylistKind(),
 				Reconciler: playlistReconciler,
-				Mutator: &simple.Mutator{
-					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
-						// modify req.Object if needed
-						return &app.MutatingResponse{
-							UpdatedObject: req.Object,
-						}, nil
-					},
-				},
-				Validator: &simple.Validator{
-					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						// do something here if needed
-						return nil
-					},
-				},
+				Mutator:    playlistMutator,
+				Validator:  playlistValidator,
+			},
+			{
+				Kind:       playlistv1.PlaylistKind(),
+				Reconciler: playlistReconciler,
+				Mutator:    playlistMutator,
+				Validator:  playlistValidator,
 			},
 		},
 	}
@@ -92,11 +102,16 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := schema.GroupVersion{
+	gvV0alpha1 := schema.GroupVersion{
 		Group:   playlistv0alpha1.PlaylistKind().Group(),
 		Version: playlistv0alpha1.PlaylistKind().Version(),
 	}
+	gvV1 := schema.GroupVersion{
+		Group:   playlistv1.PlaylistKind().Group(),
+		Version: playlistv1.PlaylistKind().Version(),
+	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {playlistv0alpha1.PlaylistKind()},
+		gvV0alpha1: {playlistv0alpha1.PlaylistKind()},
+		gvV1:       {playlistv1.PlaylistKind()},
 	}
 }
