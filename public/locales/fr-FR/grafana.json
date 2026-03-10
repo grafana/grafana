@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Erreur lors du chargement de la règle pour cet événement.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrer par :",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "La période sélectionnée contient trop d’événements à afficher. Affichage des 5 000 derniers événements. Essayez d’utiliser une période plus courte.",
         "title": "Impossible d'afficher tous les événements"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Tableau de bord",
         "element": "Élément",
+        "link-set": "",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
         "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
@@ -5402,6 +5411,12 @@
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
         "variable-set": "Variables"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Utiliser des dimensions de clé statiques",
       "name-allow-custom-values": "Autoriser les valeurs personnalisées"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Impossible d’accéder au tableau de bord sélectionné. Veuillez réessayer.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} par <person />",
       "usage-count_one": "Utilisé sur {{count}} tableaux de bord",
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Géré par : Kubectl",
@@ -10692,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
-    "description-enable-logs-highlighting": "Utiliser un schéma de coloration prédéfini pour mettre en évidence les parties pertinentes des lignes de journal",
-    "description-show-controls": "Afficher les contrôles pour accéder à la première ou à la dernière ligne du log et filtrer par niveau de log",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "En phase de test. Lorsque les journaux OTel sont affichés, ajouter un champ supplémentaire contenant les paires clé-valeur pertinentes issues des étiquettes et des métadonnées.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Icône glisser-déposer",
       "clear-button": "Effacer",
@@ -12141,10 +12193,12 @@
     "start-modal": {
       "button-start": "Démarrer {{title}}",
       "description-customize-dashboard-elements-visibility": "Personnaliser la visibilité des éléments du tableau de bord",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Les hauteurs du panneau seront ajustées à la taille de l'écran",
       "label-autofit": "Ajustement automatique",
       "label-dashboard-links": "Liens du tableau de bord",
       "label-display-dashboard-controls": "Afficher les contrôles du tableau de bord",
+      "label-hide-logo": "",
       "label-mode": "Mode",
       "label-time-and-refresh": "Heure et actualisation",
       "label-variables": "Variables",

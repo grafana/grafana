@@ -740,6 +740,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "이 이벤트에 대한 규칙 로딩 중 오류 발생",
         "header": {
@@ -777,6 +781,10 @@
         }
       },
       "filterBy": "필터링 기준:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "선택한 기간에 표시할 이벤트가 너무 많습니다. 가장 최근의 5,000개 이벤트를 표시합니다. 기간을 좀 더 짧게 설정해 보세요.",
         "title": "모든 이벤트 표시 불가"
@@ -5360,6 +5368,7 @@
         "annotation-set": "",
         "dashboard": "대시보드",
         "element": "요소",
+        "link-set": "",
         "local-variable": "로컬 변수",
         "multiple-elements": "여러 요소",
         "multiple-elements-delete-text": "정말 이 요소를 삭제하시겠어요?",
@@ -5374,6 +5383,12 @@
         "tabs": "탭",
         "variable": "{{type}} 변수",
         "variable-set": "변수"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6418,6 +6433,11 @@
       "label-use-static-key-dimensions": "고정 키 차원 사용",
       "name-allow-custom-values": "사용자 지정 값 허용"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "선택한 대시보드로 이동할 수 없습니다. 다시 시도해 주세요.",
@@ -6836,6 +6856,34 @@
     "library-viz-panel-info": {
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "관리자: Kubectl",
@@ -10639,9 +10687,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
-    "description-enable-logs-highlighting": "사전 정의된 색상 구성을 사용하여 로그 라인의 관련 부분을 강조 표시합니다",
-    "description-show-controls": "마지막 또는 첫 번째 로그 라인으로 이동하는 컨트롤과 로그 단계별 필터를 표시합니다",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "실험적. OTel 로그가 표시되면, 레이블 및 메타데이터의 관련 키-값 쌍을 추가로 표시 필드로 추가합니다.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "드래그 앤 드롭 아이콘",
       "clear-button": "지우기",
@@ -12082,10 +12134,12 @@
     "start-modal": {
       "button-start": "{{title}} 시작",
       "description-customize-dashboard-elements-visibility": "대시보드 요소 가시성 사용자 지정",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "패널 높이는 화면 크기에 맞게 조정됩니다.",
       "label-autofit": "자동 맞춤",
       "label-dashboard-links": "대시보드 링크",
       "label-display-dashboard-controls": "대시보드 제어 표시",
+      "label-hide-logo": "",
       "label-mode": "모드",
       "label-time-and-refresh": "시간 및 새로 고침",
       "label-variables": "변수",
