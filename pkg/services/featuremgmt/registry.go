@@ -2443,6 +2443,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamsApi",
+			Description:  "Enables team APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesTeamsHandlerRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,

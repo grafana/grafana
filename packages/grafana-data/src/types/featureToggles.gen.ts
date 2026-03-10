@@ -1543,6 +1543,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Enables team APIs in the app platform
+  * @default false
+  */
+  kubernetesTeamsApi?: boolean;
+  /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
