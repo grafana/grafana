@@ -25,9 +25,7 @@ export const createCorrelationsHandler = (data: CreateCorrelationApiResponse) =>
     return HttpResponse.json(data);
   });
 
-export const deleteCorrelationsHandler = (
-  data: DeleteCorrelationApiResponse | ((info: Parameters<Parameters<typeof http.get>[1]>[0]) => Response)
-) =>
+export const deleteCorrelationsHandler = (data: DeleteCorrelationApiResponse) =>
   http.delete('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations/:id', ({ params }) => {
     const { id } = params;
     if (id !== undefined && typeof id === 'string') {
