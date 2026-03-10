@@ -20,7 +20,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
 	FolderResource:    true,
 	DashboardResource: true,
-	ShortURLResource:  false,
+	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 
 // read storage configs from ini file. They look like:
@@ -61,6 +61,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
+	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
+	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
@@ -99,6 +101,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
+	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()

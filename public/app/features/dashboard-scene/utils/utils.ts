@@ -268,10 +268,7 @@ export function getDefaultPluginId(): string {
 export function getDefaultVizPanel(): VizPanel {
   const defaultPluginId = getDefaultPluginId();
 
-  const newPanelTitle =
-    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      ? ''
-      : t('dashboard.new-panel-title', 'New panel');
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
   const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 

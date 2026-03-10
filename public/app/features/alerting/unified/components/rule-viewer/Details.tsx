@@ -354,5 +354,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gap: theme.spacing(4),
     gridTemplateColumns: '1fr',
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
   }),
 });
