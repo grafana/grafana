@@ -56,6 +56,21 @@ func GetAuthorizer() authorizer.Authorizer {
 			}
 		}
 
+		// Auth handling for Logs Drilldown default labels
+		if attr.GetResource() == "logsdrilldowndefaultlabels" {
+			// Allow get for all users
+			if attr.GetVerb() == "get" {
+				return authorizer.DecisionAllow, "", nil
+			}
+			// require plugins:write permissions for other operations
+			_, ok := p[accesscontrol.PluginRolePrefix+"write"]
+			if ok {
+				return authorizer.DecisionAllow, "user has plugins:write", nil
+			} else {
+				return authorizer.DecisionDeny, "user missing plugins:write", nil
+			}
+		}
+
 		if len(p) == 0 {
 			return authorizer.DecisionDeny, "no permissions", nil
 		}
