@@ -2468,14 +2468,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesTeamsApi",
-			Description:  "Enables team APIs in the app platform",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesServiceAccountsApi",
 			Description:  "Enables service account APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2626,6 +2618,15 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
+			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			FrontendOnly:    true,
 		},
 		{
 			Name:         "flameGraphWithCallTree",

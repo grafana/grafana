@@ -1541,6 +1541,23 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointFrontend",
+        "resourceVersion": "1773063626484",
+        "creationTimestamp": "2026-03-03T16:55:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-09 13:40:26.484445 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2709,20 +2726,6 @@
       },
       "spec": {
         "description": "Enables service account token APIs in the app platform",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "kubernetesTeamsApi",
-        "resourceVersion": "1773147333794",
-        "creationTimestamp": "2026-03-10T12:55:33Z"
-      },
-      "spec": {
-        "description": "Enables team APIs in the app platform",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
