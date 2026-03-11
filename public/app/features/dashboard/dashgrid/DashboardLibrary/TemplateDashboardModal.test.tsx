@@ -209,7 +209,11 @@ describe('TemplateDashboardModal', () => {
 
     describe('when feature flags are enabled', () => {
       beforeEach(() => {
-        setTestFlags({ dashboardTemplatesAssistantButton: true, 'assistant.frontend.tools.dashboardTemplates': true });
+        setTestFlags({
+          dashboardTemplatesAssistantButton: true,
+          'assistant.frontend.tools.dashboardTemplates': true,
+          analyticsFramework: false,
+        });
       });
 
       it('should redirect to template dashboard URL when Customize with Assistant is clicked with correct parameters', async () => {
@@ -271,6 +275,7 @@ describe('TemplateDashboardModal', () => {
 
   describe('View template button', () => {
     it('should track action view_template when View template is clicked', async () => {
+      setTestFlags({ analyticsFramework: false });
       const { user } = render(<TemplateDashboardModal />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
