@@ -770,11 +770,6 @@ export interface FeatureToggles {
   */
   appPlatformGrpcClientAuth?: boolean;
   /**
-  * Enable the groupsync extension for managing Group Attribute Sync feature
-  * @default false
-  */
-  groupAttributeSync?: boolean;
-  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
