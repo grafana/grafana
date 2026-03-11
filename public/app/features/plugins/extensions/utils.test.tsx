@@ -528,6 +528,14 @@ describe('Plugin Extensions / Utils', () => {
         expect(proxy.a.c).toBeUndefined();
       });
     });
+
+    it('should pass through React elements without wrapping them in a proxy', () => {
+      const element = <div>hello</div>;
+      const proxy = getMutationObserverProxy({ child: element });
+
+      expect(proxy.child).toBe(element);
+      expect(isMutationObserverProxy(proxy.child)).toBe(false);
+    });
   });
 
   describe('writableProxy()', () => {
@@ -617,6 +625,24 @@ describe('Plugin Extensions / Utils', () => {
           stack: expect.any(String),
         }
       );
+    });
+
+    it('should not throw when value contains React elements', () => {
+      const element = <div>hello</div>;
+
+      expect(() => {
+        writableProxy({ children: element });
+      }).not.toThrow();
+    });
+
+    it('should preserve React elements as-is while cloning other properties', () => {
+      const element = <div>hello</div>;
+      const original = { name: 'test', children: element };
+      const copy = writableProxy(original);
+
+      expect(copy).not.toBe(original);
+      expect(copy.name).toBe('test');
+      expect(copy.children).toBe(element);
     });
   });
 
@@ -992,6 +1018,28 @@ describe('Plugin Extensions / Utils', () => {
         message: 'Test error',
         componentStack: expect.any(String),
       });
+    });
+
+    it('should correctly render when children are passed as props', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const ParentComponent = ({ children }: React.PropsWithChildren) => {
+        return <div data-testid="parent-wrapper">{children}</div>;
+      };
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ParentComponent',
+        Component: ParentComponent,
+        log,
+      });
+
+      render(
+        <WrappedComponent>
+          <span>child content</span>
+        </WrappedComponent>
+      );
+
+      expect(await screen.findByTestId('parent-wrapper')).toBeVisible();
+      expect(screen.getByText('child content')).toBeVisible();
     });
   });
 
