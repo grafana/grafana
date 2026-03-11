@@ -7,6 +7,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,6 +18,13 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+// tupleKey generates a unique string key for a tuple based on user, relation, and object.
+// Conditions are intentionally excluded — they are part of tuple content, not identity.
+// Uses null-byte separators to prevent collisions between field values.
+func tupleKey(tuple *openfgav1.TupleKey) string {
+	return tuple.GetUser() + "\x00" + tuple.GetRelation() + "\x00" + tuple.GetObject()
+}
 
 // fetchGlobalRolePerms fetches cluster-scoped GlobalRole resources and resolves their
 // effective permissions (following RoleRefs + PermissionsOmitted). The returned map is
@@ -154,18 +162,18 @@ func resolveAllGlobalRolePermissions(
 	return resolved, nil
 }
 
-// fetchAndTranslateTuples fetches CRDs from Unistore and translates them directly to tuples.
-// This streaming approach avoids keeping all CRDs in memory.
+// fetchAndTranslateTuples fetches CRDs from Unistore and translates them directly into a
+// map keyed by tupleKey.
 //
 // GlobalRole tuples are injected selectively: only GlobalRoles that are NOT referenced by any
 // namespace Role are added standalone. GlobalRoles that ARE referenced already have their
 // permissions inlined into the namespace Role's tuples via translateRoleToTuples composition.
-func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) ([]*openfgav1.TupleKey, error) {
+func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace string) (map[string]*openfgav1.TupleKey, error) {
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateTuples")
 	defer span.End()
 
 	globalRolePerms := r.getGlobalRolePerms()
-	allTuples := make([]*openfgav1.TupleKey, 0, len(globalRolePerms)*2)
+	expectedMap := make(map[string]*openfgav1.TupleKey, len(globalRolePerms)*2)
 
 	// Track which GlobalRoles are referenced by namespace Roles via RoleRefs.
 	// Those have their permissions inlined and must not be added as standalone tuples.
@@ -190,19 +198,16 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		"users":               TranslateUserToTuples,
 	}
 
-	// Process each GVR type and translate to tuples immediately
+	// Process each GVR type and insert translated tuples directly into the map
 	for _, gvr := range reconcileGVRs {
 		translator, ok := translators[gvr.Resource]
 		if !ok {
 			return nil, tracing.Errorf(span, "no translator found for resource type: %s", gvr.Resource)
 		}
 
-		tuples, err := r.fetchAndTranslateGVR(ctx, namespace, gvr, translator)
-		if err != nil {
+		if err := r.fetchAndTranslateGVR(ctx, namespace, gvr, translator, expectedMap); err != nil {
 			return nil, tracing.Errorf(span, "failed to process %s: %w", gvr.Resource, err)
 		}
-
-		allTuples = append(allTuples, tuples...)
 	}
 
 	// For GlobalRoles not referenced by any namespace Role, add their tuples directly.
@@ -215,19 +220,23 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		if err != nil {
 			return nil, tracing.Errorf(span, "failed to generate tuples for unlinked GlobalRole %s: %w", roleName, err)
 		}
-		allTuples = append(allTuples, tuples...)
+		for _, t := range tuples {
+			expectedMap[tupleKey(t)] = t
+		}
 	}
 
-	return allTuples, nil
+	return expectedMap, nil
 }
 
-// fetchAndTranslateGVR fetches CRDs of a specific type and translates them to tuples.
+// fetchAndTranslateGVR fetches CRDs of a specific type and inserts translated tuples
+// directly into the destination map
 func (r *Reconciler) fetchAndTranslateGVR(
 	ctx context.Context,
 	namespace string,
 	gvr schema.GroupVersionResource,
 	translator func(*unstructured.Unstructured) ([]*openfgav1.TupleKey, error),
-) ([]*openfgav1.TupleKey, error) {
+	dest map[string]*openfgav1.TupleKey,
+) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.fetchAndTranslateGVR", trace.WithAttributes(
 		attribute.String("gvr.group", gvr.Group),
 		attribute.String("gvr.version", gvr.Version),
@@ -235,18 +244,16 @@ func (r *Reconciler) fetchAndTranslateGVR(
 	))
 	defer span.End()
 
-	var allTuples []*openfgav1.TupleKey
-
 	// Get the dynamic client for this namespace
 	clients, err := r.clientFactory.Clients(ctx, namespace)
 	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get clients for namespace %s: %w", namespace, err)
+		return tracing.Errorf(span, "failed to get clients for namespace %s: %w", namespace, err)
 	}
 
 	// Get the resource interface for the specific GVR
 	resourceClient, _, err := clients.ForResource(ctx, gvr)
 	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get client for resource %s: %w", gvr.String(), err)
+		return tracing.Errorf(span, "failed to get client for resource %s: %w", gvr.String(), err)
 	}
 
 	// Stream through pages using the Kubernetes dynamic client
@@ -255,15 +262,17 @@ func (r *Reconciler) fetchAndTranslateGVR(
 		if err != nil {
 			return fmt.Errorf("failed to translate %s/%s: %w", gvr.Resource, item.GetName(), err)
 		}
-		allTuples = append(allTuples, tuples...)
+		for _, t := range tuples {
+			dest[tupleKey(t)] = t
+		}
 		return nil
 	})
 
 	if err != nil {
-		return nil, tracing.Error(span, err)
+		return tracing.Error(span, err)
 	}
 
-	return allTuples, nil
+	return nil
 }
 
 // listAndProcess is a helper function that lists all resources and processes each one.
@@ -295,36 +304,46 @@ func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, fn fu
 	return nil
 }
 
-// readAllTuplesFromZanzana reads all tuples from Zanzana for a namespace.
-func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace string) ([]*openfgav1.TupleKey, error) {
-	ctx, span := r.tracer.Start(ctx, "reconciler.readAllTuplesFromZanzana")
+// computeDiffStreaming reads current tuples from Zanzana page-by-page and computes the diff
+// against expectedMap. It mutates expectedMap by deleting matched entries; after return,
+// remaining entries in expectedMap are returned as toAdd.
+func (r *Reconciler) computeDiffStreaming(
+	ctx context.Context, namespace string,
+	expectedMap map[string]*openfgav1.TupleKey,
+) (toAdd, toDelete []*openfgav1.TupleKey, err error) {
+	ctx, span := r.tracer.Start(ctx, "reconciler.computeDiffStreaming")
 	defer span.End()
-
-	var allTuples []*openfgav1.TupleKey
-	var continuationToken string
 
 	// Get store info for the namespace
 	storeInfo, err := r.server.GetOrCreateStore(ctx, namespace)
 	if err != nil {
-		return nil, tracing.Errorf(span, "failed to get store info: %w", err)
+		return nil, nil, tracing.Errorf(span, "failed to get store info: %w", err)
 	}
 
-	// Read all tuples using pagination
+	var continuationToken string
+
+	// Read current tuples page-by-page and diff against expected
 	for {
 		req := &openfgav1.ReadRequest{
 			StoreId:           storeInfo.ID,
-			PageSize:          nil, // Use default page size
+			PageSize:          wrapperspb.Int32(1000),
 			ContinuationToken: continuationToken,
 		}
 
 		resp, err := r.server.GetOpenFGAServer().Read(ctx, req)
 		if err != nil {
-			return nil, tracing.Errorf(span, "failed to read tuples: %w", err)
+			return nil, nil, tracing.Errorf(span, "failed to read tuples: %w", err)
 		}
 
-		// Extract tuple keys from tuples
 		for _, tuple := range resp.GetTuples() {
-			allTuples = append(allTuples, tuple.GetKey())
+			key := tupleKey(tuple.GetKey())
+			if _, exists := expectedMap[key]; exists {
+				// Tuple is in sync — remove from expected so it won't be added
+				delete(expectedMap, key)
+			} else {
+				// Tuple exists in Zanzana but not expected — needs deletion
+				toDelete = append(toDelete, tuple.GetKey())
+			}
 		}
 
 		if resp.GetContinuationToken() == "" {
@@ -333,7 +352,13 @@ func (r *Reconciler) readAllTuplesFromZanzana(ctx context.Context, namespace str
 		continuationToken = resp.GetContinuationToken()
 	}
 
-	return allTuples, nil
+	// Remaining entries in expectedMap are missing from Zanzana — need to be added
+	toAdd = make([]*openfgav1.TupleKey, 0, len(expectedMap))
+	for _, tuple := range expectedMap {
+		toAdd = append(toAdd, tuple)
+	}
+
+	return toAdd, toDelete, nil
 }
 
 // writeTuplesToZanzana applies the diff (additions and deletions) to Zanzana in batches.
