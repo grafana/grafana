@@ -309,10 +309,11 @@ describe('Panel mutation commands', () => {
       expect(result.success).toBe(true);
       const data = result.data as PanelElementEntry;
       expect(data.layoutItem.kind).toBe('GridLayoutItem');
-      expect(data.layoutItem.spec.x).toBe(6);
-      expect(data.layoutItem.spec.y).toBe(3);
-      expect(data.layoutItem.spec.width).toBe(8);
-      expect(data.layoutItem.spec.height).toBe(5);
+      const gridSpec = data.layoutItem.spec as { x: number; y: number; width: number; height: number };
+      expect(gridSpec.x).toBe(6);
+      expect(gridSpec.y).toBe(3);
+      expect(gridSpec.width).toBe(8);
+      expect(gridSpec.height).toBe(5);
     });
   });
 
@@ -640,8 +641,9 @@ describe('Panel mutation commands', () => {
       expect(result.changes[0].previousValue).not.toBeNull();
       const data = result.data as PanelElementEntry;
       expect(data.layoutItem.kind).toBe('GridLayoutItem');
-      expect(data.layoutItem.spec.x).toBe(12);
-      expect(data.layoutItem.spec.width).toBe(6);
+      const gridSpec = data.layoutItem.spec as { x: number; width: number };
+      expect(gridSpec.x).toBe(12);
+      expect(gridSpec.width).toBe(6);
     });
 
     it('returns error for non-existent element', async () => {
