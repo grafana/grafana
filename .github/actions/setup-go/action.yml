@@ -27,7 +27,7 @@ runs:
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
-        cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.sum' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.mod' || '' }}
 
     # When cache-build is disabled, cache only GOMODCACHE via actions/cache.
     # This avoids restoring/saving the large GOCACHE (~5 GB) for jobs that
