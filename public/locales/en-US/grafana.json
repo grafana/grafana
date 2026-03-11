@@ -5154,6 +5154,12 @@
       }
     },
     "canvas-actions": {
+      "add": {
+        "paste": {
+          "description": "Click or drag to paste panel",
+          "title": "Paste panel"
+        }
+      },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 3 levels",
@@ -5764,10 +5770,11 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy or Duplicate",
+        "copy-or-duplicate": "Copy/paste or duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout"
+        "layout": "Layout",
+        "paste": "Paste"
       },
       "continue": "Continue",
       "panel": {
