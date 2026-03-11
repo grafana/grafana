@@ -36,15 +36,14 @@ var (
 
 var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
 }
 
 type LegacyStore struct {
-	store               legacy.LegacyIdentityStore
-	ac                  claims.AccessClient
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -56,10 +55,6 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "serviceaccount.Delete")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -102,10 +97,6 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx, span := s.tracer.Start(ctx, "serviceaccount.Create")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {

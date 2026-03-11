@@ -897,11 +897,13 @@
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
       "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
+      "button-history": "History",
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
+      "tooltip-history": "View the history of notification attempts made to this contact point",
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
@@ -1869,14 +1871,16 @@
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
       "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications_one": "{{count}} notification",
+      "timeline-n-notifications_one": "{{count}} notifications",
       "timeline-n-notifications_other": "{{count}} notifications",
-      "timeline-n-receivers_one": "{{count}} receiver",
+      "timeline-n-receivers_one": "{{count}} receivers",
       "timeline-n-receivers_other": "{{count}} receivers",
       "timeline-one-notification": "1 notification",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
-      "timeline-toggle-notifications": "Toggle notification details"
+      "timeline-toggle-notifications": "Toggle notification details",
+      "view-notification-detail": "Details",
+      "view-notification-tooltip": "View full notification details"
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -2090,6 +2094,12 @@
       },
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
+    "multiple-policies-view": {
+      "collapse-all": "Collapse all",
+      "expand-all": "Expand all",
+      "policy-tree-filter-label": "Policy",
+      "policy-tree-filter-placeholder": "Select policy trees"
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Are you sure you would like to delete \"{{muteTiming}}\"?"
     },
@@ -2187,47 +2197,60 @@
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
       "title-no-alertmanager-found": "No Alertmanager found"
     },
-    "notification-history": {
-      "annotations": "Annotations:",
-      "column": {
-        "contact-point": "Contact point",
-        "group-labels": "Group Labels",
-        "state": "State",
-        "time": "Time"
-      },
-      "description": "Description:",
-      "empty": "No notifications have been sent for this alert rule in the last {{days}} days",
-      "empty-filtered": "No notifications match the current filters for the last {{days}} days",
-      "error": {
-        "default": "Unable to fetch notification history",
-        "title": "Error fetching notifications"
-      },
-      "filter": {
-        "label": "Filter notifications",
-        "outcome": "Outcome",
-        "placeholder": "Search labels...",
-        "status": "Status",
-        "tooltip": "Use label matcher expression or click on a group label to filter instances, for example:"
-      },
+    "notification-detail": {
+      "action-silence": "Silence this group",
+      "action-view-contact-point": "View contact point",
+      "alert-count-inline_one": "{{count}} alert(s)",
+      "alert-count-inline_other": "{{count}} alert(s)",
+      "alerts-empty": "No alerts found for this notification.",
+      "alerts-loading": "Loading alerts...",
+      "batch-all-ok": "all succeeded",
+      "batch-count-many_one": "{{count}} deliveries",
+      "batch-count-many_other": "{{count}} deliveries",
+      "batch-count-one": "1 delivery",
+      "batch-failed_one": "{{count}} failed",
+      "batch-failed_other": "{{count}} failed",
+      "current": "Current",
+      "debug-details-heading": "Debug details",
+      "delivery-failed": "Delivery failed",
+      "delivery-success": "Delivered successfully",
+      "error-title": "Error loading notification",
+      "error-title-banner": "Delivery error",
+      "error-unknown": "Unknown error",
+      "field-group-key": "Group key",
+      "field-integration-index": "Integration index",
+      "field-pipeline-time": "Pipeline time",
+      "field-retry": "Retry",
+      "field-timestamp": "Timestamp",
+      "field-uuid": "UUID",
       "firing-alerts": "Firing Alerts",
-      "labels": "Labels:",
-      "loading": "Loading notifications...",
-      "notification-error": "Notification Error",
-      "outcome": {
-        "failed": "Failed",
-        "success": "Success"
-      },
+      "group-labels-heading": "Group Labels",
+      "loading": "Loading notification...",
+      "no": "No",
+      "not-found-body": "No UUID was provided. Please navigate from the notifications list.",
+      "not-found-title": "Notification not found",
+      "page-title": "View",
+      "related-count_one": "{{count}} related notifications",
+      "related-count_other": "{{count}} related notifications",
+      "related-count-with-failures_one": "{{count}} related ({{failed}} failed)",
+      "related-count-with-failures_other": "{{count}} related ({{failed}} failed)",
+      "related-loading": "Loading related notifications...",
+      "related-sidebar-subtitle": "Notification attempts for the same alert group and route",
+      "related-sidebar-title": "Related Notifications",
       "resolved-alerts": "Resolved Alerts",
-      "showing-alerts": "Showing {{ showing }} out of {{ total }} alerts",
-      "started": "Started:",
-      "status": {
-        "firing": "Firing",
-        "resolved": "Resolved"
-      },
-      "summary": "Summary:"
+      "retry-tooltip": "This attempt was a retry of a previous attempt",
+      "uuid-not-found-body": "No notification found with UUID: {{uuid}}",
+      "uuid-not-found-title": "Notification not found",
+      "yes": "Yes"
+    },
+    "notification-history": {
+      "enrichment-explore": "View in Explore",
+      "enrichment-no-logs": "No log lines",
+      "enrichment-type-logs": "logs",
+      "enrichments": "Enrichments:"
     },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Search by contact point",
+      "label-search-by-contact-point": "Contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
       "search-query-input-placeholder-search": "Search"
     },
@@ -2297,7 +2320,8 @@
       "outcome-failed": "Failed",
       "status-firing": "Firing",
       "status-resolved": "Resolved",
-      "unable-to-fetch": "Unable to fetch notification history"
+      "unable-to-fetch": "Unable to fetch notification history",
+      "view-link": "View"
     },
     "notifications-runtime-datasource": {
       "message": {
@@ -2392,6 +2416,7 @@
       "tooltip-managed-by-plugin": "This rule is managed by the {{pluginName}} plugin"
     },
     "policies": {
+      "add-route": "Add route",
       "aria-label-collapse": "Collapse",
       "aria-label-expand": "Expand",
       "aria-label-more": "more actions for policy",
@@ -2402,9 +2427,10 @@
         "title-new-notification-policy": "New notification policy"
       },
       "default-policy": {
-        "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
+        "route-count_one": "{{count}} routes",
+        "route-count_other": "{{count}} routes",
         "title": "Default policy",
-        "update": "Update default policy"
+        "update": "Update policy"
       },
       "delete": {
         "confirm": "Yes, delete policy",
@@ -2419,7 +2445,7 @@
         "failed-to-update-your-configuration": "Failed to update your configuration:",
         "title-something-went-wrong": "Something went wrong"
       },
-      "filter-description": "Filter notification policies by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
+      "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
       "matchers": "Matchers",
       "metadata": {
@@ -2452,24 +2478,23 @@
       },
       "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
-      "new-child": "New child policy",
-      "new-policy": "Add new policy",
+      "new-child": "Add route",
+      "new-policy": "Add route",
       "no-matchers": "No matchers",
       "reload-policies": "Reload policies",
       "reset-modal": {
+        "delete": "Delete",
+        "deleting": "Deleting...",
+        "permanently-delete": "This action will permanently delete the <1>{{routeName}}</1> notification policy.",
         "permanently-reset": "This action will permanently reset the <1>{{routeName}}</1> notification policy to an empty state.",
         "reset": "Reset",
         "resetting": "Resetting...",
+        "title-delete-notification-policy": "Delete notification policy",
         "title-reset-notification-policy": "Reset notification policy"
       },
-      "root-policy": {
-        "description": "All alert instances associated with this Route will be handled by this default policy if no other matching policies are found.",
-        "title": "Default policy for '{{routeName}}'"
-      },
-      "save-policy": "Save policy",
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
-        "update-policy": "Update policy",
+        "update-route": "Update route",
         "updating": "Updating..."
       },
       "update-errors": {
@@ -2511,9 +2536,9 @@
       "title-routing-tree-not-found": "Routing tree not found"
     },
     "policy": {
-      "label-new-child-policy": "New child policy",
-      "label-new-sibling-above": "New sibling above",
-      "label-new-sibling-below": "New sibling below"
+      "label-new-child-policy": "Add child",
+      "label-new-sibling-above": "Add sibling above",
+      "label-new-sibling-below": "Add sibling below"
     },
     "policy-page": {
       "text-subtitle": "Determine how alerts are routed to contact points for alert rules configured to use this notification policy."
@@ -3503,7 +3528,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Add notification policy"
+        "title-add-route": "Add route"
       }
     },
     "use-columns": {
@@ -3544,7 +3569,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Delete",
       "label-edit": "Edit",
-      "label-export": "Export"
+      "label-export": "Export",
+      "label-reset": "Reset"
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Yes, delete contact point",
@@ -3576,7 +3602,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Edit notification policy"
+        "title-edit-route": "Edit route"
       }
     },
     "use-page-nav": {
@@ -5342,6 +5368,7 @@
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
@@ -5396,6 +5423,7 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
@@ -5410,6 +5438,12 @@
         "tabs": "Tabs",
         "variable": "{{type}} variable",
         "variable-set": "Variables"
+      },
+      "links": {
+        "add-link": "Add link",
+        "reorder": "Drag to reorder",
+        "select-link": "Select",
+        "untitled": "Untitled link"
       },
       "row": {
         "header": {
@@ -6456,6 +6490,11 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-link": {
+      "inline-instance-name": "New link",
+      "label-link": "Link",
+      "tooltip": "Add link to another dashboard or external site"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -6552,6 +6591,17 @@
       "tooltip-move-down": "Move down",
       "tooltip-move-up": "Move up"
     },
+    "annotations-list": {
+      "drag-end": {
+        "description": "Reorder annotations list"
+      }
+    },
+    "annotations-section": {
+      "content-drag-to-reorder": "Drag to reorder",
+      "name-builtin": "{{annoName}} (Built-in)",
+      "name-disabled": "(Disabled) {{annoName}}",
+      "select": "Select"
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
       "cannot-start-with": "It cannot start with '/' or end with '/', '.', or whitespace.",
@@ -6596,6 +6646,15 @@
       "name-json-values": "JSON",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
+    },
+    "dashboard-annotations-list": {
+      "add-annotation-query": "Add annotation query",
+      "title-above-dashboard-count_one": "Above dashboard ({{count}})",
+      "title-above-dashboard-count_other": "Above dashboard ({{count}})",
+      "title-controls-menu-count_one": "Controls menu ({{count}})",
+      "title-controls-menu-count_other": "Controls menu ({{count}})",
+      "title-hidden-count_one": "Hidden ({{count}})",
+      "title-hidden-count_other": "Hidden ({{count}})"
     },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
@@ -6790,6 +6849,7 @@
       "title": {
         "description": "Description",
         "panel-links": "Panel links",
+        "panel-styles": "Panel styles",
         "title": "Title",
         "transparent-background": "Transparent background"
       }
@@ -6875,6 +6935,34 @@
       "last-edited": "{{timeAgo}} by<person />",
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
+    },
+    "link-edit-actions": {
+      "add-link": "Add link",
+      "remove-link": "Remove link",
+      "update-link": "Update link"
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": "Reorder links list"
+        }
+      },
+      "render-list": {
+        "aria-label-link": "Link"
+      }
+    },
+    "link-options": {
+      "icon": "Icon",
+      "include-time-range": "Include current time range",
+      "include-variables": "Include current template variable values",
+      "open-in-new-tab": "Open link in new tab",
+      "options-category": "Options",
+      "show-as-dropdown": "Show as dropdown",
+      "show-in-controls-menu": "Show in controls menu",
+      "type": "Type",
+      "type-dashboards": "Dashboards",
+      "type-link": "Link",
+      "with-tags": "With tags"
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
@@ -6974,6 +7062,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": "Panel styles"
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Back"
@@ -6986,6 +7077,11 @@
         }
       },
       "title-close": "Close"
+    },
+    "provisioned-controls-section": {
+      "label": "Provisioned by data source",
+      "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
@@ -7102,8 +7198,8 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
-      "affected-dashboards_other": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
+      "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
@@ -7212,6 +7308,13 @@
       "discard": "Discard",
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
+    },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
     },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
@@ -8732,6 +8835,20 @@
     "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
+    "presets": {
+      "circle": "Circle",
+      "circle_desc": "plain round, from thresholds",
+      "gradient": "Gradient",
+      "gradient_desc": "gradient color scale",
+      "neon": "Neon",
+      "neon_desc": "round, single color endpoint glow",
+      "neonSegmented": "Neon segmented",
+      "neonSegmented_desc": "round, few segments",
+      "segmented": "Segmented",
+      "segmented_desc": "segmented thresholds",
+      "standard": "Standard",
+      "standard_desc": "plain, from thresholds"
+    },
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
@@ -9633,6 +9750,9 @@
     "cascader": {
       "clear-button": "Clear selection"
     },
+    "color-picker": {
+      "input-label": "RGBA value"
+    },
     "color-picker-popover": {
       "palette-tab": "Colors",
       "spectrum-tab": "Custom"
@@ -10330,8 +10450,8 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frames,",
-      "count-frames_other": "{{count}} frames,",
+      "count-frames_one": "{{count}} frames, ",
+      "count-frames_other": "{{count}} frames, ",
       "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
@@ -10594,8 +10714,8 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <strong>{{count}} dashboards.</strong>",
-      "num-affected_other": "This update will affect <strong>{{count}} dashboards.</strong>",
+      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
+      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     }
@@ -10788,7 +10908,8 @@
     },
     "log-line-details": {
       "clear-search": "Clear",
-      "close": "Close log details",
+      "close-inline-details": "Close details for this log",
+      "close-sidebar-details": "Close log details sidebar",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -12153,10 +12274,12 @@
     "start-modal": {
       "button-start": "Start {{title}}",
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
+      "description-hide-logo": "Hide the branding footer from the dashboard",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard links",
       "label-display-dashboard-controls": "Display dashboard controls",
+      "label-hide-logo": "Hide logo",
       "label-mode": "Mode",
       "label-time-and-refresh": "Time and refresh",
       "label-variables": "Variables",
@@ -13493,7 +13616,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Add filter",
+      "disable": "Disable {{type}}",
       "duplicate": "Duplicate {{type}}",
+      "enable": "Enable {{type}}",
       "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
@@ -13591,11 +13716,10 @@
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "footer-items_one": "{{count}} item",
+      "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
-      "loading-queries-transformations": "Loading queries and transformations",
       "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
@@ -14404,8 +14528,8 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)",
-      "too-many-points_other": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)"
+      "too-many-points_one": "Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)",
+      "too-many-points_other": "Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)"
     }
   },
   "support-bundles": {
@@ -14819,6 +14943,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
+    },
+    "presets": {
+      "area": "Area",
+      "default": "Default",
+      "smooth": "Smooth",
+      "stacked-area": "Stacked area",
+      "stacked-area-gradient": "Stacked area gradient",
+      "stacked-smooth": "Stacked smooth",
+      "stacked-step": "Stacked step",
+      "step": "Step",
+      "step-filled": "Step filled",
+      "step-hue": "Step hue"
     },
     "span-nulls-editor": {
       "gaps-options": {

@@ -550,11 +550,9 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
-                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
-                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}
