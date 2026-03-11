@@ -3,36 +3,35 @@
 package v1alpha1
 
 import (
-    "github.com/grafana/grafana-app-sdk/resource"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana-app-sdk/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type GetSomethingRequestParamsObject struct {
-    metav1.TypeMeta `json:",inline"`
-    GetSomethingRequestParams `json:",inline"`
+	metav1.TypeMeta           `json:",inline"`
+	GetSomethingRequestParams `json:",inline"`
 }
 
 func NewGetSomethingRequestParamsObject() *GetSomethingRequestParamsObject {
-    return &GetSomethingRequestParamsObject{}
+	return &GetSomethingRequestParamsObject{}
 }
 
 func (o *GetSomethingRequestParamsObject) DeepCopyObject() runtime.Object {
-    dst := NewGetSomethingRequestParamsObject()
-    o.DeepCopyInto(dst)
-    return dst
+	dst := NewGetSomethingRequestParamsObject()
+	o.DeepCopyInto(dst)
+	return dst
 }
 
 func (o *GetSomethingRequestParamsObject) DeepCopyInto(dst *GetSomethingRequestParamsObject) {
-    dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
-    dst.TypeMeta.Kind = o.TypeMeta.Kind
-    dstGetSomethingRequestParams := GetSomethingRequestParams{}
-    _ = resource.CopyObjectInto(&dstGetSomethingRequestParams, &o.GetSomethingRequestParams)
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	dstGetSomethingRequestParams := GetSomethingRequestParams{}
+	_ = resource.CopyObjectInto(&dstGetSomethingRequestParams, &o.GetSomethingRequestParams)
 }
 
-
 func (GetSomethingRequestParamsObject) OpenAPIModelName() string {
-    return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomethingRequestParamsObject"
+	return "com.github.grafana.grafana.apps.example.pkg.apis.example.v1alpha1.GetSomethingRequestParamsObject"
 }
 
 var _ runtime.Object = NewGetSomethingRequestParamsObject()
