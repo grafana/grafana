@@ -109,14 +109,14 @@ type KVBackend interface {
 }
 
 type KVBackendOptions struct {
-	KvStore                      KV
-	WithPruner                   bool
-	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Tracer                       trace.Tracer          // TODO add tracing
-	Reg                          prometheus.Registerer // TODO add metrics
-	Log                          log.Logger
-	GarbageCollection            GarbageCollectionConfig
+	KvStore              KV
+	WithPruner           bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+	Log                  log.Logger
+	GarbageCollection    GarbageCollectionConfig
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -183,22 +183,22 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                           kv,
-		bulkLock:                     NewBulkLock(),
-		dataStore:                    newDataStore(kv),
-		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:                    opts.WatchOptions.normalize(),
-		snowflake:                    s,
-		log:                          logger,
-		eventRetentionPeriod:         eventRetentionPeriod,
-		eventPruningInterval:         eventPruningInterval,
-		rvManager:                    opts.RvManager,
-		dbKeepAlive:                  opts.DBKeepAlive,
-		lastImportStore:              newLastImportStore(kv),
-		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
-		searchLookback:               opts.SearchLookback,
+		kv:                   kv,
+		bulkLock:             NewBulkLock(),
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:            opts.WatchOptions.normalize(),
+		snowflake:            s,
+		log:                  logger,
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+		rvManager:            opts.RvManager,
+		dbKeepAlive:          opts.DBKeepAlive,
+		lastImportStore:      newLastImportStore(kv),
+		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
+		garbageCollection:    opts.GarbageCollection,
+		searchLookback:       opts.SearchLookback,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
