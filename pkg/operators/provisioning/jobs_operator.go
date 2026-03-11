@@ -223,13 +223,14 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
 	}
 	features := featuremgmt.ProvideToggles(featureManager)
-	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport) //nolint:staticcheck
+	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
+	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -242,7 +243,7 @@ func setupWorkers(
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, resources.IsFolderMetadataEnabled(cfg))
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
@@ -250,7 +251,7 @@ func setupWorkers(
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics)
+	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
 	syncWorker := sync.NewSyncWorker(
 		clients,
 		repositoryResources,
@@ -262,9 +263,23 @@ func setupWorkers(
 	)
 	workers = append(workers, syncWorker)
 
-	// Export
+	// Export — standalone export generates new UIDs so exported files
+	// don't reference existing resource identifiers.
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
 	exportWorker := export.NewExportWorker(
+		clients,
+		repositoryResources,
+		resourceLister,
+		export.ExportAllWithNewUIDs,
+		stageIfPossible,
+		metrics,
+		exportEnabled,
+	)
+	workers = append(workers, exportWorker)
+
+	// Migrate — export preserves original names so the takeover
+	// allowlist can correlate resources during the sync phase.
+	migrateExportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
 		resourceLister,
@@ -273,13 +288,10 @@ func setupWorkers(
 		metrics,
 		exportEnabled,
 	)
-	workers = append(workers, exportWorker)
-
-	// Migrate
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 		cleaner,
-		exportWorker,
+		migrateExportWorker,
 		syncWorker,
 	)
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)

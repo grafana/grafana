@@ -23,7 +23,6 @@ describe('AnnotationAvatar', () => {
   });
 
   it('allows https URLs through', () => {
-    // @todo uhh
     const safeUrl = 'https://grafana.com/static/assets/img/grot-404.svg';
     render(<AnnotationAvatar src={safeUrl} />);
     const img = screen.getByRole('img', { name: 'Annotation avatar' });

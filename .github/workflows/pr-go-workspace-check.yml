@@ -38,11 +38,8 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
-      with:
-        cache: false
-        go-version-file: go.mod
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
 
     - name: Update workspace
       run: make update-workspace
@@ -75,15 +72,14 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
-      with:
-        cache: false
-        go-version-file: go.mod
-
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+
+    # Enterprise must be cloned before setup-go so that enterprise
+    # modules are visible when the Go cache key is computed.
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss

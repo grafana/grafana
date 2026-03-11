@@ -81,6 +81,7 @@ export const AnnotationsPlugin2 = ({
     annotations: xAnnos,
     clusteringMode,
     plotWidth: plot?.bbox.width,
+    // if the plot hasn't defined the time range yet, we don't want to cluster until it does
     timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
@@ -302,9 +303,16 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
+/**
+ * Defines when to skip rendering a clustered annotation
+ * @param vals
+ * @param i
+ */
 const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
   return (
+    // We don't currently cluster region annotations
     !vals.isRegion?.[i] &&
+    // We use the clusterIdx to define when an annotation is a cluster
     vals.clusterIdx?.[i] !== undefined &&
     vals.clusterIdx?.[i] !== null &&
     vals.clusterIdx?.[i] >= 0

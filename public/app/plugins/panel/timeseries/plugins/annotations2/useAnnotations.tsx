@@ -29,6 +29,7 @@ const buildWipAnnoFrame = (newRange: TimeRange2) => {
       isRegion: isRegion,
       // #00d3ffff
       color: DEFAULT_ANNOTATION_COLOR_HEX8,
+      tags: [],
     },
   ]);
 

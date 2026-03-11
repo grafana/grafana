@@ -11,6 +11,8 @@ import { AnnotationAvatar } from './AnnotationAvatar';
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 export function AnnotationTooltipHeader({
+  clusterLength,
+  clusterIndex,
   text,
   avatarImg,
   alertState,
@@ -23,6 +25,8 @@ export function AnnotationTooltipHeader({
   onRemove,
   isCluster = false,
 }: {
+  clusterLength?: string;
+  clusterIndex?: number;
   text?: string;
   avatarImg?: string | undefined;
   alertState?: string | undefined;
@@ -48,11 +52,15 @@ export function AnnotationTooltipHeader({
       <div className={styles.header}>
         <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>
+            {clusterIndex && <span className={styles.clusterIndex}>{clusterIndex}</span>}
             <span>
               <AnnotationAvatar src={avatarImg} />
               <AnnotationAlertState alertState={alertState} />
             </span>
-            {timeRange}
+            <Stack width="100%" basis="100%" justifyContent="space-between" alignItems="center">
+              <span className={styles.timeRange}>{timeRange}</span>
+              {clusterLength && <span className={styles.clusterCount}>{clusterLength}</span>}
+            </Stack>
           </div>
           {(canEdit || canDelete || isPinned) && (
             <div className={styles.controls}>
@@ -101,6 +109,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     padding: theme.spacing(0, 1),
   }),
+  clusterIndex: css({
+    fontWeight: theme.typography.fontWeightBold,
+    marginRight: theme.spacing(1),
+  }),
+  clusterCount: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  timeRange: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
   clusterWrapper: css({
     background: theme.colors.background.elevated,
     position: 'sticky',
@@ -119,7 +137,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
   meta: css({
+    width: '100%',
     display: 'flex',
+    whiteSpace: 'nowrap',
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),

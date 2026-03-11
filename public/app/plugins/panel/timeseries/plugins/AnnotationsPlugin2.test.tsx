@@ -435,7 +435,8 @@ describe('AnnotationsPlugin2', () => {
         });
 
         it.each([userEvent.hover, userEvent.click])('delete', async (event) => {
-          const onAnnotationDelete = jest.fn().mockImplementation((id: string) => {}) as (id: string) => void;
+          const onAnnotationDelete = jest.fn().mockImplementation((id: number) => {}) as (id: number) => void;
+          // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but string breaks annotation API
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => true,
             canEditAnnotations: () => true,
@@ -459,7 +460,7 @@ describe('AnnotationsPlugin2', () => {
           expect(onAnnotationDelete).not.toHaveBeenCalled();
           await userEvent.click(deleteButton);
           // from the 'id' field
-          expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
+          expect(onAnnotationDelete).toHaveBeenCalledWith(4683);
         });
       });
     });
@@ -579,12 +580,11 @@ describe('AnnotationsPlugin2', () => {
         expect(texts).toHaveLength(3);
         expect(texts[0]).toBeVisible();
 
-        // // Assert all of the titles are rolled-up and rendered
+        // Assert all of the titles are rolled-up and rendered
         expect(titles[0]).toHaveTextContent('prod-000-writes-error');
         expect(titles[1]).toHaveTextContent('prod-001-writes-error');
         expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
-        //
-        // // Assert all of the text are rolled-up and ren rendered
+        // Assert all of the text are rolled-up and rendered
         expect(texts[0]).toHaveTextContent('(>16MB)');
         expect(texts[1]).toHaveTextContent('(>32MB)');
         expect(texts[2]).toHaveTextContent('Declared by Ada');

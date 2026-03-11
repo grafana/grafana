@@ -15,7 +15,7 @@ export function getAnnotationTooltip(
   timeZone: string,
   canEditAnnotations: (dsUID: string) => boolean,
   canDeleteAnnotations: (dsUID: string) => boolean,
-  onAnnotationDelete?: (id: string) => void
+  onAnnotationDelete?: (id: number) => void
 ) {
   const annoId = annoVals.id?.[annoIdx];
   const dashboardUID = annoVals.dashboardUID?.[annoIdx] ?? undefined;
@@ -45,7 +45,7 @@ export function getAnnotationTooltip(
 
   return {
     title,
-    onDelete: annoId != null && onAnnotationDelete ? () => onAnnotationDelete(annoId?.toString()) : undefined,
+    onDelete: annoId != null && onAnnotationDelete ? () => onAnnotationDelete(annoId) : undefined,
     canEdit,
     canDelete,
     time,
