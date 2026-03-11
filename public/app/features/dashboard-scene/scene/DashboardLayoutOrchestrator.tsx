@@ -18,10 +18,11 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { dashboardEditActions, DashboardStateChangedEvent, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel } from '../utils/utils';
+import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -98,6 +99,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
   private _tabDragState: TabDragState | undefined;
+  /** Stored pointerup handler for new-panel drag so we can remove it */
+  private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
 
   public constructor() {
     super({});
@@ -155,9 +158,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey });
   }
 
-  public startDraggingNewPanel(): void {
+  public startDraggingNewPanel(action: 'newPanel' | 'paste'): void {
+    this._dropNewItemPointerUpHandler = (evt: PointerEvent) => this._dropNew(evt, action);
     document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
-    document.body.addEventListener('pointerup', this._dropNewPanel, true);
+    document.body.addEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
   }
 
   private _stopDraggingSync(evt: PointerEvent) {
@@ -484,11 +488,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _cleanupDragState() {
     document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
-    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
+    if (this._dropNewItemPointerUpHandler) {
+      document.body.removeEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
+      this._dropNewItemPointerUpHandler = null;
+    }
     this._lastDropTarget = null;
   }
 
-  private _dropNewPanel = (evt: PointerEvent): void => {
+  private _dropNew = (evt: PointerEvent, action: 'newPanel' | 'paste'): void => {
     const lastDropTarget = this._lastDropTarget;
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
 
@@ -499,36 +506,36 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._cleanupDragState();
       return;
     }
-
-    const panel = getDefaultVizPanel();
-
-    if (lastDropTarget) {
-      this._addPanelToLayout(lastDropTarget, panel);
-    } else {
-      // if no lastDropTarget and not in Sidebar, treat the dashboard itself as the drop target
-      this._getDashboard().addPanel(panel);
-    }
-
-    this._cleanupDragState();
-
-    DashboardInteractions.trackAddPanelClick(
-      'sidebar',
-      lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard',
-      'drop'
-    );
+    // defer so the droppable doesn't rerender during dnd drag-end, resulting in a console warning
+    requestAnimationFrame(() => {
+      if (action === 'paste') {
+        this._pastePanelToLayout(lastDropTarget);
+      } else {
+        this._addNewPanelToLayout(lastDropTarget);
+      }
+      this._cleanupDragState();
+    });
+    return;
   };
 
-  private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
-    const dropTargetRowOrTab = sceneGraph.findObject(
-      dropTarget,
-      (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
-    );
-    if (dropTargetRowOrTab instanceof RowItem || dropTargetRowOrTab instanceof TabItem) {
-      dropTargetRowOrTab.getLayout().addPanel(panel);
-    } else {
-      // if no root row or layout element, add the item into the dashboard directly
-      this._getDashboard().addPanel(panel);
-    }
+  private _getLayoutForDropTarget = (
+    dropTarget: DashboardDropTarget | null
+  ): DashboardScene | AutoGridLayoutManager | DefaultGridLayoutManager => {
+    const dashboard = this._getDashboard();
+    return getLayoutForObject(dropTarget ?? dashboard) ?? dashboard;
+  };
+
+  private _addNewPanelToLayout = (dropTarget: DashboardDropTarget | null) => {
+    const panel = getDefaultVizPanel();
+    this._getLayoutForDropTarget(dropTarget).addPanel(panel);
+    DashboardInteractions.trackAddPanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
+  };
+
+  private _pastePanelToLayout = (dropTarget: DashboardDropTarget | null) => {
+    const layout = this._getLayoutForDropTarget(dropTarget);
+    // shouldn't be undefined
+    layout.pastePanel();
+    DashboardInteractions.trackPastePanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };
 
   /**

@@ -32,12 +32,11 @@ func TestIntegrationStars(t *testing.T) {
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0,
-		grafanarest.Mode2,
-		grafanarest.Mode3,
+		grafanarest.Mode1,
 		grafanarest.Mode5,
 	} {
 		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
-		if mode > grafanarest.Mode2 {
+		if mode >= grafanarest.Mode5 {
 			flags = append(flags, featuremgmt.FlagKubernetesStars)
 		}
 

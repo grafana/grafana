@@ -10,6 +10,7 @@ export const useAssistant = jest.fn().mockReturnValue({
 });
 
 export const createAssistantContextItem = jest.fn();
+export const useProvidePageContext = jest.fn().mockReturnValue(jest.fn());
 
 // Additional exports that may be used
 export const toggleAssistant = jest.fn();
