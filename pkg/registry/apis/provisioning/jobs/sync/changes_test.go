@@ -513,6 +513,7 @@ func TestCompare(t *testing.T) {
 		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
 		expectedError   string
 		expectedChanges []ResourceFileChange
+		expectedMissing []string
 		description     string
 	}{
 		{
@@ -577,14 +578,16 @@ func TestCompare(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources)
 
-			changes, err := Compare(context.Background(), repo, repoResources, "current-ref")
+			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref")
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 				require.Nil(t, changes)
+				require.Nil(t, missing)
 			} else {
 				require.NoError(t, err, tt.description)
 				require.Equal(t, tt.expectedChanges, changes, tt.description)
+				require.Equal(t, tt.expectedMissing, missing, tt.description)
 			}
 		})
 	}

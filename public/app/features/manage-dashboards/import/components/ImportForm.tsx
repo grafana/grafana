@@ -3,7 +3,6 @@ import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -117,9 +116,6 @@ export function ImportForm({
         </Field>
         {inputs.dataSources &&
           inputs.dataSources.map((input: DataSourceInput, index: number) => {
-            if (input.pluginId === ExpressionDatasourceRef.type) {
-              return null;
-            }
             const dataSourceOption = `dataSources.${index}` as const;
             const current = watchDataSources ?? [];
             return (

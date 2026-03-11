@@ -62,7 +62,8 @@ export function DashboardImportK8s({ queryParams }: Props) {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       const dashboard = response.json;
       const format = detectExportFormat(dashboard);
-      const inputs = format === ExportFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+      const inputs =
+        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,
@@ -116,7 +117,8 @@ export function DashboardImportK8s({ queryParams }: Props) {
       const format = detectExportFormat(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
       const dashboard = isDashboardV2Resource(json) || isDashboardV1Resource(json) ? json.spec : json;
-      const inputs = format === ExportFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+      const inputs =
+        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,
