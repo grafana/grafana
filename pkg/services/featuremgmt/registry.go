@@ -266,7 +266,7 @@ var (
 		{
 			Name:            "provisioning",
 			Description:     "Next generation provisioning... and git",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "true",
