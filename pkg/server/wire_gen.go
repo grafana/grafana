@@ -906,11 +906,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
-	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
+	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
@@ -1604,11 +1604,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
-	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
+	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
