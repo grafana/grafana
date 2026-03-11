@@ -18,6 +18,8 @@ import (
 	v1alpha1 "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/dashvalidator/v1alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName:          "dashvalidator",
 	Group:            "dashvalidator.grafana.app",

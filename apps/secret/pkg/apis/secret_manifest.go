@@ -18,6 +18,8 @@ import (
 	v1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName:          "secret",
 	Group:            "secret.grafana.app",

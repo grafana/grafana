@@ -14,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName:          "provisioning",
 	Group:            "provisioning.grafana.app",
