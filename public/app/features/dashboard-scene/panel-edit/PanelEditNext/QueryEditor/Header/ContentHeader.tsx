@@ -73,6 +73,7 @@ export interface ContentHeaderProps {
   onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
+  isMultiSelection?: boolean;
   /**
    * Optional callback to render additional elements in the header's left section.
    *
@@ -111,6 +112,7 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
+  isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
 }: ContentHeaderProps) {
@@ -203,6 +205,7 @@ export function ContentHeader({
               query={selectedQuery}
               queries={queries}
               onQueryUpdate={onUpdateQuery}
+              readOnly={isMultiSelection}
             />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
@@ -230,6 +233,7 @@ export function ContentHeaderSceneWrapper({
     selectedAlert,
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -252,6 +256,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
+      isMultiSelection={selectedQueryRefIds.length > 1}
       renderHeaderExtras={renderHeaderExtras}
     />
   );

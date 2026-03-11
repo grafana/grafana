@@ -9,7 +9,6 @@ export interface UseQueryEditorUITogglesResult {
   transformTogglesState: { showHelp: boolean; showDebug: boolean };
   openSidebar: (focusField?: QueryOptionField) => void;
   closeSidebar: () => void;
-  /** Resets datasource help and transform help/debug toggles to their default (hidden) state. */
   resetUIToggles: () => void;
   toggleDatasourceHelp: () => void;
   toggleHelp: () => void;
@@ -19,8 +18,6 @@ export interface UseQueryEditorUITogglesResult {
 /**
  * Manages UI-only toggle state for the query editor:
  * the query options sidebar, datasource help panel, and transformation debug/help toggles.
- *
- * These have no dependency on Scene objects and can be tested in complete isolation.
  */
 export function useQueryEditorUIToggles(): UseQueryEditorUITogglesResult {
   const [isQueryOptionsOpen, setIsQueryOptionsOpen] = useState(false);

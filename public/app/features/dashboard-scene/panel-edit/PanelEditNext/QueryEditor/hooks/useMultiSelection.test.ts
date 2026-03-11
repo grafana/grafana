@@ -194,7 +194,6 @@ describe('useMultiSelection', () => {
       act(() => result.current.clearSelection());
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
-      expect(result.current.selectedAlertId).toBeNull();
     });
 
     it('calls onClearSideEffects', () => {
@@ -228,24 +227,6 @@ describe('useMultiSelection', () => {
       act(() => result.current.onCardSelectionChange(null, null));
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
-    });
-  });
-
-  describe('selectAlert', () => {
-    it('sets selectedAlertId and clears query and transformation selection', () => {
-      const { result } = setup();
-      act(() => result.current.toggleQuerySelection({ refId: 'A' }));
-      act(() => result.current.selectAlert('alert-1'));
-      expect(result.current.selectedAlertId).toBe('alert-1');
-      expect(result.current.selectedQueryRefIds).toEqual([]);
-      expect(result.current.selectedTransformationIds).toEqual([]);
-    });
-
-    it('clears alert when called with null', () => {
-      const { result } = setup();
-      act(() => result.current.selectAlert('alert-1'));
-      act(() => result.current.selectAlert(null));
-      expect(result.current.selectedAlertId).toBeNull();
     });
   });
 

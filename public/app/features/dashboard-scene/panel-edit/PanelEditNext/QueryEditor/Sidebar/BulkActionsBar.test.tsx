@@ -146,8 +146,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
-        // None of the selected queries have hide:true so the button says "Hide all"
-        await user.click(screen.getByRole('button', { name: /hide all/i }));
+        // None of the selected queries have hide:true so the button says "Hide"
+        await user.click(screen.getByRole('button', { name: /hide/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], true);
       });
 
@@ -160,8 +160,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
-        // All selected queries are hidden — button says "Show all"
-        await user.click(screen.getByRole('button', { name: /show all/i }));
+        // All selected queries are hidden — button says "Show"
+        await user.click(screen.getByRole('button', { name: /show/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], false);
       });
     });

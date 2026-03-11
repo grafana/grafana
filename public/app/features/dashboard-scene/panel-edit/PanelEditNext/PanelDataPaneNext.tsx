@@ -366,7 +366,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
     const refIdSet = new Set(refIds);
-    const queries = queryRunner.state.queries.filter((q) => !refIdSet.has(q.refId));
+    const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
     queryRunner.setState({ queries });
     this.resolveUniformDatasource();
     this.runQueries();
@@ -405,52 +405,38 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const refIdSet = new Set(refIds);
-    const queries = [...queryRunner.state.queries];
-    const needsMixed = queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME;
+    const requiresMixedMode = queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME;
 
-    let updatedQueries: DataQuery[];
+    const remapQuery = (query: DataQuery, fallbackDsRef?: DataSourceRef): DataQuery => {
+      if (refIdSet.has(query.refId)) {
+        const previousDataSource = query.datasource
+          ? getDataSourceSrv().getInstanceSettings(query.datasource)
+          : undefined;
+        const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
+        if (shouldUseDefaultQuery && defaultQuery) {
+          return { ...defaultQuery, ...query, datasource: dsRef };
+        }
+        return { ...query, datasource: dsRef };
+      }
+      if (fallbackDsRef && !query.datasource) {
+        return { ...query, datasource: fallbackDsRef };
+      }
+      return query;
+    };
 
-    if (needsMixed) {
+    if (requiresMixedMode) {
       const currentPanelDsRef = queryRunner.state.datasource;
       const defaultDsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
       const fallbackDsRef = currentPanelDsRef ?? (defaultDsSettings ? getDataSourceRef(defaultDsSettings) : undefined);
 
-      updatedQueries = queries.map((query) => {
-        if (refIdSet.has(query.refId)) {
-          const previousDataSource = query.datasource
-            ? getDataSourceSrv().getInstanceSettings(query.datasource)
-            : undefined;
-          const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
-          if (shouldUseDefaultQuery && defaultQuery) {
-            return { ...defaultQuery, ...query, datasource: dsRef };
-          }
-          return { ...query, datasource: dsRef };
-        }
-        if (!query.datasource) {
-          return { ...query, datasource: fallbackDsRef };
-        }
-        return query;
-      });
-
       queryRunner.setState({
-        queries: updatedQueries,
+        queries: queryRunner.state.queries.map((query) => remapQuery(query, fallbackDsRef)),
         datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
       });
     } else {
-      updatedQueries = queries.map((query) => {
-        if (refIdSet.has(query.refId)) {
-          const previousDataSource = query.datasource
-            ? getDataSourceSrv().getInstanceSettings(query.datasource)
-            : undefined;
-          const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
-          if (shouldUseDefaultQuery && defaultQuery) {
-            return { ...defaultQuery, ...query, datasource: dsRef };
-          }
-          return { ...query, datasource: dsRef };
-        }
-        return query;
+      queryRunner.setState({
+        queries: queryRunner.state.queries.map((query) => remapQuery(query)),
       });
-      queryRunner.setState({ queries: updatedQueries });
     }
 
     this.resolveUniformDatasource();
@@ -551,7 +537,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
     const indexSet = new Set(indices);
-    const transformations = filterDataTransformerConfigs([...transformer.state.transformations]).filter(
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).filter(
       (_, i) => !indexSet.has(i)
     );
     transformer.setState({ transformations });
@@ -564,7 +550,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
     const indexSet = new Set(indices);
-    const transformations = filterDataTransformerConfigs([...transformer.state.transformations]).map((t, i) =>
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).map((t, i) =>
       indexSet.has(i) ? { ...t, disabled } : t
     );
     transformer.setState({ transformations });

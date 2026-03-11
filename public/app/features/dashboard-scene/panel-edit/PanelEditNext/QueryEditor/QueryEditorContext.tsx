@@ -78,9 +78,7 @@ export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
-  /** Ordered array of selected query refIds. Last element is the primary (shown in editor). */
   selectedQueryRefIds: readonly string[];
-  /** Ordered array of selected transformation IDs. Last element is the primary. */
   selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;

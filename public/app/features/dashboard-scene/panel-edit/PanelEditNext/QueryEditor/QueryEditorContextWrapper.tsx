@@ -9,7 +9,13 @@ import { ExpressionQuery } from 'app/features/expressions/types';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PendingExpression, PendingSavedQuery, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
+import {
+  PendingExpression,
+  PendingSavedQuery,
+  PendingTransformation,
+  QueryEditorProvider,
+  SelectionModifiers,
+} from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { useMultiSelection } from './hooks/useMultiSelection';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -32,17 +38,6 @@ export function getNextSelectedQueryRefIds(
   updatedRefId: string
 ) {
   return currentSelectedRefIds.map((id) => (id === originalRefId ? updatedRefId : id));
-}
-
-/**
- * @deprecated Use getNextSelectedQueryRefIds instead.
- */
-export function getNextSelectedQueryRefId(
-  currentSelectedRefId: string | null,
-  originalRefId: string,
-  updatedRefId: string
-) {
-  return currentSelectedRefId === originalRefId ? updatedRefId : currentSelectedRefId;
 }
 
 /**
@@ -72,7 +67,7 @@ export function QueryEditorContextWrapper({
   const transformations = useTransformations(dataTransformer);
   const alertingState = useAlertRulesForPanel(dataPane, panel);
 
-  // ── UI toggles (no Scene deps) ────────────────────────────────────────────
+  // UI toggles
   const {
     isQueryOptionsOpen,
     focusedField,
@@ -86,26 +81,17 @@ export function QueryEditorContextWrapper({
     toggleDebug,
   } = useQueryEditorUIToggles();
 
-  // ── Multi-selection (breaks circular dep via ref) ─────────────────────────
-  //
-  // Circular dependency chain:
-  //   useMultiSelection → onClearSideEffects → clearSideEffects → clearPendingExpression
-  //   → usePendingExpression → onCardSelectionChange → useMultiSelection
-  //
-  // A stable ref wrapping clearSideEffects breaks the cycle: useMultiSelection receives
-  // a stable callback that always calls the latest clearSideEffects at call time.
   const clearSideEffectsRef = useRef<() => void>(() => {});
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
   const {
     selectedQueryRefIds,
     selectedTransformationIds,
-    selectedAlertId,
-    onCardSelectionChange,
-    selectAlert,
+    onCardSelectionChange: onCardSelectionChangeRaw,
     trackQueryRename,
-    toggleQuerySelection,
-    toggleTransformationSelection,
-    clearSelection,
+    toggleQuerySelection: toggleQuerySelectionRaw,
+    toggleTransformationSelection: toggleTransformationSelectionRaw,
+    clearSelection: clearSelectionRaw,
   } = useMultiSelection({
     queries: queryRunnerState?.queries ?? [],
     transformations,
@@ -113,7 +99,43 @@ export function QueryEditorContextWrapper({
     onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
   });
 
-  // ── Pending items ─────────────────────────────────────────────────────────
+  // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
+  const onCardSelectionChange = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      setSelectedAlertId(null);
+      onCardSelectionChangeRaw(queryRefId, transformationId);
+    },
+    [onCardSelectionChangeRaw]
+  );
+
+  const toggleQuerySelection = useCallback(
+    (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
+      setSelectedAlertId(null);
+      toggleQuerySelectionRaw(query, modifiers);
+    },
+    [toggleQuerySelectionRaw]
+  );
+
+  const toggleTransformationSelection = useCallback(
+    (transformation: Transformation, modifiers?: SelectionModifiers) => {
+      setSelectedAlertId(null);
+      toggleTransformationSelectionRaw(transformation, modifiers);
+    },
+    [toggleTransformationSelectionRaw]
+  );
+
+  const clearSelection = useCallback(() => {
+    setSelectedAlertId(null);
+    clearSelectionRaw();
+  }, [clearSelectionRaw]);
+
+  const selectAlert = useCallback(
+    (alertId: string | null) => {
+      setSelectedAlertId(alertId);
+      clearSelectionRaw();
+    },
+    [clearSelectionRaw]
+  );
 
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
     usePendingExpression({
@@ -146,8 +168,6 @@ export function QueryEditorContextWrapper({
       onCardSelectionChange,
     });
 
-  // ── Shared cleanup helper ─────────────────────────────────────────────────
-
   const clearSideEffects = useCallback(() => {
     resetUIToggles();
     clearPendingExpression();
@@ -158,8 +178,6 @@ export function QueryEditorContextWrapper({
   // Update the ref every render so the stable callback inside useMultiSelection
   // always delegates to the latest clearSideEffects.
   clearSideEffectsRef.current = clearSideEffects;
-
-  // ── Derived state ─────────────────────────────────────────────────────────
 
   const dsState = useMemo(
     () => ({
@@ -206,8 +224,6 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
-  // ── uiState ───────────────────────────────────────────────────────────────
-
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -228,7 +244,6 @@ export function QueryEditorContextWrapper({
       },
       setSelectedAlert: (alert: AlertRule | null) => {
         selectAlert(alert?.alertId ?? null);
-        clearSideEffects();
       },
       queryOptions: {
         options: queryOptions,
@@ -316,8 +331,6 @@ export function QueryEditorContextWrapper({
     ]
   );
 
-  // ── actions ───────────────────────────────────────────────────────────────
-
   const actions = useMemo(
     () => ({
       onSwitchToClassic,
@@ -352,17 +365,13 @@ export function QueryEditorContextWrapper({
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
       // Bulk actions
-      bulkDeleteQueries: (refIds: readonly string[]) => {
-        dataPane.bulkDeleteQueries(refIds);
-        clearSelection();
-      },
+      bulkDeleteQueries: dataPane.bulkDeleteQueries,
       bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => {
         dataPane.bulkToggleQueriesHide(refIds, hide);
       },
       bulkDeleteTransformations: (transformIds: readonly string[]) => {
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
         dataPane.bulkDeleteTransformations(indices);
-        clearSelection();
       },
       bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => {
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
@@ -372,7 +381,7 @@ export function QueryEditorContextWrapper({
         dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings));
       },
     }),
-    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction, clearSelection, trackQueryRename]
+    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction, trackQueryRename]
   );
 
   return (
