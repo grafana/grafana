@@ -110,35 +110,20 @@ jobs:
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
 
-            const workflows = [];
-            if (REF === 'main' && SOURCE_EVENT === 'schedule') {
-              workflows.push('release-build-nightly.yml');
-            } else if (REF === 'main') {
-              workflows.push('release-build-pro.yml');
-              workflows.push('release-build-enterprise.yml');
-            } else if (REF.startsWith('release-')) {
-              workflows.push('release-build-enterprise.yml');
-            }
-
-            const inputs = {
-              "version": VERSION,
-              "build-id": String(BUILD_ID),
-              "bucket": BUCKET,
-              "grafana-commit": GRAFANA_COMMIT,
-              "source-event": SOURCE_EVENT,
-              "upstream": REPO,
-            };
-
-            for (const workflow_id of workflows) {
-              core.info(`Dispatching ${workflow_id} on ref ${REF}`);
-              await github.rest.actions.createWorkflowDispatch({
-                  owner: 'grafana',
-                  repo: 'grafana-enterprise',
-                  workflow_id,
-                  ref: REF,
-                  inputs,
-              });
-            }
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'grafana-enterprise',
+                workflow_id: 'release-build.yml',
+                ref:  REF,
+                inputs: {
+                  "version": VERSION,
+                  "build-id": String(BUILD_ID),
+                  "bucket": BUCKET,
+                  "grafana-commit": GRAFANA_COMMIT,
+                  "source-event": SOURCE_EVENT,
+                  "upstream": REPO,
+                }
+            })
 
   build:
     runs-on: github-hosted-ubuntu-x64-large
