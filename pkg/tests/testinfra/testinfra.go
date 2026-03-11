@@ -190,16 +190,24 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		}
 	})
 
-	// Wait for Grafana to be ready
+	// Wait for Grafana to be ready, retrying until the health endpoint responds or the timeout is reached.
 	addr := listener.Addr().String()
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		assert.NoError(t, err)
-	})
-	require.Equal(t, 200, resp.StatusCode)
+	healthURL := fmt.Sprintf("http://%s/api/health", addr)
+	healthClient := &http.Client{Timeout: 2 * time.Second}
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		resp, err := healthClient.Get(healthURL)
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err == nil && resp.StatusCode == 200 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("Grafana health endpoint did not return 200 within 30s")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	t.Logf("Grafana is listening on %s", addr)
 
