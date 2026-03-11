@@ -901,4 +901,8 @@ const (
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls
 	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )
