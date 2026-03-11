@@ -826,10 +826,6 @@ const (
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
 
-	// FlagKubernetesTeamsApi
-	// Enables team APIs in the app platform
-	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
-
 	// FlagKubernetesServiceAccountsApi
 	// Enables service account APIs in the app platform
 	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"
