@@ -138,7 +138,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
                   />
                   {config.featureToggles.dashboardNewLayouts && (
                     <Checkbox
-                      label={t('playlist.start-modal.label-playlist-nav', 'Previous and next playlist buttons')}
+                      label={t('playlist.start-modal.label-playlist-nav', 'Playlist navigation buttons')}
                       name="displayPlaylistNav"
                       value={displayPlaylistNav}
                       onChange={(e) => setDisplayPlaylistNav(e.currentTarget.checked)}

@@ -9,7 +9,6 @@ export default function PlaylistStartPage() {
   const { uid = '' } = useParams();
   const { data, isLoading } = useGetPlaylistQuery({ name: uid });
   if (!isLoading && data) {
-    console.log('data', data);
     playlistSrv.start(data);
   }
   return null;
