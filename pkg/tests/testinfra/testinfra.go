@@ -388,6 +388,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
+	if opts.RBACSingleOrganization {
+		_, err = rbacSect.NewKey("single_organization", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -819,6 +823,7 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	RBACSingleOrganization                bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool

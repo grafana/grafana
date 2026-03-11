@@ -12,6 +12,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -475,7 +476,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, toUserConflictError(err, cmd.UID)
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
@@ -483,18 +484,24 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 
 // toUserConflictError converts a UNIQUE constraint violation on user.email or
 // user.login into a 409 Conflict API error. All other errors are returned as-is.
-func toUserConflictError(err error, uid string) error {
+// It uses the DB dialect to detect the violation across SQLite, MySQL and PostgreSQL.
+func toUserConflictError(dialect migrator.Dialect, err error, uid string) error {
 	if err == nil {
 		return nil
 	}
-	msg := err.Error()
-	switch {
-	case strings.Contains(msg, "UNIQUE constraint failed: user.email"):
-		return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
-			fmt.Errorf("email is already taken"))
-	case strings.Contains(msg, "UNIQUE constraint failed: user.login"):
-		return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
-			fmt.Errorf("login is already taken"))
+	if dialect != nil && dialect.IsUniqueConstraintViolation(err) {
+		msg := dialect.ErrorMessage(err)
+		switch {
+		case strings.Contains(msg, "email"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("email is already taken"))
+		case strings.Contains(msg, "login"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("login is already taken"))
+		default:
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("user already exists"))
+		}
 	}
 	return err
 }
@@ -754,7 +761,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, toUserConflictError(err, cmd.UID)
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil

@@ -80,7 +80,7 @@ func (f *StoreWrapper) FilterList(ctx context.Context, list runtime.Object) (run
 	}
 
 	requesterLogin := authInfo.GetUsername()
-	filtered := userList.Items[:0]
+	filtered := make([]iamv0.User, 0, len(userList.Items))
 	for _, u := range userList.Items {
 		if _, isHidden := cfg.HiddenUsers[u.Spec.Login]; !isHidden || u.Spec.Login == requesterLogin {
 			filtered = append(filtered, u)

@@ -24,9 +24,10 @@ func TestIntegrationUsers(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -120,6 +121,9 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
+		t.Cleanup(func() {
+			_ = userClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		})
 
 		// Get the user to update
 		createdUID := created.GetName()
