@@ -300,6 +300,10 @@ The following issues don't produce specific error messages but are commonly enco
 1. Ensure Grafana can access the Prometheus rules API endpoint.
 1. Note that for Prometheus (unlike Mimir), the Alerting UI only supports viewing existing rules, not creating new ones.
 
+## Data doesn't appear in Metrics Drilldown
+
+If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
+
 ## Get additional help
 
 If you continue to experience issues after following this troubleshooting guide:
