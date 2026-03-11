@@ -62,7 +62,11 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): OptionsPaneCategoryDescriptor[] {
+function useEditPaneOptions(
+  this: LinkEditEditableElement,
+  linkEdit: LinkEdit,
+  isNewElement: boolean
+): OptionsPaneCategoryDescriptor[] {
   const basicCategoryId = useId();
   const titleId = useId();
   const typeId = useId();
@@ -84,7 +88,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
         new OptionsPaneItemDescriptor({
           title: '',
           id: titleId,
-          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" />,
+          render: () => <LinkTextInput linkEdit={linkEdit} prop="title" autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -126,7 +130,7 @@ function useEditPaneOptions(this: LinkEditEditableElement, linkEdit: LinkEdit): 
           render: () => <LinkIconSelect linkEdit={linkEdit} />,
         })
       );
-  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit]);
+  }, [basicCategoryId, titleId, typeId, tagsId, urlId, tooltipId, iconId, linkEdit, isNewElement]);
 
   const optionsCategory = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
