@@ -26,6 +26,7 @@ const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
 export function getOrgAlertmanagerLocalStorageKey(orgId: number): string {
   return `${ALERTMANAGER_NAME_LOCAL_STORAGE_KEY}-org-${orgId}`;
 }
+
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
   // manually setting the alertmanagersource name will override all of the other sources
@@ -99,10 +100,10 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
   // Clean up stale org-scoped key if the stored value no longer resolves to an available AM
   React.useEffect(() => {
-    if (!isDesiredAvailable && sourceFromStore) {
+    if (sourceFromStore && !isAlertManagerAvailable(availableAlertManagers, sourceFromStore)) {
       store.delete(localStorageKey);
     }
-  }, [isDesiredAvailable, localStorageKey, sourceFromStore]);
+  }, [availableAlertManagers, localStorageKey, sourceFromStore]);
 
   const selectedAlertmanagerConfig = React.useMemo(() => {
     return selectedAlertmanager ? getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData : undefined;

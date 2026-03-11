@@ -130,7 +130,7 @@ describe('useAlertmanager', () => {
     expect(result.current.selectedAlertmanager).toBe(GRAFANA_RULES_SOURCE_NAME);
   });
 
-  it('Should clean up stale localStorage entry when stored AM is not available', async () => {
+  it('Should clean up stale localStorage entry when stored AM is not available', () => {
     jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
       availableExternalDataSources: [],
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
