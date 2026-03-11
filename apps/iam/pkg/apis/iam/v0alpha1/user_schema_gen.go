@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaUser = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewUser(), &UserList{}, resource.WithKind("User"),
-		resource.WithPlural("users"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+		resource.WithPlural("users"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.email",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*User)
@@ -24,7 +24,7 @@ var (
 				return cast.Spec.Email, nil
 			},
 		},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.login",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*User)

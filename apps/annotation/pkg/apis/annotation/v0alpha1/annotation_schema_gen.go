@@ -14,7 +14,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaAnnotation = resource.NewSimpleSchema("annotation.grafana.app", "v0alpha1", NewAnnotation(), &AnnotationList{}, resource.WithKind("Annotation"),
-		resource.WithPlural("annotations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+		resource.WithPlural("annotations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.time",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*Annotation)
@@ -25,7 +25,7 @@ var (
 				return fmt.Sprintf("%d", cast.Spec.Time), nil
 			},
 		},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.timeEnd",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Annotation)
@@ -39,7 +39,7 @@ var (
 					return fmt.Sprintf("%d", *cast.Spec.TimeEnd), nil
 				},
 			},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.dashboardUID",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Annotation)
@@ -53,7 +53,7 @@ var (
 					return *cast.Spec.DashboardUID, nil
 				},
 			},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.panelID",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*Annotation)

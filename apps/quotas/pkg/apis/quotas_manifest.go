@@ -18,8 +18,6 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/quotas/pkg/apis/quotas/v0alpha1"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName:          "quotas",
 	Group:            "quotas.grafana.app",
