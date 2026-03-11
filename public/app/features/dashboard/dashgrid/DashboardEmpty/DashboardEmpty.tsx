@@ -1,17 +1,12 @@
-import { css, cx } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { css } from '@emotion/css';
+import { useCallback, useState } from 'react';
 
+import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Icon } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Icon, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
-import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -24,215 +19,87 @@ import {
 interface InternalProps {
   dashboard: DashboardModel | DashboardScene;
   onAddVisualization?: () => void;
-  onAddLibraryPanel?: () => void;
-  onImportDashboard?: () => void;
 }
 
-const InternalDashboardEmpty = ({
-  dashboard,
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: InternalProps) => {
+const InternalDashboardEmpty = ({ onAddVisualization }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const [searchParams] = useSearchParams();
-  const dashboardLibraryDatasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  const [prompt, setPrompt] = useState('');
+  const { openAssistant } = useAssistant();
 
-  return (
-    <>
-      <Stack alignItems="center" justifyContent="center">
-        <div
-          className={cx(styles.wrapper, {
-            [styles.wrapperMaxWidth]:
-              !(config.featureToggles.dashboardLibrary || config.featureToggles.suggestedDashboards) ||
-              !dashboardLibraryDatasourceUid,
-          })}
-        >
-          {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
-            <NewLayoutEmpty
-              dashboard={dashboard}
-              styles={styles}
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
-            />
-          ) : (
-            <OldLayoutEmpty
-              dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid}
-              onAddVisualization={onAddVisualization}
-              onAddLibraryPanel={onAddLibraryPanel}
-              onImportDashboard={onImportDashboard}
-            />
-          )}
-        </div>
-      </Stack>
-    </>
-  );
-};
-
-const DashboardExtensionsComponents = ({
-  dashboardLibraryDatasourceUid,
-}: {
-  dashboardLibraryDatasourceUid: string | null;
-}) => (
-  <>
-    {/* Suggested Dashboards Section */}
-    {config.featureToggles.suggestedDashboards &&
-      config.featureToggles.dashboardLibrary &&
-      dashboardLibraryDatasourceUid && <SuggestedDashboards datasourceUid={dashboardLibraryDatasourceUid} />}
-
-    {/* Basic Provisioned Dashboards Section that don't include community dashboards */}
-    {config.featureToggles.dashboardLibrary &&
-      !config.featureToggles.suggestedDashboards &&
-      dashboardLibraryDatasourceUid && (
-        <BasicProvisionedDashboardsEmptyPage datasourceUid={dashboardLibraryDatasourceUid} />
-      )}
-  </>
-);
-interface NewLayoutEmptyProps {
-  dashboard: DashboardScene;
-  styles: {
-    wrapper: string;
-    wrapperMaxWidth: string;
-    appsIcon: string;
-  };
-  dashboardLibraryDatasourceUid: string | null;
-}
-
-const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, editPane } = dashboard.state;
-  const isEditingNewDashboard = isEditing && !uid;
-
-  // open the edit pane when the dashboard is new and in editing mode
-  // will only happen when the default empty state is shown (not overridden by extension point)
-  useEffect(() => {
-    if (isEditingNewDashboard) {
-      editPane.openPane('add');
+  const handleSubmit = useCallback(() => {
+    if (prompt.trim() && openAssistant) {
+      openAssistant({
+        origin: 'dashboard/empty-state',
+        mode: 'dashboarding',
+        prompt: prompt.trim(),
+        autoSend: true,
+      });
     }
-  }, [isEditingNewDashboard, editPane]);
+  }, [prompt, openAssistant]);
 
   return (
-    <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-      <Box padding={4}>
-        <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
-          <Icon name="apps" size="xxl" className={styles.appsIcon} />
-        </Box>
-        <Text element="h1" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.title">New dashboard</Trans>
-        </Text>
-        <Box marginTop={3} paddingX={4}>
-          <Text element="p" textAlignment="center" color="secondary">
-            <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
-          </Text>
-        </Box>
-      </Box>
-      <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
-    </Stack>
-  );
-};
+    <Stack alignItems="center" justifyContent="center">
+      <div className={styles.wrapper}>
+        <Stack direction="column" alignItems="center" gap={3}>
+          <div className={styles.sparkleCircle}>
+            <Icon name="ai-sparkle" size="xxl" className={styles.sparkleIcon} />
+          </div>
 
-interface OldLayoutEmptyProps {
-  dashboardLibraryDatasourceUid: string | null;
-  onAddVisualization?: () => void;
-  onAddLibraryPanel?: () => void;
-  onImportDashboard?: () => void;
-}
-const OldLayoutEmpty = ({
-  dashboardLibraryDatasourceUid,
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: OldLayoutEmptyProps) => (
-  <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-    <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
-      <Stack direction="column" alignItems="center" gap={2}>
-        <Text element="h1" textAlignment="center" weight="medium">
-          <Trans i18nKey="dashboard.empty.add-visualization-header">
-            Start your new dashboard by adding a visualization
-          </Trans>
-        </Text>
-        <Box marginBottom={2} paddingX={4}>
+          <Text element="h1" textAlignment="center" weight="medium">
+            <Trans i18nKey="dashboard.empty.ai-welcome-title">Welcome to your dashboard</Trans>
+          </Text>
+
           <Text element="p" textAlignment="center" color="secondary">
-            <Trans i18nKey="dashboard.empty.add-visualization-body">
-              Select a data source and then query and visualize your data with charts, stats and tables or create lists,
-              markdowns and other widgets.
+            <Trans i18nKey="dashboard.empty.ai-welcome-subtitle">
+              What would you like to visualize today?
             </Trans>
           </Text>
-        </Box>
-        <Button
-          size="lg"
-          icon="plus"
-          data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-          onClick={onAddVisualization}
-          disabled={!onAddVisualization}
-        >
-          <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
-        </Button>
-      </Stack>
-    </Box>
 
-    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
+          <div className={styles.promptBar}>
+            <IconButton
+              name="plus"
+              size="lg"
+              aria-label={t('dashboard.empty.ai-add-panel-aria', 'Add panel manually')}
+              tooltip={t('dashboard.empty.ai-add-panel-tooltip', 'Add panel')}
+              onClick={onAddVisualization}
+              className={styles.promptButton}
+            />
+            <input
+              className={styles.promptInput}
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={t('dashboard.empty.ai-prompt-placeholder', 'Server performance metrics')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSubmit();
+                }
+              }}
+            />
+            <IconButton
+              name="arrow-right"
+              size="lg"
+              aria-label={t('dashboard.empty.ai-submit-aria', 'Submit prompt')}
+              tooltip={t('dashboard.empty.ai-submit-tooltip', 'Submit')}
+              onClick={handleSubmit}
+              className={styles.promptButton}
+            />
+          </div>
 
-    <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
-      <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-        <Stack direction="column" alignItems="center" gap={1}>
-          <Text element="h3" textAlignment="center" weight="medium">
-            <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
-          </Text>
-          <Box marginBottom={2}>
-            <Text element="p" textAlignment="center" color="secondary">
-              <Trans i18nKey="dashboard.empty.add-library-panel-body">
-                Add visualizations that are shared with other dashboards.
-              </Trans>
-            </Text>
-          </Box>
-          <Button
-            icon="plus"
-            fill="outline"
-            data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
-            onClick={onAddLibraryPanel}
-            disabled={!onAddLibraryPanel}
-          >
-            <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
+          <Button icon="apps" fill="text" onClick={onAddVisualization}>
+            <Trans i18nKey="dashboard.empty.ai-add-panel-button">Add a panel</Trans>
           </Button>
         </Stack>
-      </Box>
-      <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-        <Stack direction="column" alignItems="center" gap={1}>
-          <Text element="h3" textAlignment="center" weight="medium">
-            <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
-          </Text>
-          <Box marginBottom={2}>
-            <Text element="p" textAlignment="center" color="secondary">
-              <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                Import dashboards from files or{' '}
-                <TextLink external href="https://grafana.com/grafana/dashboards/">
-                  grafana.com
-                </TextLink>
-                .
-              </Trans>
-            </Text>
-          </Box>
-          <Button
-            icon="upload"
-            fill="outline"
-            data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
-            onClick={onImportDashboard}
-            disabled={!onImportDashboard}
-          >
-            <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
-          </Button>
-        </Stack>
-      </Box>
+      </div>
     </Stack>
-  </Stack>
-);
+  );
+};
 
 export interface Props {
   dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
 
-// We pass the default empty UI through to the extension point so that the extension can conditionally render it if needed.
-// For example, an extension might want to render custom UI for a specific experiment cohort, and the default UI for everyone else.
 const DashboardEmpty = (props: Props) => {
   const { isReadOnlyRepo, isProvisioned } = useRepositoryStatus(props);
   const onAddVisualization = useOnAddVisualization({ ...props, isReadOnlyRepo, isProvisioned });
@@ -243,14 +110,9 @@ const DashboardEmpty = (props: Props) => {
     <DashboardEmptyExtensionPoint
       renderDefaultUI={useCallback(
         () => (
-          <InternalDashboardEmpty
-            dashboard={props.dashboard}
-            onAddVisualization={onAddVisualization}
-            onAddLibraryPanel={onAddLibraryPanel}
-            onImportDashboard={onImportDashboard}
-          />
+          <InternalDashboardEmpty dashboard={props.dashboard} onAddVisualization={onAddVisualization} />
         ),
-        [onAddVisualization, onAddLibraryPanel, onImportDashboard, props.dashboard]
+        [onAddVisualization, props.dashboard]
       )}
       onAddVisualization={onAddVisualization}
       onAddLibraryPanel={onAddLibraryPanel}
@@ -264,20 +126,57 @@ export default DashboardEmpty;
 function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
-      label: 'dashboard-empty-wrapper',
+      display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing.gridSize * 4,
-      paddingTop: theme.spacing(2),
-
-      [theme.breakpoints.up('sm')]: {
-        paddingTop: theme.spacing(12),
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: theme.spacing(12),
+      width: '100%',
+      maxWidth: '600px',
+    }),
+    sparkleCircle: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '64px',
+      height: '64px',
+      borderRadius: theme.shape.radius.circle,
+      background: theme.colors.background.secondary,
+    }),
+    sparkleIcon: css({
+      color: theme.colors.primary.text,
+    }),
+    promptBar: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      width: '100%',
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.pill,
+      border: `1px solid ${theme.colors.border.medium}`,
+      background: theme.colors.background.primary,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('border-color'),
+      },
+      '&:focus-within': {
+        borderColor: theme.colors.primary.border,
       },
     }),
-    wrapperMaxWidth: css({
-      maxWidth: '890px',
+    promptInput: css({
+      flex: 1,
+      border: 'none',
+      outline: 'none',
+      background: 'transparent',
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.fontSize,
+      fontFamily: theme.typography.fontFamily,
+      padding: theme.spacing(1, 0),
+      '&::placeholder': {
+        color: theme.colors.text.disabled,
+      },
     }),
-    appsIcon: css({
-      fill: theme.v1.palette.orange,
+    promptButton: css({
+      flexShrink: 0,
     }),
   };
 }
