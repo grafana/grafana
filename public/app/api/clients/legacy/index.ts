@@ -1,26 +1,39 @@
-import { generatedAPI, type CreateTeamApiArg } from '@grafana/api-clients/rtkq/legacy';
+import { RequestOptions } from '@grafana/api-clients/rtkq';
+import { generatedAPI, type CreateTeamApiArg, type SetTeamRolesApiArg } from '@grafana/api-clients/rtkq/legacy';
 
-interface CreateTeamApiArgWithNotificationOptions extends CreateTeamApiArg {
-  showSuccessAlert?: boolean;
+/**
+ * Adds a check to the endpoint that will pass on the showSuccessAlert property to the backend_srv. This way it's
+ * possible to disable the automatic toast that some of the legacy endpoints produce.
+ * @param endpointDefinition
+ */
+function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: ApiArg) => RequestOptions }>(
+  endpointDefinition: Def
+) {
+  const originalQuery = endpointDefinition.query;
+  if (!originalQuery) {
+    return;
+  }
+
+  endpointDefinition.query = (queryArg: ApiArg) => {
+    const requestOptions = originalQuery(queryArg);
+
+    const showSuccessAlert = 'showSuccessAlert' in queryArg ? Boolean(queryArg.showSuccessAlert) : undefined;
+    return {
+      ...requestOptions,
+      // Because createTeam API returns a message prop in the response, it would always generate a success toast
+      // which may not be always wanted.
+      ...(showSuccessAlert !== undefined && { showSuccessAlert }),
+    };
+  };
 }
 
 export const legacyAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     createTeam: (endpointDefinition) => {
-      const originalQuery = endpointDefinition.query;
-      if (!originalQuery) {
-        return;
-      }
-
-      endpointDefinition.query = (queryArg: CreateTeamApiArgWithNotificationOptions) => {
-        const requestOptions = originalQuery(queryArg);
-        return {
-          ...requestOptions,
-          // Because createTeam API returns a message prop in the response, it would always generate a success toast
-          // which may not be always wanted.
-          ...(queryArg.showSuccessAlert !== undefined && { showSuccessAlert: queryArg.showSuccessAlert }),
-        };
-      };
+      withSuccessAlertCheck<CreateTeamApiArg, typeof endpointDefinition>(endpointDefinition);
+    },
+    setTeamRoles: (endpointDefinition) => {
+      withSuccessAlertCheck<SetTeamRolesApiArg, typeof endpointDefinition>(endpointDefinition);
     },
   },
 });
