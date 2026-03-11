@@ -5,9 +5,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, TableIdentifier } from '@grafana/plugin-ui';
-
-import { SQLEditorV2 as SQLEditor, SQLEditorV2LanguageDefinition as LanguageDefinition } from './SQLEditorV2';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -15,12 +12,16 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
-import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
-import { getSqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
+import {
+  SQLEditorV2LanguageDefinition as LanguageDefinition,
+  SQLEditorV2 as SQLEditor,
+  SQLEditorV2CompletionProvider,
+} from './SQLEditorV2';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlExprContextValue, SqlExprProvider } from './SqlExprContext';
 import { SqlQueryActions } from './SqlQueryActions';
@@ -54,12 +55,15 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
-  const completionProvider = useMemo(
-    () =>
-      getSqlCompletionProvider({
-        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
-        refIds,
-      }),
+  const completionProvider = useMemo<SQLEditorV2CompletionProvider>(
+    () => ({
+      getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
+      getColumns: async (table: string) => {
+        const cols = await fetchFields({ table }, queries || []);
+        return cols.map((c) => c.name);
+      },
+      getFunctions: () => ALLOWED_FUNCTIONS,
+    }),
     [queries, refIds]
   );
 
@@ -345,7 +349,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
-  const fields = await fetchSQLFields({ table: identifier.table }, queries);
-  return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
+async function fetchFields(identifier: { table?: string }, queries: DataQuery[]) {
+  return fetchSQLFields({ table: identifier.table }, queries);
 }

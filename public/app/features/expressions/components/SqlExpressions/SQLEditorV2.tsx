@@ -1,4 +1,5 @@
-import { MySQL, sql } from '@codemirror/lang-sql';
+import { autocompletion, completeFromList, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { MySQL, sql, SQLNamespace } from '@codemirror/lang-sql';
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
@@ -10,10 +11,15 @@ import { useLatest } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
+export interface SQLEditorV2CompletionProvider {
+  getTables: () => Promise<string[]>;
+  getColumns: (table: string) => Promise<string[]>;
+  getFunctions?: () => string[];
+}
+
 export interface SQLEditorV2LanguageDefinition {
   id: string;
-  // Placeholder for future CM6 completion extension — ignored in POC
-  completionProvider?: unknown;
+  completionProvider?: SQLEditorV2CompletionProvider;
   formatter?: (query: string) => Promise<string>;
 }
 
@@ -27,6 +33,54 @@ export interface SQLEditorV2Props {
   height?: number;
 }
 
+async function buildCompletionSource(
+  provider: SQLEditorV2CompletionProvider,
+  context: CompletionContext
+): Promise<CompletionResult | null> {
+  const tables = await provider.getTables();
+
+  // Build a SQLNamespace: { tableName: [col1, col2, ...] }
+  const schema: SQLNamespace = {};
+  for (const table of tables) {
+    const columns = await provider.getColumns(table);
+    schema[table] = columns;
+  }
+
+  // Delegate to lang-sql's built-in schema completion
+  const { schemaCompletionSource } = await import('@codemirror/lang-sql');
+  const schemaSource = schemaCompletionSource({ schema, dialect: MySQL });
+  const schemaResult = schemaSource(context);
+
+  const functions = provider.getFunctions?.() ?? [];
+  if (functions.length === 0) {
+    return schemaResult instanceof Promise ? await schemaResult : schemaResult;
+  }
+
+  // Merge function completions
+  const fnSource = completeFromList(functions.map((f) => ({ label: f, type: 'function' })));
+  const fnRaw = fnSource(context);
+
+  const [resolvedSchema, fnResult] = await Promise.all([
+    schemaResult instanceof Promise ? schemaResult : Promise.resolve(schemaResult),
+    fnRaw instanceof Promise ? fnRaw : Promise.resolve(fnRaw),
+  ]);
+
+  if (!resolvedSchema && !fnResult) {
+    return null;
+  }
+  if (!resolvedSchema) {
+    return fnResult;
+  }
+  if (!fnResult) {
+    return resolvedSchema;
+  }
+
+  return {
+    from: resolvedSchema.from,
+    options: [...resolvedSchema.options, ...fnResult.options],
+  };
+}
+
 export function SQLEditorV2({ query, onChange, onBlur, language, children, width, height }: SQLEditorV2Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -34,6 +88,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useLatest(onChange);
   const onBlurRef = useLatest(onBlur);
+  const languageRef = useLatest(language);
 
   // Mount the editor once
   useEffect(() => {
@@ -41,10 +96,15 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
       return;
     }
 
+    const completionSource = languageRef.current?.completionProvider
+      ? (context: CompletionContext) => buildCompletionSource(languageRef.current!.completionProvider!, context)
+      : null;
+
     const extensions = [
-      sql({ dialect: MySQL }),
+      sql({ dialect: MySQL, upperCaseKeywords: true }),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
+      autocompletion({ override: completionSource ? [completionSource] : undefined }),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           onChangeRef.current?.(update.state.doc.toString(), true);
