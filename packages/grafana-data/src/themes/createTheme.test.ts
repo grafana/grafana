@@ -31,9 +31,9 @@ describe('theme registry', () => {
     const theme = getThemeById('brightpink');
     expect(theme).toBeDefined();
     expect(theme.name).toBe('Bright pink');
-    expect(theme.colors.mode).toBe('dark');
+    expect(theme.colors.mode).toBe('light');
     expect(theme.colors.primary.main).toBe('#FF1493');
-    expect(theme.colors.background.canvas).toBe('#1A0A14');
+    expect(theme.colors.background.canvas).toBe('#FFF0F5');
   });
 
   it('should include brightpink in available themes when allowed', () => {
