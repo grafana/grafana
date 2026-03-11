@@ -59,11 +59,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-          cache-dependency-path: "**/*.sum"
+        uses: ./.github/actions/setup-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -96,11 +92,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-          cache-dependency-path: "**/*.sum"
+        uses: ./.github/actions/setup-go
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
