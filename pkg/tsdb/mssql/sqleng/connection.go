@@ -21,7 +21,7 @@ import (
 // odbcNeedsEscape returns true if the value contains semicolon or closing brace,
 // which would break connection string parsing (semicolon is the key=value delimiter).
 func odbcNeedsEscape(s string) bool {
-	return strings.ContainsAny(s, ";}")
+    return strings.ContainsAny(s, ";}") || s != strings.TrimSpace(s)
 }
 
 // escapeOdbcValue wraps a connection string value in ODBC braces so that semicolons
