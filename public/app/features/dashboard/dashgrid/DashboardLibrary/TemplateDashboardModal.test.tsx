@@ -10,9 +10,11 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { TemplateDashboardModal } from './TemplateDashboardModal';
+import { NewTemplateDashboardInteractions } from './analytics/main';
 import { TemplateDashboardInteractions } from './interactions';
 
 const mockItemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockImplementation();
+const mockNewItemClicked = jest.spyOn(NewTemplateDashboardInteractions, 'itemClicked').mockImplementation();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -292,5 +294,48 @@ describe('TemplateDashboardModal', () => {
         })
       );
     });
+  });
+
+  describe('when analyticsFramework flag is enabled', () => {
+    it('should track action assistant with new analytics framework when Customize with Assistant is clicked', async () => {
+      setTestFlags({
+        dashboardTemplatesAssistantButton: true,
+        'assistant.frontend.tools.dashboardTemplates': true,
+        analyticsFramework: true,
+      });
+      const { user } = render(<TemplateDashboardModal />, {
+        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      });
+
+      await waitFor(() => {
+        expect(screen.getAllByRole('button', { name: /Customize with Assistant/i })).toHaveLength(2);
+      });
+
+      await user.click(screen.getAllByRole('button', { name: /Customize with Assistant/i })[0]);
+
+      expect(mockNewItemClicked).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'assistant',
+        })
+      );
+    });
+  });
+  it('view template button should track action view_template with new analytics framework when View template is clicked', async () => {
+    setTestFlags({ analyticsFramework: true });
+    const { user } = render(<TemplateDashboardModal />, {
+      historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'View template' })).toHaveLength(2);
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'View template' })[0]);
+
+    expect(mockNewItemClicked).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'view_template',
+      })
+    );
   });
 });
