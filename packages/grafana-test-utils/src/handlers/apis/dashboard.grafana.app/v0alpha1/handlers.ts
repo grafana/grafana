@@ -34,9 +34,9 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     // TODO: query filter
     const limitFilter = parseInt(url.searchParams.get('limit') || '', 10) || hits.length;
     const folderFilter = url.searchParams.get('folder') || null;
-    const typeFilter = url.searchParams.getAll('type') || [];
+    const typeFilter = url.searchParams.getAll('type');
     const nameFilter = url.searchParams.getAll('name');
-    const tagFilter = url.searchParams.getAll('tag') || null;
+    const tagFilter = url.searchParams.getAll('tag');
     const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
 
     const filters: HitFilterArray = [];
@@ -46,20 +46,18 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
       filters.push((hit) => filteredNameFilter.includes(hit.name));
     }
 
-    if (typeFilter.length) {
+    if (typeFilter.length > 0) {
       filters.push((hit) => typeFilter.includes(hit.resource));
     }
 
-    if (tagFilter && tagFilter.length > 0) {
+    if (tagFilter.length > 0) {
       filters.push((hit) => Boolean(hit.tags?.some((tag) => tagFilter.includes(tag))));
-    }
-
-    if (folderFilter && folderFilter !== 'general') {
-      filters.push((hit) => hit.folder === folderFilter);
     }
 
     if (folderFilter === 'general') {
       filters.push((hit) => hit.folder === undefined || hit.folder === 'general');
+    } else if (folderFilter) {
+      filters.push((hit) => hit.folder === folderFilter);
     }
 
     const filtered = hits.filter((hit) => filters.every((fn) => fn(hit)));
@@ -79,7 +77,7 @@ const getDefaultSearchHandler = () =>
     const typeFilters = new URL(request.url).searchParams.getAll('type');
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
-    const tagFilter = new URL(request.url).searchParams.getAll('tag') || null;
+    const tagFilter = new URL(request.url).searchParams.getAll('tag');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
@@ -92,11 +90,11 @@ const getDefaultSearchHandler = () =>
         filters.push(({ item }) => filteredNameFilter.includes(item.uid));
       }
 
-      if (mappedTypeFilters.length) {
+      if (mappedTypeFilters.length > 0) {
         filters.push(({ item }) => mappedTypeFilters.includes(item.kind));
       }
 
-      if (tagFilter && tagFilter.length > 0) {
+      if (tagFilter.length > 0) {
         filters.push(({ item }) =>
           Boolean(
             (item.kind === 'folder' || item.kind === 'dashboard') && item.tags?.some((tag) => tagFilter.includes(tag))
@@ -104,15 +102,13 @@ const getDefaultSearchHandler = () =>
         );
       }
 
-      if (folderFilter && folderFilter !== 'general') {
-        filters.push(
-          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
-        );
-      }
-
       if (folderFilter === 'general') {
         filters.push(
           ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === undefined
+        );
+      } else if (folderFilter) {
+        filters.push(
+          ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
         );
       }
 
