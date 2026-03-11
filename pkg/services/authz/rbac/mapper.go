@@ -97,6 +97,10 @@ type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource string) (Mapping, bool)
+	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
+	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
+	// Returns ("", false) if no translation is found.
+	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
 	// GetGroups returns all registered group names
@@ -371,6 +375,23 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	}
 
 	return &t, true
+}
+
+func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	groupKey, ok := m.findGroupKey(group)
+	if !ok {
+		return "", false
+	}
+	resources := m[groupKey]
+	if _, ok := resources[resource]; ok {
+		return resource, true
+	}
+	for apiResource, t := range resources {
+		if t.Resource() == resource {
+			return apiResource, true
+		}
+	}
+	return "", false
 }
 
 func (m mapper) GetAll(group string) []Mapping {

@@ -174,7 +174,6 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
       series: [],
       timeRange: getDefaultTimeRange(),
     },
-    isLoading: false,
     queryError: undefined,
     ...qrState,
   };

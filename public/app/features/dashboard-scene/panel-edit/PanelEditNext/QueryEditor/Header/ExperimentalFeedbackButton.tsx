@@ -14,7 +14,7 @@ export function ExperimentalFeedbackButton() {
   const styles = useStyles2(getStyles);
 
   // Track whether the banner was visible when this component first mounted.
-  // If it was, the user dismissed it in this session — animate the button in.
+  // If it was, the user dismissed it - animate the button in.
   // If it wasn't (already dismissed on load), skip the animation.
   const bannerWasInitiallyVisible = useRef(showVersionBanner);
   const shouldAnimate = bannerWasInitiallyVisible.current && !showVersionBanner;
@@ -80,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   animated: css({
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${slideInAndPulse} 0.4s ${theme.transitions.easing.easeOut} both`,
+      animation: `${slideInAndPulse} 0.6s ${theme.transitions.easing.easeOut} 100ms both`,
     },
   }),
   button: css({

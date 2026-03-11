@@ -2,13 +2,9 @@ import { Page, Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { getColumnIdx } from './table-utils';
+import { getColumnIdx, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = '8100236d-603c-421e-a21b-2a0b0ea4eaa3';
-
-const waitForTableLoad = async (loc: Page | Locator) => {
-  await expect(loc.locator('.rdg')).toBeVisible();
-};
 
 test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () => {
   test('Footer affected by filtering', async ({ gotoDashboardPage, selectors, page }) => {

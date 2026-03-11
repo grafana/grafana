@@ -9,12 +9,12 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 
-import { isVariableEditable } from '../../serialization/sceneVariablesSetToVariables';
 import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
+import { isVariableEditable } from './utils';
 
 export interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
@@ -39,21 +39,22 @@ export function VariableEditorList({
 }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
+  const editableVariables = variables.filter(isVariableEditable);
+  const editableToOriginalIndex = editableVariables.map((v) => variables.indexOf(v));
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !result.source) {
       return;
     }
 
     reportInteraction('Variable drag and drop');
-    onChangeOrder(result.source.index, result.destination.index);
+    onChangeOrder(editableToOriginalIndex[result.source.index], editableToOriginalIndex[result.destination.index]);
   };
 
   const onVariableAdd = () => {
     onAdd();
     DashboardInteractions.addVariableButtonClicked({ source: 'settings_pane' });
   };
-
-  const editableVariables = variables.filter(isVariableEditable);
 
   return editableVariables.length <= 0 ? (
     <EmptyVariablesList onAdd={onVariableAdd} />
@@ -79,11 +80,7 @@ export function VariableEditorList({
           <Droppable droppableId="variables-list" direction="vertical">
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                {variables.map((variableScene, index) => {
-                  if (!isVariableEditable(variableScene)) {
-                    return null;
-                  }
-
+                {editableVariables.map((variableScene, index) => {
                   const variableState = variableScene.state;
                   return (
                     <VariableEditorListRow
