@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Erreur lors du chargement de la règle pour cet événement.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrer par :",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "La période sélectionnée contient trop d’événements à afficher. Affichage des 5 000 derniers événements. Essayez d’utiliser une période plus courte.",
         "title": "Impossible d'afficher tous les événements"
@@ -889,11 +897,13 @@
       "aria-label-more-actions": "Plus d’actions pour le point de contact « {{contactPointName}} »",
       "ariaLabel-delete": "Supprimer",
       "button-edit": "Modifier",
+      "button-history": "",
       "button-view": "Afficher",
       "export-ariaLabel-export": "Exporter",
       "export-label-export": "Exporter",
       "label-delete": "Supprimer",
       "label-manage-permissions": "Gérer les autorisations",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Les points de contact mis en service ne peuvent pas être modifiés dans l’interface utilisateur"
     },
     "contact-point-selector": {
@@ -2082,6 +2092,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Voulez-vous vraiment supprimer « {{muteTiming}} » ?"
     },
@@ -2179,47 +2195,8 @@
       "body-no-alertmanager-found": "Nous n’avons trouvé aucun Alertmanager externe et vous n’avez peut-être pas accès à l’Alertmanager Grafana intégré.",
       "title-no-alertmanager-found": "Aucun Alertmanager trouvé"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Recherche par point de contact",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Choisissez un point de contact",
       "search-query-input-placeholder-search": "Rechercher"
     },
@@ -2384,6 +2361,7 @@
       "tooltip-managed-by-plugin": "Cette règle est gérée par le plugin {{pluginName}}"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Réduire",
       "aria-label-expand": "Développer",
       "aria-label-more": "plus d’actions pour la politique",
@@ -2394,9 +2372,10 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Toutes les instances d'alerte seront gérées par la politique par défaut si aucune autre politique correspondante n'est trouvée.",
         "title": "Politique par défaut",
-        "update": "Mettre à jour la politique par défaut"
+        "update": "",
+        "route-count_one": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Oui, supprimer la politique",
@@ -2411,7 +2390,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtrez les politiques de notification en utilisant une liste de correspondances séparées par des virgules, par exemple :<1>gravité=critique, région=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Politiques générées automatiquement",
       "matchers": "Correspondants",
       "metadata": {
@@ -2442,24 +2421,23 @@
         "n-instances_one": "instance",
         "n-instances_other": "instance"
       },
-      "new-child": "Nouvelle politique enfant",
-      "new-policy": "Ajouter une nouvelle politique",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Aucun correspondant",
       "reload-policies": "Recharger les politiques",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Enregistrer la politique",
       "update": {
         "please-wait": "Veuillez patienter pendant que nous mettons à jour vos politiques de notification.",
-        "update-policy": "Mettre à jour la politique",
+        "update-route": "",
         "updating": "Mise à jour…"
       },
       "update-errors": {
@@ -2503,9 +2481,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Nouvelle politique enfant",
-      "label-new-sibling-above": "Nouvel élément frère au-dessus",
-      "label-new-sibling-below": "Nouvel élément frère au-dessous"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3495,7 +3473,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Ajouter une politique de notification"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3536,7 +3514,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Supprimer",
       "label-edit": "Modifier",
-      "label-export": "Exporter"
+      "label-export": "Exporter",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Oui, supprimer le point de contact",
@@ -3568,7 +3547,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Modifier la politique de notification"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5334,6 +5313,7 @@
       "panel-description": "Modifier la description du panneau",
       "panel-edit": "Modifications du panneau",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
+      "panel-preset": "",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
       "panel-title": "Modifier le titre du panneau",
@@ -5388,6 +5368,7 @@
         "annotation-set": "",
         "dashboard": "Tableau de bord",
         "element": "Élément",
+        "link-set": "",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
         "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
@@ -5402,6 +5383,12 @@
         "tabs": "Onglets",
         "variable": "Variable {{type}}",
         "variable-set": "Variables"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6435,11 @@
       "label-use-static-key-dimensions": "Utiliser des dimensions de clé statiques",
       "name-allow-custom-values": "Autoriser les valeurs personnalisées"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Impossible d’accéder au tableau de bord sélectionné. Veuillez réessayer.",
@@ -6782,6 +6774,7 @@
       "title": {
         "description": "Description",
         "panel-links": "Liens de panneau",
+        "panel-styles": "",
         "title": "Titre",
         "transparent-background": "Arrière-plan transparent"
       }
@@ -6867,6 +6860,34 @@
       "last-edited": "{{timeAgo}} par <person />",
       "usage-count_one": "Utilisé sur {{count}} tableaux de bord",
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Géré par : Kubectl",
@@ -6966,6 +6987,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Retour"
@@ -6978,6 +7002,11 @@
         }
       },
       "title-close": "Fermer"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Ce tableau de bord est géré par la mise en service Grafana et ne peut pas être supprimé. Supprimez le tableau de bord du fichier de configuration pour le supprimer.",
@@ -9625,6 +9654,9 @@
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
+    "color-picker": {
+      "input-label": ""
+    },
     "color-picker-popover": {
       "palette-tab": "Couleurs",
       "spectrum-tab": "Personnalisé"
@@ -10692,9 +10724,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Expérimental. Obtenez plus de résultats en faisant défiler jusqu’en bas de la liste des logs.",
-    "description-enable-logs-highlighting": "Utiliser un schéma de coloration prédéfini pour mettre en évidence les parties pertinentes des lignes de journal",
-    "description-show-controls": "Afficher les contrôles pour accéder à la première ou à la dernière ligne du log et filtrer par niveau de log",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "En phase de test. Lorsque les journaux OTel sont affichés, ajouter un champ supplémentaire contenant les paires clé-valeur pertinentes issues des étiquettes et des métadonnées.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Icône glisser-déposer",
       "clear-button": "Effacer",
@@ -12141,10 +12177,12 @@
     "start-modal": {
       "button-start": "Démarrer {{title}}",
       "description-customize-dashboard-elements-visibility": "Personnaliser la visibilité des éléments du tableau de bord",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Les hauteurs du panneau seront ajustées à la taille de l'écran",
       "label-autofit": "Ajustement automatique",
       "label-dashboard-links": "Liens du tableau de bord",
       "label-display-dashboard-controls": "Afficher les contrôles du tableau de bord",
+      "label-hide-logo": "",
       "label-mode": "Mode",
       "label-time-and-refresh": "Heure et actualisation",
       "label-variables": "Variables",
@@ -13481,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13577,7 +13617,6 @@
       "alerts-loading": "",
       "card-click": "Sélectionner la carte {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
@@ -14807,6 +14846,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Données en dehors de la plage de temps",
       "zoom-to-data": "Zoom sur les données"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
