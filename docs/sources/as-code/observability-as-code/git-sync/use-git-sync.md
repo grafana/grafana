@@ -90,3 +90,19 @@ To update or delete your repository configuration after you've completed setup:
 
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
+
+## Manage folder permissions
+
+By default, folders provisioned with Git Sync have these default permissions:
+
+- Admin = Admin
+- Editor = Editor
+- Viewer = Viewer.
+
+Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
+
+To modify the permissions make sure the provisioned folder has the `_folder.json` metadata file with the folder's UID.
+
+### Create the metadata file
+
+TBC

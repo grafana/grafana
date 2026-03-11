@@ -94,23 +94,10 @@ A resource can be:
 
 ## Known limitations
 
-### Synced resources
-
 - You can only sync dashboards and folders. Refer to [Supported resources](#resource-support-and-compatibility) for more information.
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
 - Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise.
 - When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
-- If you want to manage existing resources with Git Sync, you need to save them as JSON files and commit them to the synced repository. Use `grafanactl` or open a PR to import, copy, move, or save a dashboard. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
+- If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
-### Permission management
-
-You cannot modify the permissions of a provisioned folder after you've synced it.
-
-The default permissions are:
-
-- Admin = Admin
-- Editor = Editor
-- Viewer = Viewer.
-
-Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
