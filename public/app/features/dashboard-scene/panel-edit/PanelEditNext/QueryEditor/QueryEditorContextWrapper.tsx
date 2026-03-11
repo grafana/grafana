@@ -1,15 +1,23 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PendingExpression, PendingSavedQuery, PendingTransformation, QueryEditorProvider } from './QueryEditorContext';
+import {
+  PendingExpression,
+  PendingSavedQuery,
+  PendingTransformation,
+  QueryEditorProvider,
+  SelectionModifiers,
+} from './QueryEditorContext';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
+import { useMultiSelection } from './hooks/useMultiSelection';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
 import { useQueryEditorUIToggles } from './hooks/useQueryEditorUIToggles';
@@ -73,15 +81,61 @@ export function QueryEditorContextWrapper({
     toggleDebug,
   } = useQueryEditorUIToggles();
 
-  const [selectedQueryRefIds, setSelectedQueryRefIds] = useState<string[]>([]);
-  const [selectedTransformationIds, setSelectedTransformationIds] = useState<string[]>([]);
+  const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
-  const onCardSelectionChange = useCallback((queryRefId: string | null, transformationId: string | null) => {
-    setSelectedQueryRefIds(queryRefId ? [queryRefId] : []);
-    setSelectedTransformationIds(transformationId ? [transformationId] : []);
+  const {
+    selectedQueryRefIds,
+    selectedTransformationIds,
+    onCardSelectionChange: onCardSelectionChangeRaw,
+    trackQueryRename,
+    toggleQuerySelection: toggleQuerySelectionRaw,
+    toggleTransformationSelection: toggleTransformationSelectionRaw,
+    clearSelection: clearSelectionRaw,
+  } = useMultiSelection({
+    queries: queryRunnerState?.queries ?? [],
+    transformations,
+    // Stable callback — always delegates to the latest clearSideEffects via ref.
+    onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
+  });
+
+  // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
+  const onCardSelectionChange = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      setSelectedAlertId(null);
+      onCardSelectionChangeRaw(queryRefId, transformationId);
+    },
+    [onCardSelectionChangeRaw]
+  );
+
+  const toggleQuerySelection = useCallback(
+    (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
+      setSelectedAlertId(null);
+      toggleQuerySelectionRaw(query, modifiers);
+    },
+    [toggleQuerySelectionRaw]
+  );
+
+  const toggleTransformationSelection = useCallback(
+    (transformation: Transformation, modifiers?: SelectionModifiers) => {
+      setSelectedAlertId(null);
+      toggleTransformationSelectionRaw(transformation, modifiers);
+    },
+    [toggleTransformationSelectionRaw]
+  );
+
+  const clearSelection = useCallback(() => {
     setSelectedAlertId(null);
-  }, []);
+    clearSelectionRaw();
+  }, [clearSelectionRaw]);
+
+  const selectAlert = useCallback(
+    (alertId: string | null) => {
+      setSelectedAlertId(alertId);
+      clearSelectionRaw();
+    },
+    [clearSelectionRaw]
+  );
 
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
     usePendingExpression({
@@ -120,6 +174,10 @@ export function QueryEditorContextWrapper({
     clearPendingTransformation();
     setPendingSavedQueryState(null);
   }, [resetUIToggles, clearPendingExpression, clearPendingTransformation]);
+
+  // Update the ref every render so the stable callback inside useMultiSelection
+  // always delegates to the latest clearSideEffects.
+  clearSideEffectsRef.current = clearSideEffects;
 
   const dsState = useMemo(
     () => ({
@@ -173,7 +231,10 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
-      setSelectedQuery: (query: DataQuery | null) => {
+      toggleQuerySelection,
+      toggleTransformationSelection,
+      clearSelection,
+      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         onCardSelectionChange(query ? query.refId : null, null);
         clearSideEffects();
       },
@@ -182,8 +243,7 @@ export function QueryEditorContextWrapper({
         clearSideEffects();
       },
       setSelectedAlert: (alert: AlertRule | null) => {
-        setSelectedAlertId(alert?.alertId ?? null);
-        onCardSelectionChange(null, null);
+        selectAlert(alert?.alertId ?? null);
       },
       queryOptions: {
         options: queryOptions,
@@ -240,7 +300,11 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
+      toggleQuerySelection,
+      toggleTransformationSelection,
+      clearSelection,
       onCardSelectionChange,
+      selectAlert,
       clearSideEffects,
       queryOptions,
       isQueryOptionsOpen,
@@ -274,7 +338,7 @@ export function QueryEditorContextWrapper({
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
         // Keep selection stable when a query is renamed so the editor stays open.
-        setSelectedQueryRefIds((current) => getNextSelectedQueryRefIds(current, originalRefId, updatedQuery.refId));
+        trackQueryRename(originalRefId, updatedQuery.refId);
       },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
@@ -301,7 +365,7 @@ export function QueryEditorContextWrapper({
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
     }),
-    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction]
+    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction, trackQueryRename]
   );
 
   return (

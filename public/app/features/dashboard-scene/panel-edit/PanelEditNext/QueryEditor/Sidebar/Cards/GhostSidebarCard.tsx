@@ -12,7 +12,7 @@ export function GhostSidebarCard({ id, type }: GhostSidebarCardProps) {
   const item: ActionItem = { name: '', type, isHidden: false };
 
   return (
-    <SidebarCard id={id} isSelected={false} item={item} onClick={() => {}} variant="ghost">
+    <SidebarCard id={id} isSelected={false} item={item} onSelect={() => {}} variant="ghost">
       {null}
     </SidebarCard>
   );

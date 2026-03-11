@@ -67,6 +67,13 @@ interface TransformationToggles {
   toggleDebug: () => void;
 }
 
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
@@ -76,6 +83,9 @@ export interface QueryEditorUIState {
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
