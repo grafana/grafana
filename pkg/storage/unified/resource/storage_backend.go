@@ -68,20 +68,20 @@ func convertEmptyToClusterNamespace(namespace string) string {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake                    *snowflake.Node
-	kv                           KV
-	bulkLock                     *BulkLock
-	dataStore                    *dataStore
-	eventStore                   *eventStore
-	notifier                     notifier
-	log                          log.Logger
-	withPruner                   bool
-	eventRetentionPeriod         time.Duration
-	eventPruningInterval         time.Duration
-	historyPruner                Pruner
-	garbageCollection            GarbageCollectionConfig
-	lastImportStore              *lastImportStore
-	lastImportTimeMaxAge         time.Duration
+	snowflake            *snowflake.Node
+	kv                   KV
+	bulkLock             *BulkLock
+	dataStore            *dataStore
+	eventStore           *eventStore
+	notifier             notifier
+	log                  log.Logger
+	withPruner           bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	garbageCollection    GarbageCollectionConfig
+	lastImportStore      *lastImportStore
+	lastImportTimeMaxAge time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
