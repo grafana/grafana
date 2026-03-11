@@ -91,7 +91,7 @@ To add an annotation query, follow these steps:
 
 For more detailed information about annotations, refer to the full [Annotations documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/).
 
-## Add dashboard links
+## Add links
 
 For more detailed information on dashboard links, refer to the full [Dashboard links documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/).
 
@@ -104,9 +104,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
-1. Click **Dashboard link**.
-
-   The default link type is **Dashboards**.
+1. Click **Link**.
 
 {{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="add-dashboard-link" >}}
 
@@ -130,7 +128,7 @@ To add a URL link to your dashboard, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
-1. Click **Dashboard link**.
+1. Click **Link**.
 
 {{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
 

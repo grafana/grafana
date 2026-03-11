@@ -66,7 +66,7 @@ Once you've added a dashboard link, it appears in the upper right corner of your
 
 ### Add links to dashboards
 
-Add links to other dashboards at the top of your current dashboard.
+To add a link to another dashboard at the top of your current dashboard, follow these steps:
 
 {{< docs/list >}}
 
@@ -75,11 +75,11 @@ Add links to other dashboards at the top of your current dashboard.
 1. In the sidebar, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 
-   The default link type is **Dashboards**.
-
 {{< shared id="add-dashboard-link" >}}
 
-1. In the **With tags** drop-down, enter tags to limit the linked dashboards to only the ones with the tags you enter.
+   The default link type is **Dashboards**.
+
+1. In the **With tags** drop-down list, enter tags to limit the linked dashboards to only the ones with the tags you enter.
 
    If you don't add any tags, Grafana includes links to all other dashboards.
 
@@ -99,7 +99,11 @@ Add links to other dashboards at the top of your current dashboard.
 
 ### Add a URL link to a dashboard
 
-Add a link to a URL at the top of your current dashboard. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
+Add a link to a URL at the top of your current dashboard.
+You can link to any available URL, including dashboards, panels, or external sites.
+You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
+
+To add a URL link to your dashboard, follow these steps:
 
 {{< docs/list >}}
 
@@ -110,7 +114,7 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
 
 {{< shared id="url-dashboard-link" >}}
 
-1. In the **Type** drop-down, select **Link**.
+1. In the **Type** drop-down list, select **Link**.
 1. In the **URL** field, enter the URL to which you want to link.
 
    Depending on the target, you might want to include field values. **Example:** https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests
