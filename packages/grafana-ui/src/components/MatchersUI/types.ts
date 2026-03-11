@@ -8,7 +8,6 @@ export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {
   matcher: FieldMatcherInfo<TOptions>;
   /* Maps matcher options to human-readable label */
   optionsToLabel: (options: TOptions) => string;
-  getUniqueScopes?: (data: DataFrame[]) => Set<MatcherScope>;
 }
 
 export interface MatcherUIProps<T> {
@@ -17,6 +16,5 @@ export interface MatcherUIProps<T> {
   data: DataFrame[];
   options: T;
   scope?: MatcherScope;
-  allowedScopes?: MatcherScope[];
   onChange: (options: T, scope?: MatcherScope) => void;
 }

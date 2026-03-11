@@ -72,12 +72,13 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
-    const loremIpsumCell = getCell(page, 1, longTextColIdx);
+    const table = page.locator('.rdg');
+    const loremIpsumCell = getCell(table, 1, longTextColIdx);
     await loremIpsumCell.scrollIntoViewIfNeeded();
     await loremIpsumCell.hover();
-    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
-    await getCell(page, 1, longTextColIdx + 1).hover();
-    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
+    await getCell(table, 1, longTextColIdx + 1).hover();
+    await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // enable cell inspect, confirm that hover no longer triggers.
     await dashboardPage
@@ -147,15 +148,16 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const stateColumnHeader = getCell(page, 0, 1);
+    const table = page.locator('.rdg');
+    const stateColumnHeader = getCell(table, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
-    await expect(getCell(page, 1, 1)).toContainText('down'); // down or down fast
+    await expect(getCell(table, 1, 1)).toContainText('down'); // down or down fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
-    await expect(getCell(page, 1, 1)).toContainText('up'); // up or up fast
+    await expect(getCell(table, 1, 1)).toContainText('up'); // up or up fast
 
     await stateColumnHeader.getByText('Info').click();
     await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
@@ -173,12 +175,14 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const infoColumnIdx = await getColumnIdx(page, 'Info');
+    const table = page.locator('.rdg');
+
+    const infoColumnIdx = await getColumnIdx(table, 'Info');
 
     const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
 
     // get the first value in the "State" column, filter it out, then check that it went away.
-    const firstStateValue = (await getCell(page, 1, infoColumnIdx).textContent())!;
+    const firstStateValue = (await getCell(table, 1, infoColumnIdx).textContent())!;
     await stateColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
@@ -195,7 +199,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(filterContainer).not.toBeVisible();
 
     // did it actually filter out our value?
-    await expect(getCell(page, 1, infoColumnIdx)).not.toHaveText(firstStateValue);
+    await expect(getCell(table, 1, infoColumnIdx)).not.toHaveText(firstStateValue);
   });
 
   test('Tests pagination, row height adjustment', async ({ gotoDashboardPage, selectors, page }) => {
@@ -296,7 +300,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const dataLinkColIdx = await getColumnIdx(page, 'Data Link');
 
     // Info column has a single DataLink by default.
-    const infoCell = getCell(page, 1, infoColumnIdx);
+    const table = page.locator('.rdg');
+    const infoCell = getCell(table, 1, infoColumnIdx);
     await expect(infoCell.locator('a')).toBeVisible();
     expect(infoCell.locator('a')).toHaveAttribute('href');
     expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
@@ -313,7 +318,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         continue;
       }
 
-      const cell = getCell(page, 1, colIdx);
+      const cell = getCell(table, 1, colIdx);
       await expect(cell.locator('a')).toBeVisible();
       expect(cell.locator('a')).toHaveAttribute('href');
       expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
@@ -326,7 +331,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
-      const cell = getCell(page, 1, colIdx);
+      const cell = getCell(table, 1, colIdx);
       if (colIdx === infoColumnIdx) {
         // the Info column should still have its single link.
         expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
@@ -440,7 +445,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
     await filterContainer.getByRole('button', { name: 'Ok' }).click();
 
-    const cell = getCell(page, 1, dataLinkColumnIdx);
+    const table = page.locator('.rdg');
+    const cell = getCell(table, 1, dataLinkColumnIdx);
     await expect(cell).toBeVisible();
     await expect(cell).toHaveCSS('text-decoration', /line-through/);
 

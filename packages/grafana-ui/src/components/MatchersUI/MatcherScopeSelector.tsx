@@ -71,5 +71,7 @@ function useScopesOptions(
 
 export function MatcherScopeSelector({ value, scopes, allowedScopes, ...rest }: MatcherScopeSelectorProps) {
   const options = useScopesOptions(scopes, value, allowedScopes);
-  return <RadioButtonGroup {...rest} options={options} value={value} />;
+  return <RadioButtonGroup {...rest} options={options} value={value ?? options[0]?.value} />;
 }
+
+export { getUniqueMatcherScopes } from './utils';

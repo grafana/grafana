@@ -113,8 +113,19 @@ export function getGroupDescriptionForScope(scope: MatcherScope): string | undef
 /**
  * @internal
  */
-export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
-  return useMemo(() => getFrameFieldsDisplayNames(data, filter), [data, filter]);
+export function useFieldDisplayNames(
+  data: DataFrame[],
+  filter?: (field: Field) => boolean,
+  scope?: MatcherScope
+): FrameFieldsDisplayNames {
+  return useMemo(() => getFrameFieldsDisplayNames(data, filter, undefined, undefined, scope), [data, filter, scope]);
+}
+
+interface UseSelectOptionsProps {
+  firstItem?: ComboboxOption;
+  fieldType?: string;
+  baseNameMode?: FieldNamePickerBaseNameMode;
+  scope?: MatcherScope;
 }
 
 /**
@@ -123,70 +134,77 @@ export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) 
 export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
-  firstItem?: ComboboxOption,
-  fieldType?: string,
-  baseNameMode?: FieldNamePickerBaseNameMode
+  { firstItem, fieldType, baseNameMode, scope }: UseSelectOptionsProps = {}
 ): ComboboxOption[] {
   return useMemo(() => {
     let found = false;
 
-    const shouldShowScopes = displayNames.scopes.size > 0;
+    const shouldShowScopes = !scope && displayNames.scopes.size > 0;
+    const isFound = (name: string) => name === currentName && (scope ? displayNames.scopes.get(name) === scope : true);
+    const getGroup = (name: string) =>
+      shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined;
+    const optionFactory =
+      (getLabel: (name: string) => string, getExtraOptions?: (name: string) => Partial<ComboboxOption> | undefined) =>
+      (name: string) => ({
+        value: name,
+        label: getLabel(name),
+        group: getGroup(name),
+        ...getExtraOptions?.(name),
+      });
 
-    const options: ComboboxOption[] = [];
+    const displayNameBuilder = optionFactory(
+      (name) => name,
+      (name) => {
+        const field = displayNames.fields.get(name);
+        if (!field) {
+          return;
+        }
+        return { icon: getFieldTypeIcon(field) };
+      }
+    );
+    const baseFieldNameBuilder = optionFactory((name) =>
+      t('grafana-ui.matchers.labels.base-field-name', '{{name}} (base field name)', { name })
+    );
+
+    let options: ComboboxOption[] = [];
     if (firstItem) {
       options.push(firstItem);
     }
-    if (baseNameMode === FieldNamePickerBaseNameMode.OnlyBaseNames) {
-      for (const name of displayNames.raw) {
-        if (!found && name === currentName) {
-          found = true;
-        }
-        options.push({
-          value: name,
-          label: t('grafana-ui.matchers.labels.base-field-name', '{{name}} (base field name)', { name }),
-          group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
-        });
-      }
-    } else {
-      for (const name of displayNames.display) {
-        if (!found && name === currentName) {
-          found = true;
-        }
-        const field = displayNames.fields.get(name);
-        if (!fieldType || fieldType === field?.type) {
-          options.push({
-            value: name,
-            label: name,
-            icon: field ? getFieldTypeIcon(field) : undefined,
-            group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
-          });
-        }
-      }
 
-      if (baseNameMode !== FieldNamePickerBaseNameMode.ExcludeBaseNames) {
-        for (const name of displayNames.raw) {
-          if (!displayNames.display.has(name)) {
-            if (!found && name === currentName) {
-              found = true;
-            }
-            options.push({
-              value: name,
-              label: t('grafana-ui.matchers.labels.base-field-name', '{{name}} (base field name)', { name }),
-              group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined,
-            });
-          }
+    // the list order and contents of the list depends on the baseNameMode
+    const sets: Array<{ set: Set<string>; builder: (name: string) => ComboboxOption }> = [];
+    if (baseNameMode === FieldNamePickerBaseNameMode.OnlyBaseNames) {
+      sets.push({ set: displayNames.raw, builder: baseFieldNameBuilder });
+    } else {
+      sets.push({ set: displayNames.display, builder: displayNameBuilder });
+    }
+    if (baseNameMode !== FieldNamePickerBaseNameMode.ExcludeBaseNames) {
+      sets.push({ set: displayNames.raw, builder: baseFieldNameBuilder });
+    }
+
+    for (const { set, builder } of sets) {
+      for (const name of set) {
+        if (!found && isFound(name)) {
+          found = true;
         }
+        if (scope && displayNames.scopes.get(name) !== scope) {
+          continue;
+        }
+        options.push(builder(name));
       }
     }
 
     if (currentName && !found) {
-      options.push({
-        value: currentName,
-        label: t('grafana-ui.matchers.labels.not-found', '{{name}} (not found)', { name: currentName }),
-        group: shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(currentName)) : undefined,
-      });
+      const notFoundOption = optionFactory((name) =>
+        t('grafana-ui.matchers.labels.not-found', '{{name}} (not found)', { name })
+      );
+      options.push(notFoundOption(currentName));
     }
 
     return options;
-  }, [displayNames, currentName, firstItem, fieldType, baseNameMode]);
+  }, [displayNames, currentName, firstItem, baseNameMode, scope]);
+}
+
+export function getUniqueMatcherScopes(data: DataFrame[]): Set<MatcherScope> {
+  return new Set([...getFrameFieldsDisplayNames(data).scopes.values()]);
 }

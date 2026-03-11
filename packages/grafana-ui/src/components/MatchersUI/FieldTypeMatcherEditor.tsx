@@ -14,7 +14,7 @@ import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const counts = useFieldCounts(data);
-  const selectOptions = useSelectOptions(counts, scope, options);
+  const selectOptions = useCountSelectOptions(counts, scope, options);
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
@@ -111,7 +111,7 @@ const useFieldCounts = (data: DataFrame[]): ScopedCounts => {
   return useMemo(() => countScopedFields(data), [data]);
 };
 
-const useSelectOptions = (counts: ScopedCounts, scope: MatcherScope, opt?: string): ComboboxOption[] => {
+const useCountSelectOptions = (counts: ScopedCounts, scope: MatcherScope, opt?: string): ComboboxOption[] => {
   return useMemo(() => {
     let found = false;
     const options: ComboboxOption[] = [];
@@ -148,5 +148,4 @@ export const getFieldTypeMatcherItem: () => FieldMatcherUIRegistryItem<string> =
     'Set properties for fields of a specific type (number, string, boolean)'
   ),
   optionsToLabel: (options) => options,
-  getUniqueScopes: (data) => new Set([...countScopedFields(data).keys()]),
 });

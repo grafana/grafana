@@ -17,7 +17,6 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { getFrameFieldsDisplayNames } from './utils';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
 
@@ -110,5 +109,4 @@ export const getFieldValueMatcherItem: () => FieldMatcherUIRegistryItem<FieldVal
     'Set properties for fields with reducer condition'
   ),
   optionsToLabel: (options) => `${options?.reducer} ${options?.op} ${options?.value}`,
-  getUniqueScopes: (data) => new Set([...getFrameFieldsDisplayNames(data).scopes.values()]),
 });

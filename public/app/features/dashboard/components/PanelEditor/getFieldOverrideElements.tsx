@@ -13,12 +13,11 @@ import {
   fieldMatchers,
   FieldConfigSource,
   DataFrame,
-  FieldMatcherID,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { MatcherScope } from '@grafana/schema';
-import { fieldMatchersUI, MatcherScopeSelector, useStyles2, ValuePicker } from '@grafana/ui';
+import { fieldMatchersUI, getUniqueMatcherScopes, MatcherScopeSelector, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
@@ -80,6 +79,8 @@ export function getFieldOverrideCategories(
     isOverride: true,
   };
 
+  const uniqueMatcherScopes = getUniqueMatcherScopes(data);
+
   /**
    * Main loop through all override rules
    */
@@ -131,8 +132,8 @@ export function getFieldOverrideCategories(
       onOverrideChange(idx, { ...override, properties });
     };
 
-    const uniqueScopes = matcherUi.getUniqueScopes?.(data) ?? new Set();
-    const shouldShowScopeSelector = uniqueScopes.size > 1;
+    const hasInvalidScope = override.matcher.scope && !uniqueMatcherScopes.has(override.matcher.scope);
+    const shouldShowScopeSelector = uniqueMatcherScopes.size > 1 || hasInvalidScope;
 
     const htmlId = `${overrideId}-matcher`;
     if (shouldShowScopeSelector) {
@@ -147,7 +148,7 @@ export function getFieldOverrideCategories(
               <MatcherScopeSelector
                 id={scopeId}
                 value={override.matcher.scope}
-                scopes={uniqueScopes}
+                scopes={uniqueMatcherScopes}
                 onChange={onMatcherScopeChange}
                 allowedScopes={ALLOWED_SCOPES}
               />
@@ -170,7 +171,6 @@ export function getFieldOverrideCategories(
               scope={override.matcher.scope}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
-              allowedScopes={ALLOWED_SCOPES}
             />
           );
         },

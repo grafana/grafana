@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, FieldType, fieldMatchers } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';
@@ -10,10 +10,9 @@ import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 import { frameHasName, useFieldDisplayNames, useSelectOptions } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id, allowedScopes } = props;
-  const areNestedFieldsAllowed = allowedScopes?.includes('nested');
-  const names = useFieldDisplayNames(data, (field) => areNestedFieldsAllowed || field.type !== FieldType.nestedFrames);
-  const selectOptions: ComboboxOption[] = useSelectOptions(names, options);
+  const { data, options, onChange: onChangeFromProps, id, scope } = props;
+  const names = useFieldDisplayNames(data);
+  const selectOptions: ComboboxOption[] = useSelectOptions(names, options, { scope });
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
