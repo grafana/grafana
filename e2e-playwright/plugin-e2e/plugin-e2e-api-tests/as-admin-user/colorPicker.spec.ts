@@ -20,7 +20,7 @@ test.describe(
         await expect(
           colorPicker,
           formatExpectError('Expected color picker to have the selected hex color')
-        ).toHaveColor('#FF5733');
+        ).toHaveColor('#ff5733');
       });
 
       test('should select a color using rgb value', async ({ panelEditPage }) => {
@@ -32,7 +32,7 @@ test.describe(
         await expect(
           colorPicker,
           formatExpectError('Expected color picker to have the selected rgb color')
-        ).toHaveColor('rgb(0, 128, 255)');
+        ).toHaveColor('#0080ff');
       });
     });
   }
