@@ -158,7 +158,7 @@ function getDeleteBannerText(repoType: string): BannerText {
       { repoType }
     ),
     body: t(
-      'provisioned-resource-preview-banner.preview-banner.not-deleted',
+      'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
       'The rest of Grafana users in your organization will still see this resource until this branch is merged'
     ),
     button: t(
