@@ -151,7 +151,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService(), nil)
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 

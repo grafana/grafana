@@ -23,10 +23,10 @@ type Service struct {
 
 var _ team.Service = (*Service)(nil)
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
 	legacyService, err := ProvideLegacyService(db, cfg, tracer)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
@@ -35,7 +35,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 		legacyService:     legacyService,
 		k8sService:        k8sService,
 		openFeatureClient: openfeature.NewDefaultClient(),
-	}
+	}, nil
 }
 
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {

@@ -436,7 +436,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	teamimplService, err := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	if err != nil {
+		return nil, err
+	}
 	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService)
 	if err != nil {
 		return nil, err
@@ -1129,7 +1132,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	teamimplService, err := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	if err != nil {
+		return nil, err
+	}
 	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService)
 	if err != nil {
 		return nil, err
@@ -1741,7 +1747,10 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 		return Runner{}, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	teamimplService, err := teamimpl.ProvideService(sqlStore, cfg, tracingService, eventualRestConfigProvider)
+	if err != nil {
+		return Runner{}, err
+	}
 	cacheService := localcache.ProvideService()
 	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService)
 	if err != nil {
