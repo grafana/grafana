@@ -15,6 +15,19 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
+var (
+	reBlockComment = regexp.MustCompile(`(?s)/\*.*?\*/`)
+	reLineComment  = regexp.MustCompile(`--[^\n]*`)
+)
+
+// stripSQLComments removes SQL line comments (--) and block comments (/* */)
+// from the query string.
+func stripSQLComments(sql string) string {
+	sql = reBlockComment.ReplaceAllString(sql, "")
+	sql = reLineComment.ReplaceAllString(sql, "")
+	return sql
+}
+
 type postgresMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
 	timescaledb bool
@@ -28,6 +41,10 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 }
 
 func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
+	sql = stripSQLComments(sql)
+
 	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
