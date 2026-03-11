@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTime, dateTimeFormatTimeAgo } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, IconName, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -33,7 +33,7 @@ export function NotificationHeader({
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
           <NotificationState status={notification.status} />
-          <Tooltip content={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}>
+          <Tooltip content={dateTimeFormat(notification.timestamp)}>
             <Text variant="bodySmall" color="secondary">
               {dateTimeFormatTimeAgo(notification.timestamp)}
             </Text>

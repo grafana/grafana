@@ -10,7 +10,7 @@ import {
   CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
@@ -398,11 +398,8 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           )}
           {alert.startsAt && (
             <Text variant="bodySmall" color="secondary">
-              <Trans
-                i18nKey="alerting.notifications-scene.started"
-                values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
-              >
-                Started: {{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
+              <Trans i18nKey="alerting.notifications-scene.started" values={{ value: dateTimeFormat(alert.startsAt) }}>
+                Started: {{ value: dateTimeFormat(alert.startsAt) }}
               </Trans>
             </Text>
           )}
@@ -459,7 +456,7 @@ interface TimestampProps {
 }
 
 const Timestamp = ({ time }: TimestampProps) => {
-  const formattedDate = time ? dateTime(time).format('YYYY-MM-DD HH:mm:ss') : '-';
+  const formattedDate = time ? dateTimeFormat(time) : '-';
 
   return (
     <Text variant="body" weight="light">

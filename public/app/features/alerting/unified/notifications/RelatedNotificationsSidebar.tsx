@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Icon, IconName, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -82,7 +82,7 @@ export function RelatedNotificationsSidebar({
           <Stack direction="column" gap={0.5}>
             <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
               <Text variant="bodySmall" color="secondary">
-                {dateTime(batch.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+                {dateTimeFormat(batch.timestamp)}
               </Text>
               {batch.hasCurrent && <Badge color="blue" text={t('alerting.notification-detail.current', 'Current')} />}
               {batch.allRetry && (

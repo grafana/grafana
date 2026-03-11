@@ -7,13 +7,11 @@ import { render } from 'test/test-utils';
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 import { setupMswServer } from '../mockApi';
-import { setHistorianAlerts, setHistorianNotifications } from '../mocks/server/handlers/historian';
+import { HISTORIAN_BASE, setHistorianAlerts, setHistorianNotifications } from '../mocks/server/handlers/historian';
 
 import NotificationDetailPage from './NotificationDetailPage';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
-
-const HISTORIAN_BASE = '/apis/historian.alerting.grafana.app/v0alpha1/namespaces/default';
 
 const server = setupMswServer();
 

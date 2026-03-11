@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { CreateNotificationsqueryalertsNotificationEntryAlert } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTime, dateTimeFormatTimeAgo } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LoadingPlaceholder, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -98,7 +98,7 @@ function AlertsList({ alerts, groupLabels, heading }: AlertsListProps) {
                   <Text>{linkText}</Text>
                 )}
                 {alert.startsAt && (
-                  <Tooltip content={dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss')}>
+                  <Tooltip content={dateTimeFormat(alert.startsAt)}>
                     <Text variant="bodySmall" color="secondary">
                       {dateTimeFormatTimeAgo(alert.startsAt)}
                     </Text>

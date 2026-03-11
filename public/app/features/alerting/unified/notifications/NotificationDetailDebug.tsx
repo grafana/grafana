@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode } from 'react';
 
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Collapse, Text, useStyles2 } from '@grafana/ui';
 
@@ -27,11 +27,11 @@ export function DebugDetails({ notification, isOpen, onToggle }: DebugDetailsPro
         <DetailRow label={t('alerting.notification-detail.field-uuid', 'UUID')} value={notification.uuid} />
         <DetailRow
           label={t('alerting.notification-detail.field-timestamp', 'Timestamp')}
-          value={dateTime(notification.timestamp).format('YYYY-MM-DD HH:mm:ss')}
+          value={dateTimeFormat(notification.timestamp)}
         />
         <DetailRow
           label={t('alerting.notification-detail.field-pipeline-time', 'Pipeline time')}
-          value={dateTime(notification.pipelineTime).format('YYYY-MM-DD HH:mm:ss')}
+          value={dateTimeFormat(notification.pipelineTime)}
         />
         <DetailRow
           label={t('alerting.notification-detail.field-integration-index', 'Integration index')}

@@ -7,7 +7,7 @@ import {
   CreateNotificationsqueryalertsResponse,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
-const HISTORIAN_BASE = '/apis/historian.alerting.grafana.app/v0alpha1/namespaces/default';
+export const HISTORIAN_BASE = '/apis/historian.alerting.grafana.app/v0alpha1/namespaces/default';
 
 let notificationEntries: CreateNotificationqueryNotificationEntry[] = [];
 let alertEntries: CreateNotificationsqueryalertsNotificationEntryAlert[] = [];
