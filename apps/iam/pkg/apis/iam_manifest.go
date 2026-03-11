@@ -41,8 +41,8 @@ var appManifestData = app.ManifestData{
 					Conversion: false,
 				},
 
-			{
-				Kind:       "Role",
+				{
+					Kind:       "Role",
 					Plural:     "Roles",
 					Scope:      "Namespaced",
 					Conversion: false,
