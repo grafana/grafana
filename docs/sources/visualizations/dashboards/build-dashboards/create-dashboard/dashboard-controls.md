@@ -140,3 +140,25 @@ To add a URL link to your dashboard, follow these steps:
 {{< /docs/list >}}
 
 ## Add filters
+
+To add a filter, follow these steps:
+
+<!-- vale Grafana.Spelling = NO -->
+
+{{< docs/list >}}
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **Add new element** icon (blue plus sign) and select **Filter**.
+1. Choose a filter type from the list.
+
+{{< shared-snippet path="/docs/grafana/latest/visualizations/..." id="add-filter" >}}
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
+{{< /docs/list >}}
+
+<!-- vale Grafana.Spelling = YES -->
