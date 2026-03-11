@@ -21,7 +21,4 @@ runs:
         cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.mod' || '' }}
     - name: Report Go cache sizes
       if: inputs.cache == 'true'
-      shell: bash
-      run: |
-        echo "GOMODCACHE: $(du -sh "$(go env GOMODCACHE)" 2>/dev/null | cut -f1 || echo 'N/A')"
-        echo "GOCACHE:    $(du -sh "$(go env GOCACHE)" 2>/dev/null | cut -f1 || echo 'N/A')"
+      uses: ./.github/actions/report-go-cache-sizes
