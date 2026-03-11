@@ -169,6 +169,7 @@ func TestAfterRoleCreate(t *testing.T) {
 	})
 }
 
+func TestBeginRoleUpdate(t *testing.T) {
 	var wg sync.WaitGroup
 	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
