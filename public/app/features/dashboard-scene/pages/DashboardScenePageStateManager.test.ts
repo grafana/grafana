@@ -1586,6 +1586,53 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(getDashSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should keep v2 manager state in sync after loadDashboard', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'linked-dash',
+            creationTimestamp: '',
+            resourceVersion: '2',
+            generation: 2,
+          },
+          spec: { ...defaultDashboardV2Spec(), title: 'Linked dashboard' },
+        },
+        getDashSpy
+      );
+
+      await manager.loadDashboard({ uid: 'linked-dash', route: DashboardRoutes.Normal });
+
+      expect(getDashSpy).toHaveBeenCalledTimes(1);
+      expect(manager.state.dashboard?.state.uid).toBe('linked-dash');
+      expect(v2Manager.state.dashboard?.state.uid).toBe('linked-dash');
+    });
+
+    it('should not sync state back to v1 manager after loadDashboard', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      const v1SetStateSpy = jest.spyOn(manager['v1Manager'], 'setState');
+
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(v1SetStateSpy).not.toHaveBeenCalled();
+    });
+
     it('should maintain active manager state between operations', async () => {
       setupV1FailureV2Success();
 
@@ -1600,7 +1647,24 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(cachedDash).toBeDefined();
     });
 
-    it.todo('should handle snapshot loading for both v1 and v2');
+    it('should keep v2 manager state in sync after loadSnapshot', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      manager.setActiveManager('v2');
+
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      jest.spyOn(manager, 'loadSnapshotScene').mockResolvedValue(manager.state.dashboard!);
+
+      await manager.loadSnapshot('snapshot-slug');
+
+      expect(v2Manager.state.dashboard).toBeDefined();
+      expect(v2Manager.state.dashboard?.state.uid).toBe(manager.state.dashboard?.state.uid);
+    });
 
     it('should handle dashboard reloading with current active manager', async () => {
       setupV1FailureV2Success();
