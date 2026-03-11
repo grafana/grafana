@@ -92,6 +92,7 @@ type CreateNotificationqueryRequestV0alpha1BodyGroupBy struct {
 	Status           bool `json:"status"`
 	Outcome          bool `json:"outcome"`
 	Error            bool `json:"error"`
+	RuleUID          bool `json:"ruleUID"`
 }
 
 // NewCreateNotificationqueryRequestV0alpha1BodyGroupBy creates a new CreateNotificationqueryRequestV0alpha1BodyGroupBy object.

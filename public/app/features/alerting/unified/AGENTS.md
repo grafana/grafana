@@ -321,6 +321,21 @@ if (config.featureToggles.alertingTriage) {
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 
+### Date/Time Formatting
+
+Use `dateTimeFormat()` / `dateTimeFormatTimeAgo()` from `@grafana/data` instead of `dateTime().format()` — they respect the user's configured timezone.
+
+```typescript
+// Good - respects user timezone
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+dateTimeFormat(timestamp);
+dateTimeFormatTimeAgo(timestamp);
+
+// Bad - ignores user timezone setting
+import { dateTime } from '@grafana/data';
+dateTime(timestamp).format('YYYY-MM-DD HH:mm:ss');
+```
+
 ### Data Source Abstractions
 
 ```typescript

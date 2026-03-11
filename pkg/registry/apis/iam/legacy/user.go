@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	stdsql "database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -270,10 +271,11 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 	for rows.Next() {
 		t := UserTeam{}
 
-		// regression: team_member.permission has been nulled in some instances
-		// Team memberships created before the permission column was added will have a NULL value
+		// regression: team_member.permission and team_member.external have been nulled in some instances
+		// Team memberships created before the permission/external columns were added will have NULL values
 		var nullablePermission *int64
-		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission, &t.External)
+		var nullableExternal stdsql.NullBool
+		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission, &nullableExternal)
 		if err != nil {
 			return nil, err
 		}
@@ -283,6 +285,10 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		} else {
 			// treat NULL as member permission
 			t.Permission = team.PermissionType(0)
+		}
+
+		if nullableExternal.Valid {
+			t.External = nullableExternal.Bool
 		}
 
 		res.Items = append(res.Items, t)

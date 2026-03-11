@@ -20,6 +20,8 @@ import {
   VisualizationSuggestion,
   VisualizationSuggestionsSupplierDeprecated,
   VisualizationSuggestionsSupplier,
+  VisualizationPresetsContext,
+  VisualizationPresetsSupplier,
   VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
@@ -118,6 +120,7 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
+  private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -421,6 +424,41 @@ export class PanelPlugin<
         return Object.assign(suggestionWithDefaults, { hash: getSuggestionHash(suggestionWithDefaults) });
       }
     );
+  }
+
+  /**
+   * @alpha
+   * Register a supplier of presets for a panel plugin
+   */
+  setPresetsSupplier(supplier: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>): this {
+    this.presetsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   * Return style presets for a panel plugin
+   */
+  getPresets(
+    context: VisualizationPresetsContext = {}
+  ): Array<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'>);
+
+    return this.presetsSupplier?.(context)?.map((s) => {
+      const withDefaultsApplied = withDefaults(s);
+      return Object.assign(withDefaultsApplied, { hash: getSuggestionHash(withDefaultsApplied) });
+    });
   }
 
   /**
