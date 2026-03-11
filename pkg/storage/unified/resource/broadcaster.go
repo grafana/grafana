@@ -289,4 +289,3 @@ func (r *ringBuffer[T]) readInto(dst chan T) bool {
 	}
 	return true
 }
-
