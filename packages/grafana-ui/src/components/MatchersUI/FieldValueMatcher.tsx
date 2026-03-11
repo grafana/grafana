@@ -91,7 +91,12 @@ export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
               width={19}
             />
 
-            <Input type="number" value={opts.value} onChange={onChangeValue} />
+            <Input
+              type="number"
+              value={opts.value}
+              onChange={onChangeValue}
+              aria-label={t('grafana-ui.field-value-matcher.reducer-value-label', 'Reducer value')}
+            />
           </>
         )}
       </Stack>

@@ -88,6 +88,8 @@ export function getGroupLabelForScope(scope?: MatcherScope): string | undefined 
       return t('grafana-ui.matchers.groups.nested', 'Nested');
     case 'annotation':
       return t('grafana-ui.matchers.groups.annotation', 'Annotations');
+    case 'exemplar':
+      return t('grafana-ui.matchers.groups.exemplar', 'Exemplars');
     case 'series':
     default:
       return t('grafana-ui.matchers.groups.series', 'Dataframe');

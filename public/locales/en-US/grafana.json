@@ -9952,10 +9952,12 @@
     },
     "field-name-by-regex-matcher": {
       "input-placeholder": "Enter regular expression",
-      "scope": "Target fields"
+      "scope": "Target fields",
+      "scope-tooltip": "To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default \"dataframe\" scope is applied if no scope is selected."
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
+      "reducer-value-label": "Reducer value",
       "select-field-placeholder": "Select field reducer"
     },
     "file-dropzone": {
@@ -9982,6 +9984,7 @@
     "matchers": {
       "groups": {
         "annotation": "Annotations",
+        "exemplar": "Exemplars",
         "nested": "Nested",
         "series": "Dataframe"
       },
