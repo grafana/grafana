@@ -17,13 +17,12 @@ export function TimeSeries(props: TimeSeriesProps) {
   const theme = useTheme2();
 
   const prepConfig = useCallback(
-    (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange, annotationLanes?: number) => {
+    (alignedFrame: DataFrame, getTimeRange: () => TimeRange, annotationLanes?: number) => {
       return preparePlotConfigBuilder({
         frame: alignedFrame,
         theme,
         timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
         getTimeRange,
-        allFrames,
         renderers,
         tweakScale,
         tweakAxis,
@@ -35,18 +34,18 @@ export function TimeSeries(props: TimeSeriesProps) {
     [theme, timeZone, options, renderers, tweakAxis, tweakScale]
   );
 
-  const renderLegend = useCallback(
-    (config: UPlotConfigBuilder) => {
-      if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
-        return null;
-      }
+  // const renderLegend = useCallback(
+  //   (config: UPlotConfigBuilder) => {
+  //     if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
+  //       return null;
+  //     }
 
-      return <PlotLegend data={frames} config={config} {...legend} />;
-    },
-    [legend, frames]
-  );
+  //     return <PlotLegend data={frames} config={config} {...legend} />;
+  //   },
+  //   [legend, frames]
+  // );
 
   return (
-    <GraphNG {...props} theme={theme} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={renderLegend} />
+    <GraphNG {...props} theme={theme} prepConfig={prepConfig} propsToDiff={propsToDiff} renderLegend={() => null} />
   );
 }

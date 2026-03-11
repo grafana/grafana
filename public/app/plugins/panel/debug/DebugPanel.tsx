@@ -30,6 +30,7 @@ export function DebugPanel(props: Props) {
 
   if (
     prevSeries != null &&
+    prevSeries.length > 0 &&
     prevSeries !== props.data.series &&
     prevSeries[0].fields[0].values !== props.data.series[0].fields[0].values
   ) {
@@ -40,5 +41,7 @@ export function DebugPanel(props: Props) {
         fields[i].values.length = 0;
       }
     }
+
+    prevSeries.length = 0;
   }
 }

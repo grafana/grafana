@@ -42,7 +42,6 @@ export interface GraphNGProps extends Themeable2 {
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
   prepConfig: (
     alignedFrame: DataFrame,
-    allFrames: DataFrame[],
     getTimeRange: () => TimeRange,
     annotationLanes?: number
   ) => UPlotConfigBuilder;
@@ -109,20 +108,19 @@ const defaultMatchers = {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  private plotInstance: React.RefObject<uPlot | null>;
+  private plotInstance: uPlot | null = null;
 
   constructor(props: GraphNGProps) {
     super(props);
-    let state = this.prepState(props);
+    let state = this.prepState(props)!;
     state.alignedData = state.config!.prepData!([state.alignedFrame]) as AlignedData;
     this.state = state;
-    this.plotInstance = React.createRef();
   }
 
   getTimeRange = () => this.props.timeRange;
 
   prepState(props: GraphNGProps, withConfig = true) {
-    let state: GraphNGState = null as any;
+    let state: GraphNGState | null = null;
 
     const { frames, fields = defaultMatchers, preparePlotFrame, replaceVariables, dataLinkPostProcessor } = props;
 
@@ -199,7 +197,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotationLanes);
+        config = props.prepConfig(alignedFrameFinal, this.getTimeRange, this.props.annotationLanes);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -239,7 +237,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(
             newState.alignedFrame,
-            this.props.frames,
             this.getTimeRange,
             this.props.annotationLanes
           );
@@ -253,6 +250,10 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     }
   }
 
+  setPlotRef = (u: uPlot) => {
+    this.plotInstance = u;
+  };
+
   render() {
     const { width, height, children, renderLegend } = this.props;
     const { config, alignedFrame, alignedData } = this.state;
@@ -264,13 +265,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     return (
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={config}
-            data={alignedData!}
-            width={vizWidth}
-            height={vizHeight}
-            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
-          >
+          <UPlotChart config={config} data={alignedData!} width={vizWidth} height={vizHeight} plotRef={this.setPlotRef}>
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>
         )}

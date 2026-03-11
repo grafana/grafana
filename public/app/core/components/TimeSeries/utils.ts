@@ -91,7 +91,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   theme,
   timeZones,
   getTimeRange,
-  allFrames,
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
@@ -470,13 +469,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
     if (field.state?.origin) {
       if (!indexByName) {
-        indexByName = getNamesToFieldIndex(frame, allFrames);
+        indexByName = getNamesToFieldIndex(frame);
       }
 
-      const originFrame = allFrames[field.state.origin.frameIndex];
-      const originField = originFrame?.fields[field.state.origin.fieldIndex];
-
-      const dispName = getFieldDisplayName(originField ?? field, originFrame, allFrames);
+      const dispName = field.state!.displayName!;
 
       // disable default renderers
       if (customRenderedFields.indexOf(dispName) >= 0) {
@@ -518,11 +514,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           (f) =>
             customConfig.fillBelowTo === f.name ||
             customConfig.fillBelowTo === f.config?.displayNameFromDS ||
-            customConfig.fillBelowTo === getFieldDisplayName(f, frame, allFrames)
+            customConfig.fillBelowTo === f.state!.displayName!
         );
 
         const fillBelowDispName = fillBelowToField
-          ? getFieldDisplayName(fillBelowToField, frame, allFrames)
+          ? fillBelowToField.state!.displayName!
           : customConfig.fillBelowTo;
 
         const t = indexByName.get(dispName);
@@ -678,7 +674,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
     if (!indexByName) {
-      indexByName = getNamesToFieldIndex(frame, allFrames);
+      indexByName = getNamesToFieldIndex(frame);
     }
     let fieldIndices: Record<string, number> = {};
 
@@ -725,16 +721,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   return builder;
 };
 
-function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   const originNames = new Map<string, number>();
   frame.fields.forEach((field, i) => {
-    const origin = field.state?.origin;
-    if (origin) {
-      const origField = allFrames[origin.frameIndex]?.fields[origin.fieldIndex];
-      if (origField) {
-        originNames.set(getFieldDisplayName(origField, allFrames[origin.frameIndex], allFrames), i);
-      }
-    }
+    originNames.set(field.state!.displayName!, i);
   });
   return originNames;
 }

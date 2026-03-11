@@ -292,7 +292,6 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   theme: GrafanaTheme2;
   timeZones: TimeZone[];
   getTimeRange: () => TimeRange;
-  allFrames: DataFrame[];
   renderers?: Renderers;
   tweakScale?: (opts: ScaleProps, forField: Field) => ScaleProps;
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
