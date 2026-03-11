@@ -99,18 +99,22 @@ To update or delete your repository configuration after you've completed setup:
 
 ## Manage folder permissions
 
+{{< admonition type="caution" >}}
+To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**.
+{{< /admonition >}}
+
 By default, folders provisioned with Git Sync have these roles with its associated permissions:
 
 - Admin = Admin
 - Editor = Editor
 - Viewer = Viewer.
 
-Refer to [Roles and permissions](ref:roles-and-permissions) for more information on what each role implies. 
+Refer to [Roles and permissions](ref:roles-and-permissions) for more information on what each role implies.
 
-To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**.You can modify permissions:
+To modify folder permissions:
 
 - From the UI, refer to [Manage dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/).
-- Using the API.
+- Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
 
 ### The folder json metadata file
 
@@ -131,7 +135,7 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 Where:
 
-- `folder_uid` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references 
+- `folder_uid` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references
 - `folder_ui_name` is the display name shown in the Grafana UI
 
 ### Create the folder metadata file

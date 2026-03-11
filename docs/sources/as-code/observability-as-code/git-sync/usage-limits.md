@@ -100,4 +100,3 @@ A resource can be:
 - When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
 - If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
-
