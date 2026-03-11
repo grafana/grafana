@@ -21,7 +21,7 @@ import (
 // odbcNeedsEscape returns true if the value contains semicolon or closing brace,
 // which would break connection string parsing (semicolon is the key=value delimiter).
 func odbcNeedsEscape(s string) bool {
-    return strings.ContainsAny(s, ";}") || s != strings.TrimSpace(s)
+	return strings.ContainsAny(s, ";}") || s != strings.TrimSpace(s)
 }
 
 // escapeOdbcValue wraps a connection string value in ODBC braces so that semicolons
@@ -143,7 +143,7 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 			user = escapeOdbcValue(user)
 			pass = escapeOdbcValue(pass)
 		}
-		
+
 		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
 		if useOdbc {
 			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:")
