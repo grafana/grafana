@@ -36,6 +36,7 @@ const (
 	prunerMaxEvents             = 20
 	defaultEventRetentionPeriod = 1 * time.Hour
 	defaultEventPruningInterval = 5 * time.Minute
+	defaultSearchLookback       = 1 * time.Second
 	clusterScopeNamespace       = "__cluster__"
 )
 
@@ -96,6 +97,8 @@ type kvStorageBackend struct {
 	// tenantWatcher watches Tenant CRDs for pending-delete state.
 	// nil if tenant watching is not configured.
 	tenantWatcher *TenantWatcher
+
+	searchLookback time.Duration
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -132,6 +135,10 @@ type KVBackendOptions struct {
 
 	// TenantWatcherConfig, if set, enables watching Tenant CRDs for pending-delete state.
 	TenantWatcherConfig *TenantWatcherConfig
+
+	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
+	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
+	SearchLookback time.Duration
 }
 
 var (
@@ -172,6 +179,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventPruningInterval = defaultEventPruningInterval
 	}
 
+	searchLookback := opts.SearchLookback
+	if searchLookback < 0 {
+		searchLookback = defaultSearchLookback
+	}
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		bulkLock:                     NewBulkLock(),
@@ -189,6 +201,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 		garbageCollection:            opts.GarbageCollection,
+		searchLookback:               opts.SearchLookback,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -1113,17 +1126,12 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-// listModifiedSinceLookback is the duration subtracted from sinceRv before
-// querying the data or event store. This guards against concurrent writes that
-// commit slightly out-of-order, ensuring recently-committed events are re-scanned.
-const listModifiedSinceLookback = time.Second
-
 // ListModifiedSince returns all resources that have changed since the given
-// resource version. A small lookback window (listModifiedSinceLookback) is
-// applied so that events committed concurrently with the previous call are not
-// missed. Because of this, callers may receive events with resource versions
-// slightly before sinceRv. If a `lastCalledWithSinceRv` parameter is passed,
-// the lookback may be skipped as an optimization.
+// resource version. If searchLookback is non-zero, a lookback window is applied
+// so that events committed concurrently with the previous call are not missed.
+// Because of this, callers may receive events with resource versions slightly
+// before sinceRv. If a `lastCalledWithSinceRv` parameter is passed, the
+// lookback may be skipped as an optimization.
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
@@ -1155,16 +1163,16 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
 	sinceRvTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
 
-	var skipLookback bool
-	if lastCalledWithSinceRv != nil {
-		skipLookback = (*lastCalledWithSinceRv).Sub(sinceRvTime) > listModifiedSinceLookback
-	}
-
 	var effectiveRv int64
-	if skipLookback {
+	if k.searchLookback == 0 {
 		effectiveRv = sinceRv
 	} else {
-		effectiveRv = subtractDurationFromSnowflake(sinceRv, listModifiedSinceLookback)
+		skipLookback := lastCalledWithSinceRv != nil && (*lastCalledWithSinceRv).Sub(sinceRvTime) > k.searchLookback
+		if skipLookback {
+			effectiveRv = sinceRv
+		} else {
+			effectiveRv = subtractDurationFromSnowflake(sinceRv, k.searchLookback)
+		}
 	}
 
 	// If no new events since effectiveRv, return early and avoid doing a range query.
@@ -1175,11 +1183,11 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	sinceRvAge := time.Since(sinceRvTime)
 
 	if sinceRvAge > time.Hour {
-		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 
-	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
 }
 
