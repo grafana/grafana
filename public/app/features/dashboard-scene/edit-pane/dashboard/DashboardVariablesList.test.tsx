@@ -44,7 +44,7 @@ function renderVariablesList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.editPane, 'selectObject');
 
-  const renderResult = render(<DashboardVariablesList set={variableSet} />);
+  const renderResult = render(<DashboardVariablesList variableSet={variableSet} />);
 
   return {
     ...renderResult,

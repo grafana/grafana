@@ -39,8 +39,6 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
     editPane.selectObject(a, a.state.key!);
   }, []);
 
-  const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
-
   const onDragEnd = useCallback(
     (result: DropResult) => {
       const { source, destination } = result;
@@ -98,52 +96,47 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
   );
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <DraggableList
-        items={visible}
-        droppableId={ID_VISIBLE_LIST}
-        title={t(
-          'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
-          'Above dashboard ({{count}})',
-          { count: visible.length }
-        )}
-        dataTestId={`${ID_VISIBLE_LIST}-annotation-name`}
-        onClickItem={onClickAnnotation}
-        renderItemLabel={(a) => <AnnotationName annotation={a} />}
-      />
-      <DraggableList
-        items={controlsMenu}
-        droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu-count', 'Controls menu ({{count}})', {
-          count: controlsMenu.length,
-        })}
-        dataTestId={`${ID_CONTROLS_MENU_LIST}-annotation-name`}
-        onClickItem={onClickAnnotation}
-        renderItemLabel={(a) => <AnnotationName annotation={a} />}
-      />
-      <DraggableList
-        items={hidden}
-        droppableId={ID_HIDDEN_LIST}
-        title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
-          count: hidden.length,
-        })}
-        dataTestId={`${ID_HIDDEN_LIST}-annotation-name`}
-        onClickItem={onClickAnnotation}
-        renderItemLabel={(a) => <AnnotationName annotation={a} />}
-      />
-      <Box display="flex" paddingTop={1} paddingBottom={2}>
-        <Button
-          fullWidth
-          icon="plus"
-          size="sm"
-          variant="secondary"
-          onClick={onClickAddAnnotation}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
-        >
-          <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
-        </Button>
-      </Box>
-    </DragDropContext>
+    <>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <DraggableList
+          items={visible}
+          droppableId={ID_VISIBLE_LIST}
+          title={t(
+            'dashboard-scene.dashboard-annotations-list.title-above-dashboard-count',
+            'Above dashboard ({{count}})',
+            { count: visible.length }
+          )}
+          dataTestId={`${ID_VISIBLE_LIST}-annotation-name`}
+          onClickItem={onClickAnnotation}
+          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+        />
+        <DraggableList
+          items={controlsMenu}
+          droppableId={ID_CONTROLS_MENU_LIST}
+          title={t(
+            'dashboard-scene.dashboard-annotations-list.title-controls-menu-count',
+            'Controls menu ({{count}})',
+            {
+              count: controlsMenu.length,
+            }
+          )}
+          dataTestId={`${ID_CONTROLS_MENU_LIST}-annotation-name`}
+          onClickItem={onClickAnnotation}
+          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+        />
+        <DraggableList
+          items={hidden}
+          droppableId={ID_HIDDEN_LIST}
+          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
+            count: hidden.length,
+          })}
+          dataTestId={`${ID_HIDDEN_LIST}-annotation-name`}
+          onClickItem={onClickAnnotation}
+          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+        />
+      </DragDropContext>
+      <AddAnnotationButton dataLayerSet={dataLayerSet} />
+    </>
   );
 }
 
@@ -184,6 +177,25 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
       />
       {name}
     </div>
+  );
+}
+
+function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
+
+  return (
+    <Box display="flex" paddingTop={1} paddingBottom={1}>
+      <Button
+        fullWidth
+        icon="plus"
+        size="sm"
+        variant="secondary"
+        onClick={onClickAddAnnotation}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
+      >
+        <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
+      </Button>
+    </Box>
   );
 }
 

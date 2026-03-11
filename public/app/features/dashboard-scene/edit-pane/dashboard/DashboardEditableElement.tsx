@@ -1,7 +1,7 @@
 import { ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { SceneObject, SceneVariableSet, type SceneVariables } from '@grafana/scenes';
+import { SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -16,13 +16,13 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 import { DashboardLinksList } from './DashboardLinksList';
-import { DashboardVariablesList } from './DashboardVariablesList';
+import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
 function useEditPaneOptions(
   this: DashboardEditableElement,
   dashboard: DashboardScene
 ): OptionsPaneCategoryDescriptor[] {
-  const { body, $variables } = dashboard.useState();
+  const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
@@ -47,7 +47,7 @@ function useEditPaneOptions(
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
-  const variablesCategory = useVariablesCategory($variables);
+  const variablesCategory = useVariablesCategory(dashboard);
   const annotationsCategory = useAnnotationsCategory(dashboardSceneGraph.getDataLayers(dashboard));
   const linksCategory = useLinksCategory(dashboard);
 
@@ -106,30 +106,39 @@ export class DashboardEditableElement implements EditableDashboardElement {
   }
 }
 
-function useVariablesCategory(variableSet: SceneVariables | undefined): OptionsPaneCategoryDescriptor[] {
+function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+  const { $variables } = dashboard.useState();
   const variableListId = useId();
+  const addVariableButtonId = useId();
 
   return useMemo(() => {
-    if (!(variableSet instanceof SceneVariableSet) || !variableSet?.state.variables.length) {
-      return [];
-    }
-
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-variables-category.category.title.variables', 'Variables'),
       id: 'dashboard-variables',
     });
 
+    if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: variableListId,
+          skipField: true,
+          render: () => <DashboardVariablesList variableSet={$variables} />,
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: variableListId,
+        id: addVariableButtonId,
         skipField: true,
-        render: () => <DashboardVariablesList set={variableSet} />,
+        render: () => <AddVariableButton dashboard={dashboard} />,
       })
     );
 
     return [category];
-  }, [variableSet, variableListId]);
+  }, [$variables, addVariableButtonId, variableListId, dashboard]);
 }
 
 function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPaneCategoryDescriptor[] {

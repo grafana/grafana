@@ -7,6 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
+import { DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
 import { isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -26,8 +27,8 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
   [ID_HIDDEN_LIST]: VariableHide.hideVariable,
 };
 
-export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
-  const { variables } = set.useState();
+export function DashboardVariablesList({ variableSet }: { variableSet: SceneVariableSet }) {
+  const { variables } = variableSet.useState();
   const { editable, nonEditable } = useMemo(() => partitionVariablesByEditability(variables), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
@@ -35,11 +36,6 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
     const { editPane } = getDashboardSceneFor(variable).state;
     editPane.selectObject(variable, variable.state.key!);
   }, []);
-
-  const onAddVariable = useCallback(() => {
-    openAddVariablePane(getDashboardSceneFor(set));
-    DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
-  }, [set]);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -53,7 +49,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
         return;
       }
 
-      const currentVariables = set.state.variables;
+      const currentVariables = variableSet.state.variables;
       const lists: Record<string, SceneVariable[]> = {
         [ID_VISIBLE_LIST]: [...visible],
         [ID_CONTROLS_MENU_LIST]: [...controlsMenu],
@@ -70,7 +66,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
       const newHide = getTargetHide(destination.droppableId, oldHide);
 
       dashboardEditActions.edit({
-        source: set,
+        source: variableSet,
         description: t(
           'dashboard-scene.variables-list.create-drag-end-handler.description.reorder-variables-list',
           'Reorder variables list'
@@ -79,7 +75,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
           if (newHide !== oldHide) {
             moved.setState({ hide: newHide });
           }
-          set.setState({
+          variableSet.setState({
             variables: [
               ...nonEditable,
               ...lists[ID_VISIBLE_LIST],
@@ -92,11 +88,11 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
           if (newHide !== oldHide) {
             moved.setState({ hide: oldHide });
           }
-          set.setState({ variables: currentVariables });
+          variableSet.setState({ variables: currentVariables });
         },
       });
     },
-    [set, nonEditable, visible, controlsMenu, hidden]
+    [variableSet, nonEditable, visible, controlsMenu, hidden]
   );
 
   return (
@@ -129,18 +125,6 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
         onClickItem={onClickVariable}
         renderItemLabel={(v) => v.state.name}
       />
-      <Box display="flex" paddingTop={1} paddingBottom={2}>
-        <Button
-          fullWidth
-          icon="plus"
-          size="sm"
-          variant="secondary"
-          onClick={onAddVariable}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
-        >
-          <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
-        </Button>
-      </Box>
     </DragDropContext>
   );
 }
@@ -152,6 +136,28 @@ function getTargetHide(droppableId: string, currentHide: VariableHide): Variable
       : VariableHide.dontHide;
   }
   return DROPPABLE_TO_HIDE[droppableId];
+}
+
+export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
+  const onAddVariable = useCallback(() => {
+    openAddVariablePane(dashboard);
+    DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+  }, [dashboard]);
+
+  return (
+    <Box display="flex" paddingTop={1} paddingBottom={1}>
+      <Button
+        fullWidth
+        icon="plus"
+        size="sm"
+        variant="secondary"
+        onClick={onAddVariable}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+      >
+        <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
+      </Button>
+    </Box>
+  );
 }
 
 export function partitionVariablesByEditability(variables: SceneVariable[]) {
