@@ -26,9 +26,7 @@ function buildContext(panes: Array<[string, ExploreItemState]>): ChatContextItem
       return buildMixedContext(pane.queries);
     }
 
-    const matchingQueries = pane.queries.filter(
-      (q) => !q.datasource?.uid || q.datasource.uid === ds.uid
-    );
+    const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
     return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
   });
 }
