@@ -8,8 +8,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
+import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { ThunkDispatch } from 'app/types/store';
 
 import { getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
@@ -58,14 +58,17 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     });
   }
 
-  // Add team folders virtual item after shared with me (or at the start if shared with me is not present)
+  // Add team folders virtual item only if the user actually has team folders
   if (!parentUID && config.featureToggles.teamFolders) {
-    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-    folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.my-team-folders', 'My team folders'),
-      uid: TEAM_FOLDERS_UID,
-    });
+    const teamFolders = await listTeamFolders();
+    if (teamFolders.length > 0) {
+      const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+      folders.splice(insertIndex, 0, {
+        ...virtualFolderBase,
+        name: t('browse-dashboards.my-team-folders', 'My team folders'),
+        uid: TEAM_FOLDERS_UID,
+      });
+    }
   }
 
   return folders.map<NestedFolderDTO>((item) => {
@@ -138,7 +141,7 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
  * Fetches the user's teams and returns actual folder items directly under "Team folders",
  * with team owner info attached to each folder.
  */
-export async function listTeamFolders(dispatch: ThunkDispatch): Promise<DashboardViewItem[]> {
+export async function listTeamFolders(): Promise<DashboardViewItem[]> {
   const teams = await dispatch(legacyAPI.endpoints.getSignedInUserTeamList.initiate(undefined)).unwrap();
 
   if (!teams || teams.length === 0) {

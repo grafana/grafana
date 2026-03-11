@@ -55,9 +55,9 @@ export const refreshParents = createAsyncThunk(
 
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
-  async ({ parentUID, pageSize }: RefetchChildrenArgs, thunkAPI): Promise<RefetchChildrenResult> => {
+  async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
-      const children = await listTeamFolders(thunkAPI.dispatch);
+      const children = await listTeamFolders();
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -105,7 +105,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children = await listTeamFolders(thunkAPI.dispatch);
+      const children = await listTeamFolders();
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
