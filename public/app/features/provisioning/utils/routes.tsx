@@ -108,6 +108,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // This is a temporary route to redirect from old preview to the new preview URL
       path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
       component: RedirectToProvisioningPreview,
     },
