@@ -176,7 +176,7 @@ describe('useMenuFocus', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
-  it('does not click submenu items when Enter key is pressed', async () => {
+  it('does not click items that have a submenu when Enter key is pressed', async () => {
     const ref = createRef<HTMLDivElement>();
     const onClick = jest.fn();
     const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
