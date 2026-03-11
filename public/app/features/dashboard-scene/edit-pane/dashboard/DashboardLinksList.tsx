@@ -78,35 +78,32 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
   );
 
   return (
-    <>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <DraggableList
-          items={visible}
-          droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard ({{count}})', {
-            count: visible.length,
-          })}
-          dataTestId={`${ID_VISIBLE_LIST}-link-name`}
-          onClickItem={onClickLink}
-          renderItemLabel={(l) => l.title}
-        />
-        <DraggableList
-          items={controlsMenu}
-          droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu ({{count}})', {
-            count: controlsMenu.length,
-          })}
-          dataTestId={`${ID_CONTROLS_MENU_LIST}-link-name`}
-          onClickItem={onClickLink}
-          renderItemLabel={(l) => l.title}
-        />
-      </DragDropContext>
-      <AddLinkButton dashboard={dashboard} />
-    </>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <DraggableList
+        items={visible}
+        droppableId={ID_VISIBLE_LIST}
+        title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard ({{count}})', {
+          count: visible.length,
+        })}
+        dataTestId={`${ID_VISIBLE_LIST}-link-name`}
+        onClickItem={onClickLink}
+        renderItemLabel={(l) => l.title}
+      />
+      <DraggableList
+        items={controlsMenu}
+        droppableId={ID_CONTROLS_MENU_LIST}
+        title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu ({{count}})', {
+          count: controlsMenu.length,
+        })}
+        dataTestId={`${ID_CONTROLS_MENU_LIST}-link-name`}
+        onClickItem={onClickLink}
+        renderItemLabel={(l) => l.title}
+      />
+    </DragDropContext>
   );
 }
 
-function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
+export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddLink = useCallback(() => {
     openAddLinkPane(dashboard);
     DashboardInteractions.addLinkButtonClicked({ source: 'edit_pane' });

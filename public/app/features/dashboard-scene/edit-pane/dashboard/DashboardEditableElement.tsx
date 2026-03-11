@@ -15,7 +15,7 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
-import { DashboardLinksList } from './DashboardLinksList';
+import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
 function useEditPaneOptions(
@@ -164,7 +164,9 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
 }
 
 function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+  const { links } = dashboard.useState();
   const linksListId = useId();
+  const addLinkButtonId = useId();
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
@@ -172,15 +174,26 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
       id: 'dashboard-links',
     });
 
+    if (links.length) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: linksListId,
+          skipField: true,
+          render: () => <DashboardLinksList dashboard={dashboard} />,
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: linksListId,
+        id: addLinkButtonId,
         skipField: true,
-        render: () => <DashboardLinksList dashboard={dashboard} />,
+        render: () => <AddLinkButton dashboard={dashboard} />,
       })
     );
 
     return [category];
-  }, [dashboard, linksListId]);
+  }, [addLinkButtonId, dashboard, links.length, linksListId]);
 }
