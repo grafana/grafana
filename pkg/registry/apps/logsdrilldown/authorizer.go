@@ -58,8 +58,8 @@ func GetAuthorizer() authorizer.Authorizer {
 
 		// Auth handling for Logs Drilldown default labels
 		if attr.GetResource() == "logsdrilldowndefaultlabels" {
-			// Allow get for all users
-			if attr.GetVerb() == "get" {
+			// Allow list and get for all users
+			if attr.GetVerb() == "list" || attr.GetVerb() == "get" {
 				return authorizer.DecisionAllow, "", nil
 			}
 			// require plugins:write permissions for other operations
