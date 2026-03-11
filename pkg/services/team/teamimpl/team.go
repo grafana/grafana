@@ -18,27 +18,27 @@ import (
 // At package level
 const defaultCacheDuration = 5 * time.Minute
 
-type Service struct {
+type LegacyService struct {
 	cache  *localcache.CacheService
 	store  store
 	tracer tracing.Tracer
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func ProvideLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
 
 	if err := store.teamMemberUidMigration(); err != nil {
 		return nil, err
 	}
 
-	return &Service{
+	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
 		store:  store,
 		tracer: tracer,
 	}, nil
 }
 
-func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
+func (s *LegacyService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	_, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 		attribute.String("name", cmd.Name),
@@ -47,7 +47,7 @@ func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (
 	return s.store.Create(ctx, cmd)
 }
 
-func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
+func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
 	ctx, span := s.tracer.Start(ctx, "team.UpdateTeam", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 		attribute.Int64("teamID", cmd.ID),
@@ -56,7 +56,7 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
+func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	ctx, span := s.tracer.Start(ctx, "team.DeleteTeam", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 		attribute.Int64("teamID", cmd.ID),
@@ -65,7 +65,7 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 	return s.store.Delete(ctx, cmd)
 }
 
-func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+func (s *LegacyService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	ctx, span := s.tracer.Start(ctx, "team.SearchTeams", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.String("query", query.Query),
@@ -74,7 +74,7 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+func (s *LegacyService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamByID", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("teamID", query.ID),
@@ -84,7 +84,7 @@ func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery)
 	return s.store.GetByID(ctx, query)
 }
 
-func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
+func (s *LegacyService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
@@ -93,7 +93,7 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 	return s.store.GetByUser(ctx, query)
 }
 
-func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamIDsByUser", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("userID", query.UserID),
@@ -102,7 +102,7 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	return s.store.GetIDsByUser(ctx, query)
 }
 
-func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
+func (s *LegacyService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
@@ -112,7 +112,7 @@ func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, u
 	return s.store.IsMember(orgId, teamId, userId)
 }
 
-func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
+func (s *LegacyService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
 	ctx, span := s.tracer.Start(ctx, "team.RemoveUsersMemberships", trace.WithAttributes(
 		attribute.Int64("userID", userID),
 	))
@@ -120,7 +120,7 @@ func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) erro
 	return s.store.RemoveUsersMemberships(ctx, userID)
 }
 
-func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
+func (s *LegacyService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMemberships", trace.WithAttributes(
 		attribute.Int64("orgID", orgID),
 		attribute.Int64("userID", userID),
@@ -151,7 +151,7 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 	return teams, nil
 }
 
-func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
+func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamMembers", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("teamID", query.TeamID),
@@ -161,6 +161,6 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *Service) RegisterDelete(query string) {
+func (s *LegacyService) RegisterDelete(query string) {
 	s.store.RegisterDelete(query)
 }

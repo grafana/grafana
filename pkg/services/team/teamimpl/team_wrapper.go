@@ -1,4 +1,4 @@
-package teamprovider
+package teamimpl
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,7 +24,7 @@ type Service struct {
 var _ team.Service = (*Service)(nil)
 
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) *Service {
-	legacyService, err := teamimpl.ProvideService(db, cfg, tracer)
+	legacyService, err := ProvideLegacyService(db, cfg, tracer)
 	if err != nil {
 		return nil
 	}
