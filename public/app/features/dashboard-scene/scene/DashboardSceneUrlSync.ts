@@ -10,12 +10,13 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'expandRows', 'shareView'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -113,6 +114,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       if (!!layout.state.grid.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
         layout.state.grid.setState({ UNSAFE_fitPanels });
+      }
+    }
+
+    if (typeof values.expandRows === 'string') {
+      if (layout instanceof DefaultGridLayoutManager) {
+        layout.expandAllRows();
+      } else if (layout instanceof RowsLayoutManager) {
+        layout.expandAllRows();
       }
     }
 
