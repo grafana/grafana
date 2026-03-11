@@ -37,11 +37,11 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-After you have synced your resources, Git Sync creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. To access it, follow these steps:
+After you sync your resources, Git Sync creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. To access it, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen.
-1. Go to the **Repositories** tab, and locate the repository you want to work with. You can either view the current status of the sync, carry out pulls, or update your settings.
+1. Go to the **Repositories** tab, and locate the repository you want to work with. You can view the current status of the sync, run pulls, or update your settings.
 
 Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards) for more information about working with provisioned files.
 
@@ -61,18 +61,18 @@ Before you proceed to troubleshoot, understand the [Usage and performance known 
 
 {{< /admonition >}}
 
-Monitor the **View** status page for synchronization issues and status updates. Common events include:
+Monitor the **View** status page for synchronization issues and status updates. The status page displays the following events:
 
-- Sync started
-- Sync completed
-- Sync failed (with error details)
-- Sync issues
+- **Sync started:** The synchronization process has begun.
+- **Sync completed:** The synchronization process finished successfully.
+- **Sync failed:** The synchronization process failed. Refer to the error details for troubleshooting.
+- **Sync issues:** The synchronization process encountered issues.
 
 **Dashboard sync errors**
 
-- If dashboards are not syncing, check if the repository URL is correct and accessible from the Grafana instance.
-- Ensure that the configured repository branch exists and is correctly referenced.
-- Check for conflicts in the repository that may prevent syncing.
+- **Repository URL:** If dashboards don't sync, verify that the repository URL is correct and accessible from the Grafana instance.
+- **Repository branch:** Verify that the configured repository branch exists and is correctly referenced.
+- **Conflicts:** Check for conflicts in the repository that may prevent syncing.
 
 **Dashboard import errors**
 
@@ -81,13 +81,13 @@ Monitor the **View** status page for synchronization issues and status updates. 
 
 ## Synchronize changes
 
-To sync resources between the provisioned repositories and your Grafana instance, click **Pull** under the repository you want to sync, and wait for the synchronization process to complete.
+To sync resources between the provisioned repositories and your Grafana instance, click **Pull** under the repository you want to sync. The synchronization process runs and completes.
 
-Existing dashboards with the same `uid` are overwritten.
+Grafana overwrites existing dashboards with the same `uid`.
 
 ## Update or delete your settings
 
-To update or delete your repository configuration after you've completed setup:
+To update or delete your repository configuration after you complete setup:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning**.
@@ -100,7 +100,7 @@ To update or delete your repository configuration after you've completed setup:
 ## Manage folder permissions
 
 {{< admonition type="caution" >}}
-To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**. The metadata file is created automatically when you connect your repository with Git Sync. If your folder is missing the file, you'll see a warning in the Grafana UI.
+To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID. The metadata file is created automatically when you connect your repository with Git Sync. If your folder is missing the file, you'll see a warning in the Grafana UI.
 {{< /admonition >}}
 
 By default, folders provisioned with Git Sync have these roles with its associated permissions:
@@ -125,19 +125,15 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
   "apiVersion": "folder.grafana.app/v1beta1",
   "kind": "Folder",
   "metadata": {
-    "name": "folder_uid"
+    "name": "<FOLDER_UID>"
   },
   "spec": {
-    "title": "folder_ui_name"
+    "title": "<FOLDER_UI_NAME>"
   }
 }
 ```
 
 Where:
 
-- `folder_uid` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references
-- `folder_ui_name` is the display name shown in the Grafana UI
-
-### Create the folder metadata file
-
-TBC
+- `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
+- `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI.
