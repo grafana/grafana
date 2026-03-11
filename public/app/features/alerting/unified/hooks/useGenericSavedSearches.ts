@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { safeParse } from 'valibot';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -85,10 +86,10 @@ function createTrackingFunctions(context: Record<string, unknown> = {}) {
  * Returns valid entries and logs warnings for invalid data.
  */
 function validateSavedSearches(data: unknown, storageKey: string): SavedSearch[] {
-  const result = savedSearchesArraySchema.safeParse(data);
+  const result = safeParse(savedSearchesArraySchema, data);
 
   if (result.success) {
-    return result.data;
+    return result.output;
   }
 
   // If the whole array failed, try to salvage individual valid entries
@@ -98,14 +99,14 @@ function validateSavedSearches(data: unknown, storageKey: string): SavedSearch[]
   }
 
   logWarning(`Saved searches validation failed for ${storageKey}, filtering invalid entries`, {
-    issues: JSON.stringify(result.error.issues),
+    issues: JSON.stringify(result.issues),
   });
 
   const validEntries: SavedSearch[] = [];
   for (const item of data) {
-    const itemResult = savedSearchSchema.safeParse(item);
+    const itemResult = safeParse(savedSearchSchema, item);
     if (itemResult.success) {
-      validEntries.push(itemResult.data);
+      validEntries.push(itemResult.output);
     }
   }
   return validEntries;

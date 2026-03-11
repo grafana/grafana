@@ -1,17 +1,27 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import {
+  type BaseIssue,
+  type BaseSchema,
+  type InferOutput,
+  number as vNumber,
+  object,
+  optional,
+  partial,
+  picklist,
+  string as vString,
+} from 'valibot';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
 import { DeepRequired, ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
-const ThemeColorsModeSchema = z.enum(['light', 'dark']);
+const ThemeColorsModeSchema = picklist(['light', 'dark']);
 /** @internal */
-export type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
+export type ThemeColorsMode = InferOutput<typeof ThemeColorsModeSchema>;
 
-const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
-  z
-    .object({
+const createThemeColorsBaseSchema = <TColor extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(color: TColor) =>
+  partial(
+    object({
       mode: ThemeColorsModeSchema,
 
       primary: color,
@@ -21,74 +31,74 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       success: color,
       warning: color,
 
-      text: z.object({
-        primary: z.string().optional(),
-        secondary: z.string().optional(),
-        disabled: z.string().optional(),
-        link: z.string().optional(),
+      text: object({
+        primary: optional(vString()),
+        secondary: optional(vString()),
+        disabled: optional(vString()),
+        link: optional(vString()),
         /** Used for auto white or dark text on colored backgrounds */
-        maxContrast: z.string().optional(),
+        maxContrast: optional(vString()),
       }),
 
-      background: z.object({
+      background: object({
         /** Dashboard and body background */
-        canvas: z.string().optional(),
+        canvas: optional(vString()),
         /** Primary content pane background (panels etc) */
-        primary: z.string().optional(),
+        primary: optional(vString()),
         /** Cards and elements that need to stand out on the primary background */
-        secondary: z.string().optional(),
+        secondary: optional(vString()),
         /**
          * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
-        elevated: z.string().optional(),
+        elevated: optional(vString()),
       }),
 
-      border: z.object({
-        weak: z.string().optional(),
-        medium: z.string().optional(),
-        strong: z.string().optional(),
+      border: object({
+        weak: optional(vString()),
+        medium: optional(vString()),
+        strong: optional(vString()),
       }),
 
-      gradients: z.object({
-        brandVertical: z.string().optional(),
-        brandHorizontal: z.string().optional(),
+      gradients: object({
+        brandVertical: optional(vString()),
+        brandHorizontal: optional(vString()),
       }),
 
-      action: z.object({
+      action: object({
         /** Used for selected menu item / select option */
-        selected: z.string().optional(),
+        selected: optional(vString()),
         /**
          * @alpha (Do not use from plugins)
          * Used for selected items when background only change is not enough (Currently only used for FilterPill)
          **/
-        selectedBorder: z.string().optional(),
+        selectedBorder: optional(vString()),
         /** Used for hovered menu item / select option */
-        hover: z.string().optional(),
+        hover: optional(vString()),
         /** Used for button/colored background hover opacity */
-        hoverOpacity: z.number().optional(),
+        hoverOpacity: optional(vNumber()),
         /** Used focused menu item / select option */
-        focus: z.string().optional(),
+        focus: optional(vString()),
         /** Used for disabled buttons and inputs */
-        disabledBackground: z.string().optional(),
+        disabledBackground: optional(vString()),
         /** Disabled text */
-        disabledText: z.string().optional(),
+        disabledText: optional(vString()),
         /** Disablerd opacity */
-        disabledOpacity: z.number().optional(),
+        disabledOpacity: optional(vNumber()),
       }),
 
-      scrollbar: z.string().optional(),
-      hoverFactor: z.number(),
-      contrastThreshold: z.number(),
-      tonalOffset: z.number(),
+      scrollbar: optional(vString()),
+      hoverFactor: vNumber(),
+      contrastThreshold: vNumber(),
+      tonalOffset: vNumber(),
     })
-    .partial();
+  );
 
-// Need to override the zod type to include the generic properly
+// Need to override the valibot type to include the generic properly
 /** @internal */
 export type ThemeColorsBase<TColor> = DeepRequired<
   Omit<
-    z.infer<ReturnType<typeof createThemeColorsBaseSchema>>,
+    InferOutput<ReturnType<typeof createThemeColorsBaseSchema>>,
     'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning'
   >
 > & {
@@ -113,7 +123,7 @@ export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
 export const ThemeColorsInputSchema = createThemeColorsBaseSchema(ThemeRichColorInputSchema);
 
 /** @internal */
-export type ThemeColorsInput = z.infer<typeof ThemeColorsInputSchema>;
+export type ThemeColorsInput = InferOutput<typeof ThemeColorsInputSchema>;
 
 class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';

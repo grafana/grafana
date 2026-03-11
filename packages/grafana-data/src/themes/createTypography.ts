@@ -1,7 +1,7 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import { type InferOutput, minValue, number as vNumber, object, optional, pipe, string as vString } from 'valibot';
 
 import { ThemeColors } from './createColors';
 
@@ -41,20 +41,20 @@ export interface ThemeTypographyVariant {
   letterSpacing?: string;
 }
 
-export const ThemeTypographyInputSchema = z.object({
-  fontFamily: z.string().optional(),
-  fontFamilyMonospace: z.string().optional(),
-  fontSize: z.number().positive().optional(),
-  fontWeightLight: z.number().positive().optional(),
-  fontWeightRegular: z.number().positive().optional(),
-  fontWeightMedium: z.number().positive().optional(),
-  fontWeightBold: z.number().positive().optional(),
+export const ThemeTypographyInputSchema = object({
+  fontFamily: optional(vString()),
+  fontFamilyMonospace: optional(vString()),
+  fontSize: optional(pipe(vNumber(), minValue(1))),
+  fontWeightLight: optional(pipe(vNumber(), minValue(1))),
+  fontWeightRegular: optional(pipe(vNumber(), minValue(1))),
+  fontWeightMedium: optional(pipe(vNumber(), minValue(1))),
+  fontWeightBold: optional(pipe(vNumber(), minValue(1))),
   // what's the font-size on the html element.
   // 16px is the default font-size used by browsers.
-  htmlFontSize: z.number().positive().optional(),
+  htmlFontSize: optional(pipe(vNumber(), minValue(1))),
 });
 
-export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;
+export type ThemeTypographyInput = InferOutput<typeof ThemeTypographyInputSchema>;
 
 const defaultFontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";

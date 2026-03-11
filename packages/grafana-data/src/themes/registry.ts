@@ -1,3 +1,5 @@
+import { safeParse } from 'valibot';
+
 import { Registry, RegistryItem } from '../utils/Registry';
 
 import { createTheme, NewThemeOptionsSchema } from './createTheme';
@@ -77,11 +79,11 @@ const themeRegistry = new Registry<ThemeRegistryItem>(() => {
 });
 
 for (const [name, json] of Object.entries(extraThemes)) {
-  const result = NewThemeOptionsSchema.safeParse(json);
+  const result = safeParse(NewThemeOptionsSchema, json);
   if (!result.success) {
-    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+    console.error(`Invalid theme definition for theme ${name}: ${result.issues[0].message}`);
   } else {
-    const theme = result.data;
+    const theme = result.output;
     themeRegistry.register({
       id: theme.id,
       name: theme.name,

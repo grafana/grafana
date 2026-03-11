@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import z from 'zod';
+import { array, minLength, nullable, pipe, record, string as vString } from 'valibot';
 
 import { UserStorage } from '@grafana/runtime/internal';
 
@@ -30,9 +30,9 @@ export interface UseTriagePredefinedOverridesResult {
   setDefaultSearchId: (id: string | null) => Promise<void>;
 }
 
-const nameOverridesSchema = z.record(z.string(), z.string());
-const dismissedIdsSchema = z.array(z.string());
-const defaultSearchIdSchema = z.string().min(1).nullable();
+const nameOverridesSchema = record(vString(), vString());
+const dismissedIdsSchema = array(vString());
+const defaultSearchIdSchema = nullable(pipe(vString(), minLength(1)));
 
 /** Data shape returned by the predefined overrides loader. */
 export interface TriagePredefinedOverridesData {

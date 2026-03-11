@@ -1,3 +1,5 @@
+import { safeParse } from 'valibot';
+
 import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { performanceUtils } from '@grafana/scenes';
@@ -727,11 +729,11 @@ function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
 }
 
 function isScopeObj(obj: unknown): obj is Scope {
-  return ScopeSchema.safeParse(obj).success;
+  return safeParse(ScopeSchema, obj).success;
 }
 
 function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
-  return RecentScopeSchema.safeParse(obj).success;
+  return safeParse(RecentScopeSchema, obj).success;
 }
 
 function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {

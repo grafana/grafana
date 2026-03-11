@@ -1,15 +1,15 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import { type InferOutput, integer, minValue, number as vNumber, object, optional, pipe } from 'valibot';
 
 /** @internal */
-export const ThemeSpacingOptionsSchema = z.object({
-  gridSize: z.int().positive().optional(),
+export const ThemeSpacingOptionsSchema = object({
+  gridSize: optional(pipe(vNumber(), integer(), minValue(1))),
 });
 
 /** @internal */
-export type ThemeSpacingOptions = z.infer<typeof ThemeSpacingOptionsSchema>;
+export type ThemeSpacingOptions = InferOutput<typeof ThemeSpacingOptionsSchema>;
 
 /** @internal */
 export type ThemeSpacingArgument = number | string;

@@ -1,3 +1,5 @@
+import { parse } from 'valibot';
+
 import { alertingAlertRuleFormSchema, alertingModelSchema } from './alertRuleFormSchema';
 
 describe('alertingModelSchema', () => {
@@ -20,7 +22,7 @@ describe('alertingModelSchema', () => {
       type: 'threshold',
     };
 
-    const result = alertingModelSchema.parse(model);
+    const result = parse(alertingModelSchema, model);
     expect(result.type).toBe('threshold');
     expect(result.conditions).toBeDefined();
   });
@@ -35,7 +37,7 @@ describe('alertingModelSchema', () => {
       type: 'reduce',
     };
 
-    const result = alertingModelSchema.parse(model);
+    const result = parse(alertingModelSchema, model);
     expect(result.type).toBe('reduce');
     expect(result.reducer).toBe('mean');
   });
@@ -49,7 +51,7 @@ describe('alertingModelSchema', () => {
       type: 'math',
     };
 
-    const result = alertingModelSchema.parse(model);
+    const result = parse(alertingModelSchema, model);
     expect(result.type).toBe('math');
     expect(result.expression).toBe('$B > 0.4');
   });
@@ -64,7 +66,7 @@ describe('alertingModelSchema', () => {
       refId: 'A',
     };
 
-    const result = alertingModelSchema.parse(model);
+    const result = parse(alertingModelSchema, model);
     expect(result.expr).toBe('up');
     expect(result.instant).toBe(true);
   });
@@ -72,7 +74,7 @@ describe('alertingModelSchema', () => {
   it('should not add default values', () => {
     const model = { refId: 'A' };
 
-    const result = alertingModelSchema.parse(model);
+    const result = parse(alertingModelSchema, model);
     expect(result).not.toHaveProperty('instant');
     expect(result).not.toHaveProperty('range');
     expect(result).not.toHaveProperty('queryType');
@@ -134,7 +136,7 @@ describe('alertingAlertRuleFormSchema', () => {
       condition: 'C',
     };
 
-    const result = alertingAlertRuleFormSchema.parse(alertRule);
+    const result = parse(alertingAlertRuleFormSchema, alertRule);
     const queries = result.queries || [];
     expect(queries[0].model.expr).toBe('up');
     expect(queries[1].model.type).toBe('reduce');
@@ -147,7 +149,7 @@ describe('alertingAlertRuleFormSchema', () => {
       group: 'alpha_squad_api_service_rules',
     };
 
-    const result = alertingAlertRuleFormSchema.parse(minimalPayload);
+    const result = parse(alertingAlertRuleFormSchema, minimalPayload);
     expect(result.folder?.uid).toBe('folder-uid');
     expect(result.folder?.title).toBe('Alpha squad');
     expect(result.group).toBe('alpha_squad_api_service_rules');

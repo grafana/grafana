@@ -1,5 +1,21 @@
 import { clamp } from 'lodash';
-import z from 'zod';
+import {
+  type InferOutput,
+  any,
+  array,
+  fallback,
+  looseObject,
+  object,
+  optional,
+  parse,
+  record,
+  union,
+  boolean as vBoolean,
+  enum_ as vEnum,
+  number as vNumber,
+  string as vString,
+  undefined_ as vUndefined,
+} from 'valibot';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
@@ -161,94 +177,92 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
 // schema for grafana rule values is navigateToAlertFormSchema , shared in the restrictedGrafanaApis.
 // TODO: add this to the DMA new plugin.
 
-const cloudRuleFormValuesSchema = z.looseObject({
-  name: z.string().optional(),
-  type: z.enum(RuleFormType).catch(RuleFormType.grafana),
-  dataSourceName: z.string().optional().default(''),
-  group: z.string().optional(),
-  labels: z
-    .array(
-      z.object({
-        key: z.string(),
-        value: z.string(),
+const cloudRuleFormValuesSchema = looseObject({
+  name: optional(vString()),
+  type: fallback(vEnum(RuleFormType), RuleFormType.grafana),
+  dataSourceName: optional(vString(), ''),
+  group: optional(vString()),
+  labels: optional(
+    array(
+      object({
+        key: vString(),
+        value: vString(),
       })
-    )
-    .optional()
-    .default([]),
-  annotations: z
-    .array(
-      z.object({
-        key: z.string(),
-        value: z.string(),
+    ),
+    []
+  ),
+  annotations: optional(
+    array(
+      object({
+        key: vString(),
+        value: vString(),
       })
-    )
-    .optional()
-    .default([]),
-  queries: z.array(z.any()).optional(),
-  condition: z.string().optional(),
-  noDataState: z
-    .enum(GrafanaAlertStateDecision)
-    .optional()
-    .default(GrafanaAlertStateDecision.NoData)
-    .catch(GrafanaAlertStateDecision.NoData),
-  execErrState: z
-    .enum(GrafanaAlertStateDecision)
-    .optional()
-    .default(GrafanaAlertStateDecision.Error)
-    .catch(GrafanaAlertStateDecision.Error),
-  folder: z
-    .union([
-      z.object({
-        title: z.string(),
-        uid: z.string(),
+    ),
+    []
+  ),
+  queries: optional(array(any())),
+  condition: optional(vString()),
+  noDataState: fallback(
+    optional(vEnum(GrafanaAlertStateDecision), GrafanaAlertStateDecision.NoData),
+    GrafanaAlertStateDecision.NoData
+  ),
+  execErrState: fallback(
+    optional(vEnum(GrafanaAlertStateDecision), GrafanaAlertStateDecision.Error),
+    GrafanaAlertStateDecision.Error
+  ),
+  folder: optional(
+    union([
+      object({
+        title: vString(),
+        uid: vString(),
       }),
-      z.undefined(),
+      vUndefined(),
     ])
-    .optional(),
-  evaluateEvery: z.string().optional(),
-  evaluateFor: z.string().optional().default('0s'),
-  keepFiringFor: z.string().optional(),
-  isPaused: z.boolean().optional().default(false),
-  manualRouting: z.boolean().optional(),
-  contactPoints: z
-    .record(
-      z.string(),
-      z.object({
-        selectedContactPoint: z.string(),
-        overrideGrouping: z.boolean(),
-        groupBy: z.array(z.string()),
-        overrideTimings: z.boolean(),
-        groupWaitValue: z.string(),
-        groupIntervalValue: z.string(),
-        repeatIntervalValue: z.string(),
-        muteTimeIntervals: z.array(z.string()),
-        activeTimeIntervals: z.array(z.string()),
+  ),
+  evaluateEvery: optional(vString()),
+  evaluateFor: optional(vString(), '0s'),
+  keepFiringFor: optional(vString()),
+  isPaused: optional(vBoolean(), false),
+  manualRouting: optional(vBoolean()),
+  contactPoints: optional(
+    record(
+      vString(),
+      object({
+        selectedContactPoint: vString(),
+        overrideGrouping: vBoolean(),
+        groupBy: array(vString()),
+        overrideTimings: vBoolean(),
+        groupWaitValue: vString(),
+        groupIntervalValue: vString(),
+        repeatIntervalValue: vString(),
+        muteTimeIntervals: array(vString()),
+        activeTimeIntervals: array(vString()),
       })
     )
-    .optional(),
-  editorSettings: z
-    .object({
-      simplifiedQueryEditor: z.boolean(),
-      simplifiedNotificationEditor: z.boolean(),
+  ),
+  editorSettings: optional(
+    object({
+      simplifiedQueryEditor: vBoolean(),
+      simplifiedNotificationEditor: vBoolean(),
     })
-    .optional(),
-  metric: z.string().optional(),
-  targetDatasourceUid: z.string().optional(),
-  namespace: z.string().optional(),
-  expression: z.string().optional(),
-  missingSeriesEvalsToResolve: z.number().optional(),
+  ),
+  metric: optional(vString()),
+  targetDatasourceUid: optional(vString()),
+  namespace: optional(vString()),
+  expression: optional(vString()),
+  missingSeriesEvalsToResolve: optional(vNumber()),
 });
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  let parsedRule: z.infer<typeof alertingAlertRuleFormSchema> | z.infer<typeof cloudRuleFormValuesSchema>;
+  let parsedRule: InferOutput<typeof alertingAlertRuleFormSchema> | InferOutput<typeof cloudRuleFormValuesSchema>;
   // differencitate between cloud and grafana prefill
   if (rule.type === RuleFormType.cloudAlerting) {
     // we use this schema to coerce prefilled query params into a valid "FormValues" interface
-    parsedRule = cloudRuleFormValuesSchema.parse(rule);
+    parsedRule = parse(cloudRuleFormValuesSchema, rule);
   } else {
     // grafana prefill
     // coerce prefill params to a valid RuleFormValues interface
-    parsedRule = alertingAlertRuleFormSchema.parse(rule);
+    parsedRule = parse(alertingAlertRuleFormSchema, rule);
   }
 
   return revealHiddenQueries({

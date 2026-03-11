@@ -4,24 +4,24 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
 
 export const updateVariablePayloadSchema = payloads.updateVariable;
 
-export type UpdateVariablePayload = z.infer<typeof updateVariablePayloadSchema>;
+export type UpdateVariablePayload = InferOutput<typeof updateVariablePayloadSchema>;
 
 export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   name: 'UPDATE_VARIABLE',
-  description: payloads.updateVariable.description ?? '',
+  description: getPayloadDescription(payloads.updateVariable),
 
   payloadSchema: payloads.updateVariable,
   permission: requiresEdit,

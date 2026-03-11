@@ -12,24 +12,32 @@
  * - Alert Activity: URL parameters (e.g., "var-filters=...&var-groupBy=...&from=...&to=...")
  */
 
-import z from 'zod';
+import {
+  type InferOutput,
+  array,
+  object,
+  optional,
+  boolean as vBoolean,
+  number as vNumber,
+  string as vString,
+} from 'valibot';
 
 import { t } from '@grafana/i18n';
 
 /**
- * Zod schema for validating a saved search object.
+ * Valibot schema for validating a saved search object.
  * Used to validate data loaded from storage.
  */
-export const savedSearchSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  isDefault: z.boolean(),
-  query: z.string(),
-  createdAt: z.number().optional(),
+export const savedSearchSchema = object({
+  id: vString(),
+  name: vString(),
+  isDefault: vBoolean(),
+  query: vString(),
+  createdAt: optional(vNumber()),
 });
-export const savedSearchesArraySchema = z.array(savedSearchSchema);
+export const savedSearchesArraySchema = array(savedSearchSchema);
 
-export type SavedSearch = z.infer<typeof savedSearchSchema>;
+export type SavedSearch = InferOutput<typeof savedSearchSchema>;
 
 export interface ValidationError {
   field: 'name';

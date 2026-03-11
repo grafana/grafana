@@ -9,6 +9,8 @@
  * import this module directly because it lives inside the core bundle.
  */
 
+import { parse, safeParse } from 'valibot';
+
 import type { DashboardMutationAPI } from '@grafana/data';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
@@ -29,6 +31,16 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
     const cmd = ALL_COMMANDS.find((c) => c.name === normalized);
-    return cmd?.payloadSchema ?? null;
+    if (!cmd) {
+      return null;
+    }
+    const schema = cmd.payloadSchema;
+    return {
+      parse: (data: unknown) => parse(schema, data),
+      safeParse: (data: unknown) => {
+        const result = safeParse(schema, data);
+        return result.success ? { success: true, data: result.output } : { success: false, error: result.issues };
+      },
+    };
   },
 };

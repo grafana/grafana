@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type InferOutput, integer, minValue, number as vNumber, object, optional, pipe } from 'valibot';
 
 /** @beta */
 export interface ThemeShape {
@@ -36,12 +36,12 @@ export interface Radii {
 }
 
 /** @internal */
-export const ThemeShapeInputSchema = z.object({
-  borderRadius: z.int().nonnegative().optional(),
+export const ThemeShapeInputSchema = object({
+  borderRadius: optional(pipe(vNumber(), integer(), minValue(0))),
 });
 
 /** @internal */
-export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
+export type ThemeShapeInput = InferOutput<typeof ThemeShapeInputSchema>;
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
   const baseBorderRadius = options.borderRadius ?? 6;

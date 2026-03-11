@@ -1,4 +1,14 @@
-import { z } from 'zod';
+import {
+  type InferOutput,
+  array,
+  boolean as vBoolean,
+  literal,
+  object,
+  optional,
+  picklist,
+  string as vString,
+  union,
+} from 'valibot';
 
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
@@ -29,24 +39,24 @@ export interface ThemeVizColor<T extends ThemeVizColorName> {
 type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
 
 const createShadeSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
-  z.enum([`super-light-${color}`, `light-${color}`, color, `semi-dark-${color}`, `dark-${color}`]);
+  picklist([`super-light-${color}`, `light-${color}`, color, `semi-dark-${color}`, `dark-${color}`]);
 
-type ThemeVizColorShadeName<T extends ThemeVizColorName> = z.infer<ReturnType<typeof createShadeSchema<T>>>;
+type ThemeVizColorShadeName<T extends ThemeVizColorName> = InferOutput<ReturnType<typeof createShadeSchema<T>>>;
 
 const createHueSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
-  z.object({
-    name: z.literal(color),
-    shades: z.array(
-      z.object({
-        color: z.string(),
+  object({
+    name: literal(color),
+    shades: array(
+      object({
+        color: vString(),
         name: createShadeSchema(color),
-        aliases: z.array(z.string()).optional(),
-        primary: z.boolean().optional(),
+        aliases: optional(array(vString())),
+        primary: optional(vBoolean()),
       })
     ),
   });
 
-const ThemeVizHueSchema = z.union([
+const ThemeVizHueSchema = union([
   createHueSchema('red'),
   createHueSchema('orange'),
   createHueSchema('yellow'),
@@ -58,14 +68,14 @@ const ThemeVizHueSchema = z.union([
 /**
  * @alpha
  */
-export type ThemeVizHue = z.infer<typeof ThemeVizHueSchema>;
+export type ThemeVizHue = InferOutput<typeof ThemeVizHueSchema>;
 
-export const ThemeVisualizationColorsInputSchema = z.object({
-  hues: z.array(ThemeVizHueSchema).optional(),
-  palette: z.array(z.string()).optional(),
+export const ThemeVisualizationColorsInputSchema = object({
+  hues: optional(array(ThemeVizHueSchema)),
+  palette: optional(array(vString())),
 });
 
-export type ThemeVisualizationColorsInput = z.infer<typeof ThemeVisualizationColorsInputSchema>;
+export type ThemeVisualizationColorsInput = InferOutput<typeof ThemeVisualizationColorsInputSchema>;
 
 /**
  * @internal

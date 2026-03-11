@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -14,16 +14,16 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const addRowPayloadSchema = payloads.addRow;
 
-export type AddRowPayload = z.infer<typeof addRowPayloadSchema>;
+export type AddRowPayload = InferOutput<typeof addRowPayloadSchema>;
 
 export const addRowCommand: MutationCommand<AddRowPayload> = {
   name: 'ADD_ROW',
-  description: payloads.addRow.description ?? '',
+  description: getPayloadDescription(payloads.addRow),
 
   payloadSchema: payloads.addRow,
   permission: requiresNewDashboardLayouts,

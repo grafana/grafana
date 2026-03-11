@@ -4,23 +4,23 @@
  * Remove a row by path. Optionally move contained panels to another group.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
 import { movePanelsToLayout } from './movePanelsHelper';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const removeRowPayloadSchema = payloads.removeRow;
 
-export type RemoveRowPayload = z.infer<typeof removeRowPayloadSchema>;
+export type RemoveRowPayload = InferOutput<typeof removeRowPayloadSchema>;
 
 export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
   name: 'REMOVE_ROW',
-  description: payloads.removeRow.description ?? '',
+  description: getPayloadDescription(payloads.removeRow),
 
   payloadSchema: payloads.removeRow,
   permission: requiresNewDashboardLayouts,

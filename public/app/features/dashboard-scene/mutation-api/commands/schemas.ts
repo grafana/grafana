@@ -1,87 +1,117 @@
 /**
- * Dashboard Mutation API -- Canonical Zod Schemas & Payload Definitions
+ * Dashboard Mutation API -- Canonical Valibot Schemas & Payload Definitions
  *
  * This file contains two layers:
  *
  * 1. BUILDING-BLOCK SCHEMAS -- v2beta1 data structures (VariableKind, etc.)
  *    used internally by core code.
  *
- * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Zod schema per mutation
+ * 2. PAYLOAD SCHEMAS & `payloads` RECORD -- one Valibot schema per mutation
  *    command, accessible via DashboardMutationAPI.getPayloadSchema().
  *
- * This file only depends on Zod, keeping it safe for import from any
+ * This file only depends on Valibot, keeping it safe for import from any
  * internal module without pulling in the DashboardScene dependency tree.
  *
- * DEFAULTS: Literal `kind` and `version` fields use .optional().default()
+ * DEFAULTS: Literal `kind` and `version` fields use optional(schema, default)
  * so consumers (e.g. LLM tools) can omit boilerplate. After parsing, these
  * fields are always present in the output.
  *
- * The `.describe()` annotations flow into generated JSON Schema via
- * `z.toJSONSchema()` and are used by LLM tool consumers for guidance.
+ * The metadata() annotations flow into generated JSON Schema via
+ * Valibot's toJSONSchema() and are used by LLM tool consumers for guidance.
  */
 
-import { z } from 'zod';
+import {
+  type GenericSchema,
+  array,
+  boolean as vBoolean,
+  getMetadata,
+  literal,
+  metadata,
+  number as vNumber,
+  object,
+  optional,
+  picklist,
+  pipe,
+  record,
+  regex,
+  strictObject,
+  string as vString,
+  union,
+  unknown,
+  variant,
+} from 'valibot';
 
-export const dataQueryKindSchema = z.object({
-  kind: z.literal('DataQuery').optional().default('DataQuery'),
-  group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
-  version: z.string().optional().default('v0'),
-  datasource: z
-    .object({
-      name: z.string().optional(),
+export const dataQueryKindSchema = object({
+  kind: optional(literal('DataQuery'), 'DataQuery'),
+  group: pipe(vString(), metadata({ description: 'Datasource type (e.g., "prometheus", "loki", "mysql")' })),
+  version: optional(vString(), 'v0'),
+  datasource: optional(
+    object({
+      name: optional(vString()),
     })
-    .optional(),
-  spec: z.record(z.string(), z.unknown()).describe('Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)'),
+  ),
+  spec: pipe(
+    record(vString(), unknown()),
+    metadata({ description: 'Query-specific fields (e.g., expr for Prometheus, rawSql for SQL)' })
+  ),
 });
 
 // Variable building-block schemas (v2beta1)
 
-export const variableOptionSchema = z.object({
-  selected: z.boolean().optional().describe('Flag indicating if the value is selected'),
-  text: z.string().or(z.array(z.string())).describe('The text or list of texts of the current value'),
-  value: z.string().or(z.array(z.string())).describe('The value or list of values of the current value'),
-  properties: z.record(z.string(), z.string()).optional().describe('Additional properties for multi-props variables'),
+export const variableOptionSchema = object({
+  selected: pipe(optional(vBoolean()), metadata({ description: 'Flag indicating if the value is selected' })),
+  text: pipe(
+    union([vString(), array(vString())]),
+    metadata({ description: 'The text or list of texts of the current value' })
+  ),
+  value: pipe(
+    union([vString(), array(vString())]),
+    metadata({ description: 'The value or list of values of the current value' })
+  ),
+  properties: pipe(
+    optional(record(vString(), vString())),
+    metadata({ description: 'Additional properties for multi-props variables' })
+  ),
 });
 
-const variableHideSchema = z
-  .enum(['dontHide', 'hideLabel', 'hideVariable', 'inControlsMenu'])
-  .optional()
-  .default('dontHide')
-  .describe(
-    `Flag indicating if the variable should be:
+const variableHideSchema = pipe(
+  optional(picklist(['dontHide', 'hideLabel', 'hideVariable', 'inControlsMenu']), 'dontHide'),
+  metadata({
+    description: `Flag indicating if the variable should be:
 - "dontHide": show label and value (visible)
 - "hideLabel": show value only (label hidden)
 - "hideVariable": show nothing (fully hidden)
-- "inControlsMenu": show in a drop-down menu`
-  );
+- "inControlsMenu": show in a drop-down menu`,
+  })
+);
 
-const variableRefreshSchema = z
-  .enum(['never', 'onDashboardLoad', 'onTimeRangeChanged'])
-  .optional()
-  .default('never')
-  .describe(
-    `Options to config when to refresh a variable:
+const variableRefreshSchema = pipe(
+  optional(picklist(['never', 'onDashboardLoad', 'onTimeRangeChanged']), 'never'),
+  metadata({
+    description: `Options to config when to refresh a variable:
 - "never": Never refresh the variable
 - "onDashboardLoad": Queries the data source every time the dashboard loads
-- "onTimeRangeChanged": Queries the data source when the dashboard time range changes`
-  );
+- "onTimeRangeChanged": Queries the data source when the dashboard time range changes`,
+  })
+);
 
-const variableSortSchema = z
-  .enum([
-    'disabled',
-    'alphabeticalAsc',
-    'alphabeticalDesc',
-    'numericalAsc',
-    'numericalDesc',
-    'alphabeticalCaseInsensitiveAsc',
-    'alphabeticalCaseInsensitiveDesc',
-    'naturalAsc',
-    'naturalDesc',
-  ])
-  .optional()
-  .default('disabled')
-  .describe(
-    `Sort variable options. Accepted values are:
+const variableSortSchema = pipe(
+  optional(
+    picklist([
+      'disabled',
+      'alphabeticalAsc',
+      'alphabeticalDesc',
+      'numericalAsc',
+      'numericalDesc',
+      'alphabeticalCaseInsensitiveAsc',
+      'alphabeticalCaseInsensitiveDesc',
+      'naturalAsc',
+      'naturalDesc',
+    ]),
+    'disabled'
+  ),
+  metadata({
+    description: `Sort variable options. Accepted values are:
 - "disabled": No sorting
 - "alphabeticalAsc": Alphabetical ASC
 - "alphabeticalDesc": Alphabetical DESC
@@ -90,320 +120,384 @@ const variableSortSchema = z
 - "alphabeticalCaseInsensitiveAsc": Alphabetical Case Insensitive ASC
 - "alphabeticalCaseInsensitiveDesc": Alphabetical Case Insensitive DESC
 - "naturalAsc": Natural ASC
-- "naturalDesc": Natural DESC`
-  );
+- "naturalDesc": Natural DESC`,
+  })
+);
 
-const adHocFilterSchema = z.object({
-  key: z.string().describe('Filter key (dimension name)'),
-  operator: z.string().describe('Comparison operator (e.g., "=", "!=", "=~")'),
-  value: z.string().describe('Filter value'),
-  values: z.array(z.string()).optional().describe('Multiple filter values'),
-  keyLabel: z.string().optional().describe('Display label for the key'),
-  valueLabels: z.array(z.string()).optional().describe('Display labels for values'),
-  forceEdit: z.boolean().optional(),
-  origin: z.literal('dashboard').optional(),
+const adHocFilterSchema = object({
+  key: pipe(vString(), metadata({ description: 'Filter key (dimension name)' })),
+  operator: pipe(vString(), metadata({ description: 'Comparison operator (e.g., "=", "!=", "=~")' })),
+  value: pipe(vString(), metadata({ description: 'Filter value' })),
+  values: pipe(optional(array(vString())), metadata({ description: 'Multiple filter values' })),
+  keyLabel: pipe(optional(vString()), metadata({ description: 'Display label for the key' })),
+  valueLabels: pipe(optional(array(vString())), metadata({ description: 'Display labels for values' })),
+  forceEdit: optional(vBoolean()),
+  origin: optional(literal('dashboard')),
 });
 
-const metricFindValueSchema = z.object({
-  text: z.string().describe('Display text'),
-  value: z.union([z.string(), z.number()]).optional().describe('Option value'),
-  group: z.string().optional(),
-  expandable: z.boolean().optional(),
+const metricFindValueSchema = object({
+  text: pipe(vString(), metadata({ description: 'Display text' })),
+  value: pipe(optional(union([vString(), vNumber()])), metadata({ description: 'Option value' })),
+  group: optional(vString()),
+  expandable: optional(vBoolean()),
 });
 
 const defaultVariableOption = { text: '', value: '' };
 
 // Common spec fields shared by all variable types
 const commonVariableSpecFields = {
-  name: z.string().describe('The name of the variable. Must be unique within the dashboard.'),
-  label: z.string().optional().describe('The label of the variable displayed in the UI dropdown'),
-  description: z.string().optional().describe('The description of the variable, shown as tooltip'),
+  name: pipe(vString(), metadata({ description: 'The name of the variable. Must be unique within the dashboard.' })),
+  label: pipe(optional(vString()), metadata({ description: 'The label of the variable displayed in the UI dropdown' })),
+  description: pipe(
+    optional(vString()),
+    metadata({ description: 'The description of the variable, shown as tooltip' })
+  ),
   hide: variableHideSchema,
-  skipUrlSync: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('Whether the variable value should be managed by URL query params or not'),
+  skipUrlSync: pipe(
+    optional(vBoolean(), false),
+    metadata({ description: 'Whether the variable value should be managed by URL query params or not' })
+  ),
 };
 
 // Per-type variable kind schemas (v2beta1)
 
-export const queryVariableKindSchema = z
-  .object({
-    kind: z.literal('QueryVariable'),
-    spec: z.object({
+export const queryVariableKindSchema = pipe(
+  object({
+    kind: literal('QueryVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      query: dataQueryKindSchema.describe(
-        'The data query to use for fetching variable options. Uses v2beta1 DataQueryKind format. For Prometheus string queries use { "__grafana_string_value": "label_values(metric, label)" } in spec.'
+      query: pipe(
+        dataQueryKindSchema,
+        metadata({
+          description:
+            'The data query to use for fetching variable options. Uses v2beta1 DataQueryKind format. For Prometheus string queries use { "__grafana_string_value": "label_values(metric, label)" } in spec.',
+        })
       ),
       refresh: variableRefreshSchema,
-      regex: z
-        .string()
-        .optional()
-        .default('')
-        .describe(
-          'Regex used to extract part of a series name or metric node segment. Named capture groups can be used to separate the display text and value.'
-        ),
-      regexApplyTo: z
-        .enum(['value', 'text'])
-        .optional()
-        .describe('Whether regex applies to variable "value" (used in queries) or "text" (shown to users)'),
+      regex: pipe(
+        optional(vString(), ''),
+        metadata({
+          description:
+            'Regex used to extract part of a series name or metric node segment. Named capture groups can be used to separate the display text and value.',
+        })
+      ),
+      regexApplyTo: pipe(
+        optional(picklist(['value', 'text'])),
+        metadata({
+          description: 'Whether regex applies to variable "value" (used in queries) or "text" (shown to users)',
+        })
+      ),
       sort: variableSortSchema,
-      multi: z.boolean().optional().default(false).describe('Flag indicating if the variable can have multiple values'),
-      includeAll: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Flag indicating if the variable should include the 'All' option"),
-      allValue: z.string().optional().describe("Custom value to use when 'All' is selected"),
-      allowCustomValue: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('Flag indicating if the variable can have a custom value'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The current value of the variable'),
-      options: z
-        .array(variableOptionSchema)
-        .optional()
-        .default([])
-        .describe('The available options for the variable (populated automatically from the query)'),
-      placeholder: z.string().optional().describe('Placeholder text when no value is selected'),
-      definition: z.string().optional().describe('Query definition string for display'),
-      staticOptions: z
-        .array(variableOptionSchema)
-        .optional()
-        .describe('Static options to include alongside query results'),
-      staticOptionsOrder: z
-        .enum(['before', 'after', 'sorted'])
-        .optional()
-        .describe('Where to place static options relative to query results'),
+      multi: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: 'Flag indicating if the variable can have multiple values' })
+      ),
+      includeAll: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: "Flag indicating if the variable should include the 'All' option" })
+      ),
+      allValue: pipe(optional(vString()), metadata({ description: "Custom value to use when 'All' is selected" })),
+      allowCustomValue: pipe(
+        optional(vBoolean(), true),
+        metadata({ description: 'Flag indicating if the variable can have a custom value' })
+      ),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The current value of the variable' })
+      ),
+      options: pipe(
+        optional(array(variableOptionSchema), []),
+        metadata({
+          description: 'The available options for the variable (populated automatically from the query)',
+        })
+      ),
+      placeholder: pipe(optional(vString()), metadata({ description: 'Placeholder text when no value is selected' })),
+      definition: pipe(optional(vString()), metadata({ description: 'Query definition string for display' })),
+      staticOptions: pipe(
+        optional(array(variableOptionSchema)),
+        metadata({ description: 'Static options to include alongside query results' })
+      ),
+      staticOptionsOrder: pipe(
+        optional(picklist(['before', 'after', 'sorted'])),
+        metadata({ description: 'Where to place static options relative to query results' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      'QueryVariable: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.',
   })
-  .describe(
-    'QueryVariable: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.'
-  );
+);
 
-export const customVariableKindSchema = z
-  .object({
-    kind: z.literal('CustomVariable'),
-    spec: z.object({
+export const customVariableKindSchema = pipe(
+  object({
+    kind: literal('CustomVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      query: z
-        .string()
-        .describe(
-          'Comma-separated list of options defining the variable values (e.g., "dev,staging,prod"). Avoid for single options.'
-        ),
-      multi: z.boolean().optional().default(false).describe('Flag indicating if the variable can have multiple values'),
-      includeAll: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Flag indicating if the variable should include the 'All' option"),
-      allValue: z.string().optional().describe("Custom value to use when 'All' is selected"),
-      allowCustomValue: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('Flag indicating if the variable can have a custom value'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The current value of the variable'),
-      options: z.array(variableOptionSchema).optional().default([]).describe('The available options for the variable'),
-      valuesFormat: z.enum(['csv', 'json']).optional().describe('Format for multi-value output'),
+      query: pipe(
+        vString(),
+        metadata({
+          description:
+            'Comma-separated list of options defining the variable values (e.g., "dev,staging,prod"). Avoid for single options.',
+        })
+      ),
+      multi: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: 'Flag indicating if the variable can have multiple values' })
+      ),
+      includeAll: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: "Flag indicating if the variable should include the 'All' option" })
+      ),
+      allValue: pipe(optional(vString()), metadata({ description: "Custom value to use when 'All' is selected" })),
+      allowCustomValue: pipe(
+        optional(vBoolean(), true),
+        metadata({ description: 'Flag indicating if the variable can have a custom value' })
+      ),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The current value of the variable' })
+      ),
+      options: pipe(
+        optional(array(variableOptionSchema), []),
+        metadata({ description: 'The available options for the variable' })
+      ),
+      valuesFormat: pipe(
+        optional(picklist(['csv', 'json'])),
+        metadata({ description: 'Format for multi-value output' })
+      ),
     }),
+  }),
+  metadata({
+    description: 'CustomVariable: Define the variable options manually using a comma-separated list.',
   })
-  .describe('CustomVariable: Define the variable options manually using a comma-separated list.');
+);
 
-export const datasourceVariableKindSchema = z
-  .object({
-    kind: z.literal('DatasourceVariable'),
-    spec: z.object({
+export const datasourceVariableKindSchema = pipe(
+  object({
+    kind: literal('DatasourceVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      pluginId: z
-        .string()
-        .describe(
-          'The datasource plugin type to list instances of (e.g., "prometheus", "loki", "mysql"). Allows switching between different instances of the same datasource type.'
-        ),
+      pluginId: pipe(
+        vString(),
+        metadata({
+          description:
+            'The datasource plugin type to list instances of (e.g., "prometheus", "loki", "mysql"). Allows switching between different instances of the same datasource type.',
+        })
+      ),
       refresh: variableRefreshSchema,
-      regex: z
-        .string()
-        .optional()
-        .default('')
-        .describe('Regex to filter the datasource instances shown in the dropdown'),
-      multi: z.boolean().optional().default(false).describe('Flag indicating if the variable can have multiple values'),
-      includeAll: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Flag indicating if the variable should include the 'All' option"),
-      allValue: z.string().optional().describe("Custom value to use when 'All' is selected"),
-      allowCustomValue: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('Flag indicating if the variable can have a custom value'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The currently selected datasource'),
-      options: z
-        .array(variableOptionSchema)
-        .optional()
-        .default([])
-        .describe('The available datasource options (populated automatically)'),
+      regex: pipe(
+        optional(vString(), ''),
+        metadata({ description: 'Regex to filter the datasource instances shown in the dropdown' })
+      ),
+      multi: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: 'Flag indicating if the variable can have multiple values' })
+      ),
+      includeAll: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: "Flag indicating if the variable should include the 'All' option" })
+      ),
+      allValue: pipe(optional(vString()), metadata({ description: "Custom value to use when 'All' is selected" })),
+      allowCustomValue: pipe(
+        optional(vBoolean(), true),
+        metadata({ description: 'Flag indicating if the variable can have a custom value' })
+      ),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The currently selected datasource' })
+      ),
+      options: pipe(
+        optional(array(variableOptionSchema), []),
+        metadata({ description: 'The available datasource options (populated automatically)' })
+      ),
     }),
+  }),
+  metadata({
+    description: 'DatasourceVariable: Quickly change the data source for an entire dashboard.',
   })
-  .describe('DatasourceVariable: Quickly change the data source for an entire dashboard.');
+);
 
-export const intervalVariableKindSchema = z
-  .object({
-    kind: z.literal('IntervalVariable'),
-    spec: z.object({
+export const intervalVariableKindSchema = pipe(
+  object({
+    kind: literal('IntervalVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      query: z
-        .string()
-        .describe(
-          'Comma-separated time intervals representing the available options (e.g., "1m,5m,15m,1h,6h,12h,1d,7d")'
-        ),
-      auto: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe('Enable automatic interval calculation based on the current time range and panel width'),
-      auto_min: z
-        .string()
-        .optional()
-        .default('')
-        .describe('Minimum auto interval (e.g., "10s", "1m"). Prevents intervals from becoming too small.'),
-      auto_count: z
-        .number()
-        .optional()
-        .default(0)
-        .describe('Target number of data points for auto interval calculation'),
-      refresh: z.literal('onTimeRangeChanged').optional().default('onTimeRangeChanged'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The currently selected interval'),
-      options: z
-        .array(variableOptionSchema)
-        .optional()
-        .default([])
-        .describe('The available interval options (populated from query)'),
+      query: pipe(
+        vString(),
+        metadata({
+          description:
+            'Comma-separated time intervals representing the available options (e.g., "1m,5m,15m,1h,6h,12h,1d,7d")',
+        })
+      ),
+      auto: pipe(
+        optional(vBoolean(), false),
+        metadata({
+          description: 'Enable automatic interval calculation based on the current time range and panel width',
+        })
+      ),
+      auto_min: pipe(
+        optional(vString(), ''),
+        metadata({
+          description: 'Minimum auto interval (e.g., "10s", "1m"). Prevents intervals from becoming too small.',
+        })
+      ),
+      auto_count: pipe(
+        optional(vNumber(), 0),
+        metadata({ description: 'Target number of data points for auto interval calculation' })
+      ),
+      refresh: optional(literal('onTimeRangeChanged'), 'onTimeRangeChanged'),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The currently selected interval' })
+      ),
+      options: pipe(
+        optional(array(variableOptionSchema), []),
+        metadata({ description: 'The available interval options (populated from query)' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      'IntervalVariable: Represents time spans (e.g., "1m", "1h") for controlling time aggregations in queries.',
   })
-  .describe('IntervalVariable: Represents time spans (e.g., "1m", "1h") for controlling time aggregations in queries.');
+);
 
-export const constantVariableKindSchema = z
-  .object({
-    kind: z.literal('ConstantVariable'),
-    spec: z.object({
+export const constantVariableKindSchema = pipe(
+  object({
+    kind: literal('ConstantVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      query: z
-        .string()
-        .describe(
-          'The constant value. Useful for internal dashboard logic or complex query parts you do not want users to change.'
-        ),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The current value of the variable'),
+      query: pipe(
+        vString(),
+        metadata({
+          description:
+            'The constant value. Useful for internal dashboard logic or complex query parts you do not want users to change.',
+        })
+      ),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The current value of the variable' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      "ConstantVariable: A hidden, fixed value. Useful for internal dashboard logic or complex query parts you don't want users to change.",
   })
-  .describe(
-    "ConstantVariable: A hidden, fixed value. Useful for internal dashboard logic or complex query parts you don't want users to change."
-  );
+);
 
-export const textVariableKindSchema = z
-  .object({
-    kind: z.literal('TextVariable'),
-    spec: z.object({
+export const textVariableKindSchema = pipe(
+  object({
+    kind: literal('TextVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      query: z.string().optional().default('').describe('Default value for the free-form text input field'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The current value of the variable'),
+      query: pipe(
+        optional(vString(), ''),
+        metadata({ description: 'Default value for the free-form text input field' })
+      ),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The current value of the variable' })
+      ),
     }),
+  }),
+  metadata({
+    description: 'TextVariable: A free-form text input field for user-provided filters or parameters.',
   })
-  .describe('TextVariable: A free-form text input field for user-provided filters or parameters.');
+);
 
-export const groupByVariableKindSchema = z
-  .object({
-    kind: z.literal('GroupByVariable'),
-    group: z.string().describe('Datasource type (e.g., "prometheus", "loki")'),
-    datasource: z.object({ name: z.string().optional() }).optional().describe('Datasource reference'),
-    spec: z.object({
+export const groupByVariableKindSchema = pipe(
+  object({
+    kind: literal('GroupByVariable'),
+    group: pipe(vString(), metadata({ description: 'Datasource type (e.g., "prometheus", "loki")' })),
+    datasource: pipe(
+      optional(object({ name: optional(vString()) })),
+      metadata({ description: 'Datasource reference' })
+    ),
+    spec: object({
       ...commonVariableSpecFields,
-      defaultValue: variableOptionSchema.optional().describe('Default selected value'),
-      current: variableOptionSchema
-        .optional()
-        .default(defaultVariableOption)
-        .describe('The current value of the variable'),
-      options: z.array(variableOptionSchema).optional().default([]).describe('The available options for the variable'),
-      multi: z.boolean().optional().default(false).describe('Flag indicating if the variable can have multiple values'),
+      defaultValue: pipe(optional(variableOptionSchema), metadata({ description: 'Default selected value' })),
+      current: pipe(
+        optional(variableOptionSchema, defaultVariableOption),
+        metadata({ description: 'The current value of the variable' })
+      ),
+      options: pipe(
+        optional(array(variableOptionSchema), []),
+        metadata({ description: 'The available options for the variable' })
+      ),
+      multi: pipe(
+        optional(vBoolean(), false),
+        metadata({ description: 'Flag indicating if the variable can have multiple values' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      'GroupByVariable: Group-by dimension selector. Allows grouping query results by a dimension. Has top-level group and datasource fields for data source binding.',
   })
-  .describe(
-    'GroupByVariable: Group-by dimension selector. Allows grouping query results by a dimension. Has top-level group and datasource fields for data source binding.'
-  );
+);
 
-export const adhocVariableKindSchema = z
-  .object({
-    kind: z.literal('AdhocVariable'),
-    group: z.string().describe('Datasource type (e.g., "prometheus", "loki")'),
-    datasource: z.object({ name: z.string().optional() }).optional().describe('Datasource reference'),
-    spec: z.object({
+export const adhocVariableKindSchema = pipe(
+  object({
+    kind: literal('AdhocVariable'),
+    group: pipe(vString(), metadata({ description: 'Datasource type (e.g., "prometheus", "loki")' })),
+    datasource: pipe(
+      optional(object({ name: optional(vString()) })),
+      metadata({ description: 'Datasource reference' })
+    ),
+    spec: object({
       ...commonVariableSpecFields,
-      baseFilters: z.array(adHocFilterSchema).optional().default([]).describe('Base filters always applied to queries'),
-      filters: z
-        .array(adHocFilterSchema)
-        .optional()
-        .default([])
-        .describe('User-configured ad-hoc filters applied to queries'),
-      defaultKeys: z
-        .array(metricFindValueSchema)
-        .optional()
-        .default([])
-        .describe('Default dimension keys shown in the filter dropdown'),
-      allowCustomValue: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe('Flag indicating if custom filter values can be entered'),
+      baseFilters: pipe(
+        optional(array(adHocFilterSchema), []),
+        metadata({ description: 'Base filters always applied to queries' })
+      ),
+      filters: pipe(
+        optional(array(adHocFilterSchema), []),
+        metadata({ description: 'User-configured ad-hoc filters applied to queries' })
+      ),
+      defaultKeys: pipe(
+        optional(array(metricFindValueSchema), []),
+        metadata({ description: 'Default dimension keys shown in the filter dropdown' })
+      ),
+      allowCustomValue: pipe(
+        optional(vBoolean(), true),
+        metadata({ description: 'Flag indicating if custom filter values can be entered' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      'AdhocVariable: Ad-hoc filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.',
   })
-  .describe(
-    'AdhocVariable: Ad-hoc filter builder that adds key/value filters to all queries for a data source. Has top-level group and datasource fields for data source binding.'
-  );
+);
 
-export const switchVariableKindSchema = z
-  .object({
-    kind: z.literal('SwitchVariable'),
-    spec: z.object({
+export const switchVariableKindSchema = pipe(
+  object({
+    kind: literal('SwitchVariable'),
+    spec: object({
       ...commonVariableSpecFields,
-      current: z.string().optional().default('false').describe('Current toggle state ("true" or "false")'),
-      enabledValue: z
-        .string()
-        .optional()
-        .default('true')
-        .describe('Value substituted in queries when the toggle is enabled'),
-      disabledValue: z
-        .string()
-        .optional()
-        .default('false')
-        .describe('Value substituted in queries when the toggle is disabled'),
+      current: pipe(
+        optional(vString(), 'false'),
+        metadata({ description: 'Current toggle state ("true" or "false")' })
+      ),
+      enabledValue: pipe(
+        optional(vString(), 'true'),
+        metadata({ description: 'Value substituted in queries when the toggle is enabled' })
+      ),
+      disabledValue: pipe(
+        optional(vString(), 'false'),
+        metadata({ description: 'Value substituted in queries when the toggle is disabled' })
+      ),
     }),
+  }),
+  metadata({
+    description:
+      'SwitchVariable: A boolean toggle variable. Uses current as a string ("true"/"false"), not VariableOption.',
   })
-  .describe(
-    'SwitchVariable: A boolean toggle variable. Uses current as a string ("true"/"false"), not VariableOption.'
-  );
+);
 
-export const variableKindSchema = z.discriminatedUnion('kind', [
+export const variableKindSchema = variant('kind', [
   queryVariableKindSchema,
   customVariableKindSchema,
   datasourceVariableKindSchema,
@@ -415,233 +509,312 @@ export const variableKindSchema = z.discriminatedUnion('kind', [
   switchVariableKindSchema,
 ]);
 
-export const emptyPayloadSchema = z.object({}).strict();
+export const emptyPayloadSchema = strictObject({});
 
 // Layout building-block schemas (v2beta1)
 
-export const elementReferenceSchema = z.object({
-  kind: z.literal('ElementReference').optional().default('ElementReference'),
-  name: z.string().describe('Element key in the dashboard elements map'),
+export const elementReferenceSchema = object({
+  kind: optional(literal('ElementReference'), 'ElementReference'),
+  name: pipe(vString(), metadata({ description: 'Element key in the dashboard elements map' })),
 });
 
-export const layoutPathSchema = z
-  .string()
-  .regex(/^\/([a-z]+\/\d+(\/[a-z]+\/\d+)*)?$/)
-  .describe(
-    'Path to a location in the layout tree, from GET_LAYOUT output. ' +
-      'Examples: "/" (root), "/rows/0" (first row), "/tabs/1/rows/0" (first row inside second tab).'
-  );
-
-export const gridPositionSchema = z
-  .object({
-    x: z.number().optional().describe('Column position (0-23 in a 24-column grid)'),
-    y: z.number().optional().describe('Row position'),
-    width: z.number().optional().describe('Width in grid columns (1-24)'),
-    height: z.number().optional().describe('Height in grid units'),
+export const layoutPathSchema = pipe(
+  vString(),
+  regex(/^\/([a-z]+\/\d+(\/[a-z]+\/\d+)*)?$/),
+  metadata({
+    description:
+      'Path to a location in the layout tree, from GET_LAYOUT output. ' +
+      'Examples: "/" (root), "/rows/0" (first row), "/tabs/1/rows/0" (first row inside second tab).',
   })
-  .describe('Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.');
+);
 
-export const rowRepeatOptionsSchema = z
-  .object({
-    mode: z.literal('variable'),
-    value: z.string().describe('Variable name to repeat by'),
-  })
-  .describe('Repeat options matching v2beta1 RowRepeatOptions');
+export const gridPositionSchema = pipe(
+  object({
+    x: pipe(optional(vNumber()), metadata({ description: 'Column position (0-23 in a 24-column grid)' })),
+    y: pipe(optional(vNumber()), metadata({ description: 'Row position' })),
+    width: pipe(optional(vNumber()), metadata({ description: 'Width in grid columns (1-24)' })),
+    height: pipe(optional(vNumber()), metadata({ description: 'Height in grid units' })),
+  }),
+  metadata({ description: 'Grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields.' })
+);
 
-export const tabRepeatOptionsSchema = z
-  .object({
-    mode: z.literal('variable'),
-    value: z.string().describe('Variable name to repeat by'),
-  })
-  .describe('Repeat options matching v2beta1 TabRepeatOptions');
+export const rowRepeatOptionsSchema = pipe(
+  object({
+    mode: literal('variable'),
+    value: pipe(vString(), metadata({ description: 'Variable name to repeat by' })),
+  }),
+  metadata({ description: 'Repeat options matching v2beta1 RowRepeatOptions' })
+);
 
-export const rowsLayoutRowSpecSchema = z.object({
-  title: z.string().optional().describe('Row heading title'),
-  collapse: z.boolean().optional().default(false).describe('Whether the row starts collapsed'),
-  hideHeader: z.boolean().optional().default(false).describe('Hide the row header'),
-  fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
-  repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
+export const tabRepeatOptionsSchema = pipe(
+  object({
+    mode: literal('variable'),
+    value: pipe(vString(), metadata({ description: 'Variable name to repeat by' })),
+  }),
+  metadata({ description: 'Repeat options matching v2beta1 TabRepeatOptions' })
+);
+
+export const rowsLayoutRowSpecSchema = object({
+  title: pipe(optional(vString()), metadata({ description: 'Row heading title' })),
+  collapse: pipe(optional(vBoolean(), false), metadata({ description: 'Whether the row starts collapsed' })),
+  hideHeader: pipe(optional(vBoolean(), false), metadata({ description: 'Hide the row header' })),
+  fillScreen: pipe(optional(vBoolean(), false), metadata({ description: 'Row fills viewport height' })),
+  repeat: pipe(optional(rowRepeatOptionsSchema), metadata({ description: 'Repeat row for each value of a variable' })),
 });
 
-export const partialRowSpecSchema = z
-  .object({
-    title: z.string().optional().describe('Row heading title'),
-    collapse: z.boolean().optional().describe('Whether the row is collapsed'),
-    hideHeader: z.boolean().optional().describe('Hide the row header'),
-    fillScreen: z.boolean().optional().describe('Row fills viewport height'),
-    repeat: rowRepeatOptionsSchema
-      .optional()
-      .describe('Repeat row for each value of a variable. Omit to leave unchanged.'),
-  })
-  .describe('Fields to update (partial RowsLayoutRowSpec)');
+export const partialRowSpecSchema = pipe(
+  object({
+    title: pipe(optional(vString()), metadata({ description: 'Row heading title' })),
+    collapse: pipe(optional(vBoolean()), metadata({ description: 'Whether the row is collapsed' })),
+    hideHeader: pipe(optional(vBoolean()), metadata({ description: 'Hide the row header' })),
+    fillScreen: pipe(optional(vBoolean()), metadata({ description: 'Row fills viewport height' })),
+    repeat: pipe(
+      optional(rowRepeatOptionsSchema),
+      metadata({ description: 'Repeat row for each value of a variable. Omit to leave unchanged.' })
+    ),
+  }),
+  metadata({ description: 'Fields to update (partial RowsLayoutRowSpec)' })
+);
 
-export const tabsLayoutTabSpecSchema = z.object({
-  title: z.string().optional().describe('Tab title'),
-  repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
+export const tabsLayoutTabSpecSchema = object({
+  title: pipe(optional(vString()), metadata({ description: 'Tab title' })),
+  repeat: pipe(optional(tabRepeatOptionsSchema), metadata({ description: 'Repeat tab for each value of a variable' })),
 });
 
-export const partialTabSpecSchema = z
-  .object({
-    title: z.string().optional().describe('Tab title'),
-    repeat: tabRepeatOptionsSchema
-      .optional()
-      .describe('Repeat tab for each value of a variable. Omit to leave unchanged.'),
-  })
-  .describe('Fields to update (partial TabsLayoutTabSpec)');
+export const partialTabSpecSchema = pipe(
+  object({
+    title: pipe(optional(vString()), metadata({ description: 'Tab title' })),
+    repeat: pipe(
+      optional(tabRepeatOptionsSchema),
+      metadata({ description: 'Repeat tab for each value of a variable. Omit to leave unchanged.' })
+    ),
+  }),
+  metadata({ description: 'Fields to update (partial TabsLayoutTabSpec)' })
+);
 
 // Payload schemas -- one per mutation command.
 // These compose the building-block schemas above into the exact shape
 // each command's `payload` field expects.
 
-export const addVariablePayloadSchema = z.object({
-  variable: variableKindSchema.describe('Variable definition (VariableKind)'),
-  position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
+export const addVariablePayloadSchema = object({
+  variable: pipe(variableKindSchema, metadata({ description: 'Variable definition (VariableKind)' })),
+  position: pipe(
+    optional(vNumber()),
+    metadata({ description: 'Position in variables list (optional, appends if not set)' })
+  ),
 });
 
-export const updateVariablePayloadSchema = z.object({
-  name: z.string().describe('Variable name to update'),
-  variable: variableKindSchema.describe('New variable definition (VariableKind)'),
+export const updateVariablePayloadSchema = object({
+  name: pipe(vString(), metadata({ description: 'Variable name to update' })),
+  variable: pipe(variableKindSchema, metadata({ description: 'New variable definition (VariableKind)' })),
 });
 
-export const removeVariablePayloadSchema = z.object({
-  name: z.string().describe('Variable name to remove'),
+export const removeVariablePayloadSchema = object({
+  name: pipe(vString(), metadata({ description: 'Variable name to remove' })),
 });
 
 // Layout payload schemas
 
 export const getLayoutPayloadSchema = emptyPayloadSchema;
 
-export const addRowPayloadSchema = z.object({
-  row: z.object({
-    kind: z.literal('RowsLayoutRow').optional().default('RowsLayoutRow'),
+export const addRowPayloadSchema = object({
+  row: object({
+    kind: optional(literal('RowsLayoutRow'), 'RowsLayoutRow'),
     spec: rowsLayoutRowSpecSchema,
   }),
-  parentPath: layoutPathSchema
-    .optional()
-    .default('/')
-    .describe('Path to the parent container. "/" for root, or e.g. "/tabs/0" to add inside a tab.'),
-  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+  parentPath: pipe(
+    optional(layoutPathSchema, '/'),
+    metadata({
+      description: 'Path to the parent container. "/" for root, or e.g. "/tabs/0" to add inside a tab.',
+    })
+  ),
+  position: pipe(
+    optional(vNumber()),
+    metadata({ description: 'Zero-based index within the parent to insert at (appends if omitted)' })
+  ),
 });
 
-export const removeRowPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")'),
-  moveContentTo: layoutPathSchema
-    .optional()
-    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+export const removeRowPayloadSchema = object({
+  path: pipe(layoutPathSchema, metadata({ description: 'Path to the row (e.g., "/rows/1", "/tabs/0/rows/2")' })),
+  moveContentTo: pipe(
+    optional(layoutPathSchema),
+    metadata({
+      description: 'Path to another group to move contained content to. Content is deleted if omitted.',
+    })
+  ),
 });
 
-export const updateRowPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Path to the row'),
+export const updateRowPayloadSchema = object({
+  path: pipe(layoutPathSchema, metadata({ description: 'Path to the row' })),
   spec: partialRowSpecSchema,
 });
 
-export const moveRowPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Current path to the row (e.g., "/rows/2", "/tabs/0/rows/1")'),
-  toParent: layoutPathSchema
-    .optional()
-    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
-  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+export const moveRowPayloadSchema = object({
+  path: pipe(
+    layoutPathSchema,
+    metadata({ description: 'Current path to the row (e.g., "/rows/2", "/tabs/0/rows/1")' })
+  ),
+  toParent: pipe(
+    optional(layoutPathSchema),
+    metadata({
+      description: 'Path to the destination parent. Omit to reorder within the same parent.',
+    })
+  ),
+  toPosition: pipe(
+    optional(vNumber()),
+    metadata({ description: 'Zero-based index at the destination (appends if omitted)' })
+  ),
 });
 
-export const addTabPayloadSchema = z.object({
-  tab: z.object({
-    kind: z.literal('TabsLayoutTab').optional().default('TabsLayoutTab'),
+export const addTabPayloadSchema = object({
+  tab: object({
+    kind: optional(literal('TabsLayoutTab'), 'TabsLayoutTab'),
     spec: tabsLayoutTabSpecSchema,
   }),
-  parentPath: layoutPathSchema
-    .optional()
-    .default('/')
-    .describe('Path to the parent container. "/" for root, or e.g. "/rows/0" to add inside a row.'),
-  position: z.number().optional().describe('Zero-based index within the parent to insert at (appends if omitted)'),
+  parentPath: pipe(
+    optional(layoutPathSchema, '/'),
+    metadata({
+      description: 'Path to the parent container. "/" for root, or e.g. "/rows/0" to add inside a row.',
+    })
+  ),
+  position: pipe(
+    optional(vNumber()),
+    metadata({ description: 'Zero-based index within the parent to insert at (appends if omitted)' })
+  ),
 });
 
-export const removeTabPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")'),
-  moveContentTo: layoutPathSchema
-    .optional()
-    .describe('Path to another group to move contained content to. Content is deleted if omitted.'),
+export const removeTabPayloadSchema = object({
+  path: pipe(layoutPathSchema, metadata({ description: 'Path to the tab (e.g., "/tabs/1", "/rows/0/tabs/2")' })),
+  moveContentTo: pipe(
+    optional(layoutPathSchema),
+    metadata({
+      description: 'Path to another group to move contained content to. Content is deleted if omitted.',
+    })
+  ),
 });
 
-export const updateTabPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Path to the tab'),
+export const updateTabPayloadSchema = object({
+  path: pipe(layoutPathSchema, metadata({ description: 'Path to the tab' })),
   spec: partialTabSpecSchema,
 });
 
-export const moveTabPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Current path to the tab (e.g., "/tabs/2", "/rows/0/tabs/1")'),
-  toParent: layoutPathSchema
-    .optional()
-    .describe('Path to the destination parent. Omit to reorder within the same parent.'),
-  toPosition: z.number().optional().describe('Zero-based index at the destination (appends if omitted)'),
+export const moveTabPayloadSchema = object({
+  path: pipe(
+    layoutPathSchema,
+    metadata({ description: 'Current path to the tab (e.g., "/tabs/2", "/rows/0/tabs/1")' })
+  ),
+  toParent: pipe(
+    optional(layoutPathSchema),
+    metadata({
+      description: 'Path to the destination parent. Omit to reorder within the same parent.',
+    })
+  ),
+  toPosition: pipe(
+    optional(vNumber()),
+    metadata({ description: 'Zero-based index at the destination (appends if omitted)' })
+  ),
 });
 
-export const layoutTypeSchema = z.enum(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
+export const layoutTypeSchema = picklist(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
 
-export const autoGridOptionsSchema = z
-  .object({
-    maxColumnCount: z.number().optional().describe('Maximum number of columns'),
-    columnWidthMode: z
-      .enum(['narrow', 'standard', 'wide', 'custom'])
-      .optional()
-      .describe('Column width preset. Use "custom" with columnWidth for pixel values.'),
-    columnWidth: z
-      .number()
-      .optional()
-      .describe('Custom column width in pixels (only used when columnWidthMode is "custom")'),
-    rowHeightMode: z
-      .enum(['short', 'standard', 'tall', 'custom'])
-      .optional()
-      .describe('Row height preset. Use "custom" with rowHeight for pixel values.'),
-    rowHeight: z.number().optional().describe('Custom row height in pixels (only used when rowHeightMode is "custom")'),
-    fillScreen: z.boolean().optional().describe('Whether the grid fills the viewport height'),
-  })
-  .describe('Options for AutoGridLayout only. Rejected for other layout types.');
-
-export const updateLayoutPayloadSchema = z.object({
-  path: layoutPathSchema.describe('Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")'),
-  layoutType: layoutTypeSchema
-    .optional()
-    .describe(
-      'Target layout type. If omitted, keeps current type and just applies options. ' +
-        'Group conversions: RowsLayout <-> TabsLayout. Grid conversions: GridLayout <-> AutoGridLayout.'
+export const autoGridOptionsSchema = pipe(
+  object({
+    maxColumnCount: pipe(optional(vNumber()), metadata({ description: 'Maximum number of columns' })),
+    columnWidthMode: pipe(
+      optional(picklist(['narrow', 'standard', 'wide', 'custom'])),
+      metadata({ description: 'Column width preset. Use "custom" with columnWidth for pixel values.' })
     ),
-  options: autoGridOptionsSchema.optional().describe('AutoGridLayout properties. Rejected for other layout types.'),
+    columnWidth: pipe(
+      optional(vNumber()),
+      metadata({ description: 'Custom column width in pixels (only used when columnWidthMode is "custom")' })
+    ),
+    rowHeightMode: pipe(
+      optional(picklist(['short', 'standard', 'tall', 'custom'])),
+      metadata({ description: 'Row height preset. Use "custom" with rowHeight for pixel values.' })
+    ),
+    rowHeight: pipe(
+      optional(vNumber()),
+      metadata({ description: 'Custom row height in pixels (only used when rowHeightMode is "custom")' })
+    ),
+    fillScreen: pipe(optional(vBoolean()), metadata({ description: 'Whether the grid fills the viewport height' })),
+  }),
+  metadata({ description: 'Options for AutoGridLayout only. Rejected for other layout types.' })
+);
+
+export const updateLayoutPayloadSchema = object({
+  path: pipe(layoutPathSchema, metadata({ description: 'Path to the layout node (e.g. "/", "/rows/0", "/tabs/0")' })),
+  layoutType: pipe(
+    optional(layoutTypeSchema),
+    metadata({
+      description:
+        'Target layout type. If omitted, keeps current type and just applies options. ' +
+        'Group conversions: RowsLayout <-> TabsLayout. Grid conversions: GridLayout <-> AutoGridLayout.',
+    })
+  ),
+  options: pipe(
+    optional(autoGridOptionsSchema),
+    metadata({ description: 'AutoGridLayout properties. Rejected for other layout types.' })
+  ),
 });
 
-export const movePanelPayloadSchema = z.object({
-  element: elementReferenceSchema.describe('Element to move, identified by name'),
-  toParent: layoutPathSchema
-    .optional()
-    .describe('Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.'),
-  position: gridPositionSchema
-    .optional()
-    .describe(
-      'New grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields. ' +
-        'Ignored for AutoGridLayout targets.'
-    ),
+export const movePanelPayloadSchema = object({
+  element: pipe(elementReferenceSchema, metadata({ description: 'Element to move, identified by name' })),
+  toParent: pipe(
+    optional(layoutPathSchema),
+    metadata({
+      description:
+        'Path to the destination group (e.g., "/rows/1", "/tabs/0/rows/2"). Stays in current group if omitted.',
+    })
+  ),
+  position: pipe(
+    optional(gridPositionSchema),
+    metadata({
+      description:
+        'New grid position (partial GridLayoutItemSpec). Keeps current values for omitted fields. ' +
+        'Ignored for AutoGridLayout targets.',
+    })
+  ),
 });
 
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
- * Each value is a Zod schema with a `.describe()` annotation that serves
+ * Each value is a Valibot schema with a metadata() annotation that serves
  * as the command description (flows into JSON Schema for LLM consumers).
  */
+/** Extract the description string from a schema's metadata action. */
+export function getPayloadDescription<TSchema extends GenericSchema>(schema: TSchema): string {
+  const metadata = getMetadata(schema);
+  if (metadata && typeof metadata === 'object' && 'description' in metadata) {
+    const desc = metadata.description;
+    if (typeof desc === 'string') {
+      return desc;
+    }
+  }
+  return '';
+}
+
 export const payloads = {
-  addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
-  removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
-  updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
-  listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
-  enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
-  getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
-  addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),
-  removeRow: removeRowPayloadSchema.describe('Remove a row from the dashboard layout'),
-  updateRow: updateRowPayloadSchema.describe('Update a row in the dashboard layout'),
-  moveRow: moveRowPayloadSchema.describe('Move or reorder a row in the dashboard layout'),
-  addTab: addTabPayloadSchema.describe('Add a new tab to the dashboard layout'),
-  removeTab: removeTabPayloadSchema.describe('Remove a tab from the dashboard layout'),
-  updateTab: updateTabPayloadSchema.describe('Update a tab in the dashboard layout'),
-  moveTab: moveTabPayloadSchema.describe('Move or reorder a tab in the dashboard layout'),
-  movePanel: movePanelPayloadSchema.describe('Move a panel to a different group or position'),
-  updateLayout: updateLayoutPayloadSchema.describe('Update the layout type and/or properties at a given path'),
+  addVariable: pipe(addVariablePayloadSchema, metadata({ description: 'Add a new template variable' })),
+  removeVariable: pipe(removeVariablePayloadSchema, metadata({ description: 'Remove a template variable' })),
+  updateVariable: pipe(updateVariablePayloadSchema, metadata({ description: 'Update an existing template variable' })),
+  listVariables: pipe(emptyPayloadSchema, metadata({ description: 'List all template variables on the dashboard' })),
+  enterEditMode: pipe(emptyPayloadSchema, metadata({ description: 'Enter dashboard edit mode' })),
+  getLayout: pipe(
+    getLayoutPayloadSchema,
+    metadata({ description: 'Get the dashboard layout tree and trimmed elements map' })
+  ),
+  addRow: pipe(addRowPayloadSchema, metadata({ description: 'Add a new row to the dashboard layout' })),
+  removeRow: pipe(removeRowPayloadSchema, metadata({ description: 'Remove a row from the dashboard layout' })),
+  updateRow: pipe(updateRowPayloadSchema, metadata({ description: 'Update a row in the dashboard layout' })),
+  moveRow: pipe(moveRowPayloadSchema, metadata({ description: 'Move or reorder a row in the dashboard layout' })),
+  addTab: pipe(addTabPayloadSchema, metadata({ description: 'Add a new tab to the dashboard layout' })),
+  removeTab: pipe(removeTabPayloadSchema, metadata({ description: 'Remove a tab from the dashboard layout' })),
+  updateTab: pipe(updateTabPayloadSchema, metadata({ description: 'Update a tab in the dashboard layout' })),
+  moveTab: pipe(moveTabPayloadSchema, metadata({ description: 'Move or reorder a tab in the dashboard layout' })),
+  movePanel: pipe(movePanelPayloadSchema, metadata({ description: 'Move a panel to a different group or position' })),
+  updateLayout: pipe(
+    updateLayoutPayloadSchema,
+    metadata({ description: 'Update the layout type and/or properties at a given path' })
+  ),
 };
