@@ -1,6 +1,5 @@
 ---
 aliases:
-
 keywords:
   - panel
   - dashboard
@@ -24,7 +23,7 @@ Using the **Dashboard controls** section of the edit pane, you can add variables
 
 To add a variable, follow these steps:
 
-<!-- add vale ignore here -->
+<!-- vale Grafana.Spelling = NO -->
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
@@ -57,7 +56,7 @@ To add a variable, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-<!-- add vale yes here -->
+<!-- vale Grafana.Spelling = YES -->
 
 For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/).
 
@@ -73,7 +72,7 @@ To add an annotation query, follow these steps:
 
    This name is given to the toggle (checkbox) that allows you to enable/disable showing annotation events from this query.
 
-1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox. <!--rest of this is from full docs--consider shared content -->
+1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox. <!-- shared content -->
 1. Select a color for the event markers.
 1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
 
@@ -86,7 +85,7 @@ To add an annotation query, follow these steps:
    - **Selected panels** - The annotations are displayed on all the panels you select.
    - **All panels except** - The annotations are displayed on all panels except the ones you select.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}} <!-- shared content ends here -->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}} <!-- /shared content -->
 
 1. To add a query, do one of the following:
    - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
@@ -118,7 +117,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Dashboard link**.
 
-   The default link type is **Dashboards**. <!-- from dashboard links content -->
+   The default link type is **Dashboards**. <!-- shared content -->
 
 1. In the **With tags** drop-down, enter tags to limit the linked dashboards to only the ones with the tags you enter.
 
@@ -129,7 +128,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
    - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables](ref:dashboard-url-variables).
    - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
-   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar. <!-- end of shared content-->
+   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar. <!-- /shared content-->
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
