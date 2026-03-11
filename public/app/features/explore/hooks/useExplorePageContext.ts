@@ -115,7 +115,14 @@ function summarizeQuery(query: DataQuery, ds?: DataSourceApi): Record<string, un
 
 function isQueryEmpty(query: DataQuery, ds?: DataSourceApi): boolean {
   if (ds?.getQueryDisplayText) {
-    return !ds.getQueryDisplayText(query)?.trim();
+    try {
+      const displayText = ds.getQueryDisplayText(query);
+      if (displayText && displayText.trim()) {
+        return false;
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
   const { refId, datasource, ...rest } = query;
   return Object.keys(rest).length === 0;
