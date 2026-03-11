@@ -497,6 +497,159 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 	}
 }
 
+// TestV2alpha1ToV1beta1MatcherConfig tests conversion of matcher scope/config (transformation filter and field override)
+func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	scopeSeries := dashv2alpha1.DashboardMatcherScopeSeries
+	scopeNested := dashv2alpha1.DashboardMatcherScopeNested
+	filterMatcher := &dashv2alpha1.DashboardMatcherConfig{
+		Id:      "byName",
+		Scope:   &scopeSeries,
+		Options: map[string]interface{}{"include": ".*"},
+	}
+
+	v2alpha1 := dashv2alpha1.Dashboard{
+		Spec: dashv2alpha1.DashboardSpec{
+			Title: "Test Dashboard",
+			Elements: map[string]dashv2alpha1.DashboardElement{
+				"panel-with-matchers": {
+					PanelKind: &dashv2alpha1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2alpha1.DashboardPanelSpec{
+							Id:    1,
+							Title: "Panel with matchers",
+							Data: dashv2alpha1.DashboardQueryGroupKind{
+								Kind: "QueryGroup",
+								Spec: dashv2alpha1.DashboardQueryGroupSpec{
+									Queries: []dashv2alpha1.DashboardPanelQueryKind{},
+									Transformations: []dashv2alpha1.DashboardTransformationKind{
+										{
+											Kind: "filterByValue",
+											Spec: dashv2alpha1.DashboardDataTransformerConfig{
+												Id:      "filterByValue",
+												Filter:  nil,
+												Options: map[string]interface{}{},
+											},
+										},
+										{
+											Kind: "groupBy",
+											Spec: dashv2alpha1.DashboardDataTransformerConfig{
+												Id:      "groupBy",
+												Filter:  filterMatcher,
+												Options: map[string]interface{}{"include": ".*"},
+											},
+										},
+									},
+									QueryOptions: *dashv2alpha1.NewDashboardQueryOptionsSpec(),
+								},
+							},
+							VizConfig: dashv2alpha1.DashboardVizConfigKind{
+								Kind: "timeseries",
+								Spec: dashv2alpha1.DashboardVizConfigSpec{
+									PluginVersion: "1.0",
+									Options:       map[string]interface{}{},
+									FieldConfig: dashv2alpha1.DashboardFieldConfigSource{
+										Defaults: *dashv2alpha1.NewDashboardFieldConfig(),
+										Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{
+											{
+												Matcher: dashv2alpha1.DashboardMatcherConfig{
+													Id:      "byName",
+													Scope:   &scopeNested,
+													Options: map[string]interface{}{"name": "Field1"},
+												},
+												Properties: []dashv2alpha1.DashboardDynamicConfigValue{},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{
+						Items: []dashv2alpha1.DashboardGridLayoutItemKind{
+							{
+								Kind: "GridLayoutItem",
+								Spec: dashv2alpha1.DashboardGridLayoutItemSpec{
+									X: 0, Y: 0, Width: 12, Height: 8,
+									Element: dashv2alpha1.DashboardElementReference{
+										Kind: "ElementReference",
+										Name: "panel-with-matchers",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var v1beta1 dashv1.Dashboard
+	err = scheme.Convert(&v2alpha1, &v1beta1, nil)
+	require.NoError(t, err)
+
+	dashboard := v1beta1.Spec.Object
+
+	// Find the panel (may be under panels[0] or in a row's panels depending on layout conversion)
+	panels, ok := dashboard["panels"].([]interface{})
+	require.True(t, ok, "panels should exist")
+	require.NotEmpty(t, panels, "at least one panel expected")
+
+	// Grid layout produces flat panels; get the panel with transformations
+	var panel map[string]interface{}
+	for _, p := range panels {
+		pm, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if _, hasTrans := pm["transformations"]; hasTrans {
+			panel = pm
+			break
+		}
+	}
+	require.NotNil(t, panel, "panel with transformations should exist")
+
+	// Transformation with nil Filter: v1 may omit filter or have empty object
+	transformations, ok := panel["transformations"].([]interface{})
+	require.True(t, ok, "transformations should exist")
+	require.Len(t, transformations, 2)
+
+	// Second transformation should have filter with scope "series"
+	trans1, ok := transformations[1].(map[string]interface{})
+	require.True(t, ok)
+	filter, ok := trans1["filter"].(map[string]interface{})
+	require.True(t, ok, "second transformation should have filter")
+	assert.Equal(t, "byName", filter["id"])
+	assert.Equal(t, "series", filter["scope"])
+	assert.Equal(t, map[string]interface{}{"include": ".*"}, filter["options"])
+
+	// Field config overrides: matcher should have scope "nested"
+	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
+	require.True(t, ok, "fieldConfig should exist")
+	overrides, ok := fieldConfig["overrides"].([]interface{})
+	require.True(t, ok, "overrides should exist")
+	require.Len(t, overrides, 1)
+	override0, ok := overrides[0].(map[string]interface{})
+	require.True(t, ok)
+	matcher, ok := override0["matcher"].(map[string]interface{})
+	require.True(t, ok, "override should have matcher")
+	assert.Equal(t, "byName", matcher["id"])
+	assert.Equal(t, "nested", matcher["scope"])
+	assert.Equal(t, map[string]interface{}{"name": "Field1"}, matcher["options"])
+}
+
 // TestV2beta1ToV1beta1WriteOutputFiles writes output files from v2beta1 input files
 // This test reads v2beta1 input files (including subdirectories), converts them to v1beta1, and writes the output files
 func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
