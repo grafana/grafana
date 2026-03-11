@@ -25,20 +25,14 @@ To add a variable, follow these steps:
 
 <!-- vale Grafana.Spelling = NO -->
 
+{{< docs/list >}}
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
 1. Choose a variable type from the list.
-1. Enter a **Name** for the variable. <!-- from Variables docs, maybe make a shared file -->
-1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
-   If you don't enter a display name, then the drop-down list label is the variable name.
-
-1. Choose a **Display** option:
-   - **Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.
-   - **Above dashboard, label hidden** - The variable drop-down list displays above the dashboard, but without showing the name of the variable.
-   - **Controls menu** - The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
-   - **Hidden** - No variable drop-down list is displayed on the dashboard. <!-- end of shared content -->
+{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/variables/add-template-variables/index.md" id="add-variable" >}}
 
 1. Complete the variable configuration. For more detailed configuration information, click the one of the following links to complete the steps for adding your selected variable type:
 
@@ -55,6 +49,8 @@ To add a variable, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /docs/list >}}
 
 <!-- vale Grafana.Spelling = YES -->
 
