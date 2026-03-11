@@ -94,13 +94,8 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			folders = append(folders, resources.ParseFolder(dirPath, repoName))
 		}
 
-		missing := 0
-		for _, folder := range folders {
-			if _, ok := hasMetadata[folder.Path]; !ok {
-				missing++
-			}
-		}
-		progress.SetTotal(ctx, missing)
+		totalMissing := len(folders) - len(hasMetadata)
+		progress.SetTotal(ctx, totalMissing)
 
 		for _, folder := range folders {
 			if _, ok := hasMetadata[folder.Path]; ok {
