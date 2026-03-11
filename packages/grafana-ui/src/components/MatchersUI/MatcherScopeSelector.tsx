@@ -1,46 +1,47 @@
-import { useId, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { MatcherScope } from '@grafana/schema';
 
-import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
-import { Field } from '../Forms/Field';
+import { RadioButtonGroup, RadioButtonGroupProps } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 
 import { getGroupDescriptionForScope, getGroupLabelForScope } from './utils';
 
-export interface MatcherScopeSelectorProps {
-  scope?: MatcherScope;
+export interface MatcherScopeSelectorProps extends Omit<RadioButtonGroupProps<MatcherScope>, 'options'> {
   scopes: Set<MatcherScope>;
-  onChange: (newScope: MatcherScope) => void;
   allowedScopes?: MatcherScope[];
 }
 
 function useScopesOptions(
-  uniqScopes: Set<MatcherScope>,
+  providedUniqScopes: Set<MatcherScope>,
   currentScope?: MatcherScope,
   allowedScopes?: MatcherScope[]
-): Array<ComboboxOption<MatcherScope>> {
-  return useMemo(() => {
+): Array<SelectableValue<MatcherScope>> {
+  // process the detected scopes and remove disallowed ones
+  const uniqScopes = useMemo(() => {
+    const result = new Set(providedUniqScopes);
     // Remove the series scope from the set, so we can gaurantee it's the first option, and also
     // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
-    uniqScopes.delete('series');
-
+    result.delete('series');
     if (allowedScopes) {
-      uniqScopes.forEach((scope) => {
+      result.forEach((scope) => {
         if (!allowedScopes.includes(scope)) {
-          uniqScopes.delete(scope);
+          result.delete(scope);
         }
       });
     }
+    return result;
+  }, [providedUniqScopes, allowedScopes]);
 
-    const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
+  // Check if the current scope is not found in the uniqScopes set
+  const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
 
+  return useMemo(() => {
     if (uniqScopes.size === 0 && !scopeNotFound) {
       return [];
     }
 
-    const arr: Array<ComboboxOption<MatcherScope>> = [
+    const arr: Array<SelectableValue<MatcherScope>> = [
       {
         label: getGroupLabelForScope('series'),
         description: getGroupDescriptionForScope('series'),
@@ -57,35 +58,18 @@ function useScopesOptions(
     }
 
     if (scopeNotFound) {
-      const innerLabel = getGroupLabelForScope(currentScope);
-
       arr.push({
-        label: t('grafana-ui.matchers.labels.not-found', '{{name}} (not found)', { name: innerLabel }),
+        label: getGroupLabelForScope(currentScope),
         description: getGroupDescriptionForScope(currentScope),
         value: currentScope,
       });
     }
 
     return arr;
-  }, [uniqScopes, currentScope, allowedScopes]);
+  }, [uniqScopes, currentScope, scopeNotFound]);
 }
 
-export function MatcherScopeSelector({ scope, scopes, onChange, allowedScopes }: MatcherScopeSelectorProps) {
-  const id = useId();
-  const matcherScopeOptions = useScopesOptions(scopes, scope, allowedScopes);
-
-  if (matcherScopeOptions.length === 0) {
-    return null;
-  }
-
-  return (
-    <Field noMargin label={t('grafana-ui.field-name-by-regex-matcher.scope', 'Override scope')}>
-      <Combobox
-        id={id}
-        options={matcherScopeOptions}
-        value={scope ?? 'series'}
-        onChange={(opt) => onChange(opt.value!)}
-      />
-    </Field>
-  );
+export function MatcherScopeSelector({ value, scopes, allowedScopes, ...rest }: MatcherScopeSelectorProps) {
+  const options = useScopesOptions(scopes, value, allowedScopes);
+  return <RadioButtonGroup {...rest} options={options} value={value} />;
 }

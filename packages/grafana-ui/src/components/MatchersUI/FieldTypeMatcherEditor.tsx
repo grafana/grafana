@@ -9,14 +9,12 @@ import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id, scope = 'series', allowedScopes } = props;
+  const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useSelectOptions(counts, scope, options);
-  const uniqScopes = useMemo(() => new Set([...counts.keys()]), [counts]);
 
   const onChange = useCallback(
     (selection: ComboboxOption) => {
@@ -29,13 +27,6 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   return (
     <Stack direction="column" gap={1}>
       <Combobox id={id} value={selectedOption} options={selectOptions} onChange={onChange} />
-      {/* @todo: its super weird that this is second, but the labels thing makes that hard to fix. */}
-      <MatcherScopeSelector
-        scope={scope}
-        scopes={uniqScopes}
-        onChange={(newScope) => onChangeFromProps(options, newScope)}
-        allowedScopes={allowedScopes}
-      />
     </Stack>
   );
 });
@@ -83,7 +74,7 @@ export const getAllFieldTypeIconOptions: () => Array<ComboboxOption<FieldType>> 
 
 type ScopedCounts = Map<MatcherScope, Map<FieldType, number>>;
 
-const countScopedFields = (
+export const countScopedFields = (
   data: DataFrame[],
   scopeCounts: ScopedCounts = new Map(),
   scope: MatcherScope = 'series'
@@ -157,4 +148,5 @@ export const getFieldTypeMatcherItem: () => FieldMatcherUIRegistryItem<string> =
     'Set properties for fields of a specific type (number, string, boolean)'
   ),
   optionsToLabel: (options) => options,
+  getUniqueScopes: (data) => new Set([...countScopedFields(data).keys()]),
 });

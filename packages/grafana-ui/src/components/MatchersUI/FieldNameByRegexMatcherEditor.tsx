@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -6,15 +6,12 @@ import { t } from '@grafana/i18n';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames } from './utils';
+import { getFrameFieldsDisplayNames } from './utils';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { id, options, onChange, data, scope = 'series', allowedScopes } = props;
+  const { id, options, onChange, scope = 'series' } = props;
   const [regexp, setRegexp] = useState(options);
-  const names = useFieldDisplayNames(data);
-  const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
 
   return (
     <Stack gap={1} direction="column">
@@ -24,12 +21,6 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props
         value={regexp}
         onChange={(e) => setRegexp(e.currentTarget.value)}
         onBlur={() => onChange(regexp, scope)}
-      />
-      <MatcherScopeSelector
-        scope={scope}
-        scopes={uniqScopes}
-        onChange={(newScope) => onChange(regexp, newScope)}
-        allowedScopes={allowedScopes}
       />
     </Stack>
   );
@@ -47,4 +38,5 @@ export const getFieldNameByRegexMatcherItem: () => FieldMatcherUIRegistryItem<st
     'Set properties for fields with names matching a regex'
   ),
   optionsToLabel: (options) => options,
+  getUniqueScopes: (data) => new Set([...getFrameFieldsDisplayNames(data).scopes.values()]),
 });

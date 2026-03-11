@@ -42,7 +42,7 @@ export function getFrameFieldsDisplayNames(
   filter?: (field: Field) => boolean,
   existingNames?: FrameFieldsDisplayNames,
   parentData: DataFrame[] = data,
-  scope?: MatcherScope
+  scope: MatcherScope = 'series'
 ): FrameFieldsDisplayNames {
   const names =
     existingNames ??
@@ -67,15 +67,12 @@ export function getFrameFieldsDisplayNames(
       const disp = getFieldDisplayName(field, frame, parentData);
       names.display.add(disp);
       names.fields.set(disp, field);
-      if (scope) {
-        names.scopes.set(disp, scope);
-      }
+      names.scopes.set(disp, scope);
+
       if (field.name && disp !== field.name) {
         names.raw.add(field.name);
         names.fields.set(field.name, field);
-        if (scope) {
-          names.scopes.set(field.name, scope);
-        }
+        names.scopes.set(field.name, scope);
       }
     }
   }
@@ -88,12 +85,12 @@ export function getFrameFieldsDisplayNames(
 export function getGroupLabelForScope(scope?: MatcherScope): string | undefined {
   switch (scope) {
     case 'nested':
-      return t('grafana-ui.matchers.groups.nested', 'Nested fields');
+      return t('grafana-ui.matchers.groups.nested', 'Nested');
     case 'annotation':
       return t('grafana-ui.matchers.groups.annotation', 'Annotations');
     case 'series':
     default:
-      return t('grafana-ui.matchers.groups.series', 'Series');
+      return t('grafana-ui.matchers.groups.series', 'Dataframe');
   }
 }
 
@@ -117,9 +114,7 @@ export function getGroupDescriptionForScope(scope: MatcherScope): string | undef
  * @internal
  */
 export function useFieldDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
-  return useMemo(() => {
-    return getFrameFieldsDisplayNames(data, filter);
-  }, [data, filter]);
+  return useMemo(() => getFrameFieldsDisplayNames(data, filter), [data, filter]);
 }
 
 /**

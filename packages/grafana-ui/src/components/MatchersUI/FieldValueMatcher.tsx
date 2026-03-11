@@ -9,16 +9,15 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ComparisonOperation, MatcherScope } from '@grafana/schema';
+import { ComparisonOperation } from '@grafana/schema';
 
 import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherScopeSelector } from './MatcherScopeSelector';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames } from './utils';
+import { getFrameFieldsDisplayNames } from './utils';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
 
@@ -45,10 +44,8 @@ function isBooleanReducer(r: ReducerID) {
   return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
 }
 
-export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope, allowedScopes }: Props) => {
+export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
-  const names = useFieldDisplayNames(data);
-  const uniqScopes = useMemo(() => new Set([...names.scopes.values()]), [names]);
 
   const onSetReducer = useCallback(
     (selection: ComboboxOption<ReducerID>) => {
@@ -68,13 +65,6 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope, al
     (e: FormEvent<HTMLInputElement>) => {
       const value = e.currentTarget.valueAsNumber;
       return onChange({ ...options, value });
-    },
-    [options, onChange]
-  );
-
-  const onScopeChange = useCallback(
-    (newScope: MatcherScope) => {
-      return onChange(options, newScope);
     },
     [options, onChange]
   );
@@ -106,8 +96,6 @@ export const FieldValueMatcherEditor = ({ id, options, onChange, data, scope, al
           </>
         )}
       </Stack>
-
-      <MatcherScopeSelector scope={scope} scopes={uniqScopes} onChange={onScopeChange} allowedScopes={allowedScopes} />
     </Stack>
   );
 };
@@ -122,4 +110,5 @@ export const getFieldValueMatcherItem: () => FieldMatcherUIRegistryItem<FieldVal
     'Set properties for fields with reducer condition'
   ),
   optionsToLabel: (options) => `${options?.reducer} ${options?.op} ${options?.value}`,
+  getUniqueScopes: (data) => new Set([...getFrameFieldsDisplayNames(data).scopes.values()]),
 });

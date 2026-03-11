@@ -13,11 +13,12 @@ import {
   fieldMatchers,
   FieldConfigSource,
   DataFrame,
+  FieldMatcherID,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { MatcherScope } from '@grafana/schema';
-import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
+import { fieldMatchersUI, MatcherScopeSelector, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
@@ -116,6 +117,10 @@ export function getFieldOverrideCategories(
       onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
     };
 
+    const onMatcherScopeChange = (scope: MatcherScope) => {
+      onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope } });
+    };
+
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {
       const registryItem = registry.get(value.value!);
       const propertyConfig: DynamicConfigValue = { id: registryItem.id, value: registryItem.defaultValue };
@@ -126,10 +131,32 @@ export function getFieldOverrideCategories(
       onOverrideChange(idx, { ...override, properties });
     };
 
-    /**
-     * Add override matcher UI element
-     */
+    const uniqueScopes = matcherUi.getUniqueScopes?.(data) ?? new Set();
+    const shouldShowScopeSelector = matcherUi.id !== FieldMatcherID.byName && uniqueScopes.size > 1;
+
     const htmlId = `${overrideId}-matcher`;
+    if (shouldShowScopeSelector) {
+      const scopeId = `${overrideId}-scope`;
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          id: scopeId,
+          title: t('grafana-ui.field-name-by-regex-matcher.scope', 'Target fields'),
+          // tooltip: t('grafana-ui.field-name-by-regex-matcher.scope-tooltip', 'To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default "dataframe" scope is applied if no scope is selected.'),
+          render: function renderMatcherScopeEditor() {
+            return (
+              <MatcherScopeSelector
+                id={scopeId}
+                value={override.matcher.scope}
+                scopes={uniqueScopes}
+                onChange={onMatcherScopeChange}
+                allowedScopes={ALLOWED_SCOPES}
+              />
+            );
+          },
+        })
+      );
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         id: htmlId,
@@ -140,9 +167,9 @@ export function getFieldOverrideCategories(
               id={htmlId}
               matcher={matcherUi.matcher}
               data={data ?? []}
+              scope={override.matcher.scope}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
-              scope={override.matcher.scope}
               allowedScopes={ALLOWED_SCOPES}
             />
           );

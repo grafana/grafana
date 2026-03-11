@@ -9952,7 +9952,7 @@
     },
     "field-name-by-regex-matcher": {
       "input-placeholder": "Enter regular expression",
-      "scope": "Override scope"
+      "scope": "Target fields"
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
@@ -9982,8 +9982,8 @@
     "matchers": {
       "groups": {
         "annotation": "Annotations",
-        "nested": "Nested fields",
-        "series": "Series"
+        "nested": "Nested",
+        "series": "Dataframe"
       },
       "labels": {
         "base-field-name": "{{name}} (base field name)",
