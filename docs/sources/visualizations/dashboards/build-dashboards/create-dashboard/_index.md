@@ -18,16 +18,16 @@ title: Create dashboards
 description: Create and edit a dashboard
 weight: 1
 image_maps:
-  - key: editpane-sidebar
+  - key: sidebar-toolbar
     src: /media/docs/grafana/dashboards/screenshot-edit-sidebar-v12.4.png
-    alt: An annotated image of the edit pane and sidebar
+    alt: An annotated image of the sidebar and toolbar
     points:
       - x_coord: 96
         y_coord: 17
         content: |
           **Dashboard options**
 
-          Click the icon to open the edit pane. Edit mode only.
+          Click the icon to open the side bar. Edit mode only.
       - x_coord: 96
         y_coord: 25
         content: |
@@ -55,12 +55,6 @@ image_maps:
 ---
 
 # Create dashboards
-
-{{< admonition type="note">}}
-Dynamic dashboards is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-For information on the generally available dashboard creation experience, refer to the [documentation for the latest self-managed version of Grafana](https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/).
-{{< /admonition >}}
 
 Dashboards and panels allow you to show your data in visual form.
 Each panel needs at least one query to display a visualization.
@@ -127,11 +121,11 @@ To create a dashboard, follow these steps:
 1. Click **Back to dashboard**.
 1. (Optional) Continue building the dashboard by doing one or more of the following:
 
-   - Select the panel you just created and click **Configure** in the edit pane to continue panel setup.
+   - Select the panel you just created and click **Configure** in the sidebar to continue panel setup.
    - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
    - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
    - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
-   - Click the **Dashboard options** icon to open the edit pane and access [panel layout options](#panel-layouts).
+   - Click the **Dashboard options** icon to open the sidebar and access [panel layout options](#panel-layouts).
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -141,32 +135,32 @@ To create a dashboard, follow these steps:
 ## Dashboard edit
 
 Now that you've created a basic dashboard, you can augment it with more options.
-You can make several updates without leaving the dashboard by using the edit pane, which is explained in the next section.
+You can make several updates without leaving the dashboard by using the sidebar, which is explained in the next section.
 
-### The edit pane and sidebar
+### The sidebar and toolbar
 
-The _edit pane_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
-The _sidebar_ is on the next to the edit pane, and it includes options that are useful to have available all the time.
+The _sidebar_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
+The _toolbar_ is next to the sidebar, and it includes options that are useful to have available all the time.
 
-The following image shows the parts of the edit pane and the sidebar.
-Hover your cursor over the numbers to display descriptions of the sidebar options (descriptions also follow the image):
+The following image shows the parts of the sidebar and the toolbar.
+Hover your cursor over the numbers to display descriptions of the toolbar options (descriptions also follow the image):
 
-{{< image-map key="editpane-sidebar" >}}
+{{< image-map key="sidebar-toolbar" >}}
 
 {{< admonition type="note" >}}
-The sidebar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
+The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
 {{< /admonition >}}
 
-You can dock, undock, and resize the edit pane.
-When the edit pane is closed, you can resize the sidebar so the icon names are visible.
+You can dock, undock, and resize the sidebar.
+When the sidebar is closed, you can resize the toolbar so the icon names are visible.
 
 {{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
 
-The available configuration options in the edit pane differ depending on the selected dashboard element:
+The available configuration options in the sidebar differ depending on the selected dashboard element:
 
-- Dashboards: High-level options are in the edit pane and further configuration options are in the **Settings** page.
-- Groupings (rows and tabs): All configuration options are available in the edit pane.
-- Panels: High-level options are in the edit pane and further configuration options are in the **Edit panel** view.
+- Dashboards: High-level options are in the sidebar and further configuration options are in the **Settings** page.
+- Groupings (rows and tabs): All configuration options are available in the sidebar.
+- Panels: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
 ### Navigate using the content outline
 
@@ -178,7 +172,7 @@ The outline also lets you quickly navigate the dashboard and is available in bot
 To navigate the dashboard using the outline, follow these steps:
 
 1. Navigate to the dashboard you want to view or update.
-1. In the right sidebar, click the **Content outline** icon to open it.
+1. In the right toolbar, click the **Content outline** icon to open it.
 1. Expand the outline to find the part of the dashboard you want to view or update.
 1. Click the tree item to navigate that part of the dashboard.
 
@@ -188,13 +182,13 @@ To edit a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the part of the dashboard you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
+1. Click the part of the dashboard you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
 1. Do one of the following:
    - Update an existing dashboard element
-   - Click the **Add new element** icon in the sidebar.
+   - Click the **Add new element** icon in the toolbar.
 
 1. Change the dashboard as needed.
 1. When you've finished making changes, click **Save**.
@@ -230,7 +224,7 @@ To update the panel layout, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the dashboard or the grouping that contains the panel layout you want to update.
-1. Click the **Dashboard options** icon to open the edit pane, if needed.
+1. Click the **Dashboard options** icon to open the sidebar, if needed.
 1. Under **Layout**, select **Custom** or **Auto grid**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -259,7 +253,7 @@ You can nest up to two levels deep, which means a dashboard can have a maximum o
 - Panels
 
 You can only have one type of grouping at each level.
-Inside of those groupings however, you have to freedom to add different elements.
+Inside of those groupings however, you have to freedom to add different dashboard elements.
 Also, custom and auto grid panel layouts are supported for rows and tabs, so each grouping can have a different panel layout.
 
 <!-- {{< figure src="/media/docs/grafana/dashboards/screenshot-groupings-v12.4.png" alt="Dashboard with nested groupings" max-width="750px" >}} -->
@@ -314,9 +308,9 @@ To group panels, follow these steps:
 1. Select **Group into row** or **Group into tab**.
 
    All the panels are moved into the grouping, and a dotted blue line surrounds the row or tab.
-   The edit pane opens, displaying the relevant options.
+   The sidebar opens, displaying the relevant options.
 
-1. Set the [grouping configuration options](#grouping-configuration-options) in the edit pane.
+1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
 1. (Optional) Add one or both of the following:
    - A [nested grouping](#add-nested-groupings)
    - Other [groupings at the same level](#add-more-groupings-at-the-same-level).
@@ -337,7 +331,7 @@ To add a second-level (or nested) grouping, follow these steps:
 1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
-   The edit pane opens displaying the relevant options.
+   The sidebar opens displaying the relevant options.
 
 1. Set the configuration options for the nested grouping.
 1. Click **Save**.
@@ -405,7 +399,7 @@ To configure repeats, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
+1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -503,7 +497,7 @@ To configure show/hide rules, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
+1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -568,17 +562,21 @@ To resize a panel, follow these steps:
 
 ## Copy or duplicate dashboard elements
 
-You can copy and paste or duplicate panels, rows, and tabs.
+You can copy and paste or duplicate the following dashboard elements:
+
+- Panels
+- Rows
+- Tabs
 
 To copy or duplicate dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
+1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. In the top-corner of the edit pane, click the **Copy or Duplicate** icon and do one of the following:
+1. In the top-corner of the sidebar, click the **Copy or Duplicate** icon and do one of the following:
    - Click **Copy**.
    - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
 
