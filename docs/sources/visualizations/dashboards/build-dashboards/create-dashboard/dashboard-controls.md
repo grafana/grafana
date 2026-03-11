@@ -112,28 +112,23 @@ For more detailed information on dashboard links, refer to the full [Dashboard l
 
 To add a link to another dashboard at the top of your current dashboard, follow these steps:
 
+{{< docs/list >}}
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Dashboard link**.
 
-   The default link type is **Dashboards**. <!-- shared content -->
+   The default link type is **Dashboards**.
 
-1. In the **With tags** drop-down, enter tags to limit the linked dashboards to only the ones with the tags you enter.
-
-   If you don't add any tags, Grafana includes links to all other dashboards.
-
-1. Set link options:
-   - **Show as dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
-   - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
-   - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables](ref:dashboard-url-variables).
-   - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
-   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar. <!-- /shared content-->
+{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="add-dashboard-link" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /docs/list >}}
 
 ### Add a URL link to a dashboard
 

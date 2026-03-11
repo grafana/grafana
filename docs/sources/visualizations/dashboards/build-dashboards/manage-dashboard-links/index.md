@@ -84,12 +84,16 @@ Once you've added a dashboard link, it appears in the upper right corner of your
 
 Add links to other dashboards at the top of your current dashboard.
 
+{{< docs/list >}}
+
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 
    The default link type is **Dashboards**.
+
+{{< shared id="add-dashboard-link" >}}
 
 1. In the **With tags** drop-down, enter tags to limit the linked dashboards to only the ones with the tags you enter.
 
@@ -102,8 +106,12 @@ Add links to other dashboards at the top of your current dashboard.
    - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
    - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
 
+{{< /shared >}}
+
 1. Click **Save dashboard** in the top-right corner.
 1. Click **Back to dashboard** and then **Exit edit**.
+
+{{< /docs/list >}}
 
 ### Add a URL link to a dashboard
 
