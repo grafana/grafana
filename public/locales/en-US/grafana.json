@@ -12611,7 +12611,6 @@
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
-    "title-loaded-deleted-pull-request-in-repo": "This resource deletion is loaded from the branch you just created in {{repoType}} and it is only visible to you",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {

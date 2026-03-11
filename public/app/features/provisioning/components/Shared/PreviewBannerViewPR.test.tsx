@@ -180,16 +180,6 @@ describe('PreviewBannerViewPR', () => {
       expect(screen.getByText('A resource has been deleted in a branch in GitHub.')).toBeInTheDocument();
     });
 
-    it('should render delete-specific title for existing PR', () => {
-      setup({ prURL: 'test-url', isNewPr: false, action: 'delete' });
-
-      expect(
-        screen.getByText(
-          'This resource deletion is loaded from the branch you just created in GitHub and it is only visible to you'
-        )
-      ).toBeInTheDocument();
-    });
-
     it('should render delete-specific body text', () => {
       setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
 
