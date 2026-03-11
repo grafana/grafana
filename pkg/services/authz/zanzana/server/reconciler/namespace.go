@@ -254,7 +254,7 @@ func (r *Reconciler) computeDiffStreaming(
 	for {
 		req := &openfgav1.ReadRequest{
 			StoreId:           storeInfo.ID,
-			PageSize:          wrapperspb.Int32(1000),
+			PageSize:          wrapperspb.Int32(r.cfg.zanzanaReadPageSize()),
 			ContinuationToken: continuationToken,
 		}
 

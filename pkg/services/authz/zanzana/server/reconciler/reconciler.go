@@ -39,10 +39,11 @@ type Reconciler struct {
 
 // Config holds the reconciler configuration.
 type Config struct {
-	Workers        int
-	Interval       time.Duration
-	WriteBatchSize int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize      int // Size of the buffered work queue for namespaces (default 1000)
+	Workers             int
+	Interval            time.Duration
+	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 1000)
 }
 
 func (c Config) queueSize() int {
@@ -50,6 +51,13 @@ func (c Config) queueSize() int {
 		return 1000
 	}
 	return c.QueueSize
+}
+
+func (c Config) zanzanaReadPageSize() int32 {
+	if c.ZanzanaReadPageSize <= 0 {
+		return 1000
+	}
+	return int32(c.ZanzanaReadPageSize)
 }
 
 // GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
