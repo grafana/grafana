@@ -138,7 +138,11 @@ The following image and descriptions highlight the panel features:
 
 ## Panel menu
 
-To access the panel editor, hover over the top-right corner of any panel. Click the panel menu icon that appears and select **Edit**. The panel menu gives you access to the following actions:
+To access the panel editor, hover the cursor over the top-right corner of any panel.
+Click the panel menu icon that appears and select **Edit**.
+
+The panel menu also gives you access to several actions.
+If an option is only available in view mode or edit mode, that's indicated:
 
 - **View**: View the panel in full screen.
 - **Edit**: Open the panel editor to edit panel and visualization options.
@@ -148,15 +152,16 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
+- **Assistant**: View mode only. Access options for help from Grafana Assistant.<!-- is this going out in 13? -->
+- **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
-  - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
+  - **Duplicate**: Edit mode only. Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
   - **Copy**: Copy the panel to the clipboard.
-  - **New library panel**: Create a panel that can be imported into other dashboards.
+  - **New library panel**: Edit mode only. Create a panel that can be imported into other dashboards.
   - **New alert rule**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert](ref:create) based on the panel queries.
   - **Hide legend**: Hide the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
-- **Remove**: Remove the panel from the dashboard.
+- **Remove**: Edit mode only. Remove the panel from the dashboard.
 
 ## Keyboard shortcuts
 
