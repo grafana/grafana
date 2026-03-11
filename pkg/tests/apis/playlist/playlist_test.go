@@ -148,9 +148,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "file", // write the files to disk
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -161,9 +161,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "file", // write the files to disk
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
@@ -174,9 +174,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (file, mode 5)", func(t *testing.T) {
 		helper := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "file", // write the files to disk
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode5,
@@ -214,9 +214,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     false, // required for  unified storage
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeUnified, // use the entity api tables
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeUnified, // use the entity api tables
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -227,18 +227,18 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     false,
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeUnified,
-			EnableFeatureToggles:  []string{},
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeUnified,
+			EnableFeatureToggles: []string{},
 		}))
 	})
 
 	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     false, // required for  unified storage
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeUnified, // use the entity api tables
+			AppModeProduction:    false, // required for  unified storage
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeUnified, // use the entity api tables
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode5,
@@ -252,9 +252,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 		t.Skip("local etcd testing")
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeEtcd, // requires etcd running on localhost:2379
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -278,9 +278,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 		t.Skip("local etcd testing")
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeEtcd, // requires etcd running on localhost:2379
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
@@ -304,9 +304,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 		t.Skip("local etcd testing")
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeEtcd, // requires etcd running on localhost:2379
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: options.StorageTypeEtcd, // requires etcd running on localhost:2379
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode5,

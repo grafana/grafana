@@ -163,12 +163,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -223,11 +223,11 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				EnableFeatureToggles:  featureToggles,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
