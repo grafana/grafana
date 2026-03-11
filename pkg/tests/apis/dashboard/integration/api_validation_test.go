@@ -69,7 +69,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
@@ -106,7 +105,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				DisableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
@@ -135,7 +133,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations:               true,
 		AppModeProduction:                   true,
 		DisableAnonymous:                    true,
 		DisableAuthZClientCache:             true,
@@ -187,7 +184,6 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
@@ -226,7 +222,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,

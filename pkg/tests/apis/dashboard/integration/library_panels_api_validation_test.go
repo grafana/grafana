@@ -32,7 +32,6 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
@@ -96,7 +95,6 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
@@ -299,7 +297,6 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
 				DisableAnonymous:      true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
@@ -518,7 +515,6 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		opts := testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
 			DisableAnonymous:      true,
 			EnableFeatureToggles: []string{
 				"kubernetesLibraryPanels",

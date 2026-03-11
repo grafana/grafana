@@ -36,7 +36,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
@@ -226,7 +225,6 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
@@ -323,7 +321,6 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
 		AppModeProduction:     true,
 		DisableAnonymous:      true,
 		APIServerStorageType:  "unified",
@@ -434,7 +431,6 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
 			AppModeProduction:     true,
 			DisableAnonymous:      true,
 			APIServerStorageType:  "unified",
