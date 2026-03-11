@@ -6,6 +6,7 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { FeatureBadge, Stack } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
+import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';
 
@@ -22,7 +23,12 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
   const presets = useMemo(() => (plugin ? getPluginPresets(plugin, data?.series) : null), [plugin, data]);
 
   const handlePresetApply = useCallback(
-    (preset: PanelPluginVisualizationSuggestion) => {
+    (preset: PanelPluginVisualizationSuggestion, index: number) => {
+      VizSuggestionsInteractions.presetApplied({
+        pluginId: preset.pluginId,
+        presetName: preset.name,
+        presetIndex: index + 1,
+      });
       setSelectedPreset(preset.hash);
       if (preset.fieldConfig || preset.options) {
         onApplyPreset(preset, panel.state.fieldConfig);
@@ -50,7 +56,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
       <VisualizationCardGrid
         items={presets}
         data={data}
-        onItemClick={(preset) => handlePresetApply(preset)}
+        onItemClick={(preset, index) => handlePresetApply(preset, index)}
         getItemKey={(preset) => preset.hash}
         selectedKey={selectedPreset}
         minColumnWidth={120}
