@@ -36,6 +36,7 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCo
 }
 
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (m *mockDirectRestConfigProvider) IsReady() bool                                              { return true }
 
 type mockRoundTripper struct {
 	statusCode   int
