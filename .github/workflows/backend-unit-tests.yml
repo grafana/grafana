@@ -63,7 +63,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -100,7 +100,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:

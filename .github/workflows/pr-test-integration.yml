@@ -66,7 +66,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Run tests
         if: matrix.shard != 'profiled'
         env:
@@ -179,7 +179,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -228,7 +228,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -277,7 +277,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -395,7 +395,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -449,7 +449,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-          cache-dependency-path: "**/*.sum"
+          cache-dependency-path: "**/*.mod"
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
