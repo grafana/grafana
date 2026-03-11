@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -1058,20 +1060,6 @@ func matchesVersionFilter(key DataKey, req *resourcepb.ListRequest) bool {
 	return true
 }
 
-// filterHistoryKeysByVersion filters history keys based on version match criteria
-func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListRequest) ([]DataKey, error) {
-	if err := validateVersionFilter(req); err != nil {
-		return nil, err
-	}
-	filtered := make([]DataKey, 0, len(historyKeys))
-	for _, key := range historyKeys {
-		if matchesVersionFilter(key, req) {
-			filtered = append(filtered, key)
-		}
-	}
-	return filtered, nil
-}
-
 // sortByResourceVersion sorts the history keys based on the sortAscending flag
 func sortByResourceVersion(filteredKeys []DataKey, sortAscending bool) {
 	if sortAscending {
@@ -1311,7 +1299,8 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 	}
 }
 
-// ListHistory is like ListIterator, but it returns the history of a resource.
+// ListHistory is like ListIterator, but it returns the history of a particular resource or
+// across a namespace/group/resource.
 func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if err := validateListHistoryRequest(req); err != nil {
 		return 0, err
@@ -1338,6 +1327,18 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		sortOrder = SortOrderAsc
 	}
 
+	if err := validateVersionFilter(req); err != nil {
+		return 0, err
+	}
+
+	isTrash := req.Source == resourcepb.ListRequest_TRASH
+
+	// Trash queries use ascending key order for correct chronological state
+	// tracking within each resource name.
+	if isTrash {
+		sortOrder = SortOrderAsc
+	}
+
 	keysIter := k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
@@ -1345,30 +1346,20 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		Name:      key.Name,
 	}, sortOrder)
 
-	// Handle trash differently from regular history — collect all keys
-	// and delegate to processTrashEntries unchanged.
-	if req.Source == resourcepb.ListRequest_TRASH {
-		historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-		for dataKey, err := range keysIter {
-			if err != nil {
-				return 0, err
-			}
-			historyKeys = append(historyKeys, dataKey)
-		}
-		return k.processTrashEntries(ctx, req, fn, historyKeys, lastSeenRV, sortAscending, listRV)
+	// Trash-specific state: tracks currently-deleted resources.
+	var deletedResources map[string]DataKey
+	if isTrash {
+		deletedResources = make(map[string]DataKey)
 	}
 
-	// Non-trash path: filter during iteration.
-	if err := validateVersionFilter(req); err != nil {
-		return 0, err
-	}
-
-	useLatestDeletionAsMinRV := req.ResourceVersion == 0 &&
+	// Non-trash-specific state.
+	useLatestDeletionAsMinRV := !isTrash && req.ResourceVersion == 0 &&
 		req.GetVersionMatchV2() != resourcepb.ResourceVersionMatchV2_Exact
-
 	historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
 	latestDeleteRV := int64(0)
 
+	// Filter out as many rows as we can while reading from the iterator, which
+	// contains entries for potentially multiple resources in the same group/resource/namespace.
 	for dataKey, err := range keysIter {
 		if err != nil {
 			return 0, err
@@ -1376,37 +1367,56 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		if !matchesVersionFilter(dataKey, req) {
 			continue
 		}
-		// Pagination can be applied inline when we don't need to scan
-		// all keys for latestDeleteRV first.
-		if !useLatestDeletionAsMinRV && lastSeenRV > 0 {
-			if sortAscending && dataKey.ResourceVersion <= lastSeenRV {
-				continue
+
+		if isTrash {
+			// Events are ordered by RV (ascending) within each name.
+			// Deletions set the map entry; non-deletions clear it.
+			// After iteration, remaining entries are truly deleted resources.
+			if dataKey.Action == DataActionDeleted {
+				deletedResources[dataKey.Name] = dataKey
+			} else {
+				delete(deletedResources, dataKey.Name)
 			}
-			if !sortAscending && dataKey.ResourceVersion >= lastSeenRV {
-				continue
+		} else {
+			// Inline pagination + latestDeleteRV tracking
+			if !useLatestDeletionAsMinRV && lastSeenRV > 0 {
+				if sortAscending && dataKey.ResourceVersion <= lastSeenRV {
+					continue
+				}
+				if !sortAscending && dataKey.ResourceVersion >= lastSeenRV {
+					continue
+				}
 			}
+			if useLatestDeletionAsMinRV && dataKey.Action == DataActionDeleted && dataKey.ResourceVersion > latestDeleteRV {
+				latestDeleteRV = dataKey.ResourceVersion
+			}
+			historyKeys = append(historyKeys, dataKey)
 		}
-		if useLatestDeletionAsMinRV && dataKey.Action == DataActionDeleted && dataKey.ResourceVersion > latestDeleteRV {
-			latestDeleteRV = dataKey.ResourceVersion
-		}
-		historyKeys = append(historyKeys, dataKey)
 	}
 
-	// Apply live history filter if a deletion was found
-	if latestDeleteRV > 0 {
-		liveKeys := make([]DataKey, 0, len(historyKeys))
-		for _, k := range historyKeys {
-			if k.ResourceVersion > latestDeleteRV {
-				liveKeys = append(liveKeys, k)
-			}
-		}
-		historyKeys = liveKeys
-	}
-
-	// When useLatestDeletionAsMinRV is true, pagination can't be applied
-	// while consuming the iterator, so apply it now.
-	if useLatestDeletionAsMinRV {
+	if isTrash {
+		// When requesting from the `trash` source, sort globally by resource
+		// version and then apply pagination.
+		historyKeys = slices.Collect(maps.Values(deletedResources))
+		sortByResourceVersion(historyKeys, sortAscending)
 		historyKeys = applyPagination(historyKeys, lastSeenRV, sortAscending)
+	} else {
+		// Apply live history filter if a deletion was found
+		if latestDeleteRV > 0 {
+			liveKeys := make([]DataKey, 0, len(historyKeys))
+			for _, k := range historyKeys {
+				if k.ResourceVersion > latestDeleteRV {
+					liveKeys = append(liveKeys, k)
+				}
+			}
+			historyKeys = liveKeys
+		}
+
+		// When useLatestDeletionAsMinRV is true, pagination can't be applied
+		// while consuming the iterator, so apply it now.
+		if useLatestDeletionAsMinRV {
+			historyKeys = applyPagination(historyKeys, lastSeenRV, sortAscending)
+		}
 	}
 
 	// Create pull-style iterator from BatchGet
@@ -1414,78 +1424,13 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	defer stop()
 
 	iter := kvHistoryIterator{
-		listRV:        listRV,
-		sortAscending: sortAscending,
-		next:          next,
-	}
-
-	err := fn(&iter)
-	if err != nil {
-		return 0, err
-	}
-
-	return listRV, nil
-}
-
-// processTrashEntries handles the special case of listing deleted items (trash)
-func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyKeys []DataKey, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
-	// Filter to only deleted entries
-	deletedKeys := make([]DataKey, 0, len(historyKeys))
-	for _, key := range historyKeys {
-		if key.Action == DataActionDeleted {
-			deletedKeys = append(deletedKeys, key)
-		}
-	}
-
-	// Check if the resource currently exists (is live)
-	// If it exists, don't return any trash entries
-	_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-		Group:     req.Options.Key.Group,
-		Resource:  req.Options.Key.Resource,
-		Namespace: req.Options.Key.Namespace,
-		Name:      req.Options.Key.Name,
-	})
-
-	trashKeys := make([]DataKey, 0, 1)
-	if errors.Is(err, ErrNotFound) {
-		// Resource doesn't exist currently, so we can return the latest delete
-		// Find the latest delete event
-		var latestDelete *DataKey
-		for _, key := range deletedKeys {
-			if latestDelete == nil || key.ResourceVersion > latestDelete.ResourceVersion {
-				latestDelete = &key
-			}
-		}
-		if latestDelete != nil {
-			trashKeys = append(trashKeys, *latestDelete)
-		}
-	}
-	// If err != ErrNotFound, the resource exists, so no trash entries should be returned
-
-	// Apply version filtering
-	filteredKeys, err := filterHistoryKeysByVersion(trashKeys, req)
-	if err != nil {
-		return 0, err
-	}
-
-	// Sort the entries
-	sortByResourceVersion(filteredKeys, sortAscending)
-
-	// Pagination: filter out items up to and including lastSeenRV
-	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
-
-	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
-	defer stop()
-
-	iter := kvHistoryIterator{
 		listRV:          listRV,
 		sortAscending:   sortAscending,
-		skipProvisioned: true,
+		skipProvisioned: isTrash,
 		next:            next,
 	}
 
-	err = fn(&iter)
+	err := fn(&iter)
 	if err != nil {
 		return 0, err
 	}

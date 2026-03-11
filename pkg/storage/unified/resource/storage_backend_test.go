@@ -1814,10 +1814,10 @@ func TestKvStorageBackend_ListTrash_EmptyName(t *testing.T) {
 
 	// deleted2 first (most recent event)
 	require.Equal(t, "resource-deleted2", trashItems[0].name)
-	require.Equal(t, deleteRV1, trashItems[0].resourceVersion)
+	require.Equal(t, deleteRV2, trashItems[0].resourceVersion)
 
 	require.Equal(t, "resource-deleted1", trashItems[1].name)
-	require.Equal(t, deleteRV2, trashItems[1].resourceVersion)
+	require.Equal(t, deleteRV1, trashItems[1].resourceVersion)
 }
 
 func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
