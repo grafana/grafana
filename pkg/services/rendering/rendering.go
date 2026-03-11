@@ -267,13 +267,11 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 }
 
 // Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
-func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
-	}
+
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
@@ -345,13 +343,11 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	return res, nil
 }
 
-func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
-	}
+
 	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
