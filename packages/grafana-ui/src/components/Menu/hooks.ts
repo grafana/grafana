@@ -87,7 +87,7 @@ export const useMenuFocus = ({
         event.stopPropagation();
         const focusedElement = menuItems?.[focusedItem];
         // Check if the focused item has a submenu by looking for nested menuitems
-        const hasSubMenu = focusedElement?.querySelector('[data-role="menuitem"]') !== null;
+        const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
 
         if (!hasSubMenu) {
           focusedElement?.click();
