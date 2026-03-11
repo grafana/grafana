@@ -64,7 +64,6 @@ export const AnnotationsPlugin2 = ({
   canvasRegionRendering = true,
   options,
 }: AnnotationsPluginProps) => {
-  console.log('input annos', annotations);
   const [plot, setPlot] = useState<uPlot>();
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();

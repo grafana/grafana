@@ -69,6 +69,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
+      // @ts-expect-error @todo create issue for dashboards - id is typed incorrectly as string but breaks API response
       id: annoVals.id?.[annoIdx] ?? undefined,
       tags,
       description,

@@ -49,7 +49,8 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
-  id?: number;
+  // @todo this is actually a number, and sending a string will break the API response!
+  id?: string;
   from: number;
   to: number;
   tags: string[];

@@ -35,9 +35,11 @@ export const AnnotationTooltip2Cluster = ({
 
   const annotationTooltipComponents: React.ReactNode[] = [];
   const clusterIdx = annoVals.clusterIdx?.[annoIdx];
+  let annotationCount = 0;
 
   for (let i = 0; i < annoVals.time.length; i++) {
     if (annoVals.clusterIdx?.[i] === clusterIdx && i !== annoIdx) {
+      annotationCount++;
       const { onDelete, canEdit, canDelete, time, alertState, avatarImgSrc } = getAnnotationTooltip(
         annoVals,
         i,
@@ -53,8 +55,9 @@ export const AnnotationTooltip2Cluster = ({
       const annotationId = annoVals.id?.[i];
 
       annotationTooltipComponents.push(
-        <>
+        <div className={annotationCount % 2 === 0 ? styles.zebra : styles.annotationWrapper}>
           <AnnotationTooltipHeader
+            clusterIndex={annotationCount}
             avatarImg={avatarImgSrc}
             alertState={alertState}
             timeRange={time}
@@ -69,8 +72,9 @@ export const AnnotationTooltip2Cluster = ({
               onClose();
             }}
           />
+
           <AnnotationTooltipBody title={title} text={text} alertText={alertText} tags={annoVals?.tags?.[i] ?? []} />
-        </>
+        </div>
       );
     }
   }
@@ -84,7 +88,7 @@ export const AnnotationTooltip2Cluster = ({
     onAnnotationDelete
   );
 
-  const text =
+  const count =
     annotationTooltipComponents.length.toString() +
     ' ' +
     t('timeseries.annotation-tooltip2.cluster-header', 'annotations');
@@ -93,7 +97,7 @@ export const AnnotationTooltip2Cluster = ({
     <div data-testid={selectors.pages.Dashboard.Annotations.clusterTooltip} className={styles.wrapper}>
       <ScrollContainer maxHeight="260px">
         <AnnotationTooltipHeader
-          text={text}
+          clusterLength={count}
           isCluster={true}
           timeRange={time}
           canEdit={false}
@@ -120,6 +124,13 @@ export const AnnotationTooltip2Cluster = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  zebra: css({
+    backgroundColor: theme.colors.background.canvas,
+    paddingBottom: theme.spacing(1.5),
+  }),
+  annotationWrapper: css({
+    paddingBottom: theme.spacing(1.5),
+  }),
   wrapper: css({
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'initial',
@@ -130,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     userSelect: 'text',
   }),
   hr: css({
-    borderTop: `2px solid ${theme.colors.border.medium}`,
+    borderTop: `1px solid ${theme.colors.border.medium}`,
     width: '100%',
   }),
 });
