@@ -41,7 +41,6 @@ func TestIntegrationStars(t *testing.T) {
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
 			AppModeProduction:     false, // required for experimental APIs
 			DisableAnonymous:      true,
 			EnableFeatureToggles:  flags,

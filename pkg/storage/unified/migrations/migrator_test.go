@@ -117,13 +117,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		// Set up test environment with Mode0 (writes only to legacy)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			DisableDataMigrations: true,
-			DisableDBCleanup:      true,
-			APIServerStorageType:  "unified",
-			UnifiedStorageConfig:  unifiedConfig,
-			EnableFeatureToggles:  featureToggles,
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			DisableDBCleanup:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: unifiedConfig,
+			EnableFeatureToggles: featureToggles,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -166,7 +165,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			GrafanaOpts: testinfra.GrafanaOpts{
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
-				DisableDataMigrations: true,
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				UnifiedStorageConfig:  unifiedConfig,
@@ -227,7 +225,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			GrafanaOpts: testinfra.GrafanaOpts{
 				AppModeProduction:     true,
 				DisableAnonymous:      true,
-				DisableDataMigrations: false, // Run migrations at startup
 				DisableDBCleanup:      true,
 				APIServerStorageType:  "unified",
 				EnableFeatureToggles:  featureToggles,
@@ -273,7 +270,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				//EnableLog:              true,
 				AppModeProduction:      true,
 				DisableAnonymous:       true,
-				DisableDataMigrations:  false,
 				APIServerStorageType:   "unified",
 				UnifiedStorageConfig:   unifiedConfig,
 				MigrationParquetBuffer: true,

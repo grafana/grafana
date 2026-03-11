@@ -37,7 +37,6 @@ func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVe
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous:      true,
-			DisableDataMigrations: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -179,7 +178,6 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
 	})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -513,7 +511,6 @@ func TestIntegrationListPagination(t *testing.T) {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
-				DisableDataMigrations: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
@@ -602,7 +599,6 @@ func TestIntegrationListPagination(t *testing.T) {
 		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
-				DisableDataMigrations: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
@@ -706,7 +702,6 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:     true,
-			DisableDataMigrations: true,
 			DisableAnonymous:      true,
 			APIServerStorageType:  "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{

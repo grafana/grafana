@@ -61,8 +61,7 @@ func isTargetEligibleForMigrations(targets []string) bool {
 }
 
 func (p *UnifiedStorageMigrationServiceImpl) shouldRunMigrations() bool {
-	return !p.cfg.DisableDataMigrations &&
-		p.cfg.UnifiedStorageType() == "unified" &&
+	return p.cfg.UnifiedStorageType() == "unified" &&
 		isTargetEligibleForMigrations(p.cfg.Target)
 }
 
@@ -70,7 +69,6 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 	if !p.shouldRunMigrations() {
 		metrics.MUnifiedStorageMigrationStatus.Set(1)
 		logger.Info("Data migrations are disabled, skipping",
-			"disableDataMigrations", p.cfg.DisableDataMigrations,
 			"unifiedStorageType", p.cfg.UnifiedStorageType(),
 			"target", p.cfg.Target,
 		)
