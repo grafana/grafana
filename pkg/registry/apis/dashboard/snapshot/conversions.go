@@ -61,7 +61,6 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		},
 		Spec: dashV0.SnapshotSpec{
 			Title:     &v.Name,
-			DeleteKey: &v.DeleteKey,
 			Dashboard: v.Dashboard.MustMap(),
 		},
 	}
