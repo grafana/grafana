@@ -364,6 +364,22 @@ export function QueryEditorContextWrapper({
       },
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
+      // Bulk actions
+      bulkDeleteQueries: dataPane.bulkDeleteQueries,
+      bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => {
+        dataPane.bulkToggleQueriesHide(refIds, hide);
+      },
+      bulkDeleteTransformations: (transformIds: readonly string[]) => {
+        const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
+        dataPane.bulkDeleteTransformations(indices);
+      },
+      bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => {
+        const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
+        dataPane.bulkToggleTransformationsDisabled(indices, disabled);
+      },
+      bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => {
+        dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings));
+      },
     }),
     [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction, trackQueryRename]
   );
