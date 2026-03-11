@@ -1,7 +1,7 @@
 import { MySQL, sql } from '@codemirror/lang-sql';
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
-import { oneDark } from '@codemirror/theme-one-dark';
+import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
@@ -43,7 +43,8 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
 
     const extensions = [
       sql({ dialect: MySQL }),
-      theme.isDark ? oneDark : syntaxHighlighting(defaultHighlightStyle),
+      theme.isDark ? oneDarkTheme : [],
+      syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           onChangeRef.current?.(update.state.doc.toString(), true);
