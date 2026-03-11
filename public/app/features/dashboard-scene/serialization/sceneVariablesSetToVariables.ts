@@ -4,7 +4,6 @@ import {
   MultiValueVariable,
   SceneVariables,
   sceneUtils,
-  SceneVariable,
 } from '@grafana/scenes';
 import {
   VariableModel,
@@ -604,8 +603,4 @@ export function sceneVariablesSetToSchemaV2Variables(
 export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
   // Only keep dashboard originated filters in the schema
   return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
-}
-
-export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system' && variable.state.origin === undefined;
 }
