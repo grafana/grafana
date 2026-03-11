@@ -22,7 +22,7 @@ import { NEW_LINK } from './utils';
 
 // Default to dropdown for new links because if a dashboard has a lot of links,
 // the side pane will be pushed down the page and be unscrollable
-function createDefaultLink(): DashboardLink {
+export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 

@@ -13,8 +13,8 @@ import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
 
-const ID_VISIBLE_LIST = 'variables-list-visible';
-const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';
+const ID_VISIBLE_LIST = 'links-list-visible';
+const ID_CONTROLS_MENU_LIST = 'links-list-controls-menu';
 
 const DROPPABLE_TO_PLACEMENT: Record<string, DashboardLinkPlacement | undefined> = {
   [ID_VISIBLE_LIST]: undefined,
@@ -125,6 +125,7 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   );
 }
 
+// we make links Scene-like for DraggableList
 type PseudoSceneLink = DashboardLink & { state: { key: string; name: string } };
 
 export function partitionLinksByPlacement(links: DashboardLink[]) {
@@ -132,6 +133,7 @@ export function partitionLinksByPlacement(links: DashboardLink[]) {
   const controlsMenu: PseudoSceneLink[] = [];
 
   links.forEach((link, index) => {
+    // we make links Scene-like for DraggableList
     if (link.placement === 'inControlsMenu') {
       controlsMenu.push({ ...link, state: { key: String(index), name: link.title } });
     } else {
