@@ -129,6 +129,10 @@ type stubProvider struct {
 	meta pluginsv0alpha1.MetaSpec
 }
 
+func (s *stubProvider) Name() string {
+	return "stub"
+}
+
 func (s *stubProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Result, error) {
 	return &meta.Result{Meta: s.meta, TTL: time.Hour}, nil
 }
@@ -140,6 +144,10 @@ type slowProvider struct {
 	meta       pluginsv0alpha1.MetaSpec
 	active     *atomic.Int32
 	concurrent *atomic.Bool
+}
+
+func (s *slowProvider) Name() string {
+	return "slow"
 }
 
 func (s *slowProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Result, error) {
@@ -154,6 +162,10 @@ func (s *slowProvider) GetMeta(_ context.Context, _ meta.PluginRef) (*meta.Resul
 // selectiveProvider only succeeds for plugins in succeedIDs.
 type selectiveProvider struct {
 	succeedIDs map[string]bool
+}
+
+func (s *selectiveProvider) Name() string {
+	return "selective"
 }
 
 func (s *selectiveProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*meta.Result, error) {

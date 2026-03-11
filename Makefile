@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.7
+GO_VERSION = 1.25.8
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -19,7 +19,7 @@ BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
 BUILD_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-BUILD_STAMP := $(shell echo $${SOURCE_DATE_EPOCH:-$$(date +%s 2>/dev/null)})
+BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell date +%s 2>/dev/null))
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	-X main.commit=$(BUILD_COMMIT) \
 	-X main.buildBranch=$(BUILD_BRANCH) \
@@ -565,6 +565,7 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
+	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

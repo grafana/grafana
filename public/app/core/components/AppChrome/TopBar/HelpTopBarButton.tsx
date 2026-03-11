@@ -49,6 +49,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
       iconOnly
       icon="question-circle"
       aria-label={t('navigation.help.aria-label', 'Help')}
+      aria-expanded={isOpen}
       variant={isOpen ? 'active' : 'default'}
       tooltip={
         isOpen
