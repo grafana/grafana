@@ -3,91 +3,101 @@ package teamk8s
 import (
 	"context"
 	"errors"
-	"sync"
 
-	"github.com/grafana/grafana-app-sdk/k8s"
-	"github.com/grafana/grafana-app-sdk/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var teamGVR = schema.GroupVersionResource{
+	Group:    iamv0alpha1.APIGroup,
+	Version:  iamv0alpha1.APIVersion,
+	Resource: "teams",
+}
+
 type TeamK8sService struct {
-	logger             log.Logger
-	namespaceMapper    request.NamespaceMapper
-	restConfigProvider apiserver.RestConfigProvider
-	clientGenerator    resource.ClientGenerator
-	teamClient         *iamv0alpha1.TeamClient
-	teamBindingClient  *iamv0alpha1.TeamBindingClient
-	initClients        sync.Once
+	logger          log.Logger
+	namespaceMapper request.NamespaceMapper
+	configProvider  apiserver.DirectRestConfigProvider
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, restConfigProvider apiserver.RestConfigProvider) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
 	return &TeamK8sService{
-		logger:             logger,
-		namespaceMapper:    request.GetNamespaceMapper(cfg),
-		restConfigProvider: restConfigProvider,
-		initClients:        sync.Once{},
+		logger:          logger,
+		namespaceMapper: request.GetNamespaceMapper(cfg),
+		configProvider:  configProvider,
 	}
 }
 
-// initK8sClients lazily initializes the Kubernetes clients on first use.
-func (s *TeamK8sService) initK8sClients(ctx context.Context, logger log.Logger) {
-	s.initClients.Do(func() {
-		if s.restConfigProvider == nil {
-			return
-		}
+func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	if s.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
+	}
 
-		restConfig, err := s.restConfigProvider.GetRestConfig(ctx)
-		if err != nil {
-			logger.Warn("Failed to get rest config", "error", err)
-			return
-		}
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, errors.New("no request context")
+	}
 
-		s.clientGenerator = k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
+	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
+	if err != nil {
+		return nil, err
+	}
 
-		if c, err := iamv0alpha1.NewTeamClientFromGenerator(s.clientGenerator); err != nil {
-			logger.Warn("Failed to create team client", "error", err)
-		} else {
-			s.teamClient = c
-		}
-
-		if c, err := iamv0alpha1.NewTeamBindingClientFromGenerator(s.clientGenerator); err != nil {
-			logger.Warn("Failed to create team binding client", "error", err)
-		} else {
-			s.teamBindingClient = c
-		}
-	})
+	return dyn.Resource(teamGVR).Namespace(namespace), nil
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	s.initK8sClients(ctx, s.logger)
+	namespace := s.namespaceMapper(cmd.OrgID)
 
-	if s.teamClient == nil {
-		return team.Team{}, errors.New("team client not initialized")
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return team.Team{}, err
 	}
 
 	uid := util.GenerateShortUID()
-	namespace := s.namespaceMapper(cmd.OrgID)
-
-	k8sTeam := iamv0alpha1.NewTeam()
-	k8sTeam.Name = uid
-	k8sTeam.Namespace = namespace
-	k8sTeam.Spec = iamv0alpha1.TeamSpec{
-		Title:       cmd.Name,
-		Email:       cmd.Email,
-		ExternalUID: cmd.ExternalUID,
-		Provisioned: cmd.IsProvisioned,
+	k8sTeam := iamv0alpha1.Team{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+			Kind:       "Team",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      uid,
+			Namespace: namespace,
+		},
+		Spec: iamv0alpha1.TeamSpec{
+			Title:       cmd.Name,
+			Email:       cmd.Email,
+			ExternalUID: cmd.ExternalUID,
+			Provisioned: cmd.IsProvisioned,
+		},
 	}
 
-	created, err := s.teamClient.Create(ctx, k8sTeam, resource.CreateOptions{})
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&k8sTeam)
 	if err != nil {
+		return team.Team{}, err
+	}
+
+	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
+	if err != nil {
+		return team.Team{}, err
+	}
+
+	var created iamv0alpha1.Team
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &created); err != nil {
 		return team.Team{}, err
 	}
 
@@ -104,62 +114,42 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	s.initK8sClients(ctx, s.logger)
-
 	return errors.New("not implemented")
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	s.initK8sClients(ctx, s.logger)
-
 	return errors.New("not implemented")
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return team.SearchTeamQueryResult{}, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return nil, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return nil, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return nil, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return false, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
-	s.initK8sClients(ctx, s.logger)
-
 	return errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return nil, errors.New("not implemented")
 }
 
 func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
-	s.initK8sClients(ctx, s.logger)
-
 	return nil, errors.New("not implemented")
 }
 

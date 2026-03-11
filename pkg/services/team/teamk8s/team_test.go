@@ -2,30 +2,33 @@ package teamk8s
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana-app-sdk/resource"
+	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
 func TestTeamK8sService_CreateTeam(t *testing.T) {
 	tests := []struct {
-		name       string
-		cmd        *team.CreateTeamCommand
-		setupMock  func(*mockResourceClient)
-		nilClient  bool
-		expectErr  bool
-		expectTeam team.Team
+		name           string
+		cmd            *team.CreateTeamCommand
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noReqContext   bool
+		expectErr      bool
+		expectTeam     team.Team
 	}{
 		{
 			name: "successfully creates a team",
@@ -34,9 +37,13 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				Email: "team@example.com",
 				OrgID: 1,
 			},
-			setupMock: func(m *mockResourceClient) {
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-				returnedTeam := &iamv0alpha1.Team{
+				resp := iamv0alpha1.Team{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+						Kind:       "Team",
+					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:              "some-uid",
 						Namespace:         "org-1",
@@ -47,11 +54,10 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 						Email: "team@example.com",
 					},
 				}
-				m.On("Create", mock.Anything, mock.Anything, mock.Anything, resource.CreateOptions{}).
-					Return(returnedTeam, nil)
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
 			},
 			expectTeam: team.Team{
-				UID:     "some-uid",
 				OrgID:   1,
 				Name:    "Test Team",
 				Email:   "team@example.com",
@@ -66,8 +72,12 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				ExternalUID:   "ext-uid-123",
 				IsProvisioned: true,
 			},
-			setupMock: func(m *mockResourceClient) {
-				returnedTeam := &iamv0alpha1.Team{
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				resp := iamv0alpha1.Team{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+						Kind:       "Team",
+					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "new-uid",
 						Namespace: "org-2",
@@ -78,11 +88,10 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 						Provisioned: true,
 					},
 				}
-				m.On("Create", mock.Anything, mock.Anything, mock.Anything, resource.CreateOptions{}).
-					Return(returnedTeam, nil)
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
 			},
 			expectTeam: team.Team{
-				UID:           "new-uid",
 				OrgID:         2,
 				Name:          "Provisioned Team",
 				ExternalUID:   "ext-uid-123",
@@ -95,32 +104,56 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				Name:  "Failing Team",
 				OrgID: 1,
 			},
-			setupMock: func(m *mockResourceClient) {
-				m.On("Create", mock.Anything, mock.Anything, mock.Anything, resource.CreateOptions{}).
-					Return(nil, errors.New("k8s error"))
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Message:  "k8s error",
+					Code:     http.StatusInternalServerError,
+				})
 			},
 			expectErr: true,
 		},
 		{
-			name:      "returns error when client is not initialized",
-			cmd:       &team.CreateTeamCommand{Name: "Any Team", OrgID: 1},
-			nilClient: true,
-			expectErr: true,
+			name:        "returns error when config provider not initialized",
+			cmd:         &team.CreateTeamCommand{Name: "Any Team", OrgID: 1},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
+			name:         "returns error when no request context",
+			cmd:          &team.CreateTeamCommand{Name: "Any Team", OrgID: 1},
+			noReqContext: true,
+			expectErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := NewTeamK8sService(log.NewNopLogger(), nil, nil)
+			var svc *TeamK8sService
 
-			if !tt.nilClient {
-				mockClient := new(mockResourceClient)
-				tt.setupMock(mockClient)
-				svc.teamClient = iamv0alpha1.NewTeamClient(mockClient)
-				defer mockClient.AssertExpectations(t)
+			if tt.nilProvider {
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+			} else {
+				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
+				defer ts.Close()
+
+				provider := &mockDirectRestConfigProvider{
+					restConfig: &clientrest.Config{Host: ts.URL},
+				}
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
 			}
 
-			result, err := svc.CreateTeam(context.Background(), tt.cmd)
+			var ctx context.Context
+			if tt.noReqContext {
+				ctx = context.Background()
+			} else {
+				ctx = contextWithReqContext()
+			}
+
+			result, err := svc.CreateTeam(ctx, tt.cmd)
 
 			if tt.expectErr {
 				require.Error(t, err)
@@ -128,96 +161,27 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectTeam.UID, result.UID)
 			assert.Equal(t, tt.expectTeam.OrgID, result.OrgID)
 			assert.Equal(t, tt.expectTeam.Name, result.Name)
 			assert.Equal(t, tt.expectTeam.Email, result.Email)
 			assert.Equal(t, tt.expectTeam.ExternalUID, result.ExternalUID)
 			assert.Equal(t, tt.expectTeam.IsProvisioned, result.IsProvisioned)
-			assert.Equal(t, tt.expectTeam.Created, result.Created)
+			assert.Equal(t, tt.expectTeam.Created.UTC(), result.Created.UTC())
 		})
 	}
 }
 
-// mockResourceClient implements resource.Client for testing.
-type mockResourceClient struct {
-	mock.Mock
+type mockDirectRestConfigProvider struct {
+	restConfig *clientrest.Config
 }
 
-func (m *mockResourceClient) Get(ctx context.Context, identifier resource.Identifier) (resource.Object, error) {
-	args := m.Called(ctx, identifier)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(resource.Object), args.Error(1)
+func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *clientrest.Config {
+	return m.restConfig
 }
 
-func (m *mockResourceClient) GetInto(ctx context.Context, identifier resource.Identifier, into resource.Object) error {
-	args := m.Called(ctx, identifier, into)
-	return args.Error(0)
-}
+func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
-func (m *mockResourceClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (resource.ListObject, error) {
-	args := m.Called(ctx, namespace, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(resource.ListObject), args.Error(1)
-}
-
-func (m *mockResourceClient) ListInto(ctx context.Context, namespace string, opts resource.ListOptions, into resource.ListObject) error {
-	args := m.Called(ctx, namespace, opts, into)
-	return args.Error(0)
-}
-
-func (m *mockResourceClient) Create(ctx context.Context, identifier resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
-	args := m.Called(ctx, identifier, obj, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(resource.Object), args.Error(1)
-}
-
-func (m *mockResourceClient) CreateInto(ctx context.Context, identifier resource.Identifier, obj resource.Object, opts resource.CreateOptions, into resource.Object) error {
-	args := m.Called(ctx, identifier, obj, opts, into)
-	return args.Error(0)
-}
-
-func (m *mockResourceClient) Update(ctx context.Context, identifier resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
-	args := m.Called(ctx, identifier, obj, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(resource.Object), args.Error(1)
-}
-
-func (m *mockResourceClient) UpdateInto(ctx context.Context, identifier resource.Identifier, obj resource.Object, opts resource.UpdateOptions, into resource.Object) error {
-	args := m.Called(ctx, identifier, obj, opts, into)
-	return args.Error(0)
-}
-
-func (m *mockResourceClient) Patch(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, opts resource.PatchOptions) (resource.Object, error) {
-	args := m.Called(ctx, identifier, patch, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(resource.Object), args.Error(1)
-}
-
-func (m *mockResourceClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, opts resource.PatchOptions, into resource.Object) error {
-	args := m.Called(ctx, identifier, patch, opts, into)
-	return args.Error(0)
-}
-
-func (m *mockResourceClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
-	args := m.Called(ctx, identifier, opts)
-	return args.Error(0)
-}
-
-func (m *mockResourceClient) Watch(_ context.Context, _ string, _ resource.WatchOptions) (resource.WatchResponse, error) {
-	return nil, nil
-}
-
-func (m *mockResourceClient) SubresourceRequest(ctx context.Context, identifier resource.Identifier, opts resource.CustomRouteRequestOptions) ([]byte, error) {
-	return nil, nil
+func contextWithReqContext() context.Context {
+	reqCtx := &contextmodel.ReqContext{}
+	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
 }

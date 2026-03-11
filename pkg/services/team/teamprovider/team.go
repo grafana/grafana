@@ -24,13 +24,13 @@ type Service struct {
 
 var _ team.Service = (*Service)(nil)
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, restConfigProvider apiserver.RestConfigProvider) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) *Service {
 	legacyService, err := teamimpl.ProvideService(db, cfg, tracer)
 	if err != nil {
 		return nil
 	}
 
-	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, restConfigProvider)
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
 
 	return &Service{
 		legacyService:     legacyService,
