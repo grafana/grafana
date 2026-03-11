@@ -1195,6 +1195,21 @@
     },
     {
       "metadata": {
+        "name": "colorblindThemes",
+        "resourceVersion": "1770395198316",
+        "creationTimestamp": "2026-02-06T16:26:38Z"
+      },
+      "spec": {
+        "description": "Enables the new colorblind-friendly themes",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -1416,6 +1431,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardUnifiedDrilldownControls",
+        "resourceVersion": "1773081615691",
+        "creationTimestamp": "2026-03-09T18:40:15Z"
+      },
+      "spec": {
+        "description": "Renders ad hoc filters and group by in a single unified control",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardValidatorApp",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1508,6 +1538,36 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpoint",
+        "resourceVersion": "1772118749630",
+        "creationTimestamp": "2026-02-26T15:12:29Z"
+      },
+      "spec": {
+        "description": "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointFrontend",
+        "resourceVersion": "1773063626484",
+        "creationTimestamp": "2026-03-03T16:55:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-09 13:40:26.484445 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1898,6 +1958,20 @@
     },
     {
       "metadata": {
+        "name": "flameGraphWithCallTree",
+        "resourceVersion": "1773162696077",
+        "creationTimestamp": "2026-03-10T17:11:36Z"
+      },
+      "spec": {
+        "description": "Enables the new Flame Graph UI containing the Call Tree view",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-03T14:15:23Z"
@@ -2188,6 +2262,19 @@
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "inlineLogDetailsNoScrolls",
+        "resourceVersion": "1772636622548",
+        "creationTimestamp": "2026-03-04T15:03:42Z"
+      },
+      "spec": {
+        "description": "Enables an inline version of Log Details that creates no new scrolls",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
         "expression": "false"
       }
     },
@@ -2648,6 +2735,34 @@
     },
     {
       "metadata": {
+        "name": "kubernetesServiceAccountTokensApi",
+        "resourceVersion": "1773060933794",
+        "creationTimestamp": "2026-03-09T12:55:33Z"
+      },
+      "spec": {
+        "description": "Enables service account token APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesServiceAccountsApi",
+        "resourceVersion": "1773060933794",
+        "creationTimestamp": "2026-03-09T12:55:33Z"
+      },
+      "spec": {
+        "description": "Enables service account APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesShortURLs",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -2727,6 +2842,20 @@
       },
       "spec": {
         "description": "Use the new APIs for syncing users to teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsApi",
+        "resourceVersion": "1773151565569",
+        "creationTimestamp": "2026-03-10T14:06:05Z"
+      },
+      "spec": {
+        "description": "Enables team APIs in the app platform",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2822,7 +2951,8 @@
       "metadata": {
         "name": "logsContextDatasourceUi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-01-27T14:12:01Z"
+        "creationTimestamp": "2023-01-27T14:12:01Z",
+        "deletionTimestamp": "2026-03-10T16:59:23Z"
       },
       "spec": {
         "description": "Allow datasource to provide custom UI for context view",
@@ -3034,6 +3164,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/aws-datasources",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "nestedFramesFieldOverrides",
+        "resourceVersion": "1772838275804",
+        "creationTimestamp": "2026-03-06T23:04:35Z"
+      },
+      "spec": {
+        "description": "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
