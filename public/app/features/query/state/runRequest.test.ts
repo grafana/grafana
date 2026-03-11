@@ -390,6 +390,61 @@ describe('runRequest', () => {
     });
   });
 
+  runRequestScenario('After response with partial errors (some queries succeed, some fail)', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataB-1', refId: 'B' } as DataFrame],
+        errors: [{ refId: 'A', message: 'query A failed' }],
+        state: LoadingState.Done,
+      });
+    });
+
+    it('should have state Done when data is present alongside errors', () => {
+      expect(ctx.results[0].state).toEqual(LoadingState.Done);
+    });
+
+    it('should include errors', () => {
+      expect(ctx.results[0].errors).toHaveLength(1);
+      expect(ctx.results[0].errors?.[0].refId).toBe('A');
+    });
+
+    it('should include the successful data', () => {
+      expect(ctx.results[0].series).toHaveLength(1);
+      expect(ctx.results[0].series[0].name).toBe('DataB-1');
+    });
+  });
+
+  runRequestScenario('After multiple packets where errors accumulate across packets', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataB-1', refId: 'B' } as DataFrame],
+        errors: [{ refId: 'A', message: 'query A failed' }],
+        key: 'B',
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataD-1', refId: 'D' } as DataFrame],
+        errors: [{ refId: 'C', message: 'query C failed' }],
+        key: 'D',
+      });
+    });
+
+    it('should accumulate errors from all packets', () => {
+      expect(ctx.results[1].errors).toHaveLength(2);
+      expect(ctx.results[1].errors?.[0].refId).toBe('A');
+      expect(ctx.results[1].errors?.[1].refId).toBe('C');
+    });
+
+    it('should have state Done when data is present', () => {
+      expect(ctx.results[1].state).toEqual(LoadingState.Done);
+    });
+
+    it('should include all successful data', () => {
+      expect(ctx.results[1].series).toHaveLength(2);
+    });
+  });
+
   runRequestScenario('When some queries are hidden', (ctx) => {
     ctx.setup(() => {
       ctx.request.targets = [{ refId: 'A', hide: true }, { refId: 'B' }];
