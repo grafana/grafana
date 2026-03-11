@@ -89,12 +89,6 @@
       "import": "./dist/esm/raw/composable/debug/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/debug/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/elasticsearch/dataquery/x/ElasticsearchDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/elasticsearch/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/elasticsearch/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/elasticsearch/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/elasticsearch/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/gauge/panelcfg/x/GaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/gauge/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/gauge/panelcfg/x/types.gen.d.ts",
