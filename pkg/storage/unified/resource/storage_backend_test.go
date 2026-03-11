@@ -1837,9 +1837,9 @@ func TestKvStorageBackend_ListHistory_EmptyName(t *testing.T) {
 		// resource-b is deleted so its live history is empty.
 		require.Len(t, items, 2)
 		require.Equal(t, "resource-a", items[0].name)
-		require.Equal(t, rv1, items[0].resourceVersion)
+		require.Equal(t, rv2, items[0].resourceVersion) // descending: rv2 first
 		require.Equal(t, "resource-a", items[1].name)
-		require.Equal(t, rv2, items[1].resourceVersion)
+		require.Equal(t, rv1, items[1].resourceVersion)
 	})
 }
 

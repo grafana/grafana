@@ -1352,11 +1352,10 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		deletedResources = make(map[string]DataKey)
 	}
 
-	// Non-trash-specific state.
 	useLatestDeletionAsMinRV := !isTrash && req.ResourceVersion == 0 &&
 		req.GetVersionMatchV2() != resourcepb.ResourceVersionMatchV2_Exact
 	historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	latestDeleteRV := int64(0)
+	latestDeleteRV := map[string]int64{}
 
 	// Filter out as many rows as we can while reading from the iterator, which
 	// contains entries for potentially multiple resources in the same group/resource/namespace.
@@ -1387,8 +1386,8 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 					continue
 				}
 			}
-			if useLatestDeletionAsMinRV && dataKey.Action == DataActionDeleted && dataKey.ResourceVersion > latestDeleteRV {
-				latestDeleteRV = dataKey.ResourceVersion
+			if useLatestDeletionAsMinRV && dataKey.Action == DataActionDeleted && dataKey.ResourceVersion > latestDeleteRV[dataKey.Name] {
+				latestDeleteRV[dataKey.Name] = dataKey.ResourceVersion
 			}
 			historyKeys = append(historyKeys, dataKey)
 		}
@@ -1401,11 +1400,12 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		sortByResourceVersion(historyKeys, sortAscending)
 		historyKeys = applyPagination(historyKeys, lastSeenRV, sortAscending)
 	} else {
-		// Apply live history filter if a deletion was found
-		if latestDeleteRV > 0 {
+		// Apply live history filter: for each name that has a deletion,
+		// keep only entries with RV after that name's latest delete.
+		if len(latestDeleteRV) > 0 {
 			liveKeys := make([]DataKey, 0, len(historyKeys))
 			for _, k := range historyKeys {
-				if k.ResourceVersion > latestDeleteRV {
+				if delRV, ok := latestDeleteRV[k.Name]; !ok || k.ResourceVersion > delRV {
 					liveKeys = append(liveKeys, k)
 				}
 			}
