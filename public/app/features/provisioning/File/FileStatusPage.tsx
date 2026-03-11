@@ -115,7 +115,7 @@ function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
     <div>
       <Stack>
         {isDashboard && (
-          <LinkButton target={'_blank'} href={`${PROVISIONING_PREVIEW_URL}/${repo}/dashboard/preview/${wrap.path}`}>
+          <LinkButton target={'_blank'} href={`${PROVISIONING_PREVIEW_URL}/${repo}/preview/${wrap.path}`}>
             <Trans i18nKey="provisioning.resource-view.dashboard-preview">Dashboard Preview</Trans>
           </LinkButton>
         )}

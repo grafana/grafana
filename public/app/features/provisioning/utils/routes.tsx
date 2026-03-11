@@ -1,3 +1,5 @@
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
+
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
@@ -97,7 +99,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_PREVIEW_URL + '/:slug/dashboard/preview/*',
+      path: PROVISIONING_PREVIEW_URL + '/:slug/preview/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,
       component: SafeDynamicImport(
@@ -105,5 +107,15 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
           import(/* webpackChunkName: "DashboardScenePage" */ 'app/features/dashboard-scene/pages/DashboardScenePage')
       ),
     },
+    {
+      path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
+      component: RedirectToProvisioningPreview,
+    },
   ];
+}
+
+function RedirectToProvisioningPreview() {
+  const { slug, '*': rest } = useParams();
+  const location = useLocation();
+  return <Navigate replace to={`${PROVISIONING_PREVIEW_URL}/${slug}/preview/${rest}${location.search}`} />;
 }

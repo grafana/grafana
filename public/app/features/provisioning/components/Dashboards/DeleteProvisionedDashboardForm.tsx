@@ -140,7 +140,7 @@ export function DeleteProvisionedDashboardForm({
   const onBranchSuccess = (path: string, info: { repoType: string }, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
       paramName: 'pull_request_url',
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,

@@ -100,7 +100,7 @@ export function SaveProvisionedDashboardForm({
   const navigateToPreview = useCallback(
     (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
-        baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
         repoType,
