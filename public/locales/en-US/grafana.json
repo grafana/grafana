@@ -14407,8 +14407,16 @@
       "label-standard": "Standard"
     },
     "presets": {
+      "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "list": "List",
+      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "threshold-background": "Threshold background",
+      "threshold-background-sparkline": "Threshold background with sparkline",
       "threshold-value": "Threshold value",
-      "threshold-value-description": "Color from thresholds, no graph"
+      "threshold-value-sparkline": "Threshold value with sparkline",
+      "wide-list": "Wide list",
+      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
     },
     "suggestions": {
       "stat": "Stat",
