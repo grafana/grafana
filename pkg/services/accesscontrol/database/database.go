@@ -7,11 +7,9 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/database")
@@ -54,67 +52,41 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	ctx, span := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions")
 	defer span.End()
 
-	if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
-		return nil, nil
-	}
-
-	_, buildSpan := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions.build_query")
-	filter, params := accesscontrol.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles, s.sql.GetDialect())
-
-	q := `
-	SELECT
-		permission.action,
-		permission.scope
-		FROM permission
-		INNER JOIN role ON role.id = permission.role_id
-	` + filter
-
-	if len(query.RolePrefixes) > 0 {
-		rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(query.RolePrefixes)
-		q += rolePrefixesFilter
-		params = append(params, filterParams...)
-	}
-
-	if query.ExcludeRedundantManagedPermissions {
-		q += accesscontrol.ManagedPermissionsActionSetsFilter()
-	}
-	buildSpan.End()
-
-	_, querySpan := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions.query")
-	result, err := s.getUserPermissionsRaw(ctx, s.sql.GetEngine(), q, params)
-	if err != nil {
-		querySpan.End()
-		return nil, err
-	}
-	querySpan.SetAttributes(attribute.Int("result_count", len(result)))
-	querySpan.End()
-
-	return result, nil
-}
-
-// getUserPermissionsRaw runs the permission query with engine.DB().QueryContext and scans
-// rows directly into []Permission. This avoids xorm's Find() reflection over 10k+ rows,
-// which was adding tens of ms after the DB had already returned.
-func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, engine *xorm.Engine, q string, params []any) ([]accesscontrol.Permission, error) {
-	rows, err := engine.DB().QueryContext(ctx, q, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// Pre-allocate with a reasonable capacity to limit reallocations for large result sets.
-	out := make([]accesscontrol.Permission, 0, 4096)
-	var action, scope string
-	for rows.Next() {
-		if err := rows.Scan(&action, &scope); err != nil {
-			return nil, err
+	result := make([]accesscontrol.Permission, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
+			// no permission to fetch
+			return nil
 		}
-		out = append(out, accesscontrol.Permission{Action: action, Scope: scope})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return out, nil
+
+		filter, params := accesscontrol.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles, s.sql.GetDialect())
+
+		q := `
+		SELECT
+			permission.action,
+			permission.scope
+			FROM permission
+			INNER JOIN role ON role.id = permission.role_id
+		` + filter
+
+		if len(query.RolePrefixes) > 0 {
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(query.RolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
+		}
+
+		if query.ExcludeRedundantManagedPermissions {
+			q += accesscontrol.ManagedPermissionsActionSetsFilter()
+		}
+
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return result, err
 }
 
 func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
