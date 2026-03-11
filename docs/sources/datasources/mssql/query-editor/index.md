@@ -148,6 +148,10 @@ To simplify syntax and to allow for dynamic components, such as date range filte
 Use macros in the `SELECT` clause to simplify the creation of time series queries.
 From the **Data operations** drop-down, choose a macro such as `$\_\_timeGroup` or `$\_\_timeGroupAlias`. Then, select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down. This generates a time-series query based on your selected time grouping.
 
+{{< admonition type="warning" >}}
+Time macros (`$__time`, `$__timeFilter`, etc.) don't support time zone parameters in Microsoft SQL Server and always expand to UTC values. If your timestamps aren't stored in UTC (common with `datetime`/`datetime2` types), convert them to UTC in your SQL query using `AT TIME ZONE … AT TIME ZONE 'UTC'` rather than passing a time zone argument to a macro.
+{{< /admonition >}}
+
 | **Macro**                                              | **Description**                                                                                                                                                                                                                          |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$__time(dateColumn)`                                  | Renames the specified column to `_time`. <br/>Example: `dateColumn AS time`                                                                                                                                                              |
