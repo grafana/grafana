@@ -111,23 +111,13 @@ func TestBroadcaster(t *testing.T) {
 	ch := make(chan int)
 	input := []int{1, 2, 3}
 	go func() {
+		defer close(ch)
 		for _, v := range input {
 			ch <- v
 		}
 	}()
-	t.Cleanup(func() {
-		close(ch)
-	})
 
-	b, err := NewBroadcaster(ctx, func(out chan<- int) error {
-		go func() {
-			for v := range ch {
-				out <- v
-			}
-		}()
-		return nil
-	})
-	require.NoError(t, err)
+	b := NewBroadcaster(ctx, ch)
 
 	sub, err := b.Subscribe(ctx)
 	require.NoError(t, err)
@@ -149,16 +139,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	defer cancel()
 
 	ch := make(chan int)
-	b, err := NewBroadcaster(ctx, func(out chan<- int) error {
-		go func() {
-			defer close(out)
-			for v := range ch {
-				out <- v
-			}
-		}()
-		return nil
-	})
-	require.NoError(t, err)
+	b := NewBroadcaster(ctx, ch)
 
 	// Create 101 subscribers that never read — more than the
 	// unsubscribe channel buffer (100) in the original code.

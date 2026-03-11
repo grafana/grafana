@@ -65,40 +65,22 @@ import (
 // using channels and other concurrency patterns since that's a way longer
 // topic for a refresher.
 
-// ConnectFunc is used to initialize the watch implementation. It should do very
-// basic work and checks and it has the chance to return an error. After that,
-// it should fork to a different goroutine with the provided channel and send to
-// it all the new events from the backing database. It is also responsible for
-// closing the provided channel under all circumstances, included returning an
-// error. The caller of this function will only receive from this channel (i.e.
-// it is guaranteed to never send to it or close it), hence providing a safe
-// separation of concerns and preventing panics.
-//
-// FIXME: this signature suffers from inversion of control. It would also be
-// much simpler if NewBroadcaster receives a context.Context and a <-chan T
-// instead. That would also reduce the scope of the broadcaster to only
-// broadcast to subscribers what it receives on the provided <-chan T. The
-// context.Context is still needed to provide additional values in case we want
-// to add observability into the broadcaster, which we want. The broadcaster
-// should still terminate on either the context being done or the provided
-// channel being closed.
-type ConnectFunc[T any] func(chan<- T) error
-
 type Broadcaster[T any] interface {
 	Subscribe(context.Context) (<-chan T, error)
 	Unsubscribe(<-chan T)
 }
 
-func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadcaster[T], error) {
+// NewBroadcaster creates a broadcaster that fans out items received on input to
+// all active subscribers. The caller owns the input channel and is responsible
+// for closing it when no more data will be sent. The broadcaster terminates
+// when either ctx is cancelled or input is closed.
+func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
 	b := &broadcaster[T]{
 		started: make(chan struct{}),
 	}
-	err := b.init(ctx, connect)
-	if err != nil {
-		return nil, err
-	}
+	b.init(ctx, input)
 
-	return b, nil
+	return b
 }
 
 type broadcaster[T any] struct {
@@ -158,14 +140,7 @@ func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
 const chanBufferLen = 100
 
 // init initializes the broadcaster. It should not be run more than once.
-func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error {
-	// create the stream that will connect us with the watch implementation and
-	// send it to them so they initialize and start sending data
-	stream := make(chan T, chanBufferLen)
-	if err := connect(stream); err != nil {
-		return err
-	}
-
+func (b *broadcaster[T]) init(ctx context.Context, input <-chan T) {
 	// initialize our internal state
 	b.shouldTerminate = ctx.Done()
 	b.cache = newChannelCache[T](ctx, 100)
@@ -174,14 +149,11 @@ func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error
 	b.subs = make(map[<-chan T]chan T)
 	b.terminated = make(chan struct{})
 
-	// start handling incoming data from the watch implementation. If data came
-	// in until now, it will be buffered in `stream`
-	go b.stream(stream)
+	// start handling incoming data from the provided input channel
+	go b.stream(input)
 
 	// unblock any Subscribe/Unsubscribe calls since we are ready to handle them
 	close(b.started)
-
-	return nil
 }
 
 // stream acts a message broker between the watch implementation that receives a
