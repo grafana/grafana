@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -1543,6 +1538,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Enables team APIs in the app platform
+  * @default false
+  */
+  kubernetesTeamsApi?: boolean;
+  /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
@@ -1652,4 +1652,9 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Enables the new Flame Graph UI containing the Call Tree view
+  * @default false
+  */
+  flameGraphWithCallTree?: boolean;
 }

@@ -41,9 +41,9 @@ export class MockDataSourceApi extends DataSourceApi {
     meta?: DataSourcePluginMeta,
     public error: string | null = null
   ) {
-    const instaceSettings =
+    const instanceSettings =
       typeof datasource === 'string' ? ({ name: datasource } as DataSourceInstanceSettings) : datasource;
-    super(instaceSettings);
+    super(instanceSettings);
     if (result) {
       this.result = result;
     }
