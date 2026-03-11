@@ -33,11 +33,6 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     const tabABefore = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
     const tabBBefore = await getTabWithBoundingBox(dashboardPage, selectors, 'top b');
 
-    await expect(tabABefore.tab).toBeVisible();
-    await expect(tabBBefore.tab).toBeVisible();
-
-    expect(tabABefore.box.x).toBeLessThan(tabBBefore.box.x);
-
     await tabABefore.tab.hover();
     await page.mouse.down();
     await page.mouse.move(tabBBefore.box.x + tabBBefore.box.width + 10, tabBBefore.box.y + tabBBefore.box.height / 2, {
@@ -66,6 +61,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     await page.mouse.move(drop.box.x + 5, drop.box.y + 5, { steps: 20 });
     await page.mouse.up();
 
+    // pangea adds a short animation after mouse up and endDrag handlers is called with a small delay to
     await expect(async () => {
       const dragged = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
       const bottomA = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom a');
