@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaExternalGroupMapping = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewExternalGroupMapping(), &ExternalGroupMappingList{}, resource.WithKind("ExternalGroupMapping"),
-		resource.WithPlural("externalgroupmappings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+		resource.WithPlural("externalgroupmappings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
 			FieldSelector: "spec.teamRef.name",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*ExternalGroupMapping)
@@ -24,7 +24,7 @@ var (
 				return cast.Spec.TeamRef.Name, nil
 			},
 		},
-			{
+			resource.SelectableField{
 				FieldSelector: "spec.externalGroupId",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*ExternalGroupMapping)
