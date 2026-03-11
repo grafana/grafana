@@ -100,7 +100,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       return;
     }
 
-    const values = field.values.toArray();
+    const values = field.values;
 
     values[row] = newValue.data;
     field.values = [...values];

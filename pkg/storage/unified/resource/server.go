@@ -559,7 +559,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
-		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash || k == utils.LabelGetFullpath {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
 			return nil, NewBadRequestError("can not save label: " + k)
 		}
 	}
@@ -1341,31 +1341,32 @@ func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
-	var err error
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
-		events, err := s.backend.WatchWriteEvents(s.ctx)
-		if err != nil {
-			return err
-		}
-		go func() {
-			for v := range events {
-				if v == nil {
-					s.log.Error("received nil event")
-					continue
-				}
-				// Skip events during batch updates
-				if v.PreviousRV < 0 {
-					continue
-				}
+	events, err := s.backend.WatchWriteEvents(s.ctx)
+	if err != nil {
+		return err
+	}
 
-				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
-				s.mostRecentRV.Store(v.ResourceVersion)
-				out <- v
+	out := make(chan *WrittenEvent, chanBufferLen)
+	go func() {
+		defer close(out)
+		for v := range events {
+			if v == nil {
+				s.log.Error("received nil event")
+				continue
 			}
-		}()
-		return nil
-	})
-	return err
+			// Skip events during batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
+			s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
+			s.mostRecentRV.Store(v.ResourceVersion)
+			out <- v
+		}
+	}()
+
+	s.broadcaster = NewBroadcaster(s.ctx, out)
+	return nil
 }
 
 //nolint:gocyclo

@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -593,6 +588,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
+  * Renders ad hoc filters and group by in a single unified control
+  * @default false
+  */
+  dashboardUnifiedDrilldownControls?: boolean;
   /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
@@ -1657,4 +1657,9 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
 }

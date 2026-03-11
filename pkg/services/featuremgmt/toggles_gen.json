@@ -1416,6 +1416,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardUnifiedDrilldownControls",
+        "resourceVersion": "1773081615691",
+        "creationTimestamp": "2026-03-09T18:40:15Z"
+      },
+      "spec": {
+        "description": "Renders ad hoc filters and group by in a single unified control",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardValidatorApp",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2220,6 +2235,19 @@
     },
     {
       "metadata": {
+        "name": "inlineLogDetailsNoScrolls",
+        "resourceVersion": "1772636622548",
+        "creationTimestamp": "2026-03-04T15:03:42Z"
+      },
+      "spec": {
+        "description": "Enables an inline version of Log Details that creates no new scrolls",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "interactiveLearning",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-10-22T08:06:21Z"
@@ -2891,7 +2919,8 @@
       "metadata": {
         "name": "logsContextDatasourceUi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-01-27T14:12:01Z"
+        "creationTimestamp": "2023-01-27T14:12:01Z",
+        "deletionTimestamp": "2026-03-10T16:59:23Z"
       },
       "spec": {
         "description": "Allow datasource to provide custom UI for context view",

@@ -666,6 +666,9 @@ type Cfg struct {
 	GarbageCollectionBatchSize                 int
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
+	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
+	// Default: 0 (no expiration).
+	StorageModeCacheTTL time.Duration
 
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
@@ -673,6 +676,7 @@ type Cfg struct {
 
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
+	DisablePruner                 bool
 	TenantApiServerAddress        string
 	TenantWatcherAllowInsecureTLS bool
 	TenantWatcherCAFile           string
