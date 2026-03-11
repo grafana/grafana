@@ -3651,15 +3651,18 @@
     {
       "metadata": {
         "name": "provisioning",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-22T09:03:50Z"
+        "resourceVersion": "1773217396085",
+        "creationTimestamp": "2024-11-22T09:03:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-11 08:23:16.085006 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Next generation provisioning... and git",
-        "stage": "experimental",
+        "description": "Enables Git Sync and as-code provisioning for Grafana resources",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
