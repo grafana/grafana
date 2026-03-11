@@ -200,7 +200,7 @@ func NewAPIService(
 					return authorizer.DecisionDeny, "no identity found", apierrors.NewUnauthorized("no identity found in context")
 				}
 
-			if a.GetResource() == "globalroles" {
+				if a.GetResource() == "globalroles" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
