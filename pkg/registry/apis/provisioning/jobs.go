@@ -8,12 +8,15 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -28,6 +31,7 @@ type jobsConnector struct {
 	jobs                  JobQueueGetter
 	historic              jobs.HistoryReader
 	access                auth.AccessChecker
+	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 }
 
@@ -37,6 +41,7 @@ func NewJobsConnector(
 	jobs JobQueueGetter,
 	historic jobs.HistoryReader,
 	access auth.AccessChecker,
+	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
 ) *jobsConnector {
 	return &jobsConnector{
@@ -45,6 +50,7 @@ func NewJobsConnector(
 		jobs:                  jobs,
 		historic:              historic,
 		access:                access,
+		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -177,11 +183,9 @@ func (c *jobsConnector) Connect(
 			}
 		}
 
-		if spec.Action == provisioning.JobActionPush || spec.Action == provisioning.JobActionMigrate {
-			if err := c.authorizeResourceJob(r.Context(), repo, cfg, spec); err != nil {
-				responder.Error(err)
-				return
-			}
+		if err := c.authorizeJob(r.Context(), repo, cfg, spec); err != nil {
+			responder.Error(err)
+			return
 		}
 
 		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
@@ -224,29 +228,125 @@ var (
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
 
-// authorizeResourceJob checks that the requesting user has the required permissions
-// for operations that read and write all supported resource types (export and migrate).
-// This runs at job creation time while the user's identity is still in the request
-// context, since the job executes later as the provisioning service identity.
-//
-// Delegates to the resources.Authorizer which checks:
-//  1. Read permission on all supported resource types at root level.
-//  2. Create permission on all supported resource types in the target folder.
+// authorizeJob dispatches pre-flight authorization checks based on the job action.
+func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	switch spec.Action {
+	case provisioning.JobActionPush, provisioning.JobActionMigrate:
+		return c.authorizeResourceJob(ctx, repo, cfg, spec)
+	case provisioning.JobActionDelete:
+		if spec.Delete != nil {
+			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete)
+		}
+	case provisioning.JobActionMove:
+		if spec.Move != nil {
+			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
+		}
+	}
+	return nil
+}
+
+// newJobAuthorizer creates an Authorizer for the given repository. Returns an error
+// if the repository does not implement Reader.
+func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
+	reader, ok := repo.(repository.Reader)
+	if !ok {
+		return nil, apierrors.NewBadRequest("repository does not support reading")
+	}
+	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled), nil
+}
+
+// authorizeResourceRefs fetches each referenced resource and checks that the user
+// has the given verb permission on it. Resources that no longer exist are skipped.
+func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, verb, action string) error {
+	if len(refs) == 0 {
+		return nil
+	}
+
+	clients, err := c.clients.Clients(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("create clients for authorization: %w", err)
+	}
+
+	for _, ref := range refs {
+		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
+		client, gvr, err := clients.ForKind(ctx, gvk)
+		if err != nil {
+			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
+		}
+
+		obj, err := client.Get(ctx, ref.Name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			return fmt.Errorf("authorize %s resource %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+		}
+
+		parsed := &resources.ParsedResource{
+			Existing: obj,
+			Obj:      obj,
+			Meta:     meta,
+			GVR:      gvr,
+		}
+		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
+			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+		}
+	}
+	return nil
+}
+
+// authorizeResourceJob checks read + create permissions on all supported resource
+// types for export and migrate jobs.
 func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
 	if spec.Push == nil && spec.Migrate == nil {
 		return nil
 	}
 
-	reader, ok := repo.(repository.Reader)
-	if !ok {
-		return apierrors.NewBadRequest("repository does not support reading")
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	if err != nil {
+		return err
 	}
-
-	authorizer := resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled)
 	if err := authorizer.AuthorizeReadAllSupported(ctx); err != nil {
 		return err
 	}
 	return authorizer.AuthorizeCreateAllSupported(ctx)
+}
+
+// authorizeDeleteJob checks delete permissions on targeted paths and resources.
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range opts.Paths {
+		if err := authorizer.AuthorizeDeleteByPath(ctx, path); err != nil {
+			return fmt.Errorf("authorize delete %q: %w", path, err)
+		}
+	}
+
+	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbDelete, "delete")
+}
+
+// authorizeMoveJob checks update permission on sources and create permission on targets.
+func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range opts.Paths {
+		if err := authorizer.AuthorizeMoveByPath(ctx, path, opts.TargetPath); err != nil {
+			return fmt.Errorf("authorize move %q: %w", path, err)
+		}
+	}
+
+	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbUpdate, "move")
 }
 
 // ValidUUID ensures the ID is valid for a blob.

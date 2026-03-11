@@ -669,3 +669,219 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestAuthorizeDeleteByPath(t *testing.T) {
+	t.Run("file path checks dashboard delete on parent folder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group &&
+				req.Resource == DashboardResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("root-level file checks dashboard delete on root folder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		rootFolder := RootFolder(repo)
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group &&
+				req.Resource == DashboardResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), rootFolder).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "dashboard.json")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("directory path delegates to AuthorizeDeleteFolder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized file path returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("file path with folder metadata uses stable UID", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(repo).Maybe()
+		parentMeta := NewFolderManifest("stable-folder-uid", "team-a")
+		data, _ := json.Marshal(parentMeta)
+		rw.On("Read", mock.Anything, "team-a/_folder.json", "").
+			Return(&repository.FileInfo{Data: data}, nil)
+		rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group &&
+				req.Resource == DashboardResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), "stable-folder-uid").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, rw, mockAccess, true)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+}
+
+func TestAuthorizeMoveByPath(t *testing.T) {
+	t.Run("file path checks update on source and create on target", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group &&
+				req.Resource == DashboardResource.Resource &&
+				req.Verb == utils.VerbUpdate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group &&
+				req.Resource == DashboardResource.Resource &&
+				req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("directory path delegates to AuthorizeMoveFolder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbUpdate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbCreate
+		}), mock.AnythingOfType("string")).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src-folder/", "dst-folder/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized on source returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "restricted/dash.json", "dest/dash.json")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("unauthorized on target returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), mock.Anything).Return(nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json")
+
+		assert.Error(t, err)
+	})
+}

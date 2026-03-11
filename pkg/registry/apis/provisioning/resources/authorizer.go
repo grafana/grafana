@@ -78,6 +78,21 @@ type Authorizer interface {
 	//   - Does NOT check permissions on contents of "old-project"
 	AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error
 
+	// AuthorizeDeleteByPath checks if the user has permission to delete the target
+	// at the specified path. For directory paths, it delegates to AuthorizeDeleteFolder.
+	// For file paths, it checks dashboard delete permission on the parent folder.
+	//
+	// Designed for pre-flight bulk authorization (e.g., delete jobs) where files
+	// are not parsed. For individual resource operations where the resource type
+	// is known, prefer AuthorizeResource instead.
+	AuthorizeDeleteByPath(ctx context.Context, path string) error
+
+	// AuthorizeMoveByPath checks if the user has permission to move the source
+	// path to the target path. For directory sources, delegates to AuthorizeMoveFolder.
+	// For file sources, checks dashboard update permission on the source's parent
+	// folder and dashboard create permission on the target folder.
+	AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath string) error
+
 	// AuthorizeReadAllSupported checks if the current user has read (get) permission
 	// on every supported provisioning resource type at the root level.
 	// This is used before operations that enumerate all resources (e.g. full export).
@@ -300,6 +315,94 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 
 	// Check create permission on the target parent folder
 	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
+}
+
+// AuthorizeDeleteByPath checks if the user has permission to delete the target
+// at the specified path.
+//
+// For directory paths, it delegates to AuthorizeDeleteFolder which checks
+// folder delete permission in the parent folder context.
+//
+// For file paths, it checks dashboard delete permission on the parent folder.
+// Most provisioned files are dashboards; when the exact resource type is known
+// the caller should use AuthorizeResource with the resolved resource instead.
+func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path string) error {
+	if safepath.IsDir(path) {
+		return a.AuthorizeDeleteFolder(ctx, path)
+	}
+
+	parentPath := safepath.Dir(path)
+	var folderID string
+	if parentPath == "" {
+		folderID = RootFolder(a.repo)
+	} else {
+		var err error
+		folderID, err = GetFolderID(ctx, a.reader, parentPath, "", a.folderMetadataEnabled)
+		if err != nil {
+			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
+		}
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    DashboardResource.Group,
+		Resource: DashboardResource.Resource,
+		Verb:     utils.VerbDelete,
+	}, folderID)
+}
+
+// AuthorizeMoveByPath checks if the user has permission to move the source path
+// to the target path.
+//
+// For directory sources, delegates to AuthorizeMoveFolder which checks
+// folders:update on the source and folders:create on the target parent.
+//
+// For file sources, checks dashboards:update (write) on the source's parent folder
+// and dashboards:create on the target folder. This mirrors how AuthorizeMoveFolder
+// checks update + create but uses dashboard resource permissions for files.
+func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath string) error {
+	if safepath.IsDir(sourcePath) {
+		return a.AuthorizeMoveFolder(ctx, sourcePath, targetPath)
+	}
+
+	// Check update permission on the source file's parent folder
+	sourceParent := safepath.Dir(sourcePath)
+	var sourceFolderID string
+	if sourceParent == "" {
+		sourceFolderID = RootFolder(a.repo)
+	} else {
+		var err error
+		sourceFolderID, err = GetFolderID(ctx, a.reader, sourceParent, "", a.folderMetadataEnabled)
+		if err != nil {
+			return fmt.Errorf("get source folder ID for %q: %w", sourcePath, err)
+		}
+	}
+
+	if err := a.access.Check(ctx, authlib.CheckRequest{
+		Group:    DashboardResource.Group,
+		Resource: DashboardResource.Resource,
+		Verb:     utils.VerbUpdate,
+	}, sourceFolderID); err != nil {
+		return err
+	}
+
+	// Check create permission on the target folder
+	targetParent := safepath.Dir(targetPath)
+	var targetFolderID string
+	if targetParent == "" {
+		targetFolderID = RootFolder(a.repo)
+	} else {
+		var err error
+		targetFolderID, err = GetFolderID(ctx, a.reader, targetParent, "", a.folderMetadataEnabled)
+		if err != nil {
+			return fmt.Errorf("get target folder ID for %q: %w", targetPath, err)
+		}
+	}
+
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    DashboardResource.Group,
+		Resource: DashboardResource.Resource,
+		Verb:     utils.VerbCreate,
+	}, targetFolderID)
 }
 
 // AuthorizeReadAllSupported checks if the current user has read (get) permission
