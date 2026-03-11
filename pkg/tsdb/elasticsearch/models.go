@@ -128,13 +128,9 @@ func describeMetric(metricType, field string) string {
 }
 
 func (q *Query) IsEsqlQuery() bool {
-	return q.IsCodeEditorType() && q.QueryType != nil && *q.QueryType == "esql"
+	return q.QueryType != nil && *q.QueryType == "esql"
 }
 
 func (q *Query) IsDSLQuery() bool {
-	return q.IsCodeEditorType() && q.QueryType != nil && *q.QueryType == "dsl"
-}
-
-func (q *Query) IsCodeEditorType() bool {
-	return q.EditorType != nil && *q.EditorType == "code"
+	return q.QueryType != nil && *q.QueryType == "dsl"
 }

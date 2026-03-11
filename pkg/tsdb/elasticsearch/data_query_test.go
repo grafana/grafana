@@ -1931,9 +1931,8 @@ func TestExecuteElasticsearchDataQuery_ReplacesEsqlIndexPlaceholder(t *testing.T
 		Queries: []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
-					"editorType": "code",
-					"queryLanguage": "esql",
-					"esqlQuery": "FROM $index | LIMIT 10"
+					"queryType": "esql",
+					"query": "FROM $index | LIMIT 10"
 				}`),
 				TimeRange: timeRange,
 				RefID:     "A",
