@@ -16,6 +16,7 @@ import {
   CatalogPlugin,
   InstancePlugin,
   LocalPlugin,
+  PluginUpdateStrategy,
   ProvisionedPlugin,
   RemotePlugin,
   RemotePluginStatus,
@@ -386,14 +387,15 @@ function isNotHiddenByConfig(id: string) {
 }
 
 export function isManagedPlugin(id: string, remote?: RemotePlugin) {
+  if (!config.pluginAdminExternalManageEnabled) {
+    return false;
+  }
+
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
   let remoteManaged = false;
   if (remote) {
-    remoteManaged =
-      remote.managed.enabled &&
-      config.pluginAdminExternalManageEnabled &&
-      Boolean(config.featureToggles.managedPluginsV2);
+    remoteManaged = remote.managed.enabled && Boolean(config.featureToggles.managedPluginsV2);
   }
 
   // pluginCatalogManagedPlugins considers the instance config as source of truth
@@ -441,8 +443,8 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
     plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    (plugin.isManaged &&
-      (plugin.signatureType === PluginSignatureType.grafana || plugin.signatureType === PluginSignatureType.core)) // Managed plugins cannot be modified
+    plugin.isManaged || // Managed plugins cannot be modified
+    (plugin.managed.enabled && plugin.managed.strategy === PluginUpdateStrategy.Assigned) // Managed assigned plugins cannot be modified
   ) {
     return false;
   }
