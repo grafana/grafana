@@ -173,11 +173,17 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
 
 export function getFilterTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
   const editableVariables = getEditableVariables();
-  return FILTER_VARIABLE_TYPES.map((variableType) => ({
+  const result = FILTER_VARIABLE_TYPES.map((variableType) => ({
     label: editableVariables[variableType].name,
     value: variableType,
     description: editableVariables[variableType].description,
   }));
+
+  if (!config.featureToggles.groupByVariable) {
+    return result.filter((option) => option.value !== 'groupby');
+  }
+
+  return result;
 }
 
 export function getVariableEditor(type: EditableVariableType) {
