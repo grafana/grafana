@@ -20,7 +20,7 @@ review_date: 2026-03-10
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). The Prometheus query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the Prometheus query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). You can access the Prometheus query editor from a dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**, or from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For options and functions common to all query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
@@ -74,7 +74,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
-  - **Verbose** - Displays all label names.
+  - **Verbose** - Displays all label names and values.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
 
 - **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
@@ -86,8 +86,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 
 - **Type** - This setting determines the query type. These include:
   - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
-  - **Range** - Returns a range vector - a set of time series
-    a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
+  - **Range** - Returns a range vector, a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
   - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform).
 
 {{< admonition type="note" >}}
@@ -116,15 +115,7 @@ Click the **Open book icon** to open the Metrics explorer, where you can search 
 
 If you would like to explore your metrics in the query builder further, you can open the **Metrics explorer** by clicking the first option in the metric select component of the query builder.
 
-The Metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type, and description for each metric. You can enter text into the search input to filter results.
-You can also filter by type.
-
-The following options are included under the **Additional Settings** drop-down:
-
-- **Include description in search**: Toggle on to search by both name and description.
-- **Include results with no metadata**: Toggle on to include metrics that lack type or description metadata.
-- **Disable text wrap**: Toggle on to disable text wrapping.
-- **Enable regex search**: Toggle on to filter metric names by regex search, which uses an additional call on the Prometheus API.
+The Metrics explorer displays all metrics in a paginated table list. The list shows the name, type, and description for each metric. You can enter text into the search input to filter results, and use the type filter to narrow metrics by type (Counter, Gauge, Histogram, Summary, etc.).
 
 {{< admonition type="note" >}}
 The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-browser-in-code-mode) are separate elements. The Metrics explorer does not have the ability to browse labels yet, but the Metrics browser can display all labels on a metric name.
