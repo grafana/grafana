@@ -23,13 +23,14 @@ async function getTabWithBoundingBox(page: DashboardPage, selectors: E2ESelector
 }
 
 test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
-  test('drag a tab within the same tabs manager', async ({ dashboardPage, selectors, page }) => {
+  test('drag a tab within the same manager and then to a different row', async ({ dashboardPage, selectors, page }) => {
     await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
       checkPanelsVisible: false,
       requiresDataSourceSelection: false,
     });
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
+    // drag a tab within the same tabs manager ---
     const tabABefore = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
     const tabBBefore = await getTabWithBoundingBox(dashboardPage, selectors, 'top b');
 
@@ -44,15 +45,9 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     const tabBAfter = await getTabWithBoundingBox(dashboardPage, selectors, 'top b');
 
     expect(tabAAfter.box.x).toBeGreaterThan(tabBAfter.box.x);
-  });
 
-  test('drag a tab to a different tabs manager (in a different row)', async ({ dashboardPage, selectors, page }) => {
-    await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
-      checkPanelsVisible: false,
-      requiresDataSourceSelection: false,
-    });
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-
+    // drag a tab to a different tabs manager (in a different row) ---
+    // Tabs have been swapped, re-fetch references for the cross-row drag
     const drag = await getTabWithBoundingBox(dashboardPage, selectors, 'top a');
     const drop = await getTabWithBoundingBox(dashboardPage, selectors, 'bottom b');
 
