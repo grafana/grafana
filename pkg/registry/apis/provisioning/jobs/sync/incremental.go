@@ -24,7 +24,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if previousRef == currentRef {
 		// We still need to detect missing folder metadata if the flag is enabled
 		if folderMetadataEnabled {
-			detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer)
+			if err := detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer); err != nil {
+				return err
+			}
 		}
 		progress.SetFinalMessage(ctx, "same commit as last time")
 		return nil
@@ -64,7 +66,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	if folderMetadataEnabled {
-		detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer)
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+			return err
+		}
 	}
 
 	if len(affectedFolders) > 0 {
@@ -272,19 +276,20 @@ func cleanupOrphanedFolders(
 
 // detectMissingFolderMetadata reads the full file tree and records warnings for folders
 // that do not have a folder metadata file.
-func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
+func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.detect_missing_folder_metadata")
 	defer span.End()
 
 	readerRepo, ok := repo.(repository.Reader)
 	if !ok {
-		return
+		span.RecordError(fmt.Errorf("repository does not implement Reader"))
+		return nil
 	}
 
 	tree, err := readerRepo.ReadTree(ctx, currentRef)
 	if err != nil {
 		span.RecordError(err)
-		return
+		return fmt.Errorf("detect missing folder metadata: %w", err)
 	}
 
 	changeActions := make(map[string]repository.FileAction, len(diff))
@@ -303,4 +308,6 @@ func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned,
 		}
 		progress.Record(ctx, builder.Build())
 	}
+
+	return nil
 }

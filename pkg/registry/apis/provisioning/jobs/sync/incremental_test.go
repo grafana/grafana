@@ -915,7 +915,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("ReadTree error is non-fatal", func(t *testing.T) {
+	t.Run("ReadTree error fails the job", func(t *testing.T) {
 		mockVersioned := repository.NewMockVersioned(t)
 		mockReader := repository.NewMockReader(t)
 		repo := &compositeRepo{
@@ -947,6 +947,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry(nil), fmt.Errorf("read tree failed"))
 
 		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
-		require.NoError(t, err)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "detect missing folder metadata: read tree failed")
 	})
 }
