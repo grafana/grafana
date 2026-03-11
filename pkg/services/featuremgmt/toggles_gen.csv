@@ -99,7 +99,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,secretsKeeperUI,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-01-23,alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 2025-01-27,alertingSaveStateCompressed,preview,@grafana/alerting-squad,false,false,false
-2024-11-26,scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
+2024-11-27,scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-07-31,useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-08-29,useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-11-11,logQLScope,privatePreview,@grafana/oss-big-tent,false,false,false
@@ -151,7 +151,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-08-29,exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 2024-10-14,appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 2024-09-09,groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
-2024-09-25,alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
+2024-09-26,alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 2024-09-17,improvedExternalSessionHandling,GA,@grafana/identity-access-team,false,false,false
 2024-09-23,useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 2024-09-26,rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
@@ -246,7 +246,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
@@ -274,7 +274,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
 2025-12-01,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
-2026-03-02,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
+2026-03-03,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
@@ -293,7 +293,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
-2025-12-04,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-12-05,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-12-09,multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
 2026-03-02,dashboardSectionVariables,experimental,@grafana/dashboards-squad,false,false,true
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
