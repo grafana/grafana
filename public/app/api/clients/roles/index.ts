@@ -23,15 +23,11 @@ const transformRolesError = (error: FetchBaseQueryError) => {
 export const rolesAPI = generatedAPI.injectEndpoints({
   overrideExisting: true,
   endpoints: (build) => ({
-    listUserRoles: build.query<
-      Role[],
-      { userId: number; includeHidden?: boolean; includeMapped?: boolean; targetOrgId?: number }
-    >({
+    listUserRoles: build.query<Role[], { userId: number; includeHidden?: boolean; targetOrgId?: number }>({
       query: (queryArg) => ({
         url: `/access-control/users/${queryArg.userId}/roles`,
         params: {
           includeHidden: queryArg.includeHidden,
-          includeMapped: queryArg.includeMapped,
           targetOrgId: queryArg.targetOrgId,
         },
       }),

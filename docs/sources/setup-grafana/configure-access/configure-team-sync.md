@@ -21,6 +21,10 @@ Team sync lets you set up synchronization between your auth providers teams and 
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+The legacy Group Attribute Sync feature that mapped Identity Provider groups directly to Grafana roles has been removed. To manage access from external groups, use team sync and assign roles to teams instead.
+{{< /admonition >}}
+
 Grafana keeps track of all synchronized users in teams, and you can see which users have been synchronized in the team members list, see `LDAP` label in screenshot.
 This mechanism allows Grafana to remove an existing synchronized user from a team when its group membership changes. This mechanism also enables you to manually add a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 

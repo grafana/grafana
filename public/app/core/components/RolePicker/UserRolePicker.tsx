@@ -62,7 +62,7 @@ export const UserRolePicker = ({
   const shouldFetch = apply ? !roles && !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
 
   const { data: fetchedRoles, isLoading: isFetching } = useListUserRolesQuery(
-    shouldFetch ? { userId, includeHidden: true, includeMapped: true, targetOrgId: orgId } : skipToken
+    shouldFetch ? { userId, includeHidden: true, targetOrgId: orgId } : skipToken
   );
 
   const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();

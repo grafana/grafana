@@ -1218,14 +1218,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "groupAttributeSync",
-			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
-			Stage:        FeatureStagePrivatePreview,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "alertingQueryAndExpressionsStepMode",
 			Description:  "Enables step mode for alerting queries and expressions",
 			Stage:        FeatureStageGeneralAvailability,
