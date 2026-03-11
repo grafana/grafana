@@ -67,6 +67,13 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -115,6 +122,13 @@ jobs:
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
           CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
