@@ -79,7 +79,7 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.2 report \
               --service grafana \
               --service-url "https://fsperfbaseline.grafana-dev.net" \
               --service-version "rrc-instant" \
@@ -104,7 +104,7 @@ jobs:
             -e PROMETHEUS_URL="$PROMETHEUS_URL" \
             -e PROMETHEUS_USER="$PROMETHEUS_USER" \
             -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.1 report \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v1.0.2 report \
               --service grafana \
               --service-url "https://fsperf.grafana-dev.net" \
               --service-version "rrc-instant" \
