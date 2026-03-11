@@ -80,7 +80,6 @@ type kvStorageBackend struct {
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
 	garbageCollection            GarbageCollectionConfig
-	withExperimentalClusterScope bool
 	lastImportStore              *lastImportStore
 	lastImportTimeMaxAge         time.Duration
 	//tracer        trace.Tracer
