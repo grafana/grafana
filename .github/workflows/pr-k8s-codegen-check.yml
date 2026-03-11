@@ -25,6 +25,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update k8s codegen
       run: ./hack/update-codegen.sh

@@ -1871,9 +1871,9 @@
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
       "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications_one": "{{count}} notification",
+      "timeline-n-notifications_one": "{{count}} notifications",
       "timeline-n-notifications_other": "{{count}} notifications",
-      "timeline-n-receivers_one": "{{count}} receiver",
+      "timeline-n-receivers_one": "{{count}} receivers",
       "timeline-n-receivers_other": "{{count}} receivers",
       "timeline-one-notification": "1 notification",
       "timeline-status-firing": "Firing",
@@ -2243,6 +2243,12 @@
       "uuid-not-found-title": "Notification not found",
       "yes": "Yes"
     },
+    "notification-history": {
+      "enrichment-explore": "View in Explore",
+      "enrichment-no-logs": "No log lines",
+      "enrichment-type-logs": "logs",
+      "enrichments": "Enrichments:"
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
@@ -2421,7 +2427,7 @@
         "title-new-notification-policy": "New notification policy"
       },
       "default-policy": {
-        "route-count_one": "{{count}} route",
+        "route-count_one": "{{count}} routes",
         "route-count_other": "{{count}} routes",
         "title": "Default policy",
         "update": "Update policy"
@@ -7192,8 +7198,8 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
-      "affected-dashboards_other": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
+      "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
@@ -8829,6 +8835,20 @@
     "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
+    "presets": {
+      "circle": "Circle",
+      "circle_desc": "plain round, from thresholds",
+      "gradient": "Gradient",
+      "gradient_desc": "gradient color scale",
+      "neon": "Neon",
+      "neon_desc": "round, single color endpoint glow",
+      "neonSegmented": "Neon segmented",
+      "neonSegmented_desc": "round, few segments",
+      "segmented": "Segmented",
+      "segmented_desc": "segmented thresholds",
+      "standard": "Standard",
+      "standard_desc": "plain, from thresholds"
+    },
     "suggestions": {
       "arc": "Gauge",
       "circular": "Circular gauge",
@@ -10430,8 +10450,8 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frames,",
-      "count-frames_other": "{{count}} frames,",
+      "count-frames_one": "{{count}} frames, ",
+      "count-frames_other": "{{count}} frames, ",
       "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
@@ -10694,8 +10714,8 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <strong>{{count}} dashboards.</strong>",
-      "num-affected_other": "This update will affect <strong>{{count}} dashboards.</strong>",
+      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
+      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     }
@@ -10888,7 +10908,8 @@
     },
     "log-line-details": {
       "clear-search": "Clear",
-      "close": "Close log details",
+      "close-inline-details": "Close details for this log",
+      "close-sidebar-details": "Close log details sidebar",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
       "displayed-fields-section": "Organize displayed fields",
@@ -13695,7 +13716,7 @@
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
       "data": "Data",
-      "footer-items_one": "{{count}} item",
+      "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
@@ -14507,8 +14528,8 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)",
-      "too-many-points_other": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)"
+      "too-many-points_one": "Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)",
+      "too-many-points_other": "Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)"
     }
   },
   "support-bundles": {
