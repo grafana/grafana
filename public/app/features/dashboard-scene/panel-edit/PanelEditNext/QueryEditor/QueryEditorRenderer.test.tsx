@@ -95,7 +95,7 @@ describe('QueryEditorRenderer', () => {
       return (
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-          qrState={{ queries: [queryA, queryB], data: undefined, isLoading: false, queryError: undefined }}
+          qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
           panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{

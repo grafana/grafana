@@ -894,11 +894,13 @@
       "aria-label-more-actions": "'{{contactPointName}}' 연락처에 대한 추가 동작",
       "ariaLabel-delete": "삭제",
       "button-edit": "편집",
+      "button-history": "",
       "button-view": "보기",
       "export-ariaLabel-export": "내보내기",
       "export-label-export": "내보내기",
       "label-delete": "삭제",
       "label-manage-permissions": "권한 관리",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "프로비저닝된 연락처는 UI에서 편집할 수 없습니다"
     },
     "contact-point-selector": {
@@ -2079,6 +2081,12 @@
       },
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "정말 \"{{muteTiming}}\"을(를) 삭제하시겠어요?"
     },
@@ -2176,47 +2184,8 @@
       "body-no-alertmanager-found": "외부 Alertmanager를 찾을 수 없으며 내장된 Grafana Alertmanager에 액세스할 수 없습니다.",
       "title-no-alertmanager-found": "Alertmanager를 찾을 수 없습니다"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "연락처로 검색",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "연락처 선택",
       "search-query-input-placeholder-search": "검색"
     },
@@ -2381,6 +2350,7 @@
       "tooltip-managed-by-plugin": "이 규칙은 {{pluginName}} 플러그인에서 관리합니다"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "접기",
       "aria-label-expand": "펼치기",
       "aria-label-more": "정책에 대한 추가 동작",
@@ -2391,9 +2361,9 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "일치하는 다른 정책을 찾을 수 없는 경우 모든 경고 인스턴스는 기본 정책에 의해 처리됩니다.",
         "title": "기본 정책",
-        "update": "기본 정책 업데이트"
+        "update": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "삭제 진행",
@@ -2408,7 +2378,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "다음과 같이 쉼표로 구분된 일치 조건의 목록을 사용하여 알림 정책을 필터링합니다. <1>심각도=심각, 지역=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "자동 생성된 정책",
       "matchers": "일치 조건",
       "metadata": {
@@ -2438,24 +2408,23 @@
         },
         "n-instances_other": "인스턴스"
       },
-      "new-child": "새 하위 정책",
-      "new-policy": "새 정책 추가",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "일치 조건 없음",
       "reload-policies": "정책 다시 로딩",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "정책 저장",
       "update": {
         "please-wait": "알림 정책을 업데이트하는 동안 잠시 기다려 주세요.",
-        "update-policy": "정책 업데이트",
+        "update-route": "",
         "updating": "업데이트 중..."
       },
       "update-errors": {
@@ -2498,9 +2467,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "새 하위 정책",
-      "label-new-sibling-above": "위에 형제 항목 추가",
-      "label-new-sibling-below": "아래에 형제 항목 추가"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3483,7 +3452,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "알림 정책 추가"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3524,7 +3493,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "삭제",
       "label-edit": "편집",
-      "label-export": "내보내기"
+      "label-export": "내보내기",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "네, 연락처를 삭제해 주세요",
@@ -3556,7 +3526,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "알림 정책 편집"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5314,6 +5284,7 @@
       "panel-description": "패널 설명 변경",
       "panel-edit": "패널 변경",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
+      "panel-preset": "",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
       "panel-title": "패널 제목 변경",
@@ -6772,6 +6743,7 @@
       "title": {
         "description": "설명",
         "panel-links": "패널 링크",
+        "panel-styles": "",
         "title": "제목",
         "transparent-background": "투명 배경"
       }
@@ -6983,6 +6955,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "뒤로"
@@ -6995,6 +6970,11 @@
         }
       },
       "title-close": "닫기"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "이 대시보드는 Grafana 프로비저닝에서 관리하며 삭제할 수 없습니다. 대시보드를 삭제하려면 구성 파일에서 대시보드를 제거하세요.",
@@ -9624,6 +9604,9 @@
     },
     "cascader": {
       "clear-button": "선택 초기화"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "색상",
@@ -13469,7 +13452,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13565,7 +13550,6 @@
       "alerts-loading": "",
       "card-click": "{{id}} 카드 선택",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "쿼리 및 표현식",
       "toggle-size": "사이드바 크기 토글",
@@ -14788,6 +14772,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "시간 범위를 벗어난 데이터",
       "zoom-to-data": "데이터 확대/축소"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
