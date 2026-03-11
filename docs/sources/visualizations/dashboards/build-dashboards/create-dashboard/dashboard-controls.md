@@ -150,7 +150,7 @@ To add a URL link to your dashboard, follow these steps:
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Dashboard link**.
 
-{{< shared-snippet path="/docs/grafana/next/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
+{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -160,18 +160,3 @@ To add a URL link to your dashboard, follow these steps:
 {{< /docs/list >}}
 
 ## Add filters
-
-<!--from click dashboard link 
-1. In the **Type** drop-down, select **Link**. <!-- shared content
-1. In the **URL** field, enter the URL to which you want to link.
-
-   Depending on the target, you might want to include field values. **Example:** https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests
-
-1. In the **Tooltip** field, enter the tooltip you want the link to display when the user hovers their mouse over it.
-1. In the **Icon** drop-down, choose the icon you want displayed with the link.
-1. Set link options; by default, these options are enabled for URL links:
-   - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
-   - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link.
-   - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
-   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar. /shared content 
-   to save -->
