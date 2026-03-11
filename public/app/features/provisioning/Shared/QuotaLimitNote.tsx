@@ -25,13 +25,16 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
     <Stack direction="row" alignItems="flex-start">
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
-        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>
-        {/* Generic message about resource quota */}
+        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans> {/* Generic message about resource quota */}
         {hasRepoLimit && hasResourceLimit ? (
-          <Trans i18nKey="provisioning.quota-limit.note-message-both" count={maxRepositories}>
-            Your account is limited to {{ count: maxRepositories }} connected repositories and{' '}
-            {{ resourceLimit: maxResourcesPerRepository }} synced resources per repository. To increase limits,
-          </Trans>
+          <>
+            <Trans i18nKey="provisioning.quota-limit.note-message-both-repositories" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories
+            </Trans>{' '}
+            <Trans i18nKey="provisioning.quota-limit.note-message-both-resources" count={maxResourcesPerRepository}>
+              and {{ count: maxResourcesPerRepository }} synced resources per repository. To increase limits,
+            </Trans>
+          </>
         ) : hasResourceLimit ? (
           <Trans i18nKey="provisioning.quota-limit.note-message-resource" count={maxResourcesPerRepository}>
             Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add
