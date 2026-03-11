@@ -894,11 +894,13 @@
       "aria-label-more-actions": "連絡先「{{contactPointName}}」のその他の操作",
       "ariaLabel-delete": "削除",
       "button-edit": "編集",
+      "button-history": "",
       "button-view": "表示",
       "export-ariaLabel-export": "エクスポート",
       "export-label-export": "エクスポート",
       "label-delete": "削除",
       "label-manage-permissions": "権限を管理する",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "プロビジョニングされた連絡先はUI上で編集できません"
     },
     "contact-point-selector": {
@@ -2079,6 +2081,12 @@
       },
       "noOptionsMessage-no-datasources-found": "データソースが見つかりません"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "「{{muteTiming}}」を削除してもよろしいですか？"
     },
@@ -2176,47 +2184,8 @@
       "body-no-alertmanager-found": "外部のAlertmanagerが見つかりません。また、内蔵のGrafana Alertmanagerにアクセスできない可能性があります。",
       "title-no-alertmanager-found": "Alertmanagerが見つかりません"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "連絡先で検索",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "コンタクトポイントを選択",
       "search-query-input-placeholder-search": "検索"
     },
@@ -2381,6 +2350,7 @@
       "tooltip-managed-by-plugin": "このルールは{{pluginName}}プラグインによって管理されています"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "折りたたみ表示",
       "aria-label-expand": "展開",
       "aria-label-more": "ポリシーのその他の操作",
@@ -2391,9 +2361,9 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "一致する他のポリシーが見つからない場合、すべてのアラートインスタンスはデフォルトのポリシーによって処理されます。",
         "title": "デフォルトのポリシー",
-        "update": "デフォルトのポリシーを更新する"
+        "update": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "はい、ポリシーを削除します",
@@ -2408,7 +2378,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "通知ポリシーを、カンマで区切られたマッチャーのリストを使用してフィルタリングします。例：<1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "自動生成されたポリシー",
       "matchers": "マッチャー",
       "metadata": {
@@ -2438,24 +2408,23 @@
         },
         "n-instances_other": "インスタンス"
       },
-      "new-child": "新しい子ポリシー",
-      "new-policy": "新しいポリシーを追加",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "マッチャーなし",
       "reload-policies": "ポリシーを再読み込み",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "ポリシーを保存",
       "update": {
         "please-wait": "通知ポリシーを更新している間、しばらくお待ちください。",
-        "update-policy": "ポリシーを更新します",
+        "update-route": "",
         "updating": "更新中..."
       },
       "update-errors": {
@@ -2498,9 +2467,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "新しい子ポリシー",
-      "label-new-sibling-above": "上に新しい兄弟ポリシーを追加",
-      "label-new-sibling-below": "下に新しい兄弟ポリシーを追加"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3483,7 +3452,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "通知ポリシーを追加"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3524,7 +3493,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "削除",
       "label-edit": "編集",
-      "label-export": "エクスポート"
+      "label-export": "エクスポート",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "はい、連絡先を削除する",
@@ -3556,7 +3526,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "通知ポリシーを編集"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5314,6 +5284,7 @@
       "panel-description": "パネルの説明を変更",
       "panel-edit": "パネルの変更",
       "panel-max-repeats-per-row": "行あたりの最大繰り返し回数",
+      "panel-preset": "",
       "panel-repeat-direction": "方向を繰り返す",
       "panel-repeat-variable": "パネルの繰り返し",
       "panel-title": "パネルのタイトルを変更",
@@ -6772,6 +6743,7 @@
       "title": {
         "description": "説明",
         "panel-links": "パネルリンク",
+        "panel-styles": "",
         "title": "タイトル",
         "transparent-background": "透明の背景"
       }
@@ -6983,6 +6955,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "戻る"
@@ -6995,6 +6970,11 @@
         }
       },
       "title-close": "閉じる"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "このダッシュボードはGrafanaプロビジョニングによって管理されており、削除できません。構成ファイルからダッシュボードを削除して削除します。",
@@ -9624,6 +9604,9 @@
     },
     "cascader": {
       "clear-button": "選択をクリア"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "カラー",
@@ -13469,7 +13452,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13565,7 +13550,6 @@
       "alerts-loading": "",
       "card-click": "カード{{id}}を選択",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "クエリと式",
       "toggle-size": "サイドバーのサイズを切り替える",
@@ -14788,6 +14772,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "時間範囲外のデータ",
       "zoom-to-data": "データにズーム"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
