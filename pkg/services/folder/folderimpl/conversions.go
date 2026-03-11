@@ -72,8 +72,9 @@ func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers ma
 		Version:     int(meta.GetGeneration()),
 		ManagedBy:   manager.Kind,
 
-		Fullpath:     meta.GetAnnotation(utils.AnnoKeyFullpath),
-		FullpathUIDs: meta.GetAnnotation(utils.AnnoKeyFullpathUIDs),
+		// Fullpath/FullpathUIDs are not stored on objects; callers use buildFolderFullPaths when needed
+		Fullpath:     "",
+		FullpathUIDs: "",
 		URL:          url,
 		Created:      created,
 		Updated:      *updated,

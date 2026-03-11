@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -2616,6 +2608,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 			Expression:   "false",
 		},
 	}

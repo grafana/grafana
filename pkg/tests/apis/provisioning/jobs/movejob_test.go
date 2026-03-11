@@ -1,4 +1,4 @@
-package provisioning
+package jobs
 
 import (
 	"context"
@@ -28,9 +28,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/all-panels.json":    "dashboard1.json",
-			"testdata/text-options.json":  "dashboard2.json",
-			"testdata/timeline-demo.json": "folder/dashboard3.json",
+			"../testdata/all-panels.json":    "dashboard1.json",
+			"../testdata/text-options.json":  "dashboard2.json",
+			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
@@ -210,9 +210,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		}, time.Second*5, time.Millisecond*50, "repository should be deleted before creating new one")
 
 		// Create modified test files with unique UIDs for ResourceRef testing
-		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
-		textOptionsContent := helper.LoadFile("testdata/text-options.json")
-		timelineDemoContent := helper.LoadFile("testdata/timeline-demo.json")
+		allPanelsContent := helper.LoadFile("../testdata/all-panels.json")
+		textOptionsContent := helper.LoadFile("../testdata/text-options.json")
+		timelineDemoContent := helper.LoadFile("../testdata/timeline-demo.json")
 
 		// Modify UIDs to be unique for ResourceRef tests
 		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "moveref1"`, 1)

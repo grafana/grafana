@@ -78,6 +78,16 @@ type Authorizer interface {
 	//   - Does NOT check permissions on contents of "old-project"
 	AuthorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error
 
+	// AuthorizeReadAllSupported checks if the current user has read (get) permission
+	// on every supported provisioning resource type at the root level.
+	// This is used before operations that enumerate all resources (e.g. full export).
+	AuthorizeReadAllSupported(ctx context.Context) error
+
+	// AuthorizeCreateAllSupported checks if the current user has create permission
+	// on every supported provisioning resource type within the repository's target
+	// folder. For instance-scoped repositories the check runs against the root folder.
+	AuthorizeCreateAllSupported(ctx context.Context) error
+
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
@@ -290,6 +300,39 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveFolder(ctx context.Context, origin
 
 	// Check create permission on the target parent folder
 	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
+}
+
+// AuthorizeReadAllSupported checks if the current user has read (get) permission
+// on every supported provisioning resource type at the root level.
+func (a *ProvisioningAuthorizer) AuthorizeReadAllSupported(ctx context.Context) error {
+	for _, kind := range SupportedProvisioningResources {
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    kind.Group,
+			Resource: kind.Resource,
+			Verb:     utils.VerbGet,
+		}, ""); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// AuthorizeCreateAllSupported checks if the current user has create permission
+// on every supported provisioning resource type within the repository's target
+// folder. For instance-scoped repositories the check runs against the root folder.
+func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context) error {
+	targetFolder := RootFolder(a.repo)
+
+	for _, kind := range SupportedProvisioningResources {
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    kind.Group,
+			Resource: kind.Resource,
+			Verb:     utils.VerbCreate,
+		}, targetFolder); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // AuthorizeWrite checks if writes are allowed to the specified ref.

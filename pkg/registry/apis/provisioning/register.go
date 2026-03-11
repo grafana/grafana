@@ -700,7 +700,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.folderMetadataEnabled)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -934,6 +934,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connHealthChecker,
 				b.connectionFactory,
 				informerFactoryResyncInterval,
+				b.registry,
 			)
 			if err != nil {
 				return err
