@@ -2103,15 +2103,14 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 	t.Run("Update and delete cluster-scoped resources", func(t *testing.T) {
 		name := nsPrefix + "-cluster-sql-1"
 
+		resp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+
 		// Update via SQL backend
 		updated, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
-			Key:   clusterKey(name),
-			Value: clusterResourceJSON(name, "uid-sql-1", "Updated SQL Cluster Resource"),
-			ResourceVersion: func() int64 {
-				resp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
-				require.NoError(t, err)
-				return resp.ResourceVersion
-			}(),
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-sql-1", "Updated SQL Cluster Resource"),
+			ResourceVersion: resp.ResourceVersion,
 		})
 		require.NoError(t, err)
 		require.Nil(t, updated.Error, "SQL Update error: %v", updated.Error)
