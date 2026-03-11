@@ -1,12 +1,18 @@
 package notifier
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
+
+	"go.yaml.in/yaml/v3"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify/nfstatus"
@@ -21,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -111,15 +118,20 @@ type MultiOrgAlertmanager struct {
 	alertsBroadcastChannel alertingCluster.ClusterChannel
 	settleCancel           context.CancelFunc
 
-	configStore AlertingStore
-	orgStore    store.OrgStore
-	kvStore     kvstore.KVStore
-	factory     OrgAlertmanagerFactory
+	configStore      AlertingStore
+	orgStore         store.OrgStore
+	kvStore          kvstore.KVStore
+	adminConfigStore store.AdminConfigurationStore
+	factory          OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
+
+	datasourceService datasources.DataSourceService
+	secretService     secrets.Service
+	httpClient        *http.Client
 
 	receiverResourcePermissions ac.ReceiverPermissionsService
 }
@@ -148,6 +160,8 @@ func NewMultiOrgAlertmanager(
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
 	notificationHistorian nfstatus.NotificationHistorian,
+	adminConfigStore store.AdminConfigurationStore,
+	datasourceService datasources.DataSourceService,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -161,10 +175,14 @@ func NewMultiOrgAlertmanager(
 		configStore:                 configStore,
 		orgStore:                    orgStore,
 		kvStore:                     kvStore,
+		adminConfigStore:            adminConfigStore,
 		decryptFn:                   decryptFn,
 		receiverResourcePermissions: receiverResourcePermissions,
 		metrics:                     m,
 		ns:                          ns,
+		secretService:               s,
+		datasourceService:           datasourceService,
+		httpClient:                  &http.Client{Timeout: 30 * time.Second},
 		peer:                        &NilPeer{},
 	}
 
@@ -328,6 +346,8 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
+
+	moa.syncDatasourceConfigs(ctx)
 
 	moa.logger.Debug("Done synchronizing Alertmanagers for orgs")
 
@@ -644,6 +664,160 @@ func (moa *MultiOrgAlertmanager) updateSilenceState(ctx context.Context, orgAM A
 	fs := NewFileStore(orgID, moa.kvStore)
 	_, err = fs.SaveSilences(ctx, silences)
 	return err
+}
+
+// mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
+type mimirConfigResponse struct {
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+}
+
+// syncDatasourceConfigs fetches the Mimir/Cortex Alertmanager configuration from each
+// org's configured datasource and applies it as an ExtraConfiguration.
+// It is called from LoadAndSyncAlertmanagersForOrgs on every poll tick.
+// Per-org errors are logged and recorded in metrics but do not abort processing of other orgs.
+func (moa *MultiOrgAlertmanager) syncDatasourceConfigs(ctx context.Context) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingDatasourceSync) {
+		return
+	}
+
+	// Operator-level UID overrides everything; no DB lookup needed when it is set.
+	operatorUID := moa.settings.UnifiedAlerting.DatasourceSyncUID
+
+	cfgs, err := moa.adminConfigStore.GetAdminConfigurations()
+	if err != nil {
+		moa.logger.Warn("Failed to fetch admin configurations for datasource sync", "error", err)
+		return
+	}
+
+	for _, cfg := range cfgs {
+		orgID := cfg.OrgID
+
+		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
+			continue
+		}
+
+		// Determine effective datasource UID: operator setting takes precedence.
+		uid := operatorUID
+		if uid == "" && cfg.DatasourceSyncUID != nil {
+			uid = *cfg.DatasourceSyncUID
+		}
+		if uid == "" {
+			continue
+		}
+
+		start := time.Now()
+		if syncErr := moa.syncDatasourceConfigForOrg(ctx, orgID, uid); syncErr != nil {
+			moa.logger.Warn("Failed to sync datasource configuration",
+				"org_id", orgID, "datasource_uid", uid, "error", syncErr)
+			moa.metrics.DatasourceSyncTotal.WithLabelValues(fmt.Sprintf("%d", orgID), "error").Inc()
+		} else {
+			moa.logger.Info("Synced datasource configuration",
+				"org_id", orgID, "datasource_uid", uid,
+				"duration_ms", time.Since(start).Milliseconds())
+			moa.metrics.DatasourceSyncTotal.WithLabelValues(fmt.Sprintf("%d", orgID), "success").Inc()
+		}
+		moa.metrics.DatasourceSyncDuration.Observe(time.Since(start).Seconds())
+	}
+}
+
+// syncDatasourceConfigForOrg fetches and applies the Mimir/Cortex Alertmanager configuration
+// for a single org. It uses a 10-second timeout to avoid blocking the sync loop.
+func (moa *MultiOrgAlertmanager) syncDatasourceConfigForOrg(ctx context.Context, orgID int64, datasourceUID string) error {
+	syncCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	ds, err := moa.datasourceService.GetDataSource(syncCtx, &datasources.GetDataSourceQuery{
+		UID:   datasourceUID,
+		OrgID: orgID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get datasource: %w", err)
+	}
+
+
+	cfg, err := moa.fetchMimirConfig(syncCtx, ds)
+	if err != nil {
+		return fmt.Errorf("failed to fetch Mimir config: %w", err)
+	}
+
+	ec := apimodels.ExtraConfiguration{
+		Identifier:         datasourceUID,
+		AlertmanagerConfig: cfg.AlertmanagerConfig,
+		TemplateFiles:      cfg.TemplateFiles,
+	}
+
+	if _, err := moa.SaveAndApplyExtraConfiguration(syncCtx, orgID, ec, true, false); err != nil {
+		return fmt.Errorf("failed to apply extra configuration: %w", err)
+	}
+
+	return nil
+}
+
+// fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex datasource.
+func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, error) {
+	configURL, err := moa.buildMimirConfigURL(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build config URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, configURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Add basic auth if enabled.
+	if ds.BasicAuth {
+		password := moa.secretService.GetDecryptedValue(ctx, ds.SecureJsonData, "basicAuthPassword", "")
+		req.SetBasicAuth(ds.BasicAuthUser, password)
+	}
+
+	// Add custom headers (e.g. X-Scope-OrgID for Mimir multi-tenancy).
+	headers, err := moa.datasourceService.CustomHeaders(ctx, ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	for key, values := range headers {
+		for _, v := range values {
+			req.Header.Add(key, v)
+		}
+	}
+
+	resp, err := moa.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return nil, fmt.Errorf("unexpected HTTP status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var cfg mimirConfigResponse
+	decoder := yaml.NewDecoder(bytes.NewReader(body))
+	if err := decoder.Decode(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &cfg, nil
+}
+
+// buildMimirConfigURL constructs the Mimir alertmanager configuration API URL.
+// The config endpoint is /api/v1/alerts directly on the datasource URL.
+func (moa *MultiOrgAlertmanager) buildMimirConfigURL(ds *datasources.DataSource) (string, error) {
+	parsed, err := url.Parse(ds.URL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse datasource URL: %w", err)
+	}
+
+	return parsed.JoinPath("/api/v1/alerts").String(), nil
 }
 
 // NilPeer and NilChannel implements the Alertmanager clustering interface.

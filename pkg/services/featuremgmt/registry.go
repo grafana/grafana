@@ -2690,13 +2690,13 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "alertingDatasourceSync",
-			Description: "Automatically sync Mimir Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
+			Name:            "alertingDatasourceSync",
+			Description:     "Automatically sync Mimir Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
-			Expression:  "false",
+			Expression:      "false",
 		},
 	}
 )

@@ -397,6 +397,8 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
 	)
 	require.NoError(t, err)
 	return mam

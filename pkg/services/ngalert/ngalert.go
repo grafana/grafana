@@ -291,6 +291,8 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
+		ng.store,
+		ng.DataSourceService,
 		opts...,
 	)
 	if err != nil {
