@@ -176,15 +176,15 @@ const LogLineComponent = memo(
       };
     }, [handleLogLineResize]);
 
+    // Sync collapsed from log when log identity or wrapLogMessage changes.
+    // Critical for react-window: when a row is recycled for a different log, we must reset state from the new log.
     useEffect(() => {
       if (!wrapLogMessage) {
         setCollapsed(undefined);
-      } else if (collapsed === undefined && log.collapsed !== undefined) {
-        setCollapsed(log.collapsed);
-      } else if (collapsed !== undefined && log.collapsed === undefined) {
-        setCollapsed(log.collapsed);
+      } else {
+        setCollapsed(log.collapsed ?? undefined);
       }
-    }, [collapsed, log.collapsed, wrapLogMessage]);
+    }, [log.uid, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
