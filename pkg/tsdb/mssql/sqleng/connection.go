@@ -138,12 +138,15 @@ func generateConnectionString(dsInfo DataSourceInfo, azureCredentials azcredenti
 	case kerberosRaw, kerberosKeytab, kerberosCredentialCacheFile, kerberosCredentialCache:
 		user := dsInfo.User
 		pass := dsInfo.DecryptedSecureJSONData["password"]
-		if odbcNeedsEscape(pass) || odbcNeedsEscape(user) {
+		useOdbc := odbcNeedsEscape(pass) || odbcNeedsEscape(user)
+		if useOdbc {
 			user = escapeOdbcValue(user)
 			pass = escapeOdbcValue(pass)
-			connStr = "odbc:" + kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
-		} else {
-			connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		}
+		
+		connStr = kerberos.Krb5ParseAuthCredentials(addr.Host, addr.Port, dsInfo.Database, user, pass, kerberosAuth)
+		if useOdbc {
+			connStr = "odbc:" + strings.TrimPrefix(connStr, "odbc:")
 		}
 	default:
 		user := dsInfo.User
