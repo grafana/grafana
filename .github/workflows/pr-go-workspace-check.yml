@@ -40,8 +40,6 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
-      with:
-        cache: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -76,8 +74,6 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
-      with:
-        cache: 'false'
 
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
