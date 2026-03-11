@@ -325,3 +325,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-03-10,flameGraphWithCallTree,experimental,@grafana/observability-traces-and-profiling,false,false,true
+2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false

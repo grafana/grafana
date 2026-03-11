@@ -894,11 +894,13 @@
       "aria-label-more-actions": "聯絡點「{{contactPointName}}」的更多動作",
       "ariaLabel-delete": "刪除",
       "button-edit": "編輯",
+      "button-history": "",
       "button-view": "檢視",
       "export-ariaLabel-export": "匯出",
       "export-label-export": "匯出",
       "label-delete": "刪除",
       "label-manage-permissions": "管理權限",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "無法在使用者介面中編輯已設定的聯絡點"
     },
     "contact-point-selector": {
@@ -2079,6 +2081,12 @@
       },
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "確定要刪除「{{muteTiming}}」嗎？"
     },
@@ -2176,47 +2184,8 @@
       "body-no-alertmanager-found": "我們找不到任何外部的 Alertmanager，您可能沒有內建 Grafana Alertmanager 的存取權限。",
       "title-no-alertmanager-found": "找不到 Alertmanager"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "按聯絡點搜尋",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "選擇聯絡點",
       "search-query-input-placeholder-search": "搜尋"
     },
@@ -2381,6 +2350,7 @@
       "tooltip-managed-by-plugin": "此規則由「{{pluginName}}」外掛程式管理"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "收闔",
       "aria-label-expand": "展開",
       "aria-label-more": "符合政策所需的更多動作",
@@ -2391,9 +2361,9 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "若未找到其他符合條件的政策，所有警報執行個體將由預設政策處理。",
         "title": "預設政策",
-        "update": "更新預設政策"
+        "update": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "是的，刪除政策",
@@ -2408,7 +2378,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "使用以逗號分隔的比對條件清單來篩選通知政策，例如：<1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "自動產生的政策",
       "matchers": "匹配條件",
       "metadata": {
@@ -2438,24 +2408,23 @@
         },
         "n-instances_other": "執行個體"
       },
-      "new-child": "新的子級政策",
-      "new-policy": "新增政策",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "沒有匹配條件",
       "reload-policies": "重新載入政策",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "儲存政策",
       "update": {
         "please-wait": "請稍候，我們正在更新您的通知政策。",
-        "update-policy": "更新政策",
+        "update-route": "",
         "updating": "正在更新…"
       },
       "update-errors": {
@@ -2498,9 +2467,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "新的子級政策",
-      "label-new-sibling-above": "上方的新同級項目",
-      "label-new-sibling-below": "下方的新同級項目"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3483,7 +3452,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "新增通知政策"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3524,7 +3493,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "刪除",
       "label-edit": "編輯",
-      "label-export": "匯出"
+      "label-export": "匯出",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "是，刪除聯絡點",
@@ -3556,7 +3526,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "編輯通知政策"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5314,6 +5284,7 @@
       "panel-description": "變更面板描述",
       "panel-edit": "面板變更",
       "panel-max-repeats-per-row": "每列最大重複次數",
+      "panel-preset": "",
       "panel-repeat-direction": "重複方向",
       "panel-repeat-variable": "面板重複方式",
       "panel-title": "變更面板標題",
@@ -6772,6 +6743,7 @@
       "title": {
         "description": "說明",
         "panel-links": "面板連結",
+        "panel-styles": "",
         "title": "標題",
         "transparent-background": "透明背景"
       }
@@ -6983,6 +6955,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "返回"
@@ -6995,6 +6970,11 @@
         }
       },
       "title-close": "關閉"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "此儀表板由 Grafana 佈建管理，無法刪除。從設定檔中移除儀表板以將其刪除。",
@@ -9624,6 +9604,9 @@
     },
     "cascader": {
       "clear-button": "清空選項"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "顏色",
@@ -13469,7 +13452,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13565,7 +13550,6 @@
       "alerts-loading": "",
       "card-click": "選取卡片 {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "查詢和運算式",
       "toggle-size": "切換側邊欄大小",
@@ -14788,6 +14772,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "資料超出時間範圍",
       "zoom-to-data": "縮放至資料"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
