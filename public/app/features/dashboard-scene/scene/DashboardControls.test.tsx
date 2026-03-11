@@ -240,6 +240,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       expect(scene.getUrlState()).toEqual({});
     });
@@ -251,35 +252,41 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
       scene.updateFromUrl({
         '_dash.hideTimePicker': '',
         '_dash.hideVariables': '',
         '_dash.hideLinks': '',
         '_dash.hideDashboardControls': '',
+        '_dash.hidePlaylistNav': '',
       });
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
       expect(scene.state.hideLinksControls).toBeTruthy();
       expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
-    it('should reset hide flags when url params are removed', () => {
+    it('should not override state if no new state comes from url', () => {
       const scene = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       scene.updateFromUrl({});
-      expect(scene.state.hideTimeControls).toBeFalsy();
-      expect(scene.state.hideVariableControls).toBeFalsy();
-      expect(scene.state.hideLinksControls).toBeFalsy();
-      expect(scene.state.hideDashboardControls).toBeFalsy();
+      expect(scene.state.hideTimeControls).toBeTruthy();
+      expect(scene.state.hideVariableControls).toBeTruthy();
+      expect(scene.state.hideLinksControls).toBeTruthy();
+      expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hidePlaylistNav).toBeTruthy();
     });
 
     it('should not call setState if no changes', () => {
@@ -288,6 +295,7 @@ describe('DashboardControls', () => {
         hideVariableControls: true,
         hideLinksControls: true,
         hideDashboardControls: true,
+        hidePlaylistNav: true,
       });
       const setState = jest.spyOn(scene, 'setState');
 
@@ -296,6 +304,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables': 'true',
         '_dash.hideLinks': 'true',
         '_dash.hideDashboardControls': 'true',
+        '_dash.hidePlaylistNav': 'true',
       });
 
       expect(setState).toHaveBeenCalledTimes(0);

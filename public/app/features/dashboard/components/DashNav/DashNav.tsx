@@ -242,9 +242,9 @@ export const DashNav = memo<Props>((props) => {
           onClick={onPlaylistPrev}
           narrow
         />
-        {/* <ToolbarButton onClick={onPlaylistStop}>
+        <ToolbarButton onClick={onPlaylistStop}>
           <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
-        </ToolbarButton> */}
+        </ToolbarButton>
         <ToolbarButton
           tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
           icon="forward"
