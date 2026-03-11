@@ -57,10 +57,15 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   for (const key in packets) {
     const packet = packets[key];
 
-    if (packet.error || packet.errors?.length) {
-      loadingState = LoadingState.Error;
+    if (packet.error) {
       error = packet.error;
-      errors = packet.errors;
+    }
+    if (packet.errors?.length) {
+      if (errors) {
+        errors = [...errors, ...packet.errors];
+      } else {
+        errors = [...packet.errors];
+      }
     }
 
     if (packet.data && packet.data.length) {
@@ -73,6 +78,12 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
         series.push(dataItem);
       }
     }
+  }
+
+  // Only set Error state when all data failed and there's nothing to render.
+  // When some queries succeed, use Done + errors so panels can render the successful data.
+  if ((errors?.length || error) && series.length === 0) {
+    loadingState = LoadingState.Error;
   }
 
   const timeRange = getRequestTimeRange(request, loadingState);
