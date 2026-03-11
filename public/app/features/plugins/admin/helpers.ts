@@ -1,14 +1,8 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import {
-  PluginSignatureStatus,
-  dateTimeParse,
-  PluginError,
-  PluginType,
-  PluginErrorCode,
-  PluginSignatureType,
-} from '@grafana/data';
+import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -395,7 +389,7 @@ export function isManagedPlugin(id: string, remote?: RemotePlugin) {
 
   let remoteManaged = false;
   if (remote) {
-    remoteManaged = remote.managed.enabled && Boolean(config.featureToggles.managedPluginsV2);
+    remoteManaged = remote.managed.enabled && getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
   }
 
   // pluginCatalogManagedPlugins considers the instance config as source of truth

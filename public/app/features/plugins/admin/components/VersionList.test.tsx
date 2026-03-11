@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider, FlagSet } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
@@ -217,7 +218,7 @@ describe('VersionList', () => {
       installedVersion,
     });
 
-    renderWithStore(<VersionList plugin={plugin} />);
+    renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
     const buttons = screen.getAllByRole('button');
     const enabledButtons = buttons.filter((btn) => !(btn as HTMLButtonElement).disabled);
     expect(enabledButtons).toHaveLength(2);
@@ -252,7 +253,7 @@ describe('VersionList', () => {
       installedVersion,
     });
 
-    renderWithStore(<VersionList plugin={plugin} />);
+    renderWithStore(<VersionList plugin={plugin} />, { managedPluginsV2: true });
     const buttons = screen.getAllByRole('button');
     const disabledButtons = buttons.filter((btn) => (btn as HTMLButtonElement).disabled);
     expect(disabledButtons).toHaveLength(versions.length - 1);
@@ -262,10 +263,14 @@ describe('VersionList', () => {
   });
 });
 
-function renderWithStore(component: JSX.Element) {
+function renderWithStore(component: JSX.Element, flags?: FlagSet = {}) {
   const store = configureStore();
 
-  return render(<Provider store={store}>{component}</Provider>);
+  return render(
+    <Provider store={store}>
+      <OpenFeatureTestProvider flagValueMap={flags}>{component}</OpenFeatureTestProvider>
+    </Provider>
+  );
 }
 
 function generateVersionsForMajor(major: string, numberOfVersions: number) {
