@@ -54,8 +54,8 @@ export function StepResultAlert({ severity, description, link, help }: CardProps
             <Icon name="external-link-alt" size="md" aria-hidden={true} className={styles.linkIcon} />
           </Link>
         )}
-        {help && <Text>{help}</Text>}
       </Stack>
+      {help && <Text variant={'bodySmall'}>{help}</Text>}
     </Alert>
   );
 }
@@ -177,12 +177,11 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     // Create roles if requested
     ////////////////////////////
     if (pendingRoles && pendingRoles.length) {
+      reportState({ state: 'loading' }, 'createRoles');
       // TODO: this fetch can fail or user just don't have permissions and this is skipped silently
       //  Maybe we should just do that in the form itself and disable the input if user does not have permissions
       await contextSrv.fetchUserPermissions();
       if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
-        reportState({ state: 'loading' }, 'createRoles');
-
         const mutationArg: SetTeamRolesApiArg & { showSuccessAlert?: boolean } = {
           teamId: teamData.teamId,
           setTeamRolesCommand: {
@@ -198,6 +197,17 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
         } else {
           reportState({ state: 'success' }, 'createRoles');
         }
+      } else {
+        // Probably should not happen as this should be checked before creating a team.
+        reportState(
+          {
+            state: 'error',
+            error: new Error(
+              t('teams.create-team.roles-create-permission-issue', "You don't have permissions to set roles")
+            ),
+          },
+          'createRoles'
+        );
       }
     }
 
