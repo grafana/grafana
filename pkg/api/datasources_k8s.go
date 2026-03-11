@@ -31,7 +31,6 @@ import (
 // Optional access control metadata is still fetched from the legacy accesscontrol service for now.
 func (hs *HTTPServer) getK8sDataSourceByUIDHandler() web.Handler {
 	return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-
 		// use the legacy handler if the feature toggle is disabled
 		client := openfeature.NewDefaultClient()
 		if !client.Boolean(c.Req.Context(), featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs, false, openfeature.TransactionContext(c.Req.Context())) {
