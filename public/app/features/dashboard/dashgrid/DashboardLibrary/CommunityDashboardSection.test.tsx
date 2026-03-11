@@ -2,9 +2,11 @@ import { screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardSection } from './CommunityDashboardSection';
+import { NewDashboardLibraryInteractions } from './analytics/main';
 import { checkDashboardCompatibility, CompatibilityCheckResult } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
@@ -28,6 +30,17 @@ jest.mock('./utils/communityDashboardHelpers', () => ({
 jest.mock('./interactions', () => ({
   ...jest.requireActual('./interactions'),
   DashboardLibraryInteractions: {
+    loaded: jest.fn(),
+    searchPerformed: jest.fn(),
+    itemClicked: jest.fn(),
+    compatibilityCheckTriggered: jest.fn(),
+    compatibilityCheckCompleted: jest.fn(),
+  },
+}));
+
+jest.mock('./analytics/main', () => ({
+  ...jest.requireActual('./analytics/main'),
+  NewDashboardLibraryInteractions: {
     loaded: jest.fn(),
     searchPerformed: jest.fn(),
     itemClicked: jest.fn(),
@@ -284,6 +297,7 @@ describe('CommunityDashboardSection', () => {
     });
 
     it('should track analytics when compatibility check is triggered', async () => {
+      setTestFlags({ analyticsFramework: false });
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
@@ -309,6 +323,7 @@ describe('CommunityDashboardSection', () => {
     });
 
     it('should track analytics when compatibility check completes', async () => {
+      setTestFlags({ analyticsFramework: false });
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
@@ -466,6 +481,7 @@ describe('CommunityDashboardSection', () => {
     });
 
     it('should not trigger auto-checks on initial load', async () => {
+      setTestFlags({ analyticsFramework: false });
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
@@ -483,6 +499,85 @@ describe('CommunityDashboardSection', () => {
       expect(mockInterpolateDashboard).not.toHaveBeenCalled();
       expect(mockCheckCompatibility).not.toHaveBeenCalled();
       expect(DashboardLibraryInteractions.compatibilityCheckTriggered).not.toHaveBeenCalled();
+    });
+  });
+  describe('when analyticsFramework is enabled', () => {
+    testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+    it('Compatibility Badge Feature should track analytics with the new framework when compatibility check is triggered', async () => {
+      setTestFlags({ analyticsFramework: true });
+      mockDatasourceType = 'prometheus';
+      mockFetchCommunityDashboards.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
+      mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
+
+      await setup();
+
+      await waitFor(() => {
+        expect(NewDashboardLibraryInteractions.compatibilityCheckTriggered).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dashboardId: '1',
+            dashboardTitle: 'Test Dashboard',
+            datasourceType: 'prometheus',
+            triggerMethod: 'auto_initial_load',
+          })
+        );
+      });
+    });
+    it('Compatibility Badge Featureshould track analytics with the new framework when compatibility check completes', async () => {
+      setTestFlags({ analyticsFramework: true });
+      mockDatasourceType = 'prometheus';
+      mockFetchCommunityDashboards.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
+      mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
+
+      await setup();
+
+      await waitFor(() => {
+        expect(NewDashboardLibraryInteractions.compatibilityCheckCompleted).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dashboardId: '1',
+            dashboardTitle: 'Test Dashboard',
+            datasourceType: 'prometheus',
+            score: 85,
+            metricsFound: 17,
+            metricsTotal: 20,
+            triggerMethod: 'auto_initial_load',
+          })
+        );
+      });
+    });
+    describe('and dashboardValidatorApp is disabled', () => {
+      testWithFeatureToggles({ disable: ['dashboardValidatorApp'] });
+      it('should not trigger auto-checks on initial load', async () => {
+        setTestFlags({ analyticsFramework: true });
+        mockDatasourceType = 'prometheus';
+        mockFetchCommunityDashboards.mockResolvedValue({
+          page: 1,
+          pages: 5,
+          items: [createMockGnetDashboard()],
+        });
+
+        await setup();
+
+        await waitFor(() => {
+          expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+        });
+
+        // Verify no API calls were made
+        expect(mockInterpolateDashboard).not.toHaveBeenCalled();
+        expect(mockCheckCompatibility).not.toHaveBeenCalled();
+        expect(NewDashboardLibraryInteractions.compatibilityCheckTriggered).not.toHaveBeenCalled();
+      });
     });
   });
 });
