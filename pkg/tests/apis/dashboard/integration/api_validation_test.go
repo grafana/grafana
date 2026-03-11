@@ -64,7 +64,7 @@ type TestContext struct {
 func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -221,7 +221,7 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 func TestIntegrationDashboardAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -884,8 +884,8 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 
 	t.Run("Dashboard upsert propagates legacy id", func(t *testing.T) {
-		// ensures that the internal ID is propogated from legacy to unified on upsert even in mode 3
-		if ctx.DualWriterMode != rest.Mode3 {
+		// ensures that the internal ID is propagated from legacy to unified on upsert even in mode 1
+		if ctx.DualWriterMode != rest.Mode1 {
 			t.Skip("Skipping upsert metadata test")
 		}
 
