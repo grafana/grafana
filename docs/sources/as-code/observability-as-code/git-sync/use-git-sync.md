@@ -116,7 +116,7 @@ To modify folder permissions:
 - From the UI, refer to [Manage dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/).
 - Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
 
-### The folder json metadata file
+### The folder's JSON metadata file
 
 Each folder in a synced repository contains a `.folder.json` file at its root:
 
