@@ -82,7 +82,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 - **Format** - Determines how the data from your Prometheus query is interpreted and visualized in a panel. Choose from the following format options:
   - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
   - **Table** - Displays data in table format. This format works only in a [Table panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/).
-  - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
+  - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/) by converting cumulative histograms to regular ones and sorting the series by bucket boundaries.
 
 - **Type** - This setting determines the query type. These include:
   - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
