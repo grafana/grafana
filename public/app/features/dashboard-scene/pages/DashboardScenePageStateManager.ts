@@ -1153,9 +1153,14 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
     return this.withVersionHandling((manager) => {
-      // sync active manager state first to trigger reload properly
-      manager.setState(this.state);
-      return manager.reloadDashboard(queryParams);
+      if (manager instanceof DashboardScenePageStateManagerV2) {
+        // V2 reload needs state synced into the active manager before reloading.
+        manager.setState(this.state);
+        return manager.reloadDashboard(queryParams);
+      }
+
+      // preserve existing v1 reload behavior
+      return manager.reloadDashboard.call(this, queryParams);
     });
   }
 
