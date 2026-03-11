@@ -2531,7 +2531,8 @@
       "body-provisioned": "This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.",
       "title-imported": "This {{resource}} was imported and cannot be edited through the UI",
       "title-imported-time-interval": "This time interval was imported and cannot be edited through the UI",
-      "title-provisioned": "This {{resource}} cannot be edited through the UI"
+      "title-provisioned": "This {{resource}} cannot be edited through the UI",
+      "title-provisioned-compact": "Provisioned {{resource}}"
     },
     "provisioning-badge": {
       "badge": {

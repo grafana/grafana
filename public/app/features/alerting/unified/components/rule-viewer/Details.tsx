@@ -12,9 +12,12 @@ import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/un
 
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeEditTimeIntervalLink } from '../../utils/misc';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
+import { InhibitionRulesAlert } from '../InhibitionRulesAlert';
+import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Tokenize } from '../Tokenize';
 import { DetailText } from '../common/DetailText';
 import { TimingOptionsMeta } from '../notification-policies/Policy';
@@ -43,9 +46,11 @@ const DetailGroup = ({ title, children }: { title?: string; children: React.Reac
 
 interface DetailsProps {
   rule: CombinedRule;
+  isProvisioned?: boolean;
+  showInhibitionRules?: boolean;
 }
 
-export const Details = ({ rule }: DetailsProps) => {
+export const Details = ({ rule, isProvisioned, showInhibitionRules }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
   const pendingPeriod = usePendingPeriod(rule);
@@ -98,6 +103,10 @@ export const Details = ({ rule }: DetailsProps) => {
   );
   return (
     <div className={styles.metadata}>
+      <Stack direction="column" gap={1}>
+        {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} compact />}
+        {showInhibitionRules && <InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} compact />}
+      </Stack>
       <DetailGroup>
         <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
         {rulerRuleType.grafana.rule(rule.rulerRule) && (

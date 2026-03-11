@@ -19,21 +19,36 @@ type ExtraAlertProps = Omit<ComponentPropsWithoutRef<typeof Alert>, 'title' | 's
 
 interface ResourceAlertProps extends ExtraAlertProps {
   resource: ProvisionedResource;
+  /** When true, renders a compact header-only alert with the description in a tooltip */
+  compact?: boolean;
 }
 
-export const ProvisioningAlert = ({ resource, ...rest }: ResourceAlertProps) => {
+export const ProvisioningAlert = ({ resource, compact, ...rest }: ResourceAlertProps) => {
+  const title = t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
+    resource,
+  });
+  const body = t(
+    'alerting.provisioning.body-provisioned',
+    'This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.',
+    { resource }
+  );
+
+  if (compact) {
+    const compactTitle = t('alerting.provisioning.title-provisioned-compact', 'Provisioned {{resource}}', {
+      resource,
+    });
+    return (
+      <Tooltip content={body}>
+        <div>
+          <Alert title={compactTitle} severity="info" bottomSpacing={0} topSpacing={0} />
+        </div>
+      </Tooltip>
+    );
+  }
+
   return (
-    <Alert
-      title={t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
-        resource,
-      })}
-      severity="info"
-      {...rest}
-    >
-      <Trans i18nKey="alerting.provisioning.body-provisioned">
-        This {{ resource }} has been provisioned, that means it was created by config. Please contact your server admin
-        to update this {{ resource }}.
-      </Trans>
+    <Alert title={title} severity="info" {...rest}>
+      {body}
     </Alert>
   );
 };
