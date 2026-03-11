@@ -51,9 +51,8 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 func setupTestStorageBackendWithClusterScope(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:                      kv,
-		WithPruner:                   true,
-		WithExperimentalClusterScope: true,
+		KvStore:    kv,
+		WithPruner: true,
 	}
 	for _, cfg := range configs {
 		cfg(&opts)
@@ -2115,7 +2114,6 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 
 // TestKvStorageBackend_ClusterScopedResources tests create, update, delete, list, and watch
 // operations for cluster-scoped resources (empty namespace).
-// This test requires the backend to be configured with WithExperimentalClusterScoped set to true.
 //
 // The test verifies that:
 // - All write operations accept empty namespace

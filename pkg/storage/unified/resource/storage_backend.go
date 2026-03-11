@@ -59,9 +59,8 @@ func convertClusterNamespaceToEmpty(namespace string) string {
 }
 
 // convertEmptyToClusterNamespace converts empty namespace to the internal __cluster__ namespace
-// for cluster-scoped resources when WithExperimentalClusterScope is enabled
-func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterScope bool) string {
-	if withExperimentalClusterScope && namespace == "" {
+func convertEmptyToClusterNamespace(namespace string) string {
+	if namespace == "" {
 		return clusterScopeNamespace
 	}
 	return namespace
@@ -112,7 +111,6 @@ type KVBackend interface {
 type KVBackendOptions struct {
 	KvStore                      KV
 	WithPruner                   bool
-	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
 	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
 	Tracer                       trace.Tracer          // TODO add tracing
@@ -195,7 +193,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
-		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
@@ -600,7 +597,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	rv := k.snowflake.Generate().Int64()
 
-	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := convertEmptyToClusterNamespace(event.Key.Namespace)
 
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
@@ -788,7 +785,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := convertEmptyToClusterNamespace(req.Key.Namespace)
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {

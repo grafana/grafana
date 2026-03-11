@@ -35,9 +35,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	require.NoError(t, err)
 
 	kvOpts := resource.KVBackendOptions{
-		KvStore:                      kv,
-		SearchLookback:               time.Second,
-		WithExperimentalClusterScope: true,
+		KvStore:        kv,
+		SearchLookback: time.Second,
 	}
 
 	if dbConn.DriverName() == "sqlite3" {
