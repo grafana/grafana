@@ -8,8 +8,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
+import { dispatch } from 'app/types/store';
 
 import { getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
