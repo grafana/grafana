@@ -1,0 +1,46 @@
+name: Report Go Cache Sizes
+description: Reports the size of Go module and build caches with an optional label.
+
+inputs:
+  label:
+    description: Human-readable label for the report (e.g. "after setup-go", "after tests").
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Report Go cache sizes (${{ inputs.label }})
+      shell: bash
+      run: |
+        GOMODCACHE="$(go env GOMODCACHE)"
+        GOCACHE="$(go env GOCACHE)"
+
+        mod_size="0"
+        build_size="0"
+
+        if [ -d "$GOMODCACHE" ]; then
+          mod_size="$(du -sm "$GOMODCACHE" | cut -f1)"
+        fi
+        if [ -d "$GOCACHE" ]; then
+          build_size="$(du -sm "$GOCACHE" | cut -f1)"
+        fi
+
+        total_size=$(( mod_size + build_size ))
+
+        echo "### Go Cache Sizes${LABEL:+ — $LABEL}" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Cache | Path | Size |" >> "$GITHUB_STEP_SUMMARY"
+        echo "|-------|------|------|" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Module cache | \`${GOMODCACHE}\` | **${mod_size} MB** |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| Build cache  | \`${GOCACHE}\`    | **${build_size} MB** |" >> "$GITHUB_STEP_SUMMARY"
+        echo "| **Total**    |                     | **${total_size} MB** |" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+
+        echo "::group::Go Cache Sizes — ${LABEL:-unnamed}"
+        echo "Module cache ($GOMODCACHE): ${mod_size} MB"
+        echo "Build cache  ($GOCACHE):    ${build_size} MB"
+        echo "Total:                      ${total_size} MB"
+        echo "::endgroup::"
+      env:
+        LABEL: ${{ inputs.label }}
