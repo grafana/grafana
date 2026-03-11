@@ -109,6 +109,7 @@ COPY apps/dashboard apps/dashboard
 COPY apps/dashvalidator apps/dashvalidator
 COPY apps/folder apps/folder
 COPY apps/iam apps/iam
+COPY apps/theme apps/theme
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/alertenrichment apps/alerting/alertenrichment

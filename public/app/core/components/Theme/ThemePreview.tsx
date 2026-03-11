@@ -56,7 +56,7 @@ function ThemePreviewWithContext() {
           </Stack>
         </Box>
         <Divider spacing={0} />
-        <Box padding={2.5} display="flex" direction="column" flex={1}>
+        <Box padding={1} display="flex" direction="row" gap={1} flex={1}>
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <Trans i18nKey="theme-preview.panel.title">Panel</Trans>

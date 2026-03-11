@@ -191,6 +191,7 @@ type HTTPServer struct {
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	themeValidator               pref.ThemeValidator
 	Csrf                         csrf.Service
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
@@ -263,7 +264,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, themeValidator pref.ThemeValidator,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
@@ -348,6 +349,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		themeValidator:               themeValidator,
 		Csrf:                         csrfService,
 		folderPermissionsService:     folderPermissionsService,
 		dashboardPermissionsService:  dashboardPermissionsService,

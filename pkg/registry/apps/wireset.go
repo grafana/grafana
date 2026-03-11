@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	"github.com/grafana/grafana/pkg/registry/apps/theme"
 )
 
 var WireSet = wire.NewSet(
@@ -27,6 +28,7 @@ var WireSet = wire.NewSet(
 	correlations.RegisterAppInstaller,
 	rules.RegisterAppInstaller,
 	live.RegisterAppInstaller,
+	theme.RegisterAppInstaller,
 	notifications.RegisterAppInstaller,
 	historian.RegisterAppInstaller,
 	logsdrilldown.RegisterAppInstaller,

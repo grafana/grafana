@@ -1,0 +1,23 @@
+{
+  "apiVersion": "theme.grafana.app/v0alpha1",
+  "kind": "Theme",
+  "metadata": {
+    "name": "deuteranopia_protanopia_dark"
+  },
+  "spec": {
+    "title": "Deuteranopia/Protanopia (Dark)",
+    "colors": {
+      "mode": "dark",
+      "success": {
+        "main": "#2EC4B6"
+      },
+      "error": {
+        "main": "#FF7A18"
+      },
+      "warning": {
+        "main": "#FFF899"
+      },
+      "contrastThreshold": 4.5
+    }
+  }
+}

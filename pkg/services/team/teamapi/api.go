@@ -25,6 +25,7 @@ type TeamAPI struct {
 	license                  licensing.Licensing
 	cfg                      *setting.Cfg
 	preferenceService        pref.Service
+	themeValidator           pref.ThemeValidator
 	ds                       dashboards.DashboardService
 	logger                   log.Logger
 	features                 featuremgmt.FeatureToggles
@@ -41,6 +42,7 @@ func ProvideTeamAPI(
 	license licensing.Licensing,
 	cfg *setting.Cfg,
 	preferenceService pref.Service,
+	themeValidator pref.ThemeValidator,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
 	clientConfigProvider apiserver.DirectRestConfigProvider,
@@ -53,6 +55,7 @@ func ProvideTeamAPI(
 		license:                  license,
 		cfg:                      cfg,
 		preferenceService:        preferenceService,
+		themeValidator:           themeValidator,
 		ds:                       ds,
 		logger:                   log.New("team-api"),
 		features:                 features,

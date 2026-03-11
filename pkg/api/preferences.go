@@ -103,7 +103,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 	}
 
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService,
-		hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
+		hs.preferenceService, hs.themeValidator, hs.Features, c.GetOrgID(), userID, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /user/preferences signed_in_user preferences patchUserPreferences
@@ -130,7 +130,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
-	if dtoCmd.Theme != nil && !pref.IsValidThemeID(*dtoCmd.Theme) {
+	if dtoCmd.Theme != nil && !hs.themeValidator.IsValidThemeID(ctx, orgID, *dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
@@ -217,7 +217,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.themeValidator, hs.Features, c.GetOrgID(), 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org preferences patchOrgPreferences

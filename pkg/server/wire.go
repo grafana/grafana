@@ -134,6 +134,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
+	"github.com/grafana/grafana/pkg/services/preference/themevalidator"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -501,6 +502,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	themevalidator.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
@@ -517,6 +519,7 @@ var wireCLISet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	themevalidator.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 )
@@ -533,6 +536,7 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	themevalidator.ProvideService,
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),

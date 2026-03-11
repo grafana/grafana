@@ -54,6 +54,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				playlistInstaller,
 				pluginsInstaller,
 				nil, // live
+				nil, // themes
 				nil, // ShortURL
 				tt.rulesInst,
 				correlationsAppInstaller,

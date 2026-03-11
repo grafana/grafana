@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -135,7 +136,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
+	theme := hs.getThemeForIndexData(c.Req.Context(), c.GetOrgID(), prefs.Theme, urlPrefs.Theme)
 	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
@@ -307,19 +308,27 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	c.HTML(http.StatusNotFound, "index", data)
 }
 
-func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {
-	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
-		return pref.GetThemeByID(themeURLParam)
-	}
-
-	if pref.IsValidThemeID(themePrefId) {
-		theme := pref.GetThemeByID(themePrefId)
-		// TODO refactor
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+func (hs *HTTPServer) getThemeForIndexData(ctx context.Context, orgID int64, themePrefId string, themeURLParam string) *pref.ThemeDTO {
+	if themeURLParam != "" {
+		fmt.Println("Theme URL param:", themeURLParam)
+		if theme := hs.themeValidator.GetThemeByID(ctx, orgID, themeURLParam); theme != nil {
+			fmt.Println("theme is ", theme)
 			return theme
 		}
 	}
 
-	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
+	if themePrefId != "" {
+		theme := hs.themeValidator.GetThemeByID(ctx, orgID, themePrefId)
+		if theme != nil {
+			// Built-in extra themes are gated behind the grafanaconThemes feature flag,
+			// but custom themes from the theme app should always be allowed.
+			isCustom := pref.GetThemeByID(themePrefId) == nil
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			if isCustom || !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
+				return theme
+			}
+		}
+	}
+
+	return hs.themeValidator.GetThemeByID(ctx, orgID, hs.Cfg.DefaultTheme)
 }

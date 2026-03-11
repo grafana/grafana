@@ -30,6 +30,7 @@ replace (
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
+	github.com/grafana/grafana/apps/theme => ../theme
 
 	// Packages
 	github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
@@ -247,6 +248,7 @@ require (
 	github.com/grafana/grafana/apps/scope v0.0.0 // indirect
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
 	github.com/grafana/grafana/apps/shorturl v0.0.0 // indirect
+	github.com/grafana/grafana/apps/theme v0.0.0-00010101000000-000000000000 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect

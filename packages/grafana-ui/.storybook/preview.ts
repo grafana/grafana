@@ -33,17 +33,6 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const allowedExtraThemes: string[] = [];
-
-if (process.env.NODE_ENV === 'development') {
-  allowedExtraThemes.push('debug');
-  allowedExtraThemes.push('desertbloom');
-  allowedExtraThemes.push('gildedgrove');
-  allowedExtraThemes.push('gloom');
-  allowedExtraThemes.push('sapphiredusk');
-  allowedExtraThemes.push('tron');
-}
-
 /*
  * Initializes MSW
  * See https://github.com/mswjs/msw-storybook-addon#configuring-msw
@@ -171,7 +160,7 @@ const preview: Preview = {
       defaultValue: 'system',
       toolbar: {
         icon: 'paintbrush',
-        items: getBuiltInThemes(allowedExtraThemes).map((theme) => ({
+        items: getBuiltInThemes().map((theme) => ({
           value: theme.id,
           title: theme.name,
         })),
