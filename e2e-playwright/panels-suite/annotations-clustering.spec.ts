@@ -219,7 +219,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
       await expect(tooltip).toHaveCount(0);
     });
 
-    test.describe.only('wip annotations', () => {
+    test.describe('wip annotations', () => {
       // We have to keep multiple runners from executing this test at the same time or it will fail! This shouldn't be a problem in CI, but it will fail if you run it locally with multiple retries and multiple workers.
       // clean up existing wip annos from previous attempts.
       test.beforeEach(async ({ request }) => {
