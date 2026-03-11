@@ -40,6 +40,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -72,12 +74,16 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Setup Go
-      uses: ./.github/actions/setup-go
-
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
       uses: ./.github/actions/setup-enterprise
+
+    # Enterprise must be cloned before setup-go so that enterprise
+    # modules are visible when the Go cache key is computed.
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss
