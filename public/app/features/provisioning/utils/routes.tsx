@@ -116,7 +116,8 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
 }
 
 function RedirectToProvisioningPreview() {
-  const { slug, '*': rest } = useParams();
+  const { slug = '', '*': rest = '' } = useParams();
   const location = useLocation();
+  // Preserve query params (ref, pull_request_url) from old PR comment links
   return <Navigate replace to={`${PROVISIONING_PREVIEW_URL}/${slug}/preview/${rest}${location.search}`} />;
 }
