@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
@@ -22,27 +22,26 @@ export interface JobContentProps {
 }
 
 export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
-  const lastReportedStateRef = useRef<string>();
-
-  const { state, message, progress, summary } = job?.status || {};
+  const { state, message, progress, summary, errors, warnings } = job?.status || {};
   const repoName = job?.metadata?.labels?.['provisioning.grafana.app/repository'];
   const pullRequestURL = job?.status?.url?.newPullRequestURL;
+  const messages = useMemo(
+    () => getJobMessages({ state, message, errors, warnings }),
+    [state, message, errors, warnings]
+  );
 
   // Update step status based on job state.
-  // Guard with lastReportedStateRef to avoid re-reporting the same state,
-  // which would create new objects on each call and trigger infinite re-render loops.
+  // Use deconstructed fields from job status to avoid effect churn from whole-object dependency changes.
   useEffect(() => {
-    if (!state || state === lastReportedStateRef.current) {
+    if (!state) {
       return;
     }
-    lastReportedStateRef.current = state;
 
     switch (state) {
       case 'success':
         onStatusChange?.({ status: 'success' });
         break;
       case 'warning': {
-        const messages = getJobMessages(job?.status ?? {});
         onStatusChange?.({
           status: 'warning',
           warning: {
@@ -53,7 +52,6 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         break;
       }
       case 'error': {
-        const messages = getJobMessages(job?.status ?? {});
         const warningInfo = messages.warning
           ? {
               title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
@@ -81,7 +79,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
       default:
         break;
     }
-  }, [state, message, job, onStatusChange, onRetry]);
+  }, [state, messages, onStatusChange, onRetry]);
 
   if (!job?.status) {
     return null;
