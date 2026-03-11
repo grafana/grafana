@@ -30,12 +30,6 @@ const mockGetAppEvents = jest.mocked(getAppEvents);
 // Must not match any name in MOCK_TEAMS fixture (which contains 'Test Team')
 const formModel = { name: 'My New Team', email: 'test@example.com' };
 
-// PUT /api/access-control/teams/:teamId/roles has no default handler in setupMockServer,
-// so tests that exercise role creation must register one.
-const setTeamRolesSuccessHandler = http.put('/api/access-control/teams/:teamId/roles', () =>
-  HttpResponse.json({ message: 'Roles updated' })
-);
-
 describe('useCreateTeamOrchestrate', () => {
   const mockPublish = jest.fn();
 
@@ -104,7 +98,6 @@ describe('useCreateTeamOrchestrate', () => {
         http.post('/api/teams', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
       );
 
-      // Roles and folder endpoints have no handler here — MSW would throw if they were called
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], true), {
         wrapper: getWrapper({}),
       });
@@ -121,7 +114,6 @@ describe('useCreateTeamOrchestrate', () => {
   describe('roles creation', () => {
     beforeEach(() => {
       contextSrv.licensedAccessControlEnabled = () => true;
-      server.use(setTeamRolesSuccessHandler);
     });
 
     it('sets loading before the roles API responds', async () => {
@@ -175,7 +167,6 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('skips roles when pendingRoles is empty', async () => {
-      // Roles endpoint has no handler here — MSW would throw if it were called
       const { result } = renderHook(() => useCreateTeamOrchestrate([], false), { wrapper: getWrapper({}) });
 
       await act(async () => {
@@ -185,7 +176,7 @@ describe('useCreateTeamOrchestrate', () => {
       expect(result.current.rolesCreationStatus).toBeUndefined();
     });
 
-    it('skips roles when RBAC is not licensed', async () => {
+    it('reports error when RBAC is not licensed', async () => {
       contextSrv.licensedAccessControlEnabled = () => false;
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], false), {
@@ -196,10 +187,10 @@ describe('useCreateTeamOrchestrate', () => {
         await result.current.trigger(formModel);
       });
 
-      expect(result.current.rolesCreationStatus).toBeUndefined();
+      expect(result.current.rolesCreationStatus?.state).toBe('error');
     });
 
-    it('skips roles when the user lacks role permissions', async () => {
+    it('reports error when the user lacks role permissions', async () => {
       contextSrv.hasPermission = () => false;
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], false), {
@@ -210,7 +201,7 @@ describe('useCreateTeamOrchestrate', () => {
         await result.current.trigger(formModel);
       });
 
-      expect(result.current.rolesCreationStatus).toBeUndefined();
+      expect(result.current.rolesCreationStatus?.state).toBe('error');
     });
 
     it('sends the correct team id and role uids to the roles API', async () => {
@@ -284,7 +275,6 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('skips folder creation when autocreateTeamFolder is false', async () => {
-      // Folder endpoint has no handler here — MSW would throw if it were called
       const { result } = renderHook(() => useCreateTeamOrchestrate([], false), { wrapper: getWrapper({}) });
 
       await act(async () => {
@@ -318,7 +308,6 @@ describe('useCreateTeamOrchestrate', () => {
   describe('combinations of all three API calls', () => {
     beforeEach(() => {
       contextSrv.licensedAccessControlEnabled = () => true;
-      server.use(setTeamRolesSuccessHandler);
     });
 
     it('reports success for team, roles, and folder when all succeed', async () => {

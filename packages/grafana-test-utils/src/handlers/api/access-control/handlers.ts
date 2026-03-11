@@ -6,6 +6,9 @@ const searchTeamRolesHandler = () =>
     return HttpResponse.json([]);
   });
 
-const handlers = [searchTeamRolesHandler()];
+const setTeamRolesHandler = () =>
+  http.put('/api/access-control/teams/:teamId/roles', () => HttpResponse.json({ message: 'Roles updated' }));
+
+const handlers = [searchTeamRolesHandler(), setTeamRolesHandler()];
 
 export default handlers;
