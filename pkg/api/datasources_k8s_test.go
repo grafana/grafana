@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
@@ -69,6 +70,7 @@ func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 // datasources_test for legacy, and in the integration tests for the new
 // endpoints.
 func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
+
 	tests := []struct {
 		name             string
 		connectionResult *queryV0.DataSourceConnectionList
@@ -129,17 +131,14 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs: setting.NewInMemoryFlag(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs, true),
+			})
 			// not using SetupAPITestServer here because the access control is
 			// overkill. Access control for these endpoints is tested in
 			// datasources_test.go
 			hs := &HTTPServer{
-				Cfg: setting.NewCfg(),
-				Features: featuremgmt.WithFeatures(
-					featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
-					featuremgmt.FlagQueryService,
-					featuremgmt.FlagQueryServiceWithConnections,
-					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
-				),
+				Cfg:                  setting.NewCfg(),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: &mockDirectRestConfigProvider{host: "http://localhost", transport: &mockRoundTripper{statusCode: tt.statusCode, responseBody: tt.responseBody}},
 				namespacer:           func(int64) string { return "default" },
