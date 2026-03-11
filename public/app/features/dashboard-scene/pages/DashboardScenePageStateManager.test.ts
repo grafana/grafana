@@ -1860,6 +1860,27 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(loadDashboardMock).toHaveBeenCalledTimes(2);
       expect(manager.state.dashboard?.state.version).toBe(2);
     });
+
+    it('should use v1 reloadDashboard implementation and update unified state', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({
+        dashboard: { uid: 'fake-dash', editable: true, version: 1 },
+        meta: {},
+      });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      loadDashboardMock.mockResolvedValue({
+        dashboard: { uid: 'fake-dash', editable: true, version: 3, title: 'fake-dash' } as DashboardDataDTO,
+        meta: {},
+      });
+
+      await manager.reloadDashboard({ version: 3, scopes: [], from: 'now-1h', to: 'now' });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(loadDashboardMock).toHaveBeenCalledTimes(2);
+      expect(manager.state.dashboard?.state.version).toBe(3);
+    });
   });
 
   describe('Home dashboard', () => {
