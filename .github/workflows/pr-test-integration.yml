@@ -132,6 +132,13 @@ jobs:
           path: profiles/
           retention-days: 7
           if-no-files-found: ignore
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -184,6 +191,13 @@ jobs:
           CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -233,6 +247,13 @@ jobs:
         if: always()
         run: |
           make devenv-down sources=postgres_tests
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   #### Enterprise
   sqlite-enterprise:
@@ -335,6 +356,13 @@ jobs:
           path: profiles/
           retention-days: 7
           if-no-files-found: ignore
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -392,6 +420,13 @@ jobs:
           CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -446,6 +481,13 @@ jobs:
         if: always()
         run: |
           make devenv-down sources=postgres_tests
+      - name: Report Go cache sizes
+        if: always()
+        run: |
+          echo "GOMODCACHE:"
+          du -sh "$(go env GOMODCACHE)" 2>/dev/null || echo "  not found"
+          echo "GOCACHE:"
+          du -sh "$(go env GOCACHE)" 2>/dev/null || echo "  not found"
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
