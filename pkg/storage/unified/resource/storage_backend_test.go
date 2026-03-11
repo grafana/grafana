@@ -1712,6 +1712,114 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), trashItems[0].value)
 }
 
+func TestKvStorageBackend_ListTrash_EmptyName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	nsr := NamespacedResource{Namespace: "default", Group: "apps", Resource: "resources"}
+	otherNSR := NamespacedResource{Namespace: "default", Group: "apps", Resource: "other-resources"}
+
+	writeResource := func(name string, ns NamespacedResource, keyResource string) int64 {
+		obj, err := createTestObjectWithName(name, ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		rv, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  keyResource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		})
+		require.NoError(t, err)
+		return rv
+	}
+
+	deleteResource := func(name string, res NamespacedResource, key string, previousRV int64) int64 {
+		obj, err := createTestObjectWithName(name, res, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		rv, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_DELETED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  key,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: previousRV,
+		})
+		require.NoError(t, err)
+		return rv
+	}
+
+	rv1 := writeResource("resource-deleted1", nsr, "resources")
+	deleteRV1 := deleteResource("resource-deleted1", nsr, "resources", rv1)
+
+	rv2 := writeResource("resource-deleted2", nsr, "resources")
+	deleteRV2 := deleteResource("resource-deleted2", nsr, "resources", rv2)
+
+	writeResource("resource-alive", nsr, "resources")
+
+	rv4 := writeResource("resource-other-type", otherNSR, "other-resources")
+	deleteResource("resource-other-type", otherNSR, "other-resources", rv4)
+
+	// List trash across all names in `nsr`
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+			},
+		},
+		Source: resourcepb.ListRequest_TRASH,
+		Limit:  10,
+	}
+
+	var trashItems []struct {
+		name            string
+		resourceVersion int64
+	}
+
+	_, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			trashItems = append(trashItems, struct {
+				name            string
+				resourceVersion int64
+			}{
+				name:            iter.Name(),
+				resourceVersion: iter.ResourceVersion(),
+			})
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Len(t, trashItems, 2) // deleted1 and deleted2
+
+	// deleted2 first (most recent event)
+	require.Equal(t, "resource-deleted2", trashItems[0].name)
+	require.Equal(t, deleteRV1, trashItems[0].resourceVersion)
+
+	require.Equal(t, "resource-deleted1", trashItems[1].name)
+	require.Equal(t, deleteRV2, trashItems[1].resourceVersion)
+}
+
 func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
