@@ -152,7 +152,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Assistant**: View mode only. Access options for help from Grafana Assistant.<!-- is this going out in 13? -->
+- **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.<!-- rollout? -->
 - **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
 - **More**: Access other panel actions.
   - **Duplicate**: Edit mode only. Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share) instead.
