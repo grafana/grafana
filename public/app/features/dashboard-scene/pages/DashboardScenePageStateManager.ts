@@ -14,7 +14,6 @@ import {
   AnnoKeyFolder,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
-  AnnoReloadOnParamsChange,
   AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
 import { ensureV2Response, transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
@@ -779,10 +778,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
             rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
           }
 
-          // Temporary local testing hook: force dashboards to be treated as reloadable
-          // when backend metadata annotation is not available.
-          rsp.meta.reloadOnParamsChange = true;
-
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
@@ -1011,11 +1006,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
             rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
           }
 
-          // Temporary local testing hook: force dashboards to be treated as reloadable
-          // when backend metadata annotation is not available.
-          rsp.metadata.annotations = rsp.metadata.annotations || {};
-          rsp.metadata.annotations[AnnoReloadOnParamsChange] = true;
-
           if (route === DashboardRoutes.Embedded) {
             rsp.metadata.annotations = rsp.metadata.annotations || {};
             rsp.metadata.annotations[AnnoKeyEmbedded] = 'embedded';
@@ -1207,6 +1197,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   public async loadSnapshot(slug: string) {
     return this.withVersionHandling((manager) => {
       if (manager instanceof DashboardScenePageStateManagerV2) {
+        // we need to post-sync here before withVersionHandling will sync the state back to the unified manager
         return manager.loadSnapshot.call(this, slug).then(() => {
           manager.setState(this.state);
         });
@@ -1265,6 +1256,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
     return this.withVersionHandling((manager) => {
       if (manager instanceof DashboardScenePageStateManagerV2) {
+        // we need to post-sync here before withVersionHandling will sync the state back to the unified manager
         return manager.loadDashboard.call(this, options).then(() => {
           manager.setState(this.state);
         });
