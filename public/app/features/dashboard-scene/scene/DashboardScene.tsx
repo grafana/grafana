@@ -232,11 +232,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
 
-    this.subscribeToState((newState, prevState) => {
-      console.log(newState, prevState);
-      console.log(newState.body, prevState.body);
-    });
-
     window.__grafanaSceneContext = this;
 
     this._initializePanelSearch();
