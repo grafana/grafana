@@ -265,7 +265,7 @@ var (
 		},
 		{
 			Name:            "provisioning",
-			Description:     "Next generation provisioning... and git",
+			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
 			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
