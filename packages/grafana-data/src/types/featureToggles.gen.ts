@@ -1652,4 +1652,9 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
 }
