@@ -92,6 +92,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)

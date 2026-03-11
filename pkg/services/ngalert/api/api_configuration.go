@@ -63,6 +63,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 
 	resp := apimodels.GettableNGalertConfig{
 		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
+		DatasourceSyncUID:   cfg.DatasourceSyncUID,
 	}
 	return response.JSON(http.StatusOK, resp)
 }
@@ -92,9 +93,31 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return response.Error(http.StatusBadRequest, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingDatasourceSync) && body.DatasourceSyncUID != "" {
+		ds, err := srv.datasourceService.GetDataSource(c.Req.Context(), &datasources.GetDataSourceQuery{
+			UID:   body.DatasourceSyncUID,
+			OrgID: c.GetOrgID(),
+		})
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return response.Error(http.StatusBadRequest, "datasource not found", err)
+			}
+			return ErrResp(http.StatusInternalServerError, err, "failed to look up datasource")
+		}
+		if ds.Type != datasources.DS_ALERTMANAGER {
+			return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
+		}
+		impl := ds.JsonData.Get("implementation").MustString("")
+		if impl != "mimir" && impl != "cortex" {
+			return response.Error(http.StatusBadRequest, "datasource implementation must be mimir or cortex", nil)
+		}
+	}
+
 	cfg := &ngmodels.AdminConfiguration{
-		SendAlertsTo: sendAlertsTo,
-		OrgID:        c.GetOrgID(),
+		SendAlertsTo:      sendAlertsTo,
+		OrgID:             c.GetOrgID(),
+		DatasourceSyncUID: body.DatasourceSyncUID,
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
