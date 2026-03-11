@@ -1416,6 +1416,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardUnifiedDrilldownControls",
+        "resourceVersion": "1773081615691",
+        "creationTimestamp": "2026-03-09T18:40:15Z"
+      },
+      "spec": {
+        "description": "Renders ad hoc filters and group by in a single unified control",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardValidatorApp",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
