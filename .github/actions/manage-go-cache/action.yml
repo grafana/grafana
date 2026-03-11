@@ -1,4 +1,4 @@
-name: Report Go Cache Sizes
+name: Manage Go Cache
 description: >-
   Logs GOMODCACHE and GOCACHE sizes at setup time.
   As a post step, trims the Go test cache (go clean -testcache)
