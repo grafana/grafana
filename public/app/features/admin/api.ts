@@ -20,7 +20,7 @@ export const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
 
 export const getUsersRoles = async (orgId: number, users: OrgUser[]) => {
   const userIds = users.map((u) => u.userId);
-  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeMapped=true`, {
+  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, {
     userIds,
     orgId,
   });
