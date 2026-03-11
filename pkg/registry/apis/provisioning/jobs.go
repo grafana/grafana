@@ -177,8 +177,8 @@ func (c *jobsConnector) Connect(
 			}
 		}
 
-		if spec.Action == provisioning.JobActionPush {
-			if err := c.authorizeExportJob(r.Context(), repo, cfg, spec); err != nil {
+		if spec.Action == provisioning.JobActionPush || spec.Action == provisioning.JobActionMigrate {
+			if err := c.authorizeResourceJob(r.Context(), repo, cfg, spec); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -224,16 +224,16 @@ var (
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
 
-// authorizeExportJob checks that the requesting user has the required permissions
-// for an export operation. This runs at job creation time while the user's identity
-// is still in the request context, since the export job executes later as the
-// provisioning service identity with full access.
+// authorizeResourceJob checks that the requesting user has the required permissions
+// for operations that read and write all supported resource types (export and migrate).
+// This runs at job creation time while the user's identity is still in the request
+// context, since the job executes later as the provisioning service identity.
 //
 // Delegates to the resources.Authorizer which checks:
 //  1. Read permission on all supported resource types at root level.
-//  2. Create permission on all supported resource types in the target folder (if folder-scoped).
-func (c *jobsConnector) authorizeExportJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
-	if spec.Push == nil {
+//  2. Create permission on all supported resource types in the target folder.
+func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if spec.Push == nil && spec.Migrate == nil {
 		return nil
 	}
 
