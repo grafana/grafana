@@ -5,7 +5,7 @@ import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/da
 import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { validateScaleOptions, validateScaleConfig } from '../scale';
@@ -27,7 +27,10 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, settings?.filteredFieldType);
+  const selectOptions = useMatcherSelectOptions(names, fieldName, {
+    firstItem: fixedValueOption,
+    fieldType: settings?.filteredFieldType,
+  });
   const minMaxStep = useMemo(() => {
     return validateScaleOptions(settings);
   }, [settings]);

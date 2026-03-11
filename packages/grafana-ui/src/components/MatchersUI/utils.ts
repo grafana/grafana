@@ -123,7 +123,7 @@ export function useFieldDisplayNames(
   return useMemo(() => getFrameFieldsDisplayNames(data, filter, undefined, undefined, scope), [data, filter, scope]);
 }
 
-interface UseSelectOptionsProps {
+interface UseMatcherSelectOptionsProps {
   firstItem?: ComboboxOption;
   fieldType?: string;
   baseNameMode?: FieldNamePickerBaseNameMode;
@@ -133,15 +133,15 @@ interface UseSelectOptionsProps {
 /**
  * @internal
  */
-export function useSelectOptions(
+export function useMatcherSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
-  { firstItem, fieldType, baseNameMode, scope }: UseSelectOptionsProps = {}
+  { firstItem, fieldType, baseNameMode, scope }: UseMatcherSelectOptionsProps = {}
 ): ComboboxOption[] {
   return useMemo(() => {
     let found = false;
 
-    const shouldShowScopes = !scope && displayNames.scopes.size > 0;
+    const shouldShowScopes = !scope && displayNames.scopes.size > 1;
     const isFound = (name: string) => name === currentName && (scope ? displayNames.scopes.get(name) === scope : true);
     const getGroup = (name: string) =>
       shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined;
@@ -185,11 +185,15 @@ export function useSelectOptions(
     }
 
     for (const { set, builder } of sets) {
+      const shouldCheckFieldType = fieldType && set === displayNames.display;
       for (const name of set) {
         if (!found && isFound(name)) {
           found = true;
         }
         if (scope && displayNames.scopes.get(name) !== scope) {
+          continue;
+        }
+        if (shouldCheckFieldType && fieldType !== displayNames.fields.get(name)?.type) {
           continue;
         }
         options.push(builder(name));
@@ -204,7 +208,7 @@ export function useSelectOptions(
     }
 
     return options;
-  }, [displayNames, currentName, firstItem, baseNameMode, scope]);
+  }, [baseNameMode, currentName, displayNames, fieldType, firstItem, scope]);
 }
 
 export function getUniqueMatcherScopes(data: DataFrame[]): Set<MatcherScope> {

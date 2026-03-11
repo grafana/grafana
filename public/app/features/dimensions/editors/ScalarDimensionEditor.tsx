@@ -5,7 +5,7 @@ import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { ScalarDimensionOptions } from '../types';
@@ -47,7 +47,10 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, FieldType.number);
+  const selectOptions = useMatcherSelectOptions(names, fieldName, {
+    firstItem: fixedValueOption,
+    fieldType: FieldType.number,
+  });
 
   const styles = useStyles2(getStyles);
 

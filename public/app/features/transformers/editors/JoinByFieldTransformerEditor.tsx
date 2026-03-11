@@ -12,7 +12,7 @@ import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/joinByField.svg';
@@ -20,7 +20,7 @@ import lightImage from '../images/light/joinByField.svg';
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const names = useFieldDisplayNames(input);
-  const fieldNames = useSelectOptions(names);
+  const fieldNames = useMatcherSelectOptions(names);
 
   const modes = [
     {

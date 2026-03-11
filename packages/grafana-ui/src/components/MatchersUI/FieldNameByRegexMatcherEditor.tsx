@@ -7,7 +7,6 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { getFrameFieldsDisplayNames } from './utils';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { id, options, onChange, scope = 'series' } = props;
@@ -38,5 +37,4 @@ export const getFieldNameByRegexMatcherItem: () => FieldMatcherUIRegistryItem<st
     'Set properties for fields with names matching a regex'
   ),
   optionsToLabel: (options) => options,
-  getUniqueScopes: (data) => new Set([...getFrameFieldsDisplayNames(data).scopes.values()]),
 });

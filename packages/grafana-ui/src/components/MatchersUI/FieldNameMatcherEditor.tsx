@@ -7,15 +7,15 @@ import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
-import { frameHasName, useFieldDisplayNames, useSelectOptions } from './utils';
+import { frameHasName, useFieldDisplayNames, useMatcherSelectOptions } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps, id, scope } = props;
   const names = useFieldDisplayNames(data);
-  const selectOptions: ComboboxOption[] = useSelectOptions(names, options, { scope });
+  const selectOptions = useMatcherSelectOptions(names, options, { scope });
 
   const onChange = useCallback(
-    (selection: ComboboxOption) => {
+    (selection: ComboboxOption<string>) => {
       if (!frameHasName(selection.value, names)) {
         return;
       }
