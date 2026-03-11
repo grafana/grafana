@@ -9,7 +9,7 @@ import {
   contactPointsListWithUnusableItemsScenario,
   simpleContactPointsList,
   simpleContactPointsListScenario,
-} from './ContactPointSelector.test.scenario';
+} from './ContactPointSelector.scenario';
 
 const server = setupMockServer();
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
@@ -15,6 +15,7 @@ import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { EditorTypeSelector } from './EditorTypeSelector';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
+import { ElasticsearchQueryOptions } from './ElasticsearchQueryOptions';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
@@ -103,6 +104,14 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
   const [switchModalOpen, setSwitchModalOpen] = useState(false);
   const [pendingEditorType, setPendingEditorType] = useState<EditorType | null>(null);
 
+  const formatFnRef = useRef<(() => void) | null>(null);
+  const onFormatReady = useCallback((fn: () => void) => {
+    formatFnRef.current = fn;
+  }, []);
+  const handleFormat = useCallback(() => {
+    formatFnRef.current?.();
+  }, []);
+
   const isTimeSeries = isTimeSeriesQuery(value);
 
   const isCodeEditor = value.editorType === 'code';
@@ -113,6 +122,10 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
 
   const showBucketAggregationsEditor = value.metrics?.every(
     (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
+  );
+
+  const isRawDocumentEditor = value.metrics?.every(
+    (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'raw_document'
   );
 
   const onEditorTypeChange = useCallback((newEditorType: EditorType) => {
@@ -161,6 +174,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           value={value.query}
           onChange={(query) => dispatch(changeQuery(query))}
           onRunQuery={onRunQuery}
+          onFormatReady={onFormatReady}
         />
       )}
 
@@ -191,6 +205,8 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
         </>
       )}
+      <ElasticsearchQueryOptions onFormat={isCodeEditor && rawDSLFeatureEnabled ? handleFormat : undefined} />
+      {isRawDocumentEditor && <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />}
     </>
   );
 };

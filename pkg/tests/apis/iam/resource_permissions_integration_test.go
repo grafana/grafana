@@ -98,12 +98,8 @@ func newk8sTestHelperClients(helper *apis.K8sTestHelper) *k8sTestClients {
 func TestIntegrationResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, mode := range modes {
-		if mode >= rest.Mode3 {
-			t.Skip("Skipping ResourcePermission tests for Mode3+ because default permissions are not written through the new APIs")
-			continue
-		}
 		t.Run(fmt.Sprintf("ResourcePermission CRUD with dual writer mode %d", mode), func(t *testing.T) {
 			// Turn off authorization cache so permission changes apply right away in tests
 			t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")

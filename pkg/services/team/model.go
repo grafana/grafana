@@ -90,6 +90,7 @@ type SearchTeamsQuery struct {
 	OrgID        int64 `xorm:"org_id"`
 	SortOpts     []model.SortOption
 	TeamIds      []int64
+	UIDs         []string
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }

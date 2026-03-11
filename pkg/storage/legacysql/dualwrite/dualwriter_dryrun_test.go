@@ -182,7 +182,7 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		require.True(t, forceCreate, "Mode2 dry-run should set forceAllowCreate=true")
 	})
 
-	t.Run("Mode3 should pass original objInfo unchanged", func(t *testing.T) {
+	t.Run("Mode3 should wrap objInfo and set forceAllowCreate=true (same as Mode1)", func(t *testing.T) {
 		l := (rest.Storage)(nil)
 		s := (rest.Storage)(nil)
 
@@ -194,20 +194,19 @@ func TestDryRun_Update_WrapsObjInfoForLegacyReadModes(t *testing.T) {
 		dw, err := NewStaticStorage(kind, rest.Mode3, ls, us)
 		require.NoError(t, err)
 
-		originalInfo := updatedObjInfoObj{}
-		_, _, err = dw.Update(context.Background(), "foo", originalInfo,
+		_, _, err = dw.Update(context.Background(), "foo", updatedObjInfoObj{},
 			func(ctx context.Context, obj runtime.Object) error { return nil },
 			func(ctx context.Context, obj, old runtime.Object) error { return nil },
 			false, &metav1.UpdateOptions{DryRun: dryRunAll})
 		require.NoError(t, err)
 
-		// Verify unified was called with original objInfo (not wrapped)
+		// Mode3 now maps to DualWrite (same as Mode1), so objInfo should be wrapped
 		require.Len(t, us.Calls, 1)
 		call := us.Calls[0]
 		_, isWrapped := call.Arguments[2].(*wrappedUpdateInfo)
-		require.False(t, isWrapped, "Mode3 dry-run should NOT wrap objInfo")
+		require.True(t, isWrapped, "Mode3 dry-run should wrap objInfo with wrappedUpdateInfo")
 		forceCreate := call.Arguments[5].(bool)
-		require.False(t, forceCreate, "Mode3 dry-run should preserve original forceAllowCreate=false")
+		require.True(t, forceCreate, "Mode3 dry-run should set forceAllowCreate=true")
 	})
 }
 

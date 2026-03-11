@@ -33,7 +33,7 @@ func TestSearchFallback(t *testing.T) {
 		{name: "should hit legacy search handler on mode 0", mode: rest.Mode0, expectUnified: false},
 		{name: "should hit legacy search handler on mode 1", mode: rest.Mode1, expectUnified: false},
 		{name: "should hit legacy search handler on mode 2", mode: rest.Mode2, expectUnified: false},
-		{name: "should hit unified storage search handler on mode 3", mode: rest.Mode3, expectUnified: true},
+		{name: "should hit legacy search handler on mode 3", mode: rest.Mode3, expectUnified: false},
 		{name: "should hit unified storage search handler on mode 4", mode: rest.Mode4, expectUnified: true},
 		{name: "should hit unified storage search handler on mode 5", mode: rest.Mode5, expectUnified: true},
 	}

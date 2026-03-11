@@ -128,6 +128,7 @@ func TestCheckAndCreateBindingUpdate(t *testing.T) {
 				},
 				Spec: iamv0alpha1.TeamBindingSpec{
 					Subject: iamv0alpha1.TeamBindingspecSubject{
+						Kind: "User",
 						Name: "1",
 					},
 					Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
@@ -258,6 +259,7 @@ func (s *testSetup) mockCreateBinding(userUID string, permission iamv0alpha1.Tea
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			Subject: iamv0alpha1.TeamBindingspecSubject{
+				Kind: "User",
 				Name: userUID,
 			},
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
@@ -295,6 +297,7 @@ func (s *testSetup) createExistingBinding(userUID string, permission iamv0alpha1
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			Subject: iamv0alpha1.TeamBindingspecSubject{
+				Kind: "User",
 				Name: userUID,
 			},
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{

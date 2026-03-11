@@ -206,7 +206,7 @@ The generated file uses one of the following schema models:
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
-You must have the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer/) installed to export a dashboard as an image.
+You must have the [Grafana Image Renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/) configured to export a dashboard as an image.
 {{< /admonition >}}
 
 To export a dashboard in its current state as a PNG image file, follow these steps:
@@ -256,7 +256,7 @@ To share a personalized, direct link to your panel within your organization, fol
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
 
-   There are maximums for [width](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width), [height](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height), and [scale factor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor) in the image renderer configuration that you can customize if needed.
+   There are maximums for width, height, and scale factor in the image renderer [configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/troubleshooting/#available-configuration-options) that you can customize if needed.
 
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.

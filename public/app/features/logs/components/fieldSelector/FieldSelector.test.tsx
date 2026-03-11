@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';
@@ -162,6 +163,60 @@ describe('LogListFieldSelector', () => {
 
     expect(onClickShowField).toHaveBeenCalledWith('level');
     expect(onClickHideField).toHaveBeenCalledWith('service');
+  });
+
+  test('should show suggested fields for any logging source when feature toggle is on', () => {
+    const originalToggle = config.featureToggles.otelLogsFormatting;
+    try {
+      config.featureToggles.otelLogsFormatting = true;
+
+      const logsWithGenericFields: LogListModel[] = [
+        createLogLine({
+          uid: '1',
+          entry: 'log 1',
+          labels: { service_name: 'frontend', message: 'hello', app: 'web' },
+        }),
+        createLogLine({
+          uid: '2',
+          entry: 'log 2',
+          labels: { service_name: 'backend', message: 'world' },
+        }),
+      ];
+
+      const dataFramesWithGenericFields: DataFrame[] = [
+        toDataFrame({
+          fields: [
+            { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+            { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
+            {
+              name: 'labels',
+              type: FieldType.other,
+              values: [
+                { service_name: 'frontend', message: 'hello', app: 'web' },
+                { service_name: 'backend', message: 'world' },
+              ],
+            },
+          ],
+        }),
+      ];
+
+      render(
+        <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
+          <LogListFieldSelector
+            containerElement={containerElement}
+            logs={logsWithGenericFields}
+            dataFrames={dataFramesWithGenericFields}
+          />
+        </LogListContext.Provider>
+      );
+
+      expect(screen.getByText('Suggested')).toBeInTheDocument();
+      expect(screen.getAllByText('service_name').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('message').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('app').length).toBeGreaterThan(0);
+    } finally {
+      config.featureToggles.otelLogsFormatting = originalToggle;
+    }
   });
 });
 

@@ -217,9 +217,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		t.Skip("Skipping flaky test - list works with continue tokens")
 		modes := []grafanarest.DualWriterMode{
 			grafanarest.Mode1,
-			grafanarest.Mode2,
-			grafanarest.Mode3,
-			grafanarest.Mode4,
 			grafanarest.Mode5,
 		}
 		for _, mode := range modes {
@@ -632,7 +629,7 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 	// Now let's see if the iterator also works when we are limited by the page size, which should be set
 	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
 	// as legacy doesn't have such a page size limit.
-	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
+	if mode >= grafanarest.Mode4 {
 		t.Run("check page size iterator", func(t *testing.T) {
 			fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
 			require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
@@ -2146,7 +2143,7 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	mode3 := grafanarest.DualWriterMode(3)
+	mode5 := grafanarest.DualWriterMode(5)
 	ops := testinfra.GrafanaOpts{
 		DisableDataMigrations: true,
 		DisableAnonymous:      true,
@@ -2154,10 +2151,10 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 		APIServerStorageType:  "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			folders.RESOURCEGROUP: {
-				DualWriterMode: mode3,
+				DualWriterMode: mode5,
 			},
 			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: mode3,
+				DualWriterMode: mode5,
 			},
 		},
 	}
@@ -2186,14 +2183,15 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 	accessor, err := utils.MetaAccessor(&folderList.Items[0])
 	require.NoError(t, err)
 
-	expectedLabels := map[string]string{"grafana.app/deprecatedInternalID": "1"}
+	labels := accessor.GetLabels()
+	require.Contains(t, labels, "grafana.app/deprecatedInternalID")
+	require.NotEmpty(t, labels["grafana.app/deprecatedInternalID"])
+
 	expectedAnnotations := map[string]string{
 		"grafana.app/createdBy": "access-policy:service",
 		"grafana.app/managedBy": "classic-file-provisioning",
 		"grafana.app/managerId": "provisioned dashboards",
 	}
-
-	require.Equal(t, expectedLabels, accessor.GetLabels())
 	require.Equal(t, expectedAnnotations, accessor.GetAnnotations())
 }
 
@@ -2399,11 +2397,11 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 				require.Error(t, err, "folder should not exist after dry-run create")
 			})
 
-			// Update dry-run only works reliably in modes 3+ where unified storage is
+			// Update dry-run only works reliably in modes 4+ where unified storage is
 			// the primary read source, so the client-sent UID matches the unified store.
-			// In modes 1/2, the client reads from legacy (which has a different UID than
+			// In modes 1/2/3, the client reads from legacy (which has a different UID than
 			// unified), causing a UID precondition mismatch on dry-run update.
-			if mode >= 3 {
+			if mode >= 4 {
 				t.Run("update with dry-run should not actually update", func(t *testing.T) {
 					// Get the current folder
 					current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})

@@ -95,7 +95,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
             options={reducerFunctions}
             onChange={onReducerFunctionChange}
             width={20}
-            value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
+            value={reducerFunctions.find((rf) => rf.value === condition.reducer?.type)}
           />
           <div className={styles.button}>
             <Trans i18nKey="expressions.condition.of">OF</Trans>

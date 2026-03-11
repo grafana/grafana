@@ -13,6 +13,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
+import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
 import { AddVariable } from './AddVariable';
 
@@ -82,6 +83,7 @@ export function AddNewEditPane({ onAddPanel, dashboard, selectedElement }: AddNe
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
         <AddVariable dashboardScene={dashboardScene} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
+        <AddLink dashboardScene={dashboardScene} />
       </AddNewSection>
     </>
   );

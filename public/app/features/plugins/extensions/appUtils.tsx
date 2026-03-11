@@ -147,8 +147,5 @@ export function getAppPluginsToPreloadSync(apps: AppPluginConfig[]): AppPluginCo
     apps
   );
 
-  // TODO(@MattIPv4): cloud-home-app is deprecated and should not be preloaded
-  return apps.filter((app) => {
-    return app.id !== 'cloud-home-app' && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
-  });
+  return apps.filter((app) => app.preload || dashboardPanelMenuPluginIds.includes(app.id));
 }

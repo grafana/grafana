@@ -41,6 +41,7 @@ import (
         status: bool
         outcome: bool
         error: bool
+        ruleUID: bool
     }
 }
 
@@ -91,6 +92,7 @@ import (
     status?: #NotificationStatus
     outcome?: #NotificationOutcome
     error?: string
+    ruleUID?: string
 
     // Count is the number of notification attempts in the time period. Set for counts queries.
     count: int

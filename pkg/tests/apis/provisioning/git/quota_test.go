@@ -62,7 +62,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		require.Len(t, jobObj.Status.Warnings, 1,
 			"exactly 1 quota warning expected for the skipped dashboard")
-		require.Equal(t, "resource quota exceeded, skipping creation of dashboard3.json (file: dashboard3.json, name: , action: ignored)",
+		require.Equal(t, "resource quota exceeded, skipping creation of dashboard3.json (file: dashboard3.json, action: ignored)",
 			jobObj.Status.Warnings[0],
 			"quota warning should identify the skipped file")
 
@@ -228,7 +228,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.Len(t, jobObj.Status.Warnings, 1,
 			"exactly 1 quota warning expected for the skipped dashboard")
 		require.Equal(t,
-			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, name: , action: ignored)",
+			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, action: ignored)",
 			jobObj.Status.Warnings[0],
 			"quota warning should identify the skipped file")
 

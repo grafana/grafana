@@ -96,7 +96,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		Height:            height,
 		DeviceScaleFactor: scale,
 		Theme:             themeModel,
-	}, nil)
+	})
 	if err != nil {
 		if errors.Is(err, rendering.ErrTooManyRequests) {
 			c.JsonApiErr(http.StatusTooManyRequests, "Too many rendering requests", err)

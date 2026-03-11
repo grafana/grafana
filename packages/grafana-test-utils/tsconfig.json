@@ -16,5 +16,11 @@
     }
   },
   "exclude": ["dist/**/*"],
-  "include": ["src/**/*.ts*"]
+  "include": [
+    "../../public/app/types/window.d.ts",
+    "../../public/app/types/images.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "../grafana-i18n/src/types/*.d.ts",
+    "src/**/*.ts*"
+  ]
 }

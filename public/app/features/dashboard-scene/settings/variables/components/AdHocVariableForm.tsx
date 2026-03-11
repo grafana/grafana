@@ -8,7 +8,6 @@ import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
@@ -124,16 +123,22 @@ export function AdHocVariableForm({
       )}
 
       {datasourceSupported && onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
+        <Field
+          label={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
           )}
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
+          noMargin
+        >
+          <Switch
+            value={allowCustomValue ?? true}
+            onChange={onAllowCustomValueChange}
+            data-testid={
+              selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+            }
+          />
+        </Field>
       )}
     </Stack>
   );

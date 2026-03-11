@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"iter"
 	"sync"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -126,7 +127,7 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	return s.latestUpdate(ctx, dbHelper, ns), nil
 }
 
-func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (s *ResourcePermSqlBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
 		yield(nil, errNotImplemented)
 	}

@@ -21,3 +21,8 @@ const meta: Meta<typeof FlameGraphContainer> = {
 
 export default meta;
 export const Basic: StoryObj<typeof meta> = {};
+export const NewUI: StoryObj<typeof meta> = {
+  args: {
+    enableNewUI: true,
+  },
+};

@@ -2,18 +2,19 @@ import { css } from '@emotion/css';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Button, Stack, Box } from '@grafana/ui';
+import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;
   onChange: (value: string) => void;
   onRunQuery: () => void;
+  onFormatReady?: (formatFn: () => void) => void;
 }
 
 // This offset was chosen by testing to match Prometheus behavior
 const EDITOR_HEIGHT_OFFSET = 2;
 
-export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
+export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -42,15 +43,13 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
 
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
-    },
-    [onRunQuery]
-  );
 
-  const handleFormat = useCallback(() => {
-    if (editorRef.current) {
-      editorRef.current.getAction('editor.action.formatDocument')?.run();
-    }
-  }, []);
+      onFormatReady?.(() => {
+        editorRef.current?.getAction('editor.action.formatDocument')?.run();
+      });
+    },
+    [onRunQuery, onFormatReady]
+  );
 
   const handleQueryChange = useCallback(
     (newValue: string) => {
@@ -95,19 +94,6 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
           onEditorDidMount={handleEditorDidMount}
         />
       </div>
-      <div className={styles.footer}>
-        <Stack gap={1}>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="brackets-curly"
-            onClick={handleFormat}
-            tooltip="Format query (Shift+Alt+F)"
-          >
-            Format
-          </Button>
-        </Stack>
-      </div>
     </Box>
   );
 }
@@ -121,10 +107,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     width: '100%',
     overflow: 'hidden',
-  }),
-  footer: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(0.5, 0),
   }),
 });

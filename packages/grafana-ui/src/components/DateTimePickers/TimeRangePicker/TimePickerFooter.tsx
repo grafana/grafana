@@ -42,6 +42,7 @@ export const TimePickerFooter = (props: Props) => {
   const timeSettingsId = useId();
   const timeZoneSettingsId = useId();
   const fiscalYearSettingsId = useId();
+  const fiscalYearStartMonthId = useId();
 
   const onToggleChangeTimeSettings = useCallback(
     (event?: React.MouseEvent) => {
@@ -145,6 +146,7 @@ export const TimePickerFooter = (props: Props) => {
                   label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
                 >
                   <Combobox
+                    id={fiscalYearStartMonthId}
                     value={fiscalYearStartMonth ?? null}
                     options={getMonthOptions()}
                     onChange={(value) => {

@@ -34,7 +34,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
 
-  const sizeFieldId = useId();
   const unitFieldId = useId();
   const modeFieldId = useId();
 
@@ -77,18 +76,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
       {metric.type === 'bucket_script' && (
         <BucketScriptSettingsEditor value={metric} previousMetrics={previousMetrics} />
       )}
-
-      {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
-        <InlineField label="Size" {...inlineFieldProps} htmlFor={sizeFieldId}>
-          <Input
-            id={sizeFieldId}
-            onBlur={(e) => dispatch(changeMetricSetting({ metric, settingName: 'size', newValue: e.target.value }))}
-            defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
-          />
-        </InlineField>
-      )}
-
-      {metric.type === 'logs' && <SettingField label="Limit" metric={metric} settingName="limit" placeholder="500" />}
 
       {metric.type === 'cardinality' && (
         <SettingField label="Precision Threshold" metric={metric} settingName="precision_threshold" />

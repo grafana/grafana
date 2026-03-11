@@ -136,6 +136,11 @@ var appManifestData = app.ManifestData{
 																					Type: []string{"boolean"},
 																				},
 																			},
+																			"ruleUID": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
 																			"status": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"boolean"},
@@ -149,6 +154,7 @@ var appManifestData = app.ManifestData{
 																			"status",
 																			"outcome",
 																			"error",
+																			"ruleUID",
 																		},
 																	},
 																},
@@ -441,6 +447,11 @@ var appManifestData = app.ManifestData{
 									},
 								},
 								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"ruleUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},

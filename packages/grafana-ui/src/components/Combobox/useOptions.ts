@@ -120,7 +120,11 @@ export function useOptions<T extends string | number>(
     return [addCustomValue(options), groupStartIndices];
   }, [filteredOptions, addCustomValue]);
 
-  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError };
+  const resetSearch = useCallback(() => {
+    setUserTypedSearch('');
+  }, []);
+
+  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError, resetSearch };
 }
 
 /**

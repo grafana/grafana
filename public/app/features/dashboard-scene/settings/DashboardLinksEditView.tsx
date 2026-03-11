@@ -8,7 +8,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
 import { DashboardLinkList } from '../settings/links/DashboardLinkList';
-import { NEW_LINK } from '../settings/links/utils';
+import { ProvisionedLinksSection } from '../settings/links/ProvisionedLinksSection';
+import { NEW_LINK, isLinkEditable } from '../settings/links/utils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
@@ -84,7 +85,7 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
     const links = this.links;
     let count = 0;
     for (let i = 0; i < links.length; i++) {
-      if (links[i].origin === undefined) {
+      if (isLinkEditable(links[i])) {
         if (count === editableIndex) {
           return i;
         }
@@ -104,7 +105,8 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
   const dashboard = getDashboardSceneFor(model);
   const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const editableLinks = links.filter((link) => link.origin === undefined);
+  const defaultLinks = links.filter((link) => !isLinkEditable(link));
+  const editableLinks = links.filter(isLinkEditable);
   const linkToEdit = editIndex !== undefined ? editableLinks[editIndex] : undefined;
 
   if (linkToEdit) {
@@ -131,6 +133,7 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
         onDuplicate={model.onDuplicate}
         onOrderChange={model.onOrderChange}
       />
+      {defaultLinks.length > 0 && <ProvisionedLinksSection links={defaultLinks} />}
     </Page>
   );
 }

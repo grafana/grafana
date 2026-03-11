@@ -13,7 +13,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon, useStyles2 } from '@grafana/ui';
+import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
 
 import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
@@ -111,17 +111,20 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
       return (
         <tr key={row.key}>
           <td>
-            {row.label || row.key}{' '}
-            {row.help && (
-              <Tooltip content={row.help}>
-                <Icon name="info-circle" />
-              </Tooltip>
-            )}
+            <Label htmlFor={`select-${row.key}`}>
+              {row.label || row.key}{' '}
+              {row.help && (
+                <Tooltip content={row.help}>
+                  <Icon name="info-circle" />
+                </Tooltip>
+              )}
+            </Label>
           </td>
           <td>
             <Select
               value={currentValue}
               options={picker}
+              inputId={`select-${row.key}`}
               placeholder={row.placeholder || row.key}
               onChange={(v: SelectableValue<string>) => {
                 onFieldNameChange(row.key, v);

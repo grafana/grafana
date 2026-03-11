@@ -78,8 +78,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(), // empty registry = no migration log path
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
@@ -94,8 +93,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
@@ -110,8 +108,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -126,8 +123,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -142,8 +138,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -158,8 +153,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 
@@ -172,8 +166,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), unknownGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), unknownGR)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 
@@ -184,8 +177,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 			registry: NewMigrationRegistry(),
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 }
@@ -217,8 +209,7 @@ func TestMigrationStatusReader_GetStorageMode_DualWritePriority(t *testing.T) {
 			// The test verifies Mode1 short-circuits before that.
 		}
 
-		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
-		require.NoError(t, err)
+		mode := reader.GetStorageMode(context.Background(), playlistGR)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 }

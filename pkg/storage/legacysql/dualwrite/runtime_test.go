@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-var kind = schema.GroupResource{Group: "g", Resource: "r"}
+var kind = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 
 func TestRuntime_Create(t *testing.T) {
 	type testCase struct {
@@ -78,7 +77,7 @@ func TestRuntime_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), ProvideMetrics(prometheus.NewRegistry()))
+			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader())
 			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
@@ -151,7 +150,7 @@ func TestRuntime_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), ProvideMetrics(prometheus.NewRegistry()))
+			m, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader())
 			require.NoError(t, err)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
@@ -236,7 +235,7 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 		}
 
 	// Shared provider across all tests
-	dual, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), ProvideMetrics(prometheus.NewRegistry()))
+	dual, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader())
 	require.NoError(t, err)
 
 	for _, tt := range tests {

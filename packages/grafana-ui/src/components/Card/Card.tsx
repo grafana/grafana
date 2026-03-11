@@ -3,6 +3,7 @@ import { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -124,7 +125,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const optionLabel = t('grafana-ui.card.option', 'option');
 
   return (
-    <h2 className={cx(styles.heading, className)}>
+    <div data-testid={selectors.components.Card.heading} className={cx(styles.heading, className)}>
       {href ? (
         <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
@@ -138,7 +139,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       )}
       {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
       {isSelected !== undefined && <input aria-label={optionLabel} type="radio" checked={isSelected} readOnly />}
-    </h2>
+    </div>
   );
 };
 Heading.displayName = 'Heading';

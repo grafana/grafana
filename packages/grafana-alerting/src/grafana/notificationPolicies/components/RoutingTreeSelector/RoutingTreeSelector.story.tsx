@@ -11,7 +11,7 @@ import {
   routingTreeWithErrorScenario,
   simpleRoutingTreesListScenario,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const meta: Meta<typeof RoutingTreeSelector> = {
   component: RoutingTreeSelector,

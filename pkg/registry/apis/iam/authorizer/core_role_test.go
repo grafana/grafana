@@ -367,6 +367,10 @@ func (m *mockAuthInfo) GetAuthenticatedBy() string {
 	return ""
 }
 
+func (m *mockAuthInfo) GetAccessToken() string {
+	return ""
+}
+
 func (m *mockAuthInfo) GetIDToken() string {
 	return ""
 }

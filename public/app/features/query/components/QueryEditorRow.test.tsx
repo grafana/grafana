@@ -34,6 +34,13 @@ jest.mock('@grafana/i18n', () => ({
   t: (key: string, defaultValue: string) => defaultValue,
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false }),
+  useProvidePageContext: jest.fn(),
+  OpenAssistantButton: () => null,
+  createAssistantContextItem: jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({

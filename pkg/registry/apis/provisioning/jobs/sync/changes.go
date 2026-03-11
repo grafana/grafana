@@ -21,20 +21,23 @@ type ResourceFileChange struct {
 	Existing *provisioning.ResourceListItem
 }
 
-func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error) {
+// Compare reads the repository tree at ref, lists the current Grafana resources,
+// and delegates to Changes to produce the diff. It also returns the list of
+// folder paths that are missing a _folder.json metadata file.
+func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, []string, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error listing current: %w", err)
+		return nil, nil, fmt.Errorf("error listing current: %w", err)
 	}
 
 	source, err := repo.ReadTree(ctx, ref)
 	if err != nil {
-		return nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
 	changes, err := Changes(ctx, source, target)
 	if err != nil {
-		return nil, fmt.Errorf("calculate changes: %w", err)
+		return nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
 	if len(changes) > 0 {
@@ -43,9 +46,14 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 		repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 	}
 
-	return changes, nil
+	missingMetadata := resources.FindFoldersMissingMetadata(source)
+
+	return changes, missingMetadata, nil
 }
 
+// Changes computes the diff between a repository source tree and the current Grafana state (target).
+//
+//nolint:gocyclo
 func Changes(ctx context.Context, source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
@@ -67,6 +75,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
+
 	for _, file := range source {
 		// TODO: why do we have to do this here?
 		if !file.Blob && !strings.HasSuffix(file.Path, "/") {
@@ -95,7 +104,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
-			// _folder.json is a folder-metadata file (like .keep), not a resource.
+			// The folder metadata file, like .keep, is not a resource we should consider for the changes.
 			// Skip it here; the parent directory change handles folder creation.
 			if resources.IsFolderMetadataFile(file.Path) {
 				logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)

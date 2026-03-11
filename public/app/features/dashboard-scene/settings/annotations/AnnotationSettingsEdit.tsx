@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -56,6 +56,7 @@ enum AnnotationControlsDisplay {
 
 export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate, onBackToList, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
+  const showInId = useId();
 
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
@@ -338,11 +339,13 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           {/* Show in */}
           <Field
             noMargin
+            htmlFor={showInId}
             label={t('dashboard-scene.annotation-settings-edit.label-show-in', 'Show in')}
             data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}
           >
             <>
               <Select
+                inputId={showInId}
                 isLoading={loading}
                 options={getPanelFilters()}
                 value={panelFilter}

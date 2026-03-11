@@ -6,6 +6,8 @@ import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
 
+import { trackRenameInitiated } from '../../tracking';
+
 interface EditableQueryNameProps {
   query: DataQuery;
   queries: DataQuery[];
@@ -24,6 +26,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   );
 
   const onEditQuery = () => {
+    trackRenameInitiated();
     setIsEditing(true);
     setValidationError(null);
   };

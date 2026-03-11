@@ -2,6 +2,8 @@ package v0alpha1
 
 TeamBindingSpec: {
 	#Subject: {
+		// kind of the identity
+		kind: "User"
 		// uid of the identity
 		name: string
 	}

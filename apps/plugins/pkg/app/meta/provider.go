@@ -43,6 +43,8 @@ type Result struct {
 
 // Provider is used for retrieving plugin metadata.
 type Provider interface {
+	// Name returns the name of the provider.
+	Name() string
 	// GetMeta retrieves plugin metadata for the given query parameters.
 	// Returns the Result containing the MetaJSONData and its recommended TTL.
 	// If the plugin is not found, returns ErrMetaNotFound.

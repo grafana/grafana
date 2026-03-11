@@ -31,8 +31,9 @@ type ResourceStorageAuthorizer interface {
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
-// It overrides the identity in the context to use service identity for the underlying store operations.
-// That way, the underlying store authorization is always successful, and the authorization is enforced by the wrapper.
+// It overrides the identity in the context to use service identity for the underlying store operations so the
+// store's authorization always succeeds and the wrapper enforces authorization. The wrapper injects the original
+// user's UID as metadata identity so unistore can set createdBy/updatedBy correctly (see identity.WithOriginalIdentityUID).
 type Wrapper struct {
 	inner      K8sStorage
 	authorizer ResourceStorageAuthorizer
@@ -51,8 +52,20 @@ type K8sStorage interface {
 var _ rest.Storage = (*Wrapper)(nil)
 var _ k8srest.Watcher = (*Wrapper)(nil)
 
+// New returns a Wrapper that enforces authorization and uses service identity for inner store calls,
+// injecting the original user's UID for createdBy/updatedBy annotations.
 func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
 	return &Wrapper{inner: store, authorizer: authz}
+}
+
+// storeCtx returns the context for inner store calls: service identity so the store's authorization
+// succeeds, with the original user's UID injected as metadata identity for createdBy/updatedBy (see identity.WithOriginalIdentityUID).
+func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
+	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
+		srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
+	}
+	return srvCtx
 }
 
 func (w *Wrapper) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metaV1.Table, error) {
@@ -65,20 +78,17 @@ func (w *Wrapper) Create(ctx context.Context, obj runtime.Object, createValidati
 	if err != nil {
 		return nil, err
 	}
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	return w.inner.Create(srvCtx, obj, createValidation, options)
+	return w.inner.Create(w.storeCtx(ctx), obj, createValidation, options)
 }
 
 func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions) (runtime.Object, bool, error) {
 	// Fetch the object first to authorize
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	storeCtx := w.storeCtx(ctx)
 	getOpts := &metaV1.GetOptions{TypeMeta: options.TypeMeta}
 	if options.Preconditions != nil {
 		getOpts.ResourceVersion = *options.Preconditions.ResourceVersion
 	}
-	obj, err := w.inner.Get(srvCtx, name, getOpts)
+	obj, err := w.inner.Get(storeCtx, name, getOpts)
 	if err != nil {
 		return nil, false, err
 	}
@@ -88,7 +98,7 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 		return nil, false, err
 	}
 
-	return w.inner.Delete(srvCtx, name, deleteValidation, options)
+	return w.inner.Delete(storeCtx, name, deleteValidation, options)
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
@@ -102,10 +112,7 @@ func (w *Wrapper) Destroy() {
 }
 
 func (w *Wrapper) Get(ctx context.Context, name string, options *metaV1.GetOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	item, err := w.inner.Get(srvCtx, name, options)
+	item, err := w.inner.Get(w.storeCtx(ctx), name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +130,7 @@ func (w *Wrapper) GetSingularName() string {
 }
 
 func (w *Wrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	list, err := w.inner.List(srvCtx, options)
+	list, err := w.inner.List(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -163,10 +167,7 @@ func (w *Wrapper) Update(
 		userCtx:    ctx, // Keep original context for authorization
 	}
 
-	// Override the identity to use service identity for the underlying store operation
-	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-
-	return w.inner.Update(srvCtx, name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
+	return w.inner.Update(w.storeCtx(ctx), name, wrappedObjInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 type authorizedUpdateInfo struct {
@@ -196,9 +197,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		// Override the identity to use service identity for the watch operation
-		srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-		return watcher.Watch(srvCtx, options)
+		return watcher.Watch(w.storeCtx(ctx), options)
 	}
 	return nil, fmt.Errorf("watch is not supported on the underlying storage")
 }

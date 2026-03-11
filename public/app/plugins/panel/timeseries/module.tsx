@@ -10,6 +10,7 @@ import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
 import { FieldConfig, Options } from './panelcfg.gen';
+import { timeseriesPresetsSupplier } from './presets';
 import { timeseriesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
@@ -30,4 +31,5 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
     addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
+  .setPresetsSupplier(timeseriesPresetsSupplier)
   .setDataSupport({ annotations: true, alertStates: true });

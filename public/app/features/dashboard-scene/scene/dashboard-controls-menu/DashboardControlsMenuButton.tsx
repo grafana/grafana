@@ -34,6 +34,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
           annotations={annotations}
           dashboardUID={uid}
           isEditing={isEditing}
+          dashboard={dashboard}
         />
       }
     >

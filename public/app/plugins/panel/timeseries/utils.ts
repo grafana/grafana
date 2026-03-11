@@ -37,7 +37,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
             allTextsByKey.set(scaleKey, allTexts);
           }
 
-          let idxs: number[] = field.values.toArray().slice();
+          let idxs: number[] = field.values.slice();
           let txts = field.config.type!.enum!.text!;
 
           // by-reference incrementing

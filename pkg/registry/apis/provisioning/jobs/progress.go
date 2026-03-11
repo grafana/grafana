@@ -236,12 +236,18 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		r.summaries[key] = summary
 	}
 
+	fileInfo := fmt.Sprintf("(file: %s", result.Path())
+	if result.Name() != "" {
+		fileInfo = fmt.Sprintf("%s, name: %s", fileInfo, result.Name())
+	}
+	fileInfo = fmt.Sprintf("%s, action: %s)", fileInfo, result.Action())
+
 	if result.Error() != nil {
-		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error().Error(), result.Path(), result.Name(), result.Action())
+		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else if result.Warning() != nil {
-		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning().Error(), result.Path(), result.Name(), result.Action())
+		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
 		summary.Warning++
 	} else {

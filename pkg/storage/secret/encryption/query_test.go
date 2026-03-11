@@ -56,6 +56,19 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlEncryptedValueUpdateBulk: {
+				{
+					Name: "update_bulk_two_rows_for_same_namespace",
+					Data: &updateBulkEncryptedValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Rows: []bulkUpdateRow{
+							{Name: "value_1", Version: 1, EncryptedData: []byte("secret_1"), DataKeyID: "key_1", Updated: 5679},
+							{Name: "value_2", Version: 2, EncryptedData: []byte("secret_2"), DataKeyID: "key_2", Updated: 5680},
+						},
+					},
+				},
+			},
 			sqlEncryptedValueDelete: {
 				{
 					Name: "delete",
@@ -71,38 +84,46 @@ func TestEncryptedValueQueries(t *testing.T) {
 				{
 					Name: "list_limit_10_offset_0",
 					Data: &listAllEncryptedValues{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Limit:        10,
-						Offset:       0,
-						HasUntilTime: false,
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Limit:          10,
+						Offset:         0,
+						HasUntilTime:   false,
+						OrderBy:        "created",
+						OrderDirection: "ASC",
 					},
 				},
 				{
 					Name: "list_limit_10_offset_2",
 					Data: &listAllEncryptedValues{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Limit:        10,
-						Offset:       2,
-						HasUntilTime: false,
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Limit:          10,
+						Offset:         2,
+						HasUntilTime:   false,
+						OrderBy:        "created",
+						OrderDirection: "ASC",
 					},
 				},
 				{
 					Name: "list_all",
 					Data: &listAllEncryptedValues{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Limit:        0,
-						Offset:       0,
-						HasUntilTime: false,
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Limit:          0,
+						Offset:         0,
+						HasUntilTime:   false,
+						OrderBy:        "created",
+						OrderDirection: "ASC",
 					},
 				},
 				{
 					Name: "list_all_until_time",
 					Data: &listAllEncryptedValues{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Limit:        0,
-						Offset:       0,
-						HasUntilTime: true,
-						UntilTime:    untilTime,
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Limit:          0,
+						Offset:         0,
+						HasUntilTime:   true,
+						UntilTime:      untilTime,
+						OrderBy:        "created",
+						OrderDirection: "ASC",
 					},
 				},
 			},

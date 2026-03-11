@@ -534,7 +534,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := repository.ProvideDecrypter(decryptSvc)
+	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -593,7 +593,7 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
-	decrypter := connection.ProvideDecrypter(decryptSvc)
+	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),

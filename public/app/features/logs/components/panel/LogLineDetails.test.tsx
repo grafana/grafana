@@ -30,6 +30,10 @@ import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('../fieldSelector/FieldSelector');
 jest.mock('../fieldSelector/fieldSelectorUtils');
 

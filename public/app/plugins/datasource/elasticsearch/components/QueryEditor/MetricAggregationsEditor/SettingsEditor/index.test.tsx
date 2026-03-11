@@ -5,12 +5,13 @@ import { getDefaultTimeRange } from '@grafana/data';
 import { ElasticsearchDataQuery } from '../../../../dataquery.gen';
 import { ElasticDatasource } from '../../../../datasource';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
+import { ElasticsearchQueryOptions } from '../../ElasticsearchQueryOptions';
 
 import { SettingsEditor } from '.';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {
-    it('Should correctly render the settings editor and trigger correct state changes', () => {
+    it('Should correctly render the options and trigger correct state changes', () => {
       const metricId = '1';
       const initialSize = '500';
       const query: ElasticsearchDataQuery = {
@@ -30,7 +31,7 @@ describe('Settings Editor', () => {
 
       const onChange = jest.fn();
 
-      const { rerender } = render(
+      render(
         <ElasticsearchProvider
           query={query}
           datasource={{} as ElasticDatasource}
@@ -38,50 +39,29 @@ describe('Settings Editor', () => {
           onRunQuery={() => {}}
           range={getDefaultTimeRange()}
         >
-          <SettingsEditor metric={query.metrics![0]} previousMetrics={[]} />
+          <ElasticsearchQueryOptions />
         </ElasticsearchProvider>
       );
 
-      let settingsButtonEl = screen.getByRole('button', {
-        name: /Size: \d+$/i,
-      });
+      // The options group should be collapsed showing the current size
+      const optionsButton = screen.getByRole('button', { name: /Options/i });
+      expect(optionsButton).toBeInTheDocument();
 
-      // The metric row should have a settings button
-      expect(settingsButtonEl).toBeInTheDocument();
-      expect(settingsButtonEl.textContent).toBe(`Size: ${initialSize}`);
+      // Open the options group
+      fireEvent.click(optionsButton);
 
-      // Open the settings editor
-      fireEvent.click(settingsButtonEl);
-
-      // The settings editor should have a Size input
+      // The options should have a Size input
       const sizeInputEl = screen.getByLabelText('Size');
       expect(sizeInputEl).toBeInTheDocument();
 
-      // We change value and trigger a blur event to trigger an update
+      // Change the value and blur to trigger dispatch
       const newSizeValue = '23';
       fireEvent.change(sizeInputEl, { target: { value: newSizeValue } });
-      fireEvent.blur(sizeInputEl);
+      fireEvent.blur(sizeInputEl, { target: { value: newSizeValue } });
 
-      // the onChange handler should have been called correctly, and the resulting
-      // query state should match what expected
+      // the onChange handler should have been called correctly
       expect(onChange).toHaveBeenCalledTimes(1);
-      rerender(
-        <ElasticsearchProvider
-          query={onChange.mock.calls[0][0]}
-          datasource={{} as ElasticDatasource}
-          onChange={onChange}
-          onRunQuery={() => {}}
-          range={getDefaultTimeRange()}
-        >
-          <SettingsEditor metric={onChange.mock.calls[0][0].metrics![0]} previousMetrics={[]} />
-        </ElasticsearchProvider>
-      );
-
-      settingsButtonEl = screen.getByRole('button', {
-        name: /Size: \d+$/i,
-      });
-      expect(settingsButtonEl).toBeInTheDocument();
-      expect(settingsButtonEl.textContent).toBe(`Size: ${newSizeValue}`);
+      expect(onChange.mock.calls[0][0].metrics![0].settings?.size).toBe(newSizeValue);
     });
   });
 

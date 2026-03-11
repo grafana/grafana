@@ -116,7 +116,7 @@ export const getCellWidth = (field: Field): number => {
     getTextWidth(field.name, true) + ICON_AND_MENU_WIDTH, //header text
     Math.min(
       MAX_COLUMN_WIDTH,
-      field.values.toArray().reduce((acc: number, val: string | number) => {
+      field.values.reduce((acc: number, val: string | number) => {
         const textWidth = getTextWidth(val?.toString() ?? '');
 
         if (textWidth > acc) {
@@ -136,7 +136,7 @@ export const deleteRows = (gridData: DataFrame, rows: number[], hardDelete = fal
   };
 
   for (const field of copy.fields) {
-    const valuesArray = field.values.toArray();
+    const valuesArray = field.values;
 
     //delete from the end of the array to avoid index shifting
     for (let i = rows.length - 1; i >= 0; i--) {
@@ -168,7 +168,7 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
   for (let i = colFrom; i <= colTo; i++) {
     const field = copy.fields[i];
 
-    const valuesArray = field.values.toArray();
+    const valuesArray = field.values;
     valuesArray.splice(rowFrom, range.height, ...new Array(range.height).fill(null));
     field.values = [...valuesArray];
   }
@@ -181,7 +181,7 @@ export const clearCellsFromRangeSelection = (gridData: DataFrame, range: CellRan
 
 //Converting an array of nulls or undefineds returns them as strings and prints them in the cells instead of empty cells. Thus the cleanup func
 export const cleanStringFieldAfterConversion = (field: Field): void => {
-  const valuesArray = field.values.toArray();
+  const valuesArray = field.values;
   field.values = valuesArray.map((val) => (val === 'undefined' || val === 'null' ? null : val));
   return;
 };
@@ -209,7 +209,7 @@ export function getGridTheme(theme: GrafanaTheme2): Partial<Theme> {
 }
 
 export const getGridCellKind = (field: Field, row: number, hasGridSelection = false): GridCell => {
-  const value = field.values.get(row);
+  const value = field.values[row];
 
   switch (field.type) {
     case FieldType.boolean:

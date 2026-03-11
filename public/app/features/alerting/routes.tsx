@@ -274,12 +274,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/notifications-history/',
+      path: '/alerting/notifications-history',
+      component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
+    },
+    {
+      path: '/alerting/notifications-history/view/:uuid/:timestamp?',
       component: cfg.featureToggles.alertingNotificationHistoryGlobal
         ? importAlertingComponent(
             () =>
               import(
-                /* webpackChunkName: "NotificationsPage" */ 'app/features/alerting/unified/notifications/NotificationsPage'
+                /* webpackChunkName: "NotificationDetailPage" */ 'app/features/alerting/unified/notifications/NotificationDetailPage'
               )
           )
         : () => <Navigate replace to="/alerting" />,

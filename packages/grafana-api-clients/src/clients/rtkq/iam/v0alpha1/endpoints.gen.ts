@@ -2062,6 +2062,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
   metadata?: ListMeta;
 };
 export type TeamBindingspecSubject = {
+  /** kind of the identity */
+  kind: string;
   /** uid of the identity */
   name: string;
 };

@@ -57,6 +57,7 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
@@ -100,7 +101,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     links: (sceneDash.links || [])
       // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them
       // from generating the JSON model from the scenes object.
-      .filter((link) => link.origin === undefined)
+      .filter(isLinkEditable)
       .map((link) => ({
         title: link.title ?? defaultDashboardLink().title,
         url: link.url ?? defaultDashboardLink().url,

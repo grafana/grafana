@@ -8,7 +8,7 @@ import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } fr
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
+import { DashboardInput, DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
 import { validateTitle } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
@@ -125,6 +125,22 @@ export const ImportDashboardFormV2 = ({
                 control={control}
                 rules={{ required: true }}
               />
+            </Field>
+          );
+        })}
+
+      {inputs.constants &&
+        inputs.constants.map((input: DashboardInput) => {
+          const constantKey = `constant-${input.name}`;
+          return (
+            <Field
+              label={input.label}
+              key={constantKey}
+              invalid={!!errors[constantKey]}
+              error={errors[constantKey] ? `${input.label} needs a value` : undefined}
+              noMargin
+            >
+              <Input {...register(constantKey, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}

@@ -262,6 +262,7 @@ func (tapi *TeamAPI) createTeamBindingsForUsers(
 			ObjectMeta: makeMetadata(namespace, user.UID, teamUID),
 			Spec: iamv0alpha1.TeamBindingSpec{
 				Subject: iamv0alpha1.TeamBindingspecSubject{
+					Kind: "User",
 					Name: user.UID,
 				},
 				TeamRef: iamv0alpha1.TeamBindingTeamRef{

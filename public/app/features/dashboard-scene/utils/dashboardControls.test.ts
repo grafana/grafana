@@ -207,6 +207,8 @@ describe('dashboardControls', () => {
         ...mockVariable1,
         spec: {
           ...mockVariable1.spec,
+          name: 'prometheus_var1',
+          label: 'Variable 1',
           origin: {
             type: 'datasource',
             group: 'prometheus',
@@ -217,6 +219,8 @@ describe('dashboardControls', () => {
         ...mockVariable2,
         spec: {
           ...mockVariable2.spec,
+          name: 'loki_var2',
+          label: 'Variable 2',
           origin: {
             type: 'datasource',
             group: 'loki',
@@ -284,6 +288,56 @@ describe('dashboardControls', () => {
 
       expect(result.defaultVariables).toHaveLength(1);
       expect(result.defaultLinks).toHaveLength(1);
+    });
+
+    it('should use original name as label when no label is set', async () => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'prometheus' }];
+
+      const variableWithoutLabel: QueryVariableKind = {
+        ...mockVariable1,
+        spec: { ...mockVariable1.spec, name: 'region', label: '' },
+      };
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([variableWithoutLabel]),
+        getDefaultLinks: undefined,
+        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'prometheus' })),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const result = await loadDefaultControlsFromDatasources(refs);
+
+      expect(result.defaultVariables[0].spec.name).toBe('prometheus_region');
+      expect(result.defaultVariables[0].spec.label).toBe('region');
+    });
+
+    it('should sanitize hyphenated datasource types in variable name prefix', async () => {
+      const refs: DataSourceRef[] = [{ uid: 'ds-1', type: 'grafana-testdata-datasource' }];
+
+      const mockDs = createMockDatasource({
+        uid: 'ds-1',
+        type: 'grafana-testdata-datasource',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+        getRef: jest.fn(() => ({ uid: 'ds-1', type: 'grafana-testdata-datasource' })),
+      });
+
+      const mockSrv = createMockDataSourceSrv({
+        get: jest.fn(() => Promise.resolve(mockDs as DataSourceApi<DataQuery, DataSourceJsonData>)),
+      });
+
+      getDataSourceSrvMock.mockReturnValue(mockSrv);
+
+      const result = await loadDefaultControlsFromDatasources(refs);
+
+      expect(result.defaultVariables[0].spec.name).toBe('grafana_testdata_datasource_var1');
     });
 
     it('should handle datasources that return null or undefined from getDefaultVariables', async () => {

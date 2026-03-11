@@ -38,7 +38,6 @@ export interface DatasourceState {
 export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
-  isLoading: boolean;
   queryError?: DataQueryError;
 }
 

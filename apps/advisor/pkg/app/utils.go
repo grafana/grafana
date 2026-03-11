@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -218,6 +219,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					defer func() {
 						if r := recover(); r != nil {
 							log.Error("panic recovered in step", "step", step.ID(), "error", r, "item", item)
+							metrics.StepPanicsTotal.WithLabelValues(step.ID()).Inc()
 						}
 					}()
 					logger := log.With("step", step.ID())

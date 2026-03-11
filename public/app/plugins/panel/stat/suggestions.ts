@@ -31,14 +31,15 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
   if (!ds.hasData) {
     return;
   }
-  if (ds.rowCountTotal > MAX_STATS) {
-    return;
-  }
 
   const suggestions: Array<VisualizationSuggestion<Options>> = [];
   let shouldUseRawValues = false;
 
   if (ds.fieldCount === 1 && ds.hasFieldType(FieldType.string)) {
+    if (ds.rowCountTotal > MAX_STATS) {
+      return;
+    }
+
     // just a single string field
     suggestions.push({
       name: t('stat.suggestions.stat-single-string', 'Stat - single string'),
@@ -76,6 +77,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
       }
     );
   } else if (ds.hasFieldType(FieldType.string) && ds.hasFieldType(FieldType.number) && ds.frameCount === 1) {
+    if (ds.rowCountTotal > MAX_STATS) {
+      return;
+    }
+
     // String and number field with low row count show individual rows
     shouldUseRawValues = true;
     suggestions.push(

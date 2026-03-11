@@ -55,6 +55,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
   AnnoKeyEmbedded,
+  AnnoReloadOnParamsChange,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -237,7 +238,9 @@ export function transformSaveModelSchemaV2ToScene(
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
-          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
+          reloadOnParamsChange:
+            config.featureToggles.reloadDashboardsOnParamsChange &&
+            Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),

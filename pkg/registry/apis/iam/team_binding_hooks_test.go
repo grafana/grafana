@@ -32,6 +32,7 @@ func TestAfterTeamBindingCreate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -78,6 +79,7 @@ func TestAfterTeamBindingCreate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -129,6 +131,7 @@ func TestAfterTeamBindingCreate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-3",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -159,6 +162,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -175,6 +179,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -233,6 +238,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -249,6 +255,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -306,6 +313,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -322,6 +330,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -377,6 +386,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -393,6 +403,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -433,6 +444,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -449,6 +461,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -472,6 +485,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "", // Empty name will cause server-side error on delete
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -488,6 +502,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -550,6 +565,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -566,6 +582,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -601,6 +618,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -617,6 +635,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "", // Empty name - should cause early return
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -652,6 +671,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -668,6 +688,7 @@ func TestBeginTeamBindingUpdate(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -712,6 +733,7 @@ func TestAfterTeamBindingDelete(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-1",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -757,6 +779,7 @@ func TestAfterTeamBindingDelete(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-2",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -807,6 +830,7 @@ func TestAfterTeamBindingDelete(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-3",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{
@@ -830,6 +854,7 @@ func TestAfterTeamBindingDelete(t *testing.T) {
 			},
 			Spec: iamv0.TeamBindingSpec{
 				Subject: iamv0.TeamBindingspecSubject{
+					Kind: "User",
 					Name: "user-4",
 				},
 				TeamRef: iamv0.TeamBindingTeamRef{

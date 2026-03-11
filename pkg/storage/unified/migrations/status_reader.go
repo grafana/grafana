@@ -47,14 +47,14 @@ func ProvideMigrationStatusReader(
 //  2. Migration log entry exists → Unified (data has been synced)
 //  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
 //  4. Otherwise → Legacy
-func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (contract.StorageMode, error) {
+func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) contract.StorageMode {
 	// Check config for explicit DualWrite modes (Mode1, Mode2, Mode3).
 	// This takes priority because it's an explicit operational decision — cloud may want
 	// to hold a resource in dual-write even after data has been synced.
 	configKey := gr.Resource + "." + gr.Group
 	if config, found := r.cfg.UnifiedStorage[configKey]; found {
 		if config.DualWriterMode >= rest.Mode1 && config.DualWriterMode <= rest.Mode3 {
-			return contract.StorageModeDualWrite, nil
+			return contract.StorageModeDualWrite
 		}
 	}
 
@@ -67,7 +67,7 @@ func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.Gr
 			// log and fall through to the config fallback rather than failing hard.
 			logger.Warn("Failed to check migration log, falling back to config", "resource", gr.String(), "error", err)
 		} else if exists {
-			return contract.StorageModeUnified, nil
+			return contract.StorageModeUnified
 		}
 	}
 
@@ -75,11 +75,11 @@ func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.Gr
 	// This is temporary and will be removed once all environments backfill the migration log.
 	if config, found := r.cfg.UnifiedStorage[configKey]; found {
 		if config.DualWriterMode >= rest.Mode4 {
-			return contract.StorageModeUnified, nil
+			return contract.StorageModeUnified
 		}
 	}
 
-	return contract.StorageModeLegacy, nil
+	return contract.StorageModeLegacy
 }
 
 // findDefinition locates the MigrationDefinition that contains the given GroupResource.

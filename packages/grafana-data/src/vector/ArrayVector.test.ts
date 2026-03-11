@@ -15,7 +15,7 @@ describe('ArrayVector', () => {
     /// @ts-expect-error
     const av = new ArrayVector(arr);
 
-    expect(av.toArray()).toEqual(arr);
+    expect(av).toEqual(arr);
   });
 
   it('should support add and push', () => {
@@ -25,7 +25,7 @@ describe('ArrayVector', () => {
     av.push(2);
     av.push(3, 4);
 
-    expect(av.toArray()).toEqual([1, 2, 3, 4]);
+    expect(av).toEqual([1, 2, 3, 4]);
   });
 
   it('typescript should not re-define the ArrayVector<T> based on input to the constructor', () => {

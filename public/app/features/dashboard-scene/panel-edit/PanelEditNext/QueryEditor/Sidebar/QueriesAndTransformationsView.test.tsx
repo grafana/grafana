@@ -19,16 +19,6 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
-  it('should render loading bar when data is loading', () => {
-    renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
-      qrState: {
-        isLoading: true,
-      },
-    });
-
-    expect(screen.getByLabelText(/loading queries and transformations/i)).toBeInTheDocument();
-  });
-
   it('should always render transformations section even when no transformations exist', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 

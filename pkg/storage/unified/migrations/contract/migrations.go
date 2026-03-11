@@ -58,5 +58,5 @@ func (m StorageMode) String() string {
 //  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
 //  4. Otherwise → Legacy
 type MigrationStatusReader interface {
-	GetStorageMode(ctx context.Context, gr schema.GroupResource) (StorageMode, error)
+	GetStorageMode(ctx context.Context, gr schema.GroupResource) StorageMode
 }

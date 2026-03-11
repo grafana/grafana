@@ -36,7 +36,6 @@ use (
 	./pkg/infra/features
 	./pkg/plugins
 	./pkg/plugins/codegen
-	./pkg/promlib
 	./pkg/semconv
 	./pkg/storage/unified/resource/kv
 )

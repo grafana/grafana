@@ -155,11 +155,13 @@ func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
 	}
 }
 
+const chanBufferLen = 100
+
 // init initializes the broadcaster. It should not be run more than once.
 func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error {
 	// create the stream that will connect us with the watch implementation and
 	// send it to them so they initialize and start sending data
-	stream := make(chan T, 100)
+	stream := make(chan T, chanBufferLen)
 	if err := connect(stream); err != nil {
 		return err
 	}
@@ -167,8 +169,8 @@ func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error
 	// initialize our internal state
 	b.shouldTerminate = ctx.Done()
 	b.cache = newChannelCache[T](ctx, 100)
-	b.subscribe = make(chan chan T, 100)
-	b.unsubscribe = make(chan (<-chan T), 100)
+	b.subscribe = make(chan chan T, chanBufferLen)
+	b.unsubscribe = make(chan (<-chan T), chanBufferLen)
 	b.subs = make(map[<-chan T]chan T)
 	b.terminated = make(chan struct{})
 
@@ -201,6 +203,13 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		}
 	}()
 
+	unsubscribe := func(recv <-chan T) {
+		if sub, ok := b.subs[recv]; ok {
+			close(sub)
+			delete(b.subs, sub)
+		}
+	}
+
 	for {
 		select {
 		case <-b.shouldTerminate: // service context cancelled
@@ -216,10 +225,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			b.subs[sub] = sub
 
 		case recv := <-b.unsubscribe: // unsubscribe
-			if sub, ok := b.subs[recv]; ok {
-				close(sub)
-				delete(b.subs, sub)
-			}
+			unsubscribe(recv)
 
 		case item, ok := <-input: // data arrived, send to subscribers
 			// input closed, drain subscribers and exit
@@ -227,13 +233,20 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 				return
 			}
 			b.cache.Add(item)
+
+			var slow []<-chan T
 			for _, sub := range b.subs {
 				select {
 				case sub <- item:
 				default:
-					// Slow consumer, drop
-					b.unsubscribe <- sub
+					slow = append(slow, sub)
 				}
+			}
+			// Instead of sending subscribers to a b.unsubscribe channel, we unsubscribe directly.
+			// Sending to b.unsubscribe could lead to deadlock, if there are too many elements in the
+			// channel buffer already.
+			for _, recv := range slow {
+				unsubscribe(recv)
 			}
 		}
 	}

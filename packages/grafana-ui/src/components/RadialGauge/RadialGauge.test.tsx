@@ -35,6 +35,13 @@ describe('RadialGauge', () => {
       expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
     });
 
+    it('should render labels for a circle gauge', () => {
+      render(<RadialGaugeExample showScaleLabels shape="circle" />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    });
+
     it('should render labels including neutral', () => {
       render(<RadialGaugeExample showScaleLabels neutral={50} />);
 

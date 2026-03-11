@@ -10,7 +10,7 @@ import {
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const server = setupMockServer();
 

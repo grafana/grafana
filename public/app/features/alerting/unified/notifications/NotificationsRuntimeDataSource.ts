@@ -79,6 +79,7 @@ interface NotificationsAPIQuery extends DataQuery {
   outcomeFilter?: string;
   receiverFilter?: string;
   labelFilter?: string;
+  ruleUID?: string;
 }
 
 type NotificationRangeCount = CreateNotificationqueryNotificationCount;
@@ -104,6 +105,7 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
     const outcomeFilter = templateSrv.replace(query.outcomeFilter ?? '', request.scopedVars);
     const receiverFilter = templateSrv.replace(query.receiverFilter ?? '', request.scopedVars);
     const labelFilter = templateSrv.replace(query.labelFilter ?? '', request.scopedVars);
+    const ruleUID = templateSrv.replace(query.ruleUID ?? '', request.scopedVars) || undefined;
 
     // Convert label filter to API matchers
     let groupLabels: CreateNotificationqueryMatcher[] = [];
@@ -119,7 +121,8 @@ class NotificationsAPIDatasource extends RuntimeDataSource<NotificationsAPIQuery
       isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
       receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
       groupLabels,
-      Math.round(request.intervalMs / 1000)
+      Math.round(request.intervalMs / 1000),
+      ruleUID
     );
 
     const dataFrame = rangeCountsToDataFrame(rangeCounts);
@@ -189,7 +192,8 @@ export const getNotifications = async (
   status?: CreateNotificationqueryNotificationStatus,
   outcome?: CreateNotificationqueryNotificationOutcome,
   receiver?: string,
-  groupLabels?: CreateNotificationqueryMatcher[]
+  groupLabels?: CreateNotificationqueryMatcher[],
+  ruleUID?: string
 ): Promise<CreateNotificationqueryResponse> => {
   const result = await dispatch(
     notificationsApi.endpoints.createNotificationquery.initiate(
@@ -202,6 +206,7 @@ export const getNotifications = async (
           outcome: outcome,
           receiver: receiver,
           groupLabels: groupLabels || [],
+          ruleUID: ruleUID,
         },
       },
       // @ts-expect-error forceRefetch is a valid RTK Query initiate option but not included in generated types
@@ -222,7 +227,8 @@ export const getNotificationsRangeCounts = async (
   outcome?: CreateNotificationqueryNotificationOutcome,
   receiver?: string,
   groupLabels?: CreateNotificationqueryMatcher[],
-  step?: number
+  step?: number,
+  ruleUID?: string
 ): Promise<NotificationRangeCount[]> => {
   const result = await dispatch(
     notificationsApi.endpoints.createNotificationquery.initiate(
@@ -236,6 +242,7 @@ export const getNotificationsRangeCounts = async (
           receiver: receiver,
           groupLabels: groupLabels || [],
           step: step,
+          ruleUID: ruleUID,
         },
       },
       // @ts-expect-error forceRefetch is a valid RTK Query initiate option but not included in generated types

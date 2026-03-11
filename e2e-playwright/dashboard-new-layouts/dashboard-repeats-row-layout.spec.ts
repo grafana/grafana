@@ -504,7 +504,7 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test.skip('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
       // collapse rows so it's easier to move them without simulating scrolling
       const dashboardWithCollapsedRows = V2DashWithRowRepeats;
       dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;

@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { Field } from './Field';
@@ -53,14 +54,24 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
     [activeFields, suggestedFields]
   );
 
+  const toggleSelectedField = useCallback(
+    (key: string) => {
+      toggle(key);
+      reportInteraction('logs_field_selector_suggested_field_clicked');
+    },
+    [toggle]
+  );
+
   if (active.length || suggested.length) {
     return (
       <>
         <div className={styles.columnHeader}>
           <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
-          <button onClick={clear} className={styles.columnHeaderButton}>
-            <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
-          </button>
+          {active.length > 0 && (
+            <button onClick={clear} className={styles.columnHeaderButton}>
+              <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
+            </button>
+          )}
         </div>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="order-fields" direction="vertical">
@@ -108,7 +119,7 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
             <div className={styles.columnWrapper}>
               {suggested.map((field) => (
                 <div className={styles.wrap} key={field.name}>
-                  <Field field={field} toggle={toggle} />
+                  <Field field={field} toggle={toggleSelectedField} />
                 </div>
               ))}
             </div>

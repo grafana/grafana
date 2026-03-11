@@ -24,11 +24,13 @@ jest.mock('./VisualizationSuggestionCard', () => ({
   VisualizationSuggestionCard: ({
     onClick,
     suggestion,
+    isSelected,
   }: {
     onClick: () => void;
     suggestion: PanelPluginVisualizationSuggestion;
+    isSelected?: boolean;
   }) => (
-    <div data-testid={`card-${suggestion.hash}`} onClick={onClick}>
+    <div data-testid={`card-${suggestion.hash}`} data-selected={isSelected ? 'true' : 'false'} onClick={onClick}>
       {suggestion.name}
     </div>
   ),
@@ -123,6 +125,35 @@ describe('VisualizationCardGrid', () => {
       expect(onItemClick).toHaveBeenCalledWith(mockItem[0], 0);
     });
 
+    it('should mark card as selected when selectedKey is provided', () => {
+      render(
+        <VisualizationCardGrid
+          items={mockItem}
+          data={mockData}
+          onItemClick={onItemClick}
+          getItemKey={(item) => item.hash}
+          selectedKey="ts-hash"
+        />
+      );
+
+      expect(screen.getByTestId('card-ts-hash')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('card-table-hash')).toHaveAttribute('data-selected', 'false');
+    });
+
+    it('should not mark any card as selected when selectedKey is undefined', () => {
+      render(
+        <VisualizationCardGrid
+          items={mockItem}
+          data={mockData}
+          onItemClick={onItemClick}
+          getItemKey={(item) => item.hash}
+        />
+      );
+
+      expect(screen.getByTestId('card-ts-hash')).toHaveAttribute('data-selected', 'false');
+      expect(screen.getByTestId('card-table-hash')).toHaveAttribute('data-selected', 'false');
+    });
+
     it('should not call onChange when an unrelated key is pressed on a card', async () => {
       render(
         <VisualizationCardGrid
@@ -193,6 +224,30 @@ describe('VisualizationCardGrid', () => {
       );
 
       expect(screen.getByText('Unknown visualization type')).toBeInTheDocument();
+    });
+
+    it('should render a logo img when the group meta has info with logos', () => {
+      const groupWithLogo: VisualizationCardGridGroup[] = [
+        {
+          meta: {
+            id: 'timeseries',
+            name: 'Time series',
+            info: { logos: { small: 'https://test.com/logo-small.png' } },
+          } as never,
+          items: [mockItem[0]],
+        },
+      ];
+
+      render(
+        <VisualizationCardGrid
+          groups={groupWithLogo}
+          data={mockData}
+          onItemClick={onItemClick}
+          getItemKey={(item) => item.hash}
+        />
+      );
+
+      expect(document.querySelector('img[src="https://test.com/logo-small.png"]')).toBeInTheDocument();
     });
   });
 });
