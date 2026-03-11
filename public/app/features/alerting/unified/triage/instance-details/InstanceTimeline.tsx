@@ -261,18 +261,13 @@ function NotificationStatusGroup({
       : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
   const integrations = [...new Set(notifications.map((n) => n.integration))];
 
-  let outcomeLabel: string;
-  if (failedCount === 0) {
-    outcomeLabel =
-      successCount === 1
-        ? t('alerting.instance-details.timeline-all-delivered', 'delivered')
-        : t('alerting.instance-details.timeline-all-delivered-plural', 'all delivered');
-  } else if (successCount === 0) {
+  let outcomeLabel: string | undefined;
+  if (failedCount > 0 && successCount === 0) {
     outcomeLabel =
       failedCount === 1
         ? t('alerting.instance-details.timeline-all-failed', 'failed')
         : t('alerting.instance-details.timeline-all-failed-plural', 'all failed');
-  } else {
+  } else if (failedCount > 0) {
     outcomeLabel = t(
       'alerting.instance-details.timeline-mixed-outcome',
       '{{successCount}} delivered, {{failedCount}} failed',
@@ -327,9 +322,11 @@ function NotificationStatusGroup({
           <Text variant="bodySmall" truncate>
             {receiverLabel}
           </Text>
-          <Text variant="bodySmall" color={hasFailures ? 'error' : 'success'}>
-            ({outcomeLabel})
-          </Text>
+          {outcomeLabel && (
+            <Text variant="bodySmall" color="error">
+              ({outcomeLabel})
+            </Text>
+          )}
         </Stack>
         <Icon name={expanded ? 'angle-up' : 'angle-down'} size="sm" />
       </button>
