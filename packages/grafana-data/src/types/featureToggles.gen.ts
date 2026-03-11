@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */

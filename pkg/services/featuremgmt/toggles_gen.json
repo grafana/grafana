@@ -2891,7 +2891,8 @@
       "metadata": {
         "name": "logsContextDatasourceUi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-01-27T14:12:01Z"
+        "creationTimestamp": "2023-01-27T14:12:01Z",
+        "deletionTimestamp": "2026-03-10T16:59:23Z"
       },
       "spec": {
         "description": "Allow datasource to provide custom UI for context view",
