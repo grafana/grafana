@@ -1,9 +1,9 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -144,7 +144,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
-  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isAnalyticsFrameworkEnabled = getFeatureFlagClient().getBooleanValue('analyticsFramework', true);
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
