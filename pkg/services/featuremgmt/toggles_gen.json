@@ -1195,6 +1195,21 @@
     },
     {
       "metadata": {
+        "name": "colorblindThemes",
+        "resourceVersion": "1770395198316",
+        "creationTimestamp": "2026-02-06T16:26:38Z"
+      },
+      "spec": {
+        "description": "Enables the new colorblind-friendly themes",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -1416,6 +1431,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardUnifiedDrilldownControls",
+        "resourceVersion": "1773081615691",
+        "creationTimestamp": "2026-03-09T18:40:15Z"
+      },
+      "spec": {
+        "description": "Renders ad hoc filters and group by in a single unified control",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardValidatorApp",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1521,6 +1551,23 @@
         "description": "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointFrontend",
+        "resourceVersion": "1773063626484",
+        "creationTimestamp": "2026-03-03T16:55:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-09 13:40:26.484445 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
         "expression": "false"
       }
     },
