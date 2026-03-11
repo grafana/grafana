@@ -63,6 +63,7 @@ runs:
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
             - '**/go.sum'
