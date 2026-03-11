@@ -7,6 +7,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,7 +21,8 @@ import (
 )
 
 // tupleKey generates a unique string key for a tuple based on user, relation, and object.
-// Conditions are intentionally excluded — they are part of tuple content, not identity.
+// Conditions are intentionally excluded from the key — they are compared separately in
+// computeDiffStreaming so that condition changes trigger a delete+re-add.
 // Uses null-byte separators to prevent collisions between field values.
 func tupleKey(tuple *openfgav1.TupleKey) string {
 	return tuple.GetUser() + "\x00" + tuple.GetRelation() + "\x00" + tuple.GetObject()
@@ -263,9 +265,14 @@ func (r *Reconciler) computeDiffStreaming(
 
 		for _, tuple := range resp.GetTuples() {
 			key := tupleKey(tuple.GetKey())
-			if _, exists := expectedMap[key]; exists {
-				// Tuple is in sync — remove from expected so it won't be added
-				delete(expectedMap, key)
+			if expected, exists := expectedMap[key]; exists {
+				if proto.Equal(expected.GetCondition(), tuple.GetKey().GetCondition()) {
+					// Tuple is fully in sync — remove from expected
+					delete(expectedMap, key)
+				} else {
+					// Same identity but condition changed — delete old, keep expected for re-add
+					toDelete = append(toDelete, tuple.GetKey())
+				}
 			} else {
 				// Tuple exists in Zanzana but not expected — needs deletion
 				toDelete = append(toDelete, tuple.GetKey())

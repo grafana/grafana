@@ -5,6 +5,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 func makeTuple(user, relation, object string) *openfgav1.TupleKey {
@@ -46,5 +47,40 @@ func TestTupleKey(t *testing.T) {
 		a := tupleKey(makeTuple("ab", "c", "d"))
 		b := tupleKey(makeTuple("a", "bc", "d"))
 		assert.NotEqual(t, a, b)
+	})
+}
+
+func TestConditionChangeDetection(t *testing.T) {
+	t.Run("same key maps to same entry but different conditions are not proto equal", func(t *testing.T) {
+		a := makeTupleWithCondition("user:1", "viewer", "doc:1", "cond_a")
+		b := makeTupleWithCondition("user:1", "viewer", "doc:1", "cond_b")
+
+		// Keys match (condition excluded from key)
+		assert.Equal(t, tupleKey(a), tupleKey(b))
+
+		// But conditions differ
+		assert.False(t, proto.Equal(a.GetCondition(), b.GetCondition()))
+	})
+
+	t.Run("nil vs non-nil condition are not equal", func(t *testing.T) {
+		a := makeTuple("user:1", "viewer", "doc:1")
+		b := makeTupleWithCondition("user:1", "viewer", "doc:1", "cond_a")
+
+		assert.Equal(t, tupleKey(a), tupleKey(b))
+		assert.False(t, proto.Equal(a.GetCondition(), b.GetCondition()))
+	})
+
+	t.Run("same conditions are equal", func(t *testing.T) {
+		a := makeTupleWithCondition("user:1", "viewer", "doc:1", "cond_a")
+		b := makeTupleWithCondition("user:1", "viewer", "doc:1", "cond_a")
+
+		assert.True(t, proto.Equal(a.GetCondition(), b.GetCondition()))
+	})
+
+	t.Run("both nil conditions are equal", func(t *testing.T) {
+		a := makeTuple("user:1", "viewer", "doc:1")
+		b := makeTuple("user:1", "viewer", "doc:1")
+
+		assert.True(t, proto.Equal(a.GetCondition(), b.GetCondition()))
 	})
 }
