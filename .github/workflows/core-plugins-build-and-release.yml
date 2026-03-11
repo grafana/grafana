@@ -99,6 +99,8 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
         if: steps.check_backend.outputs.has_backend == 'true'
+        with:
+          cache-build: 'false'
       - name: Install Mage
         shell: bash
         if: steps.check_backend.outputs.has_backend == 'true'
