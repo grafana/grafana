@@ -1826,14 +1826,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthzGlobalRolesApi",
 			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,

@@ -76,7 +76,6 @@ func (GlobalRoleBindingSpecSubjectKind) OpenAPIModelName() string {
 type GlobalRoleBindingSpecRoleRefKind string
 
 const (
-	GlobalRoleBindingSpecRoleRefKindCoreRole   GlobalRoleBindingSpecRoleRefKind = "CoreRole"
 	GlobalRoleBindingSpecRoleRefKindGlobalRole GlobalRoleBindingSpecRoleRefKind = "GlobalRole"
 )
 

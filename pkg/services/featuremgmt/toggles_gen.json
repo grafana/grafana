@@ -2492,7 +2492,8 @@
       "metadata": {
         "name": "kubernetesAuthzCoreRolesApi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-12T08:00:51Z"
+        "creationTimestamp": "2026-01-12T08:00:51Z",
+        "deletionTimestamp": "2026-03-11T08:39:11Z"
       },
       "spec": {
         "description": "Registers AuthZ Core Roles /apis endpoint",
