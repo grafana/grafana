@@ -11,6 +11,16 @@ import { LegendDisplayMode } from '@grafana/ui';
 
 import { defaultOptions, Options } from './panelcfg.gen';
 
+const defaultPresetThresholds = {
+  mode: ThresholdsMode.Percentage,
+  steps: [
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    { value: null as unknown as number, color: 'green' },
+    { value: 60, color: 'orange' },
+    { value: 80, color: 'red' },
+  ],
+};
+
 /**
  * Basic horizontal preset - thresholds coloring
  */
@@ -43,15 +53,7 @@ const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: 'orange' },
-            { value: 80, color: 'red' },
-          ],
-        },
+        thresholds: defaultPresetThresholds,
         color: {
           mode: FieldColorModeId.Thresholds,
         },
@@ -94,15 +96,7 @@ const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: 'orange' },
-            { value: 80, color: 'red' },
-          ],
-        },
+        thresholds: defaultPresetThresholds,
         color: {
           mode: FieldColorModeId.Thresholds,
         },
@@ -145,15 +139,7 @@ const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: 'orange' },
-            { value: 80, color: 'red' },
-          ],
-        },
+        thresholds: defaultPresetThresholds,
         color: {
           mode: FieldColorModeId.Thresholds,
         },
@@ -280,15 +266,7 @@ const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
     },
     fieldConfig: {
       defaults: {
-        thresholds: {
-          mode: ThresholdsMode.Percentage,
-          steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            { value: null as unknown as number, color: 'green' },
-            { value: 60, color: 'orange' },
-            { value: 80, color: 'red' },
-          ],
-        },
+        thresholds: defaultPresetThresholds,
         color: {
           mode: FieldColorModeId.ContinuousGrYlRd,
         },
