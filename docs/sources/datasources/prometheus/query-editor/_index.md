@@ -187,6 +187,85 @@ In the **Values** section, there's a single search field that filters across all
 
 When you are satisfied with your query, click **Run query**.
 
+## Common query patterns
+
+The following examples show how to build common Prometheus queries and which query editor settings to pair with them. You can build these queries in either Builder mode or Code mode.
+
+### Monitor HTTP request rate
+
+Track the per-second rate of HTTP requests, aggregated across all instances:
+
+```promql
+sum by (status) (rate(http_requests_total[$__rate_interval]))
+```
+
+| Setting | Value |
+|---------|-------|
+| **Legend** | Custom: `{{status}}` |
+| **Format** | Time series |
+| **Type** | Range |
+
+This query uses `$__rate_interval` to automatically size the rate window based on your scrape interval. The `sum by (status)` aggregation groups results by HTTP status code, producing one line per status on the graph. In Builder mode, select the `http_requests_total` metric, add a `Rate` range function, then a `Sum` aggregation with `status` as the label.
+
+### Calculate request latency percentiles
+
+Compute the 99th-percentile request duration from a histogram metric:
+
+```promql
+histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval])))
+```
+
+| Setting | Value |
+|---------|-------|
+| **Legend** | Custom: `p99 latency` |
+| **Format** | Time series |
+| **Type** | Range |
+
+The `le` (less than or equal) label is required in the `sum by` clause because `histogram_quantile` needs bucket boundaries to calculate percentiles. To compare multiple percentiles, duplicate the query and change `0.99` to `0.95` or `0.50`.
+
+To display the raw histogram buckets as a heatmap instead, skip the `histogram_quantile` wrapper and use these settings:
+
+```promql
+sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval]))
+```
+
+| Setting | Value |
+|---------|-------|
+| **Format** | Heatmap |
+| **Type** | Range |
+
+### Compare current values across instances
+
+Show the current memory usage of every instance in a table:
+
+```promql
+(1 - (node_memory_AvailableBytes / node_memory_MemTotal)) * 100
+```
+
+| Setting | Value |
+|---------|-------|
+| **Legend** | Custom: `{{instance}}` |
+| **Format** | Table |
+| **Type** | Instant |
+
+Setting the **Type** to **Instant** returns a single value per series (the most recent data point), which is well-suited for table visualizations. In Builder mode, you can build this using two `Metrics` selectors joined with a `Binary operation`.
+
+### Track error ratio over time
+
+Calculate the ratio of failed requests to total requests:
+
+```promql
+sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) / sum(rate(http_requests_total[$__rate_interval]))
+```
+
+| Setting | Value |
+|---------|-------|
+| **Legend** | Custom: `error ratio` |
+| **Format** | Time series |
+| **Type** | Range |
+
+The regex label matcher `status=~"5.."` selects all 5xx status codes. This pattern is useful for SLO dashboards where you need to track error budgets. Pair with a [Threshold](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#thresholds) to visually highlight when the error ratio exceeds your target.
+
 ## Incremental dashboard queries (beta)
 
 Starting with Grafana v10, the Prometheus data source supports incremental querying for live dashboards. Instead of re-querying the entire time range on each refresh, Grafana can fetch only new data since the last query.
