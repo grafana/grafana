@@ -200,8 +200,13 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		if resp != nil {
 			resp.Body.Close()
 		}
-		if err == nil && resp.StatusCode == 200 {
+		if err == nil && resp != nil && resp.StatusCode == 200 {
 			break
+		}
+		if err != nil {
+			t.Logf("Health check error: %v", err)
+		} else if resp != nil {
+			t.Logf("Health check returned status %d", resp.StatusCode)
 		}
 		if time.Now().After(deadline) {
 			t.Fatal("Grafana health endpoint did not return 200 within 30s")
