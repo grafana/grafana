@@ -437,7 +437,7 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
     plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    plugin.isManaged || // Managed plugins cannot be modified
+    plugin.isManaged || // Managed plugins cannot be modified (this will be removed when managed plugins v2 is fully enabled)
     (plugin.managed.enabled && plugin.managed.strategy === PluginUpdateStrategy.Assigned) // Managed assigned plugins cannot be modified
   ) {
     return false;
@@ -466,7 +466,7 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
 
 export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   if (
-    !isPluginModifiable(plugin) ||
+    (!isPluginModifiable(plugin) && plugin.managed.strategy !== PluginUpdateStrategy.MajorAligned) || //the second part will be removed when managed plugins v2 is fully enabled
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     !plugin.isPublished ||
     plugin.isDisabled ||
