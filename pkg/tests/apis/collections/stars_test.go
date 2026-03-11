@@ -41,9 +41,9 @@ func TestIntegrationStars(t *testing.T) {
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     false, // required for experimental APIs
-			DisableAnonymous:      true,
-			EnableFeatureToggles:  flags,
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,

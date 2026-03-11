@@ -74,9 +74,9 @@ func TestIntegrationFolderTree(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
