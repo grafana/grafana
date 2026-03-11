@@ -17,6 +17,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,7 +39,8 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 // errStopping is returned when a write operation is rejected because the server is shutting down.
-var errStopping = apierrors.NewServiceUnavailable("server is stopping")
+// Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
+var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
