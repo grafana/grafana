@@ -164,6 +164,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
+    resetSearch,
   } = useOptions(props.options, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
@@ -292,6 +293,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onIsOpenChange: ({ isOpen, inputValue }) => {
       if (isOpen && inputValue === '') {
         updateOptions(inputValue);
+      }
+
+      if (!isOpen) {
+        resetSearch();
       }
     },
 

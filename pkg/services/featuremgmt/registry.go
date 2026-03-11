@@ -918,6 +918,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardUnifiedDrilldownControls",
+			Description:  "Renders ad hoc filters and group by in a single unified control",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "adHocFilterDefaultValues",
 			Description:  "Enables configuring default origin filters for ad-hoc filter variables",
 			Stage:        FeatureStageExperimental,
@@ -2609,6 +2618,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:        "inlineLogDetailsNoScrolls",
+			Description: "Enables an inline version of Log Details that creates no new scrolls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
 		},
 	}
 )
