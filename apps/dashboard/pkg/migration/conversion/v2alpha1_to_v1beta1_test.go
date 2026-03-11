@@ -621,14 +621,24 @@ func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
 	}
 	require.NotNil(t, panel, "panel with transformations should exist")
 
-	// Transformation with nil Filter: v1 may omit filter or have empty object
-	transformations, ok := panel["transformations"].([]interface{})
-	require.True(t, ok, "transformations should exist")
-	require.Len(t, transformations, 2)
+	// transformations may be []interface{} or []map[string]interface{} depending on conversion path
+	transformationsRaw := panel["transformations"]
+	require.NotNil(t, transformationsRaw, "transformations should exist")
+	var trans1 map[string]interface{}
+	switch tr := transformationsRaw.(type) {
+	case []interface{}:
+		require.Len(t, tr, 2)
+		var ok bool
+		trans1, ok = tr[1].(map[string]interface{})
+		require.True(t, ok, "second transformation should be a map")
+	case []map[string]interface{}:
+		require.Len(t, tr, 2)
+		trans1 = tr[1]
+	default:
+		t.Fatalf("transformations has unexpected type %T", transformationsRaw)
+	}
 
 	// Second transformation should have filter with scope "series"
-	trans1, ok := transformations[1].(map[string]interface{})
-	require.True(t, ok)
 	filter, ok := trans1["filter"].(map[string]interface{})
 	require.True(t, ok, "second transformation should have filter")
 	assert.Equal(t, "byName", filter["id"])
@@ -638,11 +648,21 @@ func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
 	// Field config overrides: matcher should have scope "nested"
 	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
 	require.True(t, ok, "fieldConfig should exist")
-	overrides, ok := fieldConfig["overrides"].([]interface{})
-	require.True(t, ok, "overrides should exist")
-	require.Len(t, overrides, 1)
-	override0, ok := overrides[0].(map[string]interface{})
-	require.True(t, ok)
+	overridesRaw := fieldConfig["overrides"]
+	require.NotNil(t, overridesRaw, "overrides should exist")
+	var override0 map[string]interface{}
+	switch ov := overridesRaw.(type) {
+	case []interface{}:
+		require.Len(t, ov, 1)
+		var ok bool
+		override0, ok = ov[0].(map[string]interface{})
+		require.True(t, ok)
+	case []map[string]interface{}:
+		require.Len(t, ov, 1)
+		override0 = ov[0]
+	default:
+		t.Fatalf("overrides has unexpected type %T", overridesRaw)
+	}
 	matcher, ok := override0["matcher"].(map[string]interface{})
 	require.True(t, ok, "override should have matcher")
 	assert.Equal(t, "byName", matcher["id"])
