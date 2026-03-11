@@ -131,7 +131,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         onClickItem={onClickAnnotation}
         renderItemLabel={(a) => <AnnotationName annotation={a} />}
       />
-      <Box display="flex" paddingTop={0} paddingBottom={2}>
+      <Box display="flex" paddingTop={1} paddingBottom={2}>
         <Button
           fullWidth
           icon="plus"
