@@ -207,9 +207,13 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new AdHocFiltersVariable({
         ...initialState,
         layout: 'combobox',
+        applicabilityEnabled: config.featureToggles.perPanelNonApplicableDrilldowns || undefined,
       });
     case 'groupby':
-      return new GroupByVariable(initialState);
+      return new GroupByVariable({
+        ...initialState,
+        applicabilityEnabled: config.featureToggles.perPanelNonApplicableDrilldowns || undefined,
+      });
     case 'textbox':
       return new TextBoxVariable(initialState);
     case 'switch':

@@ -177,9 +177,11 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
 export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
   const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
-  const variables = sceneGraph.getVariables(model);
-  const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
-  const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
+  const variablesSet = sceneGraph.getVariables(model);
+  const { variables } = variablesSet.useState();
+  const adhocFiltersVar = variables.find((variable) => variable instanceof AdHocFiltersVariable);
+  const groupByVar = variables.find((variable) => variable instanceof GroupByVariable);
+  const subHeaderKey = `${adhocFiltersVar?.state.name ?? 'none'}:${groupByVar?.state.name ?? 'none'}`;
   const queryRunner = model.getQueryRunner();
 
   if (!queryRunner || hideNonApplicableDrilldowns || !supportsApplicability) {
@@ -188,6 +190,7 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
 
   return (
     <PanelNonApplicableDrilldownsSubHeader
+      key={subHeaderKey}
       filtersVar={adhocFiltersVar}
       groupByVar={groupByVar}
       queryRunner={queryRunner}

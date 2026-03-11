@@ -39,7 +39,6 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     }
 
     const items: Array<{ label: string; reason?: string }> = [];
-
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
     const filterValues = [...originFilters, ...filters];
@@ -50,9 +49,12 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       for (let i = 0; i < filterValues.length; i++) {
         const filter = filterValues[i];
         const result = matchFilter(filter.key, filter.origin, i);
-        if (result && !result.applicable) {
+        const isNonApplicable = result ? !result.applicable : Boolean(filter.nonApplicable);
+        const reason = result?.reason ?? filter.nonApplicableReason;
+
+        if (isNonApplicable) {
           const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
-          items.push({ label: `${filter.key} ${filter.operator} ${displayValue}`, reason: result.reason });
+          items.push({ label: `${filter.key} ${filter.operator} ${displayValue}`, reason });
         }
       }
     }

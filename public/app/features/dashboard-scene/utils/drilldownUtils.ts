@@ -8,8 +8,7 @@ export function verifyDrilldownApplicability(
   isApplicabilityEnabled?: boolean
 ): boolean {
   const datasourceUid = sceneGraph.interpolate(sourceObject, queriesDataSource?.uid);
+  const applicabilityEnabled = isApplicabilityEnabled !== false;
 
-  return Boolean(
-    isApplicabilityEnabled && datasourceUid === sceneGraph.interpolate(sourceObject, drilldownDatasource?.uid)
-  );
+  return Boolean(applicabilityEnabled && datasourceUid === sceneGraph.interpolate(sourceObject, drilldownDatasource?.uid));
 }
