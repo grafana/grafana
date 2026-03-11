@@ -1,4 +1,4 @@
-import { OpenFeatureTestProvider, FlagSet } from '@openfeature/react-sdk';
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
@@ -263,7 +263,7 @@ describe('VersionList', () => {
   });
 });
 
-function renderWithStore(component: JSX.Element, flags?: FlagSet = {}) {
+function renderWithStore(component: JSX.Element, flags: { [key: string]: boolean } = {}) {
   const store = configureStore();
 
   return render(
