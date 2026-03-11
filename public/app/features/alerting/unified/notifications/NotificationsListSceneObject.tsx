@@ -37,6 +37,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 
+import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
 import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
@@ -403,6 +404,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
               </Trans>
             </Text>
           )}
+          {alert.enrichments && <AlertEnrichments enrichments={alert.enrichments} />}
         </Stack>
       </div>
     );
