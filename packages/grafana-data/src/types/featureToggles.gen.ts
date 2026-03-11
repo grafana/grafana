@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -1543,6 +1538,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Enables team APIs in the app platform
+  * @default false
+  */
+  kubernetesTeamsApi?: boolean;
+  /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
@@ -1552,6 +1552,16 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersApi?: boolean;
+  /**
+  * Enables service account APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountsApi?: boolean;
+  /**
+  * Enables service account token APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountTokensApi?: boolean;
   /**
   * Enables external group mapping APIs in the app platform
   * @default false
@@ -1628,13 +1638,18 @@ export interface FeatureToggles {
   */
   dsAbstractionApp?: boolean;
   /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
+  /**
   * Enables new analytics framework
   * @default false
   */
   analyticsFramework?: boolean;
   /**
-  * Enables an inline version of Log Details that creates no new scrolls
+  * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
-  inlineLogDetailsNoScrolls?: boolean;
+  flameGraphWithCallTree?: boolean;
 }

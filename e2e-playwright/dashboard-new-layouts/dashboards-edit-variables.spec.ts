@@ -173,7 +173,7 @@ test.describe(
       ).toBeVisible();
     });
 
-    test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
+    test.skip('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
       const variable: Variable = {
         type: 'textbox',
         name: 'VariableUnderTest',

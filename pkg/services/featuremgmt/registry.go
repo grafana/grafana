@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -2443,6 +2435,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamsApi",
+			Description:  "Enables team APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesTeamsHandlerRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
@@ -2453,6 +2453,22 @@ var (
 		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesServiceAccountsApi",
+			Description:  "Enables service account APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesServiceAccountTokensApi",
+			Description:  "Enables service account token APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2579,6 +2595,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpoint",
+			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:         "analyticsFramework",
 			Description:  "Enables new analytics framework",
 			Stage:        FeatureStageExperimental,
@@ -2587,11 +2611,12 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "inlineLogDetailsNoScrolls",
-			Description: "Enables an inline version of Log Details that creates no new scrolls",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
 		},
 	}
 )

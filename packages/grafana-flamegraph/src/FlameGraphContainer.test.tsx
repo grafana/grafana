@@ -7,7 +7,7 @@ import { createDataFrame, createTheme } from '@grafana/data';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { MIN_WIDTH_FOR_SPLIT_VIEW, MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -225,5 +225,104 @@ describe('labelSearch', () => {
       let found = labelSearch(search, container);
       expect(found.size).toBe(0);
     });
+  });
+});
+
+describe('FlameGraphContainer (new UI)', () => {
+  // Needed for AutoSizer to work in test
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: jest.fn(() => ({
+      width: 500,
+      height: 500,
+      left: 0,
+    })),
+  });
+
+  const FlameGraphContainerWithNewUI = () => {
+    const flameGraphData = createDataFrame(data);
+    flameGraphData.meta = {
+      custom: {
+        ProfileTypeID: 'cpu:foo:bar',
+      },
+    };
+
+    const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
+    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} enableNewUI={true} />;
+  };
+
+  it('should render without error', async () => {
+    expect(() => render(<FlameGraphContainerWithNewUI />)).not.toThrow();
+  });
+
+  it('should update search when row selected in top table', async () => {
+    render(<FlameGraphContainerWithNewUI />);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+    expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
+    // Unclick the selection so that we can click something else and continue test checks
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
+    expect(screen.getByDisplayValue('^total$')).toBeInTheDocument();
+    // after it is highlighted it will be the only (first) item in the table so [1] -> [0]
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+    expect(screen.queryByDisplayValue('^total$')).not.toBeInTheDocument();
+  });
+
+  it('should render pane view options in multi mode', async () => {
+    // Default is Multi mode with Split view, showing two pane selectors
+    render(<FlameGraphContainerWithNewUI />);
+    // In split mode, there are 2 pane selectors, each with Top Table, Flame Graph, Call Tree
+    expect(screen.getAllByText(/Top Table/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/Flame Graph/).length).toBeGreaterThanOrEqual(2);
+    // View mode options: Single/Split (as radio buttons)
+    expect(screen.getByRole('radio', { name: /Single view/ })).toBeDefined();
+    expect(screen.getByRole('radio', { name: /Split view/ })).toBeDefined();
+  });
+
+  it('should switch to single view mode', async () => {
+    render(<FlameGraphContainerWithNewUI />);
+
+    // Start in Multi + Split mode - both views visible
+    expect(screen.getByTestId('flameGraph')).toBeDefined();
+    expect(screen.getByTestId('topTable')).toBeDefined();
+
+    // Switch to Single mode using the ViewMode radio button
+    await userEvent.click(screen.getByRole('radio', { name: /Single view/ }));
+
+    // In single mode, only one pane selector should be present
+    expect(screen.getAllByText(/Top Table/).length).toBe(1);
+  });
+
+  it('should render multi option if screen width >= threshold', async () => {
+    global.innerWidth = MIN_WIDTH_FOR_SPLIT_VIEW;
+    global.dispatchEvent(new Event('resize'));
+    render(<FlameGraphContainerWithNewUI />);
+
+    // Multi mode is default, view mode options should be visible
+    expect(screen.getByText(/Split/)).toBeDefined();
+  });
+
+  it('should filter table items based on search input', async () => {
+    render(<FlameGraphContainerWithNewUI />);
+
+    const matchingText1 = 'net/http.HandlerFunc.ServeHTTP';
+    const matchingText2 = 'runtime.gcBgMarkWorker';
+    const nonMatchingText = 'runtime.systemstack';
+
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
+    expect(screen.queryAllByText(nonMatchingText).length).toBe(1);
+
+    // Apply the filter
+    const searchInput = screen.getByPlaceholderText('Search...');
+    await userEvent.type(searchInput, 'Handler serve,gcBgMarkWorker');
+
+    // We have to wait for filter to take effect
+    await waitFor(() => {
+      expect(screen.queryAllByText(nonMatchingText).length).toBe(0);
+    });
+    // Check we didn't lose the one that should match
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
   });
 });

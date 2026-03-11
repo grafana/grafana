@@ -129,9 +129,10 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter func(context.Context) (*clientrest.Config, error)
-	registry         prometheus.Registerer
-	quotaGetter      quotas.QuotaGetter
+	restConfigGetter      func(context.Context) (*clientrest.Config, error)
+	registry              prometheus.Registerer
+	quotaGetter           quotas.QuotaGetter
+	folderMetadataEnabled bool
 }
 
 // NewAPIBuilder creates an API builder.
@@ -159,6 +160,7 @@ func NewAPIBuilder(
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
+	folderMetadataEnabled bool,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -167,7 +169,7 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 
-	parsers := resources.NewParserFactory(clients, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	// Create access checker based on mode
@@ -203,6 +205,7 @@ func NewAPIBuilder(
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
+		folderMetadataEnabled:               folderMetadataEnabled,
 	}
 
 	for _, builder := range extraBuilders {
@@ -210,11 +213,6 @@ func NewAPIBuilder(
 	}
 
 	return b
-}
-
-// FolderMetadataEnabled reports whether the provisioning folder metadata feature flag is on.
-func (b *APIBuilder) FolderMetadataEnabled() bool {
-	return b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -305,6 +303,7 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
+		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -692,7 +691,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.FolderMetadataEnabled())
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -701,7 +700,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.folderMetadataEnabled)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -799,7 +798,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportEnabled,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -935,6 +934,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connHealthChecker,
 				b.connectionFactory,
 				informerFactoryResyncInterval,
+				b.registry,
 			)
 			if err != nil {
 				return err

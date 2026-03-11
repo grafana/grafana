@@ -49,9 +49,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
+        uses: ./.github/actions/setup-go
       - name: Setup Enterprise
         if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: ./.github/actions/setup-enterprise

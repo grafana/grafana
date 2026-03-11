@@ -5,6 +5,7 @@ import { BOUNDARY_ELEMENT_ID } from '../../utils/floating';
 import { measureText } from '../../utils/measureText';
 
 import {
+  MENU_ITEM_DESCRIPTION_FONT_SIZE,
   MENU_ITEM_FONT_SIZE,
   MENU_ITEM_FONT_WEIGHT,
   MENU_ITEM_PADDING,
@@ -66,22 +67,32 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   });
 
   const longestItemWidth = useMemo(() => {
-    let longestItem = '';
-    let longestItemIndex = -1;
+    let longestLabel = '';
+    let longestLabelIndex = -1;
+    let longestDescription = '';
     // @todo sort by string length DESC
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
     for (let i = 0; i < itemsToLookAt; i++) {
       const itemLabel = items[i].label ?? items[i].value.toString();
-      if (itemLabel.length > longestItem.length) {
-        longestItem = itemLabel;
-        longestItemIndex = i;
+      if (itemLabel.length > longestLabel.length) {
+        longestLabel = itemLabel;
+        longestLabelIndex = i;
+      }
+      const itemDescription = items[i].description ?? '';
+      if (itemDescription.length > longestDescription.length) {
+        longestDescription = itemDescription;
       }
     }
 
-    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
-    const iconSize = longestItemIndex > -1 && items[longestItemIndex].icon ? ICON_WIDTH : 0;
-    return size + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth + iconSize;
+    const labelWidth = measureText(longestLabel, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
+    const descriptionWidth = longestDescription
+      ? measureText(longestDescription, MENU_ITEM_DESCRIPTION_FONT_SIZE).width
+      : 0;
+    const iconSize = longestLabelIndex > -1 && items[longestLabelIndex].icon ? ICON_WIDTH : 0;
+
+    const textWidth = Math.max(labelWidth + iconSize, descriptionWidth);
+    return textWidth + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {

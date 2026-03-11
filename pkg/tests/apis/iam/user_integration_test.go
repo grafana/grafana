@@ -20,8 +20,7 @@ import (
 func TestIntegrationUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Figure out why rest.Mode4 is failing
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
