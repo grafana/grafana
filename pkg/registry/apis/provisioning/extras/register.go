@@ -1,6 +1,8 @@
 package extras
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -29,8 +31,9 @@ func ProvideProvisioningOSSRepositoryExtras(
 	decryptSvc decrypt.DecryptService,
 	ghFactory *github.Factory,
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
+	reg prometheus.Registerer,
 ) []repository.Extra {
-	decrypter := repository.ProvideDecrypter(decryptSvc)
+	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
@@ -49,8 +52,9 @@ func ProvideProvisioningOSSConnectionExtras(
 	_ *setting.Cfg,
 	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
+	reg prometheus.Registerer,
 ) []connection.Extra {
-	decrypter := connection.ProvideDecrypter(decryptSvc)
+	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(reg))
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
 	}

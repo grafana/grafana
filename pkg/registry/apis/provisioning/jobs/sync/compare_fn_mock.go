@@ -25,7 +25,7 @@ func (_m *MockCompareFn) EXPECT() *MockCompareFn_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, repo, repositoryResources, ref
-func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error) {
+func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, []string, error) {
 	ret := _m.Called(ctx, repo, repositoryResources, ref)
 
 	if len(ret) == 0 {
@@ -33,8 +33,9 @@ func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, re
 	}
 
 	var r0 []ResourceFileChange
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, error)); ok {
+	var r1 []string
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, []string, error)); ok {
 		return rf(ctx, repo, repositoryResources, ref)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string) []ResourceFileChange); ok {
@@ -45,13 +46,21 @@ func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, re
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, resources.RepositoryResources, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, resources.RepositoryResources, string) []string); ok {
 		r1 = rf(ctx, repo, repositoryResources, ref)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]string)
+		}
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, repository.Reader, resources.RepositoryResources, string) error); ok {
+		r2 = rf(ctx, repo, repositoryResources, ref)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockCompareFn_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
@@ -75,12 +84,12 @@ func (_c *MockCompareFn_Execute_Call) Run(run func(ctx context.Context, repo rep
 	return _c
 }
 
-func (_c *MockCompareFn_Execute_Call) Return(_a0 []ResourceFileChange, _a1 error) *MockCompareFn_Execute_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockCompareFn_Execute_Call) Return(_a0 []ResourceFileChange, _a1 []string, _a2 error) *MockCompareFn_Execute_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockCompareFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, error)) *MockCompareFn_Execute_Call {
+func (_c *MockCompareFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, []string, error)) *MockCompareFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

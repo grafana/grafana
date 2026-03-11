@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -141,4 +142,50 @@ func TestBroadcaster(t *testing.T) {
 	cancel()
 	_, ok := <-sub
 	require.False(t, ok)
+}
+
+func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	b, err := NewBroadcaster(ctx, func(out chan<- int) error {
+		go func() {
+			defer close(out)
+			for v := range ch {
+				out <- v
+			}
+		}()
+		return nil
+	})
+	require.NoError(t, err)
+
+	// Create 101 subscribers that never read — more than the
+	// unsubscribe channel buffer (100) in the original code.
+	const numSubs = chanBufferLen + 1
+	for i := 0; i < numSubs; i++ {
+		_, err := b.Subscribe(ctx)
+		require.NoError(t, err)
+	}
+
+	// Fill all subscriber buffers (each buffered at 100), and keep sending more elements.
+	//
+	// Since all subscribers are slow, they should get unsubscribed
+	// eventually. In the original code, unsubscribing buf size + 1 subscribers would deadlock.
+	// Use a timeout to detect the deadlock.
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < 10*chanBufferLen; i++ {
+			ch <- i
+		}
+
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Success — no deadlock.
+	case <-time.After(5 * time.Second):
+		t.Fatal("deadlock: stream() blocked trying to unsubscribe slow consumers")
+	}
 }
