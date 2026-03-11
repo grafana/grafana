@@ -1342,7 +1342,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var helper *common.ProvisioningTestHelper
 			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, withProvisioningFolderMetadata)
+				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 			} else {
 				helper = common.RunGrafana(t)
 			}

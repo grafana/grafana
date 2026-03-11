@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("single folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 		const repo = "missing-folder-meta-single"
 		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo,
@@ -59,7 +59,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	})
 
 	t.Run("multiple folders", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 		const repo = "missing-folder-meta-multi"
 		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo,
