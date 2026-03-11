@@ -18,4 +18,4 @@ runs:
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' }}
-        cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.sum' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.mod' || '' }}
