@@ -247,16 +247,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         );
 
         // Track analytics: check completed
-        DashboardLibraryInteractions.compatibilityCheckCompleted({
-          dashboardId: String(dashboard.id),
-          dashboardTitle: dashboard.name,
-          datasourceType: response.datasourceType,
-          score,
-          metricsFound,
-          metricsTotal,
-          triggerMethod,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        });
+        isAnalyticsFrameworkEnabled
+          ? NewDashboardLibraryInteractions.compatibilityCheckCompleted({
+              dashboardId: String(dashboard.id),
+              dashboardTitle: dashboard.name,
+              datasourceType: response.datasourceType,
+              score,
+              metricsFound,
+              metricsTotal,
+              triggerMethod,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            })
+          : DashboardLibraryInteractions.compatibilityCheckCompleted({
+              dashboardId: String(dashboard.id),
+              dashboardTitle: dashboard.name,
+              datasourceType: response.datasourceType,
+              score,
+              metricsFound,
+              metricsTotal,
+              triggerMethod,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            });
       } catch (err) {
         console.error('Error checking dashboard compatibility:', err);
 
