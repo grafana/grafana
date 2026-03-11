@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -921,6 +913,15 @@ var (
 			Name:         "dashboardAdHocAndGroupByWrapper",
 			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
 			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardUnifiedDrilldownControls",
+			Description:  "Renders ad hoc filters and group by in a single unified control",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -2443,6 +2444,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamsApi",
+			Description:  "Enables team APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesTeamsHandlerRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
@@ -2611,6 +2620,20 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:        "inlineLogDetailsNoScrolls",
+			Description: "Enables an inline version of Log Details that creates no new scrolls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		}, {
 			Name:            "colorblindThemes",
 			Description:     "Enables the new colorblind-friendly themes",
 			Stage:           FeatureStageGeneralAvailability,

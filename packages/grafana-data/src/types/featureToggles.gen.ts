@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -594,6 +589,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Renders ad hoc filters and group by in a single unified control
+  * @default false
+  */
+  dashboardUnifiedDrilldownControls?: boolean;
+  /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
   */
@@ -990,7 +990,7 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
-  * 
+  *
   * @default true
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
@@ -1543,6 +1543,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Enables team APIs in the app platform
+  * @default false
+  */
+  kubernetesTeamsApi?: boolean;
+  /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
@@ -1647,6 +1652,16 @@ export interface FeatureToggles {
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Enables the new Flame Graph UI containing the Call Tree view
+  * @default false
+  */
+  flameGraphWithCallTree?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the new colorblind-friendly themes
   * @default false

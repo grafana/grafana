@@ -897,11 +897,13 @@
       "aria-label-more-actions": "Weitere Aktionen für Kontaktpunkt „{{contactPointName}}“",
       "ariaLabel-delete": "Löschen",
       "button-edit": "Bearbeiten",
+      "button-history": "",
       "button-view": "Anzeigen",
       "export-ariaLabel-export": "Exportieren",
       "export-label-export": "Exportieren",
       "label-delete": "Löschen",
       "label-manage-permissions": "Berechtigungen verwalten",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Bereitgestellte Kontaktpunkte können nicht in der Benutzeroberfläche bearbeitet werden"
     },
     "contact-point-selector": {
@@ -2090,6 +2092,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Sind Sie sicher, dass Sie „{{muteTiming}}“ löschen möchten?"
     },
@@ -2187,47 +2195,8 @@
       "body-no-alertmanager-found": "Wir konnten keine externen Alertmanager finden. Möglicherweise haben Sie keinen Zugriff auf den integrierten Alertmanager von Grafana.",
       "title-no-alertmanager-found": "Kein Alertmanager gefunden"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Suche nach Kontaktpunkt",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Wählen Sie einen Kontaktpunkt",
       "search-query-input-placeholder-search": "Suche"
     },
@@ -2392,6 +2361,7 @@
       "tooltip-managed-by-plugin": "Diese Regel wird vom Plugin {{pluginName}} verwaltet"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Einklappen",
       "aria-label-expand": "Ausklappen",
       "aria-label-more": "Weitere Aktionen für die Richtlinie",
@@ -2402,9 +2372,10 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Alle Warninstanzen werden von der Standardrichtlinie bearbeitet, wenn keine anderen übereinstimmenden Richtlinien gefunden werden.",
         "title": "Standardrichtlinie",
-        "update": "Standardrichtlinie aktualisieren"
+        "update": "",
+        "route-count_one": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Ja, Richtlinie löschen",
@@ -2419,7 +2390,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtern Sie Benachrichtigungsrichtlinien und trennen Sie die Matchers durch Kommata, z. B.:<1>Schweregrad=kritisch, Region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Automatisch generierte Richtlinien",
       "matchers": "Matcher",
       "metadata": {
@@ -2450,24 +2421,23 @@
         "n-instances_one": "Instanz",
         "n-instances_other": "Instanzen"
       },
-      "new-child": "Neue untergeordnete Richtlinie",
-      "new-policy": "Neue Richtlinie hinzufügen",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Keine Matcher",
       "reload-policies": "Richtlinien erneut laden",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Richtlinie speichern",
       "update": {
         "please-wait": "Bitte warten Sie, während wir Ihre Benachrichtigungsrichtlinien aktualisieren.",
-        "update-policy": "Richtlinie aktualisieren",
+        "update-route": "",
         "updating": "Wird aktualisiert …"
       },
       "update-errors": {
@@ -2511,9 +2481,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Neue untergeordnete Richtlinie",
-      "label-new-sibling-above": "Neues gleichrangiges Element oben",
-      "label-new-sibling-below": "Neues gleichrangiges Element unten"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3503,7 +3473,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Benachrichtigungsrichtlinie hinzufügen"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3544,7 +3514,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Löschen",
       "label-edit": "Bearbeiten",
-      "label-export": "Exportieren"
+      "label-export": "Exportieren",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, Kontaktpunkt löschen",
@@ -3576,7 +3547,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Benachrichtigungsrichtlinie bearbeiten"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5342,6 +5313,7 @@
       "panel-description": "Panel-Beschreibung ändern",
       "panel-edit": "Änderungen am Panel",
       "panel-max-repeats-per-row": "Max. Wiederholungen pro Zeile",
+      "panel-preset": "",
       "panel-repeat-direction": "Richtung wiederholen",
       "panel-repeat-variable": "Panel-Wiederholung durch",
       "panel-title": "Panel-Titel ändern",
@@ -6802,6 +6774,7 @@
       "title": {
         "description": "Beschreibung",
         "panel-links": "Panel-Links",
+        "panel-styles": "",
         "title": "Titel",
         "transparent-background": "Transparenter Hintergrund"
       }
@@ -7014,6 +6987,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Zurück"
@@ -7026,6 +7002,11 @@
         }
       },
       "title-close": "Schließen"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Dieses Dashboard wird von der Grafana-Bereitstellung verwaltet und kann nicht gelöscht werden. Entfernen Sie das Dashboard aus der Konfigurationsdatei, um es zu löschen.",
@@ -9672,6 +9653,9 @@
     },
     "cascader": {
       "clear-button": "Auswahl löschen"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "Farben",
@@ -13535,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13631,7 +13617,6 @@
       "alerts-loading": "",
       "card-click": "Karte {{id}} auswählen",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
@@ -14861,6 +14846,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Daten außerhalb des Zeitbereichs",
       "zoom-to-data": "Auf Daten zoomen"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

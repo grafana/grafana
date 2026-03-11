@@ -903,11 +903,13 @@
       "aria-label-more-actions": "Další akce pro kontaktní bod „{{contactPointName}}“",
       "ariaLabel-delete": "Odstranit",
       "button-edit": "Upravit",
+      "button-history": "",
       "button-view": "Zobrazit",
       "export-ariaLabel-export": "Exportovat",
       "export-label-export": "Exportovat",
       "label-delete": "Odstranit",
       "label-manage-permissions": "Spravovat oprávnění",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Zajištěné kontaktní body nelze upravovat v uživatelském rozhraní"
     },
     "contact-point-selector": {
@@ -2112,6 +2114,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Opravdu chcete odstranit „{{muteTiming}}“?"
     },
@@ -2209,47 +2217,8 @@
       "body-no-alertmanager-found": "Nenašli jsme žádné externí správce výstrah a možná nemáte přístup k vestavěnému správci výstrah Grafana.",
       "title-no-alertmanager-found": "Nebyl nalezen žádný správce výstrah"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Hledat podle kontaktního bodu",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Vyberte kontaktní bod",
       "search-query-input-placeholder-search": "Hledat"
     },
@@ -2414,6 +2383,7 @@
       "tooltip-managed-by-plugin": "Toto pravidlo je spravováno pluginem {{pluginName}}"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Sbalit",
       "aria-label-expand": "Rozbalit",
       "aria-label-more": "další akce pro zásadu",
@@ -2424,9 +2394,12 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Všechny instance výstrahy budou zpracovány výchozími zásadami, pokud nebudou nalezeny žádné jiné odpovídající zásady.",
         "title": "Výchozí zásada",
-        "update": "Aktualizovat výchozí zásadu"
+        "update": "",
+        "route-count_one": "",
+        "route-count_few": "",
+        "route-count_many": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Ano, odstranit zásadu",
@@ -2441,7 +2414,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtrujte zásady oznamování pomocí seznamu odpovídajících osob oddělených čárkami, např.:<1>závažnost = kritická, region = EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Automaticky generované zásady",
       "matchers": "Srovnávače",
       "metadata": {
@@ -2474,24 +2447,23 @@
         "n-instances_many": "instance",
         "n-instances_other": "instance"
       },
-      "new-child": "Nová podřízená zásada",
-      "new-policy": "Přidat novou zásadu",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Žádné shody",
       "reload-policies": "Znovu načíst zásady",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Uložit zásadu",
       "update": {
         "please-wait": "Počkejte prosím, aktualizujeme vaše zásady oznamování.",
-        "update-policy": "Aktualizovat zásadu",
+        "update-route": "",
         "updating": "Probíhá aktualizace…"
       },
       "update-errors": {
@@ -2537,9 +2509,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Nová podřízená zásada",
-      "label-new-sibling-above": "Nová souvislost nahoře",
-      "label-new-sibling-below": "Nová souvislost dole"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3543,7 +3515,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Přidat zásadu oznamování"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3584,7 +3556,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Odstranit",
       "label-edit": "Upravit",
-      "label-export": "Exportovat"
+      "label-export": "Exportovat",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ano, odstranit kontaktní bod",
@@ -3616,7 +3589,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Upravit zásadu oznamování"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5398,6 +5371,7 @@
       "panel-description": "Změnit popis panelu",
       "panel-edit": "Změny panelu",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
+      "panel-preset": "",
       "panel-repeat-direction": "Opakovat směr",
       "panel-repeat-variable": "Opakování panelu podle",
       "panel-title": "Změnit název panelu",
@@ -6862,6 +6836,7 @@
       "title": {
         "description": "Popis",
         "panel-links": "Propojení panelů",
+        "panel-styles": "",
         "title": "Název",
         "transparent-background": "Průhledné pozadí"
       }
@@ -7076,6 +7051,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Zpět"
@@ -7088,6 +7066,11 @@
         }
       },
       "title-close": "Zavřít"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Tuto nástěnka spravuje zajištění Grafana a nelze ji odstranit. Odebráním nástěnky z konfiguračního souboru ji odstraníte.",
@@ -9768,6 +9751,9 @@
     },
     "cascader": {
       "clear-button": "Vymazat výběr"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "Barvy",
@@ -13667,7 +13653,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13763,7 +13751,6 @@
       "alerts-loading": "",
       "card-click": "Vybrat kartu {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Dotazy a výrazy",
       "toggle-size": "Přepnout velikost postranního panelu",
@@ -15007,6 +14994,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data mimo časový rozsah",
       "zoom-to-data": "Přiblížit na data"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
