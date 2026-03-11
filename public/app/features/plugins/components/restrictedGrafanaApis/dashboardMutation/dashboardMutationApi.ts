@@ -11,7 +11,7 @@
 
 import { parse, safeParse } from 'valibot';
 
-import type { DashboardMutationAPI } from '@grafana/data';
+import type { DashboardMutationAPI, SchemaValidator } from '@grafana/data';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 
@@ -20,6 +20,9 @@ let _client: MutationClient | null = null;
 export function setDashboardMutationClient(client: MutationClient | null): void {
   _client = client;
 }
+
+/** Cached schema wrappers keyed by command name, so repeated lookups return the same reference. */
+const _schemaCache = new Map<string, SchemaValidator>();
 
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
@@ -30,17 +33,23 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
+    const cached = _schemaCache.get(normalized);
+    if (cached) {
+      return cached;
+    }
     const cmd = ALL_COMMANDS.find((c) => c.name === normalized);
     if (!cmd) {
       return null;
     }
     const schema = cmd.payloadSchema;
-    return {
+    const wrapper: SchemaValidator = {
       parse: (data: unknown) => parse(schema, data),
       safeParse: (data: unknown) => {
         const result = safeParse(schema, data);
         return result.success ? { success: true, data: result.output } : { success: false, error: result.issues };
       },
     };
+    _schemaCache.set(normalized, wrapper);
+    return wrapper;
   },
 };
