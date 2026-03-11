@@ -37,7 +37,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/go/pkg/mod
-        key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.sum') }}
+        key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}
         restore-keys: gomod-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Report Go cache sizes
