@@ -104,7 +104,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         onClickItem={onClickLink}
         renderItemLabel={(l) => l.title}
       />
-      <Box display="flex" paddingTop={0} paddingBottom={2}>
+      <Box display="flex" paddingTop={1} paddingBottom={2}>
         <Button
           fullWidth
           icon="plus"
