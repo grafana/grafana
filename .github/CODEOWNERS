@@ -1233,11 +1233,14 @@ embed.go @grafana/grafana-as-code
 /.github/commands.json @torkelo
 /.github/dependabot.yml @grafana/frontend-ops
 /.github/issue-opened.json @grafana/grafana-community-support
+/.github/team-notifications-config.json @grafana/grafana-community-support
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-backend-group
+/.github/actions/setup-go/action.yml @grafana/grafana-backend-group
+/.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
@@ -1271,6 +1274,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/external-fr-notify.yml @grafana/grafana-community-support
+/.github/workflows/external-fr-weekly-digest.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-notify-handler.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-notify-trigger.yml @grafana/grafana-community-support
+/.github/workflows/external-pr-weekly-digest.yml @grafana/grafana-community-support
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
 /.github/workflows/pr-checks.yml @tolzhabayev
@@ -1286,6 +1294,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
+/.github/workflows/scripts/fr-digest.mts @grafana/grafana-community-support
+/.github/workflows/scripts/fr-notify.mts @grafana/grafana-community-support
+/.github/workflows/scripts/pr-digest.mts @grafana/grafana-community-support
+/.github/workflows/scripts/pr-notify.mts @grafana/grafana-community-support
+/.github/workflows/scripts/utils.mts @grafana/grafana-community-support
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
@@ -1296,7 +1309,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform

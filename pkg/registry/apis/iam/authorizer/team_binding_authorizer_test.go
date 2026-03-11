@@ -20,6 +20,7 @@ func newTeamBinding(teamName, name, subjectName string) *iamv0.TeamBinding {
 				Name: teamName,
 			},
 			Subject: iamv0.TeamBindingspecSubject{
+				Kind: "User",
 				Name: subjectName,
 			},
 		},

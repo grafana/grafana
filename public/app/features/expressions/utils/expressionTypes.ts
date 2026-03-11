@@ -32,6 +32,15 @@ export const getDefaults = (query: ExpressionQuery) => {
     case ExpressionQueryType.classic:
       if (!query.conditions) {
         query.conditions = [defaultCondition];
+      } else {
+        // API-loaded rules may have conditions without a reducer object (e.g. provisioned
+        // rules or rules created by older versions). Backfill with the default reducer
+        // to prevent downstream components from crashing on undefined access.
+        for (const condition of query.conditions) {
+          if (!condition.reducer) {
+            condition.reducer = { params: [], type: 'avg' };
+          }
+        }
       }
 
       break;
