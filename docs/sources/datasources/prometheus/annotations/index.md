@@ -16,35 +16,19 @@ menuTitle: Annotations
 title: Prometheus annotations
 weight: 500
 review_date: 2026-03-10
-refs:
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  configure-prometheus:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
-  template-variables-prometheus:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/
 ---
 
 # Prometheus annotations
 
 Annotations overlay event markers on your dashboard visualizations, helping you correlate metric behavior with events like alerts firing, deployments, or configuration changes. You can use the Prometheus data source to create annotation queries that display PromQL query results as annotation events.
 
-For general information about annotations, refer to [Annotate visualizations](ref:annotate-visualizations).
+For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
 
 ## Before you begin
 
 Before you create Prometheus annotations, ensure you have:
 
-- A [configured Prometheus data source](ref:configure-prometheus)
+- A [configured Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/)
 - Familiarity with [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query syntax
 - Metrics in Prometheus that represent events you want to annotate (for example, `ALERTS`, deployment timestamps)
 
@@ -104,4 +88,4 @@ Because **Series value as timestamp** is enabled, the metric value (the deployme
 
 ## Use template variables
 
-You can use [template variables](ref:template-variables-prometheus) in your annotation PromQL expressions to make annotations dynamic. For example, `ALERTS{instance=~"$instance"}` filters alert annotations based on the selected instance variable.
+You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/) in your annotation PromQL expressions to make annotations dynamic. For example, `ALERTS{instance=~"$instance"}` filters alert annotations based on the selected instance variable.

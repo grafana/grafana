@@ -17,40 +17,19 @@ menuTitle: Alerting
 title: Prometheus alerting
 weight: 550
 review_date: 2026-03-10
-refs:
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-  configure-prometheus:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
-  create-grafana-managed-rule:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Prometheus alerting
 
 You can use Grafana Alerting with the Prometheus data source to create alert rules based on PromQL queries. This allows you to monitor metrics, detect anomalies, and receive notifications when specific conditions are met.
 
-For general information about Grafana Alerting, refer to [Grafana Alerting](ref:alerting).
+For general information about Grafana Alerting, refer to [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/).
 
 ## Before you begin
 
 Before you create alerts with Prometheus, ensure you have:
 
-- A [configured Prometheus data source](ref:configure-prometheus)
+- A [configured Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/)
 - Appropriate permissions to create alert rules
 - Familiarity with [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query syntax
 
@@ -85,7 +64,7 @@ To create an alert rule using Prometheus:
 1. Configure notification labels, contact points, and any additional settings.
 1. Click **Save rule**.
 
-For detailed instructions, refer to [Create a Grafana-managed alert rule](ref:create-grafana-managed-rule).
+For detailed instructions, refer to [Create a Grafana-managed alert rule](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
 
 ## Configure alerting settings
 
@@ -96,7 +75,7 @@ The Prometheus data source configuration includes two alerting-related settings.
 | **Manage alerts via Alerting UI** | Enables data source-managed rules for this data source. For Prometheus, this allows viewing existing rules and alerts. For Mimir, it enables full rule management. | On |
 | **Allow as recording rules target** | Allows this data source to be selected as a target for Grafana-managed recording rules. | On |
 
-For more configuration details, refer to [Configure the Prometheus data source](ref:configure-prometheus).
+For more configuration details, refer to [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/).
 
 ## Example alert queries
 
@@ -145,7 +124,7 @@ Standard Prometheus doesn't expose a ruler API for managing alert rules remotely
 
 Follow these best practices when creating Prometheus alerts:
 
-- **Test queries in Explore first:** Verify your PromQL query returns expected results in [Explore](ref:explore) before creating an alert rule.
+- **Test queries in Explore first:** Verify your PromQL query returns expected results in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) before creating an alert rule.
 - **Use appropriate evaluation intervals:** Match the evaluation interval to the urgency of the alert. Critical alerts may need short intervals (for example, `1m`), while capacity alerts can use longer intervals (for example, `5m`).
 - **Use `rate()` and `increase()` over `irate()`:** The `rate()` and `increase()` functions are more reliable for alerting because they smooth out brief spikes.
 - **Set realistic pending periods:** Use a pending period to avoid alerting on transient spikes. For example, set a 5-minute pending period so the condition must persist before the alert fires.
