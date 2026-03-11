@@ -23,10 +23,8 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
-      with:
-        go-version-file: go.mod
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
 
     - name: Update k8s codegen
       run: ./hack/update-codegen.sh

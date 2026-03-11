@@ -33,7 +33,7 @@ func TestTeamSearchFallback(t *testing.T) {
 		{name: "mode 0", mode: rest.Mode0, expectedLegacyCalled: true, expectedUnifiedCalled: false},
 		{name: "mode 1", mode: rest.Mode1, expectedLegacyCalled: true, expectedUnifiedCalled: false},
 		{name: "mode 2", mode: rest.Mode2, expectedLegacyCalled: true, expectedUnifiedCalled: false},
-		{name: "mode 3", mode: rest.Mode3, expectedLegacyCalled: false, expectedUnifiedCalled: true},
+		{name: "mode 3", mode: rest.Mode3, expectedLegacyCalled: true, expectedUnifiedCalled: false},
 		{name: "mode 4", mode: rest.Mode4, expectedLegacyCalled: false, expectedUnifiedCalled: true},
 		{name: "mode 5", mode: rest.Mode5, expectedLegacyCalled: false, expectedUnifiedCalled: true},
 	}
