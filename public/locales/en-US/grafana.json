@@ -6966,6 +6966,7 @@
       "with-tags": "With tags"
     },
     "links-list": {
+      "drag-end-description": "Reorder links list",
       "title-above-dashboard_one": "Above dashboard ({{count}})",
       "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
