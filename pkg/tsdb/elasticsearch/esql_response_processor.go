@@ -105,7 +105,7 @@ func processEsqlRawDataResponse(response *es.EsqlResponse, target *Query) (*back
 func processEsqlMetricsResponse(response *es.EsqlResponse, target *Query) (*backend.DataResponse, error) {
 	// Metrics mode requires STATS in ES|QL to produce an aggregation result.
 	// Without STATS, return a successful empty response.
-	if !hasEsqlStatsCommand(target.EsqlQuery) {
+	if !hasEsqlStatsCommand(target.RawQuery) {
 		return &backend.DataResponse{}, nil
 	}
 

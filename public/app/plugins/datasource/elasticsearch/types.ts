@@ -83,7 +83,6 @@ export interface ElasticsearchSecureJsonData {
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
 export type EditorType = 'code' | 'builder';
-export type QueryLanguage = 'raw_dsl' | 'esql';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
@@ -212,6 +211,7 @@ export interface ElasticDatasourceLike extends DataSourceApi<ElasticsearchDataQu
   query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse>;
   getDatabaseVersion(useCachedData?: boolean): Promise<SemVer | null>;
   getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]>;
+  index?: string;
 }
 
 export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {

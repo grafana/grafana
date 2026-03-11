@@ -6,10 +6,10 @@ import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/d
 import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
-import { ElasticsearchDataQuery } from '../../dataquery.gen';
+import { ElasticsearchDataQuery, QueryType } from '../../dataquery.gen';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
-import { EditorType, ElasticsearchOptions, QueryLanguage, ElasticDatasourceLike } from '../../types';
+import { EditorType, ElasticDatasourceLike, ElasticsearchOptions } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
@@ -20,7 +20,7 @@ import { ElasticsearchQueryOptions } from './ElasticsearchQueryOptions';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
-import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery, changeQueryLanguage } from './state';
+import { changeAliasPattern, changeEditorTypeAndResetQuery, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<
   ElasticDatasourceLike,
@@ -120,13 +120,7 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
   const codeEditorFeatureEnabled = rawDSLFeatureEnabled || esqlFeatureEnabled;
   const queryLanguageSelectorEnabled = rawDSLFeatureEnabled && esqlFeatureEnabled;
 
-  const activeQueryLanguage: QueryLanguage = queryLanguageSelectorEnabled
-    ? value.queryLanguage === 'esql'
-      ? 'esql'
-      : 'raw_dsl'
-    : esqlFeatureEnabled
-      ? 'esql'
-      : 'raw_dsl';
+  const queryType: QueryType = value.queryType === 'esql' ? 'esql' : value.queryType === 'dsl' ? 'dsl' : 'lucene';
 
   // Default to 'builder' if editorType is empty
   const currentEditorType: EditorType = value.editorType === 'code' ? 'code' : 'builder';
@@ -147,26 +141,21 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
 
   const confirmEditorTypeChange = useCallback(() => {
     if (pendingEditorType) {
-      dispatch(changeEditorTypeAndResetQuery(pendingEditorType));
+      dispatch(
+        changeEditorTypeAndResetQuery({
+          editorType: pendingEditorType,
+          queryType: pendingEditorType === 'builder' ? 'lucene' : rawDSLFeatureEnabled ? 'dsl' : 'esql',
+        })
+      );
     }
     setSwitchModalOpen(false);
     setPendingEditorType(null);
-  }, [dispatch, pendingEditorType]);
+  }, [dispatch, pendingEditorType, rawDSLFeatureEnabled]);
 
   const cancelEditorTypeChange = useCallback(() => {
     setSwitchModalOpen(false);
     setPendingEditorType(null);
   }, []);
-
-  useEffect(() => {
-    if (!isCodeEditor || queryLanguageSelectorEnabled) {
-      return;
-    }
-
-    if (value.queryLanguage !== activeQueryLanguage) {
-      dispatch(changeQueryLanguage(activeQueryLanguage));
-    }
-  }, [activeQueryLanguage, dispatch, isCodeEditor, queryLanguageSelectorEnabled, value.queryLanguage]);
 
   return (
     <>
@@ -193,10 +182,10 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
       {isCodeEditor && codeEditorFeatureEnabled && (
         <CodeEditorSection
           value={value}
-          queryLanguage={activeQueryLanguage}
+          queryType={queryType}
           showQueryLanguageSelector={queryLanguageSelectorEnabled}
           onRunQuery={onRunQuery}
-          // onFormatReady={onFormatReady}
+          onFormatReady={onFormatReady}
         />
       )}
 

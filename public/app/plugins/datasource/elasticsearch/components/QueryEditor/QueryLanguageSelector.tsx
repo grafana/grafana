@@ -1,20 +1,20 @@
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
-import { QueryLanguage } from '../../types';
+import { QueryType } from '../../dataquery.gen';
 
-const OPTIONS: Array<ComboboxOption<QueryLanguage>> = [
-  { value: 'raw_dsl', label: 'DSL' },
+const OPTIONS: Array<ComboboxOption<QueryType>> = [
+  { value: 'dsl', label: 'DSL' },
   { value: 'esql', label: 'ES|QL' },
 ];
 
 interface Props {
-  value: QueryLanguage;
-  onChange: (queryLanguage: QueryLanguage) => void;
+  value: QueryType;
+  onChange: (queryType: QueryType) => void;
 }
 
 export const QueryLanguageSelector = ({ value, onChange }: Props) => {
   return (
-    <Combobox<QueryLanguage>
+    <Combobox<QueryType>
       data-testid="elasticsearch-query-language-toggle"
       options={OPTIONS}
       value={value}

@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export type QueryType = ('lucene' | 'dsl');
+export type QueryType = ('lucene' | 'dsl' | 'esql');
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
@@ -394,10 +394,6 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   editorType?: string;
   /**
-   * Query language (when editor is code): raw_dsl or esql
-   */
-  queryLanguage?: string;
-  /**
    * Metadata for variable queries
    */
   meta?: {
@@ -424,10 +420,6 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    * Name of time field
    */
   timeField?: string;
-  /**
-   * ESQL query
-   */
-  esqlQuery?: string;
 }
 
 export const defaultElasticsearchDataQuery: Partial<ElasticsearchDataQuery> = {

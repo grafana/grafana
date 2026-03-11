@@ -24,8 +24,8 @@ func TestProcessEsqlMetricsResponse_ReturnsTimeSeriesForCountMetric(t *testing.T
 	}
 
 	target := &Query{
-		RefID:     "A",
-		EsqlQuery: "FROM logs* | STATS count(*) by BUCKET(@timestamp, 10, \"2026-02-02T18:00:46.258Z\", \"2026-02-09T18:00:46.258Z\")",
+		RefID:    "A",
+		RawQuery: "FROM logs* | STATS count(*) by BUCKET(@timestamp, 10, \"2026-02-02T18:00:46.258Z\", \"2026-02-09T18:00:46.258Z\")",
 		Metrics: []*MetricAgg{
 			{Type: countType},
 		},
@@ -67,8 +67,8 @@ func TestProcessEsqlMetricsResponse_FallsBackToTableWhenNoTimeColumn(t *testing.
 	}
 
 	target := &Query{
-		RefID:     "A",
-		EsqlQuery: "FROM logs* | STATS count(*)",
+		RefID:    "A",
+		RawQuery: "FROM logs* | STATS count(*)",
 		Metrics: []*MetricAgg{
 			{Type: countType},
 		},
@@ -95,8 +95,8 @@ func TestProcessEsqlMetricsResponse_ReturnsEmptySuccessWhenNoStatsCommand(t *tes
 	}
 
 	target := &Query{
-		RefID:     "A",
-		EsqlQuery: "FROM logs* | LIMIT 10",
+		RefID:    "A",
+		RawQuery: "FROM logs* | LIMIT 10",
 		Metrics: []*MetricAgg{
 			{Type: countType},
 		},

@@ -104,11 +104,11 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 }
 
 func (e *elasticsearchDataQuery) executeEsqlQuery(q *Query) (*backend.DataResponse, error) {
-	if q.EsqlQuery == "" {
+	if q.RawQuery == "" {
 		return nil, backend.DownstreamError(fmt.Errorf("ES|QL query is empty"))
 	}
 
-	query := e.resolveEsqlIndexPlaceholder(q.EsqlQuery)
+	query := e.resolveEsqlIndexPlaceholder(q.RawQuery)
 	e.logger.Debug("Executing ES|QL query", "query", query, "refID", q.RefID)
 
 	esqlRes, err := e.client.ExecuteEsql(query)
