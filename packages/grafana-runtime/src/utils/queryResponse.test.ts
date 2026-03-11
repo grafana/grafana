@@ -1,6 +1,6 @@
 import { FetchError, FetchResponse } from 'src/services';
 
-import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
+import { DataQuery, LoadingState, toDataFrameDTO, DataFrame } from '@grafana/data';
 
 import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
@@ -471,6 +471,70 @@ describe('Query Response parser', () => {
         },
       ]
     `);
+  });
+
+  describe('partial error handling', () => {
+    test('should set state to Done when some queries succeed and some fail', () => {
+      const input = {
+        data: {
+          results: {
+            A: {
+              error: 'query A failed',
+              status: 400,
+            },
+            B: {
+              frames: [
+                {
+                  schema: {
+                    refId: 'B',
+                    fields: [
+                      { name: 'time', type: 'time' },
+                      { name: 'value', type: 'number' },
+                    ],
+                  },
+                  data: { values: [[1000], [42]] },
+                },
+              ],
+            },
+          },
+        },
+      } as unknown as FetchResponse<BackendDataSourceResponse>;
+
+      const res = toDataQueryResponse(input);
+
+      expect(res.state).toBe(LoadingState.Done);
+      expect(res.errors).toHaveLength(1);
+      expect(res.errors?.[0].refId).toBe('A');
+      expect(res.error?.refId).toBe('A');
+      expect(res.data).toHaveLength(1);
+      expect(res.data[0].refId).toBe('B');
+    });
+
+    test('should set state to Error when all queries fail with no data', () => {
+      const input = {
+        data: {
+          results: {
+            A: { error: 'query A failed', status: 400 },
+            B: { error: 'query B failed', status: 500 },
+          },
+        },
+      } as unknown as FetchResponse<BackendDataSourceResponse>;
+
+      const res = toDataQueryResponse(input);
+
+      expect(res.state).toBe(LoadingState.Error);
+      expect(res.errors).toHaveLength(2);
+      expect(res.data).toHaveLength(0);
+    });
+
+    test('should set state to Done when a single query has both error and frames', () => {
+      const res = toDataQueryResponse(resWithError);
+
+      // A query returning both error and frames has usable data — state should be Done
+      expect(res.state).toBe(LoadingState.Done);
+      expect(res.errors).toHaveLength(1);
+      expect(res.data).toHaveLength(1);
+    });
   });
 
   describe('should convert to TestingStatus', () => {

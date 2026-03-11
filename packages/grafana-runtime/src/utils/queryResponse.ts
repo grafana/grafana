@@ -107,7 +107,6 @@ export function toDataQueryResponse(
         } else {
           rsp.errors = [{ ...errorObj }];
         }
-        rsp.state = LoadingState.Error;
       }
 
       if (dr.frames?.length) {
@@ -141,6 +140,12 @@ export function toDataQueryResponse(
           rsp.data.push(toDataFrame(s));
         }
       }
+    }
+
+    // Only set Error state when all queries failed and there's no usable data.
+    // When some queries succeed, use `Done` + errors so panels can render the successful data.
+    if ((rsp.errors?.length ?? 0) > 0 && rsp.data.length === 0) {
+      rsp.state = LoadingState.Error;
     }
   }
 
