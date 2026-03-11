@@ -38,11 +38,10 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        cache: false
-        go-version-file: go.mod
+        cache: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -75,11 +74,10 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        cache: false
-        go-version-file: go.mod
+        cache: 'false'
 
     - name: Setup Enterprise
       if: github.event.pull_request.head.repo.fork == false
