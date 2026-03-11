@@ -118,6 +118,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		kv := resource.NewBadgerKV(db)
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore: kv,
+			WatchOptions: resource.WatchOptions{
+				SettleDelay: 1 * time.Millisecond,
+			},
 		})
 		require.NoError(t, err)
 

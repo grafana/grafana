@@ -740,6 +740,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Kesalahan saat memuat aturan untuk kejadian ini.",
         "header": {
@@ -777,6 +781,10 @@
         }
       },
       "filterBy": "Filter menurut:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Terlalu banyak kejadian untuk ditampilkan dalam periode waktu yang dipilih. Menampilkan 5000 kejadian terbaru. Coba gunakan periode waktu yang lebih singkat.",
         "title": "Tidak dapat menampilkan semua kejadian"
@@ -5360,6 +5368,7 @@
         "annotation-set": "",
         "dashboard": "Dasbor",
         "element": "Elemen",
+        "link-set": "",
         "local-variable": "Variabel lokal",
         "multiple-elements": "Beberapa elemen",
         "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
@@ -5374,6 +5383,12 @@
         "tabs": "Tab",
         "variable": "variabel {{type}}",
         "variable-set": "Variabel"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6418,6 +6433,11 @@
       "label-use-static-key-dimensions": "Gunakan dimensi kunci statis",
       "name-allow-custom-values": "Izinkan nilai kustom"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Tidak dapat menavigasi ke dasbor yang dipilih. Silakan coba lagi.",
@@ -6836,6 +6856,34 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} oleh<person />",
       "usage-count_other": "Digunakan pada {{count}} dasbor"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Dikelola oleh: Kubectl",
@@ -10639,9 +10687,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
-    "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log",
-    "description-show-controls": "Tampilkan kontrol untuk melompat ke baris log terakhir atau pertama, dan filter berdasarkan level log",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Eksperimental. Saat log OTel ditampilkan, tambahkan bidang tambahan yang ditampilkan dengan pasangan nilai kunci yang relevan dari label dan metadata.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ikon tarik dan lepas",
       "clear-button": "Hapus",
@@ -12082,10 +12134,12 @@
     "start-modal": {
       "button-start": "Mulai {{title}}",
       "description-customize-dashboard-elements-visibility": "Sesuaikan visibilitas elemen dasbor",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Tinggi panel akan disesuaikan agar pas dengan ukuran layar",
       "label-autofit": "Paskan otomatis",
       "label-dashboard-links": "Tautan dasbor",
       "label-display-dashboard-controls": "Tampilkan kontrol dasbor",
+      "label-hide-logo": "",
       "label-mode": "Mode",
       "label-time-and-refresh": "Waktu dan muat ulang",
       "label-variables": "Variabel",

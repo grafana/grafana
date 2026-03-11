@@ -47,3 +47,7 @@ By default these scripts will write the following files to the `/codeowners-mani
 - `teams-by-filename.json` - Files mapped to their respective codeowners
 - `filenames-by-team.json` - Codeowners mapped to their respective files
 - `metadata.json` - Hashes for cache validation
+
+## Excluded paths
+
+For a list of excluded paths and filenames, see `jest.config.codeowner.js`.
