@@ -146,7 +146,8 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates:read"
@@ -224,13 +225,23 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:delete",
+        "scope": "routes:*"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:write",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -296,7 +307,8 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates:read"
@@ -409,13 +421,23 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:delete",
+        "scope": "routes:*"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:write",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -584,13 +606,23 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:delete",
+        "scope": "routes:*"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:write",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -671,6 +703,14 @@
       {
         "action": "receivers.permissions:write",
         "scope": "receivers:*"
+      },
+      {
+        "action": "routes.permissions:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "routes.permissions:write",
+        "scope": "routes:*"
       }
     ],
     "grants": [
@@ -790,6 +830,9 @@
     "hidden": true,
     "permissions": [
       {
+        "action": "alert.notifications.routes:read"
+      },
+      {
         "action": "alert.notifications:read"
       }
     ],
@@ -804,6 +847,12 @@
     "group": "Alerting",
     "hidden": true,
     "permissions": [
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
       {
         "action": "alert.notifications:read"
       },
@@ -990,34 +1039,58 @@
     ]
   },
   {
+    "name": "fixed:alerting.managed-routes:creator",
+    "displayName": "Notification Policies Creator",
+    "description": "Create notification policies in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.notifications.routes.managed:create"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
     "name": "fixed:alerting.routes:reader",
     "displayName": "Notification Policies Reader",
     "description": "Read all notification policies in Grafana alerting",
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
       }
     ],
     "grants": [
-      "Viewer"
+      "Admin"
     ]
   },
   {
     "name": "fixed:alerting.routes:writer",
     "displayName": "Notification Policies Writer",
-    "description": "Update and reset notification policies in Grafana alerting",
+    "description": "Create, update and delete notification policies in Grafana alerting",
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.routes.managed:delete",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:write",
+        "scope": "routes:*"
       }
     ],
     "grants": [
-      "Editor"
+      "Admin"
     ]
   },
   {

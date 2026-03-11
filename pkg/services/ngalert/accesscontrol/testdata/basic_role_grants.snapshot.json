@@ -7,6 +7,8 @@
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
+      "fixed:alerting.routes:reader",
+      "fixed:alerting.routes:writer",
       "fixed:alerting:admin"
     ],
     "permissions": [
@@ -97,10 +99,19 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
+        "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "alert.notifications.routes.managed:delete",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:write",
+        "scope": "routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -194,6 +205,14 @@
       {
         "action": "receivers.permissions:write",
         "scope": "receivers:*"
+      },
+      {
+        "action": "routes.permissions:read",
+        "scope": "routes:*"
+      },
+      {
+        "action": "routes.permissions:write",
+        "scope": "routes:*"
       }
     ]
   },
@@ -203,10 +222,10 @@
       "fixed:alerting.inhibition-rules:writer",
       "fixed:alerting.instances:writer",
       "fixed:alerting.legacy:writer",
+      "fixed:alerting.managed-routes:creator",
       "fixed:alerting.notifications.external:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.receivers:writer",
-      "fixed:alerting.routes:writer",
       "fixed:alerting.rules:writer",
       "fixed:alerting.templates:writer",
       "fixed:alerting.time-intervals:writer"
@@ -277,6 +296,9 @@
       {
         "action": "alert.notifications.receivers:write",
         "scope": "receivers:*"
+      },
+      {
+        "action": "alert.notifications.routes.managed:create"
       },
       {
         "action": "alert.notifications.routes:read"
@@ -360,7 +382,6 @@
       "fixed:alerting.legacy:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
-      "fixed:alerting.routes:reader",
       "fixed:alerting.rules:reader",
       "fixed:alerting.templates:reader",
       "fixed:alerting.time-intervals:reader"

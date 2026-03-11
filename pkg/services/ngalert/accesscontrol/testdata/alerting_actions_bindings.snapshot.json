@@ -190,7 +190,26 @@
     ]
   },
   {
-    "action": "alert.notifications.routes:read",
+    "action": "alert.notifications.routes.managed:create",
+    "roles": [
+      "fixed:alerting.managed-routes:creator",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes.managed:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes.managed:read",
     "roles": [
       "fixed:alerting.notifications:reader",
       "fixed:alerting.notifications:writer",
@@ -202,12 +221,25 @@
     ]
   },
   {
-    "action": "alert.notifications.routes:write",
+    "action": "alert.notifications.routes.managed:write",
     "roles": [
       "fixed:alerting.notifications:writer",
       "fixed:alerting.routes:writer",
       "fixed:alerting:admin",
       "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes:read",
+    "roles": [
+      "fixed:alerting.legacy:reader",
+      "fixed:alerting.legacy:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes:write",
+    "roles": [
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
@@ -426,6 +458,18 @@
   },
   {
     "action": "receivers.permissions:write",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "routes.permissions:read",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "routes.permissions:write",
     "roles": [
       "fixed:alerting:admin"
     ]
