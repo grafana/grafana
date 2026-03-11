@@ -18,4 +18,10 @@ runs:
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' }}
+        # We intentionally use **/*.sum rather than **/*.mod here.
+        # go.sum is append-only so it changes often, causing frequent cache misses.
+        # This is desirable: actions/cache only saves on miss, so frequent misses
+        # keep the cache complete across all shards and dependencies (~2.5 GB).
+        # Using go.mod (which changes rarely) leads to a single shard seeding a
+        # small cache that never gets updated.
         cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.sum' || '' }}
