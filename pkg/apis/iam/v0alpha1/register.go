@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
@@ -58,7 +59,6 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		schema.GroupVersion{Group: GROUP, Version: version},
 		&UserTeamList{},
 		&ServiceAccountTokenList{},
-		&DisplayList{},
 		&SSOSetting{},
 		&SSOSettingList{},
 		&TeamMemberList{},
