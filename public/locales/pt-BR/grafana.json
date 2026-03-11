@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Erro ao carregar a regra para este evento.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtrar por:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "O período selecionado tem eventos demais para exibir. Os últimos 5.000 eventos são exibidos. Tente usar um período menor.",
         "title": "Não é possível exibir todos os eventos"
@@ -5388,6 +5396,7 @@
         "annotation-set": "",
         "dashboard": "Painel de controle",
         "element": "Elemento",
+        "link-set": "",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
         "multiple-elements-delete-text": "Tem certeza de que deseja excluir estes elementos?",
@@ -5402,6 +5411,12 @@
         "tabs": "Abas",
         "variable": "Variável {{type}}",
         "variable-set": "Variáveis"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6463,11 @@
       "label-use-static-key-dimensions": "Usar dimensões de chave estática",
       "name-allow-custom-values": "Permitir valores personalizados"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Não foi possível navegar para o painel selecionado. Tente novamente.",
@@ -6867,6 +6887,34 @@
       "last-edited": "{{timeAgo}} por<person />",
       "usage-count_one": "Usado em {{count}} painéis",
       "usage-count_other": "Usado em {{count}} painéis"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Gerenciado por: Kubectl",
@@ -9530,6 +9578,7 @@
       "log-base": "Base de log"
     },
     "builder": {
+      "annotations": "",
       "axis": {
         "category-axis": "Eixo",
         "color-label": "Cor",
@@ -9819,6 +9868,7 @@
     },
     "field-value-matcher": {
       "operator-label": "Operador de comparação",
+      "reducer-value-label": "",
       "select-field-placeholder": "Selecionar redutor de campo"
     },
     "file-dropzone": {
@@ -10690,9 +10740,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Experimental. Solicite mais resultados ao descer até a parte inferior da lista de logs.",
-    "description-enable-logs-highlighting": "Use um sistema de cores predefinido para destacar partes relevantes das linhas de log",
-    "description-show-controls": "Exibir controles para pular para a última ou primeira linha do log e filtros por nível de log",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Em teste. Quando os logs do OTel forem exibidos, adicione um campo extra exibido com pares de valores-chave relevantes de rótulos e metadados.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ícone de arrastar e soltar",
       "clear-button": "Limpar",
@@ -11744,7 +11798,7 @@
       "dialog-label": "",
       "dock": "Menu da dock",
       "list-label": "Navegação",
-      "open": "Abrir menu",
+      "open": "",
       "undock": "Desacoplar menu"
     },
     "megamenu-item": {
@@ -12139,10 +12193,12 @@
     "start-modal": {
       "button-start": "Iniciar {{title}}",
       "description-customize-dashboard-elements-visibility": "Personalizar a visibilidade dos elementos do painel",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "As alturas do painel serão ajustadas para caber no tamanho da tela",
       "label-autofit": "Ajuste automático",
       "label-dashboard-links": "Links do painel",
       "label-display-dashboard-controls": "Exibir controles do painel",
+      "label-hide-logo": "",
       "label-mode": "Modo",
       "label-time-and-refresh": "Tempo e atualização",
       "label-variables": "Variáveis",
@@ -12632,6 +12688,7 @@
       "error-connection-required": "Requer conexão",
       "error-fetch-branches": "Falha ao buscar branches",
       "error-required": "Este campo é obrigatório.",
+      "error-save-failed": "",
       "error-save-repository": "Falha ao salvar as configurações do repositório",
       "label-automatic-pulling": "Extração automática",
       "label-connection": "Conexão do aplicativo do GitHub",
@@ -12646,9 +12703,11 @@
       "placeholder-my-config": "Minha configuração"
     },
     "config-form-github-collapse": {
-      "description-realtime-feedback": "<0>Configure webhooks</0> para receber atualizações instantâneas na Grafana assim que as alterações forem confirmadas. Revise e aprove as alterações por meio de solicitações de extração antes que elas sejam implementadas.",
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
       "label-git-hub-features": "Recursos do GitHub",
-      "label-realtime-feedback": "Feedback em tempo real"
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "connect-page": {
       "subTitle": {
@@ -12797,11 +12856,14 @@
       "description-preview-requirements": "(requer <2>renderização de imagem</2> e acesso público ativado)",
       "description-read-only": "Os recursos não podem ser modificados por meio da Grafana.",
       "description-sync-interval": "Com que frequência sincronizar as alterações do repositório",
+      "description-webhook-url": "",
       "error-sync-interval-required": "O intervalo de sincronização é obrigatório",
       "label-enable-previews": "Ativar pré-visualizações do painel em solicitações de extração",
       "label-generate-dashboard-previews": "Gerar prévias do painel de controle",
       "label-read-only": "Apenas leitura",
-      "label-sync-interval": "Intervalo (segundos)"
+      "label-sync-interval": "Intervalo (segundos)",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "fix-folder-metadata": {
       "button": ""
@@ -13194,6 +13256,10 @@
       "make-sure": ""
     },
     "warning-title-default": "Aviso",
+    "watch-stream": {
+      "error-description": "",
+      "error-title": ""
+    },
     "wizard": {
       "alert-intro": "Esteja ciente das seguintes limitações. Para obter mais informações, consulte a <2>documentação do Git Sync</2>.",
       "alert-point-1": "Os recursos ainda podem ser criados, editados ou excluídos durante este processo, mas as alterações não podem ser exportadas.",

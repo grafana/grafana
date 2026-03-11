@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -588,18 +580,18 @@ var (
 		{
 			Name:         "alertingUIUseBackendFilters",
 			Description:  "Enables the UI to use certain backend-side filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingUIUseFullyCompatBackendFilters",
 			Description:  "Enables the UI to use rules backend-side filters 100% compatible with the frontend filters",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
@@ -712,6 +704,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "reportRenderBinding",
+			Description: "Enables render binding support for report rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1794,6 +1793,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthZRoleBindingsRedirect",
+			Description:  "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzResourcePermissionApis",
 			Description:  "Registers AuthZ resource permission /apis endpoints",
 			Stage:        FeatureStageExperimental,
@@ -2198,6 +2205,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "nestedFramesFieldOverrides",
+			Description:  "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
@@ -2420,6 +2435,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesTeamsApi",
+			Description:  "Enables team APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesTeamsHandlerRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
@@ -2430,6 +2453,22 @@ var (
 		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesServiceAccountsApi",
+			Description:  "Enables service account APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesServiceAccountTokensApi",
+			Description:  "Enables service account token APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2556,11 +2595,27 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpoint",
+			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:         "analyticsFramework",
 			Description:  "Enables new analytics framework",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 			Expression:   "false",
 		},
 	}

@@ -62,10 +62,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Run tests
         if: matrix.shard != 'profiled'
         env:
@@ -79,7 +76,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -105,7 +102,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=sqlite -timeout=8m -run '^TestIntegration' \
+            go test -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -174,10 +171,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -186,7 +180,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -219,10 +216,7 @@ jobs:
         run: |
           make devenv sources=postgres_tests
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -231,7 +225,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -244,9 +241,11 @@ jobs:
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
     strategy:
       matrix:
-        # We don't need more than this since it has to wait for the other tests.
         shard: [
-          1/4, 2/4, 3/4, 4/4,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
           profiled,
         ]
       fail-fast: false
@@ -262,10 +261,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -283,7 +279,7 @@ jobs:
           # Build regex pattern like: pkg1$|pkg2$|pkg3$
           SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
-          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Run profiled tests
         id: run-profiled-tests
         if: matrix.shard == 'profiled'
@@ -309,7 +305,7 @@ jobs:
             pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
             echo "📦 Running $full_pkg"
             set +e
-            go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' \
+            go test -tags=enterprise -timeout=8m -run '^TestIntegration' \
               -outputdir=profiles \
               -cpuprofile="cpu_${pkg_name}.prof" \
               -memprofile="mem_${pkg_name}.prof" \
@@ -379,10 +375,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -395,7 +388,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -429,10 +425,7 @@ jobs:
         run: |
           make devenv sources=postgres_tests
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
+        uses: ./.github/actions/setup-go
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -445,7 +438,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |

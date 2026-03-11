@@ -134,7 +134,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -150,7 +150,7 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -166,7 +166,7 @@ func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -227,23 +227,32 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			expect string
 			inK8s  bool
 		}{{
-			name: "with apiVersion",
+			name: "with apiVersion (missing spec)",
 			input: map[string]any{
-				"apiVersion": "v2",
+				"apiVersion": "dashboard.grafana.app/v2",
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "must include the dashboard contents in the spec property",
 		}, {
-			name: "with metadata",
+			name: "id at root",
+			input: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v2",
+				"id":         123,
+			},
+			expect: "must not include an id on the root element",
+		}, {
+			name: "with metadata (missing apiVersion)",
 			input: map[string]any{
 				"metadata": map[string]any{},
+				"spec":     map[string]any{},
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "but is missing an explicit apiVersion",
 		}, {
 			name: "with spec",
 			input: map[string]any{
-				"spec": map[string]any{},
+				"apiVersion": "dashboard.grafana.app/v2",
+				"spec":       map[string]any{},
 			},
-			expect: "Dashboard appears to be a full k8s style resource",
+			expect: "spec is missing required title property",
 		}, {
 			name: "with elements",
 			input: map[string]any{
@@ -260,6 +269,13 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			},
 			expect: "dashboard appears to be in v2 format",
 			inK8s:  true,
+		}, {
+			name: "non dashboard api",
+			input: map[string]any{
+				"apiVersion": "playlist.grafana.app/v2",
+				"spec":       map[string]any{},
+			},
+			expect: "dashboard payload references a non dashboard apiVersion",
 		}, {
 			name: "missing title",
 			input: map[string]any{
@@ -492,7 +508,7 @@ func TestIntegrationListPagination(t *testing.T) {
 	}
 
 	// Test on modes with legacy
-	modes := []rest.DualWriterMode{rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -678,7 +694,7 @@ func TestIntegrationListPagination(t *testing.T) {
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		runDashboardSearchTest(t, mode)
 	}
@@ -697,7 +713,7 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageDisableSearch: mode < rest.Mode3,
+			UnifiedStorageDisableSearch: mode < rest.Mode4,
 		})
 		defer helper.Shutdown()
 

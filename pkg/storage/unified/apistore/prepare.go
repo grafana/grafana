@@ -21,6 +21,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -135,7 +136,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(info.GetUID())
+	createdBy := info.GetUID()
+	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+		createdBy = metaUID
+	}
+	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
@@ -227,7 +232,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
-		obj.SetUpdatedBy(info.GetUID())
+		updatedBy := info.GetUID()
+		if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+			updatedBy = metaUID
+		}
+		obj.SetUpdatedBy(updatedBy)
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 		// Only validate when the generation has changed
