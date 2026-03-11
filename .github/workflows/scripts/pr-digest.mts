@@ -1,7 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { writeFileSync, readFileSync, mkdtempSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import {
-  loadConfig, requireEnv, log, setOutput, setOutputMultiline,
+  loadConfig, requireEnv, log, setOutput,
   sanitizeInput, sanitizeForSlack, isValidIssueNumber,
   parseCodeowners, matchFilesToCodeownersTeams,
   validatePRClusterResponse, callOpenAI, sendSlackMessage, teamChannelEnv,
@@ -58,10 +61,14 @@ function fetchPrs(): void {
     (pr) => pr.labels.some((l) => l.name === 'pr/external'),
   );
 
-  setOutputMultiline('all_prs', JSON.stringify(allPrs));
-  setOutputMultiline('external_prs', JSON.stringify(externalPrs));
+  const dataDir = mkdtempSync(join(tmpdir(), 'pr-digest-'));
+  const dataFile = join(dataDir, 'prs.json');
+  writeFileSync(dataFile, JSON.stringify(allPrs));
+  setOutput('data_file', dataFile);
+  setOutput('external_prs', JSON.stringify(externalPrs.length > 0 ? true : false));
 
   console.log(`Total open PRs: ${allPrs.length} (External: ${externalPrs.length})`);
+  console.log(`Data written to: ${dataFile}`);
 }
 
 // =============================================================================
@@ -132,9 +139,9 @@ async function processTeams(): Promise<void> {
   const slackBotToken = process.env.SLACK_BOT_TOKEN ?? '';
   const dryRun = process.env.DRY_RUN === 'true';
   const teamFilter = process.env.TEAM_FILTER ?? '';
-  const allPrsRaw = process.env.ALL_PRS ?? '[]';
+  const dataFile = requireEnv('DATA_FILE');
 
-  const allPrs: PRData[] = JSON.parse(allPrsRaw);
+  const allPrs: PRData[] = JSON.parse(readFileSync(dataFile, 'utf-8'));
   const config = loadConfig();
   const codeownersEntries = parseCodeowners();
   const link = (n: number) => prLink(repo, n);

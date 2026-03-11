@@ -11,7 +11,7 @@ FROM
 {{ if .HasUntilTime }}
 WHERE {{ .Ident "created" }} <= {{ .Arg .UntilTime }}
 {{ end }}
-ORDER BY {{ .Ident "created" }} ASC
+ORDER BY {{ .Ident .OrderBy }} {{ .OrderDirection }}
 {{ if (gt .Limit 0) }}
 LIMIT {{ .Arg .Limit }} OFFSET {{ .Arg .Offset }}
 {{ end }}
