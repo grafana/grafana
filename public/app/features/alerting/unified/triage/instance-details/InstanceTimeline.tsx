@@ -303,7 +303,7 @@ function NotificationStatusGroup({
         aria-expanded={expanded}
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
       >
-        <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
           <Text variant="bodySmall" weight="medium">
             {statusLabel}
@@ -318,15 +318,15 @@ function NotificationStatusGroup({
                   count: notifications.length,
                 })}
           </Text>
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Text variant="bodySmall" color="secondary">
-              →
-            </Text>
-            {integrations.map((integration) => (
-              <IntegrationIcon key={integration} integration={integration} />
-            ))}
-            <Text variant="bodySmall">{receiverLabel}</Text>
-          </Stack>
+          <Text variant="bodySmall" color="secondary">
+            →
+          </Text>
+          {integrations.map((integration) => (
+            <IntegrationIcon key={integration} integration={integration} />
+          ))}
+          <Text variant="bodySmall" truncate>
+            {receiverLabel}
+          </Text>
           <Text variant="bodySmall" color={hasFailures ? 'error' : 'success'}>
             ({outcomeLabel})
           </Text>
@@ -413,11 +413,12 @@ function IntegrationIcon({ integration }: { integration: string }) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   timestampCol: css({
-    width: '140px',
+    width: 'auto',
     flexShrink: 0,
     paddingTop: theme.spacing(0.5),
     textAlign: 'right',
     paddingRight: theme.spacing(1.5),
+    whiteSpace: 'nowrap',
   }),
 
   connectorCol: css({
@@ -528,7 +529,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.5, 1.5),
   }),
 
   notificationRowError: css({
