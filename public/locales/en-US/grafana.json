@@ -14972,17 +14972,7 @@
       "single-many-points-scheme": "Line scheme",
       "single-many-points-threshold-scheme": "Threshold scheme",
       "single-smooth-scheme": "Smooth scheme",
-      "single-step-fill": "Step fill",
-      "area": "Area",
-      "default": "Default",
-      "smooth": "Smooth",
-      "stacked-area": "Stacked area",
-      "stacked-area-gradient": "Stacked area gradient",
-      "stacked-smooth": "Stacked smooth",
-      "stacked-step": "Stacked step",
-      "step": "Step",
-      "step-filled": "Step filled",
-      "step-hue": "Step hue"
+      "single-step-fill": "Step fill"
     },
     "span-nulls-editor": {
       "gaps-options": {
