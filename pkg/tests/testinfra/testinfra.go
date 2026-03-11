@@ -198,7 +198,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	for {
 		resp, err := healthClient.Get(healthURL)
 		if resp != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 		if err == nil && resp != nil && resp.StatusCode == 200 {
 			break
