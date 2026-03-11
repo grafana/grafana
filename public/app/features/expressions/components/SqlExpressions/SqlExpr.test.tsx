@@ -9,8 +9,10 @@ jest.mock('@grafana/ui', () => ({
   useStyles2: jest.fn().mockImplementation(() => ({})),
 }));
 
-jest.mock('@grafana/plugin-ui', () => ({
-  SQLEditor: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
+jest.mock('@grafana/plugin-ui', () => ({}));
+
+jest.mock('./SQLEditorV2', () => ({
+  SQLEditorV2: () => <div data-testid="sql-editor">SQL Editor Mock</div>,
 }));
 
 // Mock lazy loaded GenAI components

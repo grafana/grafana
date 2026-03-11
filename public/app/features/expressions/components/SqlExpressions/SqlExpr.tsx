@@ -5,7 +5,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
+import { CompletionItemKind, TableIdentifier } from '@grafana/plugin-ui';
+
+import { SQLEditorV2 as SQLEditor, SQLEditorV2LanguageDefinition as LanguageDefinition } from './SQLEditorV2';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
