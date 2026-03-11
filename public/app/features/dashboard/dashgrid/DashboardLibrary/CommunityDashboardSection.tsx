@@ -45,7 +45,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
-  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', false);
+  const analyticsEnabledRef = useRef<boolean>(isAnalyticsFrameworkEnabled);
 
   // New state for compatibility badge feature
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
@@ -67,6 +68,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       setIsInitialLoad(false);
     }
   }, [debouncedSearchQuery]);
+
+  // Keep ref up-to-date
+  useEffect(() => {
+    analyticsEnabledRef.current = isAnalyticsFrameworkEnabled;
+  }, [isAnalyticsFrameworkEnabled]);
 
   const {
     value: response,
@@ -97,7 +103,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
       // Track search if query is present
       if (debouncedSearchQuery.trim()) {
-        isAnalyticsFrameworkEnabled
+        analyticsEnabledRef.current
           ? NewDashboardLibraryInteractions.searchPerformed({
               datasourceTypes: [ds.type],
               sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
@@ -127,7 +133,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   // Track analytics only once on first successful load
   useEffect(() => {
     if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
-      isAnalyticsFrameworkEnabled
+      analyticsEnabledRef.current
         ? NewDashboardLibraryInteractions.loaded({
             numberOfItems: response.dashboards.length,
             contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
@@ -144,7 +150,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           });
       hasTrackedLoaded.current = true;
     }
-  }, [isAnalyticsFrameworkEnabled, loading, response]);
+  }, [loading, response]);
 
   const styles = useStyles2(getStyles);
 
@@ -160,7 +166,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       // Track item click
-      isAnalyticsFrameworkEnabled
+      analyticsEnabledRef.current
         ? NewDashboardLibraryInteractions.itemClicked({
             contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
             datasourceTypes: [response.datasourceType],
@@ -202,7 +208,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       setCompatibilityMap((prev) => new Map(prev).set(dashboard.id, { status: 'loading' }));
 
       // Track analytics: check triggered
-      isAnalyticsFrameworkEnabled
+      analyticsEnabledRef.current
         ? NewDashboardLibraryInteractions.compatibilityCheckTriggered({
             dashboardId: String(dashboard.id),
             dashboardTitle: dashboard.name,
@@ -247,7 +253,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         );
 
         // Track analytics: check completed
-        isAnalyticsFrameworkEnabled
+        analyticsEnabledRef.current
           ? NewDashboardLibraryInteractions.compatibilityCheckCompleted({
               dashboardId: String(dashboard.id),
               dashboardTitle: dashboard.name,
@@ -283,7 +289,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         );
       }
     },
-    [datasourceUid, isAnalyticsFrameworkEnabled, response]
+    [datasourceUid, response]
   );
 
   // Auto-trigger compatibility checks on initial load for Prometheus datasources
