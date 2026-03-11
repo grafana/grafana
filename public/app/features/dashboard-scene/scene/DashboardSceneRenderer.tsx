@@ -1,11 +1,11 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { ScopesContext } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
@@ -27,9 +27,16 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
   } = model.useState();
+
+  const scopesServices = useScopesServices();
+
+  // Disable scope redirects while in edit mode so users aren't navigated away mid-edit.
+  useEffect(() => {
+    scopesServices?.scopesSelectorService.setRedirectEnabled(!isEditing);
+  }, [scopesServices, isEditing]);
+
   const { type } = useParams();
   const location = useLocation();
-  const scopesContext = useContext(ScopesContext);
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const navModel =
@@ -57,18 +64,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       model.restoreScrollPos();
     }
   }, [isSettingsOpen, editPanel, viewPanel, model]);
-
-  useEffect(() => {
-    if (scopesContext && isEditing) {
-      scopesContext.setReadOnly(true);
-
-      return () => {
-        scopesContext.setReadOnly(false);
-      };
-    }
-
-    return;
-  }, [scopesContext, isEditing]);
 
   if (editview) {
     return (
