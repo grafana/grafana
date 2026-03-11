@@ -19,9 +19,13 @@ import (
 )
 
 // Convert git changes into resource file changes
-func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
+func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
+		// We still need to detect missing folder metadata if the flag is enabled
+		if folderMetadataEnabled {
+			detectMissingFolderMetadata(ctx, repo, currentRef, []repository.VersionedFileChange{}, progress, tracer)
+		}
 		progress.SetFinalMessage(ctx, "same commit as last time")
 		return nil
 	}
@@ -58,6 +62,10 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	progress.SetMessage(ctx, "versioned changes replicated")
+
+	if folderMetadataEnabled {
+		detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer)
+	}
 
 	if len(affectedFolders) > 0 {
 		cleanupStart := time.Now()
@@ -260,4 +268,39 @@ func cleanupOrphanedFolders(
 	}
 
 	return nil
+}
+
+// detectMissingFolderMetadata reads the full file tree and records warnings for folders
+// that do not have a folder metadata file.
+func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned, currentRef string, diff []repository.VersionedFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.detect_missing_folder_metadata")
+	defer span.End()
+
+	readerRepo, ok := repo.(repository.Reader)
+	if !ok {
+		return
+	}
+
+	tree, err := readerRepo.ReadTree(ctx, currentRef)
+	if err != nil {
+		span.RecordError(err)
+		return
+	}
+
+	changeActions := make(map[string]repository.FileAction, len(diff))
+	for _, c := range diff {
+		changeActions[c.Path] = c.Action
+	}
+
+	missing := resources.FindFoldersMissingMetadata(tree)
+	for _, p := range missing {
+		builder := jobs.NewFolderResult(p).
+			WithWarning(resources.NewMissingFolderMetadata(p))
+		if action, ok := changeActions[p]; ok {
+			builder = builder.WithAction(action)
+		} else {
+			builder = builder.WithAction(repository.FileActionIgnored)
+		}
+		progress.Record(ctx, builder.Build())
+	}
 }
