@@ -812,12 +812,20 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	// This gates the health endpoint on apiserver boot sequence completion,
 	// including remote APIService initialization — preventing Kubernetes from
 	// routing traffic before aggregated services are ready.
+	// Use a short timeout to avoid blocking the health check if the apiserver
+	// hasn't started yet (DirectlyServeHTTP blocks until the apiserver is ready).
 	if hs.clientConfigProvider != nil {
-		readyzReq, err := http.NewRequest(http.MethodGet, "/readyz", nil)
+		readyzCtx, readyzCancel := context.WithTimeout(ctx.Req.Context(), 2*time.Second)
+		defer readyzCancel()
+		readyzReq, err := http.NewRequestWithContext(readyzCtx, http.MethodGet, "/readyz", nil)
 		if err == nil {
 			readyzResp := httptest.NewRecorder()
 			hs.clientConfigProvider.DirectlyServeHTTP(readyzResp, readyzReq)
-			if readyzResp.Code != http.StatusOK {
+			if readyzCtx.Err() != nil {
+				// Timed out waiting for apiserver to start
+				data.APIServer = "not ready"
+				healthy = false
+			} else if readyzResp.Code != http.StatusOK {
 				data.APIServer = "not ready"
 				healthy = false
 			}
