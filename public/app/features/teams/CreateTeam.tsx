@@ -88,10 +88,20 @@ const CreateTeam = (): JSX.Element => {
                   placeholder="email@test.com"
                 />
               </Field>
-              <Field noMargin>
+              <Field
+                noMargin
+                label={t('teams.create-team.label-create-team-folder', 'Team folder')}
+                description={t(
+                  'teams.create-team.description-create-team-folder',
+                  'This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.'
+                )}
+              >
                 <Checkbox
                   value={autocreateTeamFolder}
-                  label={t('teams.create-team.autocreate-team-folder', 'autocreate team folder')}
+                  label={t(
+                    'teams.create-team.checkbox-text-create-team-folder-team-folder',
+                    'Auto-create a team folder'
+                  )}
                   onChange={(event) => setAutocreateTeamFolder(event.currentTarget.checked)}
                   disabled={formDisabled}
                 />

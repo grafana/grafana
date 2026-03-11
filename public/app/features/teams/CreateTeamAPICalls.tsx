@@ -2,7 +2,12 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
-import { CreateTeamApiArg, useCreateTeamMutation, useSetTeamRolesMutation } from '@grafana/api-clients/rtkq/legacy';
+import {
+  CreateTeamApiArg,
+  SetTeamRolesApiArg,
+  useCreateTeamMutation,
+  useSetTeamRolesMutation,
+} from '@grafana/api-clients/rtkq/legacy';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
@@ -19,6 +24,7 @@ import { canUpdateRoles } from './hooks';
 export interface CardProps {
   severity: AlertVariant;
   description: string;
+  help?: string;
   link?: ResultCardLink;
 }
 
@@ -35,7 +41,7 @@ interface ResultCardLink {
  * @param link
  * @constructor
  */
-export function StepResultAlert({ severity, description, link }: CardProps) {
+export function StepResultAlert({ severity, description, link, help }: CardProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -48,6 +54,7 @@ export function StepResultAlert({ severity, description, link }: CardProps) {
             <Icon name="external-link-alt" size="md" aria-hidden={true} className={styles.linkIcon} />
           </Link>
         )}
+        {help && <Text>{help}</Text>}
       </Stack>
     </Alert>
   );
@@ -176,12 +183,16 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
       if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
         reportState({ state: 'loading' }, 'createRoles');
 
-        const { error: roleError } = await setTeamRoles({
+        const mutationArg: SetTeamRolesApiArg & { showSuccessAlert?: boolean } = {
           teamId: teamData.teamId,
           setTeamRolesCommand: {
             roleUids: pendingRoles.map((role) => role.uid),
           },
-        });
+          // We are handling reporting here so don't need this, and createTeam just alerts all the time on success
+          showSuccessAlert: false,
+        };
+        const { error: roleError } = await setTeamRoles(mutationArg);
+
         if (roleError) {
           reportState({ state: 'error', error: roleError }, 'createRoles');
         } else {
@@ -223,6 +234,7 @@ export function getStatusCardProps(status: CallState, type: CallTypes, href?: st
     return {
       severity: 'error',
       description: messages.error + (status.error ? ' ' + extractErrorMessage(status.error) : ''),
+      help: 'help' in messages ? messages.help : undefined,
     };
   }
 
@@ -251,19 +263,23 @@ function getMessages() {
   return {
     createTeam: {
       success: t('teams.create-team.team-creation-success', 'Team created successfully.'),
-      error: t('teams.create-team.failed-to-create', 'Failed to create team:'),
+      error: t('teams.create-team.failed-to-create', 'Failed to create team: '),
       loading: t('teams.create-team.team-creation-loading', 'Creating team...'),
       link: t('teams.create-team.team-creation-link', 'Open team details'),
     },
     createFolder: {
       success: t('teams.create-team.folder-creation-success', 'Folder created successfully.'),
-      error: t('teams.create-team.folder-create-failed', 'Failed to create folder:'),
+      error: t('teams.create-team.folder-create-failed', 'Failed to create folder: '),
+      help: t(
+        'teams.create-team.folder-create-failed-help',
+        'You can create the folder and assign it to a team manually from dashboards browser.'
+      ),
       loading: t('teams.create-team.folder-creation-loading', 'Creating folder...'),
       link: t('teams.create-team.folder-creation-link', 'Open folder'),
     },
     createRoles: {
       success: t('teams.create-team.role-creation-success', 'Roles created successfully.'),
-      error: t('teams.create-team.roles-create-failed', 'Failed to create roles:'),
+      error: t('teams.create-team.roles-create-failed', 'Failed to create roles: '),
       loading: t('teams.create-team.roles-creation-loading', 'Creating roles...'),
     },
   };
