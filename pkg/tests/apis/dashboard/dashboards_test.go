@@ -41,6 +41,9 @@ func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVe
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
 				},
+				"folders.folder.grafana.app": {
+					DualWriterMode: mode,
+				},
 			},
 		})
 		t.Cleanup(helper.Shutdown)

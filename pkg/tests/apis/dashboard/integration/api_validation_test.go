@@ -77,6 +77,9 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
 				},
 			})
 
@@ -111,6 +114,9 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
 				},
