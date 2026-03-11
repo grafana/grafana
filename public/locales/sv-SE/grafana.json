@@ -897,11 +897,13 @@
       "aria-label-more-actions": "Fler åtgärder för kontaktpunkten ”{{contactPointName}}”",
       "ariaLabel-delete": "Radera",
       "button-edit": "Redigera",
+      "button-history": "",
       "button-view": "Visa",
       "export-ariaLabel-export": "Exportera",
       "export-label-export": "Exportera",
       "label-delete": "Ta bort",
       "label-manage-permissions": "Hantera behörigheter",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Provisionerade kontaktpunkter kan inte redigeras i användargränssnittet"
     },
     "contact-point-selector": {
@@ -2090,6 +2092,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Inga datakällor hittades"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Är du säker på att du vill radera ”{{muteTiming}}”?"
     },
@@ -2187,47 +2195,8 @@
       "body-no-alertmanager-found": "Vi kunde inte hitta några externa Alertmanager och du kanske inte har åtkomst till den inbyggda Grafana Alertmanager.",
       "title-no-alertmanager-found": "Ingen Alertmanager hittades"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Sök efter kontaktpunkt",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Välj en kontaktpunkt",
       "search-query-input-placeholder-search": "Sök"
     },
@@ -2392,6 +2361,7 @@
       "tooltip-managed-by-plugin": "Den här regeln hanteras av tillägget {{pluginName}}"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Minimera",
       "aria-label-expand": "Expandera",
       "aria-label-more": "fler åtgärder för policy",
@@ -2402,9 +2372,10 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Alla varningsinstanser kommer att hanteras av standardpolicyn om inga andra matchande policyer hittas.",
         "title": "Standardpolicy",
-        "update": "Uppdatera standardpolicy"
+        "update": "",
+        "route-count_one": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Ja, ta bort policy",
@@ -2419,7 +2390,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtrera aviseringspolicyer med hjälp av en kommaseparerad lista över matchare, till exempel:<1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Automatiskt genererade policyer",
       "matchers": "Matchare",
       "metadata": {
@@ -2450,24 +2421,23 @@
         "n-instances_one": "instans",
         "n-instances_other": "instans"
       },
-      "new-child": "Ny underordnad policy",
-      "new-policy": "Lägg till ny policy",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Inga matchare",
       "reload-policies": "Ladda om policyer",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Spara policy",
       "update": {
         "please-wait": "Vänta medan vi uppdaterar dina aviseringspolicyer.",
-        "update-policy": "Uppdatera policy",
+        "update-route": "",
         "updating": "Uppdatering ..."
       },
       "update-errors": {
@@ -2511,9 +2481,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Ny underordnad policy",
-      "label-new-sibling-above": "Nytt syskon ovanför",
-      "label-new-sibling-below": "Nytt syskon nedanför"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3503,7 +3473,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Lägg till aviseringspolicy"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3544,7 +3514,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Ta bort",
       "label-edit": "Redigera",
-      "label-export": "Exportera"
+      "label-export": "Exportera",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Ja, radera kontaktpunkt",
@@ -3576,7 +3547,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Redigera aviseringspolicy"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5342,6 +5313,7 @@
       "panel-description": "Ändra panelbeskrivning",
       "panel-edit": "Paneländringar",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
+      "panel-preset": "",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
       "panel-title": "Ändra paneltitel",
@@ -6802,6 +6774,7 @@
       "title": {
         "description": "Beskrivning",
         "panel-links": "Panellänkar",
+        "panel-styles": "",
         "title": "Titel",
         "transparent-background": "Genomskinlig bakgrund"
       }
@@ -7014,6 +6987,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Tillbaka"
@@ -7026,6 +7002,11 @@
         }
       },
       "title-close": "Stäng"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Den här instrumentpanelen hanteras av Grafana och kan inte raderas. Ta bort instrumentpanelen från konfigurationsfilen om du vill radera den.",
@@ -9672,6 +9653,9 @@
     },
     "cascader": {
       "clear-button": "Rensa val"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "Färger",
@@ -13535,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13631,7 +13617,6 @@
       "alerts-loading": "",
       "card-click": "Välj kort {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Frågor och uttryck",
       "toggle-size": "Växla sidofältets storlek",
@@ -14861,6 +14846,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data utanför tidsintervall",
       "zoom-to-data": "Zooma till data"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

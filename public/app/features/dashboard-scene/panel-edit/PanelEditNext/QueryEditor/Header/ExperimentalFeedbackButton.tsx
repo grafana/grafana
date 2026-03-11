@@ -14,7 +14,7 @@ export function ExperimentalFeedbackButton() {
   const styles = useStyles2(getStyles);
 
   // Track whether the banner was visible when this component first mounted.
-  // If it was, the user dismissed it in this session — animate the button in.
+  // If it was, the user dismissed it - animate the button in.
   // If it wasn't (already dismissed on load), skip the animation.
   const bannerWasInitiallyVisible = useRef(showVersionBanner);
   const shouldAnimate = bannerWasInitiallyVisible.current && !showVersionBanner;
