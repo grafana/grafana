@@ -2,8 +2,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardLibrarySection } from './DashboardLibrarySection';
+import { NewDashboardLibraryInteractions } from './analytics/main';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { createMockPluginDashboard } from './utils/test-utils';
@@ -42,6 +44,13 @@ jest.mock('./interactions', () => ({
   },
 }));
 
+jest.mock('./analytics/main', () => ({
+  NewDashboardLibraryInteractions: {
+    loaded: jest.fn(),
+    itemClicked: jest.fn(),
+  },
+}));
+
 jest.mock('./DashboardCard', () => {
   const DashboardCardComponent = ({ title, onClick }: { title: string; onClick: () => void }) => (
     <div data-testid={`dashboard-card-${title}`} onClick={onClick}>
@@ -65,9 +74,16 @@ const mockLocationServicePush = locationService.push as jest.MockedFunction<type
 const mockDashboardLibraryInteractionsLoaded = DashboardLibraryInteractions.loaded as jest.MockedFunction<
   typeof DashboardLibraryInteractions.loaded
 >;
+const mockNewDashboardLibraryInteractionsLoaded = NewDashboardLibraryInteractions.loaded as jest.MockedFunction<
+  typeof NewDashboardLibraryInteractions.loaded
+>;
 const mockDashboardLibraryInteractionsItemClicked = DashboardLibraryInteractions.itemClicked as jest.MockedFunction<
   typeof DashboardLibraryInteractions.itemClicked
 >;
+const mockNewDashboardLibraryInteractionsItemClicked =
+  NewDashboardLibraryInteractions.itemClicked as jest.MockedFunction<
+    typeof NewDashboardLibraryInteractions.itemClicked
+  >;
 
 describe('DashboardLibrarySection', () => {
   beforeEach(() => {
@@ -208,6 +224,7 @@ describe('DashboardLibrarySection', () => {
   });
 
   it('should track analytics when dashboards are loaded', async () => {
+    setTestFlags({ analyticsFramework: false });
     const dashboards = [
       createMockPluginDashboard({ title: 'Dashboard 1', uid: 'uid-1' }),
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
@@ -237,6 +254,7 @@ describe('DashboardLibrarySection', () => {
   });
 
   it('should track analytics when a dashboard is clicked', async () => {
+    setTestFlags({ analyticsFramework: false });
     const dashboard = createMockPluginDashboard({
       title: 'Test Dashboard',
       uid: 'test-uid-123',
@@ -260,6 +278,71 @@ describe('DashboardLibrarySection', () => {
 
     await waitFor(() => {
       expect(mockDashboardLibraryInteractionsItemClicked).toHaveBeenCalledWith({
+        contentKind: 'datasource_dashboard',
+        datasourceTypes: ['test-plugin'],
+        libraryItemId: 'test-uid-123',
+        libraryItemTitle: 'Test Dashboard',
+        sourceEntryPoint: 'datasource_page',
+        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+        discoveryMethod: 'browse',
+      });
+    });
+  });
+  it('should track analytics with the new framework when the feature toggle is enabled and a dashboards are loaded', async () => {
+    setTestFlags({ analyticsFramework: true });
+    const dashboards = [
+      createMockPluginDashboard({ title: 'Dashboard 1', uid: 'uid-1' }),
+      createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
+    ];
+
+    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+
+    render(<DashboardLibrarySection />, {
+      historyOptions: {
+        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(mockNewDashboardLibraryInteractionsLoaded).toHaveBeenCalledWith({
+        numberOfItems: 2,
+        contentKinds: ['datasource_dashboard'],
+        datasourceTypes: ['test-datasource'],
+        sourceEntryPoint: 'datasource_page',
+        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
+      });
+    });
+  });
+
+  it('should track analytics with the new framework when the feature toggle is enabled and a dashboard is clicked', async () => {
+    setTestFlags({ analyticsFramework: true });
+    const dashboard = createMockPluginDashboard({
+      title: 'Test Dashboard',
+      uid: 'test-uid-123',
+      pluginId: 'test-plugin',
+    });
+
+    mockFetchProvisionedDashboards.mockResolvedValue([dashboard]);
+
+    render(<DashboardLibrarySection />, {
+      historyOptions: {
+        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
+    });
+
+    const dashboardCard = screen.getByTestId('dashboard-card-Test Dashboard');
+    dashboardCard.click();
+
+    await waitFor(() => {
+      expect(mockNewDashboardLibraryInteractionsItemClicked).toHaveBeenCalledWith({
         contentKind: 'datasource_dashboard',
         datasourceTypes: ['test-plugin'],
         libraryItemId: 'test-uid-123',
