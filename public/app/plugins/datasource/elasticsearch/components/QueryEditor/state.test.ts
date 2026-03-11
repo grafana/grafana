@@ -59,7 +59,7 @@ describe('Query Reducer', () => {
 
       reducerTester<ElasticsearchDataQuery['query']>()
         .givenReducer(queryReducer, initialQuery)
-        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery({ editorType: 'code', queryType: 'dsl' }))
         .thenStateShouldEqual('');
     });
   });
