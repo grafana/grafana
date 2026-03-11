@@ -22,8 +22,12 @@
   "types": "./dist/types/index.d.ts",
   "typesVersions": {
     "*": {
-      "unstable": ["dist/types/unstable.d.ts"],
-      "testing": ["dist/types/testing.d.ts"]
+      "unstable": [
+        "dist/types/unstable.d.ts"
+      ],
+      "testing": [
+        "dist/types/testing.d.ts"
+      ]
     }
   },
   "exports": {
