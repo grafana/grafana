@@ -23,7 +23,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
     if (/^\d+$/.test(this.keyPath)) {
       if (`panel-${this.keyPath}` === panel.state.key!) {
         this.matchFound = true;
-        this.matchedPanels.push(panel);
+        if (!this.matchedPanels.includes(panel)) {
+          this.matchedPanels.push(panel);
+        }
         return true;
       }
 
@@ -32,7 +34,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
 
     if (this.keyPath === panel.getPathId()) {
       this.matchFound = true;
-      this.matchedPanels.push(panel);
+      if (!this.matchedPanels.includes(panel)) {
+        this.matchedPanels.push(panel);
+      }
       return true;
     }
 
