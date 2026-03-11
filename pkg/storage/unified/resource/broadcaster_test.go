@@ -111,11 +111,13 @@ func TestBroadcaster(t *testing.T) {
 	ch := make(chan int)
 	input := []int{1, 2, 3}
 	go func() {
-		defer close(ch)
 		for _, v := range input {
 			ch <- v
 		}
 	}()
+	t.Cleanup(func() {
+		close(ch)
+	})
 
 	b := NewBroadcaster(ctx, ch)
 
