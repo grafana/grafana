@@ -27,7 +27,6 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 };
 
 export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
-  const styles = useStyles2(getDraggableListStyles);
   const { variables } = set.useState();
   const { editable, nonEditable } = useMemo(() => partitionVariablesByEditability(variables), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
