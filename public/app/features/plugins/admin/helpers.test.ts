@@ -298,7 +298,7 @@ describe('Plugins/Helpers', () => {
         expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({ isManaged: false });
       });
 
-      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+      test('should return true if plugin is set as managed major-aligned from grafana-com and grafana is in cloud', () => {
         const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
         config.pluginAdminExternalManageEnabled = true;
 
@@ -316,7 +316,7 @@ describe('Plugins/Helpers', () => {
         config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
       });
 
-      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+      test('should return false if plugin is set as managed major-aligned from grafana-com and grafana is not in cloud', () => {
         const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
         config.featureToggles.managedPluginsV2 = true;
 
@@ -326,6 +326,38 @@ describe('Plugins/Helpers', () => {
             managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
           })
         ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned } });
+
+        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+      });
+
+      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+
+        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+        config.featureToggles.managedPluginsV2 = true;
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ isManaged: true, managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+      });
+
+      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+        config.featureToggles.managedPluginsV2 = true;
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.Assigned } });
 
         config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
       });
