@@ -322,14 +322,18 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 			return nil, err
 		}
 		req.PluginContext = pCtx
-		return s.pluginClient.QueryData(ctx, req)
+		resp, err := s.pluginClient.QueryData(ctx, req)
+		recordQueryMetrics(user.GetOrgID(), ds.UID, ds.Type, resp, err)
+		return resp, err
 	} else { // query-service flow (single or multi tenant)
 		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq, err := expr.ConvertBackendRequestToDataRequest(req)
 		if err != nil {
 			return nil, err
 		}
-		return qsDsClient.QueryData(ctx, *k8sReq)
+		resp, err := qsDsClient.QueryData(ctx, *k8sReq)
+		recordQueryMetrics(user.GetOrgID(), ds.UID, ds.Type, resp, err)
+		return resp, err
 	}
 }
 
