@@ -740,6 +740,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "加载此事件的规则时出错。",
         "header": {
@@ -777,6 +781,10 @@
         }
       },
       "filterBy": "筛选方式：",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "所选时间段的事件过多，无法显示。正在显示最近的 5000 个事件。请尝试缩短时间段。",
         "title": "无法显示所有事件"
@@ -5360,6 +5368,7 @@
         "annotation-set": "",
         "dashboard": "仪表板",
         "element": "元素",
+        "link-set": "",
         "local-variable": "局部变量",
         "multiple-elements": "多个元素",
         "multiple-elements-delete-text": "您确定要删除这些元素吗？",
@@ -5374,6 +5383,12 @@
         "tabs": "标签页",
         "variable": "{{type}} 变量",
         "variable-set": "变量"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6418,6 +6433,11 @@
       "label-use-static-key-dimensions": "使用静态键维度",
       "name-allow-custom-values": "允许自定义值"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "无法导航到所选的数据面板。请再试一次。",
@@ -6836,6 +6856,34 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}}由 <person />",
       "usage-count_other": "用于 {{count}} 个数据面板"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "管理者：Kubectl",
@@ -10639,9 +10687,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
-    "description-enable-logs-highlighting": "使用预定义的着色方案来突出显示日志行的相关部分",
-    "description-show-controls": "显示控件以跳转到最后一行或第一行日志，并按日志级别筛选",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "实验性。当显示 OTel 日志时，添加一个额外的显示字段，其中包含来自标签和元数据的相关键值对。",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "拖放图标",
       "clear-button": "清除",
@@ -12082,10 +12134,12 @@
     "start-modal": {
       "button-start": "开始 {{title}}",
       "description-customize-dashboard-elements-visibility": "自定义数据面板元素可见性",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "将调整面板高度以适应屏幕大小",
       "label-autofit": "自动调整",
       "label-dashboard-links": "数据面板链接",
       "label-display-dashboard-controls": "显示数据面板控件",
+      "label-hide-logo": "",
       "label-mode": "模式",
       "label-time-and-refresh": "时间和刷新",
       "label-variables": "变量",
