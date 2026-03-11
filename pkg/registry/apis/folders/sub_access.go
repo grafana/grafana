@@ -18,13 +18,15 @@ import (
 type subAccessREST struct {
 	getter       rest.Getter
 	accessClient authlib.AccessClient
+
+	newFunc func() runtime.Object
 }
 
 var _ = rest.Connecter(&subAccessREST{})
 var _ = rest.StorageMetadata(&subAccessREST{})
 
 func (r *subAccessREST) New() runtime.Object {
-	return &foldersV1.FolderAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *subAccessREST) Destroy() {
@@ -39,7 +41,7 @@ func (r *subAccessREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subAccessREST) ProducesObject(verb string) interface{} {
-	return &foldersV1.FolderAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {

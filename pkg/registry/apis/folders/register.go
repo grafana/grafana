@@ -3,11 +3,13 @@ package folders
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -22,7 +24,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	sdkres "github.com/grafana/grafana-app-sdk/resource"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -43,8 +47,6 @@ import (
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
-
-var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -106,59 +108,83 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 	}
 }
 
-func (b *FolderAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return resourceInfo.GroupVersion()
+func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	return []schema.GroupVersion{
+		foldersv1beta1.FolderResourceInfo.GroupVersion(),
+		foldersv1.FolderResourceInfo.GroupVersion(),
+	}
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
-	scheme.AddKnownTypes(gv,
-		&folders.Folder{},
-		&folders.FolderList{},
-		&folders.FolderInfoList{},
-		&folders.DescendantCounts{},
-		&folders.FolderAccessInfo{},
-	)
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runtime.Object) {
+	scheme.AddKnownTypes(gv, types...)
 }
 
 func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := b.GetGroupVersion()
-	addKnownTypes(scheme, gv)
+	gvv1beta1 := foldersv1beta1.FolderResourceInfo.GroupVersion()
+	gvv1 := foldersv1.FolderResourceInfo.GroupVersion()
 
-	// Link this version to the internal representation.
+	addKnownTypes(scheme, gvv1,
+		&foldersv1.Folder{},
+		&foldersv1.FolderList{},
+		&foldersv1.FolderInfoList{},
+		&foldersv1.DescendantCounts{},
+		&foldersv1.FolderAccessInfo{},
+	)
+
+	addKnownTypes(scheme, gvv1beta1,
+		&foldersv1beta1.Folder{},
+		&foldersv1beta1.FolderList{},
+		&foldersv1beta1.FolderInfoList{},
+		&foldersv1beta1.DescendantCounts{},
+		&foldersv1beta1.FolderAccessInfo{},
+	)
+	// Link v1beta1 to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
 	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   gv.Group,
+		Group:   foldersv1.FolderResourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
-	})
+	},
+		&foldersv1.Folder{},
+		&foldersv1.FolderList{},
+		&foldersv1.FolderInfoList{},
+		&foldersv1.DescendantCounts{},
+		&foldersv1.FolderAccessInfo{},
+	)
 
-	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	// if err := playlist.RegisterConversions(scheme); err != nil {
-	//   return err
-	// }
-	metav1.AddToGroupVersion(scheme, gv)
-	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gv, folders.FolderKind())
+	metav1.AddToGroupVersion(scheme, gvv1)
+	metav1.AddToGroupVersion(scheme, gvv1beta1)
+	err := fieldselectors.AddSelectableFieldLabelConversions(scheme, gvv1, foldersv1.FolderKind())
 	if err != nil {
 		return err
 	}
-	return scheme.SetVersionPriority(gv)
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, gvv1beta1, foldersv1beta1.FolderKind())
+	if err != nil {
+		return err
+	}
+	// Register conversion between v1 and v1beta1 (same schema — effectively "conversion strategy: None").
+	registerFolderConversions(scheme)
+	return scheme.SetVersionPriority(gvv1, gvv1beta1)
 }
 
 func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	opts.StorageOptsRegister(resourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
-		Permissions:                 b.setDefaultFolderPermissions,
-	})
-
+func (b *FolderAPIBuilder) storageForVersion(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	folders utils.ResourceInfo,
+	newFuncAccess func() runtime.Object,
+	newFuncChildren func() runtime.Object,
+	newFuncCounts func() runtime.Object,
+	newFuncParents func() runtime.Object,
+	folderKind sdkres.Kind,
+) error {
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
-		GetAttrs: fieldselectors.BuildGetAttrsFn(folders.FolderKind()),
+		GetAttrs: fieldselectors.BuildGetAttrsFn(folderKind),
 	}
-	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, resourceInfo, opts.OptsGetter, selectableFieldsOpts)
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, opts.OptsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -167,16 +193,18 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 	if b.folderSvc != nil {
 		legacyStore := &legacyStorage{
+			resourceInfo:   folders,
 			service:        b.folderSvc,
 			namespacer:     b.namespacer,
-			tableConverter: resourceInfo.TableConverter(),
+			tableConverter: folders.TableConverter(),
 		}
-		dw, err := opts.DualWriteBuilder(resourceInfo.GroupResource(), legacyStore, unified)
+		dw, err := opts.DualWriteBuilder(folders.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
 		}
 		b.storage = &folderStorage{
-			tableConverter:       resourceInfo.TableConverter(),
+			resourceInfo:         folders,
+			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
 			features:             b.features,
 			acService:            b.acService,
@@ -186,30 +214,192 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	storage := map[string]rest.Storage{}
-	storage[resourceInfo.StoragePath()] = b.storage
+	storage[folders.StoragePath()] = b.storage
 
 	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
-	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
+	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
+
+		newFunc: newFuncParents,
 	}
-	storage[resourceInfo.StoragePath("counts")] = &subCountREST{
+	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
 		searcher: b.searcher,
+
+		newFunc: newFuncCounts,
 	}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
+	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
 		accessClient: b.accessClient,
+
+		newFunc: newFuncAccess,
 	}
 
 	// Adds a path to return children of a given folder
-	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
+	storage[folders.StoragePath("children")] = &subChildrenREST{
 		getter: b.storage,
 		lister: b.storage,
+
+		newFunc: newFuncChildren,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
 	return nil
+}
+
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport:         true,
+		RequireDeprecatedInternalID: true,
+		Permissions:                 b.setDefaultFolderPermissions,
+	})
+
+	// v1
+	if err := b.storageForVersion(
+		apiGroupInfo,
+		opts,
+		foldersv1.FolderResourceInfo,
+		func() runtime.Object { return &foldersv1.FolderAccessInfo{} },
+		func() runtime.Object { return &foldersv1.FolderList{} },
+		func() runtime.Object { return &foldersv1.DescendantCounts{} },
+		func() runtime.Object { return &foldersv1.FolderInfoList{} },
+		foldersv1.FolderKind(),
+	); err != nil {
+		return err
+	}
+
+	// v1beta1
+	if err := b.storageForVersion(
+		apiGroupInfo,
+		opts,
+		foldersv1beta1.FolderResourceInfo,
+		func() runtime.Object { return &foldersv1beta1.FolderAccessInfo{} },
+		func() runtime.Object { return &foldersv1beta1.FolderList{} },
+		func() runtime.Object { return &foldersv1beta1.DescendantCounts{} },
+		func() runtime.Object { return &foldersv1beta1.FolderInfoList{} },
+		foldersv1beta1.FolderKind(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// registerFolderConversions registers conversion between folder.grafana.app v1 and v1beta1.
+// The schemas are identical, so this is effectively "conversion strategy: None" — no semantic conversion.
+func registerFolderConversions(scheme *runtime.Scheme) {
+	// Folder
+	_ = scheme.AddConversionFunc((*foldersv1beta1.Folder)(nil), (*foldersv1.Folder)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1beta1.Folder)
+		out := b.(*foldersv1.Folder)
+		out.TypeMeta = in.TypeMeta
+		out.ObjectMeta = in.ObjectMeta
+		out.Spec.Title = in.Spec.Title
+		out.Spec.Description = in.Spec.Description
+		return nil
+	})
+	_ = scheme.AddConversionFunc((*foldersv1.Folder)(nil), (*foldersv1beta1.Folder)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1.Folder)
+		out := b.(*foldersv1beta1.Folder)
+		out.TypeMeta = in.TypeMeta
+		out.ObjectMeta = in.ObjectMeta
+		out.Spec.Title = in.Spec.Title
+		out.Spec.Description = in.Spec.Description
+		return nil
+	})
+	// FolderList
+	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderList)(nil), (*foldersv1.FolderList)(nil), func(a, b interface{}, s conversion.Scope) error {
+		in := a.(*foldersv1beta1.FolderList)
+		out := b.(*foldersv1.FolderList)
+		out.TypeMeta = in.TypeMeta
+		out.ListMeta = in.ListMeta
+		out.Items = make([]foldersv1.Folder, len(in.Items))
+		for i := range in.Items {
+			if err := scheme.Convert(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	_ = scheme.AddConversionFunc((*foldersv1.FolderList)(nil), (*foldersv1beta1.FolderList)(nil), func(a, b interface{}, s conversion.Scope) error {
+		in := a.(*foldersv1.FolderList)
+		out := b.(*foldersv1beta1.FolderList)
+		out.TypeMeta = in.TypeMeta
+		out.ListMeta = in.ListMeta
+		out.Items = make([]foldersv1beta1.Folder, len(in.Items))
+		for i := range in.Items {
+			if err := scheme.Convert(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	// FolderInfoList
+	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderInfoList)(nil), (*foldersv1.FolderInfoList)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1beta1.FolderInfoList)
+		out := b.(*foldersv1.FolderInfoList)
+		out.TypeMeta = in.TypeMeta
+		out.ListMeta = in.ListMeta
+		out.Items = make([]foldersv1.FolderInfo, len(in.Items))
+		for i := range in.Items {
+			out.Items[i] = foldersv1.FolderInfo{
+				Name: in.Items[i].Name, Title: in.Items[i].Title, Description: in.Items[i].Description,
+				Parent: in.Items[i].Parent, Detached: in.Items[i].Detached,
+			}
+		}
+		return nil
+	})
+	_ = scheme.AddConversionFunc((*foldersv1.FolderInfoList)(nil), (*foldersv1beta1.FolderInfoList)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1.FolderInfoList)
+		out := b.(*foldersv1beta1.FolderInfoList)
+		out.TypeMeta = in.TypeMeta
+		out.ListMeta = in.ListMeta
+		out.Items = make([]foldersv1beta1.FolderInfo, len(in.Items))
+		for i := range in.Items {
+			out.Items[i] = foldersv1beta1.FolderInfo{
+				Name: in.Items[i].Name, Title: in.Items[i].Title, Description: in.Items[i].Description,
+				Parent: in.Items[i].Parent, Detached: in.Items[i].Detached,
+			}
+		}
+		return nil
+	})
+	// DescendantCounts
+	_ = scheme.AddConversionFunc((*foldersv1beta1.DescendantCounts)(nil), (*foldersv1.DescendantCounts)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1beta1.DescendantCounts)
+		out := b.(*foldersv1.DescendantCounts)
+		out.TypeMeta = in.TypeMeta
+		out.Counts = make([]foldersv1.ResourceStats, len(in.Counts))
+		for i := range in.Counts {
+			out.Counts[i] = foldersv1.ResourceStats{Group: in.Counts[i].Group, Resource: in.Counts[i].Resource, Count: in.Counts[i].Count}
+		}
+		return nil
+	})
+	_ = scheme.AddConversionFunc((*foldersv1.DescendantCounts)(nil), (*foldersv1beta1.DescendantCounts)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1.DescendantCounts)
+		out := b.(*foldersv1beta1.DescendantCounts)
+		out.TypeMeta = in.TypeMeta
+		out.Counts = make([]foldersv1beta1.ResourceStats, len(in.Counts))
+		for i := range in.Counts {
+			out.Counts[i] = foldersv1beta1.ResourceStats{Group: in.Counts[i].Group, Resource: in.Counts[i].Resource, Count: in.Counts[i].Count}
+		}
+		return nil
+	})
+	// FolderAccessInfo
+	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderAccessInfo)(nil), (*foldersv1.FolderAccessInfo)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1beta1.FolderAccessInfo)
+		out := b.(*foldersv1.FolderAccessInfo)
+		out.TypeMeta = in.TypeMeta
+		out.CanSave, out.CanEdit, out.CanAdmin, out.CanDelete = in.CanSave, in.CanEdit, in.CanAdmin, in.CanDelete
+		return nil
+	})
+	_ = scheme.AddConversionFunc((*foldersv1.FolderAccessInfo)(nil), (*foldersv1beta1.FolderAccessInfo)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in := a.(*foldersv1.FolderAccessInfo)
+		out := b.(*foldersv1beta1.FolderAccessInfo)
+		out.TypeMeta = in.TypeMeta
+		out.CanSave, out.CanEdit, out.CanAdmin, out.CanDelete = in.CanSave, in.CanEdit, in.CanAdmin, in.CanDelete
+		return nil
+	})
 }
 
 var defaultPermissions = []map[string]any{
@@ -239,7 +429,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
 	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
+	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	// the resource permission will likely already exist with admin can admin, so we will need to update it
 	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
@@ -251,8 +441,8 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 				},
 				"spec": map[string]any{
 					"resource": map[string]any{
-						"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
+						"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 						"name":     obj.GetName(),
 					},
 					"permissions": defaultPermissions,
@@ -275,8 +465,8 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 			},
 			"spec": map[string]any{
 				"resource": map[string]any{
-					"apiGroup": folders.FolderResourceInfo.GroupVersionResource().Group,
-					"resource": folders.FolderResourceInfo.GroupVersionResource().Resource,
+					"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
+					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 					"name":     obj.GetName(),
 				},
 				"permissions": defaultPermissions,
@@ -306,7 +496,11 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return folders.GetOpenAPIDefinitions
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := foldersv1beta1.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, foldersv1.GetOpenAPIDefinitions(ref))
+		return defs
+	}
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -323,17 +517,20 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
-		f, ok := obj.(*folders.Folder)
-		if !ok {
-			return fmt.Errorf("obj is not folders.Folder")
+		switch f := obj.(type) {
+		case *foldersv1beta1.Folder:
+			f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		case *foldersv1.Folder:
+			f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		default:
+			return fmt.Errorf("obj is not Folder (got %T)", obj)
 		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
 }
 
-func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	var obj runtime.Object
 	verb := a.GetOperation()
 
@@ -351,9 +548,18 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		obj = a.GetObject()
 	}
 
-	f, ok := obj.(*folders.Folder)
-	if !ok {
-		return fmt.Errorf("obj is not folders.Folder")
+	// Convert to v1beta1 for validation (validation helpers expect *foldersv1beta1.Folder).
+	var f *foldersv1beta1.Folder
+	switch v := obj.(type) {
+	case *foldersv1beta1.Folder:
+		f = v
+	case *foldersv1.Folder:
+		f = &foldersv1beta1.Folder{}
+		if err := o.GetObjectConvertor().Convert(v, f, nil); err != nil {
+			return fmt.Errorf("convert folder to v1beta1: %w", err)
+		}
+	default:
+		return fmt.Errorf("obj is not Folder (got %T)", obj)
 	}
 
 	switch a.GetOperation() {
@@ -365,9 +571,17 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
-		old, ok := a.GetOldObject().(*folders.Folder)
-		if !ok {
-			return fmt.Errorf("obj is not folders.Folder")
+		var old *foldersv1beta1.Folder
+		switch v := a.GetOldObject().(type) {
+		case *foldersv1beta1.Folder:
+			old = v
+		case *foldersv1.Folder:
+			old = &foldersv1beta1.Folder{}
+			if err := o.GetObjectConvertor().Convert(v, old, nil); err != nil {
+				return fmt.Errorf("convert old folder to v1beta1: %w", err)
+			}
+		default:
+			return fmt.Errorf("old obj is not Folder (got %T)", a.GetOldObject())
 		}
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
 			return err
