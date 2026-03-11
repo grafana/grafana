@@ -567,3 +567,105 @@ func TestAuthorizeMoveFolderWithMetadata(t *testing.T) {
 		rw.AssertExpectations(t)
 	})
 }
+
+func TestAuthorizeReadAllSupported(t *testing.T) {
+	t.Run("authorized - checks get on all supported resources at root", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbGet
+			}), "").Return(nil).Once()
+		}
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeReadAllSupported(context.Background())
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized on first resource - returns error immediately", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeReadAllSupported(context.Background())
+
+		assert.Error(t, err)
+	})
+}
+
+func TestAuthorizeCreateAllSupported(t *testing.T) {
+	t.Run("folder sync target - checks create on all supported resources in target folder", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbCreate
+			}), "my-repo").Return(nil).Once()
+		}
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeCreateAllSupported(context.Background())
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("instance sync target - checks create at root", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+
+		for _, kind := range SupportedProvisioningResources {
+			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+				return req.Group == kind.Group &&
+					req.Resource == kind.Resource &&
+					req.Verb == utils.VerbCreate
+			}), "").Return(nil).Once()
+		}
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeCreateAllSupported(context.Background())
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized on create - returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		err := authorizer.AuthorizeCreateAllSupported(context.Background())
+
+		assert.Error(t, err)
+	})
+}

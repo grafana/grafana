@@ -154,6 +154,7 @@ func NewStorageBackend(
 		},
 		EventRetentionPeriod: cfg.EventRetentionPeriod,
 		EventPruningInterval: cfg.EventPruningInterval,
+		SearchLookback:       cfg.SearchLookback,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {

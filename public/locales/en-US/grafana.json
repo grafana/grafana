@@ -1878,7 +1878,9 @@
       "timeline-one-notification": "1 notification",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
-      "timeline-toggle-notifications": "Toggle notification details"
+      "timeline-toggle-notifications": "Toggle notification details",
+      "view-notification-detail": "Details",
+      "view-notification-tooltip": "View full notification details"
     },
     "instance-match": {
       "non-matching-labels": "Non-matching labels",
@@ -2195,6 +2197,52 @@
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
       "title-no-alertmanager-found": "No Alertmanager found"
     },
+    "notification-detail": {
+      "action-silence": "Silence this group",
+      "action-view-contact-point": "View contact point",
+      "alert-count-inline_one": "{{count}} alert(s)",
+      "alert-count-inline_other": "{{count}} alert(s)",
+      "alerts-empty": "No alerts found for this notification.",
+      "alerts-loading": "Loading alerts...",
+      "batch-all-ok": "all succeeded",
+      "batch-count-many_one": "{{count}} deliveries",
+      "batch-count-many_other": "{{count}} deliveries",
+      "batch-count-one": "1 delivery",
+      "batch-failed_one": "{{count}} failed",
+      "batch-failed_other": "{{count}} failed",
+      "current": "Current",
+      "debug-details-heading": "Debug details",
+      "delivery-failed": "Delivery failed",
+      "delivery-success": "Delivered successfully",
+      "error-title": "Error loading notification",
+      "error-title-banner": "Delivery error",
+      "error-unknown": "Unknown error",
+      "field-group-key": "Group key",
+      "field-integration-index": "Integration index",
+      "field-pipeline-time": "Pipeline time",
+      "field-retry": "Retry",
+      "field-timestamp": "Timestamp",
+      "field-uuid": "UUID",
+      "firing-alerts": "Firing Alerts",
+      "group-labels-heading": "Group Labels",
+      "loading": "Loading notification...",
+      "no": "No",
+      "not-found-body": "No UUID was provided. Please navigate from the notifications list.",
+      "not-found-title": "Notification not found",
+      "page-title": "View",
+      "related-count_one": "{{count}} related notifications",
+      "related-count_other": "{{count}} related notifications",
+      "related-count-with-failures_one": "{{count}} related ({{failed}} failed)",
+      "related-count-with-failures_other": "{{count}} related ({{failed}} failed)",
+      "related-loading": "Loading related notifications...",
+      "related-sidebar-subtitle": "Notification attempts for the same alert group and route",
+      "related-sidebar-title": "Related Notifications",
+      "resolved-alerts": "Resolved Alerts",
+      "retry-tooltip": "This attempt was a retry of a previous attempt",
+      "uuid-not-found-body": "No notification found with UUID: {{uuid}}",
+      "uuid-not-found-title": "Notification not found",
+      "yes": "Yes"
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Contact point",
       "placeholder-search-by-contact-point": "Choose a contact point",
@@ -2266,7 +2314,8 @@
       "outcome-failed": "Failed",
       "status-firing": "Firing",
       "status-resolved": "Resolved",
-      "unable-to-fetch": "Unable to fetch notification history"
+      "unable-to-fetch": "Unable to fetch notification history",
+      "view-link": "View"
     },
     "notifications-runtime-datasource": {
       "message": {
@@ -5313,6 +5362,7 @@
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
       "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
@@ -6793,6 +6843,7 @@
       "title": {
         "description": "Description",
         "panel-links": "Panel links",
+        "panel-styles": "Panel styles",
         "title": "Title",
         "transparent-background": "Transparent background"
       }
@@ -7005,6 +7056,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": "Panel styles"
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Back"
@@ -7017,6 +7071,11 @@
         }
       },
       "title-close": "Close"
+    },
+    "provisioned-controls-section": {
+      "label": "Provisioned by data source",
+      "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
@@ -9670,6 +9729,9 @@
     },
     "cascader": {
       "clear-button": "Clear selection"
+    },
+    "color-picker": {
+      "input-label": "RGBA value"
     },
     "color-picker-popover": {
       "palette-tab": "Colors",
@@ -13533,7 +13595,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Add filter",
+      "disable": "Disable {{type}}",
       "duplicate": "Duplicate {{type}}",
+      "enable": "Enable {{type}}",
       "error": "Error",
       "hide": "Hide {{type}}",
       "hide-help": "Hide data source help",
@@ -13635,7 +13699,6 @@
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
       "footer-items-alert_other": "{{count}} alerts",
-      "loading-queries-transformations": "Loading queries and transformations",
       "new-type": "New {{type}}",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
@@ -14859,6 +14922,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
+    },
+    "presets": {
+      "area": "Area",
+      "default": "Default",
+      "smooth": "Smooth",
+      "stacked-area": "Stacked area",
+      "stacked-area-gradient": "Stacked area gradient",
+      "stacked-smooth": "Stacked smooth",
+      "stacked-step": "Stacked step",
+      "step": "Step",
+      "step-filled": "Step filled",
+      "step-hue": "Step hue"
     },
     "span-nulls-editor": {
       "gaps-options": {

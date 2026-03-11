@@ -613,7 +613,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			// (created within a rolled-back transaction) is no longer in memory.
 			// Without flushing, the test would pass trivially because the phantom key
 			// would still be in the cache.
-			svc.FlushCache(namespace)
+			svc.(*EncryptionManager).dataKeyCache.Flush(namespace.String())
 
 			// Therefore, the data encrypted after this point, become unrecoverable after a restart.
 			// So, the different test cases here are there to prevent that from happening again
@@ -832,7 +832,7 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	assert.True(t, existsByLabel, "DEK should be cached by label before flush")
 
 	// Flush the cache for this namespace
-	svc.FlushCache(namespace)
+	svc.dataKeyCache.Flush(namespace.String())
 
 	// Verify the cache is empty for this namespace
 	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)

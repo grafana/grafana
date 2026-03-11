@@ -10,7 +10,7 @@ import {
   CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
@@ -25,6 +25,7 @@ import {
   Alert,
   Badge,
   Icon,
+  LinkButton,
   LoadingBar,
   Pagination,
   Spinner,
@@ -43,6 +44,7 @@ import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
+import { createRelativeUrl } from '../utils/url';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
@@ -208,6 +210,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
+      <div className={styles.viewCol}>{/* View link column */}</div>
     </div>
   );
 }
@@ -263,6 +266,18 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         </div>
         <div className={styles.receiverCol}>
           <Text>{record.receiver || '-'}</Text>
+        </div>
+        <div className={styles.viewCol}>
+          <LinkButton
+            href={createRelativeUrl(
+              `/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`
+            )}
+            size="sm"
+            variant="secondary"
+            icon="eye"
+          >
+            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+          </LinkButton>
         </div>
       </div>
       {!isCollapsed && (
@@ -383,11 +398,8 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           )}
           {alert.startsAt && (
             <Text variant="bodySmall" color="secondary">
-              <Trans
-                i18nKey="alerting.notifications-scene.started"
-                values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
-              >
-                Started: {{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
+              <Trans i18nKey="alerting.notifications-scene.started" values={{ value: dateTimeFormat(alert.startsAt) }}>
+                Started: {{ value: dateTimeFormat(alert.startsAt) }}
               </Trans>
             </Text>
           )}
@@ -444,7 +456,7 @@ interface TimestampProps {
 }
 
 const Timestamp = ({ time }: TimestampProps) => {
-  const formattedDate = time ? dateTime(time).format('YYYY-MM-DD HH:mm:ss') : '-';
+  const formattedDate = time ? dateTimeFormat(time) : '-';
 
   return (
     <Text variant="body" weight="light">
@@ -502,7 +514,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     receiverCol: css({
-      width: '250px',
+      width: '200px',
+    }),
+    viewCol: css({
+      width: '80px',
     }),
     expandedRow: css({
       padding: theme.spacing(2),
