@@ -29,15 +29,8 @@ function PanelAssistantHintRenderer(_props: SceneComponentProps<PanelAssistantHi
 
   return (
     <span className={styles.hintIcon} data-testid="panel-assistant-hint">
-      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-        <defs>
-          <linearGradient id="assistant-hint-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(168, 85, 247)" />
-            <stop offset="100%" stopColor="rgb(249, 115, 22)" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <Icon name="ai-sparkle" size="sm" />
+      <span className={styles.hintCircle} />
+      <Icon name="ai-sparkle" size="xs" className={styles.hintSparkle} />
     </span>
   );
 }
@@ -123,20 +116,30 @@ function getHintStyles(theme: GrafanaTheme2) {
       label: 'panel-assistant-hint',
       display: 'inline-flex',
       alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      width: 20,
+      height: 20,
       cursor: 'pointer',
       opacity: 0,
-      color: theme.colors.text.secondary,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      [theme.transitions.handleMotion('no-preference')]: {
         transition: 'opacity 150ms ease-in-out',
       },
 
-      '& svg:last-child': {
-        fill: 'url(#assistant-hint-gradient)',
-      },
-
-      '.dashboard-selectable-element:hover &': {
+      '.dashboard-selectable-element:hover &, [class*="panel-container"]:hover &': {
         opacity: 1,
       },
+    }),
+    hintCircle: css({
+      position: 'absolute',
+      inset: 0,
+      borderRadius: theme.shape.radius.circle,
+      background: 'linear-gradient(135deg, rgb(168, 85, 247), rgb(249, 115, 22))',
+    }),
+    hintSparkle: css({
+      position: 'relative',
+      color: '#fff',
+      zIndex: 1,
     }),
   };
 }
