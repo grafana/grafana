@@ -2620,6 +2620,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
+			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			FrontendOnly:    true,
+		},
+		{
 			Name:         "flameGraphWithCallTree",
 			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
 			Stage:        FeatureStageExperimental,
