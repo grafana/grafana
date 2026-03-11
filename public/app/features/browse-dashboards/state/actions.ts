@@ -1,5 +1,4 @@
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
