@@ -87,6 +87,10 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_link_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
   newVariableTypeSelected: (properties: { type: string }) => {

@@ -430,17 +430,28 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	var got string
+	var gotCnt int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+			b, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			require.NoError(t, r.Body.Close())
+			got = string(b)
+		} else if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/config") {
+			w.Header().Add("content-type", "application/json")
+			configSent := client.UserGrafanaConfig{}
+			if got != "" {
+				require.NoError(t, json.Unmarshal([]byte(got), &configSent))
+			}
+
+			require.NoError(t, json.NewEncoder(w).Encode(configSent))
+			return
+		}
+
 		w.Header().Add("content-type", "application/json")
-
-		b, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
-		require.NoError(t, r.Body.Close())
-		got = string(b)
-
-		_, err = w.Write([]byte(`{"status": "success"}`))
-		require.NoError(t, err)
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
 	}))
 
 	cfg := AlertmanagerConfig{
@@ -746,13 +757,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 						v0mimir.ProxyConfig{},
 						common_config.ProxyConfig{})))
 
-				got1 := got
+				gotCnt1 := gotCnt
 				got = ""
 				err = moa.ApplyConfig(ctx, 1, dbConfig)
 				require.NoError(t, err)
 
-				got2 := got
-				require.Equalf(t, got1, got2, "Configuration is not idempotent")
+				gotCnt2 := gotCnt
+				require.Equal(t, gotCnt1, gotCnt2, "Configuration is not idempotent, should not have updated config")
 				return
 			}
 			for _, expErr := range test.expErrContains {

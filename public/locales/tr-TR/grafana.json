@@ -743,6 +743,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Bu etkinlik için kural yüklenirken hata oluştu.",
         "header": {
@@ -780,6 +784,10 @@
         }
       },
       "filterBy": "Filtre ölçütü:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Seçilen zaman aralığında görüntülenemeyecek kadar çok olay var. En son 5000 olay görüntüleniyor. Daha kısa bir zaman aralığı kullanmayı deneyin.",
         "title": "Tüm etkinlikler görüntülenemiyor"
@@ -889,11 +897,13 @@
       "aria-label-more-actions": "\"{{contactPointName}}\" iletişim noktası için daha fazla işlem",
       "ariaLabel-delete": "Sil",
       "button-edit": "Düzenle",
+      "button-history": "",
       "button-view": "Görüntüle",
       "export-ariaLabel-export": "Dışa aktar",
       "export-label-export": "Dışa aktar",
       "label-delete": "Sil",
       "label-manage-permissions": "İzinleri yönet",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Sağlanan iletişim noktaları kullanıcı arayüzünden düzenlenemez"
     },
     "contact-point-selector": {
@@ -2082,6 +2092,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Veri kaynağı bulunamadı"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "\"{{muteTiming}}\" öğesini silmek istediğinizden emin misiniz?"
     },
@@ -2179,47 +2195,8 @@
       "body-no-alertmanager-found": "Harici bir Alertmanager bulunamadı ve yerleşik Grafana Alertmanager'a erişiminiz olmayabilir.",
       "title-no-alertmanager-found": "Alertmanager bulunamadı"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "İletişim noktasına göre ara",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Bir iletişim noktası seçin",
       "search-query-input-placeholder-search": "Ara"
     },
@@ -2384,6 +2361,7 @@
       "tooltip-managed-by-plugin": "Bu kural, {{pluginName}} eklentisi tarafından yönetilir"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Daralt",
       "aria-label-expand": "Genişlet",
       "aria-label-more": "politika için daha fazla işlem",
@@ -2394,9 +2372,10 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Başka bir eşleşen politika bulunamazsa tüm uyarı örnekleri varsayılan politika tarafından işlenecektir.",
         "title": "Varsayılan politika",
-        "update": "Varsayılan politikayı güncelle"
+        "update": "",
+        "route-count_one": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Evet, politikayı sil",
@@ -2411,7 +2390,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Bildirim politikalarını, virgülle ayrılmış eşleşenler listesi kullanarak filtreleyin, örneğin: <1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
       "matchers": "Eşleşenler",
       "metadata": {
@@ -2442,24 +2421,23 @@
         "n-instances_one": "örnek",
         "n-instances_other": "örnek"
       },
-      "new-child": "Çocuklara ilişkin yeni politika",
-      "new-policy": "Yeni politika ekle",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Eşleşen yok",
       "reload-policies": "Politikaları yeniden yükle",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Politikayı kaydet",
       "update": {
         "please-wait": "Bildirim politikalarınız güncellenirken lütfen bekleyin.",
-        "update-policy": "Politikayı güncelle",
+        "update-route": "",
         "updating": "Güncelleniyor..."
       },
       "update-errors": {
@@ -2503,9 +2481,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Çocuklara ilişkin yeni politika",
-      "label-new-sibling-above": "Yukarıdan yeni eş düzey",
-      "label-new-sibling-below": "Aşağıdan yeni eş düzey"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3495,7 +3473,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Bildirim politikası ekle"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3536,7 +3514,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Sil",
       "label-edit": "Düzenle",
-      "label-export": "Dışa aktar"
+      "label-export": "Dışa aktar",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Evet, iletişim noktasını sil",
@@ -3568,7 +3547,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Bildirim politikasını düzenle"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5334,6 +5313,7 @@
       "panel-description": "Panel açıklamasını değiştir",
       "panel-edit": "Panel değişiklikleri",
       "panel-max-repeats-per-row": "Satır başına maksimum tekrar sayısı",
+      "panel-preset": "",
       "panel-repeat-direction": "Tekrar yönü",
       "panel-repeat-variable": "Panel yineleme ölçütü",
       "panel-title": "Panel başlığını değiştir",
@@ -5388,6 +5368,7 @@
         "annotation-set": "",
         "dashboard": "Pano",
         "element": "Bileşen",
+        "link-set": "",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
         "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
@@ -5402,6 +5383,12 @@
         "tabs": "Sekmeler",
         "variable": "{{type}} değişkeni",
         "variable-set": "Değişkenler"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6448,6 +6435,11 @@
       "label-use-static-key-dimensions": "Statik anahtar boyutları kullan",
       "name-allow-custom-values": "Özel değer girişine izin ver"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Seçilen panoya gidilemedi. Lütfen tekrar deneyin.",
@@ -6782,6 +6774,7 @@
       "title": {
         "description": "Açıklama",
         "panel-links": "Panel bağlantıları",
+        "panel-styles": "",
         "title": "Başlık",
         "transparent-background": "Şeffaf arka plan"
       }
@@ -6867,6 +6860,34 @@
       "last-edited": "{{timeAgo}} önce, <person /> tarafından",
       "usage-count_one": "{{count}} panoda kullanılıyor",
       "usage-count_other": "{{count}} panoda kullanılıyor"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Yöneten: Kubectl",
@@ -6966,6 +6987,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Geri"
@@ -6978,6 +7002,11 @@
         }
       },
       "title-close": "Kapat"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Bu pano, Grafana sağlama sistemi tarafından yönetilmektedir ve silinemez. Panoyu silmek için yapılandırma dosyasından kaldırın.",
@@ -9625,6 +9654,9 @@
     "cascader": {
       "clear-button": "Seçimi temizle"
     },
+    "color-picker": {
+      "input-label": ""
+    },
     "color-picker-popover": {
       "palette-tab": "Renkler",
       "spectrum-tab": "Özel"
@@ -10692,9 +10724,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
-    "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili bölümlerini vurgulamak için önceden tanımlanmış bir renklendirme düzeni kullanın",
-    "description-show-controls": "Son veya ilk günlük satırına atlamak için ekran kontrolleri ve günlük düzeyine göre filtreler",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Deneysel. OTel günlükleri görüntülendiğinde, etiketler ve meta verilerden alınan ilgili anahtar-değer çiftleriyle ekstra bir alan gösterilir.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Sürükle ve bırak simgesi",
       "clear-button": "Temizle",
@@ -12141,10 +12177,12 @@
     "start-modal": {
       "button-start": "{{title}} ögesini başlat",
       "description-customize-dashboard-elements-visibility": "Pano ögelerinin görünürlüğünü özelleştir",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Panel yükseklikleri ekran boyutuna uyacak şekilde ayarlanacaktır",
       "label-autofit": "Otomatik sığdır",
       "label-dashboard-links": "Pano bağlantıları",
       "label-display-dashboard-controls": "Pano kontrollerini göster",
+      "label-hide-logo": "",
       "label-mode": "Mod",
       "label-time-and-refresh": "Zaman ve yenileme",
       "label-variables": "Değişkenler",
@@ -13481,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13577,7 +13617,6 @@
       "alerts-loading": "",
       "card-click": "{{id}} kartını seçin",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Sorgular ve İfadeler",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
@@ -14807,6 +14846,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Zaman aralığının dışındaki veriler",
       "zoom-to-data": "Verilere yakınlaştır"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
