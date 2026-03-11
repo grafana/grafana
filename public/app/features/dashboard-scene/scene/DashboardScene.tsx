@@ -91,8 +91,8 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
@@ -213,7 +213,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
+      body: state.body ?? AutoGridLayoutManager.createEmpty(),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
@@ -231,6 +231,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
+
+    this.subscribeToState((newState, prevState) => {
+      console.log(newState, prevState);
+      console.log(newState.body, prevState.body);
+    });
 
     window.__grafanaSceneContext = this;
 

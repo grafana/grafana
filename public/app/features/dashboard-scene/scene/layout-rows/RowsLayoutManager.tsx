@@ -24,7 +24,13 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, GridLayoutType, mapIdToGridLayoutType, ungroupLayout } from '../layouts-shared/utils';
+import {
+  generateUniqueTitle,
+  getDefaultLayout,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+  ungroupLayout,
+} from '../layouts-shared/utils';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
@@ -131,7 +137,7 @@ export class RowsLayoutManager
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem({});
+    const newRow = row ?? new RowItem({ layout: getDefaultLayout(this.state.rows) });
     const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
 
     const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
@@ -288,7 +294,11 @@ export class RowsLayoutManager
 
     const perform = () => {
       if (!rowsAfterRemoval.length) {
-        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+        parent.switchLayout(
+          row.getLayout() instanceof AutoGridLayoutManager
+            ? AutoGridLayoutManager.createEmpty()
+            : DefaultGridLayoutManager.fromVizPanels([])
+        );
       } else {
         this.setState({ rows: rowsAfterRemoval });
       }

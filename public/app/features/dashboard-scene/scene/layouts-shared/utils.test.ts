@@ -1,4 +1,80 @@
-import { generateUniqueTitle } from './utils';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabItem } from '../layout-tabs/TabItem';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+
+import { generateUniqueTitle, getDefaultLayout } from './utils';
+
+describe('getDefaultLayout', () => {
+  it('should create AutoGridLayoutManager by default when no items exist', () => {
+    const result = getDefaultLayout([]);
+    expect(result).toBeInstanceOf(AutoGridLayoutManager);
+  });
+
+  it('should create DefaultGridLayoutManager when last item has DefaultGridLayoutManager', () => {
+    const result = getDefaultLayout([new RowItem({ layout: DefaultGridLayoutManager.createEmpty() })]);
+    expect(result).toBeInstanceOf(DefaultGridLayoutManager);
+  });
+
+  it('should create AutoGridLayoutManager when last item has AutoGridLayoutManager', () => {
+    const result = getDefaultLayout([new RowItem({ layout: AutoGridLayoutManager.createEmpty() })]);
+    expect(result).toBeInstanceOf(AutoGridLayoutManager);
+  });
+
+  it('should create DefaultGridLayoutManager when last item has nested RowsLayoutManager with DefaultGridLayoutManager', () => {
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ layout: DefaultGridLayoutManager.createEmpty() })],
+    });
+    const result = getDefaultLayout([new RowItem({ layout: innerRows })]);
+    expect(result).toBeInstanceOf(DefaultGridLayoutManager);
+  });
+
+  it('should create AutoGridLayoutManager when last item has nested RowsLayoutManager with AutoGridLayoutManager', () => {
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    const result = getDefaultLayout([new RowItem({ layout: innerRows })]);
+    expect(result).toBeInstanceOf(AutoGridLayoutManager);
+  });
+
+  it('should create DefaultGridLayoutManager when last item has deeply nested TabsLayoutManager with DefaultGridLayoutManager', () => {
+    const tabsLayout = new TabsLayoutManager({
+      tabs: [new TabItem({ layout: DefaultGridLayoutManager.createEmpty() })],
+    });
+    const result = getDefaultLayout([new RowItem({ layout: tabsLayout })]);
+    expect(result).toBeInstanceOf(DefaultGridLayoutManager);
+  });
+
+  it('should use deepest leaf from last sibling with multiple nesting levels', () => {
+    const deepLayout = DefaultGridLayoutManager.createEmpty();
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ layout: deepLayout })],
+    });
+    const tabsLayout = new TabsLayoutManager({
+      tabs: [new TabItem({ layout: innerRows })],
+    });
+    const result = getDefaultLayout([
+      new RowItem({ layout: AutoGridLayoutManager.createEmpty() }),
+      new RowItem({ layout: tabsLayout }),
+    ]);
+    expect(result).toBeInstanceOf(DefaultGridLayoutManager);
+  });
+
+  it('should work with TabItem as items', () => {
+    const result = getDefaultLayout([new TabItem({ layout: DefaultGridLayoutManager.createEmpty() })]);
+    expect(result).toBeInstanceOf(DefaultGridLayoutManager);
+  });
+
+  it('should create AutoGridLayoutManager when last tab has nested RowsLayoutManager with AutoGridLayoutManager', () => {
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    const result = getDefaultLayout([new TabItem({ layout: innerRows })]);
+    expect(result).toBeInstanceOf(AutoGridLayoutManager);
+  });
+});
 
 describe('generateUniqueTitle', () => {
   it('should return the original title if it is not in the existing titles', () => {

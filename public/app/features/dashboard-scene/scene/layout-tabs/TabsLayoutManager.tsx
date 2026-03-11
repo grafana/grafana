@@ -21,7 +21,13 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import {
+  generateUniqueTitle,
+  ungroupLayout,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+  getDefaultLayout,
+} from '../layouts-shared/utils';
 import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
@@ -177,7 +183,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({});
+    const newTab = tab ?? new TabItem({ layout: getDefaultLayout(this.state.tabs) });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
@@ -360,7 +366,11 @@ export class TabsLayoutManager
 
     const perform = () => {
       if (!tabsAfterRemoval.length) {
-        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+        parent.switchLayout(
+          tab.getLayout() instanceof AutoGridLayoutManager
+            ? AutoGridLayoutManager.createEmpty()
+            : DefaultGridLayoutManager.fromVizPanels([])
+        );
       } else {
         const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
         this.setState({
