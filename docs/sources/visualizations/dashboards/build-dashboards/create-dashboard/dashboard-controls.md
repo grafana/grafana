@@ -64,35 +64,24 @@ For more detailed information on variables, refer to the full [Variables documen
 
 To add an annotation query, follow these steps:
 
+{{< docs/list >}}
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Annotation query**.
 1. Enter a name for the annotation query.
 
-   This name is given to the toggle (checkbox) that allows you to enable/disable showing annotation events from this query.
+   This name is given to the toggle that allows you to enable/disable showing annotation events from this query.
 
-1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox. <!-- shared content -->
-1. Select a color for the event markers.
-1. Select one of the following options in the **Show annotation controls in** drop-down list to control where annotations are displayed:
-
-   - **Above dashboard** - The annotation toggle is displayed above the dashboard. This is the default.
-   - **Controls menu** - The annotation toggle is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
-   - **Hidden** - The annotation toggle is not displayed on the dashboard.
-
-1. In the **Show in** drop-down list, choose one of the following options:
-   - **All panels** - The annotations are displayed on all panels that support annotations.
-   - **Selected panels** - The annotations are displayed on all the panels you select.
-   - **All panels except** - The annotations are displayed on all panels except the ones you select.
-
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}} <!-- /shared content -->
+{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/annotate-visualizations/index.md" id="add-annotation-query" >}}
 
 1. To add a query, do one of the following:
-   - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
+   - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
    - Click **Use saved query** to open a the **Saved queries** drawer and select a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
 
    {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
 1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
@@ -101,6 +90,8 @@ To add an annotation query, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /docs/list >}}
 
 For more detailed information about annotations, refer to the full [Annotations documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/).
 
