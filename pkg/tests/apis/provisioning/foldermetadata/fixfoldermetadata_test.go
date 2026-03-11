@@ -13,9 +13,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -26,17 +24,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 // TestIntegrationProvisioning_FixFolderMetadata_MissingFile verifies that the
 // fix-folder-metadata job creates _folder.json files for folders that don't
 // have them yet.
 func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-no-metadata"
@@ -63,8 +57,8 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	runFixFolderMetadataJob(t, helper, repoName)
 
 	// After the job both folders must have a well-formed metadata file.
-	parentUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-	childUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	parentUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
+	childUID, _ := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
 
 	// The two folders should carry distinct UIDs.
 	require.NotEqual(t, parentUID, childUID,
@@ -76,7 +70,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-valid-metadata"
@@ -96,16 +90,16 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	// First run: let the job create the metadata files.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	firstParentUID, firstParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
-	firstChildUID, firstChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	firstParentUID, firstParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
+	firstChildUID, firstChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
 
 	// Second run: the metadata files are already correct, nothing should change.
 	runFixFolderMetadataJob(t, helper, repoName)
 
-	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/"+folderMetadataFileName)
+	afterParentUID, afterParentTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent")
 	require.Equal(t, firstParentUID, afterParentUID, "parent folder UID must not change when the metadata file is already valid")
 	require.Equal(t, firstParentTitle, afterParentTitle, "parent folder title must not change when the metadata file is already valid")
-	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child/"+folderMetadataFileName)
+	afterChildUID, afterChildTitle := requireValidFolderMetadata(t, ctx, helper, repoName, "parent/child")
 	require.Equal(t, firstChildUID, afterChildUID, "child folder UID must not change when the metadata file is already valid")
 	require.Equal(t, firstChildTitle, afterChildTitle, "child folder title must not change when the metadata file is already valid")
 }
@@ -116,7 +110,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -153,7 +147,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -202,9 +196,10 @@ func requireFileAbsent(t *testing.T, path string) {
 // requireValidFolderMetadata reads a _folder.json via the repository files API
 // and asserts it is a valid Folder resource (correct apiVersion/kind, non-empty
 // UID and title).
-func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.ProvisioningTestHelper, repoName, filePath string) (string, string) {
+func requireValidFolderMetadata(t *testing.T, ctx context.Context, h *common.ProvisioningTestHelper, repoName, folderPath string) (string, string) {
 	t.Helper()
 
+	filePath := filepath.Join(folderPath, folderMetadataFileName)
 	wrapObj, err := h.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", filePath)
 	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", filePath)
 
