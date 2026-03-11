@@ -6,6 +6,13 @@ import { config } from '@grafana/runtime';
 
 import { ProfileButton } from './ProfileButton';
 
+// Mock the news feed to avoid real network requests that can cause flaky
+// moment.js deprecation warnings when parsing RSS pubDate values.
+jest.mock('app/plugins/panel/news/feed', () => ({
+  ...jest.requireActual('app/plugins/panel/news/feed'),
+  loadFeed: jest.fn().mockResolvedValue({ items: [] }),
+}));
+
 describe('ProfileButton', () => {
   let mainView: HTMLDivElement;
   let user: ReturnType<typeof userEvent.setup>;
