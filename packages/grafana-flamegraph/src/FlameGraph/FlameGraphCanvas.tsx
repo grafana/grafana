@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, ViewMode, TextAlign } from '../types';
 
 import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
@@ -40,7 +40,9 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  selectedView: SelectedView;
+  selectedView?: SelectedView;
+  viewMode?: ViewMode;
+  paneView?: PaneView;
   search: string;
 };
 
@@ -68,6 +70,8 @@ const FlameGraphCanvas = ({
   collapsing,
   getExtraContextMenuButtons,
   selectedView,
+  viewMode,
+  paneView,
   search,
 }: Props) => {
   const styles = getStyles();
@@ -225,6 +229,8 @@ const FlameGraphCanvas = ({
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
           selectedView={selectedView}
+          viewMode={viewMode}
+          paneView={paneView}
           search={search}
         />
       )}

@@ -204,3 +204,20 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 		),
 	}
 }
+
+func (s *Scheduler) ResetRuleMetrics() {
+	s.GroupRules.Reset()
+	s.SimpleNotificationRules.Reset()
+	s.Groups.Reset()
+	s.SimplifiedEditorRules.Reset()
+	s.PrometheusImportedRules.Reset()
+	s.SchedulableAlertRules.Set(0)
+	s.SchedulableAlertRulesHash.Set(0)
+}
+
+func (s *Scheduler) ResetOnStop() {
+	s.BehindSeconds.Set(0)
+	s.Ticker.LastTickTime.Set(0)
+	s.Ticker.NextTickTime.Set(0)
+	s.ResetRuleMetrics()
+}

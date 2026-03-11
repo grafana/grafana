@@ -205,6 +205,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
                   onClick={() => {
                     model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
                   }}
+                  aria-pressed={onlyOverrides}
                 />
               )}
               <Button

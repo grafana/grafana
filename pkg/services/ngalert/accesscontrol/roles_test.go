@@ -64,6 +64,12 @@ func toSnapshotRole(r accesscontrol.RoleRegistration) snapshotRole {
 	for _, p := range r.Role.Permissions {
 		perms = append(perms, snapshotPermission{Action: p.Action, Scope: p.Scope})
 	}
+	sort.Slice(perms, func(i, j int) bool {
+		if perms[i].Action != perms[j].Action {
+			return perms[i].Action < perms[j].Action
+		}
+		return perms[i].Scope < perms[j].Scope
+	})
 	return snapshotRole{
 		Name:        r.Role.Name,
 		DisplayName: r.Role.DisplayName,
