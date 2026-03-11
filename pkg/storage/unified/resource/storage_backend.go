@@ -1033,67 +1033,43 @@ func validateListHistoryRequest(req *resourcepb.ListRequest) error {
 	return nil
 }
 
-// filterHistoryKeysByVersion filters history keys based on version match criteria
-func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListRequest) ([]DataKey, error) {
+// validateVersionFilter checks that version match parameters are valid.
+func validateVersionFilter(req *resourcepb.ListRequest) error {
+	if req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_Exact && req.ResourceVersion <= 0 {
+		return fmt.Errorf("expecting an explicit resource version query when using Exact matching")
+	}
+	return nil
+}
+
+// matchesVersionFilter returns whether a single key passes the version filter.
+func matchesVersionFilter(key DataKey, req *resourcepb.ListRequest) bool {
 	switch req.GetVersionMatchV2() {
 	case resourcepb.ResourceVersionMatchV2_Exact:
-		if req.ResourceVersion <= 0 {
-			return nil, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
-		}
-		exactKeys := make([]DataKey, 0, len(historyKeys))
-		for _, key := range historyKeys {
-			if key.ResourceVersion == req.ResourceVersion {
-				exactKeys = append(exactKeys, key)
-			}
-		}
-		return exactKeys, nil
+		return key.ResourceVersion == req.ResourceVersion
 	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		if req.ResourceVersion > 0 {
-			filteredKeys := make([]DataKey, 0, len(historyKeys))
-			for _, key := range historyKeys {
-				if key.ResourceVersion >= req.ResourceVersion {
-					filteredKeys = append(filteredKeys, key)
-				}
-			}
-			return filteredKeys, nil
+			return key.ResourceVersion >= req.ResourceVersion
 		}
 	default:
 		if req.ResourceVersion > 0 {
-			filteredKeys := make([]DataKey, 0, len(historyKeys))
-			for _, key := range historyKeys {
-				if key.ResourceVersion <= req.ResourceVersion {
-					filteredKeys = append(filteredKeys, key)
-				}
-			}
-			return filteredKeys, nil
+			return key.ResourceVersion <= req.ResourceVersion
 		}
 	}
-	return historyKeys, nil
+	return true
 }
 
-// applyLiveHistoryFilter applies "live" history logic by ignoring events before the last delete
-func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest) []DataKey {
-	useLatestDeletionAsMinRV := req.ResourceVersion == 0 && req.Source != resourcepb.ListRequest_TRASH && req.GetVersionMatchV2() != resourcepb.ResourceVersionMatchV2_Exact
-	if !useLatestDeletionAsMinRV {
-		return filteredKeys
+// filterHistoryKeysByVersion filters history keys based on version match criteria
+func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListRequest) ([]DataKey, error) {
+	if err := validateVersionFilter(req); err != nil {
+		return nil, err
 	}
-
-	latestDeleteRV := int64(0)
-	for _, key := range filteredKeys {
-		if key.Action == DataActionDeleted && key.ResourceVersion > latestDeleteRV {
-			latestDeleteRV = key.ResourceVersion
+	filtered := make([]DataKey, 0, len(historyKeys))
+	for _, key := range historyKeys {
+		if matchesVersionFilter(key, req) {
+			filtered = append(filtered, key)
 		}
 	}
-	if latestDeleteRV > 0 {
-		liveKeys := make([]DataKey, 0, len(filteredKeys))
-		for _, key := range filteredKeys {
-			if key.ResourceVersion > latestDeleteRV {
-				liveKeys = append(liveKeys, key)
-			}
-		}
-		return liveKeys
-	}
-	return filteredKeys
+	return filtered, nil
 }
 
 // sortByResourceVersion sorts the history keys based on the sortAscending flag
@@ -1356,44 +1332,85 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Generate a new resource version for the list
 	listRV := k.snowflake.Generate().Int64()
 
-	// Get all history entries by iterating through datastore keys
-	historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
+	// Determine sort order for the datastore iterator.
+	sortOrder := SortOrderDesc
+	if sortAscending {
+		sortOrder = SortOrderAsc
+	}
 
-	// Use datastore.Keys to get all data keys for this specific resource
-	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+	keysIter := k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Name:      key.Name,
-	}, SortOrderAsc) {
+	}, sortOrder)
+
+	// Handle trash differently from regular history — collect all keys
+	// and delegate to processTrashEntries unchanged.
+	if req.Source == resourcepb.ListRequest_TRASH {
+		historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
+		for dataKey, err := range keysIter {
+			if err != nil {
+				return 0, err
+			}
+			historyKeys = append(historyKeys, dataKey)
+		}
+		return k.processTrashEntries(ctx, req, fn, historyKeys, lastSeenRV, sortAscending, listRV)
+	}
+
+	// Non-trash path: filter during iteration.
+	if err := validateVersionFilter(req); err != nil {
+		return 0, err
+	}
+
+	useLatestDeletionAsMinRV := req.ResourceVersion == 0 &&
+		req.GetVersionMatchV2() != resourcepb.ResourceVersionMatchV2_Exact
+
+	historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
+	latestDeleteRV := int64(0)
+
+	for dataKey, err := range keysIter {
 		if err != nil {
 			return 0, err
+		}
+		if !matchesVersionFilter(dataKey, req) {
+			continue
+		}
+		// Pagination can be applied inline when we don't need to scan
+		// all keys for latestDeleteRV first.
+		if !useLatestDeletionAsMinRV && lastSeenRV > 0 {
+			if sortAscending && dataKey.ResourceVersion <= lastSeenRV {
+				continue
+			}
+			if !sortAscending && dataKey.ResourceVersion >= lastSeenRV {
+				continue
+			}
+		}
+		if useLatestDeletionAsMinRV && dataKey.Action == DataActionDeleted && dataKey.ResourceVersion > latestDeleteRV {
+			latestDeleteRV = dataKey.ResourceVersion
 		}
 		historyKeys = append(historyKeys, dataKey)
 	}
 
-	// Handle trash differently from regular history
-	if req.Source == resourcepb.ListRequest_TRASH {
-		return k.processTrashEntries(ctx, req, fn, historyKeys, lastSeenRV, sortAscending, listRV)
+	// Apply live history filter if a deletion was found
+	if latestDeleteRV > 0 {
+		liveKeys := make([]DataKey, 0, len(historyKeys))
+		for _, k := range historyKeys {
+			if k.ResourceVersion > latestDeleteRV {
+				liveKeys = append(liveKeys, k)
+			}
+		}
+		historyKeys = liveKeys
 	}
 
-	// Apply filtering based on version match
-	filteredKeys, filterErr := filterHistoryKeysByVersion(historyKeys, req)
-	if filterErr != nil {
-		return 0, filterErr
+	// When useLatestDeletionAsMinRV is true, pagination can't be applied
+	// while consuming the iterator, so apply it now.
+	if useLatestDeletionAsMinRV {
+		historyKeys = applyPagination(historyKeys, lastSeenRV, sortAscending)
 	}
-
-	// Apply "live" history logic: ignore events before the last delete
-	filteredKeys = applyLiveHistoryFilter(filteredKeys, req)
-
-	// Sort the entries if not already sorted correctly
-	sortByResourceVersion(filteredKeys, sortAscending)
-
-	// Pagination: filter out items up to and including lastSeenRV
-	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
 
 	// Create pull-style iterator from BatchGet
-	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, pagedKeys))
+	next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, historyKeys))
 	defer stop()
 
 	iter := kvHistoryIterator{
