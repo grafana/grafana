@@ -19,6 +19,12 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 aliases:
   - ../../../observability-as-code/provision-resources/use-git-sync/ # /docs/grafana/next/observability-as-code/provision-resources/use-git-sync/
   - ../provision-resources/use-git-sync/
+refs:
+  roles-and-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
 ---
 
 # Work with provisioned repositories in Git Sync
@@ -93,16 +99,41 @@ To update or delete your repository configuration after you've completed setup:
 
 ## Manage folder permissions
 
-By default, folders provisioned with Git Sync have these default permissions:
+By default, folders provisioned with Git Sync have these roles with its associated permissions:
 
 - Admin = Admin
 - Editor = Editor
 - Viewer = Viewer.
 
-Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
+Refer to [Roles and permissions](ref:roles-and-permissions) for more information on what each role implies. 
 
-To modify the permissions make sure the provisioned folder has the `_folder.json` metadata file with the folder's UID.
+To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**.You can modify permissions:
 
-### Create the metadata file
+- From the UI, refer to [Manage dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/).
+- Using the API.
+
+### The folder json metadata file
+
+Each folder in a synced repository contains a `.folder.json` file at its root:
+
+```json
+{
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "kind": "Folder",
+  "metadata": {
+    "name": "folder_uid"
+  },
+  "spec": {
+    "title": "folder_ui_name"
+  }
+}
+```
+
+Where:
+
+- `folder_uid` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references 
+- `folder_ui_name` is the display name shown in the Grafana UI
+
+### Create the folder metadata file
 
 TBC
