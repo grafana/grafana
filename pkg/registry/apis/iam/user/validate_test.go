@@ -482,7 +482,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				IsGrafanaAdmin: false,
 			},
 			expectError:   true,
-			errorContains: "updating fields beyond org role requires service identity",
+			errorContains: "updating fields beyond org role requires service identity or grafana admin",
 		},
 		{
 			name: "grafana admin updating non-role fields is allowed",

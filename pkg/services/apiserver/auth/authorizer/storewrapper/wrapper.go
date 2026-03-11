@@ -24,7 +24,7 @@ var (
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
-	BeforeUpdate(ctx context.Context, obj runtime.Object) error
+	BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
@@ -215,7 +215,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	// Enforce authorization using the original user context
-	if err := a.authorizer.BeforeUpdate(a.userCtx, updatedObj); err != nil {
+	if err := a.authorizer.BeforeUpdate(a.userCtx, oldObj, updatedObj); err != nil {
 		return nil, err
 	}
 
@@ -239,7 +239,7 @@ func (b *NoopAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return nil
 }
 
-func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return nil
 }
 
@@ -264,7 +264,7 @@ func (d *DenyAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return ErrUnauthorized
 }
 
-func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (d *DenyAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return ErrUnauthorized
 }
 

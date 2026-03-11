@@ -287,7 +287,7 @@ func TestWrapper_Update(t *testing.T) {
 	assert.True(t, updated)
 
 	// Now verify that the authorization is performed inside UpdatedObject
-	setup.mockAuth.On("BeforeUpdate", mock.MatchedBy(matchesOriginalUser()), oldObj).Return(nil)
+	setup.mockAuth.On("BeforeUpdate", mock.MatchedBy(matchesOriginalUser()), oldObj, oldObj).Return(nil)
 	obj, err := authzInfo.UpdatedObject(context.Background(), oldObj)
 	require.NoError(t, err)
 	assert.Equal(t, oldObj, obj)
@@ -434,8 +434,8 @@ func (f *FakeAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) e
 	return args.Error(0)
 }
 
-func (f *FakeAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
-	args := f.Called(ctx, obj)
+func (f *FakeAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
+	args := f.Called(ctx, oldObj, obj)
 	return args.Error(0)
 }
 

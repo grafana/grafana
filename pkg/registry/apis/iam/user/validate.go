@@ -15,7 +15,6 @@ import (
 )
 
 func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.User) error {
-	// FIXME: Use claims.AuthInfoFrom(ctx) in the future
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -48,7 +47,6 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 }
 
 func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, oldObj, newObj *iamv0alpha1.User) error {
-	// FIXME: Use claims.AuthInfoFrom(ctx) in the future
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -91,11 +89,11 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 
 	// Only service identities or Grafana admins may update profile fields (login, email, title, etc.).
 	// OrgAdmins are allowed through the RBAC gate with "org.users:write" but
-	// are restricted to role and admin-guarded fields only.
-	if !isServiceUser && !onlyAllowedFieldsChanged(oldObj.Spec, newObj.Spec) {
+	// are restricted to only role updates.
+	if !isServiceUser && !isGrafanaAdmin && !onlyAllowedFieldsChanged(oldObj.Spec, newObj.Spec) {
 		return apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 			newObj.Name,
-			fmt.Errorf("updating fields beyond org role requires service identity"))
+			fmt.Errorf("updating fields beyond org role requires service identity or grafana admin"))
 	}
 
 	if newObj.Spec.Login == "" && newObj.Spec.Email == "" {

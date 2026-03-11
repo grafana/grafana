@@ -113,8 +113,8 @@ func (f *StoreWrapper) BeforeCreate(ctx context.Context, obj runtime.Object) err
 	return nil
 }
 
-// BeforeUpdate returns Forbidden if the target user is in the hidden users list.
-func (f *StoreWrapper) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+// BeforeUpdate returns Forbidden if the target user (old object) is in the hidden users list.
+func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	cfg, err := f.cfgProvider.Get(ctx)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (f *StoreWrapper) BeforeUpdate(ctx context.Context, obj runtime.Object) err
 		return nil
 	}
 
-	u, ok := obj.(*iamv0.User)
+	u, ok := oldObj.(*iamv0.User)
 	if !ok {
 		return nil
 	}
