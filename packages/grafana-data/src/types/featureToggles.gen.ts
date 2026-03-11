@@ -1667,4 +1667,9 @@ export interface FeatureToggles {
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }
