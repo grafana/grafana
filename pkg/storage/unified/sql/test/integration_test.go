@@ -59,6 +59,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.EnableSQLKVBackend = false
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
+	cfg.DisablePruner = db.IsTestDbSQLite()
 	dbstore := db.InitTestDB(t)
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
@@ -301,6 +302,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	cfg.EnableSearch = true
 	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
 	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+	cfg.DisablePruner = db.IsTestDbSQLite()
 
 	features := featuremgmt.WithFeatures()
 

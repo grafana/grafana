@@ -44,10 +44,10 @@ jobs:
         token: ${{ steps.generate_token.outputs.token }}
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        go-version-file: go.mod
+        cache-build: 'false'
 
     - name: Configure Git
       run: |

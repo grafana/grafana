@@ -69,6 +69,9 @@ const (
 	ReasonCompletedWithWarnings = "CompletedWithWarnings"
 	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
 	ReasonResourceInvalid = "ResourceInvalid"
+	// ReasonMissingFolderMetadata indicates the pull completed but some folders are missing
+	// _folder.json metadata files; their UIDs are unstable and may change on re-sync.
+	ReasonMissingFolderMetadata = "MissingFolderMetadata"
 )
 
 // Condition reasons for the Quota condition
