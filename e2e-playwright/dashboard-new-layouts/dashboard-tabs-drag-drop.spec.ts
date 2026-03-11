@@ -1,7 +1,8 @@
 import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
 
-import { importTestDashboard } from '../dashboard-new-layouts/utils';
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
+
+import { importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
