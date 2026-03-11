@@ -117,10 +117,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       panel.onFieldConfigChange(fieldConfigWithOverrides, true);
     }
 
-    // Handle preview suggestions
-    if (!options.withModKey) {
-      this.onToggleVizPicker();
-    }
+    this.onToggleVizPicker();
   };
 
   onSetSearchQuery = (searchQuery: string) => {
