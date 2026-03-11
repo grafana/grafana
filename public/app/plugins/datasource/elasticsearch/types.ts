@@ -135,7 +135,7 @@ export interface ElasticsearchAnnotationQuery {
   index?: string;
 }
 
-export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+export type RangeMap = Record<string, { gte: number; lte: number; format: string }>;
 
 export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
 
