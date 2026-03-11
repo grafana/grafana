@@ -76,9 +76,15 @@ type Broadcaster[T any] interface {
 // when either ctx is cancelled or input is closed.
 func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
 	b := &broadcaster[T]{
-		started: make(chan struct{}),
+		shouldTerminate: ctx.Done(),
+		cache:           newChannelCache[T](ctx, 100),
+		subscribe:       make(chan chan T, chanBufferLen),
+		unsubscribe:     make(chan (<-chan T), chanBufferLen),
+		subs:            make(map[<-chan T]chan T),
+		terminated:      make(chan struct{}),
 	}
-	b.init(ctx, input)
+
+	go b.stream(input)
 
 	return b
 }
@@ -86,8 +92,8 @@ func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
 type broadcaster[T any] struct {
 	// lifecycle management
 
-	started, terminated chan struct{}
-	shouldTerminate     <-chan struct{}
+	terminated      chan struct{}
+	shouldTerminate <-chan struct{}
 
 	// subscription management
 
@@ -98,13 +104,6 @@ type broadcaster[T any] struct {
 }
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
-	select {
-	case <-ctx.Done(): // client canceled
-		return nil, ctx.Err()
-	case <-b.started: // wait for broadcaster to start
-	}
-
-	// create the subscription
 	sub := make(chan T, 100)
 
 	select {
@@ -118,18 +117,9 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 }
 
 func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
-	// wait for broadcaster to start. In practice, the only way to reach
-	// Unsubscribe is by first having called Subscribe, which means we have
-	// already started. But a malfunctioning caller may call Unsubscribe freely,
-	// which would cause us to block forever the goroutine of the caller when
-	// trying to send to a nil `b.unsubscribe` or receive from a nil
-	// `b.terminated` if we haven't yet initialized those values. This would
-	// mean leaking that malfunctioninig caller's goroutine, so we rather make
-	// Unsubscribe safe in any possible case
 	if sub == nil {
 		return
 	}
-	<-b.started // wait for broadcaster to start
 
 	select {
 	case b.unsubscribe <- sub: // success submitting unsubscription
@@ -138,23 +128,6 @@ func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
 }
 
 const chanBufferLen = 100
-
-// init initializes the broadcaster. It should not be run more than once.
-func (b *broadcaster[T]) init(ctx context.Context, input <-chan T) {
-	// initialize our internal state
-	b.shouldTerminate = ctx.Done()
-	b.cache = newChannelCache[T](ctx, 100)
-	b.subscribe = make(chan chan T, chanBufferLen)
-	b.unsubscribe = make(chan (<-chan T), chanBufferLen)
-	b.subs = make(map[<-chan T]chan T)
-	b.terminated = make(chan struct{})
-
-	// start handling incoming data from the provided input channel
-	go b.stream(input)
-
-	// unblock any Subscribe/Unsubscribe calls since we are ready to handle them
-	close(b.started)
-}
 
 // stream acts a message broker between the watch implementation that receives a
 // raw stream of events and the individual clients watching for those events.
