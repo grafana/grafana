@@ -3,23 +3,85 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const (
+	folderMetadataFileName = "_folder.json"
+)
+
+// ErrMissingFolderMetadata is a sentinel error for missing _folder.json files.
+var ErrMissingFolderMetadata = errors.New("missing folder metadata")
+
+// MissingFolderMetadata is returned when a folder in the repository does not
+// have a _folder.json file and thus has an unstable hash-derived UID.
+type MissingFolderMetadata struct {
+	Path string
+}
+
+func (e *MissingFolderMetadata) Error() string {
+	return fmt.Sprintf("folder %q is missing folder metadata file - folder UID will be auto-generated and may change on next sync.", e.Path)
+}
+
+// Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
+func (e *MissingFolderMetadata) Unwrap() error {
+	return ErrMissingFolderMetadata
+}
+
+// NewMissingFolderMetadata creates a MissingFolderMetadata error for the given folder path.
+func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
+	return &MissingFolderMetadata{Path: path}
+}
+
+// FindFoldersMissingMetadata returns folder paths from source that do not have
+// a corresponding _folder.json metadata file.
+func FindFoldersMissingMetadata(source []repository.FileTreeEntry) []string {
+	seenFolders := make([]string, 0)
+	foldersWithMeta := make(map[string]struct{})
+
+	for _, file := range source {
+		path := file.Path
+		if !file.Blob {
+			if !strings.HasSuffix(path, "/") {
+				path += "/"
+			}
+			seenFolders = append(seenFolders, path)
+		} else if IsFolderMetadataFile(path) {
+			parent := safepath.Dir(path)
+			if parent != "" {
+				foldersWithMeta[parent] = struct{}{}
+			}
+		}
+	}
+
+	var missing []string
+	for _, f := range seenFolders {
+		if _, ok := foldersWithMeta[f]; !ok {
+			missing = append(missing, f)
+		}
+	}
+	return missing
+}
 
 // IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
 func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
 	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
 	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
-
-const folderMetadataFileName = "_folder.json"
 
 // IsFolderMetadataFile reports whether path refers to a _folder.json file.
 func IsFolderMetadataFile(path string) bool {
@@ -70,4 +132,135 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 		return "", fmt.Errorf("failed to create folder metadata: %w", err)
 	}
 	return folder.Name, nil
+}
+
+// GetFolderID returns the folder ID for the given path.
+// When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
+// If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
+// Returns an error if reading the metadata file fails for reasons other than not existing.
+func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
+	if folderMetadataEnabled {
+		meta, err := ReadFolderMetadata(ctx, reader, path, ref)
+		if err != nil {
+			// Only fall back to hash-based ID if the file doesn't exist
+			if !errors.Is(err, repository.ErrFileNotFound) {
+				return "", fmt.Errorf("read folder metadata: %w", err)
+			}
+			// File doesn't exist - fall back to hash-based ID
+		} else if meta.Name != "" {
+			return meta.Name, nil
+		}
+	}
+	return ParseFolder(path, reader.Config().Name).ID, nil
+}
+
+// ParseFolderResource constructs a ParsedResource for a folder at the given path.
+// This allows folders to be authorized using the same AuthorizeResource flow as other resources.
+func ParseFolderResource(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (*ParsedResource, error) {
+	config := reader.Config()
+
+	// Try to read existing folder metadata (single read for both metadata and ID)
+	var (
+		folderObj    *folders.Folder
+		folderID     string
+		err          error
+		folderExists bool
+	)
+
+	if folderMetadataEnabled {
+		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
+		if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
+			return nil, fmt.Errorf("read folder metadata: %w", err)
+		}
+
+		// If metadata was found, use its stable UID and mark folder as existing
+		if folderObj != nil && folderObj.Name != "" {
+			folderID = folderObj.Name
+			folderExists = true
+		}
+	}
+
+	// If metadata wasn't found or is disabled, check if folder path exists
+	// The repository interface will handle checking for folder markers (.keep, etc.)
+	if !folderExists {
+		_, err = reader.Read(ctx, path, ref)
+		if err == nil {
+			// Folder exists
+			folderExists = true
+		} else if !errors.Is(err, repository.ErrFileNotFound) {
+			// Some other error occurred
+			return nil, fmt.Errorf("check folder existence: %w", err)
+		}
+		// If err is ErrFileNotFound, folder doesn't exist (folderExists remains false)
+	}
+
+	// If no metadata exists or metadata is disabled, use hash-based ID
+	if folderID == "" {
+		folderID = ParseFolder(path, config.Name).ID
+	}
+
+	// Determine the folder title from the path (last part of the path)
+	folderTitle := safepath.Base(path)
+
+	// If no metadata object exists, create a minimal folder object
+	if folderObj == nil {
+		folderObj = NewFolderManifest(folderID, folderTitle)
+	} else {
+		// Update the title to match the path, even if metadata exists
+		folderObj.Spec.Title = folderTitle
+	}
+
+	// Convert to unstructured
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(folderObj)
+	if err != nil {
+		return nil, fmt.Errorf("convert folder to unstructured: %w", err)
+	}
+	folderUnstructured := &unstructured.Unstructured{Object: unstructuredMap}
+
+	// Get metadata accessor
+	meta, err := utils.MetaAccessor(folderUnstructured)
+	if err != nil {
+		return nil, fmt.Errorf("get metadata accessor: %w", err)
+	}
+
+	// For folder resources, set the folder field to the PARENT folder's ID.
+	// This matches how folder permissions work: when checking permissions on a folder,
+	// we check in the context of its parent folder.
+	parentPath := safepath.Dir(path)
+	var parentFolderID string
+	if parentPath == "" {
+		// Root-level folder - parent is the root (empty string)
+		parentFolderID = ""
+	} else {
+		// Get the parent folder's ID
+		parentFolderID, err = GetFolderID(ctx, reader, parentPath, ref, folderMetadataEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("get parent folder ID: %w", err)
+		}
+	}
+	meta.SetFolder(parentFolderID)
+
+	// Determine the action based on whether the folder exists
+	action := provisioning.ResourceActionUpdate
+	if !folderExists {
+		action = provisioning.ResourceActionCreate
+	}
+
+	return &ParsedResource{
+		Info: &repository.FileInfo{
+			Path: path,
+			Ref:  ref,
+		},
+		Repo: provisioning.ResourceRepositoryInfo{
+			Type:      config.Spec.Type,
+			Namespace: config.Namespace,
+			Name:      config.Name,
+			Title:     config.Spec.Title,
+		},
+		Obj:    folderUnstructured,
+		Meta:   meta,
+		GVK:    folders.FolderResourceInfo.GroupVersionKind(),
+		GVR:    FolderResource,
+		Action: action,
+	}, nil
 }

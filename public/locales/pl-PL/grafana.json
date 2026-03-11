@@ -749,6 +749,10 @@
       }
     },
     "central-alert-history": {
+      "description": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "details": {
         "error": "Błąd podczas ładowania reguły dla tego zdarzenia.",
         "header": {
@@ -786,6 +790,10 @@
         }
       },
       "filterBy": "Filtruj wg:",
+      "tab": {
+        "alert-events": "",
+        "notifications": ""
+      },
       "too-many-events": {
         "text": "Zbyt wiele zdarzeń do wyświetlenia w wybranym okresie. Wyświetlono ostatnie 5000 zdarzeń. Spróbuj użyć krótszego okresu.",
         "title": "Nie można wyświetlić wszystkich zdarzeń"
@@ -895,11 +903,13 @@
       "aria-label-more-actions": "Więcej działań dla punktu kontaktu „{{contactPointName}}”",
       "ariaLabel-delete": "Usuń",
       "button-edit": "Edytuj",
+      "button-history": "",
       "button-view": "Wyświetl",
       "export-ariaLabel-export": "Eksportuj",
       "export-label-export": "Eksport",
       "label-delete": "Usuń",
       "label-manage-permissions": "Zarządzaj uprawnieniami",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Nie można edytować aprowizowanych punktów kontaktu w interfejsie użytkownika"
     },
     "contact-point-selector": {
@@ -2104,6 +2114,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Nie znaleziono źródeł danych"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Czy na pewno chcesz usunąć „{{muteTiming}}”?"
     },
@@ -2201,47 +2217,8 @@
       "body-no-alertmanager-found": "Nie udało się znaleźć zewnętrznych menedżerów alertów i możesz nie mieć dostępu do wbudowanego menedżera alertów Grafany.",
       "title-no-alertmanager-found": "Nie znaleziono menedżera alertów"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Szukaj według punktu kontaktu",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Wybierz punkt kontaktowy",
       "search-query-input-placeholder-search": "Szukaj"
     },
@@ -2406,6 +2383,7 @@
       "tooltip-managed-by-plugin": "Ta reguła jest zarządzana przez wtyczkę {{pluginName}}"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Zwiń",
       "aria-label-expand": "Rozwiń",
       "aria-label-more": "więcej działań dotyczących zasad",
@@ -2416,9 +2394,12 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Wszystkie alerty będą obsługiwane przez zasady domyślne, o ile nie zostaną znalezione inne pasujące zasady.",
         "title": "Domyślne zasady",
-        "update": "Aktualizuj zasady domyślne"
+        "update": "",
+        "route-count_one": "",
+        "route-count_few": "",
+        "route-count_many": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Usuń zasady",
@@ -2433,7 +2414,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtruj zasady powiadomień, używając oddzielonej przecinkami listy dopasowań, np.:<1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Zasady generowane automatycznie",
       "matchers": "Dopasowania",
       "metadata": {
@@ -2466,24 +2447,23 @@
         "n-instances_many": "instancji",
         "n-instances_other": "instancji"
       },
-      "new-child": "Nowe zasady pochodne",
-      "new-policy": "Dodaj nowy zbiór zasad",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Brak dopasowań",
       "reload-policies": "Załaduj ponownie zasady",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Zapisz zasady",
       "update": {
         "please-wait": "Poczekaj, aż zaktualizujemy Twoje zasady powiadomień.",
-        "update-policy": "Zaktualizuj zasady",
+        "update-route": "",
         "updating": "Aktualizacja…"
       },
       "update-errors": {
@@ -2529,9 +2509,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Nowe zasady pochodne",
-      "label-new-sibling-above": "Nowy element pokrewny powyżej",
-      "label-new-sibling-below": "Nowy element pokrewny poniżej"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3535,7 +3515,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Dodaj zasady dotyczące powiadomień"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3576,7 +3556,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Usuń",
       "label-edit": "Edytuj",
-      "label-export": "Eksport"
+      "label-export": "Eksport",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Tak, usuń punkt kontaktu",
@@ -3608,7 +3589,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Edytuj zasady dotyczące powiadomień"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5390,6 +5371,7 @@
       "panel-description": "Zmień opis panelu",
       "panel-edit": "Zmiany panelu",
       "panel-max-repeats-per-row": "Maks. liczba powtórzeń na wiersz",
+      "panel-preset": "",
       "panel-repeat-direction": "Powtórz kierunek",
       "panel-repeat-variable": "Powtórz panel wg",
       "panel-title": "Zmień tytuł panelu",
@@ -5444,6 +5426,7 @@
         "annotation-set": "",
         "dashboard": "Pulpit",
         "element": "Element",
+        "link-set": "",
         "local-variable": "Zmienna lokalna",
         "multiple-elements": "Wiele elementów",
         "multiple-elements-delete-text": "Czy na pewno chcesz usunąć te elementy?",
@@ -5458,6 +5441,12 @@
         "tabs": "Karty",
         "variable": "Zmienna {{type}}",
         "variable-set": "Zmienne"
+      },
+      "links": {
+        "add-link": "",
+        "reorder": "",
+        "select-link": "",
+        "untitled": ""
       },
       "row": {
         "header": {
@@ -6508,6 +6497,11 @@
       "label-use-static-key-dimensions": "Użyj statycznych wymiarów klucza",
       "name-allow-custom-values": "Zezwalaj na wartości niestandardowe"
     },
+    "add-link": {
+      "inline-instance-name": "",
+      "label-link": "",
+      "tooltip": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nie udało się przejść na wybrany pulpit. Spróbuj ponownie.",
@@ -6842,6 +6836,7 @@
       "title": {
         "description": "Opis",
         "panel-links": "Linki panelu",
+        "panel-styles": "",
         "title": "Tytuł",
         "transparent-background": "Przezroczyste tło"
       }
@@ -6929,6 +6924,34 @@
       "usage-count_few": "Używane na {{count}} pulpitach",
       "usage-count_many": "Używane na {{count}} pulpitach",
       "usage-count_other": "Używane na {{count}} pulpitach"
+    },
+    "link-edit-actions": {
+      "add-link": "",
+      "remove-link": "",
+      "update-link": ""
+    },
+    "link-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-links-list": ""
+        }
+      },
+      "render-list": {
+        "aria-label-link": ""
+      }
+    },
+    "link-options": {
+      "icon": "",
+      "include-time-range": "",
+      "include-variables": "",
+      "open-in-new-tab": "",
+      "options-category": "",
+      "show-as-dropdown": "",
+      "show-in-controls-menu": "",
+      "type": "",
+      "type-dashboards": "",
+      "type-link": "",
+      "with-tags": ""
     },
     "managed-badge": {
       "kubectl": "Zarządzane przez Kubectl",
@@ -7028,6 +7051,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Wstecz"
@@ -7040,6 +7066,11 @@
         }
       },
       "title-close": "Zamknij"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Ten pulpit nawigacyjny jest zarządzany z poziomu konfiguracji w usłudze Grafana i nie można go usunąć. Aby go usunąć, usuń pulpit z pliku konfiguracyjnego.",
@@ -9721,6 +9752,9 @@
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
+    "color-picker": {
+      "input-label": ""
+    },
     "color-picker-popover": {
       "palette-tab": "Kolory",
       "spectrum-tab": "Niestandardowe"
@@ -10798,9 +10832,13 @@
     },
     "description-enable-field-selector": "",
     "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
-    "description-enable-logs-highlighting": "Użyj wstępnie zdefiniowanego schematu kolorowania, aby wyróżnić odpowiednie części wierszy logów",
-    "description-show-controls": "Wyświetlaj elementy sterujące, aby przejść do ostatniego lub pierwszego wiersza logu, i filtruj według poziomu logów",
+    "description-enable-logs-highlighting": "",
+    "description-order": "",
+    "description-prettify-json": "",
+    "description-show-controls": "",
     "description-show-log-attributes": "Funkcja eksperymentalna. Gdy wyświetlane są dzienniki OTel, wyświetlane jest dodatkowe pole z odpowiednimi parami klucz-wartość z etykiet i metadanych.",
+    "description-unwrapped-columns": "",
+    "description-wrap-lines": "",
     "field-selector": {
       "aria-label-drag-and-drop-icon": "Ikona przeciągania i upuszczania",
       "clear-button": "Wyczyść",
@@ -12259,10 +12297,12 @@
     "start-modal": {
       "button-start": "Rozpocznij: {{title}}",
       "description-customize-dashboard-elements-visibility": "Dostosuj widoczność elementów pulpitu",
+      "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Wysokości paneli zostaną dostosowane do rozmiaru ekranu",
       "label-autofit": "Autodopasowanie",
       "label-dashboard-links": "Linki na pulpicie",
       "label-display-dashboard-controls": "Wyświetl elementy sterujące pulpitem",
+      "label-hide-logo": "",
       "label-mode": "Tryb",
       "label-time-and-refresh": "Czas i odświeżanie",
       "label-variables": "Zmienne",
@@ -13613,7 +13653,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13709,7 +13751,6 @@
       "alerts-loading": "",
       "card-click": "Wybierz kartę {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Zapytania i wyrażenia",
       "toggle-size": "Przełącz rozmiar paska bocznego",
@@ -14953,6 +14994,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Dane poza zakresem czasu",
       "zoom-to-data": "Powiększ do danych"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

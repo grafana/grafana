@@ -7,7 +7,7 @@ import { mockCombinedRule } from '../../mocks';
 import { alertingFactory } from '../../mocks/server/db';
 import { setupDataSources } from '../../testSetup/datasources';
 
-import { RECEIVER_NAME, listContactPointsScenario } from './ContactPointLink.test.scenario';
+import { RECEIVER_NAME, listContactPointsScenario } from './ContactPointLink.scenario';
 import { Details } from './Details';
 
 const server = setupMockServer();
