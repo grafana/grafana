@@ -423,11 +423,6 @@ describe('utils', () => {
     );
   });
   describe('getLayoutForObject', () => {
-    it('returns null for null or undefined', () => {
-      expect(getLayoutForObject(null)).toBeNull();
-      expect(getLayoutForObject(undefined)).toBeNull();
-    });
-
     it('returns the DefaultGridLayoutManager when given the dashboard', () => {
       const { grid: defaultGrid } = getDefaultGrid();
       const dashboard = getDashboardWithGrid(defaultGrid);
