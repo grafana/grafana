@@ -694,3 +694,31 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestStackIDFromEnvVar(t *testing.T) {
+	t.Setenv("GF_ENVIRONMENT_STACK_ID", "1001")
+
+	cfg := NewCfg()
+	err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+	require.NoError(t, err)
+
+	require.Equal(t, "1001", cfg.StackID)
+}
+
+func TestStackSlugFromEnvVar(t *testing.T) {
+	t.Setenv("GF_ENVIRONMENT_STACK_SLUG", "mystack")
+
+	cfg := NewCfg()
+	err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+	require.NoError(t, err)
+
+	require.Equal(t, "mystack", cfg.Slug)
+}
+
+func TestStackIDDefaultEmpty(t *testing.T) {
+	cfg := NewCfg()
+	err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+	require.NoError(t, err)
+
+	require.Equal(t, "", cfg.StackID)
+}
