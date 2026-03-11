@@ -814,6 +814,10 @@ const (
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
+	// FlagKubernetesTeamsApi
+	// Enables team APIs in the app platform
+	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
+
 	// FlagKubernetesTeamsHandlerRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
@@ -893,4 +897,8 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagInlineLogDetailsNoScrolls
+	// Enables an inline version of Log Details that creates no new scrolls
+	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
 )

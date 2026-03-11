@@ -114,6 +114,10 @@ const dummyProps: Props = {
   queryLibraryRef: undefined,
   queriesChangedIndexAtRun: 0,
 };
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {

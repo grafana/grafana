@@ -38,7 +38,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
-  const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
+  const { closeDetails, detailsMode, setDetailsMode, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -146,6 +146,10 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     [onSearch, reportInteractionWrapper]
   );
 
+  const closeInlineDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
+
   return (
     <div className={styles.header} ref={containerRef}>
       <Input
@@ -250,12 +254,21 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           onClick={toggleDetailsMode}
         />
         <div className={styles.divider} />
-        <IconButton
-          name="times"
-          tooltip={t('logs.log-line-details.close', 'Close log details')}
-          variant="primary"
-          onClick={closeDetails}
-        />
+        {detailsMode === 'sidebar' ? (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-sidebar-details', 'Close log details sidebar')}
+            variant="primary"
+            onClick={closeDetails}
+          />
+        ) : (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-inline-details', 'Close details for this log')}
+            variant="primary"
+            onClick={closeInlineDetails}
+          />
+        )}
       </div>
     </div>
   );
@@ -272,6 +285,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
