@@ -100,7 +100,7 @@ To update or delete your repository configuration after you've completed setup:
 ## Manage folder permissions
 
 {{< admonition type="caution" >}}
-To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**.
+To be able to modify the permissions make sure **each provisioned folder includes the `_folder.json` metadata file with the folder's UID**. This file is created automatically when you connect your repository with Git Sync.
 {{< /admonition >}}
 
 By default, folders provisioned with Git Sync have these roles with its associated permissions:
