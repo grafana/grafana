@@ -12,6 +12,13 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { NEW_LINK } from './links/utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getList: () => [{ meta: { id: 'test', name: 'Test Data Source' } }],
+  }),
+}));
+
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
 }
@@ -281,6 +288,31 @@ describe('DashboardLinksEditView', () => {
 
       expect(getByText('Edit link')).toBeInTheDocument();
       expect(getByText('Back to list')).toBeInTheDocument();
+    });
+
+    it('should not show Provisioned by data source section when no links have origin', () => {
+      dashboard.setState({
+        links: [
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
+        ],
+      });
+      const { queryByText } = render(<settings.Component model={settings} />);
+
+      expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
+    });
+
+    it('should show Provisioned by data source section when links have origin', () => {
+      dashboard.setState({
+        links: [
+          { ...NEW_LINK, title: 'ds-link', origin: { type: 'datasource', group: 'test' } },
+          { ...NEW_LINK, title: 'user-link' },
+        ],
+      });
+      const { getByText } = render(<settings.Component model={settings} />);
+
+      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(getByText('user-link')).toBeInTheDocument();
     });
   });
 });
