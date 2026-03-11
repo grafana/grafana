@@ -864,14 +864,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Options.Key.Namespace, k.withExperimentalClusterScope)
-
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
 			Resource:  req.Options.Key.Resource,
-			Namespace: namespace,
+			Namespace: req.Options.Key.Namespace,
 			Name:      req.Options.Key.Name,
 		},
 		ResourceVersion: req.ResourceVersion,

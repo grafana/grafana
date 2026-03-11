@@ -24,7 +24,8 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			_ = db.Close()
 		})
 		kvOpts := resource.KVBackendOptions{
-			KvStore: resource.NewBadgerKV(db),
+			KvStore:                      resource.NewBadgerKV(db),
+			WithExperimentalClusterScope: true,
 		}
 		backend, err := resource.NewKVStorageBackend(kvOpts)
 		require.NoError(t, err)

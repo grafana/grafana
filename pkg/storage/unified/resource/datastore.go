@@ -906,6 +906,12 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		action = 3
 	}
 
+	// SQL backend saves cluster scoped resources as ""
+	namespace := key.Namespace
+	if namespace == "__cluster__" {
+		namespace = ""
+	}
+
 	switch key.Action {
 	case DataActionCreated:
 		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
@@ -913,7 +919,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			GUID:        key.GUID,
 			Group:       key.Group,
 			Resource:    key.Resource,
-			Namespace:   key.Namespace,
+			Namespace:   namespace,
 			Name:        key.Name,
 			Action:      action,
 			Folder:      key.Folder,
@@ -932,7 +938,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			GUID:        key.GUID,
 			Group:       key.Group,
 			Resource:    key.Resource,
-			Namespace:   key.Namespace,
+			Namespace:   namespace,
 			Name:        key.Name,
 			Action:      action,
 			Folder:      key.Folder,
@@ -950,7 +956,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
-			Namespace:   key.Namespace,
+			Namespace:   namespace,
 			Name:        key.Name,
 			PreviousRV:  previousRV,
 		})
