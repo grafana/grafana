@@ -106,7 +106,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 
 	t.Run("completed with warnings", func(t *testing.T) {
 		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
-		const repo = "missing-folder-meta-completed-with-warnings"
+		const repo = "folder-meta-with-warnings"
 		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo,
 			Target: "folder",
@@ -114,7 +114,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 				// Dashboard in folder without _folder.json → MissingFolderMetadata
 				"testdata/all-panels.json": "myfolder/dashboard.json",
 				// Invalid dashboard at root → ResourceInvalid
-				"testdata/invalid-dashboard-schema.json": "bad-dashboard.json",
+				"testdata/dashboard-missing-name.json": "bad-dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
