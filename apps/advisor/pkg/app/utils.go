@@ -164,16 +164,11 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
-	// Keep failures for other items; replace this item's failures with the retry result
-	otherFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
+	// Pull this item's failures and replace them with the retry result
+	currentFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
 		return f.ItemID == itemToRetry
 	})
-	retryFailures := make([]advisorv0alpha1.CheckReportFailure, len(failures))
-	for i, f := range failures {
-		retryFailures[i] = f
-		retryFailures[i].ItemID = itemToRetry
-	}
-	c.Status.Report.Failures = append(otherFailures, retryFailures...)
+	c.Status.Report.Failures = append(currentFailures, failures...)
 	// Wait for the retry annotation to be persisted before patching the object
 	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
 	if err != nil {

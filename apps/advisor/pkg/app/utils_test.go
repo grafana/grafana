@@ -394,7 +394,7 @@ func TestProcessCheckRetry_AddsNewFailuresFromRetry(t *testing.T) {
 	check := &mockCheck{
 		items: []any{"item"},
 		retryFailures: []advisorv0alpha1.CheckReportFailure{
-			{StepID: "new-step", Item: "new failure"},
+			{StepID: "new-step", Item: "new failure", ItemID: "item"},
 		},
 	}
 
