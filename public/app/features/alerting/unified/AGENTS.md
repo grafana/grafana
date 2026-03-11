@@ -553,6 +553,16 @@ gh pr view 67890
 gh pr diff 67890
 ```
 
+## Learning from Corrections
+
+When the user corrects a mistake you made (wrong API, wrong pattern, wrong approach), assess whether the correction represents a recurring pattern worth documenting. If so, propose a concise addition to this AGENTS.md — but do **NOT** apply it without explicit approval.
+
+Skip proposing an update if the correction is:
+
+- A one-off or highly context-specific fix
+- Already documented in this file
+- A personal preference rather than a project convention
+
 ## Getting Help
 
 - Check patterns in existing `components/` code

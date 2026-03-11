@@ -20,6 +20,16 @@
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
   "types": "./dist/types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "unstable": [
+        "dist/types/unstable.d.ts"
+      ],
+      "testing": [
+        "dist/types/testing.d.ts"
+      ]
+    }
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {

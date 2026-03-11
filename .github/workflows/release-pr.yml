@@ -134,9 +134,8 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
       - name: Configure git user
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"
