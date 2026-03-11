@@ -228,6 +228,7 @@ describe('DashboardControls', () => {
         '_dash.hideVariables',
         '_dash.hideLinks',
         '_dash.hideDashboardControls',
+        '_dash.hidePlaylistNav',
       ]);
     });
 
@@ -267,7 +268,7 @@ describe('DashboardControls', () => {
       expect(scene.state.hideDashboardControls).toBeTruthy();
     });
 
-    it('should not override state if no new state comes from url', () => {
+    it('should reset hide flags when url params are removed', () => {
       const scene = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,
@@ -275,10 +276,10 @@ describe('DashboardControls', () => {
         hideDashboardControls: true,
       });
       scene.updateFromUrl({});
-      expect(scene.state.hideTimeControls).toBeTruthy();
-      expect(scene.state.hideVariableControls).toBeTruthy();
-      expect(scene.state.hideLinksControls).toBeTruthy();
-      expect(scene.state.hideDashboardControls).toBeTruthy();
+      expect(scene.state.hideTimeControls).toBeFalsy();
+      expect(scene.state.hideVariableControls).toBeFalsy();
+      expect(scene.state.hideLinksControls).toBeFalsy();
+      expect(scene.state.hideDashboardControls).toBeFalsy();
     });
 
     it('should not call setState if no changes', () => {
@@ -350,7 +351,9 @@ describe('DashboardControls', () => {
       render(<controls.Component model={controls} />);
 
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
   });
 });
