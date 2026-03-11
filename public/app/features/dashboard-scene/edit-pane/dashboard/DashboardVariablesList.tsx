@@ -129,7 +129,7 @@ export function DashboardVariablesList({ set }: { set: SceneVariableSet }) {
         onClickItem={onClickVariable}
         renderItemLabel={(v) => v.state.name}
       />
-      <Box display="flex" paddingTop={0} paddingBottom={2}>
+      <Box display="flex" paddingTop={1} paddingBottom={2}>
         <Button
           fullWidth
           icon="plus"
