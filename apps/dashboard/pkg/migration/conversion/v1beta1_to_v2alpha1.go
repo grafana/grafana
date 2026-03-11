@@ -2341,10 +2341,8 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 
 			// Extract filter if present (optional frame matcher for transformations)
 			if filterMap, ok := tMap["filter"].(map[string]interface{}); ok {
-				transformationKind.Spec.Filter = &dashv2alpha1.DashboardMatcherConfig{
-					Id:      schemaversion.GetStringValue(filterMap, "id"),
-					Options: filterMap["options"],
-				}
+				mc := buildMatcherConfig(filterMap)
+				transformationKind.Spec.Filter = &mc
 			}
 
 			result = append(result, transformationKind)
@@ -2915,6 +2913,18 @@ func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.D
 	return thresholdsConfig
 }
 
+func buildMatcherConfig(matcherMap map[string]interface{}) dashv2alpha1.DashboardMatcherConfig {
+	mc := dashv2alpha1.DashboardMatcherConfig{
+		Id:      schemaversion.GetStringValue(matcherMap, "id"),
+		Options: matcherMap["options"],
+	}
+	if scopeStr, ok := matcherMap["scope"].(string); ok {
+		s := dashv2alpha1.DashboardMatcherScope(scopeStr)
+		mc.Scope = &s
+	}
+	return mc
+}
+
 func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides {
 	overrides, ok := fieldConfig["overrides"].([]interface{})
 	if !ok || len(overrides) == 0 {
@@ -2938,10 +2948,7 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 		// Map override fields individually
 		if matcher, exists := overrideMap["matcher"]; exists {
 			if matcherMap, ok := matcher.(map[string]interface{}); ok {
-				fieldOverride.Matcher = dashv2alpha1.DashboardMatcherConfig{
-					Id:      schemaversion.GetStringValue(matcherMap, "id"),
-					Options: matcherMap["options"],
-				}
+				fieldOverride.Matcher = buildMatcherConfig(matcherMap)
 			}
 		}
 		if properties, exists := overrideMap["properties"]; exists {
