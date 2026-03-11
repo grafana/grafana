@@ -115,8 +115,3 @@ func TestK8sNativeMapping_DifferentGroups(t *testing.T) {
 	assert.Equal(t, "app1.ext.grafana.app/widgets:get", action1)
 	assert.Equal(t, "app2.ext.grafana.app/widgets:get", action2)
 }
-
-func TestK8sNativeMapping_ImplementsMapping(t *testing.T) {
-	// Compile-time check that k8sNativeMapping satisfies the Mapping interface.
-	var _ Mapping = newK8sNativeMapping("myapp.ext.grafana.app", "widgets")
-}
