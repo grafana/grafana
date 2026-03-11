@@ -352,6 +352,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 				Name: tm.TeamUID,
 			},
 			Subject: iamv0alpha1.TeamBindingspecSubject{
+				Kind: "User",
 				Name: tm.UserUID,
 			},
 			Permission: common.MapTeamPermission(tm.Permission),

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 // FIXME: This is used to make sure we save dashboards in the apiVersion they were original saved in
@@ -23,7 +24,7 @@ import (
 // The response status indicates the original stored version, so we can then request it in an un-converted form
 type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, kind := range resources.SupportedProvisioningResources {
 		// skip from folders as we do them first... so only dashboards
@@ -84,7 +85,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			}
 		}
 
-		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress); err != nil {
+		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
 			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
@@ -99,6 +100,7 @@ func exportResource(ctx context.Context,
 	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
+	generateNewUIDs bool,
 ) error {
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
@@ -126,6 +128,11 @@ func exportResource(ctx context.Context,
 
 		if shim != nil {
 			item, err = shim(ctx, item)
+		}
+
+		if err == nil && generateNewUIDs {
+			item = item.DeepCopy()
+			item.SetName(grafanautil.GenerateShortUID())
 		}
 
 		if err == nil {

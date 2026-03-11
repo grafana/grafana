@@ -76,6 +76,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		connectionFactory,
 		controllerCfg.ResyncInterval(),
 		controllerCfg.DrainTimeout(),
+		controllerCfg.Registry(),
 	)
 
 	if err != nil {

@@ -77,9 +77,10 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry    prometheus.Registerer
-	tracer      tracing.Tracer
-	quotaGetter quotas.QuotaGetter
+	registry     prometheus.Registerer
+	tracer       tracing.Tracer
+	quotaGetter  quotas.QuotaGetter
+	tokenMetrics *repositoryTokenMetrics
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -105,6 +106,7 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
+	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -135,6 +137,7 @@ func NewRepositoryController(
 		minSyncInterval: minSyncInterval,
 		drainTimeout:    drainTimeout,
 		quotaGetter:     quotaGetter,
+		tokenMetrics:    repoTokenMetrics,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -679,7 +682,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			patchOperations = append(patchOperations, tokenOps...)
 		}
 
-		// Adding secure token to object as it will be used for healthchecks and hooks process
 		obj.Secure.Token.Create = token
 	}
 
@@ -826,20 +828,37 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	// - The token has not been recently created, and
 	// - The token will expire before the next resync interval
 	if obj.Secure.Token.IsZero() {
+		rc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
 		return true
 	}
 
+	expiration := time.UnixMilli(obj.Status.Token.Expiration)
+	rc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
+
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
-	shouldRefresh := shouldRefreshBeforeExpiration(time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval)
-	return !recentlyCreated &&
-		shouldRefresh
+	if !recentlyCreated && shouldRefreshBeforeExpiration(expiration, rc.resyncInterval) {
+		rc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
+		return true
+	}
+
+	return false
 }
 
 func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) (common.RawSecureValue, []map[string]any, error) {
+) (_ common.RawSecureValue, _ []map[string]any, err error) {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start).Seconds()
+		if err != nil {
+			rc.tokenMetrics.recordGenerationError()
+		} else {
+			rc.tokenMetrics.recordGeneration(elapsed)
+		}
+	}()
+
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
