@@ -132,7 +132,7 @@ export function getFieldOverrideCategories(
     };
 
     const uniqueScopes = matcherUi.getUniqueScopes?.(data) ?? new Set();
-    const shouldShowScopeSelector = matcherUi.id !== FieldMatcherID.byName && uniqueScopes.size > 1;
+    const shouldShowScopeSelector = uniqueScopes.size > 1;
 
     const htmlId = `${overrideId}-matcher`;
     if (shouldShowScopeSelector) {
