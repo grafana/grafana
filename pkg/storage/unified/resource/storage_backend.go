@@ -33,12 +33,18 @@ import (
 
 const (
 	defaultListBufferSize       = 100
-	prunerMaxEvents             = 20
 	defaultEventRetentionPeriod = 1 * time.Hour
+	defaultEventPruningLimit    = 20
 	defaultEventPruningInterval = 5 * time.Minute
 	defaultSearchLookback       = 1 * time.Second
 	clusterScopeNamespace       = "__cluster__"
 )
+
+// customPrunerHistoryLimits defines resource-specific history limits.
+// The key format is "group/resource".
+var customPrunerHistoryLimits = map[string]int{
+	"plugins.grafana.app/plugins": 3,
+}
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
@@ -301,8 +307,9 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
+	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)
 	counter := 0
-	// iterate over all keys for the resource and delete versions beyond the latest 20
+	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
@@ -314,12 +321,12 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		}
 
 		// Pruner needs to exclude deleted events
-		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+		if counter < prunerMaxLimit && datakey.Action != DataActionDeleted {
 			counter++
 			continue
 		}
 
-		// If we already have 20 versions, delete any more create or update events
+		// If we already have the configured number of versions, delete any more create or update events
 		if datakey.Action != DataActionDeleted {
 			err := k.dataStore.Delete(ctx, datakey)
 			if err != nil {
@@ -588,6 +595,14 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
 	}
 	return cutoffTimestamp
+}
+
+func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
+	key := fmt.Sprintf("%s/%s", group, resource)
+	if limit, ok := customPrunerHistoryLimits[key]; ok {
+		return limit
+	}
+	return defaultEventPruningLimit
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
