@@ -632,11 +632,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1

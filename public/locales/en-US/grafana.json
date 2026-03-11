@@ -9951,11 +9951,11 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Override scope"
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
-      "reducer-value-label": "Reducer value",
       "select-field-placeholder": "Select field reducer"
     },
     "file-dropzone": {
@@ -9978,6 +9978,17 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "Annotations",
+        "nested": "Nested fields",
+        "series": "Series"
+      },
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
