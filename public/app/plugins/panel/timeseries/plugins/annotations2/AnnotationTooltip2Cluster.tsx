@@ -47,8 +47,7 @@ export const AnnotationTooltip2Cluster = ({
         onAnnotationDelete
       );
 
-      const isAlertAnnotation = annoVals.alertId?.[i] != null && annoVals.newState?.[i];
-      const text = !isAlertAnnotation ? (annoVals.text?.[i] ?? '') : '';
+      const text = annoVals.text?.[i] ?? '';
       const alertText = annoVals.data?.[i] ? alertDef.getAlertAnnotationText(annoVals.data[i]) : '';
       const title = annoVals.title?.[i] ?? '';
       const annotationId = annoVals.id?.[i];
@@ -92,7 +91,7 @@ export const AnnotationTooltip2Cluster = ({
 
   return (
     <div data-testid={selectors.pages.Dashboard.Annotations.clusterTooltip} className={styles.wrapper}>
-      <ScrollContainer maxHeight="200px">
+      <ScrollContainer maxHeight="260px">
         <AnnotationTooltipHeader
           text={text}
           isCluster={true}

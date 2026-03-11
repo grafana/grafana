@@ -49,7 +49,7 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
-  id?: string;
+  id?: number;
   from: number;
   to: number;
   tags: string[];
