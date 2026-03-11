@@ -38,7 +38,6 @@ export interface DatasourceState {
 export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
-  isLoading: boolean;
   queryError?: DataQueryError;
 }
 
@@ -72,6 +71,8 @@ export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
+  selectedQueryRefIds: readonly string[];
+  selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;

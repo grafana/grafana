@@ -104,6 +104,8 @@ export const mockUIStateBase = {
   pendingTransformation: null,
   setPendingTransformation: jest.fn(),
   finalizePendingTransformation: jest.fn(),
+  selectedQueryRefIds: [] satisfies readonly string[],
+  selectedTransformationIds: [] satisfies readonly string[],
 };
 
 export const mockTransformToggles = {
@@ -164,7 +166,6 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
       series: [],
       timeRange: getDefaultTimeRange(),
     },
-    isLoading: false,
     queryError: undefined,
     ...qrState,
   };
@@ -178,6 +179,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
+    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
     queryOptions: mockQueryOptionsState,
