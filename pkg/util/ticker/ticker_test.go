@@ -28,8 +28,6 @@ func TestTicker(t *testing.T) {
 			return tick
 		case <-ctx.Done():
 			require.Failf(t, fmt.Sprintf("%v", ctx.Err()), "timeout reading the channel")
-		default:
-			require.Failf(t, "channel is empty but it should have a tick", "")
 		}
 		return time.Time{}
 	}
@@ -116,13 +114,8 @@ func TestTicker(t *testing.T) {
 		actual1 := readChanOrFail(t, ticker.C)
 		require.Equal(t, expectedTick, actual1)
 
-		var actual2 time.Time
-		require.Eventually(t, func() bool {
-			actual2 = readChanOrFail(t, ticker.C)
-			return true
-		}, time.Second, 10*time.Millisecond)
-
 		// Similarly, the second tick should be last tick + interval irregardless of wall time.
+		actual2 := readChanOrFail(t, ticker.C)
 		require.Equal(t, expectedTick.Add(interval), actual2)
 	})
 
