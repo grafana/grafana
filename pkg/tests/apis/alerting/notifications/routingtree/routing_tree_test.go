@@ -188,9 +188,19 @@ func TestIntegrationAccessControl(t *testing.T) {
 					_, err := client.Get(ctx, defaultTreeIdentifier)
 					require.NoError(t, err)
 
-					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
+					expectedError := "Forbidden"
+					if tc.user == org1.Admin {
+						expectedError = "NotFound"
+					}
+					t.Run(fmt.Sprintf("should get %s if resource does not exist", expectedError), func(t *testing.T) {
 						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
-						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+						var matches bool
+						if expectedError == "Forbidden" {
+							matches = errors.IsForbidden(err)
+						} else {
+							matches = errors.IsNotFound(err)
+						}
+						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
 					})
 				})
 			} else {
@@ -238,12 +248,22 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 					expected = updated
 
-					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
+					expectedError := "Forbidden"
+					if tc.user == org1.Admin {
+						expectedError = "NotFound"
+					}
+					t.Run(fmt.Sprintf("should get %s if name does not exist", expectedError), func(t *testing.T) {
 						up := expected.Copy().(*v1beta1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Error(t, err)
-						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+						var matches bool
+						if expectedError == "Forbidden" {
+							matches = errors.IsForbidden(err)
+						} else {
+							matches = errors.IsNotFound(err)
+						}
+						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
 					})
 				})
 			} else {
@@ -269,10 +289,20 @@ func TestIntegrationAccessControl(t *testing.T) {
 					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 					require.NoError(t, err)
 
-					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
+					expectedError := "Forbidden"
+					if tc.user == org1.Admin {
+						expectedError = "NotFound"
+					}
+					t.Run(fmt.Sprintf("should get %s if name does not exist", expectedError), func(t *testing.T) {
 						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
 						require.Error(t, err)
-						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
+						var matches bool
+						if expectedError == "Forbidden" {
+							matches = errors.IsForbidden(err)
+						} else {
+							matches = errors.IsNotFound(err)
+						}
+						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
 					})
 				})
 			} else {
