@@ -2,9 +2,10 @@ import type { PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { getBackendSrv } from '../backendSrv';
 
 import { getPanelPluginMapper } from './mappers/mappers';
-import { initPluginMetas } from './plugins';
+import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas } from './types';
 
 let panels: PanelPluginMetas = {};
@@ -31,6 +32,14 @@ export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
   }
 
   return Object.values(structuredClone(panels));
+}
+
+export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
+  if (!initialized()) {
+    await initPanelPluginMetas();
+  }
+
+  return structuredClone(panels);
 }
 
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
@@ -77,4 +86,20 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
   }
 
   panels = structuredClone(override);
+}
+
+export async function refetchPanelPluginMetas(): Promise<void> {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    panels = settings.panels;
+
+    // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
+    // eslint-disable-next-line no-restricted-syntax
+    config.panels = settings.panels;
+    return;
+  }
+
+  const metas = await refetchPluginMetas();
+  const mapper = getPanelPluginMapper();
+  panels = mapper(metas);
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -119,6 +120,16 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	if opts.Path == "" {
 		responder.Error(apierrors.NewBadRequest("missing request path"))
 		return
+	}
+
+	// Enforce quota for write operations
+	if r.Method == http.MethodPost || r.Method == http.MethodPut {
+		// Post with Original Path is a move operation
+		isCreate := r.Method == http.MethodPost && opts.OriginalPath == ""
+		if err := checkQuota(repo, isCreate); err != nil {
+			respondWithError(responder, err)
+			return
+		}
 	}
 
 	obj, err := c.handleMethodRequest(ctx, r, opts, isDir, dualReadWriter)
@@ -326,6 +337,28 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 	}
 
 	return files, nil
+}
+
+// checkQuota verifies that the repository resource quota allows the operation.
+func checkQuota(repo repository.Repository, isCreate bool) error {
+	cfg := repo.Config()
+	conditions := cfg.Status.Conditions
+
+	if quotas.IsQuotaExceeded(conditions) {
+		return apierrors.NewForbidden(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			cfg.Name,
+			quotas.NewQuotaExceededError(fmt.Errorf("quota exceeded")))
+	}
+
+	if quotas.IsQuotaReached(conditions) && isCreate {
+		return apierrors.NewForbidden(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			cfg.Name,
+			quotas.NewQuotaExceededError(fmt.Errorf("would exceced quota")))
+	}
+
+	return nil
 }
 
 var (

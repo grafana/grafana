@@ -239,7 +239,7 @@ describe('RuleViewer', () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
       await openSilenceDrawer();
 
-      const silenceDrawer = await screen.findByRole('dialog', { name: 'Drawer title Silence alert rule' });
+      const silenceDrawer = await screen.findByRole('dialog', { name: 'Silence alert rule' });
       expect(await within(silenceDrawer).findByLabelText(/^alert rule/i)).toHaveValue(
         grafanaRulerRule.grafana_alert.title
       );

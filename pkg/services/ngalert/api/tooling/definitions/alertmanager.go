@@ -267,12 +267,20 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
+	Receiver                  = config.Receiver
+	Regexp                    = config.Regexp
+	Matchers                  = config.Matchers
+	MatchRegexps              = config.MatchRegexps
+	AmMuteTimeInterval        = config.MuteTimeInterval
+	TimeInterval              = config.TimeInterval
+	InhibitRule               = config.InhibitRule
 )
 
 type MergeResult struct {
 	definition.MergeResult
-	Identifier string
-	ExtraRoute *Route
+	Identifier        string
+	ExtraRoute        *Route
+	ExtraInhibitRules []config.InhibitRule
 }
 
 func (m MergeResult) LogContext() []any {
@@ -609,15 +617,11 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = alertingmodels.ReceiverStatus
-
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
 	Body []alertingmodels.ReceiverStatus
 }
-
-type Integration = alertingmodels.IntegrationStatus
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -793,11 +797,12 @@ func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
 
 // swagger:model
 type PostableUserConfig struct {
-	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes      ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"` // TODO: Move to ConfigRevision?
-	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+	TemplateFiles          map[string]string         `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig     PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs           []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
+	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
+	amSimple               map[string]interface{}    `yaml:"-" json:"-"`
 }
 
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
@@ -835,9 +840,10 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	definition.RenameResourceUsagesInRoutes([]*definition.Route{route}, m.RenameResources)
 
 	return MergeResult{
-		MergeResult: m,
-		Identifier:  mimirCfg.Identifier,
-		ExtraRoute:  route,
+		MergeResult:       m,
+		Identifier:        mimirCfg.Identifier,
+		ExtraRoute:        route,
+		ExtraInhibitRules: mcfg.InhibitRules,
 	}, nil
 }
 

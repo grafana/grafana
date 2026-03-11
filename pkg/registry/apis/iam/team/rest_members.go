@@ -2,19 +2,21 @@ package team
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -30,20 +32,23 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
+func NewTeamMembersREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles,
+	accessClient types.AccessClient) *TeamMembersREST {
 	return &TeamMembersREST{
-		log:      log.New("grafana-apiserver.team.members"),
-		client:   client,
-		tracer:   tracer,
-		features: features,
+		log:          log.New("grafana-apiserver.team.members"),
+		client:       client,
+		tracer:       tracer,
+		features:     features,
+		accessClient: accessClient,
 	}
 }
 
 type TeamMembersREST struct {
-	log      log.Logger
-	client   resourcepb.ResourceIndexClient
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
+	accessClient types.AccessClient
+	log          log.Logger
+	client       resourcepb.ResourceIndexClient
+	tracer       trace.Tracer
+	features     featuremgmt.FeatureToggles
 }
 
 // New implements rest.Storage.
@@ -74,22 +79,37 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//nolint:staticcheck // not migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
-			http.Error(w, "functionality not available", http.StatusForbidden)
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("functionality not available")))
 			return
 		}
 
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
 
-		queryParams, err := url.ParseQuery(r.URL.RawQuery)
-		if err != nil {
-			responder.Error(err)
+		authInfo, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			responder.Error(apierrors.NewUnauthorized("no identity found"))
 			return
 		}
 
-		requester, err := identity.GetRequester(ctx)
+		// https://github.com/grafana/grafana/blob/8649534e37b4c3520af538e311fb3a84c7b9f29f/public/app/features/teams/TeamPages.tsx#L74
+		checkTeamAccess, err := s.accessClient.Check(ctx, authInfo, types.CheckRequest{
+			Namespace: authInfo.GetNamespace(),
+			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
+			Verb:      utils.VerbGetPermissions,
+			Name:      name,
+		}, "")
+		if err != nil || !checkTeamAccess.Allowed {
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
+				name, errors.New("you'll need additional permissions to perform this action. Permissions needed: \"GetPermissions\" on the \"Team\" resource")))
+			return
+		}
+
+		queryParams, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
-			responder.Error(fmt.Errorf("no identity found for request: %w", err))
+			responder.Error(err)
 			return
 		}
 
@@ -114,7 +134,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 				Key: &resourcepb.ResourceKey{
 					Group:     iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group,
 					Resource:  iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource,
-					Namespace: requester.GetNamespace(),
+					Namespace: authInfo.GetNamespace(),
 				},
 				Fields: []*resourcepb.Requirement{
 					{
@@ -136,22 +156,23 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			},
 		}
 
-		result, err := s.client.Search(ctx, searchRequest)
+		searchResult, err := s.client.Search(ctx, searchRequest)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		searchResults, err := parseResults(result, searchRequest.Offset)
+		parsedResult, err := parseResults(searchResult)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		if err := json.NewEncoder(w).Encode(searchResults); err != nil {
-			responder.Error(err)
-			return
+		result := &iamv0alpha1.GetMembersResponse{
+			GetMembersBody: parsedResult,
 		}
+
+		responder.Object(http.StatusOK, result)
 	}), nil
 }
 
@@ -165,7 +186,7 @@ func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetMembersBody, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse) (iamv0alpha1.GetMembersBody, error) {
 	if result == nil {
 		return iamv0alpha1.GetMembersBody{}, nil
 	}

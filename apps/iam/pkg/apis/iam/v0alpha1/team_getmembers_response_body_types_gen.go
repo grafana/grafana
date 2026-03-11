@@ -15,6 +15,11 @@ func NewGetMembersTeamUser() *GetMembersTeamUser {
 	return &GetMembersTeamUser{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for GetMembersTeamUser.
+func (GetMembersTeamUser) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersTeamUser"
+}
+
 // +k8s:openapi-gen=true
 type GetMembersBody struct {
 	Items []GetMembersTeamUser `json:"items"`
@@ -26,9 +31,8 @@ func NewGetMembersBody() *GetMembersBody {
 		Items: []GetMembersTeamUser{},
 	}
 }
-func (GetMembersTeamUser) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersTeamUser"
-}
+
+// OpenAPIModelName returns the OpenAPI model name for GetMembersBody.
 func (GetMembersBody) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.GetMembersBody"
 }

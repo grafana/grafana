@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/grafana-e2etest-datasource",
-  "version": "12.4.0-pre",
+  "version": "13.0.0-pre",
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
@@ -39,7 +39,7 @@
     "@grafana/ui": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-router-dom": "^6.22.0",
+    "react-router-dom": "^6.26.1",
     "rxjs": "7.8.1",
     "tslib": "2.6.3"
   },

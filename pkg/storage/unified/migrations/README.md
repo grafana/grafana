@@ -202,7 +202,7 @@ func MyResourceMigration(migrator migrator.MyResourceMigrator) migrations.Migrat
         ID:          "myresources",
         MigrationID: "myresources migration",
         Resources: []migrations.ResourceInfo{
-            {GroupResource: gr, LockTable: "my_resource_table"},
+            {GroupResource: gr, LockTables: []string{"my_resource_table"}},
         },
         Migrators: map[schema.GroupResource]migrations.MigratorFunc{
             gr: migrator.MigrateMyResources,

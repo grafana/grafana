@@ -11,10 +11,10 @@
       },
       "connection-limits": {
         "auto-max-idle": "Otomatik maksimum boşta bağlantı sayısı",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-auto-max-idle": "<i>Maksimum boşta bağlantı sayısını</i>, <i>Maksimum açık bağlantı</i> sayısıyla otomatik olarak eşitlemek istiyorsanız bu seçeneği etkinleştirin. Maksimum açık bağlantı sayısı ayarlanmamışsa varsayılan değere ayarlanır ({{defaultMaxIdle}}).",
+        "content-max-idle": "Boşta bağlantı havuzunda tutulacak maksimum bağlantı sayısıdır. <i>Maksimum açık bağlantı</i> değeri 0'dan büyük ve <i>Maksimum boşta bağlantı</i> değerinden küçükse <i>Maksimum boşta bağlantı</i> değeri, <i>Maksimum açık bağlantı</i>değerine düşürülür. 0 olarak ayarlanırsa boşta bağlantılar tutulmaz.",
         "content-max-lifetime": "Saniye cinsinden bir bağlantının yeniden kullanılabileceği maksimum süre. 0 olarak ayarlanırsa bağlantılar süresiz olarak yeniden kullanılır.",
-        "content-max-open": "",
+        "content-max-open": "Veritabanına açılabilecek maksimum açık bağlantı sayısı. <i>Maksimum boş bağlantı</i> sayısı 0'dan büyükse ve <i>Maksimum açık bağlantı</i> sayısı <i>Maksimum boş bağlantı</i> sayısından azsa <i>Maksimum boş bağlantı</i> sınırı, <i>Maksimum açık bağlantı</i> sınırıyla eşitlenecek şekilde azaltılır. 0 olarak ayarlanırsa açık bağlantı sayısı için bir sınır yoktur.",
         "max-idle": "Maks. boşta",
         "max-lifetime": "Maksimum kullanım süresi",
         "max-open": "Maks. açık",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
+        "content-invalid-query": "Sorgunuz geçersiz. Ayrıntılar için aşağıya bakın. <br />Ancak yine de bu sorguyu çalıştırabilirsiniz.",
         "editor-modes": {
           "label-builder": "Oluşturucu",
           "label-code": "Kod"
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Metin Alanı",
+          "valueField": "Değer Alanı"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Sorguyu biçimlendir"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Bu sorgu çalıştırıldığında <strong>{{bytes}}</strong> veri işlenecek.",
         "validating-query": "Sorgu doğrulanıyor..."
       },
       "raw-editor": {

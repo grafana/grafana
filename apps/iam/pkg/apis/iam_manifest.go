@@ -289,6 +289,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "ExternalGroupMappings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.externalGroupId",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

@@ -52,6 +52,7 @@ export function useWizardSubmission({
     const formData = getValues();
 
     if (currentStepConfig?.submitOnNext) {
+      setStepStatusInfo({ status: 'idle' });
       const fieldsToValidate =
         activeStep === 'connection' || activeStep === 'authType'
           ? (['repository'] as const)
@@ -121,8 +122,11 @@ export function useWizardSubmission({
               },
             });
           } else if (errors.length > 0) {
+            const visibleFields = currentStepConfig?.formFields;
             for (const [field, errorMessage] of errors) {
-              setError(field, errorMessage);
+              if (!visibleFields || visibleFields.includes(field)) {
+                setError(field, errorMessage);
+              }
             }
             const combinedMessage = errors.map(([, err]) => err.message).join('\n');
             setStepStatusInfo({

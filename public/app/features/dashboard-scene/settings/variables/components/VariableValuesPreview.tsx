@@ -9,7 +9,7 @@ import { SceneVariable, VariableValueOption, VariableValueOptionProperties } fro
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-interface VariableValuesPreviewProps {
+export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
 }
@@ -115,7 +115,7 @@ function VariableValuesWithPropsPreview({
         className={styles.table}
         columns={columns}
         data={data}
-        getRowId={(r) => String(r.value)}
+        getRowId={(r) => JSON.stringify(r)}
         pageSize={8}
       />
     </div>

@@ -1,6 +1,8 @@
 import { BootData, PanelPluginMeta } from '@grafana/data';
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { VisualizationSelectPaneTab } from '../../public/app/features/dashboard/components/PanelEditor/types';
+
 test.describe(
   'Panels smokescreen',
   {
@@ -46,7 +48,11 @@ test.describe(
           // Select the panel type in the viz picker
           await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
           await vizPicker.click({ force: true });
-          await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('All visualizations')).click();
+          await dashboardPage
+            .getByGrafanaSelector(
+              selectors.components.Tab.title(VisualizationSelectPaneTab[VisualizationSelectPaneTab.Visualizations])
+            )
+            .click();
           await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
 
           // Verify panel type is selected
