@@ -1,4 +1,10 @@
-import { FieldColorModeId, VisualizationPresetsSupplier, VisualizationSuggestion, VizOrientation } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigSource,
+  VisualizationPresetsSupplier,
+  VisualizationSuggestion,
+  VizOrientation,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BigValueColorMode,
@@ -11,6 +17,41 @@ import {
 
 import { defaultOptions, Options } from './panelcfg.gen';
 
+const BASE_OPTIONS = {
+  ...defaultOptions,
+  textMode: BigValueTextMode.Auto,
+  wideLayout: true,
+  justifyMode: BigValueJustifyMode.Auto,
+  showPercentChange: false,
+  percentChangeColorMode: PercentChangeColorMode.Standard,
+};
+
+const AUTO_OPTIONS = {
+  ...BASE_OPTIONS,
+  orientation: VizOrientation.Auto,
+};
+
+const HORIZONTAL_OPTIONS = {
+  ...BASE_OPTIONS,
+  orientation: VizOrientation.Horizontal,
+};
+
+const THRESHOLD_FIELD_CONFIG: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
+  },
+  overrides: [],
+};
+
+const FIXED_BLUE_FIELD_CONFIG: FieldConfigSource<Partial<GraphFieldConfig>> = {
+  defaults: {
+    color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
+  },
+  overrides: [],
+};
+
+// --- Single series presets ---
+
 /**
  * Threshold value preset - color from thresholds, no sparkline
  */
@@ -18,23 +59,11 @@ const thresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConf
   return {
     name: t('stat.presets.threshold-value', 'Threshold value'),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Auto,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Value,
       graphMode: BigValueGraphMode.None,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
 
@@ -45,23 +74,11 @@ const thresholdValueSparklinePreset = (): VisualizationSuggestion<Options, Graph
   return {
     name: t('stat.presets.threshold-value-sparkline', 'Threshold value with sparkline'),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Auto,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Value,
       graphMode: BigValueGraphMode.Area,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
 
@@ -72,23 +89,11 @@ const thresholdBackgroundPreset = (): VisualizationSuggestion<Options, GraphFiel
   return {
     name: t('stat.presets.threshold-background', 'Threshold background'),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Auto,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Background,
       graphMode: BigValueGraphMode.None,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
 
@@ -99,25 +104,51 @@ const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, 
   return {
     name: t('stat.presets.threshold-background-sparkline', 'Threshold background with sparkline'),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Auto,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Background,
       graphMode: BigValueGraphMode.Area,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
+
+/**
+ * Wide list preset - horizontal layout, name and value, wide layout, fixed color, area sparkline
+ */
+const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('stat.presets.wide-list', 'Wide list'),
+    // description: t('stat.presets.wide-list-desc', 'Color mode none, text mode value and name, text align center, single color'),
+    options: {
+      ...HORIZONTAL_OPTIONS,
+      textMode: BigValueTextMode.ValueAndName,
+      colorMode: BigValueColorMode.None,
+      graphMode: BigValueGraphMode.Area,
+    },
+    fieldConfig: FIXED_BLUE_FIELD_CONFIG,
+  };
+};
+
+/**
+ * List preset - horizontal layout, name and value, fixed color, area sparkline
+ */
+const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
+  return {
+    name: t('stat.presets.list', 'List'),
+    // description: t('stat.presets.list_desc', 'Color mode none, text mode value and name, text align center, single color'),
+    options: {
+      ...HORIZONTAL_OPTIONS,
+      textMode: BigValueTextMode.ValueAndName,
+      wideLayout: false,
+      colorMode: BigValueColorMode.None,
+      graphMode: BigValueGraphMode.Area,
+      justifyMode: BigValueJustifyMode.Center,
+    },
+    fieldConfig: FIXED_BLUE_FIELD_CONFIG,
+  };
+};
+
+// --- Few series presets ---
 
 /**
  * Horizontal threshold value preset - horizontal layout, color from thresholds, no sparkline
@@ -130,23 +161,11 @@ const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, Grap
     //   'Color from thresholds, horizontal, no graph'
     // ),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Horizontal,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...HORIZONTAL_OPTIONS,
       colorMode: BigValueColorMode.Value,
       graphMode: BigValueGraphMode.None,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
 
@@ -161,79 +180,11 @@ const horizontalThresholdValueSparklinePreset = (): VisualizationSuggestion<Opti
     //   'Color from thresholds, horizontal'
     // ),
     options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Horizontal,
-      textMode: BigValueTextMode.Auto,
-      wideLayout: true,
+      ...HORIZONTAL_OPTIONS,
       colorMode: BigValueColorMode.Value,
       graphMode: BigValueGraphMode.Area,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
     },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Thresholds, fixedColor: '#ad46ff' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
-  };
-};
-
-/**
- * Wide list preset - horizontal layout, name and value, wide layout, fixed color, area sparkline
- */
-const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
-    name: t('stat.presets.wide-list', 'Wide list'),
-    // description: t('stat.presets.wide-list-desc', 'Color mode none, text mode value and name, text align center, single color'),
-    options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Horizontal,
-      textMode: BigValueTextMode.ValueAndName,
-      wideLayout: true,
-      colorMode: BigValueColorMode.None,
-      graphMode: BigValueGraphMode.Area,
-      justifyMode: BigValueJustifyMode.Auto,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
-    },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
-  };
-};
-
-/**
- * List preset - horizontal layout, name and value, fixed color, area sparkline
- */
-const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
-  return {
-    name: t('stat.presets.list', 'List'),
-    // description: t('stat.presets.list_desc', 'Color mode none, text mode value and name, text align center, single color'),
-    options: {
-      ...defaultOptions,
-      orientation: VizOrientation.Horizontal,
-      textMode: BigValueTextMode.ValueAndName,
-      wideLayout: false,
-      colorMode: BigValueColorMode.None,
-      graphMode: BigValueGraphMode.Area,
-      justifyMode: BigValueJustifyMode.Center,
-      showPercentChange: false,
-      percentChangeColorMode: PercentChangeColorMode.Standard,
-    },
-    fieldConfig: {
-      defaults: {
-        color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' },
-      },
-      overrides: [],
-    },
-    cardOptions: {},
+    fieldConfig: THRESHOLD_FIELD_CONFIG,
   };
 };
 
