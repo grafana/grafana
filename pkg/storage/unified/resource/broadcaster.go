@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"io"
 )
 
@@ -18,7 +17,7 @@ type Broadcaster[T any] interface {
 func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
 	b := &broadcaster[T]{
 		shouldTerminate: ctx.Done(),
-		cache:           newChannelCache[T](ctx, 100),
+		cache:           newRingBuffer[T](100),
 		subscribe:       make(chan chan T, chanBufferLen),
 		unsubscribe:     make(chan (<-chan T), chanBufferLen),
 		subs:            make(map[<-chan T]chan T),
@@ -38,7 +37,7 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache       channelCache[T]
+	cache       ringBuffer[T]
 	subscribe   chan chan T
 	unsubscribe chan (<-chan T)
 	subs        map[<-chan T]chan T
@@ -103,8 +102,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 
 		case sub := <-b.subscribe: // subscribe
 			// send initial batch of cached items
-			err := b.cache.ReadInto(sub)
-			if err != nil {
+			if !b.cache.readInto(sub) {
 				close(sub)
 				continue
 			}
@@ -118,7 +116,7 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if !ok {
 				return
 			}
-			b.cache.Add(item)
+			b.cache.add(item)
 
 			var slow []<-chan T
 			for _, sub := range b.subs {
@@ -138,126 +136,42 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}
 }
 
-const defaultCacheSize = 100
-
-type channelCache[T any] interface {
-	Len() int
-	Add(item T)
-	Get(i int) T
-	Range(f func(T) error) error
-	Slice() []T
-	ReadInto(dst chan T) error
+// ringBuffer is a fixed-size circular buffer. It is not safe for concurrent
+// use — the broadcaster's single stream() goroutine is the only caller.
+type ringBuffer[T any] struct {
+	buf  []T
+	zero int // index of the oldest item
+	len  int // number of items currently stored
 }
 
-type localCache[T any] struct {
-	cache     []T
-	size      int
-	cacheZero int
-	cacheLen  int
-	add       chan T
-	read      chan chan T
-	ctx       context.Context
-}
-
-func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
-	c := &localCache[T]{}
-
-	c.ctx = ctx
+func newRingBuffer[T any](size int) ringBuffer[T] {
 	if size <= 0 {
-		size = defaultCacheSize
+		size = 100
 	}
-	c.size = size
-	c.cache = make([]T, c.size)
-
-	c.add = make(chan T)
-	c.read = make(chan chan T)
-
-	go c.run()
-
-	return c
+	return ringBuffer[T]{
+		buf: make([]T, size),
+	}
 }
 
-func (c *localCache[T]) Len() int {
-	return c.cacheLen
+func (r *ringBuffer[T]) add(item T) {
+	i := (r.zero + r.len) % len(r.buf)
+	r.buf[i] = item
+	if r.len < len(r.buf) {
+		r.len++
+	} else {
+		r.zero = (r.zero + 1) % len(r.buf)
+	}
 }
 
-func (c *localCache[T]) Add(item T) {
-	c.add <- item
-}
-
-func (c *localCache[T]) run() {
-	for {
+// readInto sends all cached items to dst without blocking. Returns true if all
+// items were sent, false if dst's buffer was full (slow consumer).
+func (r *ringBuffer[T]) readInto(dst chan T) bool {
+	for i := 0; i < r.len; i++ {
 		select {
-		case <-c.ctx.Done():
-			return
-		case item := <-c.add:
-			i := (c.cacheZero + c.cacheLen) % len(c.cache)
-			c.cache[i] = item
-			if c.cacheLen < len(c.cache) {
-				c.cacheLen++
-			} else {
-				c.cacheZero = (c.cacheZero + 1) % len(c.cache)
-			}
-		case r := <-c.read:
-		read:
-			for i := 0; i < c.cacheLen; i++ {
-				select {
-				case r <- c.cache[(c.cacheZero+i)%len(c.cache)]:
-				// don't wait for slow consumers
-				default:
-					break read
-				}
-			}
-			close(r)
-		}
-	}
-}
-
-func (c *localCache[T]) Get(i int) T {
-	r := make(chan T, c.size)
-	c.read <- r
-	idx := 0
-	for item := range r {
-		if idx == i {
-			return item
-		}
-		idx++
-	}
-	var zero T
-	return zero
-}
-
-func (c *localCache[T]) Range(f func(T) error) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		err := f(item)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *localCache[T]) Slice() []T {
-	s := make([]T, 0, c.size)
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		s = append(s, item)
-	}
-	return s
-}
-
-func (c *localCache[T]) ReadInto(dst chan T) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		select {
-		case dst <- item:
+		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
 		default:
-			return fmt.Errorf("slow consumer")
+			return false
 		}
 	}
-	return nil
+	return true
 }

@@ -16,6 +16,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
