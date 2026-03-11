@@ -11,6 +11,7 @@ import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -84,18 +85,32 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </Box>
 
-          <Box paddingY={1} grow={1}>
-            <Text color="primary" weight="medium">
-              {title}
-            </Text>
-            {children && <div className={styles.content}>{children}</div>}
-          </Box>
-          {action && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              {action}
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" width="100%">
+            <Box paddingY={1} grow={1}>
+              <Text color="primary" weight="medium">
+                {title}
+              </Text>
+              {children && <div className={styles.content}>{children}</div>}
             </Box>
-          )}
-          {/* If onRemove is specified, giving preference to onRemove */}
+
+            {/* actions */}
+            <Stack>
+              {action && (
+                <Box display="flex" alignItems="center">
+                  {action}
+                </Box>
+              )}
+
+              {onRemove && buttonContent && (
+                <Box display="flex" alignItems="center">
+                  <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                    {buttonContent}
+                  </Button>
+                </Box>
+              )}
+            </Stack>
+          </Stack>
+          {/* Close Icon button - If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>
               <Button
@@ -107,14 +122,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
                 variant="secondary"
               />
             </div>
-          )}
-
-          {onRemove && buttonContent && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
-                {buttonContent}
-              </Button>
-            </Box>
           )}
         </Box>
       </div>
