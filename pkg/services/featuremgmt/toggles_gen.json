@@ -1252,6 +1252,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardAssistantPopover",
+        "resourceVersion": "1773181791824",
+        "creationTimestamp": "2026-03-10T22:29:51Z"
+      },
+      "spec": {
+        "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"

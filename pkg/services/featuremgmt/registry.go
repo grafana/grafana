@@ -633,6 +633,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardAssistantPopover",
+			Description:  "Enables the assistant prompt popover on panel click in dashboard view mode",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,

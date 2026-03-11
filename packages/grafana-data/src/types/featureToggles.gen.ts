@@ -414,6 +414,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
