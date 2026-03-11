@@ -105,7 +105,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 	})
 
 	t.Run("completed with warnings", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 		const repo = "folder-meta-with-warnings"
 		helper.CreateRepo(t, common.TestRepo{
 			Name:   repo,

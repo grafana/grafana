@@ -5,23 +5,17 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// TODO(ferruvich): use the one in `common` once https://github.com/grafana/grafana/pull/119801 is merged
-func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("detects missing folder metadata after adding file to folder", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, withProvisioningFolderMetadata)
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 
 		const repoName = "incr-missing-meta-add"
 
@@ -59,7 +53,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 	})
 
 	t.Run("noop incremental sync still detects missing metadata", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, withProvisioningFolderMetadata)
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 
 		const repoName = "incr-missing-meta-noop"
 
