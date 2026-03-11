@@ -218,9 +218,138 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
       await tooltip.getByRole('button', { name: 'Close' }).click();
       await expect(tooltip).toHaveCount(0);
     });
-    // @todo annotations API doesn't care about provisioned dashboards, so any changes that are made in one e2e test in that API will pollute the data from any others in the same runner, we probably want to create a dedicated panel for testing the annotation API which is not used by any other tests
-    // test.todo('can edit locally created (wip) annotations from the clustered tooltip')
-    // test.todo('can delete locally created (wip) annotations from the clustered tooltip')
+
+    test.describe.only('wip annotations', () => {
+      // We have to keep multiple runners from executing this test at the same time or it will fail! This shouldn't be a problem in CI, but it will fail if you run it locally with multiple retries and multiple workers.
+      // clean up existing wip annos from previous attempts.
+      test.beforeEach(async ({ request }) => {
+        const response = await request.get('/api/annotations', {
+          params: {
+            dashboardUID: DASHBOARD_UID,
+            from: 0,
+            to: 9999999999999,
+            limit: 1000,
+          },
+        });
+        if (!response.ok()) {
+          return;
+        }
+        const annotations = await response.json();
+        if (!Array.isArray(annotations) || annotations.length === 0) {
+          return;
+        }
+        for (const annotation of annotations) {
+          if (annotation.id) {
+            await request.delete(`/api/annotations/${annotation.id}`);
+          }
+        }
+      });
+      // DO NOT MAKE OTHER TESTS THAT USE THIS PANEL OR THIS WILL FAIL!
+      test('can edit locally created (wip) annotations from the clustered tooltip', async ({
+        page,
+        gotoDashboardPage,
+        selectors,
+      }) => {
+        const dashboardPage = await gotoDashboardPage({
+          uid: DASHBOARD_UID,
+          queryParams: new URLSearchParams({ editPanel: 'panel-18' }),
+        });
+
+        const panel = dashboardPage.getByGrafanaSelector(
+          selectors.components.Panels.Panel.title('wip annotations panel')
+        );
+
+        await expect(panel, `Panel should be visible`).toBeVisible();
+
+        // Meta click to create a wip annotation
+        await panel.locator('.u-over').click({ position: { x: 100, y: 100 }, modifiers: ['Meta'] });
+
+        const descriptionTextarea = page.getByTestId('annotation-editor-description');
+        const tagsInput = page.getByText('Add tags');
+        const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+        await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
+        await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
+
+        // add description
+        await descriptionTextarea.fill('description text goes here');
+
+        // add a tag
+        await tagsInput.click();
+        await page.keyboard.type('tag1');
+        await page.keyboard.press('Enter');
+
+        // save
+        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        // Assert saving has closed the modal before we create another one
+        await expect(
+          page.getByText('Add annotation'),
+          'add annotation text is not rendered as the modal was removed after clicking save'
+        ).toHaveCount(0);
+        // assert annotation was created
+        await expect(markersLocator, 'annotation marker is visible').toBeVisible();
+
+        // add another anno
+        await panel.locator('.u-over').click({ position: { x: 110, y: 100 }, modifiers: ['Meta'] });
+        await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
+        await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
+        await descriptionTextarea.fill('description2 text goes here');
+
+        await tagsInput.click();
+        await page.keyboard.type('tag2');
+        await page.keyboard.press('Enter');
+        // save
+        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        // Assert saving has closed the modal before we create another one
+        await expect(
+          page.getByText('Add annotation'),
+          'add annotation text is not rendered as the modal was removed after clicking save on the second annotation'
+        ).toHaveCount(0);
+        // assert we have 2 anno markers
+        await expect(markersLocator, 'should be 2 markers visible').toHaveCount(2);
+
+        // enable clustering
+        await page.getByText('Enable annotation clustering').click();
+        await expect(markersLocator, 'after enabling clustering only one marker should be visible').toHaveCount(1);
+        await markersLocator.click();
+        await expect(
+          page.getByText('2 annotations'),
+          'annotation count text should be in cluster tooltip'
+        ).toBeVisible();
+
+        // edit from cluster
+        await page.getByRole('button', { name: 'Edit' }).nth(2).click();
+        await expect(
+          page.getByText('Edit annotation'),
+          'edit annotation text should be visible in tooltip'
+        ).toBeVisible();
+        await descriptionTextarea.fill('description2 text goes here - EDITED');
+        await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+        // Delete first anno
+        await markersLocator.click();
+        await expect(
+          page.getByText('description text goes here'),
+          'annotation 1 description is visible in cluster tooltip'
+        ).toBeVisible();
+        await expect(
+          page.getByText('description2 text goes here - EDITED'),
+          'annotation 2 edited description text is visible'
+        ).toBeVisible();
+        await expect(page.getByText('tag1'), 'tag from anno 1 is visible').toBeVisible();
+        await expect(page.getByText('tag2'), 'tag from anno 2 is visible').toBeVisible();
+        await page.getByRole('button', { name: 'Delete' }).first().click();
+
+        // Delete second anno
+        await markersLocator.click();
+        await expect(
+          page.getByText('description2 text goes here - EDITED'),
+          'anno 2 edited text is visible'
+        ).toBeVisible();
+        await expect(page.getByText('tag2'), 'anno 2 tag is visible').toBeVisible();
+        await page.getByRole('button', { name: 'Delete' }).first().click();
+        await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
+      });
+    });
   });
 });
 

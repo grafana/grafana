@@ -110,12 +110,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
             <>
               <div className={styles.content}>
                 <Field
+                  htmlFor={'annotation-description-textarea'}
                   autoFocus={true}
                   label={t('timeseries.annotation-editor2.label-description', 'Description')}
                   invalid={!!errors.description}
                   error={errors?.description?.message}
                 >
                   <TextArea
+                    id={'annotation-description-textarea'}
                     data-testid={'annotation-editor-description'}
                     className={styles.textarea}
                     {...register('description', {
@@ -123,13 +125,14 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                     })}
                   />
                 </Field>
-                <Field label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
+                <Field htmlFor={'annotation-tags-input'} label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
                   <Controller
                     control={control}
                     name="tags"
                     render={({ field: { ref, onChange, ...field } }) => {
                       return (
                         <TagFilter
+                          inputId={'annotation-tags-input'}
                           allowCustomValue
                           placeholder={t('timeseries.annotation-editor2.placeholder-add-tags', 'Add tags')}
                           onChange={onChange}
