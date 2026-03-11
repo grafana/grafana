@@ -897,11 +897,13 @@
       "aria-label-more-actions": "Mais ações para o ponto de contato \"{{contactPointName}}\"",
       "ariaLabel-delete": "Excluir",
       "button-edit": "Editar",
+      "button-history": "",
       "button-view": "Visualizar",
       "export-ariaLabel-export": "Exportar",
       "export-label-export": "Exportar",
       "label-delete": "Excluir",
       "label-manage-permissions": "Gerenciar permissões",
+      "tooltip-history": "",
       "tooltip-provisioned-contact-points": "Os pontos de contato provisionados não podem ser editados na interface do usuário"
     },
     "contact-point-selector": {
@@ -2090,6 +2092,12 @@
       },
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
+    "multiple-policies-view": {
+      "collapse-all": "",
+      "expand-all": "",
+      "policy-tree-filter-label": "",
+      "policy-tree-filter-placeholder": ""
+    },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Tem certeza de que deseja excluir \"{{muteTiming}}\"?"
     },
@@ -2187,47 +2195,8 @@
       "body-no-alertmanager-found": "Não foi possível encontrar nenhum Alertmanager externo e talvez você não tenha acesso ao Alertmanager integrado da Grafana.",
       "title-no-alertmanager-found": "Nenhum Alertmanager encontrado"
     },
-    "notification-history": {
-      "annotations": "",
-      "column": {
-        "contact-point": "",
-        "group-labels": "",
-        "state": "",
-        "time": ""
-      },
-      "description": "",
-      "empty": "",
-      "empty-filtered": "",
-      "error": {
-        "default": "",
-        "title": ""
-      },
-      "filter": {
-        "label": "",
-        "outcome": "",
-        "placeholder": "",
-        "status": "",
-        "tooltip": ""
-      },
-      "firing-alerts": "",
-      "labels": "",
-      "loading": "",
-      "notification-error": "",
-      "outcome": {
-        "failed": "",
-        "success": ""
-      },
-      "resolved-alerts": "",
-      "showing-alerts": "",
-      "started": "",
-      "status": {
-        "firing": "",
-        "resolved": ""
-      },
-      "summary": ""
-    },
     "notification-policies-filter": {
-      "label-search-by-contact-point": "Pesquisar por ponto de contato",
+      "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "Escolha um ponto de contato",
       "search-query-input-placeholder-search": "Pesquisar"
     },
@@ -2392,6 +2361,7 @@
       "tooltip-managed-by-plugin": "Esta regra é gerenciada pelo plugin {{pluginName}}"
     },
     "policies": {
+      "add-route": "",
       "aria-label-collapse": "Recolher",
       "aria-label-expand": "Expandir",
       "aria-label-more": "mais ações para a política",
@@ -2402,9 +2372,10 @@
         "title-new-notification-policy": ""
       },
       "default-policy": {
-        "description": "Todas as instâncias de alerta serão processadas pela política padrão se nenhuma outra política correspondente for encontrada.",
         "title": "Política padrão",
-        "update": "Atualizar política padrão"
+        "update": "",
+        "route-count_one": "",
+        "route-count_other": ""
       },
       "delete": {
         "confirm": "Sim, excluir política",
@@ -2419,7 +2390,7 @@
         "failed-to-update-your-configuration": "",
         "title-something-went-wrong": ""
       },
-      "filter-description": "Filtre as políticas de notificação usando uma lista de correspondências separadas por vírgulas, por exemplo:<1>severity=critical, region=EMEA</1>",
+      "filter-description": "",
       "generated-policies": "Políticas geradas automaticamente",
       "matchers": "Correspondências",
       "metadata": {
@@ -2450,24 +2421,23 @@
         "n-instances_one": "instância",
         "n-instances_other": "instância"
       },
-      "new-child": "Nova política secundária",
-      "new-policy": "Adicionar nova política",
+      "new-child": "",
+      "new-policy": "",
       "no-matchers": "Sem correspondências",
       "reload-policies": "Recarregar políticas",
       "reset-modal": {
+        "delete": "",
+        "deleting": "",
+        "permanently-delete": "",
         "permanently-reset": "",
         "reset": "",
         "resetting": "",
+        "title-delete-notification-policy": "",
         "title-reset-notification-policy": ""
       },
-      "root-policy": {
-        "description": "",
-        "title": ""
-      },
-      "save-policy": "Salvar política",
       "update": {
         "please-wait": "Aguarde enquanto atualizamos suas políticas de notificação.",
-        "update-policy": "Atualizar política",
+        "update-route": "",
         "updating": "Atualizando…"
       },
       "update-errors": {
@@ -2511,9 +2481,9 @@
       "title-routing-tree-not-found": ""
     },
     "policy": {
-      "label-new-child-policy": "Nova política secundária",
-      "label-new-sibling-above": "Novo elemento do mesmo nível acima",
-      "label-new-sibling-below": "Novo elemento do mesmo nível abaixo"
+      "label-new-child-policy": "",
+      "label-new-sibling-above": "",
+      "label-new-sibling-below": ""
     },
     "policy-page": {
       "text-subtitle": ""
@@ -3503,7 +3473,7 @@
     },
     "use-add-policy-modal": {
       "modal-element": {
-        "title-add-notification-policy": "Adicionar política de notificação"
+        "title-add-route": ""
       }
     },
     "use-columns": {
@@ -3544,7 +3514,8 @@
     "use-create-dropdown-menu-actions": {
       "label-delete": "Excluir",
       "label-edit": "Editar",
-      "label-export": "Exportar"
+      "label-export": "Exportar",
+      "label-reset": ""
     },
     "use-delete-contact-point-modal": {
       "delete-confirm": "Sim, excluir ponto de contato",
@@ -3576,7 +3547,7 @@
     },
     "use-edit-policy-modal": {
       "modal-element": {
-        "title-edit-notification-policy": "Editar política de notificação"
+        "title-edit-route": ""
       }
     },
     "use-page-nav": {
@@ -5342,6 +5313,7 @@
       "panel-description": "Alterar descrição do painel",
       "panel-edit": "Alterações no painel",
       "panel-max-repeats-per-row": "Máximo de repetições por linha",
+      "panel-preset": "",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
       "panel-title": "Alterar título do painel",
@@ -6802,6 +6774,7 @@
       "title": {
         "description": "Descrição",
         "panel-links": "Links do painel",
+        "panel-styles": "",
         "title": "Título",
         "transparent-background": "Fundo transparente"
       }
@@ -7014,6 +6987,9 @@
         }
       }
     },
+    "panel-styles": {
+      "title": ""
+    },
     "panel-viz-type-picker": {
       "button": {
         "close": "Voltar"
@@ -7026,6 +7002,11 @@
         }
       },
       "title-close": "Fechar"
+    },
+    "provisioned-controls-section": {
+      "label": "",
+      "tooltip": "",
+      "tooltip-unknown": ""
     },
     "provisioned-delete-modal": {
       "cannot-be-deleted": "Este painel de controle é gerenciado pelo provisionamento da Grafana e não pode ser excluído. Remova o painel de controle do arquivo de configuração para excluí-lo.",
@@ -9672,6 +9653,9 @@
     },
     "cascader": {
       "clear-button": "Limpar seleção"
+    },
+    "color-picker": {
+      "input-label": ""
     },
     "color-picker-popover": {
       "palette-tab": "Cores",
@@ -13535,7 +13519,9 @@
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "",
+      "disable": "",
       "duplicate": "",
+      "enable": "",
       "error": "",
       "hide": "",
       "hide-help": "",
@@ -13631,7 +13617,6 @@
       "alerts-loading": "",
       "card-click": "Selecionar cartão {{id}}",
       "data": "",
-      "loading-queries-transformations": "",
       "new-type": "",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
@@ -14861,6 +14846,18 @@
     "outside-range-plugin": {
       "data-outside-time-range": "Dados fora do intervalo de tempo",
       "zoom-to-data": "Ampliar dados"
+    },
+    "presets": {
+      "area": "",
+      "default": "",
+      "smooth": "",
+      "stacked-area": "",
+      "stacked-area-gradient": "",
+      "stacked-smooth": "",
+      "stacked-step": "",
+      "step": "",
+      "step-filled": "",
+      "step-hue": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
