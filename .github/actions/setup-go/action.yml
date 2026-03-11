@@ -19,3 +19,6 @@ runs:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' }}
         cache-dependency-path: ${{ inputs.cache == 'true' && '**/*.mod' || '' }}
+    - name: Report Go cache sizes
+      if: inputs.cache == 'true'
+      uses: ./.github/actions/report-go-cache-sizes
