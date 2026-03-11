@@ -6,65 +6,6 @@ import (
 	"io"
 )
 
-// Please, when reviewing or working on this file have the following cheat-sheet
-// in mind:
-//	1. A channel type in Go has one of three directions: send-only (chan<- T),
-//	   receive-only (<-chan T) or bidirctional (chan T). Each of them are a
-//	   different type. A bidirectional type can be converted to any of the other
-//	   two types and is automatic, any other conversion attempt results in a
-//	   panic.
-//	2. There are three operations you can do on a channel: send, receive and
-//	   close. Availability of operation for each channel direction:
-//		          |            Channel direction
-//		Operation | Receive-only | Send-only  | Bidirectional
-//		----------+--------------+------------+--------------
-//		Receive   | Yes          | No (panic) | Yes
-//		Send      | No (panic)   | Yes        | Yes
-//		Close     | No (panic)   | Yes        | Yes
-//	3. A channel of any type also has one of three states: nil (zero value),
-//	   closed, or open (technically called "non-nil, not-closed channel",
-//	   created with the `make` builtin). Nil and closed channels are also
-//	   useful, but you have to know and care for how you use them. Outcome of
-//	   each operation on a channel depending on its state, assuming the
-//	   operation is available to the channel given its direction:
-//		          |                 Channel state
-//		Operation | Nil           | Closed        | Open
-//		----------+---------------+---------------+------------------
-//		Receive   | Block forever | Block forever | Receive/Block until receive
-//		Send      | Block forever | Panic         | Send/Block until send
-//		Close     | Panic         | Panic         | Close the channel
-//	4. A `select` statement has zero or more `case` branches, each one of them
-//	   containing either a send or a receive channel operation. A `select` with
-//	   no branches blocks forever. At most one branch will be executed, which
-//	   means it behaves similar to a `switch`. If more than one branch can be
-//	   executed then one of them is picked AT RANDOM (i.e. not the one first in
-//	   the list). A `select` statement can also have a (single and optional)
-//	   `default` branch that is executed if all the other branches are
-//	   operations that are blocked at the time the `select` statement is
-//	   reached. This means that having a `default` branch causes the `select`
-//	   statement to never block.
-//	5. A receive operation on a closed channel never blocks (as said before),
-//	   but it will always yield a zero value. As it is also valid to send a zero
-//	   value to the channel, you can receive from channels in two forms:
-//		v := <-c // get a zero value if closed
-//		v2, ok := <-c // `ok` is set to false iif the channel is closed
-//	6. The `make` builtin is used to create open channels (and is the only way
-//	   to get them). It has an optional second parameter to specify the amount
-//	   of items that can buffered. After that, a send operation will block
-//	   waiting for another goroutine to receive from it (which would make room
-//	   for the new item). When the second argument is not passed to `make`, then
-//	   all operations are fully synchronized, meaning that a send will block
-//	   until a receive in another goroutine is performed, and vice versa. Less
-//	   interestingly, `make` can also create send-only or receive-only channel.
-//
-// The sources are the Go Specs, Effective Go and Go 101, which are already
-// linked in the contributing guide for the backend or elsewhere in Grafana, but
-// this file exploits so many of these subtleties that it's worth keeping a
-// refresher about them at all times. The above is unlikely to change in the
-// foreseeable future, so it's zero maintenance as well. We exclude patterns for
-// using channels and other concurrency patterns since that's a way longer
-// topic for a refresher.
-
 type Broadcaster[T any] interface {
 	Subscribe(context.Context) (<-chan T, error)
 	Unsubscribe(<-chan T)
