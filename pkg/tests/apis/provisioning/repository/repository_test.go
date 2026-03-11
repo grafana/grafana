@@ -1,4 +1,4 @@
-package provisioning
+package repository
 
 import (
 	"context"
@@ -46,8 +46,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	ctx := context.Background()
 
 	inputFiles := []string{
-		"testdata/github-readonly.json.tmpl",
-		"testdata/local-readonly.json.tmpl",
+		"../testdata/github-readonly.json.tmpl",
+		"../testdata/local-readonly.json.tmpl",
 	}
 
 	for _, inputFilePath := range inputFiles {
@@ -300,7 +300,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		{
 			name: "should succeed with valid local repository",
 			repo: func() *unstructured.Unstructured {
-				return helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+				return helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 					"Name":        "valid-repo",
 					"SyncEnabled": true,
 				})
@@ -309,7 +309,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		{
 			name: "should error if mutually exclusive finalizers are set",
 			repo: func() *unstructured.Unstructured {
-				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+				localTmp := helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 					"Name":        "repo-with-invalid-finalizers",
 					"SyncEnabled": true,
 				})
@@ -328,7 +328,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		{
 			name: "should error if unknown finalizer is set",
 			repo: func() *unstructured.Unstructured {
-				localTmp := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+				localTmp := helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 					"Name":        "repo-with-unknown-finalizer",
 					"SyncEnabled": true,
 				})
@@ -487,7 +487,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		for i, test := range pathTests {
 			t.Run(test.name, func(t *testing.T) {
 				repoName := fmt.Sprintf("git-path-test-%d", i+1)
-				gitRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+				gitRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 					"Name":        repoName,
 					"URL":         baseURL,
 					"Path":        test.path,
@@ -519,7 +519,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-path-sync-disabled"
 
 		// Create an initial repo with sync disabled and a specific path
-		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		firstRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-sync-disabled-1",
 			"URL":         baseURL,
 			"Path":        "demo/nested",
@@ -531,7 +531,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 		// Create a second repo pointing to same URL with a child path and sync disabled.
 		// This simulates the wizard onboarding flow where sync is not yet enabled.
-		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		secondRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-sync-disabled-2",
 			"URL":         baseURL,
 			"Path":        "demo/nested/child",
@@ -542,7 +542,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
 		// Create a third repo with the same path (duplicate) and sync disabled
-		thirdRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		thirdRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-sync-disabled-3",
 			"URL":         baseURL,
 			"Path":        "demo/nested",
@@ -553,7 +553,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
 
 		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
-		fourthRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		fourthRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-sync-disabled-4",
 			"URL":         baseURL,
 			"Path":        "",
@@ -569,7 +569,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-enable-sync-conflict"
 
 		// Create an initial repo with sync enabled and a specific path
-		firstRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		firstRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-enable-sync-1",
 			"URL":         baseURL,
 			"Path":        "demo/nested",
@@ -580,7 +580,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "First repository should be created successfully")
 
 		// Create second repo with conflicting child path but sync disabled (should succeed)
-		secondRepo := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		secondRepo := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        "git-enable-sync-2",
 			"URL":         baseURL,
 			"Path":        "demo/nested/child",
@@ -598,7 +598,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	})
 
 	t.Run("should update sync interval", func(t *testing.T) {
-		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+		r := helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 			"Name":                "valid-repo-testinterval",
 			"SyncEnabled":         true,
 			"SyncIntervalSeconds": 5,
@@ -611,7 +611,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	})
 
 	t.Run("should automatically add finalizers during creation", func(t *testing.T) {
-		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+		r := helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 			"Name":        "repo-auto-finalizers",
 			"SyncEnabled": false,
 		})
@@ -631,7 +631,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 	t.Run("should re-add finalizers when removed during update", func(t *testing.T) {
 		// Create a repository with finalizers
-		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+		r := helper.RenderObject(t, "../testdata/local-readonly.json.tmpl", map[string]any{
 			"Name":        "repo-update-finalizers",
 			"SyncEnabled": false,
 		})
@@ -672,9 +672,9 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 
 	const repo = "invalid-schema-tmp"
 	// Set up the repository and the file to import.
-	helper.CopyToProvisioningPath(t, "testdata/invalid-dashboard-schema.json", "invalid-dashboard-schema.json")
+	helper.CopyToProvisioningPath(t, "../testdata/invalid-dashboard-schema.json", "invalid-dashboard-schema.json")
 
-	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+	localTmp := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
@@ -729,9 +729,9 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	// 			treeEntryDir("grafana", "subtree"),
 	// 		},
 	// 		"subtree": {
-	// 			treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
+	// 			treeEntry("dashboard.json", helper.LoadFile("../testdata/all-panels.json")),
 	// 			treeEntryDir("subdir", "subtree2"),
-	// 			treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
+	// 			treeEntry("subdir/dashboard2.yaml", helper.LoadFile("../testdata/text-options.json")),
 	// 		},
 	// 	})),
 
@@ -744,7 +744,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	const repo = "github-create-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Template:           "testdata/github-readonly.json.tmpl",
+		Template:           "../testdata/github-readonly.json.tmpl",
 		Target:             "folder",
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Folder sync creates an additional folder for the repository itself
@@ -807,7 +807,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				// Create repository directly without health checks since we're only testing URL cleanup
-				input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+				input := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 					"Name":        test.name,
 					"URL":         test.input,
 					"SyncTarget":  "folder",
@@ -837,7 +837,7 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 
 	t.Run("repository with no workflows should not create a webhook", func(t *testing.T) {
 		repoName := "readonly-no-webhook"
-		input := helper.RenderObject(t, "testdata/github-readonly.json.tmpl", map[string]any{
+		input := helper.RenderObject(t, "../testdata/github-readonly.json.tmpl", map[string]any{
 			"Name":        repoName,
 			"SyncEnabled": false,
 		})
@@ -1128,7 +1128,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	helper.CreateRepo(t, originalRepo)
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
-		folderRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		folderRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        "folder-blocked-by-instance",
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
@@ -1174,7 +1174,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
-		instanceRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		instanceRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        "instance-repo-blocked",
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
@@ -1223,7 +1223,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 
 		// Try to create the 11th repository - should fail due to limit
 		eleventhRepoName := "limit-test-repo-11"
-		eleventhRepo := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		eleventhRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        eleventhRepoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
@@ -1266,7 +1266,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", targetPath).
-			Body(helper.LoadFile("testdata/all-panels.json")).
+			Body(helper.LoadFile("../testdata/all-panels.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
 		require.Equal(t, http.StatusNotFound, code)
@@ -1278,7 +1278,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", targetPath).
-			Body(helper.LoadFile("testdata/all-panels.json")).
+			Body(helper.LoadFile("../testdata/all-panels.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&code)
 		require.NoError(t, result.Error(), "expecting to be able to create file")
@@ -1353,7 +1353,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("files", "test", "..", "..", "all-panels.json"). // UNSAFE PATH
-			Body(helper.LoadFile("testdata/all-panels.json")).
+			Body(helper.LoadFile("../testdata/all-panels.json")).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx)
 		require.Error(t, result.Error(), "invalid path should return error")
@@ -1441,7 +1441,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	testRepo := common.TestRepo{
 		Name:               repo,
 		Target:             "folder",
-		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1, // folder sync creates a folder
 	}
@@ -1500,7 +1500,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	const repo = "gh-repo"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Template:           "testdata/github-readonly.json.tmpl",
+		Template:           "../testdata/github-readonly.json.tmpl",
 		Target:             "folder",
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3,
@@ -1757,7 +1757,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 	const repo = "refs-permissions-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Template:           "testdata/github-readonly.json.tmpl",
+		Template:           "../testdata/github-readonly.json.tmpl",
 		Target:             "folder",
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Repository creates folders
@@ -1821,7 +1821,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		const repo = "empty-path-test"
 		testRepo := common.TestRepo{
 			Name:     repo,
-			Template: "testdata/github-empty-path.json.tmpl",
+			Template: "../testdata/github-empty-path.json.tmpl",
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
@@ -1849,7 +1849,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Step 1: Create first repository with empty path - syncs successfully
 		testRepo1 := common.TestRepo{
 			Name:     repo1,
-			Template: "testdata/github-empty-path.json.tmpl",
+			Template: "../testdata/github-empty-path.json.tmpl",
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
@@ -1864,7 +1864,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// but sync should warn because dashboards are owned by repo1
 		testRepo2 := common.TestRepo{
 			Name:     repo2,
-			Template: "testdata/github-empty-path.json.tmpl",
+			Template: "../testdata/github-empty-path.json.tmpl",
 			Target:   "folder",
 			Values: map[string]any{
 				"SyncEnabled": true,
@@ -2833,7 +2833,7 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 	helper.CreateRepo(t, common.TestRepo{
 		Name:               repoName,
 		Target:             "folder",
-		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
+		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1,
 		Values: map[string]any{
