@@ -712,7 +712,7 @@ describe('alertingNavigationV2 respects alertingMultiplePolicies', () => {
       );
       await screen.findByTestId('search-query-input');
 
-      expect(screen.getAllByTestId('am-root-route-container').length).toBeGreaterThan(0);
+      expect((await screen.findAllByTestId('am-root-route-container')).length).toBeGreaterThan(0);
     });
   });
 });
