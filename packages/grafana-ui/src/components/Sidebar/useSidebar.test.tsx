@@ -22,7 +22,7 @@ describe('useSidebarSavedState(persistanceKey, subKey, defaultValue)', () => {
 
   describe('when persistanceKey is not passed', () => {
     test('returns the default value', () => {
-      const { result } = renderHook(() => useSidebarSavedState('persistanceKey1', 'subKey1', 1));
+      const { result } = renderHook(() => useSidebarSavedState(undefined, undefined, 1));
 
       const [state] = result.current;
       expect(state).toBe(1);
