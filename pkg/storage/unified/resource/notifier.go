@@ -134,8 +134,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 			// Drain all pending events from the raw channel before sorting,
 			// so that we don't emit a partial batch that misses events with
 			// lower RVs still waiting in the channel.
-			drained := false
-			for !drained {
+			for drained := false; !drained; {
 				select {
 				case evt, ok := <-raw:
 					if !ok {
