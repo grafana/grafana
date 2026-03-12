@@ -14,7 +14,7 @@ yarn add @grafana/api-clients
 
 ## TypeScript configuration
 
-This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports), which require `moduleResolution` to be set to `"bundler"` (or `"node16"`/`"nodenext"`) in your `tsconfig.json`:
+This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports), which require `moduleResolution` to be set to `"bundler"` in your `tsconfig.json`:
 
 ```json
 {
@@ -24,7 +24,7 @@ This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath
 }
 ```
 
-If you use [ts-node](https://typestrong.org/ts-node/), add the following to your `tsconfig.json`:
+If you use ts-node, add the following to your `tsconfig.json`:
 
 ```json
 {
