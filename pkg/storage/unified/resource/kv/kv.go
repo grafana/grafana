@@ -244,6 +244,9 @@ func (w *badgerWriteCloser) Close() error {
 	}
 
 	data := w.buf.Bytes()
+	if len(data) == 0 {
+		return nil
+	}
 
 	txn := w.db.NewTransaction(true)
 	defer txn.Discard()

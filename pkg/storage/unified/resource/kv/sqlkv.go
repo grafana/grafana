@@ -256,9 +256,8 @@ func (w *sqlWriteCloser) Close() error {
 
 	w.closed = true
 	value := w.buf.Bytes()
-	if value == nil {
-		// to prevent NOT NULL constraint violations
-		value = []byte{}
+	if len(value) == 0 {
+		return nil
 	}
 
 	qb, err := w.kv.getQueryBuilder(w.section)

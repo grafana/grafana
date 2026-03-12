@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -92,7 +93,7 @@ func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	if err != nil {
 		return err
 	}
-	// There's no data.
+	writer.Write([]byte{1})
 	return writer.Close()
 }
 
