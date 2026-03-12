@@ -128,6 +128,7 @@
     "timeseries": (import '../dev-dashboards/panel-timeseries/timeseries.json'),
     "timeseries-bars-high-density": (import '../dev-dashboards/panel-timeseries/timeseries-bars-high-density.json'),
     "timeseries-by-value-color-schemes": (import '../dev-dashboards/panel-timeseries/timeseries-by-value-color-schemes.json'),
+    "timeseries-faceted-labels": (import '../dev-dashboards/panel-timeseries/timeseries-faceted-labels.json'),
     "timeseries-formats": (import '../dev-dashboards/panel-timeseries/timeseries-formats.json'),
     "timeseries-gradient-area": (import '../dev-dashboards/panel-timeseries/timeseries-gradient-area.json'),
     "timeseries-hue-gradients": (import '../dev-dashboards/panel-timeseries/timeseries-hue-gradients.json'),
