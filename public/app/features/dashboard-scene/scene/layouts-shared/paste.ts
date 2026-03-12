@@ -110,24 +110,21 @@ export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridIte
   });
 }
 
-// Uses gridCell for placement to avoid overlaps with existing panels.
-// If the deserialized item is a DashboardGridItem (GridLayoutItem in clipboard), preserve its width/height.
 export function getDashboardGridItemFromClipboard(scene: DashboardScene, gridCell: GridCell | null): DashboardGridItem {
   const deserializedGridItem = getGridItemFromClipboard(scene);
 
+  if (deserializedGridItem instanceof DashboardGridItem) {
+    if (gridCell) {
+      // reposition to the given grid cell to avoid overlapping existing items
+      deserializedGridItem.setState({ x: gridCell.x, y: gridCell.y });
+    }
+    return deserializedGridItem;
+  }
+
   deserializedGridItem.state.body.clearParent();
 
-  const gridProps =
-    deserializedGridItem instanceof DashboardGridItem
-      ? {
-          ...gridCell,
-          width: deserializedGridItem.state.width,
-          height: deserializedGridItem.state.height,
-        }
-      : gridCell;
-
   return new DashboardGridItem({
-    ...gridProps,
+    ...gridCell,
     key: deserializedGridItem.state.key,
     body: deserializedGridItem.state.body,
     variableName: deserializedGridItem.state.variableName,
