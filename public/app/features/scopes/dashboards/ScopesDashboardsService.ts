@@ -203,7 +203,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     try {
       // Fetch navigations for this subScope
       const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
-        ? await this.apiClient.fetchScopeNavigations([subScopeName], { depth: 1 })
+        ? await this.apiClient.fetchScopeNavigations([subScopeName], {
+            depth: path.length - 1,
+            rootScope: this.state.navigationScope,
+          })
         : await this.apiClient.fetchDashboards([subScopeName]);
 
       // Filter out items that have a subScope matching any subScope already in the path
@@ -303,7 +306,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     this.updateState({ forScopeNames, loading: true });
 
     const res = config.featureToggles.useScopesNavigationEndpoint
-      ? await this.apiClient.fetchScopeNavigations(forScopeNames, { depth: 1 })
+      ? await this.apiClient.fetchScopeNavigations(forScopeNames)
       : await this.apiClient.fetchDashboards(forScopeNames);
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
