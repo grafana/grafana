@@ -146,6 +146,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
+	if hasAccess(ac.EvalPermission("roles:read")) {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "Roles",
+			Id:       "admin-roles",
+			SubTitle: "View and manage roles and permissions",
+			Icon:     "shield",
+			Url:      s.cfg.AppSubURL + "/admin/roles",
+		})
+	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.license.FeatureEnabled("groupsync") &&

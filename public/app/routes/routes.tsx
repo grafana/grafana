@@ -291,12 +291,38 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    {
-      path: '/org/serviceaccounts/:id',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
-      ),
-    },
+    ...(config.featureToggles.accessControlsInterface
+      ? [
+          {
+            path: '/org/serviceaccounts/edit/:uid/:page?',
+            component: SafeDynamicImport(
+              () =>
+                import(
+                  /* webpackChunkName: "ServiceAccountPages" */ 'app/features/serviceaccounts/ServiceAccountPages'
+                )
+            ),
+          },
+          {
+            path: '/org/serviceaccounts/:id',
+            component: SafeDynamicImport(
+              () =>
+                import(
+                  /* webpackChunkName: "ServiceAccountRedirect" */ 'app/features/serviceaccounts/ServiceAccountRedirect'
+                )
+            ),
+          },
+        ]
+      : [
+          {
+            path: '/org/serviceaccounts/:id',
+            component: SafeDynamicImport(
+              () =>
+                import(
+                  /* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage'
+                )
+            ),
+          },
+        ]),
     {
       path: '/org/teams',
       roles: () =>
@@ -361,12 +387,19 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
-    {
-      path: '/admin/users/edit/:id',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
-      ),
-    },
+    config.featureToggles.accessControlsInterface
+      ? {
+          path: '/admin/users/edit/:uid/:page?',
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "UserPages" */ 'app/features/admin/UserPages')
+          ),
+        }
+      : {
+          path: '/admin/users/edit/:id',
+          component: SafeDynamicImport(
+            () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+          ),
+        },
     {
       path: '/admin/orgs',
       component: SafeDynamicImport(

@@ -60,6 +60,8 @@ export function buildNavModel(team: Team): NavModelItem {
     });
   }
 
+  // Roles tab — ships in UI PR 1
+
   const teamGroupSync: NavModelItem = {
     active: false,
     icon: 'sync',

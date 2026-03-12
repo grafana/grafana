@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Avatar,
   CellProps,
@@ -58,7 +59,7 @@ export const UsersTable = ({
             <TextLink
               color="primary"
               inline={false}
-              href={`/admin/users/edit/${original.uid}`}
+              href={config.featureToggles.accessControlsInterface ? `/admin/users/edit/${original.uid}/information` : `/admin/users/edit/${original.uid}`}
               title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
             >
               {original.login}
@@ -189,7 +190,7 @@ export const UsersTable = ({
               variant="secondary"
               size="sm"
               icon="pen"
-              href={`admin/users/edit/${original.uid}`}
+              href={config.featureToggles.accessControlsInterface ? `admin/users/edit/${original.uid}/information` : `admin/users/edit/${original.uid}`}
               aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
               tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
             />
