@@ -76,7 +76,7 @@ type kvStorageBackend struct {
 	eventStore                   *eventStore
 	notifier                     notifier
 	log                          log.Logger
-	withPruner                   bool
+	disablePruner                bool
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
@@ -111,7 +111,7 @@ type KVBackend interface {
 
 type KVBackendOptions struct {
 	KvStore                      KV
-	WithPruner                   bool
+	DisablePruner                bool
 	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
 	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
@@ -302,6 +302,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	}
 
 	counter := 0
+	deleted := 0
 	// iterate over all keys for the resource and delete versions beyond the latest 20
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
@@ -325,14 +326,22 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 			if err != nil {
 				return err
 			}
+			deleted += 1
 		}
 	}
+
+	k.log.Debug("pruned history successfully",
+		"namespace", key.Namespace,
+		"group", key.Group,
+		"resource", key.Resource,
+		"name", key.Name,
+		"rows", deleted)
 
 	return nil
 }
 
 func (k *kvStorageBackend) initPruner(ctx context.Context) error {
-	if !k.withPruner {
+	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil
