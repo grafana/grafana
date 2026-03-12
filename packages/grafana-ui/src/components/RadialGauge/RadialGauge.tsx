@@ -105,16 +105,17 @@ export function RadialGauge(props: RadialGaugeProps) {
   const theme = useTheme2();
   const gaugeId = useId();
 
+  let effectiveTextMode = textMode;
+  if (effectiveTextMode === 'auto') {
+    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+  }
+
   const startAngle = shape === 'gauge' ? ARC_START : 0;
   const endAngle = shape === 'gauge' ? ARC_END : 360;
 
   const defs: ReactNode[] = [];
   const graphics: ReactNode[] = [];
   let sparklineElement: ReactNode | null = null;
-  let effectiveTextMode = textMode;
-  if (effectiveTextMode === 'auto') {
-    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
-  }
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const fieldDisplay = values[barIndex];
