@@ -53,9 +53,9 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
-	warningCounts map[string]int
-	metrics       *JobMetrics
-	action        string
+	warningCounts       map[string]int
+	metrics             *JobMetrics
+	action              string
 }
 
 func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action string) JobProgressRecorder {

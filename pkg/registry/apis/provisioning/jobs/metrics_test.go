@@ -92,12 +92,12 @@ func TestRecordResourceOperation(t *testing.T) {
 	folderKey := labelKey(map[string]string{
 		"action": "pull", "operation": "replaced",
 		"reason": "folder_metadata_id_migration",
-		"group": "folder.grafana.app", "kind": "Folder",
+		"group":  "folder.grafana.app", "kind": "Folder",
 	})
 	dashKey := labelKey(map[string]string{
 		"action": "pull", "operation": "created",
 		"reason": "sync",
-		"group": "dashboard.grafana.app", "kind": "Dashboard",
+		"group":  "dashboard.grafana.app", "kind": "Dashboard",
 	})
 
 	assert.InDelta(t, 1.0, pairs[folderKey], 0.001)

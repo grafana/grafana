@@ -18,8 +18,8 @@ type JobMetrics struct {
 
 	resourceWarningsTotal *prometheus.CounterVec // resource warnings by action and reason
 	resourceErrorsTotal   *prometheus.CounterVec // resource errors by action
-	fileOperationsTotal *prometheus.CounterVec   // file operations in the repository
-	resourceOpsTotal    *prometheus.CounterVec   // notable resource operations
+	fileOperationsTotal   *prometheus.CounterVec // file operations in the repository
+	resourceOpsTotal      *prometheus.CounterVec // notable resource operations
 }
 
 type QueueMetrics struct {
@@ -157,8 +157,8 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 		syncDurationHist:                 syncDurationHist,
-		resourceWarningsTotal:                    resourceWarningsTotal,
-		resourceErrorsTotal:                      resourceErrorsTotal,
+		resourceWarningsTotal:            resourceWarningsTotal,
+		resourceErrorsTotal:              resourceErrorsTotal,
 		fileOperationsTotal:              fileOperationsTotal,
 		resourceOpsTotal:                 resourceOpsTotal,
 	}
