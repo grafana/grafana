@@ -28,7 +28,7 @@ func NewRoleHooks(zClient zanzana.Client, zTickets chan bool, logger log.Logger)
 
 // convertRolePermissionsToTuples converts role permissions (action/scope) to v1 TupleKey format
 // using the shared zanzana.ConvertRolePermissionsToTuples utility and common.ToAuthzExtTupleKeys
-func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.CoreRolespecPermission) ([]*v1.TupleKey, error) {
+func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.RolespecPermission) ([]*v1.TupleKey, error) {
 	// Convert IAM permissions to zanzana.RolePermission format
 	rolePerms := make([]zanzana.RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
@@ -54,43 +54,23 @@ func convertRolePermissionsToTuples(roleUID string, permissions []iamv0.CoreRole
 }
 
 // AfterRoleCreate is a post-create hook that writes the role permissions to Zanzana (openFGA)
-// It handles both Role and CoreRole types
 func (h *RoleHooks) AfterRoleCreate(obj runtime.Object, _ *metav1.CreateOptions) {
 	if h.zClient == nil {
 		return
 	}
 
-	var rType string
-	var rt *iamv0.CoreRole
-
-	if coreRole, ok := obj.(*iamv0.CoreRole); ok {
-		rt = coreRole.DeepCopy()
-		rType = "coreRole"
-	} else if regRole, ok := obj.(*iamv0.Role); ok {
-		regRolePermissions := make([]iamv0.CoreRolespecPermission, len(regRole.Spec.Permissions))
-		for i, p := range regRole.Spec.Permissions {
-			regRolePermissions[i] = iamv0.CoreRolespecPermission(p)
-		}
-		rt = &iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      regRole.Name,
-				Namespace: regRole.Namespace,
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Permissions: regRolePermissions,
-			},
-		}
-		rType = "role"
-	} else {
-		// Not a supported role type
+	role, ok := obj.(*iamv0.Role)
+	if !ok {
 		return
 	}
+	rt := role.DeepCopy()
+	rType := "role"
 
 	wait := time.Now()
 	h.zTickets <- true
 	hooksWaitHistogram.WithLabelValues(rType, "create").Observe(time.Since(wait).Seconds())
 
-	go func(role *iamv0.CoreRole, roleType string) {
+	go func(role *iamv0.Role, roleType string) {
 		start := time.Now()
 		status := "success"
 		defer func() {
@@ -155,48 +135,27 @@ func (h *RoleHooks) AfterRoleCreate(obj runtime.Object, _ *metav1.CreateOptions)
 
 		// Record successful tuple writes
 		hooksTuplesCounter.WithLabelValues(rType, "create", "write").Add(float64(len(tuples)))
-	}(rt.DeepCopy(), rType)
+	}(rt, rType)
 }
 
 // AfterRoleDelete is a post-delete hook that removes the role permissions from Zanzana (openFGA)
-// It handles both Role and CoreRole types
 func (h *RoleHooks) AfterRoleDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
 	if h.zClient == nil {
 		return
 	}
 
-	var rType string
-	var rt *iamv0.CoreRole
-
-	// Try CoreRole first
-	if coreRole, ok := obj.(*iamv0.CoreRole); ok {
-		rt = coreRole.DeepCopy()
-		rType = "coreRole"
-	} else if regRole, ok := obj.(*iamv0.Role); ok {
-		regRolePermissions := make([]iamv0.CoreRolespecPermission, len(regRole.Spec.Permissions))
-		for i, p := range regRole.Spec.Permissions {
-			regRolePermissions[i] = iamv0.CoreRolespecPermission(p)
-		}
-		rt = &iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      regRole.Name,
-				Namespace: regRole.Namespace,
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Permissions: regRolePermissions,
-			},
-		}
-		rType = "role"
-	} else {
-		// Not a supported role type
+	role, ok := obj.(*iamv0.Role)
+	if !ok {
 		return
 	}
+	rt := role.DeepCopy()
+	rType := "role"
 
 	wait := time.Now()
 	h.zTickets <- true
-	hooksWaitHistogram.WithLabelValues("role", "delete").Observe(time.Since(wait).Seconds()) // Record wait time
+	hooksWaitHistogram.WithLabelValues(rType, "delete").Observe(time.Since(wait).Seconds())
 
-	go func(role *iamv0.CoreRole, roleType string) {
+	go func(role *iamv0.Role, roleType string) {
 		defer func() {
 			<-h.zTickets
 		}()
@@ -260,77 +219,40 @@ func (h *RoleHooks) AfterRoleDelete(obj runtime.Object, _ *metav1.DeleteOptions)
 				"tuplesCnt", len(deleteTuples),
 			)
 		}
-	}(rt.DeepCopy(), rType)
+	}(rt, rType)
 }
 
-// beginRoleUpdate is a pre-update hook that prepares zanzana updates
-// It converts old and new permissions to tuples and performs the zanzana write after K8s update succeeds
-// It handles both Role and CoreRole types
+// BeginRoleUpdate is a pre-update hook that prepares zanzana updates.
+// It converts old and new permissions to tuples and performs the zanzana write after K8s update succeeds.
 func (h *RoleHooks) BeginRoleUpdate(ctx context.Context, obj, oldObj runtime.Object, options *metav1.UpdateOptions) (registry.FinishFunc, error) {
 	if h.zClient == nil {
 		return nil, nil
 	}
-	var oldRole, newRole *iamv0.CoreRole
-	var roleType string
 
-	if oldCoreRole, ok := oldObj.(*iamv0.CoreRole); ok { // Try CoreRole first
-		oldRole = oldCoreRole.DeepCopy()
-		newCoreRole, ok := obj.(*iamv0.CoreRole)
-		if !ok {
-			return nil, nil
-		}
-		newRole = newCoreRole.DeepCopy()
-		roleType = "coreRole"
-	} else if oldRegRole, ok := oldObj.(*iamv0.Role); ok { // Try Role
-		oldRegRolePermissions := make([]iamv0.CoreRolespecPermission, len(oldRegRole.Spec.Permissions))
-		for i, p := range oldRegRole.Spec.Permissions {
-			oldRegRolePermissions[i] = iamv0.CoreRolespecPermission(p)
-		}
-		oldRole = &iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      oldRegRole.Name,
-				Namespace: oldRegRole.Namespace,
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Permissions: oldRegRolePermissions,
-			},
-		}
-		newRegRole, ok := obj.(*iamv0.Role)
-		if !ok {
-			return nil, nil
-		}
-		newRegRolePermissions := make([]iamv0.CoreRolespecPermission, len(newRegRole.Spec.Permissions))
-		for i, p := range newRegRole.Spec.Permissions {
-			newRegRolePermissions[i] = iamv0.CoreRolespecPermission(p)
-		}
-		newRole = &iamv0.CoreRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      newRegRole.Name,
-				Namespace: newRegRole.Namespace,
-			},
-			Spec: iamv0.CoreRoleSpec{
-				Permissions: newRegRolePermissions,
-			},
-		}
-		roleType = "role"
-	} else {
-		// Not a supported role type
+	oldRegRole, ok := oldObj.(*iamv0.Role)
+	if !ok {
 		return nil, nil
 	}
+	newRegRole, ok := obj.(*iamv0.Role)
+	if !ok {
+		return nil, nil
+	}
+	oldRole := oldRegRole.DeepCopy()
+	newRole := newRegRole.DeepCopy()
+	roleType := "role"
 
 	// Return a finish function that performs the zanzana write only on success
 	return func(ctx context.Context, success bool) {
 		if !success {
-			// Update failed, don't write to zanzana
 			return
 		}
 
 		// Grab a ticket to write to Zanzana
 		wait := time.Now()
 		h.zTickets <- true
-		hooksWaitHistogram.WithLabelValues(roleType, "update").Observe(time.Since(wait).Seconds()) // Record wait time
+		hooksWaitHistogram.WithLabelValues(roleType, "update").Observe(time.Since(wait).Seconds())
 
-		go func(old *iamv0.CoreRole, new *iamv0.CoreRole) {
+		go func(old *iamv0.Role, new *iamv0.Role) {
 			defer func() {
 				<-h.zTickets
 			}()
@@ -419,7 +341,7 @@ func (h *RoleHooks) BeginRoleUpdate(ctx context.Context, obj, oldObj runtime.Obj
 					)
 				}
 			}
-		}(oldRole.DeepCopy(), newRole.DeepCopy())
+		}(oldRole, newRole)
 	}, nil
 }
 
