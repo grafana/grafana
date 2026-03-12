@@ -481,13 +481,25 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, err
 	}
 
-	allowed, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
-	if !allowed {
-		return nil, false, apierrors.NewNotFound(
-			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+	if !allowedDelete {
+		// Return 404 if user also can't read the annotation (don't reveal existence),
+		// 403 if they can read it but lack delete permission.
+		allowedRead, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbGet)
+		if err != nil {
+			return nil, false, err
+		}
+		if !allowedRead {
+			return nil, false, apierrors.NewNotFound(
+				annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+			)
+		}
+		return nil, false, apierrors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name, fmt.Errorf("insufficient permissions"),
 		)
 	}
 

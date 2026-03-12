@@ -229,6 +229,18 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbDelete:           "annotations:delete",
 					utils.VerbDeleteCollection: "annotations:delete",
 				},
+				// actionSetMapping mirrors dashboard action sets so that managed permissions
+				// like "dashboards:view" (which cover annotations:read via DashboardViewActions)
+				// are also matched when checking annotation access on a specific dashboard.
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:              {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbList:             {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbCreate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbUpdate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbPatch:            {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbDelete:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbDeleteCollection: {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+				},
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
