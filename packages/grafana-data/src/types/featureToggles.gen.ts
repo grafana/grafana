@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroDatasourceSelector?: boolean;
   /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
-  /**
   * Enable Faro session replay for Grafana
   * @default false
   */
@@ -314,10 +309,10 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
-  * Does not register datasource apis that use the numeric id
+  * Register legacy datasource apis that use the numeric id
   * @default false
   */
-  datasourceDisableIdApi?: boolean;
+  datasourceLegacyIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -418,6 +413,11 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables CSV export using scenes dashboard architecture
+  * @default false
+  */
+  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -588,6 +588,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
+  * Renders ad hoc filters and group by in a single unified control
+  * @default false
+  */
+  dashboardUnifiedDrilldownControls?: boolean;
   /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
@@ -1158,11 +1163,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
@@ -1648,8 +1648,23 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
+  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }

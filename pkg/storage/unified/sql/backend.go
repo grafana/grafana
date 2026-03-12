@@ -67,7 +67,7 @@ func ProvideStorageBackend(
 
 type Backend interface {
 	resource.StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -117,6 +117,7 @@ func NewStorageBackend(
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			DisableStorageServices:  disableStorageServices,
+			DisablePruner:           cfg.DisablePruner,
 		})
 	}
 
@@ -201,6 +202,7 @@ type BackendOptions struct {
 	GarbageCollection GarbageCollectionConfig
 
 	DisableStorageServices bool
+	DisablePruner          bool
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
@@ -227,6 +229,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
+		disablePruner:           opts.DisablePruner,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -289,6 +292,7 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
+	disablePruner bool
 	historyPruner resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
@@ -371,6 +375,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
+	if b.disablePruner {
+		b.log.Debug("pruner disabled, using noop pruner")
+		b.historyPruner = &resource.NoopPruner{}
+		return nil
+	}
+
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
