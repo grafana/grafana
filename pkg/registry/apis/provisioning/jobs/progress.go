@@ -55,10 +55,10 @@ type jobProgressRecorder struct {
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
 	warningCounts       map[string]int
 	metrics             *JobMetrics
-	action              string
+	action              provisioning.JobAction
 }
 
-func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action string) JobProgressRecorder {
+func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),

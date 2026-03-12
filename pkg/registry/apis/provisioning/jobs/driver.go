@@ -208,7 +208,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, string(claimedJob.Spec.Action))
+	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection

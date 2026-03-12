@@ -3,6 +3,7 @@ package jobs
 import (
 	"time"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -153,8 +154,8 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action string, operation ResourceOperation, outcome ResourceOutcome, reason, group, kind string) {
-	m.resourceOpsTotal.WithLabelValues(action, string(operation), string(outcome), reason, group, kind).Inc()
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, operation ResourceOperation, outcome ResourceOutcome, reason, group, kind string) {
+	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, group, kind).Inc()
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {

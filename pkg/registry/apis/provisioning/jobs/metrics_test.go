@@ -3,6 +3,7 @@ package jobs
 import (
 	"testing"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -29,12 +30,12 @@ func TestRecordResourceOperation(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordResourceOperation("pull", OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("pull", OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("pull", OperationUpdated, OutcomeSuccess, "", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation("pull", OperationCreated, OutcomeWarning, "MissingFolderMetadata", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation("pull", OperationCreated, OutcomeError, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("export", OperationDeleted, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation(provisioning.JobActionPull, OperationUpdated, OutcomeSuccess, "", "folder.grafana.app", "Folder")
+	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeWarning, provisioning.ReasonMissingFolderMetadata, "folder.grafana.app", "Folder")
+	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeError, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation(provisioning.JobActionPush, OperationDeleted, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
@@ -66,7 +67,7 @@ func TestRecordResourceOperation(t *testing.T) {
 	})], 0.001)
 
 	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
-		"action": "export", "operation": "deleted", "outcome": "success",
+		"action": "push", "operation": "deleted", "outcome": "success",
 		"reason": "", "group": "dashboard.grafana.app", "kind": "Dashboard",
 	})], 0.001)
 }
