@@ -470,6 +470,20 @@ func TestValidateOnUpdate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "non-service non-admin user updating role field is allowed",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "user@example", Role: "Editor"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+			},
+			expectError: false,
+		},
+		{
 			name: "non-service non-admin user updating non-role fields is forbidden",
 			oldUser: &iamv0alpha1.User{
 				Spec: iamv0alpha1.UserSpec{Login: "testuser", Email: "old@example", Role: "Viewer"},

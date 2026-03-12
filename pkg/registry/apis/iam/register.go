@@ -139,6 +139,9 @@ func RegisterAPIService(
 		teamSearch:  NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features),
 		tracing:     tracing,
 		cfgProvider: cfgProvider,
+		apiConfig: Config{
+			SingleOrganization: cfg.RBAC.SingleOrganization,
+		},
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
 
@@ -195,6 +198,7 @@ func NewAPIService(
 		reg:                        reg,
 		roleApiInstaller:           roleApiInstaller,
 		globalRoleApiInstaller:     globalRoleApiInstaller,
+		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -326,8 +330,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
-	// Until users have been fully migrated to namespaces (no global users), we only enable the users api in single organization setups. 
-	enableUserApi := b.isSingleOrgSetup(ctx) && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
+	// Until users have been fully migrated to namespaces (no global users), we only enable the users api in single organization setups.
+	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
@@ -777,7 +781,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
-	enableUserApi := b.isSingleOrgSetup(ctx) && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
+	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 3)
@@ -982,16 +986,8 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	return store, err
 }
 
-func (b *IdentityAccessManagementAPIBuilder) isSingleOrgSetup(ctx context.Context) bool {
-	if b.cfgProvider == nil {
-		return false
-	}
-	cfg, err := b.cfgProvider.Get(ctx)
-	if err != nil {
-		b.logger.Warn("Failed to get config from provider", "error", err)
-		return false
-	}
-	return cfg.RBAC.SingleOrganization
+func (b *IdentityAccessManagementAPIBuilder) isSingleOrgSetup() bool {
+	return b.apiConfig.SingleOrganization
 }
 
 func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {

@@ -111,4 +111,11 @@ type IdentityAccessManagementAPIBuilder struct {
 	tracing tracing.Tracer
 
 	cfgProvider configprovider.ConfigProvider
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }

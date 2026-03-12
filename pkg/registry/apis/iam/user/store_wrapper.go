@@ -113,7 +113,7 @@ func (f *StoreWrapper) BeforeCreate(ctx context.Context, obj runtime.Object) err
 	return nil
 }
 
-// BeforeUpdate returns Forbidden if the target user (old object) is in the hidden users list.
+// BeforeUpdate returns Forbidden if the target user (old object) or the new login is in the hidden users list.
 func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	cfg, err := f.cfgProvider.Get(ctx)
 	if err != nil {
@@ -123,14 +123,25 @@ func (f *StoreWrapper) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Obj
 		return nil
 	}
 
-	u, ok := oldObj.(*iamv0.User)
+	oldUser, ok := oldObj.(*iamv0.User)
 	if !ok {
 		return nil
 	}
 
-	if _, isHidden := cfg.HiddenUsers[u.Spec.Login]; isHidden {
-		f.logger.Info("blocked update for hidden user", "login", u.Spec.Login, "name", u.Name)
-		return apierrors.NewForbidden(iamv0.UserResourceInfo.GroupResource(), u.Name, errors.New("operation not permitted"))
+	if _, isHidden := cfg.HiddenUsers[oldUser.Spec.Login]; isHidden {
+		f.logger.Info("blocked update for hidden user", "login", oldUser.Spec.Login, "name", oldUser.Name)
+		return apierrors.NewForbidden(iamv0.UserResourceInfo.GroupResource(), oldUser.Name, errors.New("operation not permitted"))
+	}
+
+	// Also check the new object in case the login is being changed to a hidden user's login.
+	newUser, ok := obj.(*iamv0.User)
+	if !ok {
+		return nil
+	}
+
+	if _, isHidden := cfg.HiddenUsers[newUser.Spec.Login]; isHidden {
+		f.logger.Info("blocked update to hidden user login", "login", newUser.Spec.Login, "name", newUser.Name)
+		return apierrors.NewForbidden(iamv0.UserResourceInfo.GroupResource(), newUser.Name, errors.New("operation not permitted"))
 	}
 
 	return nil
