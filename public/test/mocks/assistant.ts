@@ -1,8 +1,8 @@
+import React from 'react';
 import { of } from 'rxjs';
 
-// Mock for @grafana/assistant to prevent initialization errors in tests
-// The real module tries to call getObservablePluginLinks() during initialization
-// which fails because Grafana hasn't started. This mock prevents that.
+// Mock for @grafana/assistant to prevent initialization errors in tests.
+// The real module calls getObservablePluginLinks() during init which fails in tests.
 
 export const useAssistant = jest.fn().mockReturnValue({
   isLoading: false,
@@ -14,8 +14,6 @@ export const useAssistant = jest.fn().mockReturnValue({
 
 export const createAssistantContextItem = jest.fn();
 export const useProvidePageContext = jest.fn().mockReturnValue(jest.fn());
-
-// Additional exports that may be used
 export const toggleAssistant = jest.fn();
 export const isAssistantAvailable = jest.fn().mockReturnValue(of(false));
 
@@ -28,33 +26,24 @@ export const useInlineAssistant = jest.fn().mockReturnValue({
   reset: jest.fn(),
 });
 
-// Stub components for AITextInput and AITextArea
-type AIMockProps = {
-  value: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-  'data-testid'?: string;
-};
+export const AITextInput = jest.fn(
+  ({ value, onChange, placeholder, 'data-testid': testId }: Record<string, unknown>) =>
+    React.createElement('input', {
+      value,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => (onChange as Function)?.(e.target.value),
+      'data-testid': testId,
+      placeholder,
+    })
+);
 
-export const AITextInput = jest.fn(({ value, onChange, ...props }: AIMockProps) => {
-  const React = require('react');
-  return React.createElement('input', {
-    value,
-    onChange: (e: { target: { value: string } }) => onChange?.(e.target.value),
-    'data-testid': props['data-testid'],
-    placeholder: props.placeholder,
-  });
-});
+export const AITextArea = jest.fn(
+  ({ value, onChange, placeholder, 'data-testid': testId }: Record<string, unknown>) =>
+    React.createElement('textarea', {
+      value,
+      onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => (onChange as Function)?.(e.target.value),
+      'data-testid': testId,
+      placeholder,
+    })
+);
 
-export const AITextArea = jest.fn(({ value, onChange, ...props }: AIMockProps) => {
-  const React = require('react');
-  return React.createElement('textarea', {
-    value,
-    onChange: (e: { target: { value: string } }) => onChange?.(e.target.value),
-    'data-testid': props['data-testid'],
-    placeholder: props.placeholder,
-  });
-});
-
-// Type exports (if needed
 export type AssistantHook = ReturnType<typeof useAssistant>;
