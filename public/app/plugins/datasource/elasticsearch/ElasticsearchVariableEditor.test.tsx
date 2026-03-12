@@ -188,7 +188,7 @@ describe('ElasticsearchVariableEditor', () => {
     const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
     act(() => queryEditorOnChange({ ...queryWithMeta, queryType: 'dsl' }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: 'dsl', meta: {} }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: 'dsl', meta: undefined }));
   });
 
   it('should reset meta fields when the metric type tab changes', () => {
@@ -205,7 +205,7 @@ describe('ElasticsearchVariableEditor', () => {
     const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
     act(() => queryEditorOnChange({ ...queryWithMeta, metrics: [{ type: 'count', id: '1' }] }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ meta: {} }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ meta: undefined }));
   });
 
   it('should not reset meta fields when only the query string changes', () => {

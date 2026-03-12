@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "enableDatagridEditing",
-			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "faroSessionReplay",
 			Description:  "Enable Faro session replay for Grafana",
 			Stage:        FeatureStageExperimental,
@@ -475,8 +467,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourceDisableIdApi",
-			Description:     "Does not register datasource apis that use the numeric id",
+			Name:            "datasourceLegacyIdApi",
+			Description:     "Register legacy datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // affects the routes at startup
@@ -639,6 +631,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
@@ -1826,14 +1825,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthzGlobalRolesApi",
 			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2217,6 +2208,14 @@ var (
 			Name:         "nestedFramesFieldOverrides",
 			Description:  "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "vizLegendFacetedFilter",
+			Description:  "Enable faceted labels filter for series visibility in the legend",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
