@@ -3646,6 +3646,7 @@
     "category-alert-state-filter": "Alert state filter",
     "category-filter": "Filter",
     "category-options": "Options",
+    "category-stat-styles": "Stat styles",
     "descriptino-alerts-linked-to-dashboard": "Only show alerts linked to this dashboard",
     "description-alert-instance-label": "Filter alert instances using label querying, ex: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filter for alerts containing this text",
@@ -3656,6 +3657,9 @@
     "description-max-items": "Maximum alerts to display",
     "description-show-inactive-alerts": "Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.",
     "description-sort-order": "Sort order of alerts and alert instances",
+    "description-stat-color-mode": "Control how the stat value or background is colored",
+    "description-stat-thresholds": "Define thresholds to color the stat value based on the alert count",
+    "description-stat-value-mappings": "Modify the display text based on the alert count",
     "description-view-mode": "Toggle between list view and stat view",
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
@@ -3681,6 +3685,9 @@
     "name-recovering": "Recovering",
     "name-show-inactive-alerts": "Show alerts with 0 instances",
     "name-sort-order": "Sort order",
+    "name-stat-color-mode": "Color mode",
+    "name-stat-thresholds": "Thresholds",
+    "name-stat-value-mappings": "Value mappings",
     "name-view-mode": "View mode",
     "sort-order-options": {
       "label-alphabetical-asc": "Alphabetical (asc)",
@@ -3688,6 +3695,12 @@
       "label-importance": "Importance",
       "label-time-asc": "Time (asc)",
       "label-time-desc": "Time (desc)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "Background Gradient",
+      "label-background-solid": "Background Solid",
+      "label-none": "None",
+      "label-value": "Value"
     },
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
@@ -14488,6 +14501,18 @@
       "label-inverted": "Inverted",
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
+    },
+    "presets": {
+      "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "list": "List",
+      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "threshold-background": "Threshold background",
+      "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-value": "Threshold value",
+      "threshold-value-sparkline": "Threshold value with sparkline",
+      "wide-list": "Wide list",
+      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
     },
     "suggestions": {
       "stat": "Stat",
