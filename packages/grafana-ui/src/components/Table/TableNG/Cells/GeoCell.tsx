@@ -19,10 +19,11 @@ export function GeoCell({ value }: GeoCellProps) {
   return disp;
 }
 
-export const getStyles: TableCellStyles = () =>
-  css({
-    fontFamily: 'monospace',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  });
+const styles = css({
+  fontFamily: 'monospace',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+});
+
+export const getStyles: TableCellStyles = () => styles;

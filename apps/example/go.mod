@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/example
 
-go 1.25.7
+go 1.25.8
 
 require (
 	github.com/grafana/grafana-app-sdk v0.51.4
@@ -42,10 +42,10 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260226130908-b01d89f85c4d // indirect
-	github.com/grafana/authlib/types v0.0.0-20260226130908-b01d89f85c4d // indirect
+	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // indirect
+	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.8 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

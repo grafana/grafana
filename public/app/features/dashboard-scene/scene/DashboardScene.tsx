@@ -37,7 +37,7 @@ import { setDashboardMutationClient } from 'app/features/plugins/components/rest
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { ShowConfirmModalEvent } from 'app/types/events';
+import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   AnnoKeyManagerAllowsEdits,
@@ -164,7 +164,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
-  layoutOrchestrator?: DashboardLayoutOrchestrator;
+  layoutOrchestrator: DashboardLayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -411,6 +411,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      appEvents.publish(new DashboardDiscardedEvent());
     } else {
       // Do not restore
       this.setState({ isEditing: false });

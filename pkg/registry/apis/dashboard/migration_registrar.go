@@ -28,5 +28,7 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 			migrations.CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
 			migrations.FolderTreeValidation(folderGR),
 		},
+		// Folder and Dashboard tables are still being used
+		RenameTables: []string{},
 	}
 }

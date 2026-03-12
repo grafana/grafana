@@ -43,9 +43,9 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup Go
-      uses: actions/setup-go@v6.0.0
+      uses: ./.github/actions/setup-go
       with:
-        go-version-file: go.mod
+        cache-build: 'false'
     - name: Generate golden files
       run: make generate-golden-files
       working-directory: apps/dashboard
@@ -88,11 +88,8 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Yarn install
-      run: yarn install --immutable
-      env:
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -130,13 +127,8 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Yarn install
-      run: yarn install --immutable
-      env:
-        # Switch from default hardened mode to faster mode for internal PRs
-        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run test:ci
       env:
         TEST_MAX_WORKERS: 4
@@ -155,13 +147,8 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Yarn install
-      run: yarn install --immutable
-      env:
-        # Switch from default hardened mode to faster mode for internal PRs
-        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
@@ -176,13 +163,8 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Yarn install
-      run: yarn install --immutable
-      env:
-        # Switch from default hardened mode to faster mode for internal PRs
-        YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
-        PUPPETEER_SKIP_DOWNLOAD: true
-        CYPRESS_INSTALL_BINARY: 0
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
     - run: yarn run packages:test:ci
 
   # This is the job that is actually required by rulesets.
