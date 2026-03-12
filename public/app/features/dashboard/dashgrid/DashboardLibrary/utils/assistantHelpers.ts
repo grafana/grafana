@@ -102,6 +102,21 @@ export function buildAssistantPrompt(): string {
 }
 
 /**
+ * Async function to check if the suggested dashboard assistant is enabled.
+ * Checks the feature flag and assistant availability (no tool flag needed for suggested dashboards).
+ */
+export function isSuggestedDashboardAssistantEnabled(): Promise<boolean> {
+  return firstValueFrom(
+    isAssistantAvailable().pipe(
+      map((assistantAvailable) => {
+        const buttonEnabled = getFeatureFlagClient().getBooleanValue('suggestedDashboardsAssistantButton', false);
+        return buttonEnabled && assistantAvailable;
+      })
+    )
+  );
+}
+
+/**
  * Async function to check if the template dashboard assistant is enabled.
  * Both flags can be enabled in the specific wave/environment, but the assistant may not be available.
  * For example, cloud users without assistant access.

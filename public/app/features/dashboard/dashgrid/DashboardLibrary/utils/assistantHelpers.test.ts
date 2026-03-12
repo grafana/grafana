@@ -1,8 +1,51 @@
-import { buildTemplateContextData, buildTemplateContextTitle } from './assistantHelpers';
+import { of } from 'rxjs';
+
+import { isAssistantAvailable } from '@grafana/assistant';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
+
+import {
+  buildTemplateContextData,
+  buildTemplateContextTitle,
+  isSuggestedDashboardAssistantEnabled,
+} from './assistantHelpers';
 import { isGnetDashboard } from './dashboardLibraryHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  isAssistantAvailable: jest.fn(() => of(true)),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(() => mockFeatureFlagClient(true)),
+}));
+
+function mockFeatureFlagClient(flagValue: boolean): ReturnType<typeof getFeatureFlagClient> {
+  return { getBooleanValue: jest.fn().mockReturnValue(flagValue) } as unknown as ReturnType<
+    typeof getFeatureFlagClient
+  >;
+}
+
 describe('assistantHelpers', () => {
+  describe('isSuggestedDashboardAssistantEnabled', () => {
+    it('should return true when flag is enabled and assistant is available', async () => {
+      await expect(isSuggestedDashboardAssistantEnabled()).resolves.toBe(true);
+    });
+
+    it('should return false when flag is disabled', async () => {
+      jest.mocked(getFeatureFlagClient).mockReturnValue(mockFeatureFlagClient(false));
+
+      await expect(isSuggestedDashboardAssistantEnabled()).resolves.toBe(false);
+    });
+
+    it('should return false when assistant is unavailable', async () => {
+      jest.mocked(isAssistantAvailable).mockReturnValue(of(false));
+
+      await expect(isSuggestedDashboardAssistantEnabled()).resolves.toBe(false);
+    });
+  });
+
   describe('isGnetDashboard', () => {
     it('should distinguish GnetDashboard from PluginDashboard', () => {
       expect(isGnetDashboard(createMockGnetDashboard())).toBe(true);
