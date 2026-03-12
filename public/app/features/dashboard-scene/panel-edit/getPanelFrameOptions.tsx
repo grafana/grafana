@@ -14,6 +14,7 @@ import {
   TITLE_SYSTEM_PROMPT,
   DESCRIPTION_SYSTEM_PROMPT,
   buildPanelContext,
+  hasMeaningfulPanelContext,
 } from 'app/features/dashboard/components/GenAI/assistantContext';
 import { LLMFallbackAddon, useIsAssistantAvailable } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -183,6 +184,20 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
+function useGenerationReady(panel: VizPanel, isAssistantAvailable: boolean) {
+  const panelModel = vizPanelToPanel(panel);
+  const hasMeaningfulContext = hasMeaningfulPanelContext(panelModel);
+  const [generationReady, setGenerationReady] = React.useState(() => isAssistantAvailable && hasMeaningfulContext);
+
+  React.useEffect(() => {
+    if (isAssistantAvailable && hasMeaningfulContext && !generationReady) {
+      setGenerationReady(true);
+    }
+  }, [generationReady, hasMeaningfulContext, isAssistantAvailable]);
+
+  return generationReady;
+}
+
 export function PanelFrameTitleInput({
   panel,
   isNewElement,
@@ -196,7 +211,7 @@ export function PanelFrameTitleInput({
   const isAssistantAvailable = useIsAssistantAvailable();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
-  const [contextReady, setContextReady] = React.useState(false);
+  const generationReady = useGenerationReady(panel, isAssistantAvailable);
 
   const ref = useEditPaneInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
@@ -204,19 +219,11 @@ export function PanelFrameTitleInput({
 
   const isDefaultTitle = !title || title === t('dashboard.new-panel-title', 'New panel');
 
-  // Delay mounting AI component until panel context is available
-  React.useEffect(() => {
-    if (isAssistantAvailable && !contextReady) {
-      const timer = setTimeout(() => setContextReady(true), 500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [isAssistantAvailable, contextReady]);
-
-  const showAssistant = isAssistantAvailable && contextReady;
+  const showAssistant = isAssistantAvailable;
 
   return (
     <GenAITextInput
+      key={generationReady ? 'title-ready' : 'title-waiting'}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={showAssistant && isDefaultTitle ? '' : title}
       onChange={(val) => updatePanelTitleState(panel, val)}
@@ -225,7 +232,7 @@ export function PanelFrameTitleInput({
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
       systemPrompt={showAssistant ? TITLE_SYSTEM_PROMPT : undefined}
       getContext={() => buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))}
-      autoGenerate={showAssistant && isDefaultTitle}
+      autoGenerate={showAssistant && generationReady && isDefaultTitle}
       id={id}
       inputRef={ref}
     />
@@ -236,21 +243,13 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   const { description } = panel.useState();
   const isAssistantAvailable = useIsAssistantAvailable();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
-  const [contextReady, setContextReady] = React.useState(false);
+  const generationReady = useGenerationReady(panel, isAssistantAvailable);
 
-  // Delay mounting AI component until panel context is available
-  React.useEffect(() => {
-    if (isAssistantAvailable && !contextReady) {
-      const timer = setTimeout(() => setContextReady(true), 500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [isAssistantAvailable, contextReady]);
-
-  const showAssistant = isAssistantAvailable && contextReady;
+  const showAssistant = isAssistantAvailable;
 
   return (
     <GenAITextArea
+      key={generationReady ? 'description-ready' : 'description-waiting'}
       value={description ?? ''}
       onChange={(val) => panel.setState({ description: val })}
       onComplete={(val) => {
@@ -272,7 +271,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
       }}
       systemPrompt={showAssistant ? DESCRIPTION_SYSTEM_PROMPT : undefined}
       getContext={() => buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))}
-      autoGenerate={showAssistant && !description}
+      autoGenerate={showAssistant && generationReady && !description}
       id={id}
     />
   );

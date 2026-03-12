@@ -9,6 +9,10 @@ const ASSISTANT_OUTPUT_INSTRUCTION = [
   'If the user message is empty, generate based on the panel context alone.',
 ].join('\n');
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 export const TITLE_SYSTEM_PROMPT = [
   'You are an expert in creating Grafana panel titles.',
   'Generate a human-readable, "speaking" title that describes what the panel shows. Use plain language that a viewer would understand.',
@@ -36,12 +40,11 @@ function getQueryExpressions(panel: Panel): string[] {
   const seen = new Set<string>();
 
   for (const t of targets) {
-    if (!t || typeof t !== 'object') {
+    if (!isRecord(t)) {
       continue;
     }
-    const rec = t as Record<string, unknown>;
     for (const key of ['expr', 'query', 'target', 'metric']) {
-      const val = rec[key];
+      const val = t[key];
       if (typeof val === 'string' && val.trim() && !seen.has(val)) {
         seen.add(val);
         items.push(val);
@@ -49,6 +52,34 @@ function getQueryExpressions(panel: Panel): string[] {
     }
   }
   return items;
+}
+
+function hasDatasourceIdentity(panel: Panel): boolean {
+  const ds = panel.datasource;
+
+  if (typeof ds === 'string') {
+    return ds.trim().length > 0;
+  }
+
+  if (!ds || typeof ds !== 'object') {
+    return false;
+  }
+
+  const { uid, name } = ds;
+  return (typeof uid === 'string' && uid.trim().length > 0) || (typeof name === 'string' && name.trim().length > 0);
+}
+
+function hasTextPanelContent(panel: Panel): boolean {
+  if (panel.type !== 'text') {
+    return false;
+  }
+
+  const content = isRecord(panel.options) ? panel.options.content : undefined;
+  return typeof content === 'string' && content.trim().length > 0;
+}
+
+export function hasMeaningfulPanelContext(panel: Panel): boolean {
+  return hasDatasourceIdentity(panel) || getQueryExpressions(panel).length > 0 || hasTextPanelContent(panel);
 }
 
 export function buildPanelContext(panel: Panel, dashboard: Dashboard): string {
@@ -65,8 +96,24 @@ export function buildPanelContext(panel: Panel, dashboard: Dashboard): string {
   }
 
   const ds = panel.datasource;
-  if (ds && typeof ds === 'object' && 'type' in ds) {
-    ctx.datasource = (ds as { type?: string }).type;
+  if (isRecord(ds)) {
+    const datasourceCtx: Record<string, string> = {};
+
+    if (typeof ds.type === 'string' && ds.type) {
+      datasourceCtx.type = ds.type;
+    }
+    if (typeof ds.uid === 'string' && ds.uid) {
+      datasourceCtx.uid = ds.uid;
+    }
+    if (typeof ds.name === 'string' && ds.name) {
+      datasourceCtx.name = ds.name;
+    }
+
+    if (Object.keys(datasourceCtx).length > 0) {
+      ctx.datasource = datasourceCtx;
+    }
+  } else if (typeof ds === 'string' && ds.trim()) {
+    ctx.datasource = ds;
   }
 
   const queries = getQueryExpressions(panel);
