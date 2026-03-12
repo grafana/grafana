@@ -3,10 +3,11 @@ package resource
 import (
 	"context"
 	"io"
+	"log/slog"
 )
 
 type Broadcaster[T any] interface {
-	Subscribe(context.Context) (<-chan T, error)
+	Subscribe(ctx context.Context, name string) (<-chan T, error)
 	Unsubscribe(<-chan T)
 }
 
@@ -18,15 +19,20 @@ func NewBroadcaster[T any](ctx context.Context, input <-chan T) Broadcaster[T] {
 	b := &broadcaster[T]{
 		shouldTerminate: ctx.Done(),
 		cache:           newRingBuffer[T](100),
-		subscribe:       make(chan chan T, chanBufferLen),
+		subscribe:       make(chan subscription[T], chanBufferLen),
 		unsubscribe:     make(chan (<-chan T), chanBufferLen),
-		subs:            make(map[<-chan T]chan T),
+		subs:            make(map[<-chan T]subscription[T]),
 		terminated:      make(chan struct{}),
 	}
 
 	go b.stream(input)
 
 	return b
+}
+
+type subscription[T any] struct {
+	name string
+	ch   chan T
 }
 
 type broadcaster[T any] struct {
@@ -38,13 +44,13 @@ type broadcaster[T any] struct {
 	// subscription management
 
 	cache       ringBuffer[T]
-	subscribe   chan chan T
+	subscribe   chan subscription[T]
 	unsubscribe chan (<-chan T)
-	subs        map[<-chan T]chan T
+	subs        map[<-chan T]subscription[T]
 }
 
-func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
-	sub := make(chan T, 100)
+func (b *broadcaster[T]) Subscribe(ctx context.Context, name string) (<-chan T, error) {
+	sub := subscription[T]{name: name, ch: make(chan T, 100)}
 
 	select {
 	case <-ctx.Done(): // client canceled
@@ -52,7 +58,7 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 	case <-b.terminated: // no more data
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
-		return sub, nil
+		return sub.ch, nil
 	}
 }
 
@@ -81,18 +87,27 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	defer func() {
 		// prevent new subscriptions and make sure to discard unsubscriptions
 		close(b.terminated)
-		// terminate all subscirptions and clean the map
-		for _, sub := range b.subs {
-			close(sub)
-			delete(b.subs, sub)
+		// terminate all subscriptions
+		for recv, sub := range b.subs {
+			close(sub.ch)
+			delete(b.subs, recv)
 		}
 	}()
 
 	unsubscribe := func(recv <-chan T) {
 		if sub, ok := b.subs[recv]; ok {
-			close(sub)
-			delete(b.subs, sub)
+			close(sub.ch)
+			delete(b.subs, recv)
 		}
+	}
+
+	addSubscriber := func(sub subscription[T]) {
+		// send initial batch of cached items
+		if !b.cache.readInto(sub.ch) {
+			close(sub.ch)
+			return
+		}
+		b.subs[sub.ch] = sub
 	}
 
 	for {
@@ -101,14 +116,19 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			// send initial batch of cached items
-			if !b.cache.readInto(sub) {
-				close(sub)
-				continue
-			}
-			b.subs[sub] = sub
+			addSubscriber(sub)
 
 		case recv := <-b.unsubscribe: // unsubscribe
+			// Drain pending subscribes so we don't miss one that was
+			// buffered before this unsubscribe.
+			for drained := false; !drained; {
+				select {
+				case sub := <-b.subscribe:
+					addSubscriber(sub)
+				default:
+					drained = true
+				}
+			}
 			unsubscribe(recv)
 
 		case item, ok := <-input: // data arrived, send to subscribers
@@ -121,15 +141,18 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			var slow []<-chan T
 			for _, sub := range b.subs {
 				select {
-				case sub <- item:
+				case sub.ch <- item:
 				default:
-					slow = append(slow, sub)
+					slow = append(slow, sub.ch)
 				}
 			}
-			// Instead of sending subscribers to a b.unsubscribe channel, we unsubscribe directly.
+			// Instead of sending subscribers to b.unsubscribe channel, we unsubscribe directly.
 			// Sending to b.unsubscribe could lead to deadlock, if there are too many elements in the
 			// channel buffer already.
 			for _, recv := range slow {
+				if sub, ok := b.subs[recv]; ok {
+					slog.Warn("unsubscribing slow consumer", "subscriber", sub.name)
+				}
 				unsubscribe(recv)
 			}
 		}
