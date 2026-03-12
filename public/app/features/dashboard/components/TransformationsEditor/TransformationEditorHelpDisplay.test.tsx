@@ -1,4 +1,5 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,7 +12,6 @@ jest.mock('app/features/transformers/docs/getTransformationContent', () => ({
 }));
 
 const mockGetTransformationContent = jest.mocked(getTransformationContent);
-const mockOnCloseClick = jest.fn();
 
 const mockTransformationInfo: DataTransformerInfo = {
   id: 'test-transform',
@@ -29,8 +29,11 @@ const mockTransformer: TransformerRegistryItem<null> = {
 };
 
 describe('TransformationEditorHelpDisplay', () => {
+  let mockOnCloseClick: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOnCloseClick = jest.fn();
     mockGetTransformationContent.mockResolvedValue({
       name: 'Test Transform',
       helperDocs: 'Test help content',
@@ -53,7 +56,7 @@ describe('TransformationEditorHelpDisplay', () => {
 
     expect(screen.getByText('Test Transform')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Drawer.General.subtitle)).toBeInTheDocument();
-    await waitFor(() => {}); // flush pending async content fetch
+    await screen.findByText('Test help content');
   });
 
   it('fetches help content when opened', async () => {
@@ -62,10 +65,7 @@ describe('TransformationEditorHelpDisplay', () => {
     );
 
     expect(mockGetTransformationContent).toHaveBeenCalledWith('test-transform');
-
-    await waitFor(() => {
-      expect(screen.getByText('Test help content')).toBeInTheDocument();
-    });
+    await screen.findByText('Test help content');
   });
 
   it('shows fallback content when fetch fails', async () => {
@@ -76,7 +76,7 @@ describe('TransformationEditorHelpDisplay', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('transformation documentation')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /transformation documentation/i })).toBeInTheDocument();
     });
   });
 
@@ -85,10 +85,9 @@ describe('TransformationEditorHelpDisplay', () => {
       <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
     );
 
-    fireEvent.click(screen.getByTestId('data-testid Drawer close'));
+    await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
     expect(mockOnCloseClick).toHaveBeenCalledWith(false);
-    await waitFor(() => {}); // flush pending async content fetch
   });
 
   it('does not apply stale content when transformer changes before fetch resolves', async () => {

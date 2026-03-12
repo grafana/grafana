@@ -1,4 +1,5 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { DataTransformerInfo, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -80,7 +81,7 @@ describe('TransformationHelpDisplay', () => {
 
     expect(screen.getByText('Test Transform')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.Drawer.General.subtitle)).toBeInTheDocument();
-    await waitFor(() => {}); // flush pending async content fetch
+    await screen.findByText('Test help content');
   });
 
   it('fetches and renders help content when the drawer opens', async () => {
@@ -92,10 +93,7 @@ describe('TransformationHelpDisplay', () => {
     });
 
     expect(mockGetTransformationContent).toHaveBeenCalledWith('test-transform');
-
-    await waitFor(() => {
-      expect(screen.getByText('Test help content')).toBeInTheDocument();
-    });
+    await screen.findByText('Test help content');
   });
 
   it('shows fallback content when fetch fails', async () => {
@@ -109,7 +107,7 @@ describe('TransformationHelpDisplay', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('transformation documentation')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /transformation documentation/i })).toBeInTheDocument();
     });
   });
 
@@ -123,9 +121,8 @@ describe('TransformationHelpDisplay', () => {
       },
     });
 
-    fireEvent.click(screen.getByTestId('data-testid Drawer close'));
+    await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
     expect(toggleHelp).toHaveBeenCalled();
-    await waitFor(() => {}); // flush pending async content fetch
   });
 });
