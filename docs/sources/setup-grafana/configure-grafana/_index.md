@@ -2776,13 +2776,6 @@ List of enabled repository types, separated by `|`. When empty, defaults are app
 
 OSS types: `local`, `git`, `github`. Enterprise types: `bitbucket`, `gitlab`.
 
-You can override this with the `GF_PROVISIONING_REPOSITORY_TYPES` environment variable. For example:
-
-```ini
-[provisioning]
-repository_types = local|git|github
-```
-
 <hr>
 
 ### `[plugin.plugin_id]`
