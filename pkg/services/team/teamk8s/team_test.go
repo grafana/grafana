@@ -181,6 +181,10 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqCo
 
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
+func (m *mockDirectRestConfigProvider) IsReady() bool {
+	return true
+}
+
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
