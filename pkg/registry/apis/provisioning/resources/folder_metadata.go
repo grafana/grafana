@@ -34,12 +34,37 @@ type MissingFolderMetadata struct {
 }
 
 func (e *MissingFolderMetadata) Error() string {
-	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
+	return fmt.Sprintf("folder %q is missing folder metadata file - folder UID will be auto-generated and may change on next sync.", e.Path)
 }
 
 // Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
 func (e *MissingFolderMetadata) Unwrap() error {
 	return ErrMissingFolderMetadata
+}
+
+// NewMissingFolderMetadata creates a MissingFolderMetadata error for the given folder path.
+func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
+	return &MissingFolderMetadata{Path: path}
+}
+
+// ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.
+var ErrFolderMetadataConflict = errors.New("folder metadata conflict")
+
+// FolderMetadataConflict is returned when the folder metadata in the repository
+// conflicts with the folder state in Grafana (e.g., ID mismatch, user deleted
+// or changed the folder ID).
+type FolderMetadataConflict struct {
+	Path   string
+	Reason string
+}
+
+func (e *FolderMetadataConflict) Error() string {
+	return fmt.Sprintf("folder metadata conflict at %q: %s", e.Path, e.Reason)
+}
+
+// Unwrap supports errors.Is(err, ErrFolderMetadataConflict).
+func (e *FolderMetadataConflict) Unwrap() error {
+	return ErrFolderMetadataConflict
 }
 
 // FindFoldersMissingMetadata returns folder paths from source that do not have

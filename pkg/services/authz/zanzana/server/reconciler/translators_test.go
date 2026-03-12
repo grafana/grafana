@@ -195,7 +195,7 @@ func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
 						Name: tt.subjectName,
 					},
 					RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-						{Kind: iamv0.GlobalRoleBindingSpecRoleRefKindGlobalRole, Name: "global-role-1"},
+						{Kind: "GlobalRole", Name: "global-role-1"},
 					},
 				},
 			}
@@ -833,7 +833,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 							Name: s.name,
 						},
 						RoleRefs: []iamv0.GlobalRoleBindingspecRoleRef{
-							{Kind: iamv0.GlobalRoleBindingSpecRoleRefKindGlobalRole, Name: "global-role"},
+							{Kind: "GlobalRole", Name: "global-role"},
 						},
 					},
 				}
