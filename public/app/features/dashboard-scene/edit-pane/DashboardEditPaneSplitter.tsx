@@ -127,7 +127,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={styles.scrollContainer}
+          className={cx(styles.scrollContainer, sidebarContext.isHidden && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
