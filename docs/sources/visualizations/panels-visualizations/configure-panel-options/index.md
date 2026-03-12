@@ -67,3 +67,38 @@ Set the following options to provide basic information about a panel and define 
 | Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                                                                        |
 
 You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards](ref:set-up-generative-ai-features-for-dashboards).
+
+## Configure repeating panels
+
+You can configure Grafana to dynamically add panels to a dashboard.
+This is a panel that the system creates based on the value of a multi-value variable.
+Variables dynamically change your queries across all panels in a dashboard.
+
+To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
+
+{{< admonition type="tip" >}}
+For information about repeating rows and tabs, refer to [Configure repeat options](https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options).
+{{< /admonition >}}
+
+**Before you begin:**
+
+- Ensure that the query includes a multi-value variable.
+
+To configure repeating panels, follow these steps:
+
+{{< docs/list >}}
+
+1. Go to the dashboard you want to update and navigate to the panel you want to repeat.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
+1. Hover your cursor over the top-right corner of the panel to display the menu icon.
+1. Click the menu icon and select **Edit**.
+1. Under **Panel options** in the panel editor pane, expand the **Repeat options** section.
+
+{{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="configure-repeat" %}}
+
+1. Click **Back to dashboard** and then **Exit edit**.
+1. To propagate changes to all panels, reload the dashboard.
+
+You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.
