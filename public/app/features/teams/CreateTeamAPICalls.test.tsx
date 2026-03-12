@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { delay, http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse, type HttpResponseResolver } from 'msw';
 import useMountedState from 'react-use/lib/useMountedState';
 import { getWrapper } from 'test/test-utils';
 
@@ -12,6 +12,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { useCreateTeamOrchestrate } from './CreateTeamAPICalls';
 
 setBackendSrv(backendSrv);
+
+// Helpers to override default handlers without repeating endpoint paths in every test.
+const mockCreateTeam = (resolver: HttpResponseResolver) => http.post('/api/teams', resolver);
+const mockSetTeamRoles = (resolver: HttpResponseResolver) =>
+  http.put('/api/access-control/teams/:teamId/roles', resolver);
+const mockCreateFolder = (resolver: HttpResponseResolver) => http.post('/api/folders', resolver);
+const mockCreateFolderAppPlatform = (resolver: HttpResponseResolver) =>
+  http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', resolver);
 
 jest.mock('react-use/lib/useMountedState', () => ({
   __esModule: true,
@@ -53,7 +61,7 @@ describe('useCreateTeamOrchestrate', () => {
 
   describe('team creation', () => {
     it('sets loading before the API responds', async () => {
-      server.use(http.post('/api/teams', async () => delay('infinite')));
+      server.use(mockCreateTeam(async () => delay('infinite')));
 
       const { result, unmount } = renderHook(() => useCreateTeamOrchestrate([], false), {
         wrapper: getWrapper({}),
@@ -80,9 +88,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('reports error when the API returns an error response', async () => {
-      server.use(
-        http.post('/api/teams', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
-      );
+      server.use(mockCreateTeam(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], false), { wrapper: getWrapper({}) });
 
@@ -94,9 +100,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('does not trigger roles or folder creation when team creation fails', async () => {
-      server.use(
-        http.post('/api/teams', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
-      );
+      server.use(mockCreateTeam(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], true), {
         wrapper: getWrapper({}),
@@ -117,7 +121,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('sets loading before the roles API responds', async () => {
-      server.use(http.put('/api/access-control/teams/:teamId/roles', async () => delay('infinite')));
+      server.use(mockSetTeamRoles(async () => delay('infinite')));
 
       const { result, unmount } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], false), {
         wrapper: getWrapper({}),
@@ -149,11 +153,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('reports error when the roles API returns an error response', async () => {
-      server.use(
-        http.put('/api/access-control/teams/:teamId/roles', () =>
-          HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
-        )
-      );
+      server.use(mockSetTeamRoles(() => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], false), {
         wrapper: getWrapper({}),
@@ -208,8 +208,9 @@ describe('useCreateTeamOrchestrate', () => {
       let capturedRequest: { teamId: string; body: unknown } | undefined;
 
       server.use(
-        http.put<{ teamId: string }>('/api/access-control/teams/:teamId/roles', async ({ params, request }) => {
-          capturedRequest = { teamId: params.teamId, body: await request.json() };
+        mockSetTeamRoles(async ({ params, request }) => {
+          const { teamId } = params as { teamId: string };
+          capturedRequest = { teamId, body: await request.json() };
           return HttpResponse.json({ message: 'Roles updated' });
         })
       );
@@ -229,7 +230,7 @@ describe('useCreateTeamOrchestrate', () => {
 
   describe('folder creation', () => {
     it('sets loading before the folder API responds', async () => {
-      server.use(http.post('/api/folders', async () => delay('infinite')));
+      server.use(mockCreateFolder(async () => delay('infinite')));
 
       const { result, unmount } = renderHook(() => useCreateTeamOrchestrate([], true), {
         wrapper: getWrapper({}),
@@ -263,7 +264,7 @@ describe('useCreateTeamOrchestrate', () => {
 
     it('reports error when the legacy folder API returns an error response', async () => {
       // The legacy folder mutation throws on HTTP error responses, caught by the try/catch in the hook.
-      server.use(http.post('/api/folders', () => HttpResponse.json({}, { status: 500 })));
+      server.use(mockCreateFolder(() => HttpResponse.json({}, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 
@@ -277,9 +278,7 @@ describe('useCreateTeamOrchestrate', () => {
     it('reports error when the app platform folder API returns an error response', async () => {
       config.featureToggles.foldersAppPlatformAPI = true;
       server.use(
-        http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', () =>
-          HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
-        )
+        mockCreateFolderAppPlatform(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
       );
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
@@ -306,7 +305,7 @@ describe('useCreateTeamOrchestrate', () => {
       let capturedTitle: string | undefined;
 
       server.use(
-        http.post('/api/folders', async ({ request }) => {
+        mockCreateFolder(async ({ request }) => {
           const body = (await request.json()) as { title: string };
           capturedTitle = body.title;
           return HttpResponse.json({ uid: 'new-folder', url: '/dashboards/f/new-folder/test-team' });
@@ -343,11 +342,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('still creates folder even when roles creation fails', async () => {
-      server.use(
-        http.put('/api/access-control/teams/:teamId/roles', () =>
-          HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
-        )
-      );
+      server.use(mockSetTeamRoles(() => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], true), {
         wrapper: getWrapper({}),
@@ -362,9 +357,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('skips both roles and folder when team creation fails', async () => {
-      server.use(
-        http.post('/api/teams', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
-      );
+      server.use(mockCreateTeam(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([{ uid: 'role-1' } as never], true), {
         wrapper: getWrapper({}),
@@ -397,9 +390,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('shows an error toast for team creation failure instead of setting state', async () => {
-      server.use(
-        http.post('/api/teams', () => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
-      );
+      server.use(mockCreateTeam(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], false), { wrapper: getWrapper({}) });
 
@@ -423,7 +414,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('shows an error toast for folder creation failure instead of setting state', async () => {
-      server.use(http.post('/api/folders', () => HttpResponse.json({})));
+      server.use(mockCreateFolder(() => HttpResponse.json({})));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 
