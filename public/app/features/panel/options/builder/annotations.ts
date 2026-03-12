@@ -1,6 +1,8 @@
 import { DataTopic, PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
+import { ClusteringSwitchEditor } from './ClusteringSwitchEditor';
+
 /**
  * Adds common text control options to a visualization options
  * @param builder
@@ -24,7 +26,9 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
       annotations?.filter((df) => df.meta?.dataTopic === DataTopic.Annotations && df.length > 0).length > 1,
   });
 
-  builder.addBooleanSwitch({
+  builder.addCustomEditor({
+    editor: ClusteringSwitchEditor,
+    id: 'clusteringSwitchEditor',
     path: 'annotations.clustering',
     category,
     name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
@@ -32,7 +36,7 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
       'grafana-ui.builder.annotations.clustering.desc',
       'Combines high density point annotations into region annotations'
     ),
-    defaultValue: false,
+    defaultValue: 0,
     showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 }
