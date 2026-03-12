@@ -593,11 +593,6 @@
           },
           {
             "type": "boolean",
-            "name": "includeHidden",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
             "name": "includeMapped",
             "in": "query"
           },
