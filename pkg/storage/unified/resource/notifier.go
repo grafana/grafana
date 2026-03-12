@@ -131,6 +131,22 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 				return
 			}
 
+			// Drain all pending events from the raw channel before sorting,
+			// so that we don't emit a partial batch that misses events with
+			// lower RVs still waiting in the channel.
+			drained := false
+			for !drained {
+				select {
+				case evt, ok := <-raw:
+					if !ok {
+						return
+					}
+					buffer = append(buffer, evt)
+				default:
+					drained = true
+				}
+			}
+
 			// Sort buffer by RV
 			slices.SortFunc(buffer, func(a, b Event) int {
 				return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
