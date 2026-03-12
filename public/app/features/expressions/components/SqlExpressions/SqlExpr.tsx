@@ -12,7 +12,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
-import { fetchSQLFields } from '../../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
@@ -62,6 +62,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
         const cols = await fetchFields({ table }, queries || []);
         return cols.map((c) => c.name);
       },
+      getFunctions: () => ALLOWED_FUNCTIONS,
     }),
     [queries, refIds]
   );
