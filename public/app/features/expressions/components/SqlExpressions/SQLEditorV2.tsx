@@ -193,9 +193,14 @@ function inlineGhostExtension(): import('@codemirror/state').Extension {
     keymap.of([{ key: 'Tab', run: acceptGhostCompletion }]),
     EditorView.theme({
       '.cm-ghost-text': {
-        opacity: '0.35',
-        fontStyle: 'italic',
+        opacity: '0',
+        color: '#7c8496',
         pointerEvents: 'none',
+        animation: 'ghostFadeIn 0.15s ease-out forwards',
+      },
+      '@keyframes ghostFadeIn': {
+        from: { opacity: '0', transform: 'translateX(-2px)' },
+        to: { opacity: '0.45', transform: 'translateX(0)' },
       },
     }),
   ];
@@ -294,18 +299,25 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
           borderTop: `1px solid ${theme.colors.border.weak}`,
         },
 
-        // Subtle dropdown — secondary to the inline ghost text
+        // Glassmorphism dropdown with animated entrance
         '.cm-tooltip.cm-tooltip-autocomplete': {
-          background: theme.colors.background.elevated,
-          border: `1px solid ${theme.colors.border.weak}`,
-          borderRadius: '8px',
-          boxShadow: theme.shadows.z3,
+          background: `color-mix(in srgb, ${theme.colors.background.elevated} 85%, transparent)`,
+          backdropFilter: 'blur(12px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(12px) saturate(1.4)',
+          border: `1px solid color-mix(in srgb, ${theme.colors.border.weak} 60%, transparent)`,
+          borderRadius: '10px',
+          boxShadow: `0 8px 32px rgba(0,0,0,0.28), inset 0 0.5px 0 rgba(255,255,255,0.06)`,
           padding: '4px',
+          animation: 'dropIn 0.12s ease-out',
+        },
+        '@keyframes dropIn': {
+          from: { opacity: '0', transform: 'translateY(-4px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         '.cm-tooltip-autocomplete > ul': {
           fontFamily: theme.typography.fontFamilyMonospace,
           fontSize: '12px',
-          maxHeight: '160px',
+          maxHeight: '180px',
           overflowY: 'auto',
           scrollbarWidth: 'none',
         },
@@ -313,20 +325,38 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
           display: 'none',
         },
         '.cm-tooltip-autocomplete > ul > li': {
-          padding: '3px 8px',
-          borderRadius: '4px',
+          padding: '4px 8px',
+          borderRadius: '6px',
           lineHeight: '1.6',
           margin: '1px 0',
+          transition: 'background 0.1s ease',
+          position: 'relative',
         },
         '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+          background: `color-mix(in srgb, ${theme.colors.primary.main} 15%, transparent)`,
+        },
+        // "tab" hint on the selected item
+        '.cm-tooltip-autocomplete > ul > li[aria-selected]::after': {
+          content: '"Tab"',
+          position: 'absolute',
+          right: '6px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '9px',
+          fontFamily: theme.typography.fontFamily,
+          color: theme.colors.text.disabled,
           background: theme.colors.action.hover,
+          padding: '1px 5px',
+          borderRadius: '4px',
+          letterSpacing: '0.3px',
+          lineHeight: '1.4',
         },
         '.cm-completionIcon': {
           display: 'none',
         },
         '.cm-completionMatchedText': {
           textDecoration: 'none',
-          fontWeight: 600,
+          fontWeight: 700,
           color: theme.colors.text.maxContrast,
         },
         '.cm-completionDetail': {
