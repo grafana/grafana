@@ -7727,25 +7727,6 @@
       "message": "Nebyly nalezeny žádné zdroje dat"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Název sloupce"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Vymazat sloupec",
-        "label-clear-row": "Vymazat řádek",
-        "label-remove-all-data": "Odebrat všechna data",
-        "label-search": "Vyhledávání…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Vymazat sloupec",
-        "label-delete-column": "Odstranit sloupec",
-        "label-rename-column": "Přejmenovat sloupec",
-        "label-set-field-type": "Nastavit typ pole"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "Nemáte oprávnění ke konfiguraci nových zdrojů dat"
