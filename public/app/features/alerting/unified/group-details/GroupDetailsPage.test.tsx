@@ -184,6 +184,46 @@ describe('GroupDetailsPage', () => {
       expect(alertRuleItems[1]).toHaveTextContent(rule2.grafana_alert.title);
     });
 
+    it('should mask ungrouped group names in breadcrumb heading', async () => {
+      const ungroupedName = `no_group_for_rule_${rule1.grafana_alert.uid}`;
+      const ungroupedGroup = mockRulerRuleGroup({
+        name: ungroupedName,
+        interval: '3m',
+        rules: [rule1],
+      });
+
+      const ungroupedPromGroup: GrafanaPromRuleGroupDTO = {
+        ...promGroup,
+        name: ungroupedName,
+        rules: [
+          mockGrafanaPromAlertingRule({
+            uid: rule1.grafana_alert.uid,
+            name: rule1.grafana_alert.title,
+          }),
+        ],
+      };
+
+      setRulerRuleGroupHandler({ response: HttpResponse.json(ungroupedGroup) });
+      server.use(
+        http.get('/api/prometheus/grafana/api/v1/rules', () =>
+          HttpResponse.json<GrafanaPromRulesResponse>({
+            status: 'success',
+            data: {
+              groups: [ungroupedPromGroup],
+            },
+          })
+        )
+      );
+
+      renderGroupDetailsPage('grafana', 'test-folder-uid', ungroupedName);
+
+      await ui.header.find();
+      await waitFor(() => {
+        expect(ui.header.get()).toHaveTextContent(`${rule1.grafana_alert.title} (Ungrouped)`);
+      });
+      expect(ui.header.get()).not.toHaveTextContent('no_group_for_rule_');
+    });
+
     it('should render error alert when API returns an error', async () => {
       // Mock an error response from the API
       setRulerRuleGroupResolver((req) => {

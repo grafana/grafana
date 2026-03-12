@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
 import { useCallback, useEffect, useState } from 'react';
-import { type SubmitHandler, useForm } from 'react-hook-form';
+import { RegisterOptions, type SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
@@ -26,13 +26,14 @@ import {
   type RuleGroupIdentifierV2,
   type RulerDataSourceConfig,
 } from 'app/types/unified-alerting';
-import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
+import { MIN_TIME_RANGE_STEP_S } from '../components/rule-editor/GrafanaEvaluationBehavior';
 import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
 import { type UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -42,10 +43,12 @@ import { useReturnTo } from '../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { type SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { rulesInSameGroupHaveInvalidFor } from '../state/actions';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
-import { getRulerGroupReadOnlyStatus } from '../utils/rules';
+import { getAlertInfo, getRulerGroupReadOnlyStatus } from '../utils/rules';
+import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
 

@@ -1,4 +1,4 @@
-import { type FieldValues, type RegisterOptions } from 'react-hook-form';
+import { type FieldPath, type FieldValues, type RegisterOptions } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -8,9 +8,12 @@ import { MIN_TIME_RANGE_STEP_S } from '../utils/constants';
 import { getAlertInfo } from '../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
-export const evaluateEveryValidationOptions = <T extends FieldValues & { evaluateEvery: string }>(
+export const evaluateEveryValidationOptions = <
+  TFieldValues extends FieldValues,
+  TFieldName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(
   rules: RulerRuleDTO[]
-): RegisterOptions<T> => ({
+): RegisterOptions<TFieldValues, TFieldName> => ({
   required: {
     value: true,
     message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),

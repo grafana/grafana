@@ -38,6 +38,7 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
   isProvisionedRuleGroup,
+  isUngroupedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -162,10 +163,11 @@ export function GrafanaEvaluationBehaviorStep({
   }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
-  const [showGroupSelection, setShowGroupSelection] = useState(existing || Boolean(group));
+  const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
+  const [showGroupSelection, setShowGroupSelection] = useState(Boolean(group) && !isEditingUngroupedRule);
 
   useEffect(() => {
-    if (group) {
+    if (group && !isUngroupedRuleGroup(group)) {
       setShowGroupSelection(true);
     }
   }, [group]);
@@ -232,21 +234,25 @@ export function GrafanaEvaluationBehaviorStep({
                   {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
                 />
               </Field>
-              <Box gap={1} display={'flex'} alignItems={'center'}>
-                <Text color="secondary">
-                  <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-                </Text>
-                <Button
-                  type="button"
-                  icon="plus"
-                  variant="secondary"
-                  fill="outline"
-                  onClick={() => setShowGroupSelection(true)}
-                  disabled={!folder?.uid}
-                >
-                  <Trans i18nKey="alerting.rule-form.evaluation.show-group-selection-legacy">Use Groups (Legacy)</Trans>
-                </Button>
-              </Box>
+              {!isEditingUngroupedRule && (
+                <Box gap={1} display={'flex'} alignItems={'center'}>
+                  <Text color="secondary">
+                    <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+                  </Text>
+                  <Button
+                    type="button"
+                    icon="plus"
+                    variant="secondary"
+                    fill="outline"
+                    onClick={() => setShowGroupSelection(true)}
+                    disabled={!folder?.uid}
+                  >
+                    <Trans i18nKey="alerting.rule-form.evaluation.show-group-selection-legacy">
+                      Use Groups (Legacy)
+                    </Trans>
+                  </Button>
+                </Box>
+              )}
             </Stack>
             <EvaluationGroupQuickPick
               currentInterval={evaluateEvery}
@@ -349,7 +355,7 @@ export function GrafanaEvaluationBehaviorStep({
           </Stack>
         )}
 
-        {folder?.title && group && (
+        {folder?.title && group && !isUngroupedRuleGroup(group) && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
