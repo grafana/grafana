@@ -111,14 +111,14 @@ export const VizLegendTable = <T extends unknown>({
                 }
               }}
             >
-              {columnTitle}
-              {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
               {columnTitle === nameSortKey && filterAction && (
                 // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
                   {filterAction}
                 </span>
               )}
+              {columnTitle}
+              {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
             </th>
           ))}
         </tr>

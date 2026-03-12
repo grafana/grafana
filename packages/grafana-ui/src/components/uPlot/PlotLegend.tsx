@@ -165,7 +165,7 @@ export const PlotLegend = memo(function PlotLegend({
         <div className={styles.filterPopoverContent}>
           {facetedFilter}
           <div className={styles.filterPopoverFooter}>
-            <Button variant="secondary" size="sm" icon="link" onClick={handleToggleFilterDock}>
+            <Button variant="secondary" size="sm" icon="gf-pin" onClick={handleToggleFilterDock}>
               {t('grafana-ui.viz-legend.pin-filter', 'Pin to sidebar')}
             </Button>
             {hasActiveFilters && (
