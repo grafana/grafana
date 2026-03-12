@@ -25,6 +25,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
 import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin2Cluster } from './plugins/AnnotationsPlugin2Cluster';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
@@ -216,15 +217,27 @@ export const TimeSeriesPanel = ({
             )}
             {!isVerticallyOriented && (
               <>
-                <AnnotationsPlugin2
-                  replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
-                  annotations={data.annotations ?? []}
-                  config={uplotConfig}
-                  timeZone={timeZone}
-                  newRange={newAnnotationRange}
-                  setNewRange={setNewAnnotationRange}
-                />
+                {config.featureToggles.annotationsClustering ? (
+                  <AnnotationsPlugin2Cluster
+                    replaceVariables={replaceVariables}
+                    options={options.annotations}
+                    annotations={data.annotations ?? []}
+                    config={uplotConfig}
+                    timeZone={timeZone}
+                    newRange={newAnnotationRange}
+                    setNewRange={setNewAnnotationRange}
+                  />
+                ) : (
+                  <AnnotationsPlugin2
+                    replaceVariables={replaceVariables}
+                    multiLane={options.annotations?.multiLane}
+                    annotations={data.annotations ?? []}
+                    config={uplotConfig}
+                    timeZone={timeZone}
+                    newRange={newAnnotationRange}
+                    setNewRange={setNewAnnotationRange}
+                  />
+                )}
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin

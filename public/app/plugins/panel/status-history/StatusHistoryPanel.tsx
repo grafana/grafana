@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -24,6 +24,7 @@ import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin2Cluster } from '../timeseries/plugins/AnnotationsPlugin2Cluster';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
@@ -166,18 +167,30 @@ export const StatusHistoryPanel = ({
                   maxWidth={options.tooltip.maxWidth}
                 />
               )}
-              {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
-                <AnnotationsPlugin2
-                  replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
-                  annotations={data.annotations ?? []}
-                  config={builder}
-                  timeZone={timeZone}
-                  newRange={newAnnotationRange}
-                  setNewRange={setNewAnnotationRange}
-                  canvasRegionRendering={false}
-                />
-              )}
+              {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden &&
+                (config.featureToggles.annotationsClustering ? (
+                  <AnnotationsPlugin2Cluster
+                    replaceVariables={replaceVariables}
+                    options={options.annotations}
+                    annotations={data.annotations ?? []}
+                    config={builder}
+                    timeZone={timeZone}
+                    newRange={newAnnotationRange}
+                    setNewRange={setNewAnnotationRange}
+                    canvasRegionRendering={false}
+                  />
+                ) : (
+                  <AnnotationsPlugin2
+                    replaceVariables={replaceVariables}
+                    multiLane={options.annotations?.multiLane}
+                    annotations={data.annotations ?? []}
+                    config={builder}
+                    timeZone={timeZone}
+                    newRange={newAnnotationRange}
+                    setNewRange={setNewAnnotationRange}
+                    canvasRegionRendering={false}
+                  />
+                ))}
               <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
             </>
           );

@@ -21,6 +21,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin2Cluster } from '../timeseries/plugins/AnnotationsPlugin2Cluster';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
@@ -323,15 +324,27 @@ export const CandlestickPanel = ({
                 maxWidth={options.tooltip.maxWidth}
               />
             )}
-            <AnnotationsPlugin2
-              replaceVariables={replaceVariables}
-              multiLane={options.annotations?.multiLane}
-              annotations={data.annotations ?? []}
-              config={uplotConfig}
-              timeZone={timeZone}
-              newRange={newAnnotationRange}
-              setNewRange={setNewAnnotationRange}
-            />
+            {config.featureToggles.annotationsClustering ? (
+              <AnnotationsPlugin2Cluster
+                replaceVariables={replaceVariables}
+                options={options.annotations}
+                annotations={data.annotations ?? []}
+                config={uplotConfig}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+              />
+            ) : (
+              <AnnotationsPlugin2
+                replaceVariables={replaceVariables}
+                multiLane={options.annotations?.multiLane}
+                annotations={data.annotations ?? []}
+                config={uplotConfig}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+              />
+            )}
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
             {data.annotations && (
               <ExemplarsPlugin
