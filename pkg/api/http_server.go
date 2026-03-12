@@ -771,6 +771,7 @@ type healthResponse struct {
 	Version          string `json:"version,omitempty"`
 	Commit           string `json:"commit,omitempty"`
 	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+	APIServer        string `json:"apiserver,omitempty"`
 }
 
 // swagger:route GET /health health getHealth
@@ -799,13 +800,26 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		}
 	}
 
+	healthy := true
+
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Database = "failing"
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
-	} else {
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		healthy = false
+	}
+
+	// Check apiserver readiness. This gates the health endpoint on apiserver
+	// boot sequence completion, including remote APIService initialization —
+	// preventing Kubernetes from routing traffic before aggregated services are ready.
+	if hs.clientConfigProvider != nil && !hs.clientConfigProvider.IsReady() {
+		data.APIServer = "not ready"
+		healthy = false
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if healthy {
 		ctx.Resp.WriteHeader(http.StatusOK)
+	} else {
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	}
 
 	dataBytes, err := json.MarshalIndent(data, "", "  ")
