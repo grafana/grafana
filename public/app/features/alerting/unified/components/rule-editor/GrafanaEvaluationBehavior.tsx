@@ -257,9 +257,8 @@ export function GrafanaEvaluationBehaviorStep({
                 </Box>
               )}
             </Stack>
-            <DurationQuickPick
-              selectedDuration={evaluateEvery}
-              groupEvaluationInterval={evaluateEvery}
+            <EvaluationGroupQuickPick
+              currentInterval={evaluateEvery}
               onSelect={(interval) => setValue('evaluateEvery', interval)}
             />
           </Stack>

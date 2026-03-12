@@ -19,6 +19,14 @@ export const evaluateEveryValidationOptions = <
     message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),
   },
   validate: (evaluateEvery: string) => {
+    const normalizedInterval = evaluateEvery.trim().toLowerCase();
+    if (normalizedInterval === 'none' || normalizedInterval === '0' || normalizedInterval === '0s') {
+      return t(
+        'alerting.evaluate-every-validation-options.message.none-not-allowed',
+        'Evaluation interval cannot be None and must be a valid duration.'
+      );
+    }
+
     try {
       const duration = parsePrometheusDuration(evaluateEvery);
 
