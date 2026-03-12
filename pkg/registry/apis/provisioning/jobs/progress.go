@@ -362,9 +362,9 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	// Emit metrics outside the read lock.
 	if snapshotMetrics != nil {
 		for reason, count := range snapshotWarnings {
-			snapshotMetrics.RecordWarnings(snapshotAction, reason, count)
+			snapshotMetrics.RecordResourceWarnings(snapshotAction, reason, count)
 		}
-		snapshotMetrics.RecordErrors(snapshotAction, snapshotErrorCount)
+		snapshotMetrics.RecordResourceErrors(snapshotAction, snapshotErrorCount)
 		// Clear to prevent double emission from subsequent Complete calls.
 		r.mu.Lock()
 		r.metrics = nil

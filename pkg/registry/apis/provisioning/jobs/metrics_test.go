@@ -25,30 +25,28 @@ func TestRegisterJobMetrics(t *testing.T) {
 	})
 }
 
-func TestRecordWarnings(t *testing.T) {
+func TestRecordResourceWarnings(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordWarnings("pull", "MissingFolderMetadata", 5)
-	m.RecordWarnings("pull", "MissingFolderMetadata", 3)
-	m.RecordWarnings("pull", "ResourceInvalid", 1)
+	m.RecordResourceWarnings("pull", "MissingFolderMetadata", 5)
+	m.RecordResourceWarnings("pull", "MissingFolderMetadata", 3)
+	m.RecordResourceWarnings("pull", "ResourceInvalid", 1)
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
 
-	hist := findMetric(metrics, "grafana_provisioning_jobs_warnings")
-	require.NotNil(t, hist, "warnings histogram should be registered")
+	counter := findMetric(metrics, "grafana_provisioning_jobs_resource_warnings_total")
+	require.NotNil(t, counter, "resource warnings counter should be registered")
 
-	pairs := histogramSamples(hist)
+	pairs := counterValues(counter)
 	require.Len(t, pairs, 2, "should have two label combinations")
 
 	missingKey := labelKey(map[string]string{"action": "pull", "reason": "MissingFolderMetadata"})
 	invalidKey := labelKey(map[string]string{"action": "pull", "reason": "ResourceInvalid"})
 
-	assert.Equal(t, uint64(2), pairs[missingKey].count, "MissingFolderMetadata should have 2 observations")
-	assert.InDelta(t, 8.0, pairs[missingKey].sum, 0.001, "MissingFolderMetadata sum should be 5+3=8")
-	assert.Equal(t, uint64(1), pairs[invalidKey].count, "ResourceInvalid should have 1 observation")
-	assert.InDelta(t, 1.0, pairs[invalidKey].sum, 0.001, "ResourceInvalid sum should be 1")
+	assert.InDelta(t, 8.0, pairs[missingKey], 0.001, "MissingFolderMetadata should be 5+3=8")
+	assert.InDelta(t, 1.0, pairs[invalidKey], 0.001, "ResourceInvalid should be 1")
 }
 
 func TestRecordFileOperation(t *testing.T) {
@@ -106,30 +104,28 @@ func TestRecordResourceOperation(t *testing.T) {
 	assert.InDelta(t, 1.0, pairs[dashKey], 0.001)
 }
 
-func TestRecordErrors(t *testing.T) {
+func TestRecordResourceErrors(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordErrors("pull", 7)
-	m.RecordErrors("pull", 3)
-	m.RecordErrors("export", 0)
+	m.RecordResourceErrors("pull", 7)
+	m.RecordResourceErrors("pull", 3)
+	m.RecordResourceErrors("export", 2)
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
 
-	hist := findMetric(metrics, "grafana_provisioning_jobs_errors")
-	require.NotNil(t, hist, "errors histogram should be registered")
+	counter := findMetric(metrics, "grafana_provisioning_jobs_resource_errors_total")
+	require.NotNil(t, counter, "resource errors counter should be registered")
 
-	pairs := histogramSamples(hist)
+	pairs := counterValues(counter)
 	require.Len(t, pairs, 2, "should have two label combinations")
 
 	pullKey := labelKey(map[string]string{"action": "pull"})
 	exportKey := labelKey(map[string]string{"action": "export"})
 
-	assert.Equal(t, uint64(2), pairs[pullKey].count, "pull should have 2 observations")
-	assert.InDelta(t, 10.0, pairs[pullKey].sum, 0.001, "pull sum should be 7+3=10")
-	assert.Equal(t, uint64(1), pairs[exportKey].count, "export should have 1 observation")
-	assert.InDelta(t, 0.0, pairs[exportKey].sum, 0.001, "export sum should be 0")
+	assert.InDelta(t, 10.0, pairs[pullKey], 0.001, "pull should be 7+3=10")
+	assert.InDelta(t, 2.0, pairs[exportKey], 0.001, "export should be 2")
 }
 
 // --- helpers ---
