@@ -62,34 +62,36 @@ export function AnnotationTooltipHeader({
               {clusterLength && <span className={styles.clusterCount}>{clusterLength}</span>}
             </Stack>
           </div>
-          {(canEdit || canDelete || isPinned) && (
-            <div className={styles.controls}>
-              {canEdit && (
-                <IconButton
-                  ref={focusRef}
-                  name={'pen'}
-                  size={'sm'}
-                  onClick={onEdit}
-                  tooltip={t('timeseries.annotation-tooltip2.tooltip-edit', 'Edit')}
-                />
-              )}
-              {canDelete && (
-                <IconButton
-                  ref={canEdit ? null : focusRef}
-                  name={'trash-alt'}
-                  size={'sm'}
-                  onClick={onDelete}
-                  tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
-                />
-              )}
-              {onRemove && isPinned && (
-                <AnnotationTooltipHeaderCloseIcon
-                  onClick={onRemove}
-                  forwardRef={canEdit || canDelete ? null : focusRef}
-                />
-              )}
-            </div>
-          )}
+          <div className={styles.controls}>
+            {(canEdit || canDelete || isPinned) && (
+              <>
+                {canEdit && (
+                  <IconButton
+                    ref={focusRef}
+                    name={'pen'}
+                    size={'sm'}
+                    onClick={onEdit}
+                    tooltip={t('timeseries.annotation-tooltip2.tooltip-edit', 'Edit')}
+                  />
+                )}
+                {canDelete && (
+                  <IconButton
+                    ref={canEdit ? null : focusRef}
+                    name={'trash-alt'}
+                    size={'sm'}
+                    onClick={onDelete}
+                    tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
+                  />
+                )}
+                {onRemove && isPinned && (
+                  <AnnotationTooltipHeaderCloseIcon
+                    onClick={onRemove}
+                    forwardRef={canEdit || canDelete ? null : focusRef}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </Stack>
       </div>
       {text && (
@@ -144,6 +146,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: 400,
   }),
   controls: css({
+    // space for all three icons
+    minWidth: '54px',
+    justifyContent: 'flex-end',
     display: 'flex',
     '> :last-child': {
       marginLeft: 0,
