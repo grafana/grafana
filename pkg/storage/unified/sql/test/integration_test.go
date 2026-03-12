@@ -59,6 +59,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.EnableSQLKVBackend = false
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
+	cfg.DisablePruner = db.IsTestDbSQLite()
 	dbstore := db.InitTestDB(t)
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
@@ -213,6 +214,10 @@ func TestClientServer(t *testing.T) {
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		grpcService.StopAsync()
+		_ = services.StopAndAwaitTerminated(ctx, grpcService)
+	})
 
 	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
@@ -301,6 +306,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	cfg.EnableSearch = true
 	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
 	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+	cfg.DisablePruner = db.IsTestDbSQLite()
 
 	features := featuremgmt.WithFeatures()
 
@@ -358,7 +364,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	})
 
 	t.Run("Check service is healthy", func(t *testing.T) {
-		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{})
+		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 	})

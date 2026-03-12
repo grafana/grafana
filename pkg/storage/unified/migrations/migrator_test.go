@@ -75,8 +75,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	}
 
 	// Clean up leftover state from previous test runs (e.g., renamed _legacy tables).
+	// Also register cleanup to run after this test, so other packages sharing the same
+	// MySQL/Postgres test DB don't see the renamed tables (e.g. short_url_legacy).
+	// Failing to do so may cause subsequent tests to fail in environments where the database is shared between tests.
 	if !db.IsTestDbSQLite() {
 		cleanupLegacyTables(t, testCases)
+		t.Cleanup(func() { cleanupLegacyTables(t, testCases) })
 	}
 
 	// Collect feature toggles required by all test cases

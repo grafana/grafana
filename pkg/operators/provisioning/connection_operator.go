@@ -75,6 +75,8 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		),
 		connectionFactory,
 		controllerCfg.ResyncInterval(),
+		controllerCfg.DrainTimeout(),
+		controllerCfg.Registry(),
 	)
 
 	if err != nil {
@@ -83,11 +85,12 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 
 	informerFactory.Start(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
+		return fmt.Errorf("connection controller cache sync failed")
 	}
+
 	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
 		logger.Info("connection operator is ready")
 		deps.HealthNotifier.SetReady()
-	})
+	}, func() {})
 	return nil
 }

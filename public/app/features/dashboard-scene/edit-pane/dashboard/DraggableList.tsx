@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
@@ -28,7 +28,7 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   const styles = useStyles2(getStyles);
 
   return (
-    <DroppableCategory droppableId={droppableId} title={title} isEmpty={!items.length}>
+    <DroppableCategory droppableId={droppableId} title={title}>
       <ul className={styles.list} data-testid={droppableId}>
         {items.map((item, index) => (
           <DraggableListItem
@@ -49,11 +49,9 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
               }}
             >
               <div data-testid={dataTestId}>{renderItemLabel(item)}</div>
-              <Stack direction="row" gap={1} alignItems="center">
-                <Button variant="primary" size="sm" fill="outline">
-                  <Trans i18nKey="dashboard-scene.draggable-items-list.select">Select</Trans>
-                </Button>
-              </Stack>
+              <Button variant="primary" size="sm" fill="outline">
+                <Trans i18nKey="dashboard-scene.draggable-items-list.select">Select</Trans>
+              </Button>
             </div>
           </DraggableListItem>
         ))}

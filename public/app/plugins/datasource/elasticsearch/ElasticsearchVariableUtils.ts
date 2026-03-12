@@ -39,7 +39,7 @@ export const convertFieldsToVariableFields = (
   }
 
   // scenario 2: If meta field found, use and return (at least one text field / value field exist / or first field)
-  if (meta) {
+  if (meta?.textField || meta?.valueField) {
     let tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
     let vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
     const textField = tf || vf || original_fields[0];

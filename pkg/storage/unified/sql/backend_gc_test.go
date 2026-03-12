@@ -391,6 +391,7 @@ func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.St
 	backend, err := NewBackend(BackendOptions{
 		DBProvider:           eDB,
 		IsHA:                 false,
+		DisablePruner:        db.IsTestDbSQLite(),
 		LastImportTimeMaxAge: 24 * time.Hour,
 		GarbageCollection:    gcConfig,
 	})

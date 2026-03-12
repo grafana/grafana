@@ -9,7 +9,6 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 interface DroppableCategoryProps {
   droppableId: string;
   title: string;
-  isEmpty: boolean;
   children: ReactNode;
 }
 
