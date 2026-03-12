@@ -14,7 +14,7 @@ import { MappingContext } from './SuggestedDashboardsModal';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
-import { DashboardLibraryInteractions } from './interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -141,7 +141,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       // Track item click
-      DashboardLibraryInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [response.datasourceType],
         libraryItemId: String(dashboard.id),
