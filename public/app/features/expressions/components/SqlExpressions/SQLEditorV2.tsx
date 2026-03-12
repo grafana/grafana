@@ -68,7 +68,7 @@ function makeCompletionSource(
     const fromTables = getFromTables(context.state.doc);
     const columnCompletions: Completion[] = (await Promise.all(fromTables.map(getColumns)))
       .flat()
-      .map((col) => ({ label: col, type: 'property' }));
+      .map((col) => ({ label: col, type: 'property', boost: 10 }));
 
     // SQL keywords + functions + columns
     const kwResult = await kwSource(context);
