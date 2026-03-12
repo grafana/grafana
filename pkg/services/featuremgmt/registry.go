@@ -475,8 +475,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourceDisableIdApi",
-			Description:     "Does not register datasource apis that use the numeric id",
+			Name:            "datasourceLegacyIdApi",
+			Description:     "Register legacy datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // affects the routes at startup
@@ -639,6 +639,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
