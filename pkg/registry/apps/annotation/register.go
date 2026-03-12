@@ -75,8 +75,6 @@ func RegisterAppInstaller(
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-	case "memory":
-		store = NewMemoryStore()
 	case "sql":
 		// sql is the default, but we allow explicitly specifying it for clarity
 		fallthrough
@@ -521,6 +519,10 @@ func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation 
 //
 // The verb should be one of VerbGet, VerbList, VerbCreate, VerbUpdate, VerbPatch, or VerbDelete.
 func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
+	if anno == nil {
+		return false, apierrors.NewBadRequest("annotation must not be nil")
+	}
+
 	authInfo, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
 		return false, apierrors.NewUnauthorized("no identity found for request")

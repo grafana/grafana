@@ -347,6 +347,9 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"annotation.grafana.app": {
 			// Annotations use "type" as the scope attribute to map to legacy scopes like "annotations:type:organization".
+			// No actionSetMapping: org-level annotations are not tied to a specific dashboard, so dashboard
+			// action sets (dashboards:view, etc.) do not apply here. Access is controlled via fixed RBAC
+			// roles (e.g. annotations:read with scope annotations:type:organization).
 			"annotations": newResourceTranslation("annotations", "type", false, nil),
 		},
 	})
