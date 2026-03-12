@@ -182,9 +182,12 @@ func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (
 }
 
 // resolveFileGVR reads the file at path from the configured branch and parses it
-// to determine its Kubernetes resource type. If the file cannot be read or parsed
-// (e.g. it only exists on a feature branch), it falls back to checking all non-folder
-// supported resource types so the authorization is not silently skipped.
+// to determine its Kubernetes resource type. Returns an empty GVR if the file
+// cannot be read or parsed (e.g. it only exists on a feature branch).
+//
+// When the file is successfully parsed, the group is matched against
+// SupportedProvisioningResources. If the resource type is not supported,
+// an error is returned — we do not authorize operations on unknown types.
 func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string) (schema.GroupVersionResource, error) {
 	info, err := a.reader.Read(ctx, path, "")
 	if err != nil {
@@ -199,13 +202,18 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 		return schema.GroupVersionResource{}, nil
 	}
 
+	// Folders are authorized through their own dedicated path (authorizeFolder,
+	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
 	for _, gvr := range SupportedProvisioningResources {
+		if gvr == FolderResource {
+			continue
+		}
 		if gvr.Group == gvk.Group {
 			return gvr, nil
 		}
 	}
 
-	return schema.GroupVersionResource{}, nil
+	return schema.GroupVersionResource{}, fmt.Errorf("unsupported resource type %s/%s at %q", gvk.Group, gvk.Kind, path)
 }
 
 // authorizeFileVerb checks if the user has the given verb permission on a file at path
