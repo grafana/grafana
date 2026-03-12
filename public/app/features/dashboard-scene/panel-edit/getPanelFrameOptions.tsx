@@ -231,7 +231,9 @@ export function PanelFrameTitleInput({
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
       systemPrompt={showAssistant ? TITLE_SYSTEM_PROMPT : undefined}
-      getContext={() => buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))}
+      getContext={() =>
+        buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))
+      }
       autoGenerate={showAssistant && generationReady && isDefaultTitle}
       id={id}
       inputRef={ref}
@@ -270,7 +272,9 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
         });
       }}
       systemPrompt={showAssistant ? DESCRIPTION_SYSTEM_PROMPT : undefined}
-      getContext={() => buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))}
+      getContext={() =>
+        buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))
+      }
       autoGenerate={showAssistant && generationReady && !description}
       id={id}
     />
