@@ -2683,7 +2683,7 @@ __metadata:
     "@grafana/data": "npm:12.3.6"
     "@grafana/e2e-selectors": "npm:12.3.6"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.1"
+    "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/plugin-configs": "npm:12.3.6"
     "@grafana/runtime": "npm:12.3.6"
@@ -3305,11 +3305,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@grafana/llm@npm:1.0.1"
+"@grafana/llm@npm:1.0.3":
+  version: 1.0.3
+  resolution: "@grafana/llm@npm:1.0.3"
   dependencies:
-    "@modelcontextprotocol/sdk": "npm:^1.24.3"
+    "@modelcontextprotocol/sdk": "npm:^1.26.0"
     publint: "npm:^0.3.12"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
@@ -3319,7 +3319,7 @@ __metadata:
     "@grafana/runtime": ^10.4.0 || ^11 || ^12
     react: ^18
     rxjs: ^7.8.2
-  checksum: 10/29739ca477d0db9c3c2f5ede2eb032d411b379fcad12976677d24b27c2d38929f5916d1a7915f503d0e1080b06ccfd3f0663c2c90e52a22b170f9ebdbab01d7f
+  checksum: 10/4d78ddd4a3de4ac2abbe2b2c2c819153540caa37bffe6528fcfebdc26b4621d84ec17663f2866bc5d60af9145b0bc298a23f598e784a3e46b1a0d66b0b08bbf5
   languageName: node
   linkType: hard
 
@@ -3922,6 +3922,15 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 10/4795063e249a818c60e223f3527797878cb546ef007a52a7dd6c1a01094d3b2107820476a10fc83c0ba9dc4387c1ae49e70c8f8cff9722636219773caad19372
+  languageName: node
+  linkType: hard
+
+"@hono/node-server@npm:^1.19.9":
+  version: 1.19.11
+  resolution: "@hono/node-server@npm:1.19.11"
+  peerDependencies:
+    hono: ^4
+  checksum: 10/1718910924944bfa2f2649ae102fbdaee42e388ed373f1e36bb2674447b9f1a64a9344908c046c6100e6c387fe2d1dab5c95684cb3a415ba0a0b719fbef0a6cb
   languageName: node
   linkType: hard
 
@@ -5358,10 +5367,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.24.3":
-  version: 1.24.3
-  resolution: "@modelcontextprotocol/sdk@npm:1.24.3"
+"@modelcontextprotocol/sdk@npm:^1.26.0":
+  version: 1.27.1
+  resolution: "@modelcontextprotocol/sdk@npm:1.27.1"
   dependencies:
+    "@hono/node-server": "npm:^1.19.9"
     ajv: "npm:^8.17.1"
     ajv-formats: "npm:^3.0.1"
     content-type: "npm:^1.0.5"
@@ -5369,13 +5379,15 @@ __metadata:
     cross-spawn: "npm:^7.0.5"
     eventsource: "npm:^3.0.2"
     eventsource-parser: "npm:^3.0.0"
-    express: "npm:^5.0.1"
-    express-rate-limit: "npm:^7.5.0"
-    jose: "npm:^6.1.1"
+    express: "npm:^5.2.1"
+    express-rate-limit: "npm:^8.2.1"
+    hono: "npm:^4.11.4"
+    jose: "npm:^6.1.3"
+    json-schema-typed: "npm:^8.0.2"
     pkce-challenge: "npm:^5.0.0"
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.25 || ^4.0"
-    zod-to-json-schema: "npm:^3.25.0"
+    zod-to-json-schema: "npm:^3.25.1"
   peerDependencies:
     "@cfworker/json-schema": ^4.1.1
     zod: ^3.25 || ^4.0
@@ -5384,7 +5396,7 @@ __metadata:
       optional: true
     zod:
       optional: false
-  checksum: 10/661aea493ee06674edc0d1409d5ff6e53053da2c3eb27d28ecdd5aa212d9d6bac8c00bec1cd18c1065f2d5774afef34e3cdcd19643056f954c14f611fee8cbc4
+  checksum: 10/3cb0d61cfb916e555c85b4a527e772f88fcf9c6abacbe5eb5e965aac7c898190c416341ab3b3cba8c2d5f5ce4d513279fba3ad7784a0903d7ccd335decc55395
   languageName: node
   linkType: hard
 
@@ -17432,16 +17444,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express-rate-limit@npm:^7.5.0":
-  version: 7.5.0
-  resolution: "express-rate-limit@npm:7.5.0"
+"express-rate-limit@npm:^8.2.1":
+  version: 8.3.1
+  resolution: "express-rate-limit@npm:8.3.1"
+  dependencies:
+    ip-address: "npm:10.1.0"
   peerDependencies:
-    express: ^4.11 || 5 || ^5.0.0-beta.1
-  checksum: 10/eff34c83bf586789933a332a339b66649e2cca95c8e977d193aa8bead577d3182ac9f0e9c26f39389287539b8038890ff023f910b54ebb506a26a2ce135b92ca
+    express: ">= 4.11"
+  checksum: 10/dd97bfc48c01a6d4c5433203232b5e7a1e55e21322bde49033e5f8c4339584fe671a94096144a0810f4ea21dcec8aaaf15823109627e609f8ed1bc5912a345cf
   languageName: node
   linkType: hard
 
-"express@npm:^5.0.1":
+"express@npm:^5.2.1":
   version: 5.2.1
   resolution: "express@npm:5.2.1"
   dependencies:
@@ -18998,7 +19012,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.1"
+    "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:2.1.7"
@@ -19621,6 +19635,13 @@ __metadata:
   dependencies:
     parse-passwd: "npm:^1.0.0"
   checksum: 10/18dd4db87052c6a2179d1813adea0c4bfcfa4f9996f0e226fefb29eb3d548e564350fa28ec46b0bf1fbc0a1d2d6922ceceb80093115ea45ff8842a4990139250
+  languageName: node
+  linkType: hard
+
+"hono@npm:^4.11.4":
+  version: 4.12.7
+  resolution: "hono@npm:4.12.7"
+  checksum: 10/fed37e612730491ba9456f8f68f1b8727a5298cd839fff9641a0b7a95b1e8567a05abb819d32621b40988f166b01140cf7d573c9218dee2741004f48e09564d5
   languageName: node
   linkType: hard
 
@@ -20543,6 +20564,13 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.0.0"
   checksum: 10/cc3182d793aad82a8d1f0af697b462939cb46066ec48bbf1707c150ad5fad6406137e91a262022c269702e01621f35ef60269f6c0d7fd178487959809acdfb14
+  languageName: node
+  linkType: hard
+
+"ip-address@npm:10.1.0":
+  version: 10.1.0
+  resolution: "ip-address@npm:10.1.0"
+  checksum: 10/a6979629d1ad9c1fb424bc25182203fad739b40225aebc55ec6243bbff5035faf7b9ed6efab3a097de6e713acbbfde944baacfa73e11852bb43989c45a68d79e
   languageName: node
   linkType: hard
 
@@ -22153,10 +22181,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^6.1.1":
-  version: 6.1.3
-  resolution: "jose@npm:6.1.3"
-  checksum: 10/9626c51e8c3792b505e954f3094698c182208617b62dfb27269230f31e57560b083985ed8128b8a9753aa92daf18d3a2341cc826d149503f14569abe87d42389
+"jose@npm:^6.1.3":
+  version: 6.2.1
+  resolution: "jose@npm:6.2.1"
+  checksum: 10/12f06a76ac743eb48314e662e02b141f6e4644dbcbdb1cd083c3867b1f72f1e148a67ebf4978d0d5adeb62f4be1572feee76f1849cbc32f8af1457ec9f788299
   languageName: node
   linkType: hard
 
@@ -22374,6 +22402,13 @@ __metadata:
   version: 1.0.0
   resolution: "json-schema-traverse@npm:1.0.0"
   checksum: 10/02f2f466cdb0362558b2f1fd5e15cce82ef55d60cd7f8fa828cf35ba74330f8d767fcae5c5c2adb7851fa811766c694b9405810879bc4e1ddd78a7c0e03658ad
+  languageName: node
+  linkType: hard
+
+"json-schema-typed@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "json-schema-typed@npm:8.0.2"
+  checksum: 10/fa866d1fe91e3a94aa4fe007861475cd03dcaf47b719861cab171ef2f8598478007c634d29ae45de94ee34ddff4e13414c63ea5ff06c5b868b613142c699d511
   languageName: node
   linkType: hard
 
@@ -34535,12 +34570,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.25.0":
-  version: 3.25.0
-  resolution: "zod-to-json-schema@npm:3.25.0"
+"zod-to-json-schema@npm:^3.25.1":
+  version: 3.25.1
+  resolution: "zod-to-json-schema@npm:3.25.1"
   peerDependencies:
     zod: ^3.25 || ^4
-  checksum: 10/cb932e20b5b5e64c75b2c34a7e6dae74b727292eab9e014b93c2607378b8cb1b227f80b429053ceb77c8e0dddc338837f9e534b2a658540ff60c9e4ffdc7cc19
+  checksum: 10/744dd370f4452c8db120de1475ea4d484a11df884c4636111d630e5e1351b8a7590d99cf14a2b9f21e7906f8b78721d958663a7973a40994e7d28770876674cc
   languageName: node
   linkType: hard
 
