@@ -27,9 +27,8 @@ import {
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -76,8 +75,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       from_suggestions: options.fromSuggestions ?? false,
     });
 
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.recordPanelSuggestion(
+    vizSuggestionsTracker.record(
       panel.state.key!,
       options.suggestionMetadata
         ? { pluginId: options.pluginId, isNewPanel: this.state.isNewPanel ?? false, ...options.suggestionMetadata }
@@ -207,6 +205,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
                   onClick={() => {
                     model.onSetListMode(onlyOverrides ? OptionFilter.All : OptionFilter.Overrides);
                   }}
+                  aria-pressed={onlyOverrides}
                 />
               )}
               <Button

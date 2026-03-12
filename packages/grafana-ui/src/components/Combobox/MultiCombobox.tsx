@@ -302,7 +302,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   </>
                 }
               >
-                <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
+                <div className={multiStyles.restNumber}>{selectedItems.length - visibleItems.length}</div>
               </Tooltip>
             </Box>
           )}

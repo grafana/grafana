@@ -118,6 +118,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		kv := resource.NewBadgerKV(db)
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore: kv,
+			WatchOptions: resource.WatchOptions{
+				SettleDelay: 1 * time.Millisecond,
+			},
 		})
 		require.NoError(t, err)
 
@@ -141,6 +144,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		ret, err := sql.NewBackend(sql.BackendOptions{
 			DBProvider:      eDB,
 			PollingInterval: time.Millisecond, // Keep this fast
+			DisablePruner:   infraDB.IsTestDbSQLite(),
 		})
 		require.NoError(t, err)
 		require.NotNil(t, ret)

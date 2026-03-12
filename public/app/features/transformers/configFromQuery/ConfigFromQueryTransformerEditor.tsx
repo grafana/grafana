@@ -79,6 +79,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
           className={styles.matcherOptions}
         >
           <matcherUI.component
+            id={matcherUI.id}
             matcher={matcherUI.matcher}
             data={input}
             options={currentMatcher.options}

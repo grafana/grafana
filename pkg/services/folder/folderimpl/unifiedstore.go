@@ -353,14 +353,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetFolders")
 	defer span.End()
 
-	opts := v1.ListOptions{}
-	if q.WithFullpath || q.WithFullpathUIDs {
-		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
-		// to retrieve the parent for all folders in grafana
-		opts.LabelSelector = utils.LabelGetFullpath + "=true"
-	}
-
-	out, err := ss.list(ctx, q.OrgID, opts)
+	out, err := ss.list(ctx, q.OrgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
