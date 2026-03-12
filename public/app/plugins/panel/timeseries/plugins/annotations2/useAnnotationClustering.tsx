@@ -159,7 +159,7 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotWidth
 
 const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {
   // If the plot width is zero, something is very wrong! Let's avoid clustering in this case.
-  if (!plotWidth) {
+  if (!plotWidth || plotWidth < 0 || isNaN(plotWidth)) {
     return -1;
   }
 
