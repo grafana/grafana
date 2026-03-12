@@ -240,6 +240,12 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 	}
 
 	for _, name := range names {
+		if name == "*" {
+			return s.secureValueService.DeleteFromOwner(ctx,
+				xkube.Namespace(owner.Namespace),
+				owner.ToOwnerReference())
+		}
+
 		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
 		if err != nil {
 			return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
