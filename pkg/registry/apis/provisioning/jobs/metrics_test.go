@@ -1,9 +1,12 @@
 package jobs
 
 import (
+	"errors"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -30,12 +33,30 @@ func TestRecordResourceOperation(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation(provisioning.JobActionPull, OperationUpdated, OutcomeSuccess, "", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeWarning, provisioning.ReasonMissingFolderMetadata, "folder.grafana.app", "Folder")
-	m.RecordResourceOperation(provisioning.JobActionPull, OperationCreated, OutcomeError, "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation(provisioning.JobActionPush, OperationDeleted, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	successCreated := NewResourceResult().
+		WithGroup("dashboard.grafana.app").WithKind("Dashboard").
+		WithAction(repository.FileActionCreated).Build()
+	successUpdated := NewResourceResult().
+		WithGroup("folder.grafana.app").WithKind("Folder").
+		WithAction(repository.FileActionUpdated).Build()
+	warningCreated := NewResourceResult().
+		WithGroup("folder.grafana.app").WithKind("Folder").
+		WithAction(repository.FileActionCreated).
+		WithError(resources.NewMissingFolderMetadata("folders/a")).Build()
+	errorCreated := NewResourceResult().
+		WithGroup("dashboard.grafana.app").WithKind("Dashboard").
+		WithAction(repository.FileActionCreated).
+		WithError(errors.New("network failure")).Build()
+	successDeleted := NewResourceResult().
+		WithGroup("dashboard.grafana.app").WithKind("Dashboard").
+		WithAction(repository.FileActionDeleted).Build()
+
+	m.RecordResourceOperation(provisioning.JobActionPull, successCreated)
+	m.RecordResourceOperation(provisioning.JobActionPull, successCreated)
+	m.RecordResourceOperation(provisioning.JobActionPull, successUpdated)
+	m.RecordResourceOperation(provisioning.JobActionPull, warningCreated)
+	m.RecordResourceOperation(provisioning.JobActionPull, errorCreated)
+	m.RecordResourceOperation(provisioning.JobActionPush, successDeleted)
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)

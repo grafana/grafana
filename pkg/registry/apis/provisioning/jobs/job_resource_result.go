@@ -24,6 +24,7 @@ const (
 	OperationCreated  ResourceOperation = "created"
 	OperationUpdated  ResourceOperation = "updated"
 	OperationDeleted  ResourceOperation = "deleted"
+	OperationRenamed  ResourceOperation = "renamed"
 	OperationNoop     ResourceOperation = "noop"
 	OperationReplaced ResourceOperation = "replaced"
 )

@@ -126,7 +126,9 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
-	r.emitMetrics(result)
+	if r.metrics != nil {
+		r.metrics.RecordResourceOperation(r.action, result)
+	}
 
 	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
@@ -138,52 +140,6 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	}
 
 	r.maybeNotify(ctx)
-}
-
-// emitMetrics increments the per-record Prometheus counter. metrics and action
-// are immutable after construction, so no lock is needed.
-func (r *jobProgressRecorder) emitMetrics(result JobResourceResult) {
-	if r.metrics == nil {
-		return
-	}
-
-	group := result.Group()
-	kind := result.Kind()
-
-	if result.Error() != nil {
-		if result.Action() != repository.FileActionIgnored {
-			r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeError, "", group, kind)
-		}
-		return
-	}
-
-	if result.Warning() != nil {
-		r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeWarning, result.WarningReason(), group, kind)
-		return
-	}
-
-	switch result.Action() {
-	case repository.FileActionRenamed:
-		r.metrics.RecordResourceOperation(r.action, OperationDeleted, OutcomeSuccess, "", group, kind)
-		r.metrics.RecordResourceOperation(r.action, OperationCreated, OutcomeSuccess, "", group, kind)
-	default:
-		r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeSuccess, "", group, kind)
-	}
-}
-
-func fileActionToOperation(action repository.FileAction) ResourceOperation {
-	switch action {
-	case repository.FileActionCreated:
-		return OperationCreated
-	case repository.FileActionUpdated:
-		return OperationUpdated
-	case repository.FileActionDeleted:
-		return OperationDeleted
-	case repository.FileActionIgnored:
-		return OperationNoop
-	default:
-		return ResourceOperation(action)
-	}
 }
 
 // ResetResults will reset the results of the job.

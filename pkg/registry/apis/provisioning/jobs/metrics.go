@@ -4,6 +4,7 @@ import (
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -153,9 +154,44 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
 }
 
-// RecordResourceOperation increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, operation ResourceOperation, outcome ResourceOutcome, reason, group, kind string) {
-	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, group, kind).Inc()
+// RecordResourceOperation derives outcome, operation, and reason from the
+// result and increments the resource operations counter. Ignored errors are
+// silently skipped.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+	if result.Error() != nil && result.Action() == repository.FileActionIgnored {
+		return
+	}
+
+	var outcome ResourceOutcome
+	var reason string
+	switch {
+	case result.Error() != nil:
+		outcome = OutcomeError
+	case result.Warning() != nil:
+		outcome = OutcomeWarning
+		reason = result.WarningReason()
+	default:
+		outcome = OutcomeSuccess
+	}
+
+	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+}
+
+func fileActionToOperation(action repository.FileAction) ResourceOperation {
+	switch action {
+	case repository.FileActionCreated:
+		return OperationCreated
+	case repository.FileActionUpdated:
+		return OperationUpdated
+	case repository.FileActionDeleted:
+		return OperationDeleted
+	case repository.FileActionRenamed:
+		return OperationRenamed
+	case repository.FileActionIgnored:
+		return OperationNoop
+	default:
+		return ResourceOperation(action)
+	}
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
