@@ -155,13 +155,8 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation derives outcome, operation, and reason from the
-// result and increments the resource operations counter. Ignored errors are
-// silently skipped.
+// result and increments the resource operations counter.
 func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
-	if result.Error() != nil && result.Action() == repository.FileActionIgnored {
-		return
-	}
-
 	var outcome ResourceOutcome
 	var reason string
 	switch {
