@@ -242,6 +242,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
       return itemHeight;
     },
+    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
   });

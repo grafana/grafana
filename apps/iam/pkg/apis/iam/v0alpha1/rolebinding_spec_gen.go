@@ -77,7 +77,6 @@ type RoleBindingSpecRoleRefKind string
 
 const (
 	RoleBindingSpecRoleRefKindRole       RoleBindingSpecRoleRefKind = "Role"
-	RoleBindingSpecRoleRefKindCoreRole   RoleBindingSpecRoleRefKind = "CoreRole"
 	RoleBindingSpecRoleRefKindGlobalRole RoleBindingSpecRoleRefKind = "GlobalRole"
 )
 

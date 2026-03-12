@@ -227,7 +227,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-06,kubernetesAuthZRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-08-01,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
-2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
