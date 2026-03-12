@@ -202,6 +202,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 		garbageCollection:            opts.GarbageCollection,
 		searchLookback:               opts.SearchLookback,
+		disablePruner:                opts.DisablePruner,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
