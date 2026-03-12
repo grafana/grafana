@@ -15,6 +15,10 @@ type JobMetrics struct {
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
+
+	warningsHist        *prometheus.HistogramVec // warning counts per sync by reason
+	fileOperationsTotal *prometheus.CounterVec   // file operations in the repository
+	resourceOpsTotal    *prometheus.CounterVec   // notable resource operations
 }
 
 type QueueMetrics struct {
@@ -109,6 +113,34 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	)
 	registry.MustRegister(syncDurationHist)
 
+	warningsHist := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_jobs_warnings",
+			Help:    "Distribution of warning counts per sync job, broken down by reason",
+			Buckets: []float64{0, 1, 5, 10, 25, 50, 100, 250},
+		},
+		[]string{"action", "reason"},
+	)
+	registry.MustRegister(warningsHist)
+
+	fileOperationsTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_jobs_file_operations_total",
+			Help: "Total file operations performed by provisioning jobs",
+		},
+		[]string{"action", "operation", "reason"},
+	)
+	registry.MustRegister(fileOperationsTotal)
+
+	resourceOpsTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_jobs_resource_operations_total",
+			Help: "Total notable resource operations performed by provisioning jobs",
+		},
+		[]string{"action", "operation", "reason", "group", "kind"},
+	)
+	registry.MustRegister(resourceOpsTotal)
+
 	return JobMetrics{
 		registry:                         registry,
 		processedTotal:                   processedTotal,
@@ -116,6 +148,9 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 		syncDurationHist:                 syncDurationHist,
+		warningsHist:                     warningsHist,
+		fileOperationsTotal:              fileOperationsTotal,
+		resourceOpsTotal:                 resourceOpsTotal,
 	}
 }
 
@@ -138,6 +173,21 @@ func (m *JobMetrics) RecordFullSyncPhase(phase FullSyncPhase, duration time.Dura
 
 func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duration) {
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
+}
+
+// RecordWarnings observes the count of warnings produced by a single sync run.
+func (m *JobMetrics) RecordWarnings(action, reason string, count int) {
+	m.warningsHist.WithLabelValues(action, reason).Observe(float64(count))
+}
+
+// RecordFileOperation increments the file operations counter.
+func (m *JobMetrics) RecordFileOperation(action, operation, reason string) {
+	m.fileOperationsTotal.WithLabelValues(action, operation, reason).Inc()
+}
+
+// RecordResourceOperation increments the resource operations counter.
+func (m *JobMetrics) RecordResourceOperation(action, operation, reason, group, kind string) {
+	m.resourceOpsTotal.WithLabelValues(action, operation, reason, group, kind).Inc()
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {

@@ -172,6 +172,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	progress.SetMessage(ctx, "execute sync job")
 	progress.StrictMaxErrors(20) // make it stop after 20 errors
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
+	for reason, count := range progress.WarningCounts() {
+		r.metrics.RecordWarnings(string(job.Spec.Action), reason, count)
+	}
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
 	resultReasons := progress.ResultReasons()

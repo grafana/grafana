@@ -21,6 +21,7 @@ func classifyWarning(err error) (string, bool) {
 	var unmanagedErr *resources.ResourceUnmanagedConflictError
 	var quotaExceededErr *quotas.QuotaExceededError
 	var missingMetaErr *resources.MissingFolderMetadata
+	var metaConflictErr *resources.FolderMetadataConflict
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
@@ -33,6 +34,8 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &missingMetaErr):
 		return provisioning.ReasonMissingFolderMetadata, true
+	case errors.As(err, &metaConflictErr):
+		return provisioning.ReasonFolderMetadataConflict, true
 	default:
 		return "", false
 	}

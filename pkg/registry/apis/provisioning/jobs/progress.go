@@ -53,7 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
-	resultReasons       map[string]struct{}
+	warningCounts map[string]int
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -63,7 +63,7 @@ func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
-		resultReasons:       make(map[string]struct{}),
+		warningCounts: make(map[string]int),
 	}
 }
 
@@ -113,7 +113,7 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		}
 
 		if reason := result.WarningReason(); reason != "" {
-			r.resultReasons[reason] = struct{}{}
+			r.warningCounts[reason]++
 		}
 
 		shouldLogWarning = true
@@ -156,7 +156,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.summaries = summaries
 
 	if !keepWarnings {
-		r.resultReasons = make(map[string]struct{})
+		r.warningCounts = make(map[string]int)
 	}
 }
 
@@ -365,14 +365,28 @@ func (r *jobProgressRecorder) ResultReasons() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if len(r.resultReasons) == 0 {
+	if len(r.warningCounts) == 0 {
 		return nil
 	}
-	reasons := make([]string, 0, len(r.resultReasons))
-	for reason := range r.resultReasons {
+	reasons := make([]string, 0, len(r.warningCounts))
+	for reason := range r.warningCounts {
 		reasons = append(reasons, reason)
 	}
 	return reasons
+}
+
+func (r *jobProgressRecorder) WarningCounts() map[string]int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(r.warningCounts) == 0 {
+		return nil
+	}
+	counts := make(map[string]int, len(r.warningCounts))
+	for reason, count := range r.warningCounts {
+		counts[reason] = count
+	}
+	return counts
 }
 
 // HasDirPathFailedCreation checks if a path is nested under any failed folder creation

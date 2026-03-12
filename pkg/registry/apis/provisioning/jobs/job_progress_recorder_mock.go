@@ -277,6 +277,53 @@ func (_c *MockJobProgressRecorder_ResultReasons_Call) RunAndReturn(run func() []
 	return _c
 }
 
+// WarningCounts provides a mock function with no fields
+func (_m *MockJobProgressRecorder) WarningCounts() map[string]int {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for WarningCounts")
+	}
+
+	var r0 map[string]int
+	if rf, ok := ret.Get(0).(func() map[string]int); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]int)
+		}
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_WarningCounts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WarningCounts'
+type MockJobProgressRecorder_WarningCounts_Call struct {
+	*mock.Call
+}
+
+// WarningCounts is a helper method to define mock.On call
+func (_e *MockJobProgressRecorder_Expecter) WarningCounts() *MockJobProgressRecorder_WarningCounts_Call {
+	return &MockJobProgressRecorder_WarningCounts_Call{Call: _e.mock.On("WarningCounts")}
+}
+
+func (_c *MockJobProgressRecorder_WarningCounts_Call) Run(run func()) *MockJobProgressRecorder_WarningCounts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_WarningCounts_Call) Return(_a0 map[string]int) *MockJobProgressRecorder_WarningCounts_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_WarningCounts_Call) RunAndReturn(run func() map[string]int) *MockJobProgressRecorder_WarningCounts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetFinalMessage provides a mock function with given fields: ctx, msg
 func (_m *MockJobProgressRecorder) SetFinalMessage(ctx context.Context, msg string) {
 	_m.Called(ctx, msg)

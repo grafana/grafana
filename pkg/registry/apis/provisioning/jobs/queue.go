@@ -31,6 +31,8 @@ type JobProgressRecorder interface {
 	Complete(ctx context.Context, err error) provisioning.JobStatus
 	// ResultReasons returns the accumulated result reasons recorded during the job
 	ResultReasons() []string
+	// WarningCounts returns the count of warnings per reason accumulated during the job
+	WarningCounts() map[string]int
 	// HasDirPathFailedCreation checks if a path has any folder creations that failed
 	HasDirPathFailedCreation(path string) bool
 	// HasDirPathFailedDeletion checks if a folderPath has any folder deletions that failed
