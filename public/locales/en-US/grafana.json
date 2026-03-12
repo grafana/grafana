@@ -4079,6 +4079,20 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "presets": {
+      "basic": "Basic",
+      "basic_desc": "Basic, color from thresholds",
+      "basic-vertical": "Basic vertical",
+      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "gradient": "Gradient",
+      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient-BlYlRd": "Gradient blue-red",
+      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-vertical": "Gradient vertical",
+      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "retro-lcd": "Retro LCD",
+      "retro-lcd_desc": "Color scale, text color"
+    },
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
@@ -5152,6 +5166,12 @@
       }
     },
     "canvas-actions": {
+      "add": {
+        "paste": {
+          "description": "Click or drag to paste panel",
+          "title": "Paste panel"
+        }
+      },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 3 levels",
@@ -5762,10 +5782,11 @@
       "cancel": "Cancel",
       "common": {
         "copy": "Copy",
-        "copy-or-duplicate": "Copy or Duplicate",
+        "copy-or-duplicate": "Copy/paste or duplicate",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "layout": "Layout"
+        "layout": "Layout",
+        "paste": "Paste"
       },
       "continue": "Continue",
       "panel": {
@@ -12427,12 +12448,12 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
-        "moreDetails": "Do you find Plugin Insights usefull? Please share your feedback <2>here</2>.",
+        "moreDetails": "Plugin Insights are currently in preview, share your feedback to help us surface the most useful information <2>here</2>.",
         "pluginInsights": {
           "header": "Plugin insights"
         },
-        "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
-        "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
+        "pluginInsightsSuccessTooltip": "All relevant checks are present and verified",
+        "pluginInsightsWarningTooltip": "One or more checks need attention",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
@@ -14943,16 +14964,22 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "area": "Area",
-      "default": "Default",
-      "smooth": "Smooth",
-      "stacked-area": "Stacked area",
-      "stacked-area-gradient": "Stacked area gradient",
-      "stacked-smooth": "Stacked smooth",
-      "stacked-step": "Stacked step",
-      "step": "Step",
-      "step-filled": "Step filled",
-      "step-hue": "Step hue"
+      "multi-many-points": "Points",
+      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points-stacked-pct": "Stacked 100%",
+      "multi-points": "Points",
+      "multi-stacked-bars": "Stacked bars",
+      "multi-stacked-points": "Stacked points",
+      "single-bars": "Bars",
+      "single-bars-scheme": "Bars scheme",
+      "single-dashed-threshold": "Dashed threshold",
+      "single-few-points": "Single fill",
+      "single-many-points-fill": "Line fill",
+      "single-many-points-hue": "Line hue",
+      "single-many-points-scheme": "Line scheme",
+      "single-many-points-threshold-scheme": "Threshold scheme",
+      "single-smooth-scheme": "Smooth scheme",
+      "single-step-fill": "Step fill"
     },
     "span-nulls-editor": {
       "gaps-options": {
