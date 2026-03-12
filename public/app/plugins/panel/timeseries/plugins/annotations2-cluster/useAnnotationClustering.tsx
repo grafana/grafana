@@ -20,7 +20,7 @@ export enum ClusteringMode {
 }
 
 export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth, timeRange }: Props) => {
-  const outAnnos = useMemo(() => {
+  const { outAnnos } = useMemo(() => {
     const clusteredAnnotations: DataFrame[] = [];
 
     // per-frame clustering
@@ -98,14 +98,17 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
     }
 
     // Sort clustered frames
-    return clusteredAnnotations.length > 0
-      ? clusteredAnnotations.map((frame) =>
-          maybeSortFrame(
-            frame,
-            frame.fields.findIndex((field) => field.name === 'time')
-          )
-        )
-      : annotations;
+    return {
+      outAnnos:
+        clusteredAnnotations.length > 0
+          ? clusteredAnnotations.map((frame) =>
+              maybeSortFrame(
+                frame,
+                frame.fields.findIndex((field) => field.name === 'time')
+              )
+            )
+          : annotations,
+    };
   }, [annotations, clusteringMode, plotWidth, timeRange]);
 
   return outAnnos;

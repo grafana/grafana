@@ -43,7 +43,7 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
 
 const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8String();
 
-function getVals<T = AnnotationVals | Record<string, never>>(frame: DataFrame) {
+function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   let vals = {} as T;
   frame.fields.forEach((f) => {
