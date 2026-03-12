@@ -207,7 +207,7 @@ describe('InstanceTimeline component', () => {
     await user.click(screen.getByRole('radio', { name: 'Notifications' }));
 
     expect(screen.queryByText('Normal')).not.toBeInTheDocument();
-    expect(screen.getByText('1 delivery')).toBeInTheDocument();
+    expect(screen.getByText('1 notification')).toBeInTheDocument();
   });
 
   it('filters to show only state changes when filter is selected', async () => {
@@ -220,7 +220,7 @@ describe('InstanceTimeline component', () => {
     await user.click(screen.getByRole('radio', { name: 'State changes' }));
 
     expect(screen.getByText('Normal')).toBeInTheDocument();
-    expect(screen.queryByText('1 delivery')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 notification')).not.toBeInTheDocument();
   });
 
   it('shows empty filter message when no entries match the selected filter', async () => {
@@ -247,7 +247,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    expect(screen.getByText('1 delivery')).toBeInTheDocument();
+    expect(screen.getByText('1 notification')).toBeInTheDocument();
     expect(screen.getAllByText('my-slack-receiver').length).toBeGreaterThanOrEqual(1);
   });
 

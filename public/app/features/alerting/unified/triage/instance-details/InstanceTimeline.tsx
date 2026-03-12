@@ -336,8 +336,8 @@ function NotificationStatusGroup({
           </Text>
           <Text variant="bodySmall">
             {notifications.length === 1
-              ? t('alerting.instance-details.timeline-one-delivery', '1 delivery')
-              : t('alerting.instance-details.timeline-n-deliveries', '{{count}} deliveries', {
+              ? t('alerting.instance-details.timeline-one-notification', '1 notification')
+              : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
                   count: notifications.length,
                 })}
           </Text>
