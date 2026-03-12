@@ -82,6 +82,7 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 		var foundSourceUID string
 		var foundCorrelation Correlation
 
+		// if sourceUID is not passed, find it from the correlation and mark the correlation as found so we don't requery
 		if cmd.SourceUID == "" {
 			correlation, err := s.GetCorrelation(ctx, GetCorrelationQuery(cmd))
 			if err != nil {
@@ -95,6 +96,10 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			foundCorrelation = correlation
 		} else {
 			foundSourceUID = cmd.SourceUID
+		}
+
+		if foundSourceUID == "" {
+			return ErrSourceDataSourceDoesNotExists
 		}
 
 		query := &datasources.GetDataSourceQuery{
@@ -146,18 +151,23 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		var foundCorrelation Correlation
 
 		if cmd.SourceUID == "" {
-			retCorr, err := session.Omit("source_type", "target_type").Get(&correlation)
+			uidOnlyCorr, err := s.GetCorrelation(ctx, GetCorrelationQuery{UID: cmd.UID, OrgId: cmd.OrgId})
+
 			if err != nil {
 				return err
 			}
 
-			if correlation.Provisioned {
+			if uidOnlyCorr.Provisioned {
 				return ErrCorrelationReadOnly
 			}
 			foundSourceUID = correlation.SourceUID
-			foundCorrelation = retCorr
+			foundCorrelation = uidOnlyCorr
 		} else {
 			foundSourceUID = cmd.SourceUID
+		}
+
+		if foundSourceUID == "" {
+			return ErrSourceDataSourceDoesNotExists
 		}
 
 		query := &datasources.GetDataSourceQuery{
@@ -180,8 +190,6 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if correlation.Provisioned {
 				return ErrCorrelationReadOnly
 			}
-		} else {
-
 		}
 
 		if cmd.Label != nil {
