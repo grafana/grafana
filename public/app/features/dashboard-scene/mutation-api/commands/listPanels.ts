@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
-import { serializeResultLayoutItem } from './movePanel';
+import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
@@ -43,8 +43,11 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
         const vizPanel = expectedKey ? allPanels.find((p) => p.state.key === expectedKey) : undefined;
 
         const layoutItem = vizPanel
-          ? serializeResultLayoutItem(vizPanel, elementName)
-          : { kind: 'AutoGridLayoutItem' as const, spec: { element: { kind: 'ElementReference' as const, name: elementName } } };
+          ? serializeResultLayoutItem(vizPanel)
+          : {
+              kind: 'AutoGridLayoutItem' as const,
+              spec: { element: { kind: 'ElementReference' as const, name: elementName } },
+            };
 
         elements.push({ element, layoutItem });
       }

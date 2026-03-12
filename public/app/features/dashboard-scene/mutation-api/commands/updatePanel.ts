@@ -15,7 +15,7 @@ import { FieldConfigSource } from '@grafana/data';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
-import { serializeResultLayoutItem } from './movePanel';
+import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
@@ -177,7 +177,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
       const fullElements = getElements(scene.state.body, scene);
       const updatedElement = fullElements[elementName];
-      const resultLayoutItem = serializeResultLayoutItem(vizPanel, elementName);
+      const resultLayoutItem = serializeResultLayoutItem(vizPanel);
 
       return {
         success: true,

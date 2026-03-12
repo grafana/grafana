@@ -16,7 +16,7 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { serializeResultLayoutItem } from './movePanel';
+import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
@@ -97,7 +97,7 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
       }
 
       const elementName = scene.serializer.getElementIdForPanel(panelId) ?? `panel-${panelId}`;
-      const resultLayoutItem = serializeResultLayoutItem(vizPanel, elementName);
+      const resultLayoutItem = serializeResultLayoutItem(vizPanel);
       const fullElements = getElements(scene.state.body, scene);
       const element = fullElements[elementName];
 
