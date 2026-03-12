@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -20,7 +21,7 @@ import (
 func TestK8sUserService_GetByUserAuth(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-1"
-	iamUser := makeIAMUser("uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Editor", 1000, false, false, true, false)
+	iamUser := makeIAMUser(1, "uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Editor", 1000, false, false, true, false)
 
 	t.Run("success", func(t *testing.T) {
 		mock := &mockK8sUserClient{getUser: iamUser}
@@ -29,6 +30,7 @@ func TestK8sUserService_GetByUserAuth(t *testing.T) {
 		got, err := svc.GetByUserAuth(ctx, &login.UserAuth{UserUID: "uid-1"}, 1)
 		require.NoError(t, err)
 		require.NotNil(t, got)
+		assert.Equal(t, int64(1), got.ID)
 		assert.Equal(t, "uid-1", got.UID)
 		assert.Equal(t, "jdoe", got.Login)
 		assert.Equal(t, "jdoe@example.com", got.Email)
@@ -51,7 +53,7 @@ func TestK8sUserService_GetByUserAuth(t *testing.T) {
 func TestK8sUserService_GetByEmail(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-1"
-	iamUser := makeIAMUser("uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Viewer", 0, false, false, false, false)
+	iamUser := makeIAMUser(1, "uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Viewer", 0, false, false, false, false)
 
 	t.Run("success", func(t *testing.T) {
 		mock := &mockK8sUserClient{listUsers: &iamv0alpha1.UserList{Items: []iamv0alpha1.User{*iamUser}}}
@@ -60,6 +62,7 @@ func TestK8sUserService_GetByEmail(t *testing.T) {
 		got, err := svc.GetByEmail(ctx, "jdoe@example.com", 1)
 		require.NoError(t, err)
 		require.NotNil(t, got)
+		assert.Equal(t, int64(1), got.ID)
 		assert.Equal(t, "uid-1", got.UID)
 		assert.Equal(t, "jdoe@example.com", got.Email)
 		assert.Equal(t, 1, mock.listCalls)
@@ -88,7 +91,7 @@ func TestK8sUserService_GetByEmail(t *testing.T) {
 func TestK8sUserService_GetByLogin(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-1"
-	iamUser := makeIAMUser("uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Admin", 0, true, false, true, true)
+	iamUser := makeIAMUser(1, "uid-1", ns, "jdoe", "jdoe@example.com", "Jane Doe", "Admin", 0, true, false, true, true)
 
 	t.Run("success", func(t *testing.T) {
 		mock := &mockK8sUserClient{listUsers: &iamv0alpha1.UserList{Items: []iamv0alpha1.User{*iamUser}}}
@@ -97,6 +100,7 @@ func TestK8sUserService_GetByLogin(t *testing.T) {
 		got, err := svc.GetByLogin(ctx, "jdoe", 1)
 		require.NoError(t, err)
 		require.NotNil(t, got)
+		assert.Equal(t, int64(1), got.ID)
 		assert.Equal(t, "jdoe", got.Login)
 		assert.True(t, got.IsAdmin)
 		assert.Equal(t, 1, mock.listCalls)
@@ -126,7 +130,7 @@ func TestK8sUserService_GetSignedInUser(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-2"
 	lastSeen := time.Now().Add(-time.Hour).Unix()
-	iamUser := makeIAMUser("uid-2", ns, "admin", "admin@example.com", "Admin User", "Admin", lastSeen, true, false, true, false)
+	iamUser := makeIAMUser(2, "uid-2", ns, "admin", "admin@example.com", "Admin User", "Admin", lastSeen, true, false, true, false)
 
 	t.Run("success", func(t *testing.T) {
 		mock := &mockK8sUserClient{getUser: iamUser}
@@ -135,6 +139,7 @@ func TestK8sUserService_GetSignedInUser(t *testing.T) {
 		got, err := svc.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserUID: "uid-2", OrgID: 2})
 		require.NoError(t, err)
 		require.NotNil(t, got)
+		assert.Equal(t, int64(2), got.UserID)
 		assert.Equal(t, "uid-2", got.UserUID)
 		assert.Equal(t, int64(2), got.OrgID)
 		assert.Equal(t, "admin", got.Login)
@@ -145,7 +150,7 @@ func TestK8sUserService_GetSignedInUser(t *testing.T) {
 	})
 
 	t.Run("invalid role defaults to Viewer", func(t *testing.T) {
-		u := makeIAMUser("uid-3", ns, "u", "u@e.com", "U", "InvalidRole", 0, false, false, false, false)
+		u := makeIAMUser(3, "uid-3", ns, "u", "u@e.com", "U", "InvalidRole", 0, false, false, false, false)
 		mock := &mockK8sUserClient{getUser: u}
 		svc := initTestService(t, ns, mock)
 
@@ -171,7 +176,7 @@ func TestK8sUserService_Create(t *testing.T) {
 	ns := "org-1"
 
 	t.Run("success with UID", func(t *testing.T) {
-		created := makeIAMUser("custom-uid", ns, "newuser", "new@example.com", "New User", "Editor", 0, false, false, false, true)
+		created := makeIAMUser(1, "custom-uid", ns, "newuser", "new@example.com", "New User", "Editor", 0, false, false, false, true)
 		mock := &mockK8sUserClient{createUser: created}
 		svc := initTestService(t, ns, mock)
 
@@ -190,6 +195,7 @@ func TestK8sUserService_Create(t *testing.T) {
 		got, err := svc.Create(ctx, cmd)
 		require.NoError(t, err)
 		require.NotNil(t, got)
+		assert.Equal(t, int64(1), got.ID)
 		assert.Equal(t, "custom-uid", got.UID)
 		assert.Equal(t, "newuser", got.Login)
 		assert.Equal(t, "new@example.com", got.Email)
@@ -227,7 +233,7 @@ func TestK8sUserService_Create(t *testing.T) {
 func TestK8sUserService_Update(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-1"
-	existing := makeIAMUser("uid-1", ns, "oldlogin", "old@example.com", "Old Name", "Viewer", 0, false, false, false, false)
+	existing := makeIAMUser(1, "uid-1", ns, "oldlogin", "old@example.com", "Old Name", "Viewer", 0, false, false, false, false)
 
 	t.Run("success", func(t *testing.T) {
 		mock := &mockK8sUserClient{getUser: existing}
@@ -277,7 +283,7 @@ func TestK8sUserService_Update(t *testing.T) {
 func TestK8sUserService_UpdateLastSeenAt(t *testing.T) {
 	ctx := context.Background()
 	ns := "org-1"
-	existing := makeIAMUser("uid-1", ns, "u", "u@e.com", "U", "Viewer", 0, false, false, false, false)
+	existing := makeIAMUser(1, "uid-1", ns, "u", "u@e.com", "U", "Viewer", 0, false, false, false, false)
 	existing.ResourceVersion = "123"
 
 	t.Run("success", func(t *testing.T) {
@@ -379,7 +385,7 @@ func (m *mockK8sUserClient) UpdateStatus(ctx context.Context, identifier resourc
 	return &iamv0alpha1.User{Status: newStatus}, nil
 }
 
-func makeIAMUser(name, namespace, login, email, title, role string, lastSeenAt int64, admin, disabled, emailVerified, provisioned bool) *iamv0alpha1.User {
+func makeIAMUser(id int64, name, namespace, login, email, title, role string, lastSeenAt int64, admin, disabled, emailVerified, provisioned bool) *iamv0alpha1.User {
 	u := &iamv0alpha1.User{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
 		Spec: iamv0alpha1.UserSpec{
@@ -393,6 +399,9 @@ func makeIAMUser(name, namespace, login, email, title, role string, lastSeenAt i
 			Provisioned:   provisioned,
 		},
 		Status: iamv0alpha1.UserStatus{LastSeenAt: lastSeenAt},
+	}
+	if meta, err := utils.MetaAccessor(u); err == nil {
+		meta.SetDeprecatedInternalID(id) // nolint:staticcheck
 	}
 	return u
 }

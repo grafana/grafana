@@ -357,15 +357,6 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	syncUserToIdentity(ctx, usr, id)
 
-	// If Kubernetes user sync is enabled, we disable the sync of org roles and permissions
-	if s.isKubernetesUserSyncEnabled(ctx) {
-		// Disable org role sync since Kubernetes APIs don't support the concept of orgs and org roles
-		id.ClientParams.SyncOrgRoles = false
-		// Disable permission sync because permissions will be handled by Kubernetes RBAC on each request
-		// instead of being loaded into the identity at login time
-		id.ClientParams.SyncPermissions = false
-	}
-
 	return nil
 }
 

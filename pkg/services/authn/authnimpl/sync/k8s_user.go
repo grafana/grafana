@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -162,7 +163,7 @@ func (s *K8sUserService) GetSignedInUser(ctx context.Context, query *user.GetSig
 	}
 
 	return &user.SignedInUser{
-		UserID:         0, // we don't have the userID
+		UserID:         getDeprecatedInternalID(u),
 		UserUID:        u.Name,
 		OrgID:          query.OrgID,
 		OrgRole:        orgRole,
@@ -274,7 +275,7 @@ func iamUserToUser(u *iamv0alpha1.User, namespace string) *user.User {
 	}
 
 	return &user.User{
-		ID:            0, // we don't have the userID
+		ID:            getDeprecatedInternalID(u),
 		UID:           u.Name,
 		Login:         u.Spec.Login,
 		Email:         u.Spec.Email,
@@ -285,4 +286,11 @@ func iamUserToUser(u *iamv0alpha1.User, namespace string) *user.User {
 		IsProvisioned: u.Spec.Provisioned,
 		LastSeenAt:    lastSeenAt,
 	}
+}
+
+func getDeprecatedInternalID(u *iamv0alpha1.User) int64 {
+	if meta, err := utils.MetaAccessor(u); err == nil {
+		return meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+	return 0
 }
