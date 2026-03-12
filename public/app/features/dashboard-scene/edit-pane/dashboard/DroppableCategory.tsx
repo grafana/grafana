@@ -21,8 +21,8 @@ export function DroppableCategory({ droppableId, title, children }: DroppableCat
         <div ref={provided.innerRef} {...provided.droppableProps}>
           <OptionsPaneCategory id={droppableId} className={styles.category} title={title}>
             {children}
+            {provided.placeholder}
           </OptionsPaneCategory>
-          {provided.placeholder}
         </div>
       )}
     </Droppable>
