@@ -50,14 +50,17 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
-  const completionProvider: SQLEditorV2CompletionProvider = {
-    getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
-    getColumns: async (table) => {
-      const fields = await fetchSQLFields({ table }, queries || []);
-      return fields.map((f) => f.name);
-    },
-    getFunctions: () => ALLOWED_FUNCTIONS,
-  };
+  const completionProvider = useMemo<SQLEditorV2CompletionProvider>(
+    () => ({
+      getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
+      getColumns: async (table) => {
+        const fields = await fetchSQLFields({ table }, queries || []);
+        return fields.map((f) => f.name);
+      },
+      getFunctions: () => ALLOWED_FUNCTIONS,
+    }),
+    [refIds, queries]
+  );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
   const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
@@ -72,6 +75,7 @@ FROM
 LIMIT
   10`;
 
+  const toolboxProps = useMemo(() => ({ query }), [query]);
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
   const styles = useStyles2((theme) => getStyles(theme));
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
@@ -249,7 +253,7 @@ LIMIT
               query={query.expression || initialQuery}
               onChange={onEditorChange}
               language={EDITOR_LANGUAGE_DEFINITION}
-              toolboxProps={{ query }}
+              toolboxProps={toolboxProps}
               width={width}
               height={height}
             />

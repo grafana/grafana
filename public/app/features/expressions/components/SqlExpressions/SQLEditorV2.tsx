@@ -179,9 +179,13 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
     viewRef.current = view;
 
     // Async: fetch tables then reconfigure completion with real data
+    let cancelled = false;
     const provider = languageRef.current?.completionProvider;
     if (provider) {
       provider.getTables().then((tables) => {
+        if (cancelled) {
+          return;
+        }
         const fnCompletions: Completion[] = (provider.getFunctions?.() ?? []).map((f) => ({
           label: f,
           type: 'function',
@@ -195,6 +199,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
     }
 
     return () => {
+      cancelled = true;
       panelRootRef.current?.unmount();
       panelRootRef.current = null;
       view.destroy();
