@@ -1163,11 +1163,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
