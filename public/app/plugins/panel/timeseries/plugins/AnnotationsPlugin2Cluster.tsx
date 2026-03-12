@@ -54,6 +54,18 @@ function getVals<T = AnnotationVals | Record<string, never>>(frame: DataFrame) {
   return vals;
 }
 
+/**
+ * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
+ * @param annotations
+ * @param timeZone
+ * @param config
+ * @param newRange
+ * @param setNewRange
+ * @param replaceVariables
+ * @param canvasRegionRendering
+ * @param options
+ * @constructor
+ */
 export const AnnotationsPlugin2Cluster = ({
   annotations,
   timeZone,
