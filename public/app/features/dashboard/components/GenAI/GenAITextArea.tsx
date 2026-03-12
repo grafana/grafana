@@ -4,6 +4,7 @@ import { AITextArea } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextArea, useStyles2 } from '@grafana/ui';
+import { buildAutoGenerateSystemPrompt, buildGenAIPrompt } from './promptUtils';
 
 const DESCRIPTION_USER_PROMPT_INSTRUCTION =
   'Generate a description - no markdown, no title or reasoning, just the description.';
@@ -42,6 +43,9 @@ export function GenAITextArea({
   'data-testid': dataTestId,
 }: GenAITextAreaProps) {
   const styles = useStyles2(getStyles);
+  const effectiveSystemPrompt = autoGenerate
+    ? buildAutoGenerateSystemPrompt(systemPrompt, DESCRIPTION_USER_PROMPT_INSTRUCTION, getContext)
+    : systemPrompt;
 
   if (systemPrompt) {
     return (
@@ -50,23 +54,12 @@ export function GenAITextArea({
         value={value}
         onChange={onChange}
         onComplete={onComplete}
-        systemPrompt={systemPrompt}
+        systemPrompt={effectiveSystemPrompt}
         origin="grafana/panel-metadata/description"
         placeholder={t('gen-ai.text-area.placeholder', 'Type a description or let AI generate one...')}
         autoGenerate={autoGenerate}
         streaming
-        getUserPrompt={(textInput) => {
-          const parts = [DESCRIPTION_USER_PROMPT_INSTRUCTION];
-          const ctx = getContext?.();
-          if (ctx) {
-            parts.push(`<context>\n${ctx}\n</context>`);
-          }
-          const trimmed = textInput.trim();
-          if (trimmed) {
-            parts.push(`User request: ${trimmed}`);
-          }
-          return parts.join('\n\n');
-        }}
+        getUserPrompt={(textInput) => buildGenAIPrompt(DESCRIPTION_USER_PROMPT_INSTRUCTION, textInput, getContext)}
         className={styles.assistantTextArea}
       />
     );

@@ -4,6 +4,7 @@ import { AITextInput } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Input, useStyles2 } from '@grafana/ui';
+import { buildAutoGenerateSystemPrompt, buildGenAIPrompt } from './promptUtils';
 
 const TITLE_USER_PROMPT_INSTRUCTION = 'Generate a title - no markdown, no description or reasoning, just the title.';
 
@@ -43,6 +44,9 @@ export function GenAITextInput({
   inputRef,
 }: GenAITextInputProps) {
   const styles = useStyles2(getStyles);
+  const effectiveSystemPrompt = autoGenerate
+    ? buildAutoGenerateSystemPrompt(systemPrompt, TITLE_USER_PROMPT_INSTRUCTION, getContext)
+    : systemPrompt;
 
   if (systemPrompt) {
     return (
@@ -51,23 +55,12 @@ export function GenAITextInput({
         value={value}
         onChange={onChange}
         onComplete={onComplete}
-        systemPrompt={systemPrompt}
+        systemPrompt={effectiveSystemPrompt}
         origin="grafana/panel-metadata/title"
         placeholder={t('gen-ai.text-input.placeholder', 'Type a title or let AI generate one...')}
         autoGenerate={autoGenerate}
         streaming
-        getUserPrompt={(textInput) => {
-          const parts = [TITLE_USER_PROMPT_INSTRUCTION];
-          const ctx = getContext?.();
-          if (ctx) {
-            parts.push(`<context>\n${ctx}\n</context>`);
-          }
-          const trimmed = textInput.trim();
-          if (trimmed) {
-            parts.push(`User request: ${trimmed}`);
-          }
-          return parts.join('\n\n');
-        }}
+        getUserPrompt={(textInput) => buildGenAIPrompt(TITLE_USER_PROMPT_INSTRUCTION, textInput, getContext)}
         className={styles.assistantInput}
       />
     );
