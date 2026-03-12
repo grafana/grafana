@@ -670,6 +670,14 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 	})
 }
 
+// dashboardFileInfo returns a FileInfo containing a classic dashboard JSON that
+// ParseFileResource will recognise as a dashboard resource.
+func dashboardFileInfo() *repository.FileInfo {
+	return &repository.FileInfo{
+		Data: []byte(`{"uid":"test","schemaVersion":7,"panels":[],"tags":[]}`),
+	}
+}
+
 func TestAuthorizeDeleteByPath(t *testing.T) {
 	t.Run("file path checks dashboard delete on parent folder", func(t *testing.T) {
 		repo := &provisioning.Repository{
@@ -678,6 +686,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -701,6 +711,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		rootFolder := RootFolder(repo)
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, "dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -747,6 +759,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -756,6 +770,23 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json")
 
 		assert.Error(t, err)
+	})
+
+	t.Run("unresolvable file returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "read file")
 	})
 
 	t.Run("file path with folder metadata uses stable UID", func(t *testing.T) {
@@ -770,6 +801,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		data, _ := json.Marshal(parentMeta)
 		rw.On("Read", mock.Anything, "team-a/_folder.json", "").
 			Return(&repository.FileInfo{Data: data}, nil)
+		rw.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
 		rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -795,6 +828,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "src/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -851,6 +886,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dash.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -871,6 +908,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "src/dash.json", "").
+			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 

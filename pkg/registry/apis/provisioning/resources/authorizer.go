@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
@@ -182,24 +181,20 @@ func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (
 }
 
 // resolveFileGVR reads the file at path from the configured branch and parses it
-// to determine its Kubernetes resource type. Returns an empty GVR if the file
-// cannot be read or parsed (e.g. it only exists on a feature branch).
+// to determine its Kubernetes resource type.
 //
-// When the file is successfully parsed, the group is matched against
-// SupportedProvisioningResources. If the resource type is not supported,
-// an error is returned — we do not authorize operations on unknown types.
+// Returns an error if the file cannot be read, cannot be parsed, or its resource
+// type is not in SupportedProvisioningResources — we never authorize operations
+// on unrecognisable or unsupported types.
 func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string) (schema.GroupVersionResource, error) {
 	info, err := a.reader.Read(ctx, path, "")
 	if err != nil {
-		if errors.Is(err, repository.ErrFileNotFound) {
-			return schema.GroupVersionResource{}, nil
-		}
 		return schema.GroupVersionResource{}, fmt.Errorf("read file %q: %w", path, err)
 	}
 
 	_, gvk, _, err := ParseFileResource(ctx, info)
 	if err != nil {
-		return schema.GroupVersionResource{}, nil
+		return schema.GroupVersionResource{}, fmt.Errorf("parse file %q: %w", path, err)
 	}
 
 	// Folders are authorized through their own dedicated path (authorizeFolder,
@@ -220,38 +215,19 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 // within the given folder context. It reads the file to determine the actual resource
 // type (dashboard, library panel, etc.) rather than assuming dashboards.
 //
-// If the resource type cannot be determined (file not found, unparseable), it falls
-// back to checking the verb against all non-folder supported resource types.
+// Returns an error if the resource type cannot be determined (file not found,
+// unparseable, or unsupported type).
 func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, folderID, verb string) error {
 	gvr, err := a.resolveFileGVR(ctx, path)
 	if err != nil {
 		return err
 	}
 
-	// If we resolved a specific resource type, check just that one
-	if gvr.Group != "" {
-		return a.access.Check(ctx, authlib.CheckRequest{
-			Group:    gvr.Group,
-			Resource: gvr.Resource,
-			Verb:     verb,
-		}, folderID)
-	}
-
-	// Could not determine the file type — check all non-folder supported resource
-	// types so we don't silently skip authorization.
-	for _, kind := range SupportedProvisioningResources {
-		if kind == FolderResource {
-			continue
-		}
-		if err := a.access.Check(ctx, authlib.CheckRequest{
-			Group:    kind.Group,
-			Resource: kind.Resource,
-			Verb:     verb,
-		}, folderID); err != nil {
-			return err
-		}
-	}
-	return nil
+	return a.access.Check(ctx, authlib.CheckRequest{
+		Group:    gvr.Group,
+		Resource: gvr.Resource,
+		Verb:     verb,
+	}, folderID)
 }
 
 // authorizeFolder is a private helper that checks if the user has permission to perform

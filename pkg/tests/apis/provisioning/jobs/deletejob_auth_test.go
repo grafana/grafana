@@ -115,4 +115,54 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 	})
+
+	t.Run("delete job blocked for folder resource in file", func(t *testing.T) {
+		folderJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"sneaky-folder"},"spec":{"title":"Sneaky"}}`
+		helper.WriteToProvisioningPath(t, "folder-as-file.json", []byte(folderJSON))
+
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"folder-as-file.json"},
+			},
+		})
+
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "delete job should be blocked for folder resource in a file")
+		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")
+	})
+
+	t.Run("delete job blocked for unsupported resource type", func(t *testing.T) {
+		unsupportedJSON := `{"apiVersion":"custom.example.io/v1","kind":"Widget","metadata":{"name":"test-widget"}}`
+		helper.WriteToProvisioningPath(t, "unsupported-resource.json", []byte(unsupportedJSON))
+
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"unsupported-resource.json"},
+			},
+		})
+
+		var statusCode int
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "delete job should be blocked for unsupported resource type")
+		require.NotEqual(t, http.StatusAccepted, statusCode, "should not return 202 Accepted")
+	})
 }

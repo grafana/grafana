@@ -386,6 +386,18 @@ func (h *ProvisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// WriteToProvisioningPath writes raw data to a file inside the provisioning path.
+// Parent directories are created automatically.
+func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name string, data []byte) {
+	t.Helper()
+	fullPath := path.Join(h.ProvisioningPath, name)
+	t.Logf("Writing file to provisioning path '%s'", fullPath)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
+	require.NoError(t, err, "failed to create directories for provisioning path")
+	err = os.WriteFile(fullPath, data, 0o600)
+	require.NoError(t, err, "failed to write file to provisioning path")
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
