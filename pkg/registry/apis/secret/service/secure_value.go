@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
 	claims "github.com/grafana/authlib/types"
@@ -380,41 +379,6 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	return sv, nil
-}
-
-// DeleteFromOwner implements [contracts.SecureValueService].
-func (s *SecureValueService) DeleteFromOwner(ctx context.Context, namespace xkube.Namespace, owner metav1.OwnerReference) error {
-	if namespace == "" {
-		return fmt.Errorf("namespace cannot be empty")
-	}
-	if owner.APIVersion == "" || owner.Name == "" {
-		return fmt.Errorf("invalid owner reference")
-	}
-
-	ctx, span := s.tracer.Start(ctx, "SecureValueService.DeleteFromOwner", trace.WithAttributes(
-		attribute.String("owner", fmt.Sprintf("%+v", owner)),
-		attribute.String("namespace", namespace.String()),
-	))
-	defer span.End()
-
-	// NOTE: should this use an index?
-	all, err := s.List(ctx, namespace) // Continue token???
-	if err != nil {
-		return err
-	}
-	for _, v := range all.Items {
-		for _, o := range v.OwnerReferences {
-			if owner.APIVersion == o.APIVersion &&
-				owner.Kind == o.Kind &&
-				owner.Name == o.Name { // do not match the UID
-				if _, err = s.Delete(ctx, namespace, v.Name); err != nil {
-					return err
-				}
-				break
-			}
-		}
-	}
-	return nil
 }
 
 func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {

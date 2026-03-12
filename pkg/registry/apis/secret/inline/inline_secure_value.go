@@ -241,9 +241,7 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 
 	for _, name := range names {
 		if name == "*" {
-			return s.secureValueService.DeleteFromOwner(ctx,
-				xkube.Namespace(owner.Namespace),
-				owner.ToOwnerReference())
+			return s.deleteFromOwner(ctx, owner)
 		}
 
 		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
@@ -258,5 +256,55 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 		}
 	}
 
+	return nil
+}
+
+// DeleteFromOwner implements [contracts.SecureValueService].
+func (s *LocalInlineSecureValueService) deleteFromOwner(ctx context.Context, owner common.ObjectReference) error {
+	if owner.Namespace == "" {
+		return fmt.Errorf("namespace cannot be empty")
+	}
+	if owner.APIVersion == "" || owner.Kind == "" {
+		return fmt.Errorf("invalid owner reference")
+	}
+
+	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.deleteFromOwner", trace.WithAttributes(
+		attribute.String("owner", fmt.Sprintf("%+v", owner)),
+	))
+	defer span.End()
+
+	ns := xkube.Namespace(owner.Namespace)
+	ref := owner.ToOwnerReference()
+	matches := func(o metav1.OwnerReference) bool {
+		if ref.APIVersion != o.APIVersion {
+			return false
+		}
+		if ref.Kind != o.Kind {
+			return false
+		}
+		if ref.Name != "*" && ref.Name != o.Name {
+			return false
+		}
+		if ref.UID != "*" && ref.UID != o.UID {
+			return false
+		}
+		return true
+	}
+
+	// NOTE: should this use an index?
+	all, err := s.secureValueService.List(ctx, ns) // Continue token???
+	if err != nil {
+		return err
+	}
+	for _, v := range all.Items {
+		for _, o := range v.OwnerReferences {
+			if matches(o) {
+				if _, err = s.secureValueService.Delete(ctx, ns, v.Name); err != nil {
+					return err
+				}
+				break
+			}
+		}
+	}
 	return nil
 }

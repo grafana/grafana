@@ -589,7 +589,16 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		// Use the helper function
 		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
-		err = svc.DeleteWhenOwnedByResource(ctx, owner, "*") // * == everything from that owner
+		// Called once before migrating a datasource
+		// This will ensure we cleanup the previous values
+		err = svc.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
+			APIGroup:   owner.APIGroup,
+			APIVersion: owner.APIVersion,
+			Namespace:  defaultNs,
+			Kind:       owner.Kind,
+			Name:       "*",
+			UID:        "*",
+		}, "*") // remove everything from this owner
 		require.NoError(t, err)
 
 		names, err = tu.ListSv(ctx, xkube.Namespace(defaultNs))
