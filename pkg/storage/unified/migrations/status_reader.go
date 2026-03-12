@@ -2,6 +2,8 @@ package migrations
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -11,9 +13,12 @@ import (
 )
 
 type migrationStatusReader struct {
-	sqlStore db.DB
-	cfg      *setting.Cfg
-	registry *MigrationRegistry
+	sqlStore                db.DB
+	cfg                     *setting.Cfg
+	registry                *MigrationRegistry
+	migrationLogTableMu     sync.Mutex
+	migrationLogTableExists bool
+	completedMigrations     sync.Map
 }
 
 var _ contract.MigrationStatusReader = (*migrationStatusReader)(nil)
@@ -23,63 +28,96 @@ func ProvideMigrationStatusReader(
 	sqlStore db.DB,
 	cfg *setting.Cfg,
 	registry *MigrationRegistry,
-) contract.MigrationStatusReader {
+) (contract.MigrationStatusReader, error) {
 	reader := &migrationStatusReader{
 		sqlStore: sqlStore,
 		cfg:      cfg,
 		registry: registry,
 	}
 
-	if err := EnsureMigrationLogTable(context.Background(), sqlStore, cfg); err != nil {
-		logger.Warn("Failed to ensure migration log table exists", "error", err)
-		return reader
+	exists, err := reader.checkAndReadLogTable(context.Background())
+	if err != nil {
+		return nil, err
 	}
 
-	return reader
+	if !exists {
+		logger.Info("Migration log table not found, using config fallback")
+	}
+	return reader, nil
 }
 
 // GetStorageMode determines the storage mode for a resource.
 //
 // Resolution priority:
-//  1. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
-//     This is an explicit operational knob, primarily used in cloud to hold a resource
-//     in dual-write mode for validation before promoting to unified.
-//  2. Migration log entry exists → Unified (data has been synced)
+//  1. Migration log entry exists → Unified (data has been synced)
+//  2. Config Mode1 (or Mode2/Mode3 for backward compat) → DualWrite
 //  3. Config Mode4/Mode5 → Unified (temporary fallback for cloud backfill transition)
 //  4. Otherwise → Legacy
-func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) contract.StorageMode {
-	// Check config for explicit DualWrite modes (Mode1, Mode2, Mode3).
-	// This takes priority because it's an explicit operational decision — cloud may want
-	// to hold a resource in dual-write even after data has been synced.
+func (r *migrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (contract.StorageMode, error) {
 	configKey := gr.Resource + "." + gr.Group
-	if config, found := r.cfg.UnifiedStorage[configKey]; found {
-		if config.DualWriterMode >= rest.Mode1 && config.DualWriterMode <= rest.Mode3 {
-			return contract.StorageModeDualWrite
-		}
-	}
 
-	// Check the migration log (primary source of truth for "data has been synced").
+	// The migration log is the source of truth for "data has been synced".
 	def, ok := r.findDefinition(gr)
 	if ok {
-		exists, err := migrationExists(ctx, r.sqlStore, def.MigrationID)
+		exists, err := r.checkAndReadLogTable(ctx)
 		if err != nil {
-			// If the migration log query fails (e.g., table not created yet),
-			// log and fall through to the config fallback rather than failing hard.
-			logger.Warn("Failed to check migration log, falling back to config", "resource", gr.String(), "error", err)
-		} else if exists {
-			return contract.StorageModeUnified
+			return contract.StorageModeLegacy, err
+		}
+
+		if _, found := r.completedMigrations.Load(def.MigrationID); found {
+			return contract.StorageModeUnified, nil
+		}
+
+		if exists {
+			exists, err := migrationExists(ctx, r.sqlStore, def.MigrationID)
+			if err != nil {
+				return contract.StorageModeLegacy, fmt.Errorf("failed to resolve storage mode for %s from migration log: %w", gr.String(), err)
+			}
+			if exists {
+				r.completedMigrations.Store(def.MigrationID, struct{}{})
+				return contract.StorageModeUnified, nil
+			}
 		}
 	}
 
-	// Fallback: check config for Mode4+ (for environments where migrations are external).
-	// This is temporary and will be removed once all environments backfill the migration log.
+	// Fallback to config for explicit DualWrite modes (Mode1, Mode2, Mode3) and Unified modes (Mode4, Mode5).
+	// This is temporary and will be removed once all environments have migration logs.
 	if config, found := r.cfg.UnifiedStorage[configKey]; found {
+		if config.DualWriterMode >= rest.Mode1 && config.DualWriterMode <= rest.Mode3 {
+			return contract.StorageModeDualWrite, nil
+		}
 		if config.DualWriterMode >= rest.Mode4 {
-			return contract.StorageModeUnified
+			return contract.StorageModeUnified, nil
 		}
 	}
+	return contract.StorageModeLegacy, nil
+}
 
-	return contract.StorageModeLegacy
+func (r *migrationStatusReader) checkAndReadLogTable(ctx context.Context) (bool, error) {
+	r.migrationLogTableMu.Lock()
+	defer r.migrationLogTableMu.Unlock()
+
+	if r.migrationLogTableExists {
+		return true, nil
+	}
+
+	exists, err := migrationLogTableExists(r.sqlStore)
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, nil
+	}
+	r.migrationLogTableExists = true
+
+	ids, err := migrationLogIDs(ctx, r.sqlStore)
+	if err != nil {
+		return false, err
+	}
+	for id := range ids {
+		r.completedMigrations.Store(id, struct{}{})
+	}
+	return true, nil
 }
 
 // findDefinition locates the MigrationDefinition that contains the given GroupResource.

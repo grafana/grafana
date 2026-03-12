@@ -37,12 +37,12 @@ type fakeMigrationStatusReader struct {
 
 var _ unifiedmigrations.MigrationStatusReader = (*fakeMigrationStatusReader)(nil)
 
-func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	mode, ok := f.modes[gr.String()]
 	if !ok {
-		return unifiedmigrations.StorageModeLegacy
+		return unifiedmigrations.StorageModeLegacy, nil
 	}
-	return mode
+	return mode, nil
 }
 
 // NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
@@ -138,17 +138,20 @@ type service struct {
 
 // getStorageMode returns the cached StorageMode for a non-managed resource.
 // Results are cached with the TTL configured via StorageModeCacheTTL.
-func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	key := gr.String()
 	if val, ok := m.resourceModesCache.Get(key); ok {
-		return val.(unifiedmigrations.StorageMode)
+		return val.(unifiedmigrations.StorageMode), nil
 	}
 
-	mode := m.statusReader.GetStorageMode(ctx, gr)
+	mode, err := m.statusReader.GetStorageMode(ctx, gr)
+	if err != nil {
+		return unifiedmigrations.StorageModeLegacy, err
+	}
 	m.resourceModesCache.SetDefault(key, mode)
 
 	logging.DefaultLogger.With("resource", key, "mode", mode).Info("resolved dynamic storage mode")
-	return mode
+	return mode, nil
 }
 
 func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unified rest.Storage) (rest.Storage, error) {
@@ -173,7 +176,12 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 	}
 
 	// Use MigrationStatusReader for mode selection on non-managed resources.
-	switch m.getStorageMode(context.Background(), gr) {
+	mode, err := m.getStorageMode(context.Background(), gr)
+	if err != nil {
+		return nil, err
+	}
+
+	switch mode {
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
@@ -203,7 +211,11 @@ func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) 
 		v, ok, err := m.db.get(ctx, gr)
 		return ok && v.ReadUnified, err
 	}
-	return m.getStorageMode(ctx, gr) == unifiedmigrations.StorageModeUnified, nil
+	mode, err := m.getStorageMode(ctx, gr)
+	if err != nil {
+		return false, err
+	}
+	return mode == unifiedmigrations.StorageModeUnified, nil
 }
 
 // Status implements Service.
@@ -211,7 +223,11 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 	if !m.ShouldManage(gr) {
 		// Non-managed: derive status from statusReader, same as staticService.
 		status := StorageStatus{Group: gr.Group, Resource: gr.Resource}
-		switch m.getStorageMode(ctx, gr) {
+		mode, err := m.getStorageMode(ctx, gr)
+		if err != nil {
+			return status, err
+		}
+		switch mode {
 		case unifiedmigrations.StorageModeUnified:
 			status.WriteUnified = true
 			status.ReadUnified = true
