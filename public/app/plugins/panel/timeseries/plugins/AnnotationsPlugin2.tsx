@@ -71,7 +71,8 @@ export const AnnotationsPlugin2 = ({
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const clusteringMode: ClusteringMode | null = options?.clustering ? ClusteringMode.Render : null;
+  const clusteringMode: ClusteringMode | null =
+    options?.clustering && options.clustering > 0 ? ClusteringMode.Render : null;
   const { canExecuteActions } = usePanelContext();
   const userCanExecuteActions = canExecuteActions?.() ?? false;
 

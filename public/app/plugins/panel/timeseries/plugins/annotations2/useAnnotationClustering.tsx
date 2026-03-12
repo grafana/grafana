@@ -5,6 +5,8 @@ import { DataFrame, FieldType } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { TimeRange2 } from '@grafana/ui/internal';
 
+import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from './constants';
+
 interface Props {
   annotations: DataFrame[];
   clusteringMode: ClusteringMode | null;
@@ -155,16 +157,13 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotWidth
   return { clusterIdx, clusters };
 };
 
-// Recommended minimum spacing between interactive elements (a11y)
-const MIN_ANNOTATION_SPACING = 24;
-
 const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {
   // If the plot width is zero, something is very wrong! Let's avoid clustering in this case.
   if (!plotWidth) {
     return 0;
   }
 
-  const pixelThreshold = MIN_ANNOTATION_SPACING * uPlot.pxRatio;
+  const pixelThreshold = DEFAULT_CLUSTERING_ANNOTATION_SPACING * uPlot.pxRatio;
   const dt = timeRange.to - timeRange.from;
   const thresholdRatio = pixelThreshold / plotWidth;
   return thresholdRatio * dt;
