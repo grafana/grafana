@@ -141,7 +141,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folderManagerOpts := append([]FolderManagerOption{WithFolderMetadataEnabled(r.folderMetadataEnabled)}, cfg.folderManagerOptions...)
+	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderManagerOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 

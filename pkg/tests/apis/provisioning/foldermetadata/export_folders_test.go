@@ -95,6 +95,8 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, "no-meta-folder"), "folder directory must be created by export")
+
 		// The folder directory may be created, but _folder.json must not be present.
 		metadataPath := filepath.Join(helper.ProvisioningPath, "no-meta-folder", "_folder.json")
 		_, err := os.Stat(metadataPath)
@@ -120,6 +122,8 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, folderTitle), "folder directory must be created by export")
 
 		// _folder.json must be written inside the folder directory.
 		metadataPath := filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")
@@ -153,6 +157,8 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, folderTitle), "folder directory must still exist after export")
 
 		// _folder.json must not be created for a pre-existing folder directory.
 		metadataPath := filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")
@@ -198,6 +204,9 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle), "child folder directory must be created by export")
+
 		_, err := os.Stat(filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
 		require.True(t, os.IsNotExist(err), "parent _folder.json must not be written when the feature flag is disabled")
 
@@ -238,6 +247,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle), "grandparent folder directory must exist after export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, middleTitle), "middle folder directory must exist after export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, middleTitle, childTitle), "child folder directory must be created by export")
+
 		// Grandparent directory already existed (created implicitly by MkdirAll) → _folder.json must NOT be written.
 		_, err = os.Stat(filepath.Join(helper.ProvisioningPath, grandparentTitle, "_folder.json"))
 		require.True(t, os.IsNotExist(err), "grandparent _folder.json must not be written for a pre-existing folder directory")
@@ -254,7 +267,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for parent-child folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "nested-two-level-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -276,6 +289,9 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle), "child folder directory must be created by export")
+
 		parentManifest := readFolderManifest(t,
 			filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
 		require.Equal(t, parentUID, parentManifest.Name, "parent _folder.json should store the parent's K8s name")
@@ -288,7 +304,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for three-level folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "nested-three-level-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -313,6 +329,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle), "grandparent folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, parentTitle), "parent folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, grandparentTitle, parentTitle, childTitle), "child folder directory must be created by export")
+
 		grandparentManifest := readFolderManifest(t,
 			filepath.Join(helper.ProvisioningPath, grandparentTitle, "_folder.json"))
 		require.Equal(t, grandparentUID, grandparentManifest.Name)
@@ -330,7 +350,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for sibling folders under a common parent", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "nested-siblings-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -354,6 +374,10 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 		job := triggerExport(t, helper, repo)
 		require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
+
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle), "parent folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, siblingATitle), "sibling A folder directory must be created by export")
+		require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, siblingBTitle), "sibling B folder directory must be created by export")
 
 		parentManifest := readFolderManifest(t,
 			filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
