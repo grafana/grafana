@@ -1,5 +1,6 @@
-import { css, cx } from '@emotion/css';
-import { useId, ReactNode } from 'react';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
+import { createElement, useId, ReactNode } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -305,23 +306,14 @@ export function RadialGauge(props: RadialGaugeProps) {
     </>
   );
 
-  if (onClick) {
-    return (
-      <button onClick={onClick} className={cx(styles.clearButton, styles.vizWrapper)} style={{ width, height }}>
-        {body}
-      </button>
-    );
-  }
+  const containerProps = {
+    style: { width, height },
+    'data-testid': selectors.components.Panels.Visualization.Gauge.Container,
+    className: clsx(styles.vizWrapper, onClick ? styles.clearButton : ''),
+    onClick,
+  };
 
-  return (
-    <div
-      data-testid={selectors.components.Panels.Visualization.Gauge.Container}
-      className={styles.vizWrapper}
-      style={{ width, height }}
-    >
-      {body}
-    </div>
-  );
+  return createElement(onClick ? 'button' : 'div', containerProps, body);
 }
 
 function getStyles(theme: GrafanaTheme2) {
