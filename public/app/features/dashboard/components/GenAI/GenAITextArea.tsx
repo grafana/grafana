@@ -5,8 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextArea, useStyles2 } from '@grafana/ui';
 
-import { useIsAssistantAvailable } from './hooks';
-
 const DESCRIPTION_USER_PROMPT_INSTRUCTION =
   'Generate a description - no markdown, no title or reasoning, just the description.';
 
@@ -16,47 +14,20 @@ export interface GenAITextAreaProps {
   onComplete?: (value: string) => void;
   onBlur?: () => void;
   onFocus?: () => void;
+  /** When provided, renders AITextArea instead of a plain TextArea. */
   systemPrompt?: string;
-  userPrompt?: string;
+  /** Called at generation time to get fresh context. */
+  getContext?: () => string;
   autoGenerate?: boolean;
   id?: string;
   'data-testid'?: string;
 }
 
-function buildDescriptionUserPrompt(textInput: string, userPrompt?: string): string {
-  const parts = [DESCRIPTION_USER_PROMPT_INSTRUCTION];
-
-  if (userPrompt) {
-    parts.push(`Panel context:\n${userPrompt}`);
-  }
-
-  const trimmedInput = textInput.trim();
-  if (trimmedInput) {
-    parts.push(`User request: ${trimmedInput}`);
-  }
-
-  return parts.join('\n\n');
-}
-
-function buildDescriptionSystemPrompt(
-  systemPrompt?: string,
-  userPrompt?: string,
-  includeContext = false
-): string | undefined {
-  if (!systemPrompt) {
-    return undefined;
-  }
-
-  if (!includeContext || !userPrompt) {
-    return systemPrompt;
-  }
-
-  return [systemPrompt, `Panel context:\n${userPrompt}`].join('\n\n');
-}
-
 /**
  * A text area that uses the Grafana Assistant for AI generation when available,
  * falling back to a plain TextArea otherwise.
+ *
+ * The caller decides which variant to render by passing or omitting `systemPrompt`.
  */
 export function GenAITextArea({
   value,
@@ -65,29 +36,37 @@ export function GenAITextArea({
   onBlur,
   onFocus,
   systemPrompt,
-  userPrompt,
+  getContext,
   autoGenerate = false,
   id,
   'data-testid': dataTestId,
 }: GenAITextAreaProps) {
-  const isAssistant = useIsAssistantAvailable();
   const styles = useStyles2(getStyles);
-  const isAutoGeneration = autoGenerate && isAssistant;
-  const effectiveSystemPrompt = buildDescriptionSystemPrompt(systemPrompt, userPrompt, isAutoGeneration);
 
-  if (isAssistant) {
+  if (systemPrompt) {
     return (
       <AITextArea
         data-testid={dataTestId}
         value={value}
         onChange={onChange}
         onComplete={onComplete}
-        systemPrompt={effectiveSystemPrompt}
+        systemPrompt={systemPrompt}
         origin="grafana/panel-metadata/description"
         placeholder={t('gen-ai.text-area.placeholder', 'Type a description or let AI generate one...')}
         autoGenerate={autoGenerate}
         streaming
-        getUserPrompt={(textInput) => buildDescriptionUserPrompt(textInput, isAutoGeneration ? undefined : userPrompt)}
+        getUserPrompt={(textInput) => {
+          const parts = [DESCRIPTION_USER_PROMPT_INSTRUCTION];
+          const ctx = getContext?.();
+          if (ctx) {
+            parts.push(`<context>\n${ctx}\n</context>`);
+          }
+          const trimmed = textInput.trim();
+          if (trimmed) {
+            parts.push(`User request: ${trimmed}`);
+          }
+          return parts.join('\n\n');
+        }}
         className={styles.assistantTextArea}
       />
     );
@@ -107,7 +86,6 @@ export function GenAITextArea({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   assistantTextArea: css({
-    // Keep the AI action button inside narrow scrollable panes.
     '& button[aria-label="Generate with AI"]': {
       right: `calc(${theme.spacing(1)} + ${theme.spacing(0.5)}) !important`,
     },
