@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Tooltip, useTheme2 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/smoothing.svg';
 import lightImage from '../images/light/smoothing.svg';
 
@@ -87,7 +86,6 @@ export const getSmoothingTransformerRegistryItem: () => TransformerRegistryItem<
     categories: new Set([TransformerCategory.CalculateNewFields]),
     imageDark: darkImage,
     imageLight: lightImage,
-    help: getTransformationContent(DataTransformerID.smoothing).helperDocs,
     tags: new Set(['ASAP', 'Autosmooth']),
   };
 };
