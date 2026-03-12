@@ -2774,13 +2774,13 @@ The minimum sync interval that can be set for a repository. This is how often th
 
 List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
 
-OSS types: `git`, `github`, `local`. Enterprise types: `bitbucket`, `gitlab`.
+OSS types: `local`, `git`, `github`. Enterprise types: `bitbucket`, `gitlab`.
 
 You can override this with the `GF_PROVISIONING_REPOSITORY_TYPES` environment variable. For example:
 
 ```ini
 [provisioning]
-repository_types = git|github|local
+repository_types = local|git|github
 ```
 
 <hr>
