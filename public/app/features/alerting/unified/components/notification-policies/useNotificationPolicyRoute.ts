@@ -53,7 +53,7 @@ const {
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-const memoK8sRouteToRoute = memoize(k8sRouteToRoute);
+const memoK8sRouteToRoute = memoize(k8sRouteToRoute, { maxSize: 10 });
 
 export const useNotificationPolicyRoute = (
   { alertmanager }: BaseAlertmanagerArgs,
@@ -114,14 +114,17 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
   );
 };
 
-const parseAmConfigRoute = memoize((route: Route): Route => {
-  return {
-    ...route,
-    [ROUTES_META_SYMBOL]: {
-      provenance: route.provenance,
-    },
-  };
-});
+const parseAmConfigRoute = memoize(
+  (route: Route): Route => {
+    return {
+      ...route,
+      [ROUTES_META_SYMBOL]: {
+        provenance: route.provenance,
+      },
+    };
+  },
+  { maxSize: 10 }
+);
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
