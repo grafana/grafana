@@ -92,10 +92,16 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 {{< /shared >}}
 
-1. Click **Save dashboard** in the top-right corner.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 {{< /docs/list >}}
+
+{{< admonition type="tip" >}}
+To add links without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Link**.
+{{< /admonition >}}
 
 ### Add a URL link to a dashboard
 

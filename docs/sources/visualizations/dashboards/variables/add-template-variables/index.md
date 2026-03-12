@@ -116,7 +116,8 @@ To create a variable, follow these steps:
 {{< docs/list >}}
 
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
+1. In the sidebar, click **Settings**.
 1. Go to the **Variables** tab.
 1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
 1. Choose an option in the **Select variable type** drop-down list.
@@ -149,6 +150,10 @@ To create a variable, follow these steps:
 {{< /docs/list >}}
 
 <!-- vale Grafana.Spelling = YES -->
+
+{{< admonition type="tip" >}}
+To add variables without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Variable**.
+{{< /admonition >}}
 
 ### Variable best practices
 
