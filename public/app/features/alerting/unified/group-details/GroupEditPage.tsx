@@ -48,7 +48,6 @@ import { alertListPageLink, createListFilterLink, groups } from '../utils/naviga
 import { getRulerGroupReadOnlyStatus } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
-import { evaluateEveryValidationOptions } from './validation';
 
 type GroupEditPageRouteParams = {
   dataSourceUid?: string;
@@ -350,7 +349,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
           <>
             <Input
               id="interval"
-              {...register('interval', evaluateEveryValidationOptions(rulerGroup.rules))}
+              {...register('interval', intervalValidationOptions(rulerGroup.rules))}
               className={styles.intervalInput}
             />
             <EvaluationGroupQuickPick
@@ -406,6 +405,50 @@ const getStyles = (theme: GrafanaTheme2) => ({
   input: css({
     maxWidth: '600px',
   }),
+});
+
+const intervalValidationOptions = (rules: RulerRuleDTO[]): RegisterOptions<GroupEditFormData, 'interval'> => ({
+  required: {
+    value: true,
+    message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),
+  },
+  validate: (interval: string) => {
+    const normalizedInterval = interval.trim().toLowerCase();
+    if (normalizedInterval === 'none' || normalizedInterval === '0' || normalizedInterval === '0s') {
+      return t(
+        'alerting.group-edit.form.interval-invalid-none',
+        'Evaluation interval cannot be None and must be a valid duration.'
+      );
+    }
+
+    try {
+      const duration = parsePrometheusDuration(interval);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (rulesInSameGroupHaveInvalidFor(rules, interval).length === 0) {
+        return true;
+      }
+
+      const rulePendingPeriods = rules.map((rule) => {
+        const { forDuration } = getAlertInfo(rule, interval);
+        return forDuration ? safeParsePrometheusDuration(forDuration) : null;
+      });
+
+      const smallestPendingPeriod = Math.min(
+        ...rulePendingPeriods.filter((period): period is number => period !== null && period !== 0)
+      );
+
+      return `Evaluation interval should be smaller or equal to "pending period" values for existing rules in this rule group. Choose a value smaller than or equal to "${formatPrometheusDuration(smallestPendingPeriod)}".`;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
 });
 
 function setMatchingGroupPageUrl(groupIdentifier: RuleGroupIdentifierV2) {

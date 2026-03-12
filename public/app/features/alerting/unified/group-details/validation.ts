@@ -8,12 +8,22 @@ import { MIN_TIME_RANGE_STEP_S } from '../utils/constants';
 import { getAlertInfo } from '../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
-export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: RulerRuleDTO[]): RegisterOptions<T> => ({
+export const evaluateEveryValidationOptions = <T extends FieldValues & { evaluateEvery: string }>(
+  rules: RulerRuleDTO[]
+): RegisterOptions<T> => ({
   required: {
     value: true,
     message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),
   },
   validate: (evaluateEvery: string) => {
+    const normalizedInterval = evaluateEvery.trim().toLowerCase();
+    if (normalizedInterval === 'none' || normalizedInterval === '0' || normalizedInterval === '0s') {
+      return t(
+        'alerting.evaluate-every-validation-options.message.none-not-allowed',
+        'Evaluation interval cannot be None and must be a valid duration.'
+      );
+    }
+
     try {
       const duration = parsePrometheusDuration(evaluateEvery);
 

@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -57,6 +57,9 @@ import { rulesNav } from '../../../utils/navigation';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
+  cleanAnnotations,
+  cleanLabels,
+  fixBothInstantAndRangeQuery,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
@@ -86,7 +89,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   const routeParams = useParams<{ type: string; id: string }>();
   const uidFromParams = routeParams.id;
 
-  const { redirectToDetailsPage } = useRedirectToDetailsPage(uidFromParams);
+  const { redirectToDetailsPage, redirectToGrafanaRuleByUid } = useRedirectToDetailsPage(uidFromParams);
   const [showEditYaml, setShowEditYaml] = useState(false);
 
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -168,13 +171,26 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
     const errorTitle = t('alerting.alert-rule-form.error-title', 'Failed to save alert rule');
 
-    let saveResult: RulerGroupUpdatedResponse;
+    let saveResult: RulerGroupUpdatedResponse | undefined;
     try {
       if (!existing) {
         // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
         storeInLocalStorageValues(values);
-        // save the rule to the rule group
-        saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+
+        const hasGroup = Boolean(values.group?.trim());
+        if (grafanaTypeRule && !hasGroup) {
+          const createdUid = await createGrafanaRuleWithoutGroup(values, isRecordingRuleByType(type));
+          if (!createdUid) {
+            throw new Error('The rule was created but the UID is missing.');
+          }
+
+          notifyApp.success(t('alerting.alert-rule-form.no-group-success', 'Rule added successfully'));
+          redirectToGrafanaRuleByUid(createdUid);
+        } else {
+          // save the rule to the rule group
+          saveResult = await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+        }
+
         // track the new Grafana-managed rule creation in the analytics
         if (grafanaTypeRule) {
           const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
@@ -197,7 +213,9 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         );
       }
 
-      redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+      if (saveResult) {
+        redirectToDetailsPage(ruleDefinition, targetRuleGroupIdentifier, saveResult);
+      }
     } catch (err) {
       notifyApp.error(errorTitle, stringifyErrorLike(err));
     }
@@ -318,16 +336,20 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 function useRedirectToDetailsPage(existingUid?: string) {
   const notifyApp = useAppNotification();
 
+  const redirectToGrafanaRuleByUid = useCallback((uid: string) => {
+    locationService.replace(
+      rulesNav.detailsPageLink('grafana', { uid, ruleSourceName: 'grafana' }, undefined, {
+        skipSubPath: true,
+      })
+    );
+  }, []);
+
   const redirectGrafanaRule = useCallback(
     (saveResult: GrafanaGroupUpdatedResponse) => {
       // if the response contains no created or updated rules, we'll use the existing UID.
       const newOrUpdatedRuleUid = (saveResult.created?.at(0) || saveResult.updated?.at(0)) ?? existingUid;
       if (newOrUpdatedRuleUid) {
-        locationService.replace(
-          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' }, undefined, {
-            skipSubPath: true,
-          })
-        );
+        redirectToGrafanaRuleByUid(newOrUpdatedRuleUid);
       } else {
         notifyApp.error(
           'Cannot navigate to the new rule details page.',
@@ -336,7 +358,7 @@ function useRedirectToDetailsPage(existingUid?: string) {
         logWarning('Cannot navigate to the new rule details page. The rule was created but the UID is missing.');
       }
     },
-    [existingUid, notifyApp]
+    [existingUid, notifyApp, redirectToGrafanaRuleByUid]
   );
 
   const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
@@ -371,8 +393,176 @@ function useRedirectToDetailsPage(existingUid?: string) {
     [redirectGrafanaRule, redirectCloudRulerRule]
   );
 
-  return { redirectToDetailsPage };
+  return { redirectToDetailsPage, redirectToGrafanaRuleByUid };
 }
+
+const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
+const FOLDER_ANNOTATION = 'grafana.app/folder';
+
+function buildAlertRuleResource(values: RuleFormValues): AppPlatformRuleResource {
+  const folderUid = values.folder?.uid;
+  if (!folderUid) {
+    throw new Error('Folder UID is required to create a Grafana-managed alert rule');
+  }
+
+  if (!values.condition) {
+    throw new Error('Condition is required to create a Grafana-managed alert rule');
+  }
+
+  const labels = toRecord(cleanLabels(values.labels));
+  const annotations = toRecord(cleanAnnotations(values.annotations));
+
+  return {
+    apiVersion: ALERT_RULE_API_VERSION,
+    kind: 'AlertRule',
+    metadata: {
+      annotations: {
+        [FOLDER_ANNOTATION]: folderUid,
+      },
+      labels: {
+        ...labels,
+        [FOLDER_ANNOTATION]: folderUid,
+      },
+    },
+    spec: {
+      title: values.name,
+      expressions: toExpressionMap(values),
+      trigger: { interval: values.evaluateEvery },
+      annotations,
+      labels,
+      noDataState: values.noDataState,
+      execErrState: values.execErrState,
+      for: values.evaluateFor,
+      keepFiringFor: values.keepFiringFor,
+      paused: Boolean(values.isPaused),
+      missingSeriesEvalsToResolve: values.missingSeriesEvalsToResolve
+        ? Number(values.missingSeriesEvalsToResolve)
+        : undefined,
+      notificationSettings: getNotificationSettings(values),
+    },
+  };
+}
+
+function buildRecordingRuleResource(values: RuleFormValues): AppPlatformRuleResource {
+  const folderUid = values.folder?.uid;
+  if (!folderUid) {
+    throw new Error('Folder UID is required to create a Grafana-managed recording rule');
+  }
+
+  return {
+    apiVersion: ALERT_RULE_API_VERSION,
+    kind: 'RecordingRule',
+    metadata: {
+      annotations: {
+        [FOLDER_ANNOTATION]: folderUid,
+      },
+      labels: {
+        ...toRecord(cleanLabels(values.labels)),
+        [FOLDER_ANNOTATION]: folderUid,
+      },
+    },
+    spec: {
+      title: values.name,
+      metric: values.metric ?? values.name,
+      targetDatasourceUID: values.targetDatasourceUid ?? '',
+      trigger: { interval: values.evaluateEvery },
+      paused: Boolean(values.isPaused),
+      expressions: toExpressionMap(values),
+      labels: toRecord(cleanLabels(values.labels)),
+    },
+  };
+}
+
+function toExpressionMap(values: RuleFormValues) {
+  return values.queries.reduce<Record<string, AppPlatformExpression>>((acc, query) => {
+    const normalizedQuery = fixBothInstantAndRangeQuery(query);
+    const isSource = normalizedQuery.refId === values.condition;
+    const hasRelativeTimeRange = normalizedQuery.relativeTimeRange !== undefined;
+    const isExpression = isExpressionQuery(normalizedQuery.model);
+
+    acc[normalizedQuery.refId] = {
+      model: normalizedQuery.model,
+      queryType: normalizedQuery.queryType || undefined,
+      datasourceUID: isExpression ? undefined : normalizedQuery.datasourceUid,
+      relativeTimeRange: hasRelativeTimeRange
+        ? {
+            from: `${normalizedQuery.relativeTimeRange!.from}s`,
+            to: `${normalizedQuery.relativeTimeRange!.to}s`,
+          }
+        : undefined,
+      source: isSource,
+    };
+
+    return acc;
+  }, {});
+}
+
+async function createGrafanaRuleWithoutGroup(
+  values: RuleFormValues,
+  isRecordingRule: boolean
+): Promise<string | undefined> {
+  const namespace = config.namespace;
+  const endpoint = isRecordingRule ? 'recordingrules' : 'alertrules';
+  const resource = isRecordingRule ? buildRecordingRuleResource(values) : buildAlertRuleResource(values);
+
+  const response = await getBackendSrv().post<AppPlatformRuleResponse>(
+    `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${endpoint}`,
+    resource
+  );
+
+  return response.metadata?.name;
+}
+
+function toRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
+  return items.reduce<Record<string, string>>((acc, item) => {
+    acc[item.key] = item.value;
+    return acc;
+  }, {});
+}
+
+function getNotificationSettings(values: RuleFormValues) {
+  const settings = values.contactPoints?.grafana;
+  if (!values.manualRouting || !settings?.selectedContactPoint) {
+    return undefined;
+  }
+
+  return {
+    receiver: settings.selectedContactPoint,
+    muteTimeIntervals: settings.muteTimeIntervals,
+    activeTimeIntervals: settings.activeTimeIntervals,
+    groupBy: settings.overrideGrouping ? settings.groupBy : undefined,
+    groupWait: settings.overrideTimings ? settings.groupWaitValue : undefined,
+    groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
+    repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
+  };
+}
+
+type AppPlatformExpression = {
+  datasourceUID?: string;
+  model: unknown;
+  queryType?: string;
+  relativeTimeRange?: {
+    from: string;
+    to: string;
+  };
+  source?: boolean;
+};
+
+type AppPlatformRuleResource = {
+  apiVersion: string;
+  kind: 'AlertRule' | 'RecordingRule';
+  metadata: {
+    annotations?: Record<string, string>;
+    labels?: Record<string, string>;
+  };
+  spec: Record<string, unknown>;
+};
+
+type AppPlatformRuleResponse = {
+  metadata?: {
+    name?: string;
+  };
+};
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
   const [ruleType, dataSourceName] = watch(['type', 'dataSourceName']);
