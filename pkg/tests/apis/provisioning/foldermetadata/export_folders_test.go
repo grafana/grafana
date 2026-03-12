@@ -1,4 +1,4 @@
-package provisioning
+package foldermetadata
 
 import (
 	"encoding/json"
@@ -102,7 +102,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for newly exported folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "export-meta-new-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -123,7 +123,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 
 		// _folder.json must be written inside the folder directory.
 		metadataPath := filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")
-		data, err := os.ReadFile(metadataPath)
+		data, err := os.ReadFile(metadataPath) //nolint:gosec
 		require.NoError(t, err, "_folder.json should be created for a newly exported folder when the flag is enabled")
 
 		// The manifest must carry the actual K8s name as the stable UID.
@@ -134,7 +134,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("flag enabled does not create metadata for already-existing folder directory", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "export-existing-folder-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -168,7 +168,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 
 	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
 		t.Helper()
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec
 		require.NoError(t, err, "_folder.json should exist at %s", path)
 		var manifest foldersV1.Folder
 		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
@@ -206,7 +206,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled skips metadata for all pre-existing folder directories but creates it for new child", func(t *testing.T) {
-		helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 
 		const repo = "nested-middle-existing-repo"
 		helper.CreateRepo(t, common.TestRepo{
