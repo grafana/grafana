@@ -421,6 +421,8 @@ To configure repeats, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
+<!-- To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1). -->
+
 ### Repeating rows and tabs and the Dashboard special data source
 
 If a row includes panels using the special [Dashboard data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.

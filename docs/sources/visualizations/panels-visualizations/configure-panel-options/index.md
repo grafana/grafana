@@ -33,11 +33,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/#panel-links
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links
-  configure-repeating-rows:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
   set-up-generative-ai-features-for-dashboards:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
@@ -72,31 +67,3 @@ Set the following options to provide basic information about a panel and define 
 | Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                                                                        |
 
 You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards](ref:set-up-generative-ai-features-for-dashboards).
-
-## Configure repeating panels
-
-You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows](ref:configure-repeating-rows).
-
-To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
-
-**Before you begin:**
-
-- Ensure that the query includes a multi-value variable.
-
-To configure repeating panels, follow these steps:
-
-1. Navigate to the panel you want to update.
-1. Hover over any part of the panel to display the menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. Open the **Panel options** section of the panel editor pane.
-1. Under **Repeat options**, select a variable in the **Repeat by variable** drop-down list.
-1. Under **Repeat direction**, choose one of the following:
-   - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can't mix other panels on a row with a repeated panel.
-   - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
-
-1. If you selected **Horizontal** in the previous step, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and then **Exit edit**.
-1. To propagate changes to all panels, reload the dashboard.
-
-You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.
