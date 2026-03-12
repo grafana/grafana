@@ -43,6 +43,7 @@ describe('useShortcuts', () => {
   it('should return shortcuts with assistant shortcut when assistant is available', () => {
     mockUseAssistant.mockReturnValue({
       isAvailable: true,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
@@ -64,6 +65,7 @@ describe('useShortcuts', () => {
   it('should include all expected shortcut categories', () => {
     mockUseAssistant.mockReturnValue({
       isAvailable: false,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
@@ -86,6 +88,7 @@ describe('useShortcuts', () => {
   it('should use the correct modKey in shortcuts', () => {
     mockUseAssistant.mockReturnValue({
       isAvailable: false,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
@@ -106,6 +109,7 @@ describe('useShortcuts', () => {
   it('should memoize results when dependencies do not change', () => {
     mockUseAssistant.mockReturnValue({
       isAvailable: false,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
@@ -124,6 +128,7 @@ describe('useShortcuts', () => {
   it('should update when assistant availability changes', () => {
     mockUseAssistant.mockReturnValue({
       isAvailable: false,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
@@ -135,6 +140,7 @@ describe('useShortcuts', () => {
     // Change assistant availability
     mockUseAssistant.mockReturnValue({
       isAvailable: true,
+      isLoading: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
