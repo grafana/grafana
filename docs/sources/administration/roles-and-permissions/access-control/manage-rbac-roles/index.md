@@ -11,7 +11,7 @@ labels:
     - enterprise
 menuTitle: Manage RBAC roles
 title: Manage Grafana RBAC roles
-weight: 50
+weight: 70
 refs:
   configure-rbac-configure-rbac-in-grafana:
     - pattern: /docs/grafana/

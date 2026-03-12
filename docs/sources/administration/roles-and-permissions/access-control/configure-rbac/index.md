@@ -6,7 +6,7 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: Configure RBAC
+menuTitle: Configure RBAC in Grafana
 title: RBAC configuration options in Grafana
 weight: 100
 ---

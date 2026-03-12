@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: Plan your RBAC rollout strategy
 title: Plan your Grafana RBAC rollout strategy
-weight: 20
+weight: 10
 refs:
   api-rbac-update-a-role:
     - pattern: /docs/grafana/
