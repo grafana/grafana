@@ -105,7 +105,7 @@ func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, engine *
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	// Pre-allocate with a reasonable capacity to limit reallocations for large result sets.
 	out := make([]accesscontrol.Permission, 0, 4096)
