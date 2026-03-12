@@ -14,6 +14,7 @@ import {
 } from './moment_wrapper';
 
 const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
+const MAX_MATH_TOKEN_DIGITS = 5;
 
 export const isDurationUnit = (value: string): value is DurationUnit => {
   return units.includes(value);
@@ -182,7 +183,7 @@ export function parseDateMath(
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
         i++;
         // limit per token instead of entire str to avoid large parses
-        if (i - numFrom > 10) {
+        if (i - numFrom > MAX_MATH_TOKEN_DIGITS) {
           return undefined;
         }
       }
