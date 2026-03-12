@@ -389,7 +389,7 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					dsNode.isInputToSQLExpr = true
 				} else {
 					// Only allow data source nodes as SQL expression inputs for now
-					return makeGraphBuildError(fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID()))
+					return makeSQLGraphBuildError(fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID()))
 				}
 			}
 
@@ -412,7 +412,7 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeSQL {
 					// Do not allow SQL expressions to be inputs for other expressions for now
-					return makeGraphBuildError(fmt.Errorf("sql expressions can not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
+					return makeSQLGraphBuildError(fmt.Errorf("sql expressions can not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
 				}
 			}
 

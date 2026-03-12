@@ -44,6 +44,13 @@ func (e *ErrorWithCategory) Unwrap() error {
 	return e.err
 }
 
+const ErrCategoryInvalidGraph = "invalid_graph"
+
+// NewErrorWithCategory creates an ErrorWithCategory wrapping the given error.
+func NewErrorWithCategory(category string, err error) *ErrorWithCategory {
+	return &ErrorWithCategory{category: category, err: err}
+}
+
 // Error implements the error interface
 func (e *GoMySQLServerError) Error() string {
 	return e.err.Error()

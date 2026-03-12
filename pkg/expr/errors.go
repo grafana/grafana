@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/sql"
 )
 
 var ErrSeriesMustBeWide = errors.New("input data must be a wide series")
@@ -109,6 +110,13 @@ func makeGraphBuildError(err error) error {
 		Error: err,
 	}
 	return GraphBuildError.Build(data)
+}
+
+// makeSQLGraphBuildError is like makeGraphBuildError but also wraps the error
+// as a sql.ErrorWithCategory so that instrumentation can count it against SQL metrics.
+// Use this only when the error is directly caused by a SQL expression node.
+func makeSQLGraphBuildError(err error) error {
+	return sql.NewErrorWithCategory(sql.ErrCategoryInvalidGraph, makeGraphBuildError(err))
 }
 
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
