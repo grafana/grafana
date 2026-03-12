@@ -287,7 +287,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-// ReplicateTree replicates the folder tree to the repository.
+// EnsureFolderTreeExists replicates the folder tree to the repository.
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
