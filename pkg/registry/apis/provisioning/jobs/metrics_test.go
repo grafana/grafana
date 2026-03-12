@@ -106,6 +106,32 @@ func TestRecordResourceOperation(t *testing.T) {
 	assert.InDelta(t, 1.0, pairs[dashKey], 0.001)
 }
 
+func TestRecordErrors(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := RegisterJobMetrics(reg)
+
+	m.RecordErrors("pull", 7)
+	m.RecordErrors("pull", 3)
+	m.RecordErrors("export", 0)
+
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+
+	hist := findMetric(metrics, "grafana_provisioning_jobs_errors")
+	require.NotNil(t, hist, "errors histogram should be registered")
+
+	pairs := histogramSamples(hist)
+	require.Len(t, pairs, 2, "should have two label combinations")
+
+	pullKey := labelKey(map[string]string{"action": "pull"})
+	exportKey := labelKey(map[string]string{"action": "export"})
+
+	assert.Equal(t, uint64(2), pairs[pullKey].count, "pull should have 2 observations")
+	assert.InDelta(t, 10.0, pairs[pullKey].sum, 0.001, "pull sum should be 7+3=10")
+	assert.Equal(t, uint64(1), pairs[exportKey].count, "export should have 1 observation")
+	assert.InDelta(t, 0.0, pairs[exportKey].sum, 0.001, "export sum should be 0")
+}
+
 // --- helpers ---
 
 func findMetric(families []*dto.MetricFamily, name string) *dto.MetricFamily {

@@ -54,16 +54,19 @@ type jobProgressRecorder struct {
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
 	warningCounts map[string]int
+	metrics       *JobMetrics
+	action        string
 }
 
-func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
+func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action string) JobProgressRecorder {
 	return &jobProgressRecorder{
-		started: time.Now(),
-		// Have a faster notifier for messages and total
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
-		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
+		started:             time.Now(),
+		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
-		warningCounts: make(map[string]int),
+		warningCounts:       make(map[string]int),
+		metrics:             metrics,
+		action:              action,
 	}
 }
 
@@ -339,7 +342,34 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
 	finalMessage := r.finalMessage
 
+	// Snapshot metrics data while holding the read lock.
+	var snapshotMetrics *JobMetrics
+	var snapshotAction string
+	var snapshotWarnings map[string]int
+	var snapshotErrorCount int
+	if r.metrics != nil {
+		snapshotMetrics = r.metrics
+		snapshotAction = r.action
+		snapshotErrorCount = r.errorCount
+		snapshotWarnings = make(map[string]int, len(r.warningCounts))
+		for reason, count := range r.warningCounts {
+			snapshotWarnings[reason] = count
+		}
+	}
+
 	r.mu.RUnlock()
+
+	// Emit metrics outside the read lock.
+	if snapshotMetrics != nil {
+		for reason, count := range snapshotWarnings {
+			snapshotMetrics.RecordWarnings(snapshotAction, reason, count)
+		}
+		snapshotMetrics.RecordErrors(snapshotAction, snapshotErrorCount)
+		// Clear to prevent double emission from subsequent Complete calls.
+		r.mu.Lock()
+		r.metrics = nil
+		r.mu.Unlock()
+	}
 
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
 		if tooManyErrors {
