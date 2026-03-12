@@ -46,7 +46,10 @@ const FieldMapping = (props: FieldMappingProps) => {
 
   // Track the actual query content to avoid re-querying when only meta changes
   const queryRef = useRef(query);
-  queryRef.current = query;
+
+  useEffect(() => {
+    queryRef.current = query;
+  });
 
   // Only re-run the query when the query content changes, not when meta (valueField/textField) changes
   const queryKey = useMemo(
