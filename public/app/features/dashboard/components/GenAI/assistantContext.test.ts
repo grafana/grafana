@@ -30,13 +30,12 @@ describe('hasMeaningfulPanelContext', () => {
     ).toBe(true);
   });
 
-  it('returns true when the panel has a datasource name', () => {
+  it('returns true when the panel has a datasource type', () => {
     expect(
       hasMeaningfulPanelContext(
         makePanel({
           datasource: {
             type: 'prometheus',
-            name: 'Prometheus',
           },
         })
       )
@@ -74,7 +73,6 @@ describe('buildPanelContext', () => {
         datasource: {
           type: 'prometheus',
           uid: 'prometheus-uid',
-          name: 'Prometheus',
         },
       }),
       {
@@ -84,6 +82,5 @@ describe('buildPanelContext', () => {
 
     expect(context).toContain('"type": "prometheus"');
     expect(context).toContain('"uid": "prometheus-uid"');
-    expect(context).toContain('"name": "Prometheus"');
   });
 });

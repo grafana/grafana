@@ -57,16 +57,14 @@ function getQueryExpressions(panel: Panel): string[] {
 function hasDatasourceIdentity(panel: Panel): boolean {
   const ds = panel.datasource;
 
-  if (typeof ds === 'string') {
-    return ds.trim().length > 0;
-  }
-
-  if (!ds || typeof ds !== 'object') {
+  if (!ds) {
     return false;
   }
 
-  const { uid, name } = ds;
-  return (typeof uid === 'string' && uid.trim().length > 0) || (typeof name === 'string' && name.trim().length > 0);
+  return (
+    (typeof ds.uid === 'string' && ds.uid.trim().length > 0) ||
+    (typeof ds.type === 'string' && ds.type.trim().length > 0)
+  );
 }
 
 function hasTextPanelContent(panel: Panel): boolean {
@@ -96,7 +94,7 @@ export function buildPanelContext(panel: Panel, dashboard: Dashboard): string {
   }
 
   const ds = panel.datasource;
-  if (isRecord(ds)) {
+  if (ds) {
     const datasourceCtx: Record<string, string> = {};
 
     if (typeof ds.type === 'string' && ds.type) {
@@ -105,15 +103,10 @@ export function buildPanelContext(panel: Panel, dashboard: Dashboard): string {
     if (typeof ds.uid === 'string' && ds.uid) {
       datasourceCtx.uid = ds.uid;
     }
-    if (typeof ds.name === 'string' && ds.name) {
-      datasourceCtx.name = ds.name;
-    }
 
     if (Object.keys(datasourceCtx).length > 0) {
       ctx.datasource = datasourceCtx;
     }
-  } else if (typeof ds === 'string' && ds.trim()) {
-    ctx.datasource = ds;
   }
 
   const queries = getQueryExpressions(panel);
