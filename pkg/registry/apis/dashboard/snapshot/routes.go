@@ -116,6 +116,12 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					}
 
+					// RBAC check for snapshot creation
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
+					}
+
 					if !options.SnapshotsEnabled {
 						wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 						return
@@ -237,10 +243,23 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
+
+					// RBAC check for snapshot deletion
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
+						w.WriteHeader(http.StatusForbidden)
+						_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
+						return
+					}
+
 					vars := mux.Vars(r)
 					key := vars["deleteKey"]
 
-					err := dashboardsnapshots.DeleteWithKey(ctx, key, service)
+					err = dashboardsnapshots.DeleteWithKey(ctx, key, service)
 					if err != nil {
 						errhttp.Write(ctx, fmt.Errorf("failed to delete external dashboard (%w)", err), w)
 						return
@@ -302,9 +321,10 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := identity.GetRequester(r.Context())
+					ctx := r.Context()
+					user, err := identity.GetRequester(ctx)
 					if err != nil {
-						errhttp.Write(r.Context(), err, w)
+						errhttp.Write(ctx, err, w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -312,6 +332,12 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
+					}
+
+					// RBAC check for reading snapshot settings
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
 					}
 
 					vars := mux.Vars(r)
