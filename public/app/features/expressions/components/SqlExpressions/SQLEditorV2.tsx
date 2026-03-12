@@ -160,8 +160,10 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
   }, [language, onChangeRef]);
 
   return (
-    <div className={styles.container} style={{ width, height }}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    <div style={{ width, display: 'flex', flexDirection: 'column' }}>
+      <div className={styles.container} style={{ width: '100%', height }}>
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      </div>
       {children?.({ formatQuery })}
     </div>
   );
