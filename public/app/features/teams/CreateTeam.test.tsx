@@ -38,7 +38,7 @@ const attemptCreateTeam = async (
   teamName && (await user.type(screen.getByRole('textbox', { name: /name/i }), teamName));
   teamEmail && (await user.type(screen.getByLabelText(/email/i), teamEmail));
   if (autocreateTeamFolder) {
-    await user.click(screen.getByRole('checkbox', { name: /autocreate team folder/i }));
+    await user.click(screen.getByRole('checkbox', { name: /Auto-create a team folder/i }));
   }
   await user.click(screen.getByRole('button', { name: /create/i }));
 };
@@ -56,7 +56,7 @@ describe('Create team', () => {
     await waitFor(async () => expect(screen.queryAllByTestId('Spinner')).toHaveLength(0));
     expect(screen.getByRole('textbox', { name: /name/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /autocreate team folder/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Auto-create a team folder/i })).toBeInTheDocument();
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
