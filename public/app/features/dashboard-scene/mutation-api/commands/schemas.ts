@@ -709,17 +709,20 @@ export const vizConfigKindSchema = z
     kind: z.literal('VizConfig').optional().default('VizConfig'),
     group: z.string().describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
     version: z.string().optional().default(''),
-    spec: z.object({
-      options: z
-        .record(z.string(), z.unknown())
-        .optional()
-        .default({})
-        .describe('Panel-specific visualization options'),
-      fieldConfig: fieldConfigSchema
-        .optional()
-        .default({ defaults: {}, overrides: [] })
-        .describe('Field configuration'),
-    }),
+    spec: z
+      .object({
+        options: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .default({})
+          .describe('Panel-specific visualization options'),
+        fieldConfig: fieldConfigSchema
+          .optional()
+          .default({ defaults: {}, overrides: [] })
+          .describe('Field configuration'),
+      })
+      .optional()
+      .default({ options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
   })
   .describe('Visualization configuration (plugin + options + field config)');
 
