@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
 import { AssistantHook, useAssistant } from '@grafana/assistant';
-import { CoreApp, DataSourceInstanceSettings } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { QueryActionAssistantButton } from './QueryActionAssistantButton';
 // Mock the assistant hook
@@ -112,5 +112,36 @@ describe('QueryActionAssistantButton', () => {
 
     const button = screen.getByRole('button', { name: /query with assistant/i });
     expect(button).toBeInTheDocument();
+  });
+
+  it('should handle getQueryDisplayText throwing an error gracefully', () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const mockOpenAssistant = jest.fn();
+    useAssistantMock.mockReturnValue({
+      isAvailable: true,
+      openAssistant: mockOpenAssistant,
+    } as unknown as AssistantHook);
+
+    const queryWithContent = { refId: 'A', expr: 'up' } as DataQuery;
+    const mockDatasourceApi = {
+      getQueryDisplayText: jest.fn().mockImplementation(() => {
+        throw new Error('display text error');
+      }),
+    } as unknown as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+    render(
+      <QueryActionAssistantButton
+        {...defaultProps}
+        query={queryWithContent}
+        queries={[queryWithContent]}
+        datasourceApi={mockDatasourceApi}
+      />
+    );
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+    const button = screen.getByRole('button', { name: /query with assistant/i });
+    expect(button).toBeInTheDocument();
+
+    consoleErrorSpy.mockRestore();
   });
 });

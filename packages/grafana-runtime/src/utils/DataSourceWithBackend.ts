@@ -116,6 +116,33 @@ export interface HealthCheckResult {
 }
 
 /**
+ * Response shape from the /apis/{group}/v0alpha1/.../datasources/{uid}/health endpoint.
+ * Used when datasourcesApiServerEnableHealthEndpointFrontend is enabled.
+ *
+ * @internal
+ */
+export interface DatasourcesV0HealthCheckResult {
+  kind?: string;
+  apiVersion?: string;
+  status: string;
+  code?: number;
+  message: string;
+  details?: HealthCheckResultDetails;
+}
+
+function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResult {
+  const status: HealthStatus =
+    v.status === HealthStatus.OK || v.status === HealthStatus.Error || v.status === HealthStatus.Unknown
+      ? v.status
+      : HealthStatus.Unknown;
+  return {
+    status,
+    message: v.message,
+    details: v.details,
+  };
+}
+
+/**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
  *
@@ -357,24 +384,51 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
+    const useNewApi = config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend;
+    const healthCheckURL = useNewApi
+      ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
+      : `/api/datasources/uid/${this.uid}/health`;
+
+    if (useNewApi) {
+      return lastValueFrom(
+        getBackendSrv().fetch<DatasourcesV0HealthCheckResult>({
+          method: 'GET',
+          url: healthCheckURL,
+          showErrorAlert: false,
+          headers: this.getRequestHeaders(),
+        })
+      )
+        .then((v: FetchResponse<DatasourcesV0HealthCheckResult>) => toHealthCheckResult(v.data))
+        .catch((err) => {
+          const properties: Record<string, string> = {
+            plugin_id: this.meta?.id || '',
+            plugin_version: this.meta?.info?.version || '',
+            datasource_healthcheck_status: err?.data?.status || 'error',
+            datasource_healthcheck_message: err?.data?.message || '',
+          };
+          reportInteraction('datasource_health_check_completed', properties);
+          return err?.data;
+        });
+    }
+
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/uid/${this.uid}/health`,
+        url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)
       .catch((err) => {
-        let properties: Record<string, string> = {
+        const properties: Record<string, string> = {
           plugin_id: this.meta?.id || '',
           plugin_version: this.meta?.info?.version || '',
           datasource_healthcheck_status: err?.data?.status || 'error',
           datasource_healthcheck_message: err?.data?.message || '',
         };
         reportInteraction('datasource_health_check_completed', properties);
-        return err.data;
+        return err?.data;
       });
   }
 

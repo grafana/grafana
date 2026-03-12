@@ -41,9 +41,10 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-go@v6.0.0
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
         with:
-          go-version-file: ./go.mod
+          cache-build: 'false'
       - name: Run gofmt
         run: |
           GOFMT="$(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -e -l 2>&1 | grep -v '/pkg/build/' || true)"
@@ -62,9 +63,10 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-go@v6.0.0
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
         with:
-          go-version-file: ./go.mod
+          cache-build: 'false'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@b002b6ecfcabe6ac0e2c6cba1bcc779eb34ac51f # v9
         with:

@@ -106,6 +106,11 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()
 
+	if !s.trackWrite() {
+		return errStopping
+	}
+	defer s.inflight.Done()
+
 	sendAndClose := func(rsp *resourcepb.BulkResponse) error {
 		span.AddEvent("sendAndClose", trace.WithAttributes(attribute.String("msg", rsp.String())))
 		return stream.SendAndClose(rsp)
@@ -338,7 +343,7 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 			ts = snowflakeFromTime(t)
 		}
 	}
-	if ts > x.max || ts < 0 {
+	if ts > x.max || ts < 1e18 {
 		ts = x.max
 	}
 

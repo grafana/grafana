@@ -1154,10 +1154,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 			}
 			// Add filter if set
 			if t.Spec.Filter != nil {
-				transformation["filter"] = map[string]interface{}{
-					"id":      t.Spec.Filter.Id,
-					"options": t.Spec.Filter.Options,
-				}
+				transformation["filter"] = matcherConfigToMap(*t.Spec.Filter)
 			}
 			transformations = append(transformations, transformation)
 		}
@@ -2103,6 +2100,17 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	return result
 }
 
+func matcherConfigToMap(mc dashv2alpha1.DashboardMatcherConfig) map[string]interface{} {
+	m := map[string]interface{}{
+		"id":      mc.Id,
+		"options": mc.Options,
+	}
+	if mc.Scope != nil {
+		m["scope"] = string(*mc.Scope)
+	}
+	return m
+}
+
 func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides) []map[string]interface{} {
 	if len(overrides) == 0 {
 		return nil
@@ -2116,10 +2124,7 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 			overrideMap["__systemRef"] = *override.SystemRef
 		}
 
-		overrideMap["matcher"] = map[string]interface{}{
-			"id":      override.Matcher.Id,
-			"options": override.Matcher.Options,
-		}
+		overrideMap["matcher"] = matcherConfigToMap(override.Matcher)
 
 		properties := make([]map[string]interface{}, 0, len(override.Properties))
 		if len(override.Properties) > 0 {
