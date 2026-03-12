@@ -10,7 +10,7 @@ labels:
     - enterprise
 menuTitle: RBAC role definitions
 title: Grafana RBAC role definitions
-weight: 70
+weight: 20
 refs:
   rbac-basic-roles:
     - pattern: /docs/grafana/

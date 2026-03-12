@@ -120,17 +120,15 @@ For a reference of basic and fixed role assignments, refer to [RBAC role definit
 
 ## Create custom roles
 
-This section shows you how to create a custom RBAC role using Grafana provisioning or the HTTP API.
+Create a custom role when basic roles and fixed roles do not meet your permissions requirements. Creating and editing custom roles is not currently possible in the Grafana UI. To manage custom roles, use one of the following methods:
 
-Creating and editing custom roles is not currently possible in the Grafana UI. To manage custom roles, use one of the following methods:
-
-- [Provisioning](ref:rbac-grafana-provisioning) (for self-managed instances)
 - [HTTP API](ref:api-rbac-create-a-new-custom-role)
 - [Terraform](ref:rbac-terraform-provisioning)
+- [Provisioning](ref:rbac-grafana-provisioning) (for self-managed instances)
 
-Create a custom role when basic roles and fixed roles do not meet your permissions requirements.
+### Before you begin
 
-**Before you begin:**
+Before you begin, keep in mind the following:
 
 - [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes](ref:custom-role-actions-scopes).
@@ -319,7 +317,9 @@ roles:
         state: 'absent'
 ```
 
-## Update basic role permissions
+## Update role permissions
+
+### Update basic role permissions 
 
 If the default basic role definitions do not meet your requirements, you can change their permissions.
 
@@ -346,9 +346,7 @@ You cannot modify the `No Basic Role` permissions.
    | `from`                | List of roles from which to copy permissions.                                                                                                             |
    | `permissions > state` | The state of the permission. You can set it to `absent` to ensure it exclusion from the copy list.                                                        |
 
-1. Reload the provisioning configuration file.
-
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/#reload-provisioning-configurations).
+1. Reload the provisioning configuration file. For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/admin/#reload-provisioning-configurations).
 
 The following example modifies the `Grafana Admin` basic role permissions.
 
@@ -391,9 +389,9 @@ Make sure to **increment** the role version for the changes to be accounted for.
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
 
-## Reset basic roles to their default
+### Update permissions bla bla 
 
-This section describes how to reset the basic roles to their default.
+## Reset basic roles to their default
 
 You have two options to reset the basic roles permissions to their default.
 
@@ -413,7 +411,7 @@ basic roles permissions to their default on Grafana instance boot up.
 reset_basic_roles = true
 ```
 
-### Use the http endpoint
+### Use the HTTP endpoint
 
 An alternative to the configuration option is to use the HTTP endpoint.
 

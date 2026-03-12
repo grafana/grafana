@@ -9,7 +9,7 @@ labels:
     - enterprise
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
-weight: 80
+weight: 45
 refs:
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
