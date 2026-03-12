@@ -10,10 +10,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -120,22 +121,22 @@ func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rsp := &iam.DisplayList{
+	rsp := &iamv0.GetDisplayMappingsBody{
 		Keys:        keys.keys,
 		InvalidKeys: keys.invalid,
-		Items:       make([]iam.Display, 0, len(users.Items)+len(keys.disp)+1),
+		Items:       make([]iamv0.GetDisplayMappingsDisplay, 0, len(users.Items)+len(keys.disp)+1),
 	}
 	for _, user := range users.Items {
-		disp := iam.Display{
-			Identity: iam.IdentityRef{
-				Type: authlib.TypeUser,
+		disp := iamv0.GetDisplayMappingsDisplay{
+			Identity: iamv0.GetDisplayMappingsIdentityRef{
+				Type: string(authlib.TypeUser),
 				Name: user.UID,
 			},
 			DisplayName: user.NameOrFallback(),
-			InternalID:  user.ID, // nolint:staticcheck
+			InternalID:  ptr.To(user.ID), // nolint:staticcheck
 		}
 		if user.IsServiceAccount {
-			disp.Identity.Type = authlib.TypeServiceAccount
+			disp.Identity.Type = string(authlib.TypeServiceAccount)
 		}
 		disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.DisplayName)
 		rsp.Items = append(rsp.Items, disp)
@@ -157,7 +158,7 @@ type dispKeys struct {
 	invalid []string
 
 	// For terminal keys, this is a constant
-	disp []iam.Display
+	disp []iamv0.GetDisplayMappingsDisplay
 }
 
 func parseKeys(req []string) dispKeys {
@@ -178,18 +179,18 @@ func parseKeys(req []string) dispKeys {
 
 			switch t {
 			case authlib.TypeAnonymous:
-				keys.disp = append(keys.disp, iam.Display{
-					Identity: iam.IdentityRef{
-						Type: t,
+				keys.disp = append(keys.disp, iamv0.GetDisplayMappingsDisplay{
+					Identity: iamv0.GetDisplayMappingsIdentityRef{
+						Type: string(t),
 					},
 					DisplayName: "Anonymous",
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case authlib.TypeAPIKey:
-				keys.disp = append(keys.disp, iam.Display{
-					Identity: iam.IdentityRef{
-						Type: t,
+				keys.disp = append(keys.disp, iamv0.GetDisplayMappingsDisplay{
+					Identity: iamv0.GetDisplayMappingsIdentityRef{
+						Type: string(t),
 						Name: key,
 					},
 					DisplayName: "API Key",
@@ -197,9 +198,9 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case authlib.TypeProvisioning:
-				keys.disp = append(keys.disp, iam.Display{
-					Identity: iam.IdentityRef{
-						Type: t,
+				keys.disp = append(keys.disp, iamv0.GetDisplayMappingsDisplay{
+					Identity: iamv0.GetDisplayMappingsIdentityRef{
+						Type: string(t),
 					},
 					DisplayName: "Provisioning",
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
@@ -214,9 +215,9 @@ func parseKeys(req []string) dispKeys {
 		id, err := strconv.ParseInt(key, 10, 64)
 		if err == nil {
 			if id == 0 {
-				keys.disp = append(keys.disp, iam.Display{
-					Identity: iam.IdentityRef{
-						Type: authlib.TypeUser,
+				keys.disp = append(keys.disp, iamv0.GetDisplayMappingsDisplay{
+					Identity: iamv0.GetDisplayMappingsIdentityRef{
+						Type: string(authlib.TypeUser),
 						Name: key,
 					},
 					DisplayName: "System admin",

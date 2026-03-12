@@ -301,6 +301,110 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/display": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getDisplayMappings",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:     "key",
+											In:       "query",
+											Required: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+								},
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"invalidKeys": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"array"},
+																				Description: "Input keys that were not useable",
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						}},
+																				},
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"array"},
+																				Description: "Matching items (the caller may need to remap from keys to results)",
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getDisplayMappingsDisplay"),
+																						}},
+																				},
+																			},
+																		},
+																		"keys": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"array"},
+																				Description: "Request keys used to lookup the display value",
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/searchTeams": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -542,6 +646,65 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
+					"getDisplayMappingsDisplay": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"avatarURL": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "AvatarURL is the url where we can get the avatar for identity",
+									},
+								},
+								"displayName": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Display name for identity.",
+									},
+								},
+								"identity": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getDisplayMappingsIdentityRef"),
+									},
+								},
+								"internalID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "InternalID is the legacy numeric id for identity",
+									},
+								},
+							},
+							Required: []string{
+								"identity",
+								"displayName",
+								"avatarURL",
+							},
+						},
+					},
+					"getDisplayMappingsIdentityRef": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Type of identity e.g. \"user\".",
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+							},
+						},
+					},
 					"getSearchTeamsTeamHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -699,6 +862,7 @@ var customRouteToGoResponseType = map[string]any{
 
 	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
 
+	"v0alpha1||<namespace>/display|GET":     v0alpha1.GetDisplayMappingsResponse{},
 	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
 	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},
 }

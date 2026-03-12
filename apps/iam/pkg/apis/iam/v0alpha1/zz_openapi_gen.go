@@ -17,6 +17,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ExternalGroupMappingList{}.OpenAPIModelName():          schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
 		ExternalGroupMappingSpec{}.OpenAPIModelName():          schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
 		ExternalGroupMappingTeamRef{}.OpenAPIModelName():       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
+		GetDisplayMappingsBody{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsBody(ref),
+		GetDisplayMappingsDisplay{}.OpenAPIModelName():         schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsDisplay(ref),
+		GetDisplayMappingsIdentityRef{}.OpenAPIModelName():     schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsIdentityRef(ref),
+		GetDisplayMappingsResponse{}.OpenAPIModelName():        schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsResponse(ref),
 		GetSearchTeamsBody{}.OpenAPIModelName():                schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
 		GetSearchTeamsResponse{}.OpenAPIModelName():            schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref),
 		GetSearchTeamsTeamHit{}.OpenAPIModelName():             schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
@@ -439,6 +443,211 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref common.Referen
 				Required: []string{"name"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"keys": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Request keys used to lookup the display value",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"invalidKeys": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Input keys that were not useable",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Matching items (the caller may need to remap from keys to results)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetDisplayMappingsDisplay{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			GetDisplayMappingsDisplay{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsDisplay(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"identity": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(GetDisplayMappingsIdentityRef{}.OpenAPIModelName()),
+						},
+					},
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Display name for identity.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"avatarURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AvatarURL is the url where we can get the avatar for identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"internalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "InternalID is the legacy numeric id for identity",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"identity", "displayName", "avatarURL"},
+			},
+		},
+		Dependencies: []string{
+			GetDisplayMappingsIdentityRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsIdentityRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type of identity e.g. \"user\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetDisplayMappingsResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"keys": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Request keys used to lookup the display value",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"invalidKeys": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Input keys that were not useable",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Matching items (the caller may need to remap from keys to results)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetDisplayMappingsDisplay{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			GetDisplayMappingsDisplay{}.OpenAPIModelName()},
 	}
 }
 
