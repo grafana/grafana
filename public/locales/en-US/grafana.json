@@ -4081,6 +4081,20 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "presets": {
+      "basic": "Basic",
+      "basic_desc": "Basic, color from thresholds",
+      "basic-vertical": "Basic vertical",
+      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "gradient": "Gradient",
+      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient-BlYlRd": "Gradient blue-red",
+      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-vertical": "Gradient vertical",
+      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "retro-lcd": "Retro LCD",
+      "retro-lcd_desc": "Color scale, text color"
+    },
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
@@ -14952,16 +14966,22 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "area": "Area",
-      "default": "Default",
-      "smooth": "Smooth",
-      "stacked-area": "Stacked area",
-      "stacked-area-gradient": "Stacked area gradient",
-      "stacked-smooth": "Stacked smooth",
-      "stacked-step": "Stacked step",
-      "step": "Step",
-      "step-filled": "Step filled",
-      "step-hue": "Step hue"
+      "multi-many-points": "Points",
+      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points-stacked-pct": "Stacked 100%",
+      "multi-points": "Points",
+      "multi-stacked-bars": "Stacked bars",
+      "multi-stacked-points": "Stacked points",
+      "single-bars": "Bars",
+      "single-bars-scheme": "Bars scheme",
+      "single-dashed-threshold": "Dashed threshold",
+      "single-few-points": "Single fill",
+      "single-many-points-fill": "Line fill",
+      "single-many-points-hue": "Line hue",
+      "single-many-points-scheme": "Line scheme",
+      "single-many-points-threshold-scheme": "Threshold scheme",
+      "single-smooth-scheme": "Smooth scheme",
+      "single-step-fill": "Step fill"
     },
     "span-nulls-editor": {
       "gaps-options": {
