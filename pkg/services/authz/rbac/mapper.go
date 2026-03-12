@@ -213,12 +213,9 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
-			// Virtual resource for dashboard-scoped annotation permissions.
-			// Maps annotation verbs (create/update/delete) to annotation actions (annotations:create/write/delete)
-			// but uses dashboard scopes (dashboards:uid:<uid>) to maintain backward compatibility with
-			// the legacy authorization model.
+			// Virtual resource: maps annotation verbs to annotation actions scoped to dashboards:uid:<uid>.
 			"annotations": translation{
-				resource:  "dashboards", // Use dashboards as the scope resource
+				resource:  "dashboards",
 				attribute: "uid",
 				verbMapping: map[string]string{
 					utils.VerbGet:              "annotations:read",
@@ -229,9 +226,7 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbDelete:           "annotations:delete",
 					utils.VerbDeleteCollection: "annotations:delete",
 				},
-				// actionSetMapping mirrors dashboard action sets so that managed permissions
-				// like "dashboards:view" (which cover annotations:read via DashboardViewActions)
-				// are also matched when checking annotation access on a specific dashboard.
+				// Mirror dashboard action sets so managed roles like "dashboards:view" also grant annotations:read.
 				actionSetMapping: map[string][]string{
 					utils.VerbGet:              {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
 					utils.VerbList:             {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
@@ -363,10 +358,8 @@ func NewMapperRegistry() MapperRegistry {
 			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
 		"annotation.grafana.app": {
-			// Annotations use "type" as the scope attribute to map to legacy scopes like "annotations:type:organization".
-			// No actionSetMapping: org-level annotations are not tied to a specific dashboard, so dashboard
-			// action sets (dashboards:view, etc.) do not apply here. Access is controlled via fixed RBAC
-			// roles (e.g. annotations:read with scope annotations:type:organization).
+			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).
+			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.
 			"annotations": newResourceTranslation("annotations", "type", false, nil),
 		},
 	})

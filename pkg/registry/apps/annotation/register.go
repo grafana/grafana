@@ -173,8 +173,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
 
-		// Allow all authenticated users through - fine-grained authorization is
-		// handled in k8sRESTAdapter methods, consistent across read and write paths.
+		// Allow all authenticated users; fine-grained authz is handled per-operation in k8sRESTAdapter.
 		return authorizer.DecisionAllow, "", nil
 	})
 }
@@ -323,10 +322,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 		return nil, err
 	}
 
-	// Filter annotations based on permissions.
-	// TODO: filtering after fetch breaks pagination - the storage cursor advances by
-	// opts.Limit regardless of how many items pass the authz check, so a page may
-	// contain fewer items than requested (or none), even when more data exists.
+	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
 	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
 	for _, anno := range result.Items {
 		allowed, err := s.canAccessAnnotation(ctx, namespace, &anno, utils.VerbList)
@@ -389,12 +385,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		)
 	}
 
-	// Validate either name or generateName is provided
 	if annotation.Name == "" && annotation.GenerateName == "" {
 		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
 	}
 
-	// If a name is empty and generateName is not, generate a unique name using the provided prefix
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
@@ -412,10 +406,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 ) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 
-	// Fetch the existing annotation so that:
-	//   1. UpdatedObject can merge patch on top of it.
-	//   2. We can verify the caller has write access to the existing resource,
-	//      not just the (potentially changed) new body.
+	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
 		return nil, false, err
@@ -439,9 +430,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
 	}
 
-	// Check write access on the existing annotation (prevents moving an annotation
-	// the caller can't write) and on the new body (prevents writing to a scope
-	// the caller can't access).
+	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
 	allowed, err := s.canAccessAnnotation(ctx, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
@@ -484,8 +473,7 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, err
 	}
 	if !allowedDelete {
-		// Return 404 if user also can't read the annotation (don't reveal existence),
-		// 403 if they can read it but lack delete permission.
+		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
 		allowedRead, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbGet)
 		if err != nil {
 			return nil, false, err
@@ -509,15 +497,8 @@ func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation 
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
 }
 
-// canAccessAnnotation checks that the user has permission to perform the given verb on the annotation.
-// This maintains backward compatibility with the legacy /api/annotations authorization model.
-//
-// For dashboard annotations, it checks annotation actions (annotations:create/write/delete) with
-// dashboard scopes (dashboards:uid:<uid>).
-//
-// For org-level annotations, it checks annotation actions with the org scope (annotations:type:organization).
-//
-// The verb should be one of VerbGet, VerbList, VerbCreate, VerbUpdate, VerbPatch, or VerbDelete.
+// canAccessAnnotation checks that the caller has permission to perform verb on anno,
+// using the legacy annotation authorization model (dashboard-scoped or org-scoped).
 func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
 	if anno == nil {
 		return false, apierrors.NewBadRequest("annotation must not be nil")
@@ -531,8 +512,7 @@ func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace stri
 	var checkReq authtypes.CheckRequest
 
 	if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
-		// Org-level annotation: check annotation actions with org scope.
-		// Maps to: annotations:create/read/write/delete with scope annotations:type:organization
+		// Org-level annotation: scope is annotations:type:organization.
 		checkReq = authtypes.CheckRequest{
 			Verb:      verb,
 			Group:     "annotation.grafana.app",
@@ -541,13 +521,12 @@ func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace stri
 			Name:      "organization",
 		}
 	} else {
-		// Dashboard annotation: check annotation actions with dashboard scope.
-		// Uses the virtual resource dashboard.grafana.app/annotations which maps to:
-		// annotations:create/read/write/delete with scope dashboards:uid:<dashboardUID>
+		// Dashboard annotation: use dashboard.grafana.app/annotations virtual resource,
+		// which maps to annotation actions scoped to dashboards:uid:<dashboardUID>.
 		checkReq = authtypes.CheckRequest{
 			Verb:      verb,
 			Group:     "dashboard.grafana.app",
-			Resource:  "annotations", // Virtual resource that maps to annotation actions
+			Resource:  "annotations",
 			Namespace: namespace,
 			Name:      *anno.Spec.DashboardUID,
 		}

@@ -54,9 +54,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 	}
 }
 
-// Authorize checks if the user has permission to perform action on annotations and returns
-// the set of resources the user can access. action should be one of ac.ActionAnnotationsRead,
-// ac.ActionAnnotationsCreate, ac.ActionAnnotationsWrite, or ac.ActionAnnotationsDelete.
+// Authorize returns resources accessible to the user for the given action (e.g. ac.ActionAnnotationsRead).
 func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQuery, action string) (*AccessResources, error) {
 	user := query.SignedInUser
 	if user == nil || user.IsNil() {
@@ -154,7 +152,6 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	return visibleDashboards, nil
 }
 
-// errForbidden returns the appropriate forbidden error base for the given action.
 func errForbidden(action string) errutil.Base {
 	if action == ac.ActionAnnotationsRead {
 		return ErrReadForbidden
