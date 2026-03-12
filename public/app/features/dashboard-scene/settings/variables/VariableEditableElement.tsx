@@ -55,7 +55,7 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
           title: '',
           id: variableNameId,
           skipField: true,
-          render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
+          render: () => <VariableNameInput variable={variable} autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -161,9 +161,9 @@ interface VariableInputProps {
   id?: string;
 }
 
-function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
+function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useEditPaneInputAutoFocus({ autoFocus });
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();

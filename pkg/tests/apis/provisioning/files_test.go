@@ -1102,7 +1102,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -1223,7 +1223,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
@@ -1342,7 +1342,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var helper *common.ProvisioningTestHelper
 			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, withProvisioningFolderMetadata)
+				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 			} else {
 				helper = common.RunGrafana(t)
 			}
