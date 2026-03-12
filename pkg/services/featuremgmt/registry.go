@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -205,14 +197,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
-			Expression:   "false",
-		},
-		{
-			Name:         "enableDatagridEditing",
-			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 		},
 		{
@@ -483,8 +467,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourceDisableIdApi",
-			Description:     "Does not register datasource apis that use the numeric id",
+			Name:            "datasourceLegacyIdApi",
+			Description:     "Register legacy datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // affects the routes at startup
@@ -647,6 +631,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
@@ -926,6 +917,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardUnifiedDrilldownControls",
+			Description:  "Renders ad hoc filters and group by in a single unified control",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "adHocFilterDefaultValues",
 			Description:  "Enables configuring default origin filters for ad-hoc filter variables",
 			Stage:        FeatureStageExperimental,
@@ -1010,6 +1010,14 @@ var (
 		{
 			Name:         "dashboardTemplatesAssistantButton",
 			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "suggestedDashboardsAssistantButton",
+			Description:  "Enables the 'Customize with Assistant' button on suggested dashboard cards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
@@ -1825,14 +1833,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthzGlobalRolesApi",
 			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2216,6 +2216,14 @@ var (
 			Name:         "nestedFramesFieldOverrides",
 			Description:  "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "vizLegendFacetedFilter",
+			Description:  "Enable faceted labels filter for series visibility in the legend",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
@@ -2617,6 +2625,45 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
+			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			FrontendOnly:    true,
+		},
+		{
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:        "advisorDatasourceIntegration",
+			Description: "Enables the advisor report integration with datasource pages",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "inlineLogDetailsNoScrolls",
+			Description: "Enables an inline version of Log Details that creates no new scrolls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		}, {
+			Name:            "colorblindThemes",
+			Description:     "Enables the new colorblind-friendly themes",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaFrontendPlatformSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 	}
 )
