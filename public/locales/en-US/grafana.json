@@ -10241,7 +10241,15 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(right y-axis)"
+      "clear-filters": "Clear all",
+      "faceted-by-labels": "By labels",
+      "faceted-by-name": "By name",
+      "faceted-deselect-all": "Deselect all",
+      "faceted-select-all": "Select all",
+      "pin-filter": "Pin to sidebar",
+      "right-axis-indicator": "(right y-axis)",
+      "series-visibility": "Series visibility",
+      "unpin-sidebar": "Unpin"
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",
@@ -14930,6 +14938,11 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "legend": {
+      "category": "Legend",
+      "description-faceted-filter": "Show series visibility filter based on labels",
+      "name-faceted-filter": "Faceted filter"
     },
     "line-style-editor": {
       "line-fill-options": {

@@ -20,6 +20,19 @@
     },
     {
       "metadata": {
+        "name": "advisorDatasourceIntegration",
+        "resourceVersion": "1773236180800",
+        "creationTimestamp": "2026-03-11T13:36:20Z"
+      },
+      "spec": {
+        "description": "Enables the advisor report integration with datasource pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -4709,6 +4722,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizLegendFacetedFilter",
+        "resourceVersion": "1773129262183",
+        "creationTimestamp": "2026-03-10T07:54:22Z"
+      },
+      "spec": {
+        "description": "Enable faceted labels filter for series visibility in the legend",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

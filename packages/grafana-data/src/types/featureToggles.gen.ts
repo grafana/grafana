@@ -1403,6 +1403,11 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
@@ -1657,6 +1662,11 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
