@@ -250,7 +250,24 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
-			"users":           newResourceTranslation("users", "uid", false, map[string]bool{utils.VerbCreate: true}),
+			"users": translation{
+				resource:  "users",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "users:create",
+					utils.VerbGet:              "org.users:read",
+					utils.VerbUpdate:           "org.users:write",
+					utils.VerbPatch:            "org.users:write",
+					utils.VerbDelete:           "org.users:remove",
+					utils.VerbDeleteCollection: "users:delete",
+					utils.VerbList:             "org.users:read",
+					utils.VerbWatch:            "org.users:read",
+					utils.VerbGetPermissions:   "users.permissions:read",
+					utils.VerbSetPermissions:   "users.permissions:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+			},
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
