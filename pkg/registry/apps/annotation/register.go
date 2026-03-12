@@ -43,44 +43,19 @@ var (
 	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-// Config holds the store backend configuration for the annotation app.
-type Config struct {
-	StoreBackend      string
-	GRPCAddress       string
-	GRPCUseTLS        bool
-	GRPCTLSCAFile     string
-	GRPCTLSSkipVerify bool
-
-	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
-	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
-	CleanupSettings annotations.CleanupSettings
-}
-
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	k8sAdapter *k8sRESTAdapter
 }
 
 // RegisterAppInstaller is the wire entry point for the ST server.
-// It extracts Config from setting.Cfg and delegates to NewAppInstaller.
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(Config{
-		StoreBackend:      cfg.AnnotationAppPlatform.StoreBackend,
-		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
-		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,
-		GRPCTLSCAFile:     cfg.AnnotationAppPlatform.GRPCTLSCAFile,
-		GRPCTLSSkipVerify: cfg.AnnotationAppPlatform.GRPCTLSSkipVerify,
-		CleanupSettings: annotations.CleanupSettings{
-			Alerting:  cfg.AlertingAnnotationCleanupSetting,
-			API:       cfg.APIAnnotationCleanupSettings,
-			Dashboard: cfg.DashboardAnnotationCleanupSettings,
-		},
-	}, service, cleaner, accessClient)
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -95,10 +70,11 @@ func NewAppInstaller(
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{}
 
-	// Choose storage backend based on configuration
 	var store Store
 	var err error
 	switch cfg.StoreBackend {
+	case "memory":
+		store = NewMemoryStore()
 	case "grpc":
 		store, err = newGRPCStore(cfg)
 		if err != nil {
@@ -112,7 +88,6 @@ func NewAppInstaller(
 		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
 	}
 
-	// Layer 2→3: Wrap Store interface with K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:        store,
 		accessClient: accessClient,

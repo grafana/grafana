@@ -185,6 +185,7 @@ func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
 		OrgID: orgID,
 	})
 }
+
 func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
