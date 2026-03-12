@@ -306,7 +306,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Len(t, trashResp.Items, 1)
 	})
 
-	t.Run("will limit candidate batch size", func(t *testing.T) {
+	t.Run("will delete resources in multiple batches", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
@@ -349,8 +349,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 2)
+		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		b.garbageCollection.BatchSize = 1
@@ -369,8 +368,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Empty(t, trashResp.Items)
 	})
 
 	t.Run("will delete rows from before the resource gets deleted, but it will keep rows from after the resource gets recreated with same name", func(t *testing.T) {
@@ -666,7 +664,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Len(t, trashResp.Items, 1)
 	})
 }
