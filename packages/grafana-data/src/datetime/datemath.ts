@@ -181,7 +181,8 @@ export function parseDateMath(
       const numFrom = i;
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
         i++;
-        if (i > 10) {
+        // limit per token instead of entire str to avoid large parses
+        if (i - numFrom > 10) {
           return undefined;
         }
       }
