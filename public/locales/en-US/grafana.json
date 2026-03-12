@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
       },
-      "timeline-all-delivered": "delivered",
-      "timeline-all-delivered-plural": "all delivered",
       "timeline-all-failed": "failed",
       "timeline-all-failed-plural": "all failed",
       "timeline-delivered": "Delivered",
