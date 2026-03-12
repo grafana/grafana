@@ -55,13 +55,13 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
-    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
+    await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
     // set a max row height, watch the height decrease, then clear it to continue.
     const maxRowHeightInput = page.getByLabel('Max row height').last();
     await maxRowHeightInput.fill('80');
     await expect(async () => {
-      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+      await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeLessThan(100);
     }).toPass();
     await maxRowHeightInput.clear();
 
@@ -70,7 +70,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       .getByGrafanaSelector(selectors.components.OptionsGroup.group('panel-options-override-12'))
       .getByLabel('Wrap text')
       .click({ force: true });
-    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
     const loremIpsumCell = getCell(table, 1, longTextColIdx);
@@ -87,7 +87,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       .getByRole('switch', { name: 'Cell value inspect' })
       .click({ force: true });
     await loremIpsumCell.hover();
-    await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+    await expect(getCellHeight(table, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // click cell inspect, check that cell inspection pops open in the side as we'd expect.
     const loremIpsumText = await loremIpsumCell.textContent();
