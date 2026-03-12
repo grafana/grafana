@@ -137,7 +137,7 @@ func (s *HealthService) Register(probe HealthProbe, serviceNames ...string) {
 	s.server.SetServingStatus("", s.aggregateStatusLocked())
 }
 
-// start runs an immediate poll and starts the periodic poll loop.
+// start begins the periodic poll loop.
 func (s *HealthService) start() {
 	if len(s.probes) == 0 {
 		return

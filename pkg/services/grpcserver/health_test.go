@@ -266,7 +266,11 @@ func TestHealthService_Probes(t *testing.T) {
 		hs.Register(HealthProbeFunc(func(context.Context) (bool, error) { return true, nil }), "svc-a")
 		hs.start()
 		defer hs.Shutdown()
-		requireStatus(t, hs, "svc-a", serving)
+		// Poll loop runs on a 1s ticker at startup; wait for first tick.
+		require.Eventually(t, func() bool {
+			res, err := hs.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{Service: "svc-a"})
+			return err == nil && res.Status == serving
+		}, 3*time.Second, 100*time.Millisecond)
 	})
 }
 
