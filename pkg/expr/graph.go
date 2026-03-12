@@ -380,7 +380,7 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
 					return e
 				}
-				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				return makeGraphBuildError(fmt.Errorf("unable to find dependent node '%v'", neededVar))
 			}
 
 			// If the input is SQL, conversion is handled differently
@@ -389,30 +389,30 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 					dsNode.isInputToSQLExpr = true
 				} else {
 					// Only allow data source nodes as SQL expression inputs for now
-					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+					return makeGraphBuildError(fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID()))
 				}
 			}
 
 			if neededNode.ID() == cmdNode.ID() {
-				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
+				return makeGraphBuildError(fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar))
 			}
 
 			if cmdNode.CMDType == TypeClassicConditions {
 				if neededNode.NodeType() != TypeDatasourceNode {
-					return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
+					return makeGraphBuildError(fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType()))
 				}
 			}
 
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
-					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+					return makeGraphBuildError(fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
 				}
 			}
 
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeSQL {
 					// Do not allow SQL expressions to be inputs for other expressions for now
-					return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
+					return makeGraphBuildError(fmt.Errorf("sql expressions can not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
 				}
 			}
 

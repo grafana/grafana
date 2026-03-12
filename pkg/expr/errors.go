@@ -94,6 +94,23 @@ func MakeParseError(refID string, err error) error {
 	return ParseError.Build(data)
 }
 
+var graphBuildErrStr = "failed to build expression pipeline: {{ .Public.error }}"
+
+var GraphBuildError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.graphBuildError").MustTemplate(
+	graphBuildErrStr,
+	errutil.WithPublic(graphBuildErrStr))
+
+func makeGraphBuildError(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"error": err.Error(),
+		},
+		Error: err,
+	}
+	return GraphBuildError.Build(data)
+}
+
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
 
 var UnexpectedNodeTypeError = errutil.NewBase(
