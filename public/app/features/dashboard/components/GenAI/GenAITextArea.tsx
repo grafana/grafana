@@ -4,6 +4,7 @@ import { AITextArea } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextArea, useStyles2 } from '@grafana/ui';
+
 import { buildAutoGenerateSystemPrompt, buildGenAIPrompt } from './promptUtils';
 
 const DESCRIPTION_USER_PROMPT_INSTRUCTION =

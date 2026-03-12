@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import type { Ref } from 'react';
 
 import { AITextInput } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Input, useStyles2 } from '@grafana/ui';
+
 import { buildAutoGenerateSystemPrompt, buildGenAIPrompt } from './promptUtils';
 
 const TITLE_USER_PROMPT_INSTRUCTION = 'Generate a title - no markdown, no description or reasoning, just the title.';
@@ -21,7 +23,7 @@ export interface GenAITextInputProps {
   autoGenerate?: boolean;
   id?: string;
   'data-testid'?: string;
-  inputRef?: React.Ref<HTMLInputElement>;
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 /**
