@@ -3,6 +3,7 @@ import React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -104,7 +105,11 @@ export class TabItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    if (isEditing && this.state.$variables) {
+    if (
+      isEditing &&
+      getFeatureFlagClient().getBooleanValue('dashboardSectionVariables', false) &&
+      this.state.$variables
+    ) {
       return [this.state.$variables, ...layoutChildren];
     }
     return layoutChildren;

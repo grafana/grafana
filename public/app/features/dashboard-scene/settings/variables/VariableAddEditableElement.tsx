@@ -122,11 +122,36 @@ export class SectionVariableAddEditableElement implements EditableDashboardEleme
   public useEditPaneOptions = useSectionEditPaneOptions.bind(this, this.sectionVariableAdd);
 }
 
-/** @internal Exported for testing */
-export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
+function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
+  return (
+    <Stack direction="column" gap={0}>
+      <Box paddingBottom={1} display={'flex'}>
+        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
+      </Box>
+      <Stack direction="column" gap={1}>
+        {options.map((option) => (
+          <Card
+            noMargin
+            isCompact
+            onClick={() => onSelectType(option.value!)}
+            key={option.value}
+            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
+          >
+            <Card.Heading>{option.label}</Card.Heading>
+            <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
+          </Card>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
+/** @internal Exported for testing */
+export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = variableAdd.state.dashboardRef.resolve();
@@ -148,34 +173,10 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
     [variableAdd]
   );
 
-  return (
-    <Stack direction="column" gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
-      <Stack direction="column" gap={1}>
-        {options.map((option) => (
-          <Card
-            noMargin
-            isCompact
-            onClick={() => onAddVariable(option.value!)}
-            key={option.value}
-            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
-            data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
-          >
-            <Card.Heading>{option.label}</Card.Heading>
-            <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
-          </Card>
-        ))}
-      </Stack>
-    </Stack>
-  );
+  return <VariableTypeSelectionUI onSelectType={onAddVariable} />;
 }
 
 function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableAdd: SectionVariableAdd }) {
-  const options = useMemo(() => getVariableTypeSelectOptions(), []);
-  const styles = useStyles2(getStyles);
-
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = sectionVariableAdd.state.dashboardRef.resolve();
@@ -202,27 +203,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
     [sectionVariableAdd]
   );
 
-  return (
-    <Stack direction="column" gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
-      <Stack direction="column" gap={1}>
-        {options.map((option) => (
-          <Card
-            noMargin
-            isCompact
-            onClick={() => onAddVariable(option.value!)}
-            key={option.value}
-            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
-          >
-            <Card.Heading>{option.label}</Card.Heading>
-            <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
-          </Card>
-        ))}
-      </Stack>
-    </Stack>
-  );
+  return <VariableTypeSelectionUI onSelectType={onAddVariable} />;
 }
 
 /** @internal Exported for testing */
