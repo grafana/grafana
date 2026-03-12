@@ -101,20 +101,36 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		}
 	}
 
+	addSubscriber := func(sub subscription[T]) {
+		if !b.cache.readInto(sub.ch) {
+			close(sub.ch)
+			return
+		}
+		b.subs[sub.ch] = sub
+	}
+
 	for {
 		select {
 		case <-b.shouldTerminate: // service context cancelled
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			// send initial batch of cached items
-			if !b.cache.readInto(sub.ch) {
-				close(sub.ch)
-				continue
-			}
-			b.subs[sub.ch] = sub
+			addSubscriber(sub)
 
 		case recv := <-b.unsubscribe: // unsubscribe
+			// Drain pending subscribes first. A caller does Subscribe then
+			// Unsubscribe sequentially, so the subscribe message is always
+			// buffered before the unsubscribe. Without this drain, select
+			// may pick the unsubscribe first, making it a no-op and
+			// leaving the subscriber channel unclosed.
+			for drained := false; !drained; {
+				select {
+				case sub := <-b.subscribe:
+					addSubscriber(sub)
+				default:
+					drained = true
+				}
+			}
 			unsubscribe(recv)
 
 		case item, ok := <-input: // data arrived, send to subscribers
