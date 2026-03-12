@@ -123,6 +123,39 @@ func TestLoadingSettings(t *testing.T) {
 		require.Contains(t, cfg.appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
 	})
 
+	t.Run("Should create new key from env var when key is not in ini file but section exists", func(t *testing.T) {
+		// This tests the fix for the long-standing bug where env vars only worked
+		// if the key was already present in defaults.ini or custom.ini.
+		t.Setenv("GF_SERVER_MY_CUSTOM_SETTING", "custom_value")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		serverSection, err := cfg.Raw.GetSection("server")
+		require.NoError(t, err)
+		require.Equal(t, "custom_value", serverSection.Key("my_custom_setting").Value())
+		require.Contains(t, cfg.appliedEnvOverrides, "GF_SERVER_MY_CUSTOM_SETTING=custom_value")
+	})
+
+	t.Run("Should match env var to most specific section", func(t *testing.T) {
+		// GF_AUTH_GOOGLE_MY_KEY should match [auth.google] not [auth]
+		t.Setenv("GF_AUTH_GOOGLE_MY_KEY", "google_value")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		googleSection, err := cfg.Raw.GetSection("auth.google")
+		require.NoError(t, err)
+		require.Equal(t, "google_value", googleSection.Key("my_key").Value())
+
+		// Verify it did NOT end up in the [auth] section
+		authSection, err := cfg.Raw.GetSection("auth")
+		require.NoError(t, err)
+		require.Equal(t, "", authSection.Key("google_my_key").Value())
+	})
+
 	t.Run("Should get property map from command line args array", func(t *testing.T) {
 		cfg := NewCfg()
 		props := cfg.getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})

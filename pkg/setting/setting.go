@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -820,6 +821,9 @@ func RedactedURL(value string) (string, error) {
 
 func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 	cfg.appliedEnvOverrides = make([]string, 0)
+
+	// First pass: apply overrides for keys that already exist in the ini file.
+	appliedKeys := make(map[string]bool)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			envKey := EnvKey(section.Name(), key.Name())
@@ -828,6 +832,58 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			}
+			appliedKeys[envKey] = true
+		}
+	}
+
+	// Second pass: scan all GF_ environment variables and create new keys
+	// for any that match a known section but don't have a corresponding key yet.
+	// This allows env vars to add new config keys without requiring them to be
+	// pre-defined in defaults.ini or custom.ini.
+
+	// Build a map from env-style section prefix to ini section.
+	type sectionMapping struct {
+		prefix  string
+		section *ini.Section
+	}
+	var sectionMappings []sectionMapping
+	for _, section := range file.Sections() {
+		prefix := "GF_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(section.Name(), ".", "_"), "-", "_")) + "_"
+		sectionMappings = append(sectionMappings, sectionMapping{prefix: prefix, section: section})
+	}
+
+	// Sort by prefix length descending so more specific sections match first.
+	// e.g., GF_AUTH_GOOGLE_ matches before GF_AUTH_.
+	sort.Slice(sectionMappings, func(i, j int) bool {
+		return len(sectionMappings[i].prefix) > len(sectionMappings[j].prefix)
+	})
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, "GF_") {
+			continue
+		}
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) != 2 || len(parts[1]) == 0 {
+			continue
+		}
+		envKey := parts[0]
+		envValue := parts[1]
+
+		if appliedKeys[envKey] {
+			continue
+		}
+
+		for _, m := range sectionMappings {
+			if strings.HasPrefix(envKey, m.prefix) {
+				keyName := strings.ToLower(envKey[len(m.prefix):])
+				if keyName == "" {
+					continue
+				}
+				m.section.Key(keyName).SetValue(envValue)
+				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+				appliedKeys[envKey] = true
+				break
 			}
 		}
 	}
