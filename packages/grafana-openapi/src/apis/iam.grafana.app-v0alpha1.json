@@ -914,6 +914,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "accesscontrol",
+            "in": "query",
+            "description": "when true, includes access control metadata in the response",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -4637,92 +4645,6 @@
   },
   "components": {
     "schemas": {
-      "CoreRole": {
-        "type": "object",
-        "required": ["metadata", "spec"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          },
-          "spec": {
-            "description": "Spec is the spec of the CoreRole",
-            "default": {}
-          }
-        }
-      },
-      "CoreRoleList": {
-        "type": "object",
-        "required": ["metadata", "items"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
-      "CoreRoleSpec": {
-        "type": "object",
-        "required": ["title", "description", "group"],
-        "properties": {
-          "description": {
-            "type": "string",
-            "default": ""
-          },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
-          "permissions": {
-            "description": "Permissions for this role",
-            "type": "array",
-            "items": {
-              "default": {}
-            }
-          },
-          "title": {
-            "description": "Display name of the role",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "CoreRolespecPermission": {
-        "type": "object",
-        "required": ["action", "scope"],
-        "properties": {
-          "action": {
-            "description": "RBAC action (e.g: \"dashbaords:read\")",
-            "type": "string",
-            "default": ""
-          },
-          "scope": {
-            "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "ExternalGroupMapping": {
         "type": "object",
         "required": ["metadata", "spec"],
@@ -4906,6 +4828,13 @@
         "type": "object",
         "required": ["name", "title", "email", "provisioned", "externalUID"],
         "properties": {
+          "accessControl": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean",
+              "default": false
+            }
+          },
           "email": {
             "type": "string",
             "default": ""

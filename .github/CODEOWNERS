@@ -242,7 +242,6 @@
 /devenv/dev-dashboards/panel-bargauge @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-candlestick @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-canvas @grafana/dataviz-squad
-/devenv/dev-dashboards/panel-datagrid @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-gauge @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-geomap @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-graph @grafana/dataviz-squad
@@ -443,6 +442,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/TestDashboard.json @grafana/dashboards-squad @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards/TestV2Dashboard.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashRowsWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
@@ -696,7 +696,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/cloudwatch @grafana/aws-datasources
 /packages/grafana-schema/src/**/dashboard @grafana/dashboards-squad
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-frontend-navigation
-/packages/grafana-schema/src/**/datagrid @grafana/dataviz-squad
 /packages/grafana-schema/src/**/debug @ryantxu
 /packages/grafana-schema/src/**/elasticsearch @grafana/partner-datasources
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
@@ -1003,7 +1002,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/debug/ @ryantxu
-/public/app/plugins/panel/datagrid/ @grafana/dataviz-squad
 /public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
