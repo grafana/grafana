@@ -20,7 +20,7 @@ const kwSource = keywordCompletionSource(MySQL, true);
 
 export interface SQLEditorV2CompletionProvider {
   getTables: () => Promise<string[]>;
-  getColumns: (table: string) => Promise<string[]>;
+  getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>;
   getFunctions?: () => string[];
 }
 
@@ -53,7 +53,7 @@ function getFromTables(doc: Text): string[] {
 
 function makeCompletionSource(
   tables: string[],
-  getColumns: (table: string) => Promise<string[]>,
+  getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>,
   fnCompletions: Completion[]
 ) {
   const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
@@ -70,9 +70,15 @@ function makeCompletionSource(
 
     // Fetch columns for tables referenced in FROM
     const fromTables = getFromTables(context.state.doc);
-    const columnCompletions: Completion[] = (await Promise.all(fromTables.map(getColumns)))
-      .flat()
-      .map((col) => ({ label: col, type: 'property', boost: 10 }));
+    const columnResults = await Promise.allSettled(fromTables.map(getColumns));
+    const columnCompletions: Completion[] = columnResults
+      .flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+      .map((col) => ({
+        label: col.label,
+        apply: col.apply,
+        type: 'property',
+        boost: 10,
+      }));
 
     // SQL keywords + functions + columns
     const kwResult = await kwSource(context);
@@ -86,7 +92,7 @@ function makeCompletionSource(
 
 function buildSqlExtension(
   tables: string[],
-  getColumns: (table: string) => Promise<string[]>,
+  getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>,
   fnCompletions: Completion[]
 ) {
   return [

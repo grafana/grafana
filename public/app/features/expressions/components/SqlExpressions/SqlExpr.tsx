@@ -4,7 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
@@ -54,8 +54,16 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     () => ({
       getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
       getColumns: async (table) => {
-        const fields = await fetchSQLFields({ table }, queries || []);
-        return fields.map((f) => f.name);
+        if (!config.featureToggles.sqlExpressionsColumnAutoComplete) {
+          return [];
+        }
+
+        try {
+          const fields = await fetchSQLFields({ table }, queries || []);
+          return fields.map((f) => ({ label: f.name, apply: f.value }));
+        } catch {
+          return [];
+        }
       },
       getFunctions: () => ALLOWED_FUNCTIONS,
     }),
