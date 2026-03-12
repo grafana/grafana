@@ -7,7 +7,8 @@
       "main": "#2EC4B6"
     },
     "error": {
-      "main": "#E8467C"
+      "main": "#E8467C",
+      "text": "#F57098"
     },
     "warning": {
       "main": "#FADE2A"
