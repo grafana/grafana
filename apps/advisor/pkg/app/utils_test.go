@@ -406,6 +406,36 @@ func TestProcessCheckRetry_AddsNewFailuresFromRetry(t *testing.T) {
 	assert.Equal(t, "new failure", obj.Status.Report.Failures[0].Item)
 }
 
+func TestProcessCheckRetry_AddsFailuresWhenNoneExisted(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "item",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	// No existing failures for the retried item (empty Report.Failures)
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{res: obj}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{"item"},
+		retryFailures: []advisorv0alpha1.CheckReportFailure{
+			{StepID: "retry-step", Item: "failure from retry", ItemID: "item"},
+		},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	assert.Len(t, obj.Status.Report.Failures, 1, "retry should add new failures when none existed")
+	assert.Equal(t, "item", obj.Status.Report.Failures[0].ItemID)
+	assert.Equal(t, "retry-step", obj.Status.Report.Failures[0].StepID)
+	assert.Equal(t, "failure from retry", obj.Status.Report.Failures[0].Item)
+}
+
 func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
 	// Create an HTTP request with headers to simulate the real scenario
 	req, err := http.NewRequest("GET", "/test", nil)
