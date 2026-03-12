@@ -2,6 +2,7 @@
 aliases:
   - ../data-sources/prometheus/
   - ../features/datasources/prometheus/
+  - ../datasources/prometheus/configure/azure-authentication/
 description: Guide for authenticating with Azure Monitor Managed Service for Prometheus in Grafana
 keywords:
   - grafana
@@ -14,7 +15,7 @@ labels:
     - oss
 menuTitle: Authenticating with Azure
 title: Connect to Azure Monitor Managed Service for Prometheus
-weight: 200
+weight: 220
 review_date: 2026-03-10
 ---
 

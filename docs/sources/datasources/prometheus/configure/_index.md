@@ -82,7 +82,7 @@ Select an authentication method from the drop-down menu:
 
 - **No authentication** - Connect without credentials. Only use this option if your Prometheus instance doesn't require authentication.
 
-For Azure or AWS authentication, refer to [Connect to Azure Monitor Managed Service for Prometheus](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/azure-authentication/) or [Connect to Amazon Managed Service for Prometheus](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/aws-authentication/).
+For Azure or AWS authentication, refer to [Connect to Azure Monitor Managed Service for Prometheus](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/azure-authentication/) or [Connect to Amazon Managed Service for Prometheus](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/aws-authentication/).
 
 {{< admonition type="note" >}}
 If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.

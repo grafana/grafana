@@ -2,6 +2,7 @@
 aliases:
   - ../data-sources/prometheus/
   - ../features/datasources/prometheus/
+  - ../datasources/prometheus/configure/aws-authentication/
 description: Guide for authenticating with Amazon Managed Service for Prometheus in Grafana
 keywords:
   - grafana
@@ -14,7 +15,7 @@ labels:
     - oss
 menuTitle: Authenticating with SigV4
 title: Connect to Amazon Managed Service for Prometheus
-weight: 200
+weight: 210
 review_date: 2026-03-10
 ---
 
