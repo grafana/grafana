@@ -34,6 +34,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
         if (timeVals.length > 1 && plotWidth) {
           let { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, plotWidth, timeRange);
 
+          // Shallow copy fields and values and append the clusterIdx field
           const timeEndFrame: DataFrame = {
             ...frame,
             fields: frame.fields
@@ -53,6 +54,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
 
           const hasTimeEndField = timeEndFrame.fields.findIndex((field) => field.name === 'timeEnd') !== -1;
 
+          // If the annotation frame doesn't already have an end field defined we'll need to add one so we can create valid annotation regions
           if (!hasTimeEndField) {
             timeEndFrame.fields.push({
               type: FieldType.time,
@@ -77,6 +79,7 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
               clusterIdx: () => ci,
             };
 
+            // push the cluster values to the existing fields
             for (const field of timeEndFrame.fields) {
               field.values.push(valMapping?.[field.name]?.() ?? null);
             }
