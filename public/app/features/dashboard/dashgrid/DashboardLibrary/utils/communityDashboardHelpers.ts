@@ -13,6 +13,7 @@ import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SOURCE_ENT
 import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import type { AssistantSource } from './templateDashboardHelpers';
 
 // Constants for community dashboard pagination and API params
 // We want to get the most 6 downloaded dashboards, but we first query 12
@@ -90,7 +91,8 @@ export function navigateToTemplate(
   mappings: InputMapping[],
   eventLocation: EventLocation,
   contentKind: ContentKind,
-  datasourceTypes?: string[]
+  datasourceTypes?: string[],
+  assistantSource?: AssistantSource
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
@@ -108,6 +110,10 @@ export function navigateToTemplate(
     searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
   }
 
+  if (assistantSource) {
+    searchParams.set('assistantSource', assistantSource);
+  }
+
   locationService.push({
     pathname: DASHBOARD_LIBRARY_ROUTES.Template,
     search: searchParams.toString(),
@@ -120,6 +126,7 @@ interface UseCommunityDashboardParams {
   datasourceType: string;
   eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
   onShowMapping?: (context: MappingContext) => void;
+  assistantSource?: AssistantSource;
 }
 
 /**
@@ -233,6 +240,7 @@ export async function onUseCommunityDashboard({
   datasourceType,
   eventLocation,
   onShowMapping,
+  assistantSource,
 }: UseCommunityDashboardParams): Promise<void> {
   // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
   // with the correct discoveryMethod before calling this function
@@ -274,7 +282,8 @@ export async function onUseCommunityDashboard({
         mappingResult.mappings,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes
+        datasourceTypes,
+        assistantSource
       );
     } else {
       // Show mapping form for unmapped datasources and/or constants
@@ -295,7 +304,8 @@ export async function onUseCommunityDashboard({
               mappings,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
-              datasourceTypes
+              datasourceTypes,
+              assistantSource
             ),
         });
       }
