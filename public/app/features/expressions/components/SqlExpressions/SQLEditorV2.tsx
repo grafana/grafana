@@ -97,7 +97,12 @@ function buildSqlExtension(
 ) {
   return [
     sql({ dialect: MySQL }),
-    autocompletion({ override: [makeCompletionSource(tables, getColumns, fnCompletions)], defaultKeymap: true }),
+    autocompletion({
+      override: [makeCompletionSource(tables, getColumns, fnCompletions)],
+      defaultKeymap: true,
+      activateOnTyping: true,
+      activateOnCompletion: () => true,
+    }),
   ];
 }
 
@@ -175,6 +180,93 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
         },
         '&.cm-editor .cm-panels.cm-panels-bottom': {
           borderTop: `1px solid ${theme.colors.border.weak}`,
+        },
+
+        // --- Ultra-modern autocomplete: horizontal chip bar ---
+        '.cm-tooltip.cm-tooltip-autocomplete': {
+          background: theme.colors.background.elevated,
+          backdropFilter: 'blur(16px)',
+          border: `1px solid ${theme.colors.border.weak}`,
+          borderRadius: '12px',
+          boxShadow: `0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px ${theme.colors.border.weak}`,
+          padding: '6px',
+          minWidth: '220px',
+        },
+        '.cm-tooltip-autocomplete > ul': {
+          fontFamily: theme.typography.fontFamilyMonospace,
+          fontSize: '12px',
+          maxHeight: '200px',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+        },
+        '.cm-tooltip-autocomplete > ul::-webkit-scrollbar': {
+          display: 'none',
+        },
+        '.cm-tooltip-autocomplete > ul > li': {
+          padding: '5px 10px',
+          borderRadius: '8px',
+          border: `1px solid transparent`,
+          cursor: 'pointer',
+          transition: 'all 0.12s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          lineHeight: '1.5',
+          margin: '2px 0',
+        },
+        '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+          background: theme.colors.primary.transparent,
+          borderColor: theme.colors.primary.border,
+          boxShadow: `0 0 12px ${theme.colors.primary.transparent}`,
+          color: theme.colors.text.maxContrast,
+        },
+        // Color-coded type dot replacing the icon
+        '.cm-completionIcon': {
+          fontSize: '0',
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          display: 'inline-block',
+          flexShrink: '0',
+          background: theme.colors.text.disabled,
+          padding: '0',
+          marginRight: '0',
+          boxSizing: 'border-box',
+        },
+        '.cm-completionIcon-keyword::after': {
+          content: '""',
+        },
+        '.cm-completionIcon-keyword': {
+          background: theme.colors.warning.main,
+        },
+        '.cm-completionIcon-type::after': {
+          content: '""',
+        },
+        '.cm-completionIcon-type': {
+          background: theme.colors.info.main,
+        },
+        '.cm-completionIcon-property::after': {
+          content: '""',
+        },
+        '.cm-completionIcon-property': {
+          background: theme.colors.success.main,
+        },
+        '.cm-completionIcon-function::after': {
+          content: '""',
+        },
+        '.cm-completionIcon-function': {
+          background: '#d2a8ff',
+        },
+        '.cm-completionLabel': {
+          color: theme.colors.text.primary,
+        },
+        '.cm-completionMatchedText': {
+          textDecoration: 'none',
+          color: theme.colors.text.maxContrast,
+          fontWeight: 700,
+        },
+        '.cm-completionDetail': {
+          display: 'none',
         },
       }),
     ];
