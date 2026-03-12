@@ -234,11 +234,11 @@ Series-specific variables are available under `__series` namespace:
 
 Field-specific variables are available under `__field` namespace:
 
-- **`__field.name`**: The raw name of the field.
-- **`__field.displayName`**: The display name of the field.
-- **`__field.labels.<LABEL>`**: Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
-
-If you use a transformation such as **Rename fields by regex**, use `__field.displayName` to reference the transformed field name in data links.
+| Variable                 | Description                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `__field.name`           | The name of the field                                                                               |
+| `__field.displayName`    | The display name of the field. Use this for renamed field names.                                    |
+| `__field.labels.<LABEL>` | Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax. |
 
 ### Value variables
 
