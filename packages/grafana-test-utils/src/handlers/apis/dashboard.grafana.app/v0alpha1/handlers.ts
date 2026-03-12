@@ -116,8 +116,13 @@ const getDefaultSearchHandler = () =>
 
       if (ownerReferenceFilter.length > 0) {
         // ownerReference params are in the format "iam.grafana.app/Team/<teamUid>"
-        // Extract the team UID (last segment) and look up which folders they own
-        const teamUids = ownerReferenceFilter.map((ref) => ref.split('/').pop() ?? '');
+        const teamUidRegex = /iam\.grafana\.app\/Team\/([^/]+)$/;
+        const teamUids = ownerReferenceFilter
+          .map((ref) => {
+            const match = ref.match(teamUidRegex);
+            return match ? match[1] : '';
+          })
+          .filter(Boolean);
         const ownedFolderUids = teamUids.flatMap((teamUid) => getFolderUidsForTeam(teamUid));
         filters.push(({ item }) => ownedFolderUids.includes(item.uid));
       }

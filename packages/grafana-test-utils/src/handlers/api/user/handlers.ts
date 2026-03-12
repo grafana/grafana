@@ -44,6 +44,7 @@ const updatePreferencesHandler = () =>
   });
 
 const getSignedInUserTeamListHandler = () =>
+  // For now, current user is member of all mock fixture teams
   http.get('/api/user/teams', async () => {
     return HttpResponse.json(
       MOCK_TEAMS.map((team) => ({

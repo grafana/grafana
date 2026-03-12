@@ -20,7 +20,7 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
-function buildOwnerReferences(folderUid: string) {
+function buildOwnerReferences(folderUid: string): OwnerReference[] | undefined {
   const teamUids = FOLDER_TEAM_OWNERS[folderUid];
   if (!teamUids?.length) {
     return undefined;
