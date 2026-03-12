@@ -160,7 +160,7 @@ const buildAnnotationClusters = (frame: DataFrame, timeVals: number[], plotWidth
 const calculateMergeThreshold = (timeRange: TimeRange2, plotWidth: number) => {
   // If the plot width is zero, something is very wrong! Let's avoid clustering in this case.
   if (!plotWidth) {
-    return 0;
+    return -1;
   }
 
   const pixelThreshold = DEFAULT_CLUSTERING_ANNOTATION_SPACING * uPlot.pxRatio;

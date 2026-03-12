@@ -5,11 +5,11 @@ import { ClusteringSwitchEditor } from './ClusteringSwitchEditor';
 
 describe('ClusteringSwitchEditor', () => {
   it('should render a switch', () => {
-    render(<ClusteringSwitchEditor value={0} onChange={() => {}} item={{} as never} context={{} as never} />);
+    render(<ClusteringSwitchEditor value={-1} onChange={() => {}} item={{} as never} context={{} as never} />);
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
-  it('should display switch as unchecked when value is 0', () => {
-    render(<ClusteringSwitchEditor value={0} onChange={() => {}} item={{} as never} context={{} as never} />);
+  it('should display switch as unchecked when value is -1', () => {
+    render(<ClusteringSwitchEditor value={-1} onChange={() => {}} item={{} as never} context={{} as never} />);
     expect(screen.getByRole('switch')).not.toBeChecked();
   });
   it('should display switch as checked when value is greater than 0', () => {

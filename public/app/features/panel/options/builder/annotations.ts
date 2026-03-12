@@ -1,7 +1,7 @@
 import { DataTopic, PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { ClusteringSwitchEditor } from './ClusteringSwitchEditor';
+import { ClusteringSwitchEditor, DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED } from './ClusteringSwitchEditor';
 
 /**
  * Adds common text control options to a visualization options
@@ -36,7 +36,7 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
       'grafana-ui.builder.annotations.clustering.desc',
       'Combines high density point annotations into region annotations'
     ),
-    defaultValue: 0,
+    defaultValue: DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED,
     showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 }

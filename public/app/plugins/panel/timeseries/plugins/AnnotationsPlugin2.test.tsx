@@ -542,7 +542,7 @@ describe('AnnotationsPlugin2', () => {
         setUp({
           annotations: [mockIRMClusteringAnnotation],
           options: {
-            clustering: 0,
+            clustering: -1,
           },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
