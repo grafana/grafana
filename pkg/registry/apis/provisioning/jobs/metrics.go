@@ -153,8 +153,8 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action, operation, outcome, reason, group, kind string) {
-	m.resourceOpsTotal.WithLabelValues(action, operation, outcome, reason, group, kind).Inc()
+func (m *JobMetrics) RecordResourceOperation(action string, operation ResourceOperation, outcome ResourceOutcome, reason, group, kind string) {
+	m.resourceOpsTotal.WithLabelValues(action, string(operation), string(outcome), reason, group, kind).Inc()
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {

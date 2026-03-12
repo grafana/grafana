@@ -10,6 +10,24 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+type ResourceOutcome string
+
+const (
+	OutcomeSuccess ResourceOutcome = "success"
+	OutcomeWarning ResourceOutcome = "warning"
+	OutcomeError   ResourceOutcome = "error"
+)
+
+type ResourceOperation string
+
+const (
+	OperationCreated  ResourceOperation = "created"
+	OperationUpdated  ResourceOperation = "updated"
+	OperationDeleted  ResourceOperation = "deleted"
+	OperationNoop     ResourceOperation = "noop"
+	OperationReplaced ResourceOperation = "replaced"
+)
+
 // classifyWarning returns the warning reason for err and whether it is a warning.
 func classifyWarning(err error) (string, bool) {
 	if err == nil {

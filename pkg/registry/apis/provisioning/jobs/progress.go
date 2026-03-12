@@ -147,31 +147,42 @@ func (r *jobProgressRecorder) emitMetrics(result JobResourceResult) {
 		return
 	}
 
-	operation := string(result.Action())
 	group := result.Group()
 	kind := result.Kind()
 
 	if result.Error() != nil {
 		if result.Action() != repository.FileActionIgnored {
-			r.metrics.RecordResourceOperation(r.action, operation, "error", "", group, kind)
+			r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeError, "", group, kind)
 		}
 		return
 	}
 
 	if result.Warning() != nil {
-		reason := result.WarningReason()
-		r.metrics.RecordResourceOperation(r.action, operation, "warning", reason, group, kind)
+		r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeWarning, result.WarningReason(), group, kind)
 		return
 	}
 
 	switch result.Action() {
 	case repository.FileActionRenamed:
-		r.metrics.RecordResourceOperation(r.action, "deleted", "success", "", group, kind)
-		r.metrics.RecordResourceOperation(r.action, "created", "success", "", group, kind)
-	case repository.FileActionIgnored:
-		r.metrics.RecordResourceOperation(r.action, "noop", "success", "", group, kind)
+		r.metrics.RecordResourceOperation(r.action, OperationDeleted, OutcomeSuccess, "", group, kind)
+		r.metrics.RecordResourceOperation(r.action, OperationCreated, OutcomeSuccess, "", group, kind)
 	default:
-		r.metrics.RecordResourceOperation(r.action, operation, "success", "", group, kind)
+		r.metrics.RecordResourceOperation(r.action, fileActionToOperation(result.Action()), OutcomeSuccess, "", group, kind)
+	}
+}
+
+func fileActionToOperation(action repository.FileAction) ResourceOperation {
+	switch action {
+	case repository.FileActionCreated:
+		return OperationCreated
+	case repository.FileActionUpdated:
+		return OperationUpdated
+	case repository.FileActionDeleted:
+		return OperationDeleted
+	case repository.FileActionIgnored:
+		return OperationNoop
+	default:
+		return ResourceOperation(action)
 	}
 }
 

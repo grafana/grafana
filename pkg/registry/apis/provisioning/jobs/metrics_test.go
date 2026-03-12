@@ -29,12 +29,12 @@ func TestRecordResourceOperation(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordResourceOperation("pull", "created", "success", "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("pull", "created", "success", "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("pull", "updated", "success", "", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation("pull", "created", "warning", "MissingFolderMetadata", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation("pull", "created", "error", "", "dashboard.grafana.app", "Dashboard")
-	m.RecordResourceOperation("export", "deleted", "success", "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", OperationCreated, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", OperationUpdated, OutcomeSuccess, "", "folder.grafana.app", "Folder")
+	m.RecordResourceOperation("pull", OperationCreated, OutcomeWarning, "MissingFolderMetadata", "folder.grafana.app", "Folder")
+	m.RecordResourceOperation("pull", OperationCreated, OutcomeError, "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("export", OperationDeleted, OutcomeSuccess, "", "dashboard.grafana.app", "Dashboard")
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
