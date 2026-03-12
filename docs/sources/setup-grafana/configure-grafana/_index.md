@@ -2774,7 +2774,7 @@ The minimum sync interval that can be set for a repository. This is how often th
 
 List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
 
-OSS types: `local`, `git`, `github`. Enterprise types: `bitbucket`, `gitlab`.
+Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
 
 <hr>
 
