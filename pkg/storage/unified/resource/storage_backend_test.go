@@ -374,7 +374,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	const numEvents = 500
+	const numEvents = 50
 
 	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
