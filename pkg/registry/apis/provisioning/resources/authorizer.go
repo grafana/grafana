@@ -2,9 +2,11 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -77,7 +79,8 @@ type Authorizer interface {
 	// AuthorizeDeleteByPath checks if the user has permission to delete the target
 	// at the specified path. Handles both files and directories:
 	//   - Directory paths: checks folder delete permission
-	//   - File paths: checks dashboard delete permission on the parent folder
+	//   - File paths: reads the file to determine its resource type and checks
+	//     delete permission for that type on the parent folder
 	//
 	// For individual resource operations where the resource type is known,
 	// prefer AuthorizeResource instead.
@@ -86,7 +89,8 @@ type Authorizer interface {
 	// AuthorizeMoveByPath checks if the user has permission to move the source
 	// path to the target path. Handles both files and directories:
 	//   - Directory sources: checks folders:update on source, folders:create on target parent
-	//   - File sources: checks dashboards:update on source parent, dashboards:create on target parent
+	//   - File sources: reads the file to determine its resource type and checks
+	//     update permission on the source parent and create on the target parent
 	AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath string) error
 
 	// AuthorizeReadAllSupported checks if the current user has read (get) permission
@@ -175,6 +179,71 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 // for why we never use a caller-supplied ref here.
 func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (string, error) {
 	return GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+}
+
+// resolveFileGVR reads the file at path from the configured branch and parses it
+// to determine its Kubernetes resource type. If the file cannot be read or parsed
+// (e.g. it only exists on a feature branch), it falls back to checking all non-folder
+// supported resource types so the authorization is not silently skipped.
+func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string) (schema.GroupVersionResource, error) {
+	info, err := a.reader.Read(ctx, path, "")
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return schema.GroupVersionResource{}, nil
+		}
+		return schema.GroupVersionResource{}, fmt.Errorf("read file %q: %w", path, err)
+	}
+
+	_, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return schema.GroupVersionResource{}, nil
+	}
+
+	for _, gvr := range SupportedProvisioningResources {
+		if gvr.Group == gvk.Group {
+			return gvr, nil
+		}
+	}
+
+	return schema.GroupVersionResource{}, nil
+}
+
+// authorizeFileVerb checks if the user has the given verb permission on a file at path
+// within the given folder context. It reads the file to determine the actual resource
+// type (dashboard, library panel, etc.) rather than assuming dashboards.
+//
+// If the resource type cannot be determined (file not found, unparseable), it falls
+// back to checking the verb against all non-folder supported resource types.
+func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, folderID, verb string) error {
+	gvr, err := a.resolveFileGVR(ctx, path)
+	if err != nil {
+		return err
+	}
+
+	// If we resolved a specific resource type, check just that one
+	if gvr.Group != "" {
+		return a.access.Check(ctx, authlib.CheckRequest{
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
+			Verb:     verb,
+		}, folderID)
+	}
+
+	// Could not determine the file type — check all non-folder supported resource
+	// types so we don't silently skip authorization.
+	for _, kind := range SupportedProvisioningResources {
+		if kind == FolderResource {
+			continue
+		}
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    kind.Group,
+			Resource: kind.Resource,
+			Verb:     verb,
+		}, folderID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // authorizeFolder is a private helper that checks if the user has permission to perform
@@ -278,7 +347,8 @@ func (a *ProvisioningAuthorizer) authorizeDeleteFolder(ctx context.Context, path
 // at the specified path.
 //
 // For directory paths, checks folder delete permission in the parent folder context.
-// For file paths, checks dashboard delete permission on the parent folder.
+// For file paths, reads the file to determine its resource type and checks delete
+// permission for that type on the parent folder.
 func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path string) error {
 	if safepath.IsDir(path) {
 		return a.authorizeDeleteFolder(ctx, path)
@@ -296,11 +366,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path
 		}
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
-		Group:    DashboardResource.Group,
-		Resource: DashboardResource.Resource,
-		Verb:     utils.VerbDelete,
-	}, folderID)
+	return a.authorizeFileVerb(ctx, path, folderID, utils.VerbDelete)
 }
 
 // authorizeMoveFolder checks if the user has permission to move a folder from
@@ -351,8 +417,9 @@ func (a *ProvisioningAuthorizer) authorizeMoveFolder(ctx context.Context, origin
 // to the target path.
 //
 // For directory sources, checks folders:update on source and folders:create on the
-// target parent. For file sources, checks dashboards:update on the source's parent
-// folder and dashboards:create on the target parent folder.
+// target parent. For file sources, reads the file to determine its resource type and
+// checks update permission on the source's parent folder and create permission on
+// the target parent folder.
 func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath string) error {
 	if safepath.IsDir(sourcePath) {
 		return a.authorizeMoveFolder(ctx, sourcePath, targetPath)
@@ -370,11 +437,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		}
 	}
 
-	if err := a.access.Check(ctx, authlib.CheckRequest{
-		Group:    DashboardResource.Group,
-		Resource: DashboardResource.Resource,
-		Verb:     utils.VerbUpdate,
-	}, sourceFolderID); err != nil {
+	if err := a.authorizeFileVerb(ctx, sourcePath, sourceFolderID, utils.VerbUpdate); err != nil {
 		return err
 	}
 
@@ -390,11 +453,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		}
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
-		Group:    DashboardResource.Group,
-		Resource: DashboardResource.Resource,
-		Verb:     utils.VerbCreate,
-	}, targetFolderID)
+	return a.authorizeFileVerb(ctx, sourcePath, targetFolderID, utils.VerbCreate)
 }
 
 // AuthorizeReadAllSupported checks if the current user has read (get) permission

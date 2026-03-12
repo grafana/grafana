@@ -701,6 +701,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		rootFolder := RootFolder(repo)
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
 
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Group == DashboardResource.Group &&
