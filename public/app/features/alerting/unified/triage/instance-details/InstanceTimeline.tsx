@@ -259,7 +259,30 @@ function NotificationStatusGroup({
     receivers.length === 1
       ? receivers[0]
       : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
-  const integrations = [...new Set(notifications.map((n) => n.integration))];
+
+  const uniqueIntegrations = new Map<string, Set<number>>();
+  for (const n of notifications) {
+    const key = n.integration;
+    const indices = uniqueIntegrations.get(key) ?? new Set();
+    indices.add(n.integrationIndex);
+    uniqueIntegrations.set(key, indices);
+  }
+
+  const integrationParts: string[] = [];
+  for (const [integration, indices] of uniqueIntegrations) {
+    const name = receiverTypeNames[integration] ?? integration;
+    if (indices.size === 1) {
+      const index = [...indices][0];
+      integrationParts.push(`${name} #${index + 1}`);
+    } else {
+      integrationParts.push(`${name} ×${indices.size}`);
+    }
+  }
+  const integrationSummary = integrationParts.join(', ');
+
+  const integrations = [...uniqueIntegrations.keys()];
+
+  const failedNotifications = notifications.filter((n) => n.outcome !== 'success');
 
   let outcomeLabel: string | undefined;
   if (failedCount > 0 && successCount === 0) {
@@ -268,11 +291,16 @@ function NotificationStatusGroup({
         ? t('alerting.instance-details.timeline-all-failed', 'failed')
         : t('alerting.instance-details.timeline-all-failed-plural', 'all failed');
   } else if (failedCount > 0) {
-    outcomeLabel = t(
-      'alerting.instance-details.timeline-mixed-outcome',
-      '{{successCount}} delivered, {{failedCount}} failed',
-      { successCount, failedCount }
-    );
+    const uniqueFailedNames = [
+      ...new Set(
+        failedNotifications.map(
+          (n) => `${receiverTypeNames[n.integration] ?? n.integration} #${n.integrationIndex + 1}`
+        )
+      ),
+    ].join(', ');
+    outcomeLabel = t('alerting.instance-details.timeline-mixed-outcome-named', '{{failedNames}} failed', {
+      failedNames: uniqueFailedNames,
+    });
   }
 
   const isFiring = status === 'firing';
@@ -308,8 +336,8 @@ function NotificationStatusGroup({
           </Text>
           <Text variant="bodySmall">
             {notifications.length === 1
-              ? t('alerting.instance-details.timeline-one-notification', '1 notification')
-              : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
+              ? t('alerting.instance-details.timeline-one-delivery', '1 delivery')
+              : t('alerting.instance-details.timeline-n-deliveries', '{{count}} deliveries', {
                   count: notifications.length,
                 })}
           </Text>
@@ -321,6 +349,9 @@ function NotificationStatusGroup({
           ))}
           <Text variant="bodySmall" truncate>
             {receiverLabel}
+          </Text>
+          <Text variant="bodySmall" color="secondary">
+            · {integrationSummary}
           </Text>
           {outcomeLabel && (
             <Text variant="bodySmall" color="error">
@@ -354,11 +385,9 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
         </Text>
         <Stack direction="row" gap={0.5} alignItems="center">
           <IntegrationIcon integration={notification.integration} />
-          <Text variant="bodySmall" weight="medium" truncate>
-            {notification.receiver}
-          </Text>
-          <Text variant="bodySmall" color="secondary">
-            ({receiverTypeNames[notification.integration] ?? notification.integration})
+          <Text variant="bodySmall" weight="medium">
+            {receiverTypeNames[notification.integration] ?? notification.integration} #
+            {notification.integrationIndex + 1}
           </Text>
         </Stack>
         {isSuccess ? (
