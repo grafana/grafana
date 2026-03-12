@@ -502,6 +502,7 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 }
 
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (m mockClientConfigProvider) IsReady() bool                                            { return true }
 
 // for now, test only the general folder
 func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {

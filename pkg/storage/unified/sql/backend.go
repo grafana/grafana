@@ -117,6 +117,7 @@ func NewStorageBackend(
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			DisableStorageServices:  disableStorageServices,
+			DisablePruner:           cfg.DisablePruner,
 		})
 	}
 
@@ -154,6 +155,7 @@ func NewStorageBackend(
 		},
 		EventRetentionPeriod: cfg.EventRetentionPeriod,
 		EventPruningInterval: cfg.EventPruningInterval,
+		SearchLookback:       cfg.SearchLookback,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
@@ -198,6 +200,7 @@ type BackendOptions struct {
 	GarbageCollection GarbageCollectionConfig
 
 	DisableStorageServices bool
+	DisablePruner          bool
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
@@ -224,6 +227,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
+		disablePruner:           opts.DisablePruner,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -286,6 +290,7 @@ type backend struct {
 	// testing
 	simulatedNetworkLatency time.Duration
 
+	disablePruner bool
 	historyPruner resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
@@ -368,6 +373,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 }
 
 func (b *backend) initPruner(ctx context.Context) error {
+	if b.disablePruner {
+		b.log.Debug("pruner disabled, using noop pruner")
+		b.historyPruner = &resource.NoopPruner{}
+		return nil
+	}
+
 	b.log.Debug("using debounced history pruner")
 	// Initialize history pruner.
 	pruner, err := debouncer.NewGroup(debouncer.DebouncerOpts[resource.PruningKey]{
@@ -967,7 +978,7 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
