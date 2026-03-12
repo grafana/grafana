@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -29,6 +30,18 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 		ExpectedFolders:    0,
 	}
 	helper.CreateRepo(t, testRepo)
+
+	// Grant the editor user dashboard permissions (the default editor role
+	// does not include dashboards:write/dashboards:create which are required
+	// by the move pre-flight check for update on source and create on target).
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
 
 	t.Run("admin can create move job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
