@@ -29,6 +29,8 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
 	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
+OS ?= $(shell $(GO) env GOOS)
+ARCH ?= $(shell $(GO) env GOARCH)
 GIT_BASE = remotes/origin/main
 
 CUE_VERSION = v0.16.0
@@ -297,15 +299,22 @@ gen-jsonnet:
 gen-themes:
 	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) $(GO) generate ./pkg/services/preference
 
+pkg/services/preference/themes_generated.go:
+	$(MAKE) gen-themes
+
 .PHONY: update-workspace
 update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-themes ## Build the Grafana binary.
-	@echo "build go binaries"
-	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false $(if $(GO_BUILD_DEV),-gcflags "all=-N -l",-trimpath) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
+build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+	@echo "build go binaries ($(OS)/$(ARCH))"
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
+	cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana
+
+bin/$(OS)/$(ARCH)/grafana:
+	$(MAKE) build-go
 
 .PHONY: build-backend
 build-backend: build-go
@@ -318,6 +327,9 @@ build-air: build-go
 build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
+
+public/build:
+	$(MAKE) build-js
 
 PLUGIN_ID ?=
 
@@ -333,6 +345,19 @@ build-plugin-go: ## Build decoupled plugins
 
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
+
+# Tar.gz packaging variables (aligned with pkg/build/daggerbuild/packages)
+TARGZ_PACKAGE_NAME ?= grafana
+
+.PHONY: build-targz
+build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (same layout as daggerbuild).
+	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
+	BUILD_VERSION="$(BUILD_VERSION)" \
+	BUILD_NUMBER="$(BUILD_NUMBER)" \
+	OS="$(OS)" \
+	ARCH="$(ARCH)" \
+	GO="$(GO)" \
+	bash scripts/build-targz.sh
 
 .PHONY: run
 run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
