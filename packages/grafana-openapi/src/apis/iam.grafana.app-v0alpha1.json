@@ -914,6 +914,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "accesscontrol",
+            "in": "query",
+            "description": "when true, includes access control metadata in the response",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -3847,7 +3855,7 @@
     "/users": {
       "get": {
         "tags": ["User"],
-        "description": "list objects of kind User",
+        "description": "list or watch objects of kind User",
         "operationId": "listUser",
         "parameters": [
           {
@@ -4820,6 +4828,13 @@
         "type": "object",
         "required": ["name", "title", "email", "provisioned", "externalUID"],
         "properties": {
+          "accessControl": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean",
+              "default": false
+            }
+          },
           "email": {
             "type": "string",
             "default": ""

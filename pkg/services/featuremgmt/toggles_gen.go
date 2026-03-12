@@ -75,10 +75,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableDatagridEditing
-	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditing = "enableDatagridEditing"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -195,9 +191,9 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -258,6 +254,10 @@ const (
 	// FlagDashboardNewLayouts
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -893,6 +893,10 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls

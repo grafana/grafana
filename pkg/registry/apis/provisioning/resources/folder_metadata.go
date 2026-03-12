@@ -47,6 +47,26 @@ func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
 	return &MissingFolderMetadata{Path: path}
 }
 
+// ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.
+var ErrFolderMetadataConflict = errors.New("folder metadata conflict")
+
+// FolderMetadataConflict is returned when the folder metadata in the repository
+// conflicts with the folder state in Grafana (e.g., ID mismatch, user deleted
+// or changed the folder ID).
+type FolderMetadataConflict struct {
+	Path   string
+	Reason string
+}
+
+func (e *FolderMetadataConflict) Error() string {
+	return fmt.Sprintf("folder metadata conflict at %q: %s", e.Path, e.Reason)
+}
+
+// Unwrap supports errors.Is(err, ErrFolderMetadataConflict).
+func (e *FolderMetadataConflict) Unwrap() error {
+	return ErrFolderMetadataConflict
+}
+
 // FindFoldersMissingMetadata returns folder paths from source that do not have
 // a corresponding _folder.json metadata file.
 func FindFoldersMissingMetadata(source []repository.FileTreeEntry) []string {
@@ -121,7 +141,7 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 	return &f, nil
 }
 
-// WriteFolderMetadata writes _folder.json into folderPath and returns the stable UID.
+// WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
 func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
 	data, err := marshalFolderManifest(folder)
 	if err != nil {
