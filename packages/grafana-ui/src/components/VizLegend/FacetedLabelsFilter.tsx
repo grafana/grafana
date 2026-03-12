@@ -83,7 +83,7 @@ export function FacetedLabelsFilter({ labels, selected, onChange, dimmed }: Face
   };
 
   return (
-    <div className={cx(styles.container, dimmed && styles.dimmed)}>
+    <div className={cx(styles.container, dimmed && styles.dimmed)} data-testid="faceted-labels-filter">
       {seriesValues && (
         <div className={styles.section}>
           <span className={styles.sectionLabel}>

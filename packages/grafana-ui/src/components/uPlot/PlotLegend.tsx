@@ -185,6 +185,7 @@ export const PlotLegend = memo(function PlotLegend({
         size="md"
         tooltip={t('grafana-ui.viz-legend.series-visibility', 'Series visibility')}
         variant={hasActiveFilters ? 'primary' : undefined}
+        data-testid="faceted-labels-filter-toggle"
       />
     </Toggletip>
   ) : null;
