@@ -8,39 +8,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPermittedHostEnvVars_respectsTMPDIR(t *testing.T) {
+func TestPermittedHostEnvVars_respectsPLUGIN_UNIX_SOCKET_DIR(t *testing.T) {
 	customTmp := t.TempDir()
-	t.Setenv("TMPDIR", customTmp)
+	t.Setenv("PLUGIN_UNIX_SOCKET_DIR", customTmp)
 
 	vars := PermittedHostEnvVars()
 
 	var count int
 	for _, v := range vars {
-		if strings.HasPrefix(v, "TMPDIR=") {
-			require.Equal(t, "TMPDIR="+customTmp, v, "TMPDIR should be forwarded when set")
+		if strings.HasPrefix(v, "PLUGIN_UNIX_SOCKET_DIR=") {
+			require.Equal(t, "PLUGIN_UNIX_SOCKET_DIR="+customTmp, v, "PLUGIN_UNIX_SOCKET_DIR should be forwarded when set")
 			count++
 		}
 	}
-	require.Equal(t, 1, count, "TMPDIR should appear exactly once in PermittedHostEnvVars when set")
+	require.Equal(t, 1, count, "PLUGIN_UNIX_SOCKET_DIR should appear exactly once in PermittedHostEnvVars when set")
 }
 
-func TestPermittedHostEnvVarNames_includesTMPDIR(t *testing.T) {
+func TestPermittedHostEnvVarNames_includesPLUGIN_UNIX_SOCKET_DIR(t *testing.T) {
 	names := PermittedHostEnvVarNames()
-	require.Contains(t, names, "TMPDIR", "TMPDIR must be in permitted host env var names for restricted environments")
+	require.Contains(t, names, "PLUGIN_UNIX_SOCKET_DIR", "PLUGIN_UNIX_SOCKET_DIR must be in permitted host env var names for restricted environments")
 }
 
-func TestPermittedHostEnvVars_TMPDIRUnset(t *testing.T) {
-	prev, hadTMPDIR := os.LookupEnv("TMPDIR")
+func TestPermittedHostEnvVars_PLUGIN_UNIX_SOCKET_DIR_Unset(t *testing.T) {
+	prev, hadTMPDIR := os.LookupEnv("PLUGIN_UNIX_SOCKET_DIR")
 	if hadTMPDIR {
-		defer t.Setenv("TMPDIR", prev)
+		defer t.Setenv("PLUGIN_UNIX_SOCKET_DIR", prev)
 	}
-	_ = os.Unsetenv("TMPDIR")
+	_ = os.Unsetenv("PLUGIN_UNIX_SOCKET_DIR")
 
 	vars := PermittedHostEnvVars()
 
 	for _, v := range vars {
-		if strings.HasPrefix(v, "TMPDIR=") {
-			t.Fatal("TMPDIR should not be present when unset")
+		if strings.HasPrefix(v, "PLUGIN_UNIX_SOCKET_DIR=") {
+			t.Fatal("PLUGIN_UNIX_SOCKET_DIR should not be present when unset")
 		}
 	}
 }

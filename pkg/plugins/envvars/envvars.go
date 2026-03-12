@@ -10,9 +10,10 @@ import (
 // permittedHostEnvVarNames is the list of environment variables that can be passed from Grafana's process to the
 // plugin's process
 var permittedHostEnvVarNames = []string{
-	// TMPDIR is required for temp files in restricted environments (e.g. Kubernetes pods with read-only /tmp)
+	// PLUGIN_UNIX_SOCKET_DIR allows plugins to write Unix sockets in
+	// restricted environments (e.g. Kubernetes pods with read-only /tmp)
 	// See https://github.com/grafana/grafana/issues/119424
-	"TMPDIR",
+	"PLUGIN_UNIX_SOCKET_DIR",
 	// Env vars used by net/http (Go stdlib) for http/https proxy
 	// https://github.com/golang/net/blob/fbaf41277f28102c36926d1368dafbe2b54b4c1d/http/httpproxy/proxy.go#L91-L93
 	"HTTP_PROXY",
