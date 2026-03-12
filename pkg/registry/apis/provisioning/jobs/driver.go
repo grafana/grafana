@@ -78,6 +78,9 @@ type jobDriver struct {
 	// notifications channel for job create events
 	notifications chan struct{}
 
+	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
+	metrics *JobMetrics
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -90,6 +93,7 @@ func NewJobDriver(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	notifications chan struct{},
+	metrics *JobMetrics,
 	workers ...Worker,
 ) (*jobDriver, error) {
 	return &jobDriver{
@@ -101,6 +105,7 @@ func NewJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		metrics:              metrics,
 	}, nil
 }
 
@@ -203,7 +208,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress())
+	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection

@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "enableDatagridEditing",
-			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "faroSessionReplay",
 			Description:  "Enable Faro session replay for Grafana",
 			Stage:        FeatureStageExperimental,

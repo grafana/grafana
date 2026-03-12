@@ -17,6 +17,7 @@ import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
 
 import { AnnotationsPlugin2 } from './AnnotationsPlugin2';
+import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from './annotations2/constants';
 import {
   allAnnotationRegions,
   allAnnotations,
@@ -541,7 +542,7 @@ describe('AnnotationsPlugin2', () => {
         setUp({
           annotations: [mockIRMClusteringAnnotation],
           options: {
-            clustering: false,
+            clustering: 0,
           },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
@@ -553,7 +554,7 @@ describe('AnnotationsPlugin2', () => {
         setUp({
           annotations: [mockIRMClusteringAnnotation],
           options: {
-            clustering: true,
+            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
           },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
@@ -597,7 +598,7 @@ describe('AnnotationsPlugin2', () => {
         setUp({
           annotations: [mockAlertingFrame],
           options: {
-            clustering: true,
+            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
           },
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
