@@ -89,3 +89,7 @@ Because **Series value as timestamp** is enabled, the metric value (the deployme
 ## Use template variables
 
 You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/) in your annotation PromQL expressions to make annotations dynamic. For example, `ALERTS{instance=~"$instance"}` filters alert annotations based on the selected instance variable.
+
+## Get help
+
+If your annotations aren't appearing or behaving as expected, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/) for common solutions.

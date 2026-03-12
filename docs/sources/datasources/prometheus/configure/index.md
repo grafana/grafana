@@ -165,7 +165,7 @@ Click **Add** to add an exemplar link.
 
 You can add multiple exemplar links.
 
-### Private data source connect
+## Private data source connect
 
 _Only for Grafana Cloud users._
 
@@ -184,6 +184,8 @@ After you have configured your Prometheus data source options, click **Save & te
 **Next, you can start to visualize data by building a dashboard, or by querying data in the Explore view.**
 
 You can also remove a connection by clicking **Delete**.
+
+If the connection test fails, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/) for help resolving common errors.
 
 ## Provision the data source
 
@@ -208,11 +210,12 @@ datasources:
       manageAlerts: true
       allowAsRecordingRulesTarget: true
       prometheusType: Prometheus
-      prometheusVersion: 3.3.0
+      prometheusVersion: 2.50.0
       cacheLevel: 'High'
       disableRecordingRules: false
       seriesEndpoint: false
       timeInterval: 10s # Prometheus scrape interval
+      incrementalQuerying: true
       incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.

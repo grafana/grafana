@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Authenticating with Azure
+menuTitle: Authenticate with Azure
 title: Connect to Azure Monitor Managed Service for Prometheus
 weight: 220
 review_date: 2026-03-10

@@ -38,6 +38,8 @@ Grafana provides native support for Prometheus, so you don't need to install a p
 The following documentation helps you set up and use the Prometheus data source:
 
 - [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/)
+- [Connect to Amazon Managed Service for Prometheus](aws-authentication/)
+- [Connect to Azure Monitor Managed Service for Prometheus](azure-authentication/)
 - [Prometheus query editor](query-editor/)
 - [Template variables](template-variables/)
 - [Annotations](annotations/)
@@ -77,7 +79,11 @@ For details about Grafana's internal metrics, refer to [Internal Grafana metrics
 
 ## Amazon Managed Service for Prometheus
 
-Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
+Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. For migration steps, refer to [Connect to Amazon Managed Service for Prometheus](aws-authentication/).
+
+## Azure Monitor Managed Service for Prometheus
+
+Grafana has deprecated the Prometheus data source for Azure Monitor Managed Service for Prometheus. Use the [Azure Monitor Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) instead. For migration steps, refer to [Connect to Azure Monitor Managed Service for Prometheus](azure-authentication/).
 
 ## Additional features
 

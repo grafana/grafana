@@ -5,7 +5,7 @@ description: Guide for using the Prometheus data source's query editor
 keywords:
   - grafana
   - prometheus
-  - logs
+  - metrics
   - queries
 labels:
   products:
@@ -20,9 +20,9 @@ review_date: 2026-03-10
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). You can access the Prometheus query editor from a dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**, or from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](https://prometheus.io/docs/querying/basics/). You can access the Prometheus query editor from a dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**, or from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For options and functions common to all query editors, refer to [Query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 The Prometheus query editor has two modes:
 
@@ -155,7 +155,7 @@ When you are satisfied with your query, click **Run query**.
 
 ## Code mode
 
-**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](https://prometheus.io/docs/querying/basics/).
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
@@ -273,3 +273,7 @@ Starting with Grafana v10, the Prometheus data source supports incremental query
 You can enable or disable this feature in the data source configuration or provisioning file using the `incrementalQuerying` field in `jsonData`.
 
 You can also control the overlap between consecutive incremental queries using the `incrementalQueryOverlapWindow` field in `jsonData`. By default, this is set to `10m` (10 minutes). Increasing the `incrementalQueryOverlapWindow` value increases the time range covered by each incremental query. This can help in environments where the most recent data may be delayed or incomplete.
+
+## Get help
+
+If your queries return unexpected results or errors, refer to [Troubleshoot Prometheus data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/) for common solutions.

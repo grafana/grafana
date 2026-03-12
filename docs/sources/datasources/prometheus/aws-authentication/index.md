@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Authenticating with SigV4
+menuTitle: Authenticate with SigV4
 title: Connect to Amazon Managed Service for Prometheus
 weight: 210
 review_date: 2026-03-10

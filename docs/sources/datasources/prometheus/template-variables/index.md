@@ -43,6 +43,28 @@ Select a Prometheus data source query type and enter the required inputs:
 
 For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
+### Query type examples
+
+**Label values -- Instance dropdown for a specific job**
+
+Create a variable named `instance` that lists all instances for the `node_exporter` job:
+
+- **Query type:** `Label values`
+- **Label:** `instance`
+- **Metric:** `node_cpu_seconds_total`
+- **Label filters:** `job = node_exporter`
+
+Use the variable in a query: `rate(node_cpu_seconds_total{instance=~"$instance", job="node_exporter"}[$__rate_interval])`
+
+**Metrics -- Metric name picker**
+
+Create a variable named `metric` that lists all HTTP-related metrics:
+
+- **Query type:** `Metrics`
+- **Metric regex:** `http_.*`
+
+Use the variable in a query: `rate($metric[$__rate_interval])`
+
 ### Query options
 
 With the query variable type, you can set the following query options:
@@ -86,11 +108,11 @@ query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
 Regex: /"([^"]+)"/
 ```
 
-Populate a variable with the instances having a certain state over the time range shown in the dashboard, using `$__range_s`:
+Populate a variable with instances where memory usage exceeded 80% during the dashboard's time range:
 
 ```
-query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
-Regex:
+query_result(max_over_time(((1 - node_memory_AvailableBytes / node_memory_MemTotal) * 100)[${__range_s}s:]) > 80)
+Regex: /\{instance="([^"]+)"/
 ```
 
 ## Use `$__rate_interval`
