@@ -95,7 +95,7 @@ func TestSQLService(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["B"].Error, "not in the allowed list of")
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
-		require.Equal(t, sql.ErrCategoryBlockedNodeOrFunc, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryBlockedNodeOrFunc), sqlErr.Category())
 	})
 
 	t.Run("parse error should be returned", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestSQLService(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["B"].Error, "limit expression expected to be numeric")
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, rsp.Responses["B"].Error, &sqlErr)
-		require.Equal(t, sql.ErrCategoryGeneralGMSError, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryGeneralGMSError), sqlErr.Category())
 	})
 }
 
@@ -197,15 +197,15 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.ErrorContains(t, rsp.Responses["tsMultiNoType"].Error, "missing the data type")
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, rsp.Responses["tsMultiNoType"].Error, &sqlErr)
-		require.Equal(t, sql.ErrCategoryInputConversion, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryInputConversion), sqlErr.Category())
 
 		require.Error(t, rsp.Responses["sqlExpression"].Error, "should return dependency error")
 		require.ErrorContains(t, rsp.Responses["sqlExpression"].Error, "dependency")
 		require.ErrorAs(t, rsp.Responses["sqlExpression"].Error, &sqlErr)
-		require.Equal(t, sql.ErrCategoryDependency, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryDependency), sqlErr.Category())
 
 		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
-		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryInputConversion))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", string(sql.ErrCategoryInputConversion)))
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandInputCount, "error", "false", "test", "missing"))
 	})
 
@@ -221,12 +221,12 @@ func TestSQLServiceErrors(t *testing.T) {
 		_, err := s.BuildPipeline(t.Context(), req)
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, err, &sqlErr)
-		require.Equal(t, sql.ErrCategoryTableNotFound, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryTableNotFound), sqlErr.Category())
 		require.Error(t, err, "whole pipeline fails when selecting a dependency that does not exist")
 
 		// Metrics
 		require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandCount, "ok", "none"))
-		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryTableNotFound))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", string(sql.ErrCategoryTableNotFound)))
 	})
 
 	t.Run("pipeline will fail if query is longer than the configured limit", func(t *testing.T) {
@@ -240,8 +240,8 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.ErrorContains(t, err, "exceeded the configured limit of 5 characters")
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, err, &sqlErr)
-		require.Equal(t, sql.ErrCategoryQueryTooLong, sqlErr.Category())
+		require.Equal(t, string(sql.ErrCategoryQueryTooLong), sqlErr.Category())
 
-		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
+		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", string(sql.ErrCategoryQueryTooLong)))
 	})
 }

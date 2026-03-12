@@ -16,8 +16,11 @@ const sseErrBase = "sse.sql."
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
 type GoMySQLServerError struct {
 	err      error
-	category string
+	category ErrorCategory
 }
+
+// ErrorCategory is a typed string for SQL expression error categories used in metrics, logs, and traces.
+type ErrorCategory string
 
 // CategorizedError is an Error with a Category string for use with metrics, logs, and traces.
 type CategorizedError interface {
@@ -27,7 +30,7 @@ type CategorizedError interface {
 
 // ErrorWithCategory is a concrete implementation of CategorizedError that holds an error and its category.
 type ErrorWithCategory struct {
-	category string
+	category ErrorCategory
 	err      error
 }
 
@@ -36,7 +39,7 @@ func (e *ErrorWithCategory) Error() string {
 }
 
 func (e *ErrorWithCategory) Category() string {
-	return e.category
+	return string(e.category)
 }
 
 // Unwrap provides the original error for errors.Is/As
@@ -44,10 +47,10 @@ func (e *ErrorWithCategory) Unwrap() error {
 	return e.err
 }
 
-const ErrCategoryInvalidGraph = "invalid_graph"
+const ErrCategoryInvalidGraph ErrorCategory = "invalid_graph"
 
 // NewErrorWithCategory creates an ErrorWithCategory wrapping the given error.
-func NewErrorWithCategory(category string, err error) *ErrorWithCategory {
+func NewErrorWithCategory(category ErrorCategory, err error) *ErrorWithCategory {
 	return &ErrorWithCategory{category: category, err: err}
 }
 
@@ -62,7 +65,7 @@ func (e *GoMySQLServerError) Unwrap() error {
 }
 
 func (e *GoMySQLServerError) Category() string {
-	return e.category
+	return string(e.category)
 }
 
 // MakeGMSError creates a GoMySQLServerError with the given refID and error.
@@ -78,8 +81,8 @@ func MakeGMSError(refID string, err error) error {
 	return err
 }
 
-const ErrCategoryGMSFunctionNotFound = "gms_function_not_found"
-const ErrCategoryGMSTableNotFound = "gms_table_not_found"
+const ErrCategoryGMSFunctionNotFound ErrorCategory = "gms_function_not_found"
+const ErrCategoryGMSTableNotFound ErrorCategory = "gms_table_not_found"
 
 // WrapGoMySQLServerError wraps errors from Go MySQL Server with additional context
 // and a category.
@@ -106,12 +109,12 @@ func WrapGoMySQLServerError(refID string, err error) error {
 	}
 }
 
-const ErrCategoryGeneralGMSError = "general_gms_error"
+const ErrCategoryGeneralGMSError ErrorCategory = "general_gms_error"
 
 var generalGMSErrorStr = "sql expression failed due to error from the sql expression engine: {{ .Error }}"
 
 var GeneralGMSError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryGeneralGMSError).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryGeneralGMSError)).MustTemplate(
 	generalGMSErrorStr,
 	errutil.WithPublic(generalGMSErrorStr))
 
@@ -124,15 +127,15 @@ func MakeGeneralGMSError(err *GoMySQLServerError, refID string) CategorizedError
 		Error: err,
 	}
 
-	return &ErrorWithCategory{category: err.Category(), err: GeneralGMSError.Build(data)}
+	return &ErrorWithCategory{category: ErrorCategory(err.Category()), err: GeneralGMSError.Build(data)}
 }
 
-const ErrCategoryInputLimitExceeded = "input_limit_exceeded"
+const ErrCategoryInputLimitExceeded ErrorCategory = "input_limit_exceeded"
 
 var inputLimitExceededStr = "sql expression [{{ .Public.refId }}] was not run because the number of input cells (columns*rows) to the sql expression exceeded the configured limit of {{ .Public.inputLimit }}"
 
 var InputLimitExceededError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryInputLimitExceeded).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryInputLimitExceeded)).MustTemplate(
 	inputLimitExceededStr,
 	errutil.WithPublic(inputLimitExceededStr))
 
@@ -147,12 +150,12 @@ func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedErro
 	return &ErrorWithCategory{category: ErrCategoryInputLimitExceeded, err: InputLimitExceededError.Build(data)}
 }
 
-const ErrCategoryDuplicateStringColumns = "duplicate_string_columns"
+const ErrCategoryDuplicateStringColumns ErrorCategory = "duplicate_string_columns"
 
 var duplicateStringColumnErrorStr = "sql expression [{{ .Public.refId }}] failed because it returned duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination."
 
 var DuplicateStringColumnError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryDuplicateStringColumns).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryDuplicateStringColumns)).MustTemplate(
 	duplicateStringColumnErrorStr,
 	errutil.WithPublic(duplicateStringColumnErrorStr),
 )
@@ -184,12 +187,12 @@ func truncateExamples(examples []string, limit int) []string {
 	return truncated
 }
 
-const ErrCategoryTimeout = "timeout"
+const ErrCategoryTimeout ErrorCategory = "timeout"
 
 var timeoutStr = "sql expression [{{ .Public.refId }}] timed out after {{ .Public.timeout }}"
 
 var TimeoutError = errutil.NewBase(
-	errutil.StatusTimeout, sseErrBase+ErrCategoryTimeout).MustTemplate(
+	errutil.StatusTimeout, sseErrBase+string(ErrCategoryTimeout)).MustTemplate(
 	timeoutStr,
 	errutil.WithPublic(timeoutStr))
 
@@ -207,12 +210,12 @@ func MakeTimeOutError(err error, refID string, timeout time.Duration) Categorize
 	return &ErrorWithCategory{category: ErrCategoryTimeout, err: TimeoutError.Build(data)}
 }
 
-var ErrCategoryCancelled = "cancelled"
+const ErrCategoryCancelled ErrorCategory = "cancelled"
 
 var cancelStr = "sql expression [{{ .Public.refId }}] was cancelled before completion"
 
 var CancelError = errutil.NewBase(
-	errutil.StatusClientClosedRequest, sseErrBase+ErrCategoryCancelled).MustTemplate(
+	errutil.StatusClientClosedRequest, sseErrBase+string(ErrCategoryCancelled)).MustTemplate(
 	cancelStr,
 	errutil.WithPublic(cancelStr))
 
@@ -230,12 +233,12 @@ func MakeCancelError(err error, refID string) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryCancelled, err: CancelError.Build(data)}
 }
 
-var ErrCategoryTableNotFound = "table_not_found"
+const ErrCategoryTableNotFound ErrorCategory = "table_not_found"
 
 var tableNotFoundStr = "failed to run sql expression [{{ .Public.refId }}] because it selects from table (refId/query) [{{ .Public.table }}] and that table was not found"
 
 var TableNotFoundError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryTableNotFound).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryTableNotFound)).MustTemplate(
 	tableNotFoundStr,
 	errutil.WithPublic(tableNotFoundStr))
 
@@ -254,12 +257,12 @@ func MakeTableNotFoundError(refID, table string) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryTableNotFound, err: TableNotFoundError.Build(data)}
 }
 
-const ErrCategoryDependency = "failed_dependency"
+const ErrCategoryDependency ErrorCategory = "failed_dependency"
 
 var sqlDepErrStr = "could not run sql expression [{{ .Public.refId }}] because it selects from the results of query [{{.Public.depRefId }}] which has an error"
 
 var DependencyError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryDependency).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryDependency)).MustTemplate(
 	sqlDepErrStr,
 	errutil.WithPublic(sqlDepErrStr))
 
@@ -275,12 +278,12 @@ func MakeSQLDependencyError(refID, depRefID string) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryDependency, err: DependencyError.Build(data)}
 }
 
-const ErrCategoryInputConversion = "input_conversion"
+const ErrCategoryInputConversion ErrorCategory = "input_conversion"
 
 var sqlInputConvertErrorStr = "failed to convert the results of query [{{.Public.refId}}] (Datasource Type: [{{.Public.dsType}}]) into a SQL/Tabular format for sql expression {{ .Public.forRefID }}: {{ .Error }}"
 
 var InputConvertError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryInputConversion).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryInputConversion)).MustTemplate(
 	sqlInputConvertErrorStr,
 	errutil.WithPublic(sqlInputConvertErrorStr))
 
@@ -302,12 +305,12 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 	return &ErrorWithCategory{category: ErrCategoryInputConversion, err: InputConvertError.Build(data)}
 }
 
-const ErrCategoryEmptyQuery = "empty_query"
+const ErrCategoryEmptyQuery ErrorCategory = "empty_query"
 
 var errEmptyQueryString = "sql expression [{{.Public.refId}}] failed because it has an empty SQL query"
 
 var ErrEmptySQLQuery = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryEmptyQuery).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryEmptyQuery)).MustTemplate(
 	errEmptyQueryString,
 	errutil.WithPublic(errEmptyQueryString))
 
@@ -325,12 +328,12 @@ func MakeErrEmptyQuery(refID string) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryEmptyQuery, err: ErrEmptySQLQuery.Build(data)}
 }
 
-const ErrCategoryInvalidQuery = "invalid_query"
+const ErrCategoryInvalidQuery ErrorCategory = "invalid_query"
 
 var invalidQueryStr = "sql expression [{{.Public.refId}}] failed because it has an invalid SQL query: {{ .Public.error }}"
 
 var ErrInvalidQuery = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryInvalidQuery).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryInvalidQuery)).MustTemplate(
 	invalidQueryStr,
 	errutil.WithPublic(invalidQueryStr))
 
@@ -347,12 +350,12 @@ func MakeErrInvalidQuery(refID string, err error) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryInvalidQuery, err: ErrInvalidQuery.Build(data)}
 }
 
-var ErrCategoryBlockedNodeOrFunc = "blocked_node_or_func"
+const ErrCategoryBlockedNodeOrFunc ErrorCategory = "blocked_node_or_func"
 
 var blockedNodeOrFuncStr = "did not execute the SQL expression {{.Public.refId}} because the sql {{.Public.tokenType}} '{{.Public.token}}' is not in the allowed list of {{.Public.tokenType}}s"
 
 var BlockedNodeOrFuncError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryBlockedNodeOrFunc).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryBlockedNodeOrFunc)).MustTemplate(
 	blockedNodeOrFuncStr,
 	errutil.WithPublic(blockedNodeOrFuncStr))
 
@@ -375,13 +378,13 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) Categorize
 	return &ErrorWithCategory{category: ErrCategoryBlockedNodeOrFunc, err: BlockedNodeOrFuncError.Build(data)}
 }
 
-const ErrCategoryColumnNotFound = "column_not_found"
+const ErrCategoryColumnNotFound ErrorCategory = "column_not_found"
 
 var columnNotFoundStr = `sql expression [{{.Public.refId}}] failed because it selects from a column (refId/query) that does not exist: {{ .Error }}.
 If this happens on a previously working query, it might mean that the query has returned no data, or the resulting schema of the query has changed.`
 
 var ColumnNotFoundError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryColumnNotFound).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryColumnNotFound)).MustTemplate(
 	columnNotFoundStr,
 	errutil.WithPublic(columnNotFoundStr))
 
@@ -397,12 +400,12 @@ func MakeColumnNotFoundError(refID string, err error) CategorizedError {
 	return &ErrorWithCategory{category: ErrCategoryColumnNotFound, err: ColumnNotFoundError.Build(data)}
 }
 
-const ErrCategoryQueryTooLong = "query_too_long"
+const ErrCategoryQueryTooLong ErrorCategory = "query_too_long"
 
 var queryTooLongStr = `sql expression [{{.Public.refId}}] was not run because the SQL query exceeded the configured limit of {{ .Public.queryLengthLimit }} characters`
 
 var QueryTooLongError = errutil.NewBase(
-	errutil.StatusBadRequest, sseErrBase+ErrCategoryQueryTooLong).MustTemplate(
+	errutil.StatusBadRequest, sseErrBase+string(ErrCategoryQueryTooLong)).MustTemplate(
 	queryTooLongStr,
 	errutil.WithPublic(queryTooLongStr))
 
