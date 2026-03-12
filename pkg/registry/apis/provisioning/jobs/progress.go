@@ -126,6 +126,8 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	r.emitMetrics(result)
+
 	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
@@ -136,6 +138,39 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	}
 
 	r.maybeNotify(ctx)
+}
+
+// emitMetrics increments per-record Prometheus counters for success, warning,
+// and error outcomes. metrics and action are immutable after construction, so
+// no lock is needed.
+func (r *jobProgressRecorder) emitMetrics(result JobResourceResult) {
+	if r.metrics == nil {
+		return
+	}
+
+	if result.Error() != nil {
+		if result.Action() != repository.FileActionIgnored {
+			r.metrics.RecordResourceErrors(r.action)
+		}
+		return
+	}
+
+	if result.Warning() != nil {
+		if reason := result.WarningReason(); reason != "" {
+			r.metrics.RecordResourceWarnings(r.action, reason)
+		}
+		return
+	}
+
+	switch result.Action() {
+	case repository.FileActionRenamed:
+		r.metrics.RecordResourceSuccess(r.action, "deleted")
+		r.metrics.RecordResourceSuccess(r.action, "created")
+	case repository.FileActionIgnored:
+		r.metrics.RecordResourceSuccess(r.action, "noop")
+	default:
+		r.metrics.RecordResourceSuccess(r.action, string(result.Action()))
+	}
 }
 
 // ResetResults will reset the results of the job.
@@ -342,34 +377,7 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
 	finalMessage := r.finalMessage
 
-	// Snapshot metrics data while holding the read lock.
-	var snapshotMetrics *JobMetrics
-	var snapshotAction string
-	var snapshotWarnings map[string]int
-	var snapshotErrorCount int
-	if r.metrics != nil {
-		snapshotMetrics = r.metrics
-		snapshotAction = r.action
-		snapshotErrorCount = r.errorCount
-		snapshotWarnings = make(map[string]int, len(r.warningCounts))
-		for reason, count := range r.warningCounts {
-			snapshotWarnings[reason] = count
-		}
-	}
-
 	r.mu.RUnlock()
-
-	// Emit metrics outside the read lock.
-	if snapshotMetrics != nil {
-		for reason, count := range snapshotWarnings {
-			snapshotMetrics.RecordResourceWarnings(snapshotAction, reason, count)
-		}
-		snapshotMetrics.RecordResourceErrors(snapshotAction, snapshotErrorCount)
-		// Clear to prevent double emission from subsequent Complete calls.
-		r.mu.Lock()
-		r.metrics = nil
-		r.mu.Unlock()
-	}
 
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
 		if tooManyErrors {
@@ -403,20 +411,6 @@ func (r *jobProgressRecorder) ResultReasons() []string {
 		reasons = append(reasons, reason)
 	}
 	return reasons
-}
-
-func (r *jobProgressRecorder) WarningCounts() map[string]int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	if len(r.warningCounts) == 0 {
-		return nil
-	}
-	counts := make(map[string]int, len(r.warningCounts))
-	for reason, count := range r.warningCounts {
-		counts[reason] = count
-	}
-	return counts
 }
 
 // HasDirPathFailedCreation checks if a path is nested under any failed folder creation

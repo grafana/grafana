@@ -749,42 +749,4 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder.mu.RUnlock()
 	})
 
-	t.Run("WarningCounts returns counts per reason", func(t *testing.T) {
-		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
-
-		quotaErr1 := quotas.NewQuotaExceededError(errors.New("over quota 1"))
-		quotaErr2 := quotas.NewQuotaExceededError(errors.New("over quota 2"))
-		missingErr := resources.NewMissingFolderMetadata("some/path/")
-
-		recorder.Record(ctx, NewResourceResult().WithError(quotaErr1).Build())
-		recorder.Record(ctx, NewResourceResult().WithError(quotaErr2).Build())
-		recorder.Record(ctx, NewResourceResult().WithError(missingErr).Build())
-
-		counts := recorder.WarningCounts()
-		assert.Len(t, counts, 2)
-		assert.Equal(t, 2, counts[provisioning.ReasonQuotaExceeded])
-		assert.Equal(t, 1, counts[provisioning.ReasonMissingFolderMetadata])
-	})
-
-	t.Run("WarningCounts returns nil when no warnings", func(t *testing.T) {
-		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
-
-		assert.Nil(t, recorder.WarningCounts())
-	})
-
-	t.Run("WarningCounts returns copy not reference", func(t *testing.T) {
-		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
-
-		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
-		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
-
-		counts := recorder.WarningCounts()
-		counts[provisioning.ReasonQuotaExceeded] = 999
-
-		actual := recorder.WarningCounts()
-		assert.Equal(t, 1, actual[provisioning.ReasonQuotaExceeded], "mutation of returned map should not affect recorder")
-	})
 }

@@ -16,10 +16,10 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
+	resourceSuccessTotal  *prometheus.CounterVec // successful resource operations by action and operation
 	resourceWarningsTotal *prometheus.CounterVec // resource warnings by action and reason
-	resourceErrorsTotal   *prometheus.CounterVec // resource errors by action
-	fileOperationsTotal   *prometheus.CounterVec // file operations in the repository
-	resourceOpsTotal      *prometheus.CounterVec // notable resource operations
+	resourceErrorsTotal *prometheus.CounterVec // resource errors by action
+	resourceOpsTotal    *prometheus.CounterVec // notable resource operations
 }
 
 type QueueMetrics struct {
@@ -114,6 +114,15 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	)
 	registry.MustRegister(syncDurationHist)
 
+	resourceSuccessTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_jobs_resource_success_total",
+			Help: "Total successful resource operations during provisioning job runs",
+		},
+		[]string{"action", "operation"},
+	)
+	registry.MustRegister(resourceSuccessTotal)
+
 	resourceWarningsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_jobs_resource_warnings_total",
@@ -132,15 +141,6 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	)
 	registry.MustRegister(resourceErrorsTotal)
 
-	fileOperationsTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_jobs_file_operations_total",
-			Help: "Total file operations performed during provisioning job runs",
-		},
-		[]string{"action", "operation", "reason"},
-	)
-	registry.MustRegister(fileOperationsTotal)
-
 	resourceOpsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_jobs_resource_operations_total",
@@ -157,10 +157,10 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 		syncDurationHist:                 syncDurationHist,
+		resourceSuccessTotal:             resourceSuccessTotal,
 		resourceWarningsTotal:            resourceWarningsTotal,
-		resourceErrorsTotal:              resourceErrorsTotal,
-		fileOperationsTotal:              fileOperationsTotal,
-		resourceOpsTotal:                 resourceOpsTotal,
+		resourceErrorsTotal: resourceErrorsTotal,
+		resourceOpsTotal:    resourceOpsTotal,
 	}
 }
 
@@ -185,19 +185,19 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
 }
 
+// RecordResourceSuccess increments the successful resource operations counter.
+func (m *JobMetrics) RecordResourceSuccess(action, operation string) {
+	m.resourceSuccessTotal.WithLabelValues(action, operation).Inc()
+}
+
 // RecordResourceWarnings increments the resource warnings counter.
-func (m *JobMetrics) RecordResourceWarnings(action, reason string, count int) {
-	m.resourceWarningsTotal.WithLabelValues(action, reason).Add(float64(count))
+func (m *JobMetrics) RecordResourceWarnings(action, reason string) {
+	m.resourceWarningsTotal.WithLabelValues(action, reason).Inc()
 }
 
 // RecordResourceErrors increments the resource errors counter.
-func (m *JobMetrics) RecordResourceErrors(action string, count int) {
-	m.resourceErrorsTotal.WithLabelValues(action).Add(float64(count))
-}
-
-// RecordFileOperation increments the file operations counter.
-func (m *JobMetrics) RecordFileOperation(action, operation, reason string) {
-	m.fileOperationsTotal.WithLabelValues(action, operation, reason).Inc()
+func (m *JobMetrics) RecordResourceErrors(action string) {
+	m.resourceErrorsTotal.WithLabelValues(action).Inc()
 }
 
 // RecordResourceOperation increments the resource operations counter.
