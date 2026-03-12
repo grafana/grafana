@@ -83,7 +83,13 @@ export const ActionRow = ({
 
   // Disabled folder layout option when query is present
   const disabledOptions =
-    state.tag.length || state.starred || state.teamFolders || state.query || state.datasource || state.panel_type || state.createdBy
+    state.tag.length ||
+    state.starred ||
+    state.teamFolders ||
+    state.query ||
+    state.datasource ||
+    state.panel_type ||
+    state.createdBy
       ? [SearchLayout.Folders]
       : [];
 

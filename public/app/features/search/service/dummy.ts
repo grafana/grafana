@@ -28,6 +28,10 @@ export class DummySearcher implements GrafanaSearcher {
     return Promise.resolve(this.expectedStarsResponse!);
   }
 
+  async teamFolders(query: SearchQuery): Promise<QueryResponse> {
+    return Promise.resolve(this.expectedSearchResponse!);
+  }
+
   async getSortOptions(): Promise<SelectableValue[]> {
     return Promise.resolve(this.expectedSortResponse);
   }

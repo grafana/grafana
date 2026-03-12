@@ -123,7 +123,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return noDataResponse();
     }
 
-    const ownerReferences = teams.map((team) => `iam.grafana.app/Team/${team.uid}`);
+    const ownerReferences = teams.map((team: { uid: string }) => `iam.grafana.app/Team/${team.uid}`);
 
     return this.doSearchQuery({
       ...query,
