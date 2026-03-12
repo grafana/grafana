@@ -849,7 +849,7 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 	}
 	var sectionMappings []sectionMapping
 	for _, section := range file.Sections() {
-		prefix := "GF_" + strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(section.Name(), ".", "_"), "-", "_")) + "_"
+		prefix := EnvSectionPrefix(section.Name())
 		sectionMappings = append(sectionMappings, sectionMapping{prefix: prefix, section: section})
 	}
 
@@ -1008,12 +1008,22 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 	}
 }
 
+// envNameFromIniName converts an ini-style name (section or key) to the
+// uppercased, underscore-separated form used in GF_ environment variables.
+// Dots and dashes become underscores; everything is uppercased.
+func envNameFromIniName(name string) string {
+	s := strings.ToUpper(strings.ReplaceAll(name, ".", "_"))
+	return strings.ReplaceAll(s, "-", "_")
+}
+
+// EnvSectionPrefix returns the GF_ environment variable prefix for a given
+// ini section name, e.g. "auth.google" → "GF_AUTH_GOOGLE_".
+func EnvSectionPrefix(sectionName string) string {
+	return "GF_" + envNameFromIniName(sectionName) + "_"
+}
+
 func EnvKey(sectionName string, keyName string) string {
-	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
-	sN = strings.ReplaceAll(sN, "-", "_")
-	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
-	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
-	return envKey
+	return "GF_" + envNameFromIniName(sectionName) + "_" + envNameFromIniName(keyName)
 }
 
 func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {

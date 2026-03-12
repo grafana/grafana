@@ -50,7 +50,7 @@ var MigratedUnifiedResources = map[string]bool{
 // The key names are matched from a known list (knownUnifiedStorageKeys) to preserve
 // their original camelCase.
 func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
-	const envPrefix = "GF_UNIFIED_STORAGE_"
+	envPrefix := EnvSectionPrefix("unified_storage")
 
 	for _, env := range os.Environ() {
 		if !strings.HasPrefix(env, envPrefix) {
