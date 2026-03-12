@@ -80,7 +80,7 @@ export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionCo
           onChange={onSelectChange}
           noOptionsMessage={t('dimensions.color-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
           placeholder={item.settings?.placeholder}
-          isClearable={item.settings?.isClearable ?? false}
+          {...(item.settings?.isClearable ? { isClearable: true } : { isClearable: false })} // silly TS issue
         />
         {isFixed && (
           <div className={styles.picker}>

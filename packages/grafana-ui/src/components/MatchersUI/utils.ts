@@ -141,7 +141,8 @@ export function useMatcherSelectOptions(
   return useMemo(() => {
     let found = false;
 
-    const shouldShowScopes = !scope && displayNames.scopes.size > 1;
+    const uniqueScopes = new Set(displayNames.scopes.values());
+    const shouldShowScopes = !scope && uniqueScopes.size > 1;
     const isFound = (name: string) => name === currentName && (scope ? displayNames.scopes.get(name) === scope : true);
     const getGroup = (name: string) =>
       shouldShowScopes ? getGroupLabelForScope(displayNames.scopes.get(name)) : undefined;

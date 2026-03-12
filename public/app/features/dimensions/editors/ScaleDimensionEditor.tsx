@@ -4,7 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { Combobox, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -107,8 +107,8 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   return (
     <>
       <div>
-        <Select
-          inputId={id}
+        <Combobox
+          id={id}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

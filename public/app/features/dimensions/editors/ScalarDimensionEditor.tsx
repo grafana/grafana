@@ -4,7 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -108,7 +108,8 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
             <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
-        <Select
+        <Combobox
+          aria-label={t('dimensions.scalar-dimension-editor.label', 'Scalar')}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
