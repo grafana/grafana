@@ -34,7 +34,7 @@ func withChannelNotifier(opts *KVBackendOptions) {
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:    kv,
+		KvStore: kv,
 	}
 
 	for _, cfg := range configs {
