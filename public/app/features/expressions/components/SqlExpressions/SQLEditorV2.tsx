@@ -3,7 +3,7 @@ import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, Text } from '@codemirror/state';
 import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
-import { EditorView, ViewUpdate } from '@codemirror/view';
+import { EditorView, lineNumbers, ViewUpdate } from '@codemirror/view';
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
@@ -90,6 +90,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
 
     const extensions = [
       // Start with no tables; reconfigured async once tables are fetched
+      lineNumbers(),
       sqlCompartment.of(buildSqlExtension([], [])),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
