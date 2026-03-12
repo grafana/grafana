@@ -894,6 +894,10 @@ const (
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
 
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
+
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls
 	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
