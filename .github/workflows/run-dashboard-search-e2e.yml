@@ -30,6 +30,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - run: go version
       - name: Setup Node.js
         uses: ./.github/actions/setup-node

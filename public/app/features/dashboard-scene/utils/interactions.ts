@@ -152,8 +152,12 @@ export const DashboardInteractions = {
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
-  trackPastePanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  trackPastePanelClick(
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
   trackDeleteDashboardElement(elementType: string) {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
