@@ -10,6 +10,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
   defaultsDeep(suggestion, {
     fieldConfig: {
       defaults: {
+        unit: 'short',
         thresholds: {
           steps: [
             { value: -Infinity, color: 'green' },
