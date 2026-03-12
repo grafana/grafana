@@ -1651,7 +1651,7 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 						Name:      "test-resource",
 					},
 				},
-				Source:          resourcepb.ListRequest_HISTORY,
+				Source:         resourcepb.ListRequest_HISTORY,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
 				Limit:          10,
 			})
@@ -1787,7 +1787,7 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 						Resource:  "resources",
 					},
 				},
-				Source:          resourcepb.ListRequest_TRASH,
+				Source:         resourcepb.ListRequest_TRASH,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
 				Limit:          10,
 			})
