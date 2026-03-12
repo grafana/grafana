@@ -273,10 +273,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 2026-02-18,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,preview,@grafana/dataviz-squad,false,false,true
-2025-12-02,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
+2025-12-01,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-03,vizLegendSeriesLimit,experimental,@grafana/dataviz-squad,false,false,true
-2026-03-07,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
-2025-12-19,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
+2026-03-06,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
+2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/oss-big-tent,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -326,5 +326,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-23,dsAbstractionApp,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-03-03,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-03-10,flameGraphWithCallTree,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false
+2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false

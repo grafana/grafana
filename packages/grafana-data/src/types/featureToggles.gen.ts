@@ -1658,6 +1658,11 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
+  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
@@ -1667,4 +1672,9 @@ export interface FeatureToggles {
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }

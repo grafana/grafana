@@ -679,7 +679,7 @@
   },
   {
     "name": "fixed:alerting.provisioning:writer",
-    "displayName": "Access to alert rules provisioning API",
+    "displayName": "Write via Provisioning API",
     "description": "Manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
     "group": "Alerting",
     "permissions": [

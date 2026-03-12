@@ -507,6 +507,8 @@ export type DashboardMatcherConfig = {
   id: string;
   /** The matcher options. This is specific to the matcher implementation. */
   options?: object;
+  /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
+  scope?: string;
 };
 export type DashboardDataTransformerConfig = {
   /** Disabled transformations are skipped */

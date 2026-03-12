@@ -13523,6 +13523,9 @@
       },
       "healthResponse": {
         "properties": {
+          "apiserver": {
+            "type": "string"
+          },
           "commit": {
             "type": "string"
           },
