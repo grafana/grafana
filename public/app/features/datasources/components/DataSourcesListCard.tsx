@@ -7,16 +7,27 @@ import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
+import { FailureSeverity } from '../../connections/hooks/useFailedDatasourcesUIDs';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
+
+import { DataSourceFailureTag } from './DataSourceFailureTag';
 
 export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  hasFailures?: boolean;
+  failureSeverity?: FailureSeverity;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
+export function DataSourcesListCard({
+  dataSource,
+  hasWriteRights,
+  hasExploreRights,
+  hasFailures,
+  failureSeverity,
+}: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -31,6 +42,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          hasFailures && failureSeverity && <DataSourceFailureTag key="unhealthy-tag" severity={failureSeverity} />,
         ]}
       </Card.Meta>
       <Card.Tags>
