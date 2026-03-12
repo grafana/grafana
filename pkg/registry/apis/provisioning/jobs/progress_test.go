@@ -748,5 +748,4 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		assert.Empty(t, recorder.resultReasons)
 		recorder.mu.RUnlock()
 	})
-
 }
