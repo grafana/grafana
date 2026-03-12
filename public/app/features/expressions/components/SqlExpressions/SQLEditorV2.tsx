@@ -15,6 +15,7 @@ import {
   Decoration,
   DecorationSet,
   EditorView,
+  highlightActiveLine,
   keymap,
   lineNumbers,
   Panel,
@@ -273,6 +274,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
 
     const extensions = [
       lineNumbers(),
+      highlightActiveLine(),
       // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
       inlineGhostExtension(),
@@ -297,6 +299,15 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
         },
         '&.cm-editor .cm-panels.cm-panels-bottom': {
           borderTop: `1px solid ${theme.colors.border.weak}`,
+        },
+
+        // Active line glow
+        '.cm-activeLine': {
+          background: `linear-gradient(90deg, color-mix(in srgb, ${theme.colors.primary.main} 8%, transparent) 0%, transparent 80%)`,
+        },
+        '.cm-activeLineGutter': {
+          background: `color-mix(in srgb, ${theme.colors.primary.main} 8%, transparent)`,
+          color: theme.colors.text.primary,
         },
 
         // Glassmorphism dropdown with animated entrance
