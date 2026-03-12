@@ -33,11 +33,11 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 	}
 }
 
-func TestAuthorizeExportJob(t *testing.T) {
+func TestAuthorizeResourceJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
 
-	t.Run("authorized - reads at root + create on target folder", func(t *testing.T) {
+	t.Run("export - authorized", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -45,12 +45,27 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
+		require.NoError(t, err)
+	})
+
+	t.Run("migrate - authorized", func(t *testing.T) {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+
+		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
+		spec := provisioning.JobSpec{
+			Action:  provisioning.JobActionMigrate,
+			Migrate: &provisioning.MigrateJobOptions{},
+		}
+
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
 		require.NoError(t, err)
 	})
 
@@ -67,12 +82,11 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
@@ -92,27 +106,25 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 
-	t.Run("nil push options - no error", func(t *testing.T) {
+	t.Run("nil options - no error", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
+			Action: provisioning.JobActionPush,
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
 		require.NoError(t, err)
 	})
 
@@ -139,12 +151,11 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action:  provisioning.JobActionMigrate,
+			Migrate: &provisioning.MigrateJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, cfg, spec)
 		require.NoError(t, err)
 		accessMock.AssertExpectations(t)
 	})
@@ -177,12 +188,11 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockReader, instanceCfg, spec)
+		err := c.authorizeResourceJob(ctx, mockReader, instanceCfg, spec)
 		require.NoError(t, err)
 		accessMock.AssertExpectations(t)
 	})
@@ -193,12 +203,11 @@ func TestAuthorizeExportJob(t *testing.T) {
 
 		c := &jobsConnector{access: accessMock, folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
-			Action:     provisioning.JobActionPush,
-			Repository: "my-repo",
-			Push:       &provisioning.ExportJobOptions{},
+			Action: provisioning.JobActionPush,
+			Push:   &provisioning.ExportJobOptions{},
 		}
 
-		err := c.authorizeExportJob(ctx, mockRepo, cfg, spec)
+		err := c.authorizeResourceJob(ctx, mockRepo, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 	})

@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
@@ -37,6 +36,7 @@ import (
 
 var (
 	_ resource.UnifiedStorageGrpcService = (*service)(nil)
+	_ grpcserver.HealthProbe             = (*service)(nil)
 )
 
 type service struct {
@@ -396,6 +396,20 @@ func (s *service) running(ctx context.Context) error {
 	}
 }
 
+// CheckHealth calls IsHealthy on the storage backend and returns whether it is healthy.
+// It implements grpcserver.HealthProbe.
+func (s *service) CheckHealth(ctx context.Context) (bool, error) {
+	diag, ok := s.backend.(resourcepb.DiagnosticsServer) //nolint:staticcheck
+	if !ok {
+		return true, nil
+	}
+	resp, err := diag.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
+	if err != nil {
+		return false, fmt.Errorf("storage backend health check error: %w", err)
+	}
+	return resp.GetStatus() == resourcepb.HealthCheckResponse_SERVING, nil
+}
+
 func (s *service) stopping(_ error) error {
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
@@ -466,7 +480,8 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 		return err
 	}
 	s.serverStopper = server
-	return s.registerUnifiedResourceServer(provider, server)
+	s.registerUnifiedResourceServer(provider, server)
+	return nil
 }
 
 // searchServerWithAuth wraps a SearchServer with per-service authentication.
@@ -486,7 +501,8 @@ func (s *service) registerSearchServer(provider grpcserver.Provider, server reso
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	resourcepb.RegisterDiagnosticsServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
+	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+	return nil
 }
 
 // resourceServerWithAuth wraps a ResourceServer with per-service authentication.
@@ -497,7 +513,7 @@ type resourceServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) error {
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
@@ -512,18 +528,5 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	// Register search services
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
-	return s.registerHealthAndReflection(provider, server)
-}
-
-// registerHealthAndReflection registers the health check and reflection services on the gRPC server.
-func (s *service) registerHealthAndReflection(provider grpcserver.Provider, healthChecker resourcepb.DiagnosticsServer) error {
-	healthService, err := resource.ProvideHealthService(healthChecker)
-	if err != nil {
-		return err
-	}
-	srv := provider.GetServer()
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
-
-	return nil
 }
