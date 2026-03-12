@@ -1,10 +1,10 @@
 import { autocompletion, Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
-import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { Compartment, EditorState, Text } from '@codemirror/state';
-import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
+import { defaultHighlightStyle, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { Compartment, EditorState, Extension, Text } from '@codemirror/state';
 import { EditorView, lineNumbers, Panel, showPanel, ViewUpdate } from '@codemirror/view';
 import { css } from '@emotion/css';
+import { tags as t } from '@lezer/highlight';
 import { useEffect, useRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { useLatest } from 'react-use';
@@ -17,6 +17,73 @@ import { QueryToolbox } from '../QueryToolbox';
 
 // Hoisted — MySQL keywords and dialect don't change
 const kwSource = keywordCompletionSource(MySQL, true);
+
+function buildGrafanaDarkTheme(theme: GrafanaTheme2): Extension {
+  const editorTheme = EditorView.theme(
+    {
+      '&': {
+        backgroundColor: theme.colors.background.primary,
+        color: theme.colors.text.primary,
+      },
+      '.cm-content': {
+        caretColor: theme.colors.text.primary,
+      },
+      '.cm-cursor, .cm-dropCursor': {
+        borderLeftColor: theme.colors.text.primary,
+      },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
+        {
+          backgroundColor: theme.colors.primary.transparent,
+        },
+      '.cm-activeLine': {
+        backgroundColor: theme.colors.action.hover,
+      },
+      '.cm-gutters': {
+        backgroundColor: theme.colors.background.secondary,
+        color: theme.colors.text.secondary,
+        borderRight: 'none',
+      },
+      '.cm-activeLineGutter': {
+        backgroundColor: theme.colors.action.hover,
+      },
+      '.cm-tooltip': {
+        backgroundColor: theme.colors.background.secondary,
+        border: `1px solid ${theme.colors.border.weak}`,
+      },
+      '.cm-tooltip .cm-tooltip-arrow:before': {
+        borderTopColor: 'transparent',
+        borderBottomColor: 'transparent',
+      },
+      '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    },
+    { dark: true }
+  );
+
+  const highlightStyle = HighlightStyle.define([
+    { tag: t.keyword, color: '#ff7b72' },
+    { tag: [t.name, t.deleted, t.character, t.macroName], color: theme.colors.text.primary },
+    { tag: [t.function(t.variableName), t.labelName], color: '#d2a8ff' },
+    { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: '#79c0ff' },
+    { tag: [t.definition(t.name), t.separator], color: theme.colors.text.primary },
+    { tag: [t.typeName, t.className, t.changed, t.annotation, t.modifier, t.self, t.namespace], color: '#ffa657' },
+    { tag: [t.operator, t.operatorKeyword, t.url, t.escape, t.regexp, t.special(t.string)], color: '#79c0ff' },
+    { tag: [t.meta, t.comment], color: theme.colors.text.disabled, fontStyle: 'italic' },
+    { tag: t.strong, fontWeight: 'bold' },
+    { tag: t.emphasis, fontStyle: 'italic' },
+    { tag: t.strikethrough, textDecoration: 'line-through' },
+    { tag: t.link, color: '#79c0ff', textDecoration: 'underline' },
+    { tag: t.heading, fontWeight: 'bold', color: '#ff7b72' },
+    { tag: [t.atom, t.bool, t.special(t.variableName)], color: '#79c0ff' },
+    { tag: [t.processingInstruction, t.string, t.inserted], color: '#a5d6ff' },
+    { tag: t.invalid, color: theme.colors.error.text },
+    { tag: t.number, color: '#79c0ff' },
+  ]);
+
+  return [editorTheme, syntaxHighlighting(highlightStyle)];
+}
 
 export interface SQLEditorV2CompletionProvider {
   getTables: () => Promise<string[]>;
@@ -154,8 +221,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
       lineNumbers(),
       // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
-      theme.isDark ? oneDarkTheme : [],
-      syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
+      theme.isDark ? buildGrafanaDarkTheme(theme) : syntaxHighlighting(defaultHighlightStyle),
       showPanel.of(toolboxProps ? makeToolboxPanel : null),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {

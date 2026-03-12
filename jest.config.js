@@ -39,7 +39,7 @@ const esModules = [
   '@codemirror/view',
   '@codemirror/lang-sql',
   '@codemirror/language',
-  '@codemirror/theme-one-dark',
+  '@lezer/highlight',
 ].join('|');
 
 module.exports = {
