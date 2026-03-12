@@ -1351,7 +1351,7 @@ func (h *GitExportHelper) cloneRemote(t *testing.T, ctx context.Context, repoNam
 	require.NoError(t, err, "failed to create temp dir for git clone")
 
 	cloneDir := filepath.Join(tmpDir, "repo")
-	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir)
+	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		_ = os.RemoveAll(tmpDir)
@@ -1380,7 +1380,7 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 	cloneDir, cleanup := h.cloneRemote(t, ctx, repoName)
 	defer cleanup()
 
-	data, err := os.ReadFile(filepath.Join(cloneDir, filePath))
+	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
 	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
 	return data
 }
