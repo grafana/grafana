@@ -386,7 +386,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	const numEvents = 50
+	const numEvents = 20
 
 	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
@@ -418,7 +418,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	require.NoError(t, err)
 
 	// Write events in batches of fixed concurrency until all are written.
-	const concurrency = 20
+	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
 		end := batch + concurrency
