@@ -37,6 +37,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	kvOpts := resource.KVBackendOptions{
 		KvStore:        kv,
 		SearchLookback: time.Second,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	if dbConn.DriverName() == "sqlite3" {

@@ -31,6 +31,18 @@ func withChannelNotifier(opts *KVBackendOptions) {
 	opts.UseChannelNotifier = true
 }
 
+func withKV(kv KV) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.KvStore = kv
+	}
+}
+
+func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.WatchOptions.SettleDelay = d
+	}
+}
+
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
@@ -347,23 +359,21 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 // in ascending ResourceVersion order.
 func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	var settleDelay time.Duration = 0 // use default value to exercise handling concurrent writes
 
 	t.Run("pollingNotifier", func(t *testing.T) {
 		if db.IsTestDbSQLite() {
 			t.Skip("sqlite uses channel notifier")
 		}
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		})
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 
 	t.Run("channelNotifier", func(t *testing.T) {
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		}, withChannelNotifier)
+		if !db.IsTestDbSQLite() {
+			t.Skip("channel notifier only enabled with sqlite")
+		}
+		backend := setupTestStorageBackend(t, withChannelNotifier, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 }
