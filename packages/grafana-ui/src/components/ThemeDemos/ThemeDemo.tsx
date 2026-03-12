@@ -88,6 +88,8 @@ export const ThemeDemo = () => {
 
   const vizColors = t.visualization.hues;
 
+  const classicPalette = t.visualization.palette;
+
   const selectOptions = [
     { label: 'Item 1', value: 'Item 1' },
     { label: 'Item 2', value: 'Item 2' },
@@ -175,6 +177,16 @@ export const ThemeDemo = () => {
                 ))}
               </tbody>
             </table>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Classic palette" isOpen={true}>
+          <DemoBox bg="primary" scrollable>
+            <Stack gap={0}>
+              {classicPalette.map((paletteColor) => {
+                const color = t.visualization.getColorByName(paletteColor);
+                return <div style={{ backgroundColor: color, height: '40px', width: '20px' }} key={color} />;
+              })}
+            </Stack>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>
