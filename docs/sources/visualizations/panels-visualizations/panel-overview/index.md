@@ -17,7 +17,7 @@ title: Panel overview
 description: Learn about the features of the panel
 weight: 15
 aliases:
-  - ../../panels-visualizations/panel-overview/ # https://grafana.com/docs/grafana/next/panels-visualizations/panel-overview/
+  - ../../panels-visualizations/panel-overview/ # /docs/grafana/next/panels-visualizations/panel-overview/
 ---
 
 # Panel overview
