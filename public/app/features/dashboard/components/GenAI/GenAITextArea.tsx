@@ -79,7 +79,7 @@ export function GenAITextArea({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   assistantTextArea: css({
-    '& button[aria-label="Generate with AI"]': {
+    '& button': {
       right: `calc(${theme.spacing(1)} + ${theme.spacing(0.5)}) !important`,
     },
   }),

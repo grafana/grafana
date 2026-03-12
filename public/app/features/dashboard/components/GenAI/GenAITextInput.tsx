@@ -81,7 +81,7 @@ export function GenAITextInput({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   assistantInput: css({
-    '& button[aria-label="Generate with AI"]': {
+    '& button': {
       marginRight: theme.spacing(0.5),
     },
   }),
