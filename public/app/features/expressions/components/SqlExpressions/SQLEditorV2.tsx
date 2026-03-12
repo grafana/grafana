@@ -178,6 +178,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
   const languageRef = useLatest(language);
   const toolboxPropsRef = useLatest(toolboxProps);
   const panelRootRef = useRef<Root | null>(null);
+  const themeCompartmentRef = useRef(new Compartment());
 
   // Mount the editor once
   useEffect(() => {
@@ -221,7 +222,9 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
       lineNumbers(),
       // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
-      theme.isDark ? buildGrafanaDarkTheme(theme) : syntaxHighlighting(defaultHighlightStyle),
+      themeCompartmentRef.current.of(
+        theme.isDark ? buildGrafanaDarkTheme(theme) : syntaxHighlighting(defaultHighlightStyle)
+      ),
       showPanel.of(toolboxProps ? makeToolboxPanel : null),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
@@ -290,6 +293,19 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: query } });
     }
   }, [query]);
+
+  // Reconfigure editor theme when Grafana theme changes (e.g. dark/light toggle)
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) {
+      return;
+    }
+    view.dispatch({
+      effects: themeCompartmentRef.current.reconfigure(
+        theme.isDark ? buildGrafanaDarkTheme(theme) : syntaxHighlighting(defaultHighlightStyle)
+      ),
+    });
+  }, [theme]);
 
   // Keep toolbox re-rendered when query changes (for copy button etc.)
   useEffect(() => {
