@@ -115,7 +115,8 @@ To add a new annotation query to a dashboard, follow these steps:
 {{< docs/list >}}
 
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
+1. In the sidebar, click **Settings**.
 1. On the **Settings** page, go to the **Annotations** tab.
 1. Click **Add annotation query**.
 
@@ -161,10 +162,16 @@ To add a new annotation query to a dashboard, follow these steps:
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
-1. Click **Save dashboard**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
 {{< /docs/list >}}
+
+{{< admonition type="tip" >}}
+To create annotation queries without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Annotation query**.
+{{< /admonition >}}
 
 ## Built-in query
 
