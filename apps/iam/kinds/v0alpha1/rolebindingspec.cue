@@ -9,7 +9,7 @@ RoleBindingSpec: {
 	}
 	#RoleRef: {
 		// kind of role
-		kind: "Role" | "CoreRole" | "GlobalRole"
+		kind: "Role" | "GlobalRole"
 		// uid of the role
 		name: string
 	}
@@ -27,7 +27,7 @@ GlobalRoleBindingSpec: {
 	}
 	#RoleRef: {
 		// kind of role
-		kind: "CoreRole" | "GlobalRole"
+		kind: "GlobalRole"
 		// uid of the role
 		name: string
 	}

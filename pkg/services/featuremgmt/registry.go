@@ -641,6 +641,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "drilldownRecommendations",
 			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:        FeatureStageExperimental,
@@ -1826,14 +1833,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthzGlobalRolesApi",
 			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2620,6 +2619,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
+			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			FrontendOnly:    true,
+		},
+		{
 			Name:         "flameGraphWithCallTree",
 			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
 			Stage:        FeatureStageExperimental,
@@ -2633,6 +2641,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+		}, {
+			Name:            "colorblindThemes",
+			Description:     "Enables the new colorblind-friendly themes",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaFrontendPlatformSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 	}
 )

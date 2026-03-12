@@ -259,6 +259,10 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -650,10 +654,6 @@ const (
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
 
-	// FlagKubernetesAuthzCoreRolesApi
-	// Registers AuthZ Core Roles /apis endpoint
-	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
-
 	// FlagKubernetesAuthzGlobalRolesApi
 	// Registers AuthZ Global Roles /apis endpoint
 	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
@@ -901,4 +901,8 @@ const (
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls
 	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )

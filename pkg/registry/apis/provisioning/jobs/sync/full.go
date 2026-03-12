@@ -79,7 +79,7 @@ func FullSync(
 		}
 		for _, p := range missingFolderMetadata {
 			builder := jobs.NewFolderResult(p).
-				WithWarning(&resources.MissingFolderMetadata{Path: p})
+				WithWarning(resources.NewMissingFolderMetadata(p))
 			if action, ok := changeActions[p]; ok {
 				builder = builder.WithAction(action)
 			} else {
