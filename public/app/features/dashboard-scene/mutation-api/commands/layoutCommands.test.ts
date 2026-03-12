@@ -32,13 +32,13 @@ jest.mock('../../edit-pane/shared', () => {
   };
 });
 
+let currentTestScene: unknown;
+
 jest.mock('../../utils/utils', () => {
   const actual = jest.requireActual('../../utils/utils');
   return {
     ...actual,
-    getDashboardSceneFor: jest.fn(() => ({
-      state: { isEditing: true },
-    })),
+    getDashboardSceneFor: jest.fn(() => currentTestScene ?? { state: { isEditing: true } }),
   };
 });
 
@@ -84,6 +84,8 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     }),
   };
 
+  currentTestScene = scene;
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
 }
@@ -117,6 +119,8 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -155,6 +159,8 @@ function buildRowsSceneWithPanels(): DashboardScene {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -195,6 +201,8 @@ function buildSceneWithLayoutParent(
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -721,6 +729,7 @@ describe('Layout mutation commands', () => {
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
@@ -765,6 +774,7 @@ describe('Layout mutation commands', () => {
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
