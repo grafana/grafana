@@ -6,6 +6,7 @@ import (
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -67,7 +68,7 @@ func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
 	if cfg == nil {
 		cfg = &setting.Cfg{}
 	}
-	return &staticService{cfg: cfg}
+	return &staticService{cfg: cfg, metrics: provideDualWriterMetrics(prometheus.NewRegistry())}
 }
 
 func ProvideService(
@@ -76,6 +77,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	migrator unifiedmigrations.UnifiedStorageMigrationService,
 	statusReader unifiedmigrations.MigrationStatusReader,
+	reg prometheus.Registerer,
 ) (Service, error) {
 	// Ensure migrations have run before starting dualwrite
 	err := migrator.Run(context.Background())
@@ -87,9 +89,11 @@ func ProvideService(
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 
+	metrics := provideDualWriterMetrics(reg)
+
 	if cfg != nil {
 		if !enabled {
-			return &staticService{cfg: cfg, statusReader: statusReader}, nil
+			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 		}
 
 		foldersMode := cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
@@ -97,7 +101,7 @@ func ProvideService(
 
 		// If both are fully on unified (Mode5), the dynamic service is not needed.
 		if foldersMode == rest.Mode5 && dashboardsMode == rest.Mode5 {
-			return &staticService{cfg: cfg, statusReader: statusReader}, nil
+			return &staticService{cfg: cfg, statusReader: statusReader, metrics: metrics}, nil
 		}
 
 		if (foldersMode >= rest.Mode4 || dashboardsMode >= rest.Mode4) && foldersMode != dashboardsMode {
@@ -120,6 +124,7 @@ func ProvideService(
 		enabled:            enabled,
 		statusReader:       statusReader,
 		resourceModesCache: gocache.New(cacheTTL, cacheCleanup),
+		metrics:            metrics,
 	}, nil
 }
 
@@ -128,6 +133,7 @@ type service struct {
 	enabled            bool
 	statusReader       unifiedmigrations.MigrationStatusReader
 	resourceModesCache *gocache.Cache
+	metrics            *dualWriterMetrics
 }
 
 // getStorageMode returns the cached StorageMode for a non-managed resource.
@@ -159,7 +165,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 				service:   m,
 				legacy:    legacy,
 				unified:   unified,
-				dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
+				dualwrite: &dualWriter{legacy: legacy, unified: unified, gr: gr, metrics: m.metrics}, // not used for read
 				gr:        gr,
 			}, nil
 		}
@@ -170,7 +176,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
-		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true}, nil
+		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true, gr: gr, metrics: m.metrics}, nil
 	default:
 		return legacy, nil
 	}
