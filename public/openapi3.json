@@ -3123,6 +3123,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -13520,6 +13523,9 @@
       },
       "healthResponse": {
         "properties": {
+          "apiserver": {
+            "type": "string"
+          },
           "commit": {
             "type": "string"
           },

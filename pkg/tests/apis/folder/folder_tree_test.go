@@ -55,7 +55,6 @@ func TestIntegrationFolderTreeZanzana(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch:    true,
 		ZanzanaReconciliationInterval: 100 * time.Millisecond,
 		DisableZanzanaCache:           true,
 	})
@@ -70,10 +69,8 @@ func TestIntegrationFolderTree(t *testing.T) {
 
 	modes := []grafanarest.DualWriterMode{
 		grafanarest.Mode0, // legacy only
-		grafanarest.Mode2, // write both, read legacy
-		grafanarest.Mode3, // write both, read unified
-		grafanarest.Mode4,
-		grafanarest.Mode5,
+		grafanarest.Mode1, // write both (best-effort), read legacy
+		grafanarest.Mode5, // write/read unified, no fallback
 	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
@@ -90,7 +87,7 @@ func TestIntegrationFolderTree(t *testing.T) {
 						DualWriterMode: mode,
 					},
 				},
-				UnifiedStorageEnableSearch: mode >= grafanarest.Mode3, // make sure modes 0-3 work without search enabled
+				UnifiedStorageDisableSearch: mode < grafanarest.Mode5, // make sure modes 0-1 work without search enabled
 			})
 		})
 	}

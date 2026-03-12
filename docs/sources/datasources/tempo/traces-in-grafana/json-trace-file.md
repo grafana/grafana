@@ -30,7 +30,7 @@ To upload a trace file:
 
 ## Download a trace or service graph
 
-To download a trace or Service Graph through the [Inspector panel](https://grafana.com/docs/grafana/<TEMPO_VERSION>/explore/explore-inspector/):
+To download a trace or Service Graph through the [Inspector panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/):
 
 1. Open the inspector.
 1. Navigate to the **Data** tab.

@@ -2,8 +2,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -13,6 +17,13 @@ import { PoliciesTree } from './PoliciesTree';
 
 const PoliciesTreeWrapper = () => {
   const { name = '' } = useParams();
+  const { selectedAlertmanager = '' } = useAlertmanager();
+  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { getRouteGroupsMap } = useRouteGroupsMatcher();
+  const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
+    { amSourceName: selectedAlertmanager },
+    { skip: !canSeeAlertGroups || !selectedAlertmanager }
+  );
 
   const routeName = decodeURIComponent(name);
 
@@ -29,7 +40,14 @@ const PoliciesTreeWrapper = () => {
     );
   }
 
-  return <PoliciesTree routeName={routeName} />;
+  return (
+    <PoliciesTree
+      routeName={routeName}
+      alertGroups={alertGroups}
+      refetchAlertGroups={refetchAlertGroups}
+      getRouteGroupsMap={getRouteGroupsMap}
+    />
+  );
 };
 
 function PolicyPage() {

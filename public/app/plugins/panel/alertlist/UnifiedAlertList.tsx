@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
@@ -121,10 +121,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
-  let dashboard: DashboardModel | undefined = undefined;
+  const dashboardRef = useRef<DashboardModel | undefined>(undefined);
 
   useEffectOnce(() => {
-    dashboard = getDashboardSrv().getCurrent();
+    dashboardRef.current = getDashboardSrv().getCurrent();
   });
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
@@ -173,6 +173,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     if (!promRulesRequests.loading) {
       fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
     }
+  }, [dispatch, matcherList, stateList, effectiveLimitAlerts, dataSourceName, promRulesRequests.loading]);
+
+  useEffect(() => {
+    const dashboard = dashboardRef.current;
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
@@ -187,14 +191,12 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     };
   }, [
     dispatch,
-    dashboard,
     matcherList,
     stateList,
     effectiveLimitAlerts,
     dataSourceName,
     refetchGrafanaPromRules,
     shouldFetchGrafanaRules,
-    promRulesRequests.loading,
   ]);
 
   const handleInstancesLimit = (limit: boolean) => {

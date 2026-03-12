@@ -4051,6 +4051,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5021,6 +5022,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;

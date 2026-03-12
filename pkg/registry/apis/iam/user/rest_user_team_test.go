@@ -271,7 +271,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.True(t, responder.called)
 		require.Equal(t, http.StatusOK, responder.code)
 
-		result, ok := responder.obj.(*iamv0alpha1.GetTeamsResponse)
+		result, ok := responder.obj.(*iamv0alpha1.GetUserTeamsResponse)
 		require.True(t, ok)
 		require.Len(t, result.Items, 2)
 		require.Equal(t, "user1", result.Items[0].User)

@@ -60,6 +60,9 @@ func ProvideAppInstaller(
 	coreProvider := meta.NewCoreProvider(logger, func() (string, error) {
 		return getPluginsPath(cfgProvider)
 	})
+	if err := coreProvider.Init(context.Background()); err != nil {
+		logger.Warn("Failed to eagerly load core plugins", "error", err)
+	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager, false)

@@ -1,13 +1,16 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
 import { FieldConfig, Options } from './panelcfg.gen';
+import { timeseriesPresetsSupplier } from './presets';
 import { timeseriesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
@@ -15,7 +18,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
 
     builder.addCustomEditor({
       id: 'timezone',
@@ -25,6 +28,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       editor: TimezonesEditor,
       defaultValue: undefined,
     });
+    addAnnotationOptions(builder);
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
+  .setPresetsSupplier(timeseriesPresetsSupplier)
   .setDataSupport({ annotations: true, alertStates: true });
