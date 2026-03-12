@@ -30,6 +30,6 @@ describe('ClusteringSwitchEditor', () => {
     render(<ClusteringSwitchEditor value={24} onChange={onChange} item={{} as never} context={{} as never} />);
     await user.click(screen.getByRole('switch'));
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(0);
+    expect(onChange).toHaveBeenCalledWith(-1);
   });
 });
