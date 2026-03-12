@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -586,7 +587,11 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	tmpl := "testdata/local-write.json.tmpl"
+	var thisFile string
+	if _, file, _, ok := runtime.Caller(0); ok {
+		thisFile = file
+	}
+	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
@@ -786,6 +791,11 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 //nolint:golint,unused
 func WithLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
+}
+
+// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
+func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 func WithRepositoryTypes(types []string) GrafanaOption {

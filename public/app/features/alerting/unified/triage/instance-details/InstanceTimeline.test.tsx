@@ -247,6 +247,30 @@ describe('InstanceTimeline component', () => {
     expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
   });
 
+  it('does not show outcome label when all notifications succeed', () => {
+    const records = [makeRecord(1000, 'Normal', 'Alerting')];
+    const notifications = [
+      makeNotification({ timestamp: '1970-01-01T00:00:01.500Z', outcome: 'success' }),
+      makeNotification({ timestamp: '1970-01-01T00:00:01.600Z', outcome: 'success' }),
+    ];
+
+    render(<InstanceTimeline records={records} notifications={notifications} />);
+
+    expect(screen.queryByText(/delivered/i)).not.toBeInTheDocument();
+  });
+
+  it('shows outcome label when there are failed notifications', () => {
+    const records = [makeRecord(1000, 'Normal', 'Alerting')];
+    const notifications = [
+      makeNotification({ timestamp: '1970-01-01T00:00:01.500Z', outcome: 'success' }),
+      makeNotification({ timestamp: '1970-01-01T00:00:01.600Z', outcome: 'error' }),
+    ];
+
+    render(<InstanceTimeline records={records} notifications={notifications} />);
+
+    expect(screen.getByText('(1 delivered, 1 failed)')).toBeInTheDocument();
+  });
+
   it('expands notification details when clicking on the summary row', async () => {
     const user = userEvent.setup();
     const records = [makeRecord(1000, 'Normal', 'Alerting')];

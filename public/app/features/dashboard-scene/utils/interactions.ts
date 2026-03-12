@@ -87,6 +87,10 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
+  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_link_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
   newVariableTypeSelected: (properties: { type: string }) => {
@@ -148,8 +152,12 @@ export const DashboardInteractions = {
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
-  trackPastePanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  trackPastePanelClick(
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
   trackDeleteDashboardElement(elementType: string) {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
