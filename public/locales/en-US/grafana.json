@@ -3414,7 +3414,6 @@
       }
     },
     "triage": {
-      "alert-instances": "Alert instances",
       "all-labels-drawer-title": "All labels",
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
@@ -3426,6 +3425,8 @@
       "expand": "Expand",
       "expand-all": "Expand all",
       "expand-sidebar": "Expand sidebar",
+      "filter-labels": "Filter labels",
+      "filter-labels-placeholder": "Filter",
       "group-row": {
         "no-label": "No {{label}}"
       },
