@@ -1,8 +1,28 @@
-import { autocompletion, Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import {
+  autocompletion,
+  Completion,
+  CompletionContext,
+  CompletionResult,
+  currentCompletions,
+  selectedCompletion,
+  completionStatus,
+  acceptCompletion,
+} from '@codemirror/autocomplete';
 import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { Compartment, EditorState, Text } from '@codemirror/state';
-import { EditorView, lineNumbers, Panel, showPanel, ViewUpdate } from '@codemirror/view';
+import {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  keymap,
+  lineNumbers,
+  Panel,
+  showPanel,
+  ViewPlugin,
+  ViewUpdate,
+  WidgetType,
+} from '@codemirror/view';
 import { css } from '@emotion/css';
 
 import { useEffect, useRef } from 'react';
@@ -90,6 +110,97 @@ function makeCompletionSource(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Inline ghost-text completion (Shopify-style)
+// Shows the remaining text of the top completion as faded text after the cursor.
+// Press Tab to accept. Computed purely from the autocomplete state — no dispatch needed.
+// ---------------------------------------------------------------------------
+
+class GhostWidget extends WidgetType {
+  constructor(readonly text: string) {
+    super();
+  }
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = 'cm-ghost-text';
+    span.textContent = this.text;
+    return span;
+  }
+  eq(other: GhostWidget) {
+    return this.text === other.text;
+  }
+}
+
+function getGhostText(state: EditorState): { text: string; pos: number } | null {
+  if (completionStatus(state) !== 'active') {
+    return null;
+  }
+  const selected = selectedCompletion(state);
+  const all = currentCompletions(state);
+  const completion = selected ?? all[0];
+  if (!completion) {
+    return null;
+  }
+
+  const cursor = state.selection.main.head;
+  const textBefore = state.doc.sliceString(Math.max(0, cursor - completion.label.length), cursor);
+
+  // Find how much of the label the user has already typed
+  let overlap = 0;
+  for (let i = Math.min(textBefore.length, completion.label.length); i > 0; i--) {
+    if (completion.label.slice(0, i).toLowerCase() === textBefore.slice(textBefore.length - i).toLowerCase()) {
+      overlap = i;
+      break;
+    }
+  }
+
+  const remaining = completion.label.slice(overlap);
+  if (remaining.length === 0) {
+    return null;
+  }
+  return { text: remaining, pos: cursor };
+}
+
+// Use a ViewPlugin that provides decorations — reads completion state each update
+const ghostPlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet = Decoration.none;
+
+    update(update: ViewUpdate) {
+      const ghost = getGhostText(update.state);
+      if (ghost) {
+        this.decorations = Decoration.set([
+          Decoration.widget({ widget: new GhostWidget(ghost.text), side: 1 }).range(ghost.pos),
+        ]);
+      } else {
+        this.decorations = Decoration.none;
+      }
+    }
+  },
+  { decorations: (v) => v.decorations }
+);
+
+function acceptGhostCompletion(view: EditorView): boolean {
+  if (completionStatus(view.state) === 'active') {
+    return acceptCompletion(view);
+  }
+  return false;
+}
+
+function inlineGhostExtension(): import('@codemirror/state').Extension {
+  return [
+    ghostPlugin,
+    keymap.of([{ key: 'Tab', run: acceptGhostCompletion }]),
+    EditorView.theme({
+      '.cm-ghost-text': {
+        opacity: '0.35',
+        fontStyle: 'italic',
+        pointerEvents: 'none',
+      },
+    }),
+  ];
+}
+
 function buildSqlExtension(
   tables: string[],
   getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>,
@@ -159,6 +270,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
       lineNumbers(),
       // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
+      inlineGhostExtension(),
       oneDark,
       showPanel.of(toolboxProps ? makeToolboxPanel : null),
       EditorView.updateListener.of((update: ViewUpdate) => {
@@ -182,20 +294,18 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
           borderTop: `1px solid ${theme.colors.border.weak}`,
         },
 
-        // --- Ultra-modern autocomplete: horizontal chip bar ---
+        // Subtle dropdown — secondary to the inline ghost text
         '.cm-tooltip.cm-tooltip-autocomplete': {
           background: theme.colors.background.elevated,
-          backdropFilter: 'blur(16px)',
           border: `1px solid ${theme.colors.border.weak}`,
-          borderRadius: '12px',
-          boxShadow: `0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px ${theme.colors.border.weak}`,
-          padding: '6px',
-          minWidth: '220px',
+          borderRadius: '8px',
+          boxShadow: theme.shadows.z3,
+          padding: '4px',
         },
         '.cm-tooltip-autocomplete > ul': {
           fontFamily: theme.typography.fontFamilyMonospace,
           fontSize: '12px',
-          maxHeight: '200px',
+          maxHeight: '160px',
           overflowY: 'auto',
           scrollbarWidth: 'none',
         },
@@ -203,67 +313,21 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
           display: 'none',
         },
         '.cm-tooltip-autocomplete > ul > li': {
-          padding: '5px 10px',
-          borderRadius: '8px',
-          border: `1px solid transparent`,
-          cursor: 'pointer',
-          transition: 'all 0.12s ease',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          lineHeight: '1.5',
-          margin: '2px 0',
+          padding: '3px 8px',
+          borderRadius: '4px',
+          lineHeight: '1.6',
+          margin: '1px 0',
         },
         '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
-          background: theme.colors.primary.transparent,
-          borderColor: theme.colors.primary.border,
-          boxShadow: `0 0 12px ${theme.colors.primary.transparent}`,
-          color: theme.colors.text.maxContrast,
+          background: theme.colors.action.hover,
         },
-        // Color-coded type dot replacing the icon
         '.cm-completionIcon': {
-          fontSize: '0',
-          width: '6px',
-          height: '6px',
-          borderRadius: '50%',
-          display: 'inline-block',
-          flexShrink: '0',
-          background: theme.colors.text.disabled,
-          padding: '0',
-          marginRight: '0',
-          boxSizing: 'border-box',
-        },
-        '.cm-completionIcon-keyword::after': {
-          content: '""',
-        },
-        '.cm-completionIcon-keyword': {
-          background: theme.colors.warning.main,
-        },
-        '.cm-completionIcon-type::after': {
-          content: '""',
-        },
-        '.cm-completionIcon-type': {
-          background: theme.colors.info.main,
-        },
-        '.cm-completionIcon-property::after': {
-          content: '""',
-        },
-        '.cm-completionIcon-property': {
-          background: theme.colors.success.main,
-        },
-        '.cm-completionIcon-function::after': {
-          content: '""',
-        },
-        '.cm-completionIcon-function': {
-          background: '#d2a8ff',
-        },
-        '.cm-completionLabel': {
-          color: theme.colors.text.primary,
+          display: 'none',
         },
         '.cm-completionMatchedText': {
           textDecoration: 'none',
+          fontWeight: 600,
           color: theme.colors.text.maxContrast,
-          fontWeight: 700,
         },
         '.cm-completionDetail': {
           display: 'none',
