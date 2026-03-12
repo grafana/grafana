@@ -188,7 +188,7 @@ func fileActionToOperation(action repository.FileAction) ResourceOperation {
 	case repository.FileActionRenamed:
 		return OperationRenamed
 	case repository.FileActionIgnored:
-		return OperationNoop
+		return OperationIgnored
 	default:
 		return ResourceOperation(action)
 	}
