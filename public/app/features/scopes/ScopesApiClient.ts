@@ -228,11 +228,16 @@ export class ScopesApiClient {
     }
   };
 
-  public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+  public fetchScopeNavigations = async (
+    scopeNames: string[],
+    options?: { depth?: number; rootScope?: string }
+  ): Promise<ScopeNavigation[]> => {
     const subscription = dispatch(
       scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
         {
           scope: scopeNames,
+          depth: options?.depth,
+          rootScope: options?.rootScope,
         },
         { subscribe: false }
       )
