@@ -195,9 +195,9 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -258,6 +258,10 @@ const (
 	// FlagDashboardNewLayouts
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -650,10 +654,6 @@ const (
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
 
-	// FlagKubernetesAuthzCoreRolesApi
-	// Registers AuthZ Core Roles /apis endpoint
-	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
-
 	// FlagKubernetesAuthzGlobalRolesApi
 	// Registers AuthZ Global Roles /apis endpoint
 	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
@@ -901,4 +901,8 @@ const (
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls
 	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )

@@ -34,12 +34,17 @@ type MissingFolderMetadata struct {
 }
 
 func (e *MissingFolderMetadata) Error() string {
-	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
+	return fmt.Sprintf("folder %q is missing folder metadata file - folder UID will be auto-generated and may change on next sync.", e.Path)
 }
 
 // Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
 func (e *MissingFolderMetadata) Unwrap() error {
 	return ErrMissingFolderMetadata
+}
+
+// NewMissingFolderMetadata creates a MissingFolderMetadata error for the given folder path.
+func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
+	return &MissingFolderMetadata{Path: path}
 }
 
 // FindFoldersMissingMetadata returns folder paths from source that do not have

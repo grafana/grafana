@@ -56,7 +56,7 @@ export const AnnotationTooltip2Cluster = ({
       const annotationId = annoVals.id?.[i];
 
       annotationTooltipComponents.push(
-        <div className={annotationCount % 2 === 0 ? styles.zebra : styles.annotationWrapper}>
+        <div className={annotationCount % 2 !== 0 ? styles.zebra : styles.annotationWrapper}>
           <AnnotationTooltipHeader
             clusterIndex={annotationCount}
             avatarImg={avatarImgSrc}
@@ -127,7 +127,7 @@ export const AnnotationTooltip2Cluster = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   zebra: css({
-    backgroundColor: theme.colors.background.canvas,
+    backgroundColor: theme.colors.background.primary,
     paddingBottom: theme.spacing(1.5),
   }),
   annotationWrapper: css({
@@ -141,6 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
     userSelect: 'text',
+    overflow: 'hidden',
   }),
   hr: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,

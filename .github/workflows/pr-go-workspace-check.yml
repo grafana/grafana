@@ -40,6 +40,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -80,6 +82,8 @@ jobs:
     # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss

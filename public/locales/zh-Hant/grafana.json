@@ -1867,6 +1867,8 @@
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
+      "view-notification-detail": "",
+      "view-notification-tooltip": "",
       "timeline-n-notifications_other": "",
       "timeline-n-receivers_other": ""
     },
@@ -2184,6 +2186,53 @@
       "body-no-alertmanager-found": "我們找不到任何外部的 Alertmanager，您可能沒有內建 Grafana Alertmanager 的存取權限。",
       "title-no-alertmanager-found": "找不到 Alertmanager"
     },
+    "notification-detail": {
+      "action-silence": "",
+      "action-view-contact-point": "",
+      "alerts-empty": "",
+      "alerts-loading": "",
+      "batch-all-ok": "",
+      "batch-count-one": "",
+      "current": "",
+      "debug-details-heading": "",
+      "delivery-failed": "",
+      "delivery-success": "",
+      "error-title": "",
+      "error-title-banner": "",
+      "error-unknown": "",
+      "field-group-key": "",
+      "field-integration-index": "",
+      "field-pipeline-time": "",
+      "field-retry": "",
+      "field-timestamp": "",
+      "field-uuid": "",
+      "firing-alerts": "",
+      "group-labels-heading": "",
+      "loading": "",
+      "no": "",
+      "not-found-body": "",
+      "not-found-title": "",
+      "page-title": "",
+      "related-loading": "",
+      "related-sidebar-subtitle": "",
+      "related-sidebar-title": "",
+      "resolved-alerts": "",
+      "retry-tooltip": "",
+      "uuid-not-found-body": "",
+      "uuid-not-found-title": "",
+      "yes": "",
+      "alert-count-inline_other": "",
+      "batch-count-many_other": "",
+      "batch-failed_other": "",
+      "related-count_other": "",
+      "related-count-with-failures_other": ""
+    },
+    "notification-history": {
+      "enrichment-explore": "",
+      "enrichment-no-logs": "",
+      "enrichment-type-logs": "",
+      "enrichments": ""
+    },
     "notification-policies-filter": {
       "label-search-by-contact-point": "",
       "placeholder-search-by-contact-point": "選擇聯絡點",
@@ -2255,7 +2304,8 @@
       "outcome-failed": "",
       "status-firing": "",
       "status-resolved": "",
-      "unable-to-fetch": ""
+      "unable-to-fetch": "",
+      "view-link": ""
     },
     "notifications-runtime-datasource": {
       "message": {
@@ -5070,6 +5120,12 @@
       }
     },
     "canvas-actions": {
+      "add": {
+        "paste": {
+          "description": "",
+          "title": ""
+        }
+      },
       "add-panel": "新增面板",
       "disabled-child-contains-tabs": "無法變更為分頁，因為列已包含分頁",
       "disabled-nested-grouping": "",
@@ -5680,10 +5736,11 @@
       "cancel": "取消",
       "common": {
         "copy": "複製",
-        "copy-or-duplicate": "複製或重複",
+        "copy-or-duplicate": "",
         "delete": "刪除",
         "duplicate": "重複",
-        "layout": "版面配置"
+        "layout": "版面配置",
+        "paste": ""
       },
       "continue": "繼續",
       "panel": {
@@ -6505,6 +6562,17 @@
       "tooltip-move-down": "下移",
       "tooltip-move-up": "上移"
     },
+    "annotations-list": {
+      "drag-end": {
+        "description": ""
+      }
+    },
+    "annotations-section": {
+      "content-drag-to-reorder": "",
+      "name-builtin": "",
+      "name-disabled": "",
+      "select": ""
+    },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "它不能包含無效字元：'~'、'^'、'：'、'？'、'*'、'['、'\\\\'或']'。",
       "cannot-start-with": "不能以「/」開頭或以「/」、「.」或空格結尾。",
@@ -6549,6 +6617,12 @@
       "name-json-values": "JSON",
       "name-values-separated-comma": "以逗號分隔的值",
       "selection-options": "選擇選項"
+    },
+    "dashboard-annotations-list": {
+      "add-annotation-query": "",
+      "title-above-dashboard-count_other": "",
+      "title-controls-menu-count_other": "",
+      "title-hidden-count_other": ""
     },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "提供有關新儀表板編輯體驗的意見回饋"
@@ -7097,7 +7171,7 @@
       "loading-connected-dashboards": "正在載入已連接的儀表板…",
       "placeholder-search-affected-dashboards": "搜尋受影響的儀表板",
       "update-all": "全部更新",
-      "affected-dashboards_other": "此更新將影響 <strong>{{count}} 個儀表板</strong>。以下使用該面板的儀表板將受到影響："
+      "affected-dashboards_other": "此更新將影響 <1>{{count}} 個儀表板。</1>使用面板的以下儀表板將受到影響："
     },
     "save-provisioned-dashboard-form": {
       "api-error": "儲存儀表板時發生錯誤",
@@ -7200,6 +7274,13 @@
       "discard": "捨棄",
       "save-dashboard": "儲存儀表板",
       "title-unsaved-changes": "未儲存變更"
+    },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
     },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
@@ -7509,25 +7590,6 @@
     },
     "empty-state": {
       "message": "沒有找到資料來源"
-    }
-  },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "欄位名稱"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "清除欄位",
-        "label-clear-row": "清除列",
-        "label-remove-all-data": "刪除所有資料",
-        "label-search": "搜尋…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "清除欄位",
-        "label-delete-column": "刪除欄位",
-        "label-rename-column": "重新命名欄位",
-        "label-set-field-type": "設定欄位類型"
-      }
     }
   },
   "datasources": {
@@ -8714,6 +8776,20 @@
     "name-show-threshold-markers": "顯示閾值標記",
     "neutral": "中性 {{value}}",
     "placeholder-neutral": "自動",
+    "presets": {
+      "circle": "",
+      "circle_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "neon": "",
+      "neon_desc": "",
+      "neonSegmented": "",
+      "neonSegmented_desc": "",
+      "segmented": "",
+      "segmented_desc": "",
+      "standard": "",
+      "standard_desc": ""
+    },
     "suggestions": {
       "arc": "儀表",
       "circular": "圓形儀表",
@@ -10567,7 +10643,7 @@
       "loading-connected-dashboards": "正在載入已連接的儀表板…",
       "placeholder-search-affected-dashboards": "搜尋受影響的儀表板",
       "update-all": "全部更新",
-      "num-affected_other": "此更新將影響 <strong>{{count}} 個儀表板</strong>。"
+      "num-affected_other": "此更新將影響 <1>{{count}} 個儀表板。</1>"
     }
   },
   "link": {
@@ -10755,7 +10831,8 @@
     },
     "log-line-details": {
       "clear-search": "清除",
-      "close": "關閉紀錄詳細資訊",
+      "close-inline-details": "",
+      "close-sidebar-details": "",
       "copy-shortlink": "複製短連結",
       "copy-to-clipboard": "複製至剪貼簿",
       "displayed-fields-section": "組織顯示的欄位",
@@ -12272,12 +12349,12 @@
         "latestReleaseDate": "最新發佈日期：",
         "latestVersion": "最新版本",
         "license": "授權",
-        "moreDetails": "您覺得外掛程式深入分析有用嗎？請在<2>此處</2>分享您的意見回饋。",
+        "moreDetails": "",
         "pluginInsights": {
           "header": "外掛程式深入解析"
         },
-        "pluginInsightsSuccessTooltip": "所有相關訊號都存在並經過驗證",
-        "pluginInsightsWarningTooltip": "缺少一或多個訊號或需要注意",
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "提出問題",
         "reportAbuse": "回報疑慮",
         "reportAbuseTooltip": "將與惡意或有害外掛程式相關的問題直接報告給 Grafana Labs。",
@@ -14358,7 +14435,7 @@
       "label-never": "從不"
     },
     "status-history-panel": {
-      "too-many-points_other": "資料點過多，無法正確顯示。<br />更新查詢以回傳較少的資料點。<br />（已收到 {{count}} 個資料點）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
