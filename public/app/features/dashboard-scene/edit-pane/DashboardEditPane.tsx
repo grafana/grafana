@@ -20,6 +20,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
+import { EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
@@ -33,7 +34,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
 
 export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
 
-export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
+export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
   public constructor() {
     super({
       selectionContext: {

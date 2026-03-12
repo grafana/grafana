@@ -7,12 +7,11 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
+  SceneObject,
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
-
-import { DashboardScene } from '../scene/DashboardScene';
 
 const HINT_KEY_PREFIX = 'assistant-hint-';
 
@@ -39,7 +38,7 @@ function PanelAssistantHintRenderer(_props: SceneComponentProps<PanelAssistantHi
  * Injects an AI sparkle hint icon into the titleItems of every VizPanel on the dashboard.
  * The icon is hidden by default and revealed on panel hover via CSS.
  */
-export function addAssistantHintsToAllPanels(dashboard: DashboardScene) {
+export function addAssistantHintsToAllPanels(dashboard: SceneObject) {
   const objects = sceneGraph.findAllObjects(dashboard, (obj) => obj instanceof VizPanel);
 
   for (const obj of objects) {
@@ -71,7 +70,7 @@ export function addAssistantHintToPanel(panel: VizPanel) {
   }
 }
 
-export function removeAssistantHintsFromAllPanels(dashboard: DashboardScene) {
+export function removeAssistantHintsFromAllPanels(dashboard: SceneObject) {
   const objects = sceneGraph.findAllObjects(dashboard, (obj) => obj instanceof VizPanel);
 
   for (const obj of objects) {
@@ -99,7 +98,7 @@ function removeAssistantHintFromPanel(panel: VizPanel) {
  * Manages the lifecycle of assistant hint icons on dashboard panels.
  * Adds hints in view mode when the assistant popover is enabled, removes them otherwise.
  */
-export function useAssistantPanelHints(dashboard: DashboardScene, isEditing: boolean | undefined, isEnabled: boolean) {
+export function useAssistantPanelHints(dashboard: SceneObject, isEditing: boolean | undefined, isEnabled: boolean) {
   useEffect(() => {
     if (!isEditing && isEnabled) {
       addAssistantHintsToAllPanels(dashboard);

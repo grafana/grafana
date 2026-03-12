@@ -10,18 +10,14 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-
-import { DashboardEditPane } from './DashboardEditPane';
 import { ElementSelection } from './ElementSelection';
 import { panelHasData } from './PanelAssistantHint';
+import { EditPaneSelectionActions } from './types';
 
 interface ViewModePanelPromptCardProps {
   selection: ElementSelection | undefined;
-  editPane: DashboardEditPane;
-  dashboard: DashboardScene;
+  editPane: EditPaneSelectionActions;
+  dashboard: SceneObject;
 }
 
 /**
@@ -162,7 +158,7 @@ function useSelectedVizPanels(selection: ElementSelection | undefined): VizPanel
   }, [selection]);
 }
 
-function findPanelDomElement(panelKey: string, dashboard: DashboardScene): HTMLElement | null {
+function findPanelDomElement(panelKey: string, dashboard: SceneObject): HTMLElement | null {
   try {
     const panel = sceneGraph.findByKey(dashboard, panelKey);
     if (!panel) {
@@ -171,10 +167,7 @@ function findPanelDomElement(panelKey: string, dashboard: DashboardScene): HTMLE
 
     let current: SceneObject | undefined = panel;
     while (current) {
-      if (current instanceof DashboardGridItem && current.containerRef?.current) {
-        return current.containerRef.current;
-      }
-      if (current instanceof AutoGridItem && current.containerRef?.current) {
+      if (hasContainerRef(current) && current.containerRef?.current) {
         return current.containerRef.current;
       }
       current = current.parent;
@@ -224,4 +217,12 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
   };
+}
+
+interface WithContainerRef {
+  containerRef?: { current: HTMLElement | null };
+}
+
+function hasContainerRef(obj: SceneObject): obj is SceneObject & WithContainerRef {
+  return 'containerRef' in obj;
 }

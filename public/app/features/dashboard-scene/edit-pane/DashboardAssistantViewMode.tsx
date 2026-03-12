@@ -4,18 +4,16 @@ import { useEffect } from 'react';
 import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
-
-import { DashboardEditPane } from './DashboardEditPane';
 import { ElementSelection } from './ElementSelection';
 import { panelHasData, useAssistantPanelHints } from './PanelAssistantHint';
 import { ViewModePanelPromptCard } from './ViewModePanelPromptCard';
+import { EditPaneSelectionActions } from './types';
 
 interface DashboardAssistantViewModeProps {
-  dashboard: DashboardScene;
-  editPane: DashboardEditPane;
+  dashboard: SceneObject;
+  editPane: EditPaneSelectionActions;
   isEditing: boolean | undefined;
   selection: ElementSelection | undefined;
 }
@@ -68,8 +66,8 @@ export function DashboardAssistantPopover({
   editPane,
   selection,
 }: {
-  dashboard: DashboardScene;
-  editPane: DashboardEditPane;
+  dashboard: SceneObject;
+  editPane: EditPaneSelectionActions;
   selection: ElementSelection | undefined;
 }) {
   return <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />;
