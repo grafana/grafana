@@ -1663,6 +1663,11 @@ export interface FeatureToggles {
   */
   flameGraphWithCallTree?: boolean;
   /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
+  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
