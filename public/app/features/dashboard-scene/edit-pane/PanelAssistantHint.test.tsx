@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel, sceneGraph } from '@grafana/scenes';
+import { SceneDataTransformer, SceneGridLayout, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';

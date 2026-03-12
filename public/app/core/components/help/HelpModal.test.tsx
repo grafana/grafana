@@ -160,6 +160,7 @@ describe('useShortcuts', () => {
     beforeEach(() => {
       mockUseAssistant.mockReturnValue({
         isAvailable: false,
+        isLoading: false,
         openAssistant: jest.fn(),
         closeAssistant: jest.fn(),
         toggleAssistant: jest.fn(),
