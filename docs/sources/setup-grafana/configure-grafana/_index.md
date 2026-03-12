@@ -2768,7 +2768,7 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 
 #### `min_sync_interval`
 
-The minimum sync interval that can be set for a repository. This is how often the controller will check for changes to the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
+The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
 
 #### `repository_types`
 
