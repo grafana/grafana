@@ -731,7 +731,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder.ResetResults(true)
 
 		recorder.mu.RLock()
-		assert.Len(t, recorder.warningCounts, 1)
+		assert.Len(t, recorder.resultReasons, 1)
 		recorder.mu.RUnlock()
 	})
 
@@ -745,7 +745,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder.ResetResults(false)
 
 		recorder.mu.RLock()
-		assert.Empty(t, recorder.warningCounts)
+		assert.Empty(t, recorder.resultReasons)
 		recorder.mu.RUnlock()
 	})
 
