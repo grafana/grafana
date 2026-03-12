@@ -1,6 +1,7 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { t } from '@grafana/i18n';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { handleError } from 'app/api/utils';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 
 export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
@@ -31,11 +32,7 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             notifyApp(createSuccessNotification(t('correlations.notify.create-success', 'Correlation created')))
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(createErrorNotification(t('correlations.notify.create-error', 'Error creating correlation'), e))
-            );
-          }
+          handleError(e, dispatch, t('correlations.notify.create-error', 'Error creating correlation'));
         }
       };
     },
@@ -46,11 +43,7 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
 
           dispatch(notifyApp(createSuccessNotification(t('correlations.notify.edit-success', 'Correlation updated'))));
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(createErrorNotification(t('correlations.notify.edit-error', 'Error updating correlation'), e))
-            );
-          }
+          handleError(e, dispatch, t('correlations.notify.edit-error', 'Error updating correlation'));
         }
       },
     },
@@ -63,11 +56,7 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             notifyApp(createSuccessNotification(t('correlations.notify.delete-success', 'Correlation deleted')))
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(createErrorNotification(t('correlations.notify.delete-error', 'Error deleting correlation'), e))
-            );
-          }
+          handleError(e, dispatch, t('correlations.notify.delete-error', 'Error deleting correlation'));
         }
       },
     },
