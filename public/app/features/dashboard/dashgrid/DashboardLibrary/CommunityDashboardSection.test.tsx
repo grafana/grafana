@@ -503,8 +503,10 @@ describe('CommunityDashboardSection', () => {
   });
   describe('when analyticsFramework is enabled', () => {
     testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
-    it('Compatibility Badge Feature should track analytics with the new framework when compatibility check is triggered', async () => {
+    beforeEach(() => {
       setTestFlags({ analyticsFramework: true });
+    });
+    it('Compatibility Badge Feature should track analytics with the new framework when compatibility check is triggered', async () => {
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
@@ -529,7 +531,6 @@ describe('CommunityDashboardSection', () => {
       });
     });
     it('Compatibility Badge Featureshould track analytics with the new framework when compatibility check completes', async () => {
-      setTestFlags({ analyticsFramework: true });
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
