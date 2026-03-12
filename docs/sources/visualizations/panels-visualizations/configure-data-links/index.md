@@ -238,7 +238,7 @@ Field-specific variables are available under `__field` namespace:
 - **`__field.displayName`**: The display name of the field.
 - **`__field.labels.<LABEL>`**: Label's value to the URL. If your label contains dots, then use `__field.labels["<LABEL>"]` syntax.
 
-If you use a transformation such as **Rename fields by regex**, use `__field.displayName` to reference the transformed field label in data links.
+If you use a transformation such as **Rename fields by regex**, use `__field.displayName` to reference the transformed field name in data links.
 
 ### Value variables
 
