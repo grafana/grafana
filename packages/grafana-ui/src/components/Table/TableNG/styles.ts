@@ -180,6 +180,12 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
   })
 );
 
+/** Override react-data-grid .rdg-cell defaults when wrap header text is enabled */
+export const headerCellWrapOverrides = css({
+  whiteSpace: 'normal',
+  overflow: 'visible',
+});
+
 export const getDefaultCellStyles: TableCellStyles = memoize(
   (theme, { textAlign, shouldOverflow, maxHeight }) =>
     css({

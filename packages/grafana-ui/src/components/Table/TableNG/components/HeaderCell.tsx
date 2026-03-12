@@ -10,7 +10,6 @@ import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
-import { isTableCellStylesKeyEqual } from '../styles';
 import { FilterType, TableRow, TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -129,6 +128,11 @@ const getStyles = memoize(
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
+      ...(headerTextWrap && {
+        minWidth: 0,
+        flex: 1,
+        wordBreak: 'break-word',
+      }),
       borderRadius: theme.spacing(0.25),
       lineHeight: '20px',
       '&:hover': {
@@ -143,5 +147,5 @@ const getStyles = memoize(
       color: theme.colors.text.secondary,
     }),
   }),
-  { isMatchingKey: isTableCellStylesKeyEqual }
+  { isMatchingKey: (cacheKey, key) => cacheKey[0] === key[0] && cacheKey[1] === key[1] }
 );
