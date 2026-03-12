@@ -15,8 +15,6 @@ import {
   type MonacoEditor,
 } from '@grafana/ui';
 
-import { K8S_V2_DASHBOARD_API_CONFIG } from '../../dashboard/api/v2';
-
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 export type SchemaEditorFormat = 'json' | 'yaml';
@@ -25,7 +23,8 @@ interface JSONSchema {
   [key: string]: unknown;
 }
 
-const SCHEMA_URI = `http://grafana.com/schemas/dashboard-${K8S_V2_DASHBOARD_API_CONFIG.version}.json`;
+// Internal Monaco schema registry key -- not a real URL
+const SCHEMA_URI = 'http://grafana.com/schemas/dashboard-v2.json';
 
 export interface DashboardSchemaEditorProps {
   /** The JSON value to edit */
