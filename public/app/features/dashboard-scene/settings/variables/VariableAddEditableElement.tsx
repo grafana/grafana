@@ -79,7 +79,6 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
 
       const newVar = getVariableScene(type, { name: getNextAvailableId(type, variablesSet.state.variables ?? []) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
       DashboardInteractions.newVariableTypeSelected({ type });
     },
     [variableAdd]

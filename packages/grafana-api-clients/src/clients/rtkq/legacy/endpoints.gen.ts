@@ -5022,6 +5022,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;
