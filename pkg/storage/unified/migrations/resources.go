@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func registerMigrations(cfg *setting.Cfg,
@@ -86,9 +87,9 @@ func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (b
 }
 
 func buildResourceKey(gr schema.GroupResource, namespace string, registry *MigrationRegistry) *resourcepb.ResourceKey {
-	if !registry.HasResource(gr) {
-		return nil
-	}
+	// if !registry.HasResource(gr) {
+	// 	return nil
+	// }
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     gr.Group,
