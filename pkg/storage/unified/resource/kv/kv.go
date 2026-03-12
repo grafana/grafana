@@ -341,6 +341,10 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		defer iter.Close()
 
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
+			if err := ctx.Err(); err != nil {
+				yield("", err)
+				return
+			}
 			item := iter.Item()
 			if opt.Limit > 0 && count >= opt.Limit {
 				break
