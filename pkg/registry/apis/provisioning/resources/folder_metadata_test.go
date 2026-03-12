@@ -123,6 +123,68 @@ func TestMissingFolderMetadata_SentinelError(t *testing.T) {
 	})
 }
 
+func TestNewMissingFolderMetadata(t *testing.T) {
+	err := NewMissingFolderMetadata("team-a/dashboards/")
+	require.NotNil(t, err)
+	assert.Equal(t, "team-a/dashboards/", err.Path)
+}
+
+func TestMissingFolderMetadata_Error(t *testing.T) {
+	err := &MissingFolderMetadata{Path: "team-a/dashboards/"}
+	assert.Contains(t, err.Error(), "team-a/dashboards/")
+	assert.Contains(t, err.Error(), "missing folder metadata file")
+}
+
+func TestFolderMetadataConflict_SentinelError(t *testing.T) {
+	t.Run("errors.Is matches ErrFolderMetadataConflict", func(t *testing.T) {
+		err := &FolderMetadataConflict{Path: "x/", Reason: "uid mismatch"}
+		assert.True(t, errors.Is(err, ErrFolderMetadataConflict))
+	})
+
+	t.Run("errors.Is does not match unrelated error", func(t *testing.T) {
+		assert.False(t, errors.Is(errors.New("other"), ErrFolderMetadataConflict))
+	})
+
+	t.Run("errors.Is does not match ErrMissingFolderMetadata", func(t *testing.T) {
+		err := &FolderMetadataConflict{Path: "x/", Reason: "uid mismatch"}
+		assert.False(t, errors.Is(err, ErrMissingFolderMetadata))
+	})
+
+	t.Run("errors.As extracts FolderMetadataConflict from wrapped error", func(t *testing.T) {
+		original := &FolderMetadataConflict{Path: "x/", Reason: "uid mismatch"}
+		wrapped := fmt.Errorf("wrap: %w", original)
+
+		var target *FolderMetadataConflict
+		require.True(t, errors.As(wrapped, &target))
+		assert.Equal(t, "x/", target.Path)
+		assert.Equal(t, "uid mismatch", target.Reason)
+	})
+
+	t.Run("errors.Is matches through fmt.Errorf wrapping", func(t *testing.T) {
+		wrapped := fmt.Errorf("wrap: %w", &FolderMetadataConflict{Path: "y/", Reason: "deleted"})
+		assert.True(t, errors.Is(wrapped, ErrFolderMetadataConflict))
+	})
+}
+
+func TestFolderMetadataConflict_Error(t *testing.T) {
+	err := &FolderMetadataConflict{Path: "team-a/dashboards/", Reason: "user deleted folder"}
+	assert.Contains(t, err.Error(), "team-a/dashboards/")
+	assert.Contains(t, err.Error(), "user deleted folder")
+	assert.Contains(t, err.Error(), "folder metadata conflict")
+}
+
+func TestNewFolderManifest(t *testing.T) {
+	f := NewFolderManifest("my-uid", "My Folder")
+	require.NotNil(t, f)
+	assert.Equal(t, "my-uid", f.Name)
+	assert.Equal(t, "My Folder", f.Spec.Title)
+
+	gvk := f.GetObjectKind().GroupVersionKind()
+	assert.Equal(t, "folder.grafana.app", gvk.Group)
+	assert.Equal(t, "v1beta1", gvk.Version)
+	assert.Equal(t, "Folder", gvk.Kind)
+}
+
 func TestFindFoldersMissingMetadata(t *testing.T) {
 	tests := []struct {
 		name     string

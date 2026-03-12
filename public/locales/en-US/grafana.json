@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": "This instance is in <strong>No data</strong> state. The alert fired because the query returned no data in the evaluation window, so a graph may not be available."
       },
-      "timeline-all-delivered": "delivered",
-      "timeline-all-delivered-plural": "all delivered",
       "timeline-all-failed": "failed",
       "timeline-all-failed-plural": "all failed",
       "timeline-delivered": "Delivered",
@@ -4081,6 +4079,20 @@
     },
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
+    "presets": {
+      "basic": "Basic",
+      "basic_desc": "Basic, color from thresholds",
+      "basic-vertical": "Basic vertical",
+      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "gradient": "Gradient",
+      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient-BlYlRd": "Gradient blue-red",
+      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-vertical": "Gradient vertical",
+      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "retro-lcd": "Retro LCD",
+      "retro-lcd_desc": "Color scale, text color"
+    },
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
@@ -6604,10 +6616,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "Drag to reorder",
       "name-builtin": "{{annoName}} (Built-in)",
-      "name-disabled": "(Disabled) {{annoName}}",
-      "select": "Select"
+      "name-disabled": "(Disabled) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
@@ -6766,6 +6776,12 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-item": {
+      "drag-to-reorder": "Drag to reorder"
+    },
+    "draggable-items-list": {
+      "select": "Select"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7453,10 +7469,6 @@
       "title-hidden_one": "Hidden ({{count}})",
       "title-hidden_other": "Hidden ({{count}})"
     },
-    "variables-section": {
-      "content-drag-to-reorder": "Drag to reorder",
-      "select": "Select"
-    },
     "version-history": {
       "comparison": {
         "button-restore": "Restore to version {{version}}"
@@ -7635,25 +7647,6 @@
     },
     "empty-state": {
       "message": "No data sources found"
-    }
-  },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Column name"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-clear-row": "Clear row",
-        "label-remove-all-data": "Remove all data",
-        "label-search": "Search..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-delete-column": "Delete column",
-        "label-rename-column": "Rename column",
-        "label-set-field-type": "Set field type"
-      }
     }
   },
   "datasources": {
@@ -14967,16 +14960,22 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "area": "Area",
-      "default": "Default",
-      "smooth": "Smooth",
-      "stacked-area": "Stacked area",
-      "stacked-area-gradient": "Stacked area gradient",
-      "stacked-smooth": "Stacked smooth",
-      "stacked-step": "Stacked step",
-      "step": "Step",
-      "step-filled": "Step filled",
-      "step-hue": "Step hue"
+      "multi-many-points": "Points",
+      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points-stacked-pct": "Stacked 100%",
+      "multi-points": "Points",
+      "multi-stacked-bars": "Stacked bars",
+      "multi-stacked-points": "Stacked points",
+      "single-bars": "Bars",
+      "single-bars-scheme": "Bars scheme",
+      "single-dashed-threshold": "Dashed threshold",
+      "single-few-points": "Single fill",
+      "single-many-points-fill": "Line fill",
+      "single-many-points-hue": "Line hue",
+      "single-many-points-scheme": "Line scheme",
+      "single-many-points-threshold-scheme": "Threshold scheme",
+      "single-smooth-scheme": "Smooth scheme",
+      "single-step-fill": "Step fill"
     },
     "span-nulls-editor": {
       "gaps-options": {

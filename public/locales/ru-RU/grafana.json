@@ -7727,25 +7727,6 @@
       "message": "Источники данных не найдены"
     }
   },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Название столбца"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Очистить столбец",
-        "label-clear-row": "Очистить строку",
-        "label-remove-all-data": "Удалить все данные",
-        "label-search": "Поиск…"
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Очистить столбец",
-        "label-delete-column": "Удалить столбец",
-        "label-rename-column": "Переименовать столбец",
-        "label-set-field-type": "Задать тип поля"
-      }
-    }
-  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "У вас нет разрешения на настройку новых источников данных"
