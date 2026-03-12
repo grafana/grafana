@@ -310,20 +310,20 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 			return fn(folder, false, nil)
 		}
 
-		msg := fmt.Sprintf("Add folder %s", p)
-		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
-			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
-		}
-		// Add it to the existing tree
-		fm.tree.Add(folder, parent)
-
 		if fm.folderMetadataEnabled {
-			msg := fmt.Sprintf("Add folder metadata %s", p)
+			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
 			manifest := NewFolderManifest(folder.ID, folder.Title)
 			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
 				return fn(folder, true, err)
 			}
+		} else {
+			msg := fmt.Sprintf("Add folder %s", p)
+			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+			}
 		}
+		// Add it to the existing tree
+		fm.tree.Add(folder, parent)
 
 		return fn(folder, true, nil)
 	})
