@@ -17,6 +17,23 @@ export function isVirtualTeamFolder(uid: string) {
   return uid === TEAM_FOLDERS_UID;
 }
 
+const TEAM_FOLDER_PREFIX = TEAM_FOLDERS_UID + '/';
+
+export function isUnderTeamFolders(uid: string) {
+  return uid.startsWith(TEAM_FOLDER_PREFIX);
+}
+
+export function addTeamFolderPrefix(uid: string) {
+  return TEAM_FOLDER_PREFIX + uid;
+}
+
+export function removeTeamFolderPrefix(uid: string): string {
+  if (uid.startsWith(TEAM_FOLDER_PREFIX)) {
+    return uid.slice(TEAM_FOLDER_PREFIX.length);
+  }
+  return uid;
+}
+
 // Construct folder URL and append orgId to it
 export function getFolderURL(uid: string) {
   const { orgId } = contextSrv.user;

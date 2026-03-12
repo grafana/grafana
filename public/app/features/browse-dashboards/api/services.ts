@@ -11,7 +11,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
-import { getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
+import { addTeamFolderPrefix, getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
 export const PAGE_SIZE = 50;
 
@@ -181,7 +181,8 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
   // Return actual folders with owner reference info
   return (result.hits ?? []).map((hit) => ({
     kind: 'folder' as const,
-    uid: hit.name,
+    // Use prefixed UIDs so expansion state doesn't collide with the same folder elsewhere in the tree
+    uid: addTeamFolderPrefix(hit.name),
     title: hit.title,
     parentUID: TEAM_FOLDERS_UID,
     url: getFolderURL(hit.name),

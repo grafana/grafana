@@ -4,6 +4,7 @@ import { createAsyncThunk } from 'app/types/store';
 
 import { listDashboards, listFolders, listTeamFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
+import { addTeamFolderPrefix, removeTeamFolderPrefix } from '../utils/dashboards';
 
 import { findItem } from './utils';
 
@@ -61,7 +62,8 @@ export const refetchChildren = createAsyncThunk(
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
-    const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
+    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
     // If user has scrolled beyond the first page, then InfiniteLoader will probably trigger
@@ -82,6 +84,15 @@ export const refetchChildren = createAsyncThunk(
       const childDashboards = await listDashboards(uid, page, pageSize);
       lastPageOfKind = childDashboards.length < pageSize;
       children = children.concat(childDashboards);
+    }
+
+    // Propagate prefix to all descendants so they get independent expand/collapse state
+    const isTeamFolderChild = parentUID !== strippedUID;
+    if (isTeamFolderChild) {
+      children = children.map((child) => ({
+        ...child,
+        uid: addTeamFolderPrefix(removeTeamFolderPrefix(child.uid)),
+      }));
     }
 
     return {
@@ -112,10 +123,12 @@ export const fetchNextChildrenPage = createAsyncThunk(
     // TODO: invert prop to `includeKinds`, but also support not loading folders
     const loadDashboards = !excludeKinds.includes('dashboard');
 
-    const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
+    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
 
     const state = thunkAPI.getState().browseDashboards;
-    const collection = uid ? state.childrenByParentUID[uid] : state.rootItems;
+    const collectionKey = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const collection = collectionKey ? state.childrenByParentUID[collectionKey] : state.rootItems;
 
     let page = 1;
     let fetchKind: DashboardViewItemKind | undefined = undefined;
@@ -162,6 +175,15 @@ export const fetchNextChildrenPage = createAsyncThunk(
       const childDashboards = await listDashboards(uid, page, pageSize);
       lastPageOfKind = childDashboards.length < pageSize;
       children = children.concat(childDashboards);
+    }
+
+    // Propagate prefix to all descendants so they get independent expand/collapse state
+    const isTeamFolderChild = parentUID !== strippedUID;
+    if (isTeamFolderChild) {
+      children = children.map((child) => ({
+        ...child,
+        uid: addTeamFolderPrefix(removeTeamFolderPrefix(child.uid)),
+      }));
     }
 
     return {
