@@ -194,6 +194,7 @@ export const statPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFie
   const frameCount = dataSummary?.frameCount ?? 0;
   const hasSingleSeries = frameCount === 1;
   const hasFewSeries = frameCount > 1 && frameCount < FEW_SERIES_THRESHOLD;
+  const hasMultiSeries = frameCount >= FEW_SERIES_THRESHOLD;
 
   if (hasSingleSeries) {
     return [
@@ -210,6 +211,15 @@ export const statPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFie
     return [
       horizontalThresholdValuePreset(),
       horizontalThresholdValueSparklinePreset(),
+      thresholdBackgroundSparklinePreset(),
+    ];
+  }
+
+  if (hasMultiSeries) {
+    return [
+      thresholdValueSparklinePreset(),
+      thresholdBackgroundPreset(),
+      thresholdValuePreset(),
       thresholdBackgroundSparklinePreset(),
     ];
   }
