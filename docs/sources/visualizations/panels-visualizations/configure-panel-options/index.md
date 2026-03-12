@@ -76,9 +76,7 @@ Variables dynamically change your queries across all panels in a dashboard.
 
 To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
 
-{{< admonition type="tip" >}}
 For information about repeating rows and tabs, refer to [Configure repeat options](https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options).
-{{< /admonition >}}
 
 **Before you begin:**
 
@@ -101,4 +99,10 @@ To configure repeating panels, follow these steps:
 1. Click **Back to dashboard** and then **Exit edit**.
 1. To propagate changes to all panels, reload the dashboard.
 
+{{< /docs/list >}}
+
 You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.
+
+{{< admonition type="tip" >}}
+To access repeat options without leaving the dashboard, click anywhere on the panel to open the sidebar while the dashboard is in edit mode. Repeat options are available in the sidebar.
+{{< /admonition >}}
