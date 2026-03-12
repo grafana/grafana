@@ -28,10 +28,11 @@ theme.light.generated.json
 theme.dark.generated.json
 packages/grafana-data/src/themes/schema.generated.json
 
-# Generated Swagger API specs
+# Generated Swagger API specs/clients
 public/api-merged.json
 public/api-enterprise-spec.json
 public/openapi3.json
+!packages/grafana-api-clients/src/clients/fetch/**/*.gen.ts
 
 # Generated mock service worker
 public/mockServiceWorker.js

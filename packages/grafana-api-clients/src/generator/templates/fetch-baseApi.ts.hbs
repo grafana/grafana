@@ -1,0 +1,10 @@
+import { getAPIBaseURL } from '../../../../utils/utils';
+
+const API_GROUP = '{{group}}';
+const API_VERSION = '{{version}}';
+const BASE_URL = getAPIBaseURL(API_GROUP, API_VERSION);
+
+export const customFetch = async <T>(url: string, options: RequestInit): Promise<T> => {
+  const response = await fetch(`${BASE_URL}${url}`, options);
+  return response.json();
+};
