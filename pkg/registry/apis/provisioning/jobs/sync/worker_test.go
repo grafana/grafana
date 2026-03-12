@@ -164,7 +164,6 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
 			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
-
 			progressRecorder.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 			progressRecorder.On("ResultReasons").Return([]string(nil))
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -309,7 +308,6 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
 			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
-
 			progressRecorder.On("Complete", mock.Anything, nil).Return(tt.jobStatus)
 			progressRecorder.On("ResultReasons").Return(tt.resultReasons)
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -515,7 +513,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Final status updates
-
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -573,7 +570,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("", syncError)
 
 				// Final status updates
-
 				pr.On("Complete", mock.Anything, syncError).Return(provisioning.JobStatus{State: provisioning.JobStateError})
 				pr.On("ResultReasons").Return([]string(nil))
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -614,7 +610,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
-
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 				// Initial patch with granular updates, final patch with sync status and conditions
@@ -657,7 +652,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
-
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
@@ -725,7 +719,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
-
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
@@ -787,7 +780,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
-
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
@@ -829,7 +821,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Complete with warning state and QuotaExceeded reason
-
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
 				pr.On("ResultReasons").Return([]string{provisioning.ReasonQuotaExceeded})
 				pr.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -877,7 +868,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
-
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				pr.On("ResultReasons").Return([]string(nil))
 
