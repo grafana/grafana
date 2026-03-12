@@ -103,7 +103,7 @@ export const OrgUsersTable = ({
               <TextLink
                 color="primary"
                 inline={false}
-                href={`/admin/users/edit/${original.uid}/information`}
+                href={`/admin/users/${original.uid}/information`}
                 title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
               >
                 {original.login}

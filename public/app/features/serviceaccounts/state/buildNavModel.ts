@@ -13,7 +13,7 @@ export function buildNavModel(serviceAccount: ServiceAccountDTO | null, uid: str
       'serviceaccounts.build-nav-model.subtitle',
       'Manage settings for an individual service account.'
     ),
-    url: `/org/serviceaccounts/edit/${uid}`,
+    url: `/org/serviceaccounts/${uid}`,
     children: [],
   };
 
@@ -27,7 +27,7 @@ export function buildNavModel(serviceAccount: ServiceAccountDTO | null, uid: str
     icon: 'info-circle',
     id: `serviceaccount-information-${uid}`,
     text: t('serviceaccounts.build-nav-model.information', 'Information'),
-    url: `/org/serviceaccounts/edit/${uid}/information`,
+    url: `/org/serviceaccounts/${uid}/information`,
   });
 
   // Tokens tab (always visible)
@@ -36,7 +36,7 @@ export function buildNavModel(serviceAccount: ServiceAccountDTO | null, uid: str
     icon: 'key-skeleton-alt',
     id: `serviceaccount-tokens-${uid}`,
     text: t('serviceaccounts.build-nav-model.tokens', 'Tokens'),
-    url: `/org/serviceaccounts/edit/${uid}/tokens`,
+    url: `/org/serviceaccounts/${uid}/tokens`,
   });
 
   // Management tab (requires permission to view)
@@ -49,7 +49,7 @@ export function buildNavModel(serviceAccount: ServiceAccountDTO | null, uid: str
       icon: 'users-alt',
       id: `serviceaccount-management-${uid}`,
       text: t('serviceaccounts.build-nav-model.management', 'Management'),
-      url: `/org/serviceaccounts/edit/${uid}/management`,
+      url: `/org/serviceaccounts/${uid}/management`,
     });
   }
 

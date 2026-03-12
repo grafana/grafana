@@ -129,7 +129,7 @@ const TeamList = () => {
             <TextLink
               color="primary"
               inline={false}
-              href={`/org/teams/edit/${original.uid}`}
+              href={config.featureToggles.accessControlsInterface ? `/org/teams/${original.uid}/members` : `/org/teams/edit/${original.uid}`}
               title={t('teams.team-list.columns.title-edit-team', 'Edit team')}
             >
               {value}
@@ -269,7 +269,7 @@ const TeamList = () => {
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <a href={`org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
+                <a href={config.featureToggles.accessControlsInterface ? `org/teams/${original.uid}/members` : `org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
                   <IconButton
                     name="pen"
                     size="md"

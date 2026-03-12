@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet, Stack } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -54,7 +54,10 @@ const CreateTeam = (): JSX.Element => {
       }
 
       if (data && data.uid) {
-        locationService.push(`/org/teams/edit/${data.uid}`);
+        const teamUrl = config.featureToggles.accessControlsInterface
+          ? `/org/teams/${data.uid}/members`
+          : `/org/teams/edit/${data.uid}`;
+        locationService.push(teamUrl);
       }
     } catch (e) {
       notifyApp.error(t('teams.create-team.failed-to-create', 'Failed to create team'));

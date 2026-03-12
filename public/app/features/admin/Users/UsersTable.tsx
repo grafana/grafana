@@ -59,7 +59,7 @@ export const UsersTable = ({
             <TextLink
               color="primary"
               inline={false}
-              href={config.featureToggles.accessControlsInterface ? `/admin/users/edit/${original.uid}/information` : `/admin/users/edit/${original.uid}`}
+              href={config.featureToggles.accessControlsInterface ? `/admin/users/${original.uid}/information` : `/admin/users/edit/${original.uid}`}
               title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
             >
               {original.login}

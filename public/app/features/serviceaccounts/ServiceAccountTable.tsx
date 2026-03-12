@@ -127,7 +127,7 @@ const getCellContent = (
     return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
   }
   const href = config.featureToggles.accessControlsInterface
-    ? `/org/serviceaccounts/edit/${original.uid}/information`
+    ? `/org/serviceaccounts/${original.uid}/information`
     : `/org/serviceaccounts/${original.uid}`;
   const ariaLabel = `Edit service account's ${original.name} details`;
   switch (columnName) {

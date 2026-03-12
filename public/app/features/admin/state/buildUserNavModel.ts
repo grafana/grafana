@@ -8,7 +8,7 @@ export function buildUserNavModel(user: UserDTO | null, uid: string): NavModelIt
     img: user?.avatarUrl,
     id: `user-${uid}`,
     subTitle: user?.email || '',
-    url: `/admin/users/edit/${uid}/information`,
+    url: `/admin/users/${uid}/information`,
     children: [],
   };
 
@@ -22,7 +22,7 @@ export function buildUserNavModel(user: UserDTO | null, uid: string): NavModelIt
     icon: 'info-circle',
     id: `user-information-${uid}`,
     text: t('admin.build-user-nav-model.information', 'Information'),
-    url: `/admin/users/edit/${uid}/information`,
+    url: `/admin/users/${uid}/information`,
   });
 
   // Roles tab — ships in UI PR 1
