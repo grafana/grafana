@@ -34,7 +34,6 @@ import (
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	grafrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -44,32 +43,62 @@ var (
 	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
+// Config holds the store backend configuration for the annotation app.
+type Config struct {
+	StoreBackend      string
+	GRPCAddress       string
+	GRPCUseTLS        bool
+	GRPCTLSCAFile     string
+	GRPCTLSSkipVerify bool
+
+	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
+	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
+	CleanupSettings annotations.CleanupSettings
+}
+
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg        *setting.Cfg
 	k8sAdapter *k8sRESTAdapter
 }
 
-// RegisterAppInstaller Layers (from bottom to top):
-//  1. annotations.Repository - old Grafana annotation service
-//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
-//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+// RegisterAppInstaller is the wire entry point for the ST server.
+// It extracts Config from setting.Cfg and delegates to NewAppInstaller.
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
-	installer := &AppInstaller{
-		cfg: cfg,
-	}
+	return NewAppInstaller(Config{
+		StoreBackend:      cfg.AnnotationAppPlatform.StoreBackend,
+		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
+		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,
+		GRPCTLSCAFile:     cfg.AnnotationAppPlatform.GRPCTLSCAFile,
+		GRPCTLSSkipVerify: cfg.AnnotationAppPlatform.GRPCTLSSkipVerify,
+		CleanupSettings: annotations.CleanupSettings{
+			Alerting:  cfg.AlertingAnnotationCleanupSetting,
+			API:       cfg.APIAnnotationCleanupSettings,
+			Dashboard: cfg.DashboardAnnotationCleanupSettings,
+		},
+	}, service, cleaner, accessClient)
+}
 
-	mapper := grafrequest.GetNamespaceMapper(cfg)
+// NewAppInstaller Layers (from bottom to top):
+//  1. annotations.Repository - old Grafana annotation service
+//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
+//  3. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+func NewAppInstaller(
+	cfg Config,
+	service annotations.Repository,
+	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
+) (*AppInstaller, error) {
+	installer := &AppInstaller{}
 
 	// Choose storage backend based on configuration
 	var store Store
 	var err error
-	switch cfg.AnnotationAppPlatform.StoreBackend {
+	switch cfg.StoreBackend {
 	case "grpc":
 		store, err = newGRPCStore(cfg)
 		if err != nil {
@@ -80,13 +109,12 @@ func RegisterAppInstaller(
 		fallthrough
 	default:
 		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
-		store = NewSQLAdapter(service, cleaner, mapper, cfg)
+		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
 	}
 
 	// Layer 2→3: Wrap Store interface with K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:        store,
-		mapper:       mapper,
 		accessClient: accessClient,
 	}
 
@@ -120,9 +148,9 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func newGRPCStore(cfg *setting.Cfg) (Store, error) {
+func newGRPCStore(cfg Config) (Store, error) {
 	var dialOpts []grpc.DialOption
-	if cfg.AnnotationAppPlatform.GRPCUseTLS {
+	if cfg.GRPCUseTLS {
 		tlsConfig, err := loadTLSConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS config: %w", err)
@@ -133,20 +161,20 @@ func newGRPCStore(cfg *setting.Cfg) (Store, error) {
 	}
 
 	grpcConn, err := grpc.NewClient(
-		cfg.AnnotationAppPlatform.GRPCAddress,
+		cfg.GRPCAddress,
 		dialOpts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
-			cfg.AnnotationAppPlatform.GRPCAddress, err)
+			cfg.GRPCAddress, err)
 	}
 	return NewStoreGRPC(grpcConn), nil
 }
 
-func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
+func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	tlsConfig := &tls.Config{}
-	if cfg.AnnotationAppPlatform.GRPCTLSCAFile != "" {
-		caCert, err := os.ReadFile(cfg.AnnotationAppPlatform.GRPCTLSCAFile)
+	if cfg.GRPCTLSCAFile != "" {
+		caCert, err := os.ReadFile(cfg.GRPCTLSCAFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read CA file: %w", err)
 		}
@@ -158,7 +186,7 @@ func loadTLSConfig(cfg *setting.Cfg) (*tls.Config, error) {
 		tlsConfig.RootCAs = caCertPool
 	}
 
-	if cfg.AnnotationAppPlatform.GRPCTLSSkipVerify {
+	if cfg.GRPCTLSSkipVerify {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
@@ -229,7 +257,6 @@ var (
 // and delegates actual storage operations to the Store interface.
 type k8sRESTAdapter struct {
 	store          Store
-	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
 }
