@@ -8,7 +8,9 @@ import { rulesInSameGroupHaveInvalidFor } from '../state/actions';
 import { getAlertInfo } from '../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../utils/time';
 
-export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: RulerRuleDTO[]): RegisterOptions<T> => ({
+export const evaluateEveryValidationOptions = <T extends FieldValues & { evaluateEvery: string }>(
+  rules: RulerRuleDTO[]
+): RegisterOptions<T> => ({
   required: {
     value: true,
     message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),
