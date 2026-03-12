@@ -11,14 +11,15 @@ import { useLatest } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
+// Hoisted — MySQL keywords and dialect don't change
+const kwSource = keywordCompletionSource(MySQL, true);
+
 export interface SQLEditorV2CompletionProvider {
   getTables: () => Promise<string[]>;
-  getColumns: (table: string) => Promise<string[]>;
   getFunctions?: () => string[];
 }
 
 export interface SQLEditorV2LanguageDefinition {
-  id: string;
   completionProvider?: SQLEditorV2CompletionProvider;
   formatter?: (query: string) => Promise<string>;
 }
@@ -35,17 +36,14 @@ export interface SQLEditorV2Props {
 
 // Returns true if the cursor is in a table name position (after FROM or JOIN)
 function isAfterFromOrJoin(doc: Text, pos: number): boolean {
-  // Strip the partial word being typed, then check what keyword precedes it
   const textBefore = doc.sliceString(0, pos).replace(/\w*$/, '').trimEnd();
   return /\b(FROM|JOIN)$/i.test(textBefore);
 }
 
-function makeCompletionSource(tables: string[], functions: string[]) {
+function makeCompletionSource(tables: string[], fnCompletions: Completion[]) {
   const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
-  const fnCompletions: Completion[] = functions.map((f) => ({ label: f, type: 'function' }));
-  const kwSource = keywordCompletionSource(MySQL, true);
 
-  return (context: CompletionContext): CompletionResult | null => {
+  return async (context: CompletionContext): Promise<CompletionResult | null> => {
     const word = context.matchBefore(/\w*/);
     if (!word || (word.from === word.to && !context.explicit)) {
       return null;
@@ -56,7 +54,7 @@ function makeCompletionSource(tables: string[], functions: string[]) {
     }
 
     // Everywhere else: SQL keywords + functions
-    const kwResult = kwSource(context);
+    const kwResult = await kwSource(context);
     if (!kwResult) {
       return fnCompletions.length > 0 ? { from: word.from, options: fnCompletions } : null;
     }
@@ -64,10 +62,10 @@ function makeCompletionSource(tables: string[], functions: string[]) {
   };
 }
 
-function buildSqlExtension(tables: string[], functions: string[]) {
+function buildSqlExtension(tables: string[], fnCompletions: Completion[]) {
   return [
     sql({ dialect: MySQL }),
-    autocompletion({ override: [makeCompletionSource(tables, functions)], defaultKeymap: true }),
+    autocompletion({ override: [makeCompletionSource(tables, fnCompletions)], defaultKeymap: true }),
   ];
 }
 
@@ -89,8 +87,8 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     const sqlCompartment = new Compartment();
 
     const extensions = [
-      // Start with no tables; reconfigured async once tables are fetched
       lineNumbers(),
+      // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], [])),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
@@ -123,10 +121,13 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     const provider = languageRef.current?.completionProvider;
     if (provider) {
       provider.getTables().then((tables) => {
-        const functions = provider.getFunctions?.() ?? [];
+        const fnCompletions: Completion[] = (provider.getFunctions?.() ?? []).map((f) => ({
+          label: f,
+          type: 'function',
+        }));
         if (viewRef.current) {
           viewRef.current.dispatch({
-            effects: sqlCompartment.reconfigure(buildSqlExtension(tables, functions)),
+            effects: sqlCompartment.reconfigure(buildSqlExtension(tables, fnCompletions)),
           });
         }
       });
@@ -162,7 +163,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
 
   return (
     <div style={{ width, display: 'flex', flexDirection: 'column' }}>
-      <div className={styles.container} style={{ width: '100%', height }}>
+      <div className={styles.container} style={{ height }}>
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       </div>
       {children?.({ formatQuery })}

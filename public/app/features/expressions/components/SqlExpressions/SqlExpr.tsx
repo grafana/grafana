@@ -12,7 +12,7 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
-import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
+import { ALLOWED_FUNCTIONS } from '../../utils/metaSqlExpr';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
@@ -55,21 +55,13 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
-  const completionProvider = useMemo<SQLEditorV2CompletionProvider>(
-    () => ({
-      getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
-      getColumns: async (table: string) => {
-        const cols = await fetchFields({ table }, queries || []);
-        return cols.map((c) => c.name);
-      },
-      getFunctions: () => ALLOWED_FUNCTIONS,
-    }),
-    [queries, refIds]
-  );
+  const completionProvider: SQLEditorV2CompletionProvider = {
+    getTables: async () => refIds.map((r) => r.label ?? r.value ?? '').filter(Boolean),
+    getFunctions: () => ALLOWED_FUNCTIONS,
+  };
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
   const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
-    id: 'mysql',
     completionProvider,
     formatter: formatSQL,
   };
@@ -349,6 +341,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-async function fetchFields(identifier: { table?: string }, queries: DataQuery[]) {
-  return fetchSQLFields({ table: identifier.table }, queries);
-}
