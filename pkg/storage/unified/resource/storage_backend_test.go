@@ -48,6 +48,8 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	opts := KVBackendOptions{
 		KvStore:    kv,
 		WithPruner: true,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	for _, cfg := range configs {
