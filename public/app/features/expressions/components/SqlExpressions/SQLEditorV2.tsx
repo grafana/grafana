@@ -164,11 +164,8 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
       EditorView.theme({
         '&': { width: '100%', height: '100%', fontSize: '13px' },
         '.cm-scroller': { overflow: 'auto' },
-        '.cm-editor': {
-          //background: theme.components.input.background
-        },
+        '.cm-editor': {},
         '.cm-gutters': {
-          //background: theme.colors.background.secondary,
           borderRight: `1px solid ${theme.colors.border.weak}`,
         },
         '&.cm-editor .cm-panels.cm-panels-bottom': {
