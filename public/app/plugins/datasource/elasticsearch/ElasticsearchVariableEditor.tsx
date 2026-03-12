@@ -20,7 +20,7 @@ export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEdi
     const metricTypeChanged = newQuery.metrics?.[0]?.type !== query.metrics?.[0]?.type;
     const queryTypeChanged = newQuery.queryType !== query.queryType;
     if (metricTypeChanged || queryTypeChanged) {
-      props.onChange({ ...newQuery, meta: {} });
+      props.onChange({ ...newQuery, meta: undefined });
     } else {
       props.onChange(newQuery);
     }
@@ -46,7 +46,10 @@ const FieldMapping = (props: FieldMappingProps) => {
 
   // Track the actual query content to avoid re-querying when only meta changes
   const queryRef = useRef(query);
-  queryRef.current = query;
+
+  useEffect(() => {
+    queryRef.current = query;
+  });
 
   // Only re-run the query when the query content changes, not when meta (valueField/textField) changes
   const queryKey = useMemo(
