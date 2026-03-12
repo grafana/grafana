@@ -36,6 +36,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
+			featuremgmt.FlagKubernetesAnnotations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
 		},
@@ -120,6 +121,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "correlations.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "annotation.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "shorturl.grafana.app",

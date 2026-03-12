@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
@@ -108,6 +109,43 @@ func TestIntegrationCorrelations(t *testing.T) {
 			getResults, err := correlationsClient.Resource.Get(ctx, uidAtoB, v1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, uidAtoB, getResults.GetName())
+
+			// Create via /apis and ensure legacy /api can read it.
+			k8sOnly := &unstructured.Unstructured{
+				Object: map[string]any{
+					"spec": map[string]any{
+						"type":  "query",
+						"label": "from-k8s",
+						"source": map[string]any{
+							"group": "testdata",
+							"name":  "test-A",
+						},
+						"target": map[string]any{
+							"group": "testdata",
+							"name":  "test-B",
+						},
+						"config": map[string]any{
+							"field":  "traceID",
+							"target": map[string]any{},
+						},
+					},
+				},
+			}
+			k8sOnly.SetGenerateName("corr-")
+			k8sOnly.SetNamespace(helper.Namespacer(helper.Org1.OrgID))
+			k8sOnly.SetAPIVersion(kind.GroupVersionResource().GroupVersion().String())
+			k8sOnly.SetKind("Correlation")
+			createdK8s, err := correlationsClient.Resource.Create(ctx, k8sOnly, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotEmpty(t, createdK8s.GetName())
+
+			legacyGet := apis.DoRequest(helper, apis.RequestParams{
+				User:   correlationsClient.Args.User,
+				Method: http.MethodGet,
+				Path:   fmt.Sprintf("/api/datasources/uid/test-A/correlations/%s", createdK8s.GetName()),
+			}, &map[string]any{})
+			require.Equal(t, http.StatusOK, legacyGet.Response.StatusCode, "read /apis-created correlation via legacy /api")
+			require.Equal(t, createdK8s.GetName(), (*legacyGet.Result)["uid"])
 		})
 	}
 }
