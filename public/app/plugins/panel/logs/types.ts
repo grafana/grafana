@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListOptions } from 'app/features/logs/components/panel/LogList';
+import { Grammar } from 'prismjs';
 
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
@@ -73,4 +74,8 @@ export function isCoreApp(app: unknown): app is CoreApp {
 
 export function isLogLineMenuCustomItems(items: unknown): items is LogLineMenuCustomItem[] {
   return Array.isArray(items) && items.every((item) => 'divider' in item || ('onClick' in item && 'label' in item));
+}
+
+export function isGrammar(grammar: unknown): grammar is Grammar {
+  return grammar != null && typeof grammar === 'object' && !Array.isArray(grammar);
 }
