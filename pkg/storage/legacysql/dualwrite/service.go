@@ -160,6 +160,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 		}
 
 		if m.enabled && status.Runtime {
+			m.metrics.initResource(gr.String())
 			// Dynamic storage behavior
 			return &runtimeDualWriter{
 				service:   m,
@@ -176,6 +177,7 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy rest.Storage, unifi
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
+		m.metrics.initResource(gr.String())
 		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true, gr: gr, metrics: m.metrics}, nil
 	default:
 		return legacy, nil

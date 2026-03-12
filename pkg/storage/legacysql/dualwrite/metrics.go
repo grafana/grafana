@@ -13,6 +13,8 @@ var (
 		Name: "dualwriter_background_errors_total",
 		Help: "Total number of failed background operations in unified storage",
 	}, []string{"resource", "method"})
+
+	backgroundErrorMethods = []string{"GET", "LIST", "CREATE", "DELETE", "UPDATE", "DELETE_COLLECTION"}
 )
 
 type dualWriterMetrics struct {
@@ -29,5 +31,13 @@ func provideDualWriterMetrics(reg prometheus.Registerer) *dualWriterMetrics {
 	})
 	return &dualWriterMetrics{
 		backgroundErrors: backgroundErrorsMetric,
+	}
+}
+
+// initResource initializes all method counter combinations to zero for the given resource,
+// so that the metric is distinguishable from "not scraped" (absent) vs "no errors" (zero).
+func (m *dualWriterMetrics) initResource(resource string) {
+	for _, method := range backgroundErrorMethods {
+		m.backgroundErrors.WithLabelValues(resource, method).Add(0)
 	}
 }
