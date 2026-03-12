@@ -624,6 +624,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables the new Saved queries frontend experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default false
   */
