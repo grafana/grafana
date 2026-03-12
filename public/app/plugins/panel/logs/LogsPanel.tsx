@@ -172,6 +172,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     timestampResolution,
     showLogAttributes,
     unwrappedColumns,
+    grammar,
   } = options;
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
@@ -593,6 +594,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
               getFieldLinks={getFieldLinks}
+              grammar={isGrammar(grammar) ? grammar : undefined}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
