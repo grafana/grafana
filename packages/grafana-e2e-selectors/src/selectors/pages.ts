@@ -663,6 +663,9 @@ export const versionedPages = {
       marker: {
         '10.0.0': 'data-testid annotation-marker',
       },
+      clusterTooltip: {
+        [MIN_GRAFANA_VERSION]: 'data-testid annotation-cluster-tooltip',
+      },
     },
     Rows: {
       Repeated: {

@@ -54,6 +54,11 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
+  * Enables annotation clustering - combines high density point annotations into region annotations
+  * @default false
+  */
+  annotationClustering?: boolean;
+  /**
   * Run the GRPC server
   * @default false
   */

@@ -160,6 +160,8 @@ VizOrientation: "auto" | "vertical" | "horizontal" @cuetsy(kind="enum")
 
 // Breaks out each annotation frame into multiple lanes on the x-axis
 VizAnnotations: {
+	// Sets whether clustering is enabled. Boolean from UI switch, or number for threshold customization.
+	clustering?: number | bool
 	multiLane?: bool
 } @cuetsy(kind="interface")
 

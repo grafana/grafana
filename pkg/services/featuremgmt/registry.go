@@ -70,6 +70,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "annotationClustering",
+			Description:  "Enables annotation clustering - combines high density point annotations into region annotations",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,

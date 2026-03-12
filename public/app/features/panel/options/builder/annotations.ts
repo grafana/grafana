@@ -1,5 +1,6 @@
 import { DataTopic, PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
 /**
  * Adds common text control options to a visualization options
@@ -22,5 +23,19 @@ export function addAnnotationOptions<T>(builder: PanelOptionsEditorBuilder<T>) {
     showIf: (_, __, annotations) =>
       annotations &&
       annotations?.filter((df) => df.meta?.dataTopic === DataTopic.Annotations && df.length > 0).length > 1,
+  });
+
+  builder.addBooleanSwitch({
+    path: 'annotations.clustering',
+    category,
+    name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
+    description: t(
+      'grafana-ui.builder.annotations.clustering.desc',
+      'Combines high density point annotations into region annotations'
+    ),
+    defaultValue: false,
+    showIf: (_, __, annotations) =>
+      config.featureToggles.annotationClustering &&
+      annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 }

@@ -506,6 +506,13 @@ export enum VizOrientation {
  * Breaks out each annotation frame into multiple lanes on the x-axis
  */
 export interface VizAnnotations {
+  /**
+   * Sets whether clustering is enabled. Boolean from UI switch, or number for threshold customization. Any truthy value enables clustering.
+   */
+  clustering?: number | boolean;
+  /**
+   * Breaks out each annotation frame into multiple lanes on the x-axis
+   */
   multiLane?: boolean;
 }
 
