@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -13,8 +12,6 @@ import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
-import { QueryToolbox } from '../QueryToolbox';
-
 import { useSQLExplanations } from './GenAI/hooks/useSQLExplanations';
 import { useSQLSuggestions } from './GenAI/hooks/useSQLSuggestions';
 import {
@@ -38,9 +35,6 @@ const GenAIExplanationDrawer = lazy(() =>
     default: module.GenAIExplanationDrawer,
   }))
 );
-
-// Account for Monaco editor's border to prevent clipping
-const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 
 export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
@@ -77,7 +71,6 @@ FROM
 LIMIT
   10`;
 
-  const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>();
   const [isSchemaInspectorOpen, setIsSchemaInspectorOpen] = useState(true);
   const styles = useStyles2((theme) => getStyles(theme));
   const { handleApplySuggestion, handleCloseDrawer, handleHistoryUpdate, handleOpenDrawer, isDrawerOpen, suggestions } =
@@ -255,15 +248,10 @@ LIMIT
               query={query.expression || initialQuery}
               onChange={onEditorChange}
               language={EDITOR_LANGUAGE_DEFINITION}
+              toolboxProps={{ query }}
               width={width}
-              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-            >
-              {({ formatQuery }) => (
-                <div ref={toolboxRef}>
-                  <QueryToolbox query={query} onFormatCode={formatQuery} />
-                </div>
-              )}
-            </SQLEditor>
+              height={height}
+            />
           )}
         </AutoSizer>
       </div>

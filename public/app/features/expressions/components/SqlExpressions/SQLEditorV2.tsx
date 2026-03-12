@@ -3,13 +3,17 @@ import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, Text } from '@codemirror/state';
 import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
-import { EditorView, lineNumbers, ViewUpdate } from '@codemirror/view';
+import { EditorView, lineNumbers, Panel, showPanel, ViewUpdate } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { createRoot, Root } from 'react-dom/client';
 import { useLatest } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+
+import { SqlExpressionQuery } from '../../types';
+import { QueryToolbox } from '../QueryToolbox';
 
 // Hoisted — MySQL keywords and dialect don't change
 const kwSource = keywordCompletionSource(MySQL, true);
@@ -30,7 +34,7 @@ export interface SQLEditorV2Props {
   onChange?: (q: string, processQuery: boolean) => void;
   onBlur?: (text: string) => void;
   language?: SQLEditorV2LanguageDefinition;
-  children?: (props: { formatQuery: () => void }) => React.ReactNode;
+  toolboxProps?: { query: SqlExpressionQuery };
   width?: number;
   height?: number;
 }
@@ -91,7 +95,7 @@ function buildSqlExtension(
   ];
 }
 
-export function SQLEditorV2({ query, onChange, onBlur, language, children, width, height }: SQLEditorV2Props) {
+export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, width, height }: SQLEditorV2Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -99,6 +103,8 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
   const onChangeRef = useLatest(onChange);
   const onBlurRef = useLatest(onBlur);
   const languageRef = useLatest(language);
+  const toolboxPropsRef = useLatest(toolboxProps);
+  const panelRootRef = useRef<Root | null>(null);
 
   // Mount the editor once
   useEffect(() => {
@@ -108,12 +114,43 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
 
     const sqlCompartment = new Compartment();
 
+    // Panel factory for the QueryToolbox toolbar
+    const makeToolboxPanel = (): Panel => {
+      const dom = document.createElement('div');
+      const root = createRoot(dom);
+      panelRootRef.current = root;
+
+      const renderToolbox = (formatQuery: () => void) => {
+        const props = toolboxPropsRef.current;
+        if (props) {
+          root.render(<QueryToolbox query={props.query} onFormatCode={formatQuery} />);
+        }
+      };
+
+      // formatQuery is defined below; we'll assign it before the panel renders
+      const formatQueryFn = async () => {
+        const view = viewRef.current;
+        const lang = languageRef.current;
+        if (!lang?.formatter || !view) {
+          return;
+        }
+        const formatted = await lang.formatter(view.state.doc.toString());
+        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: formatted } });
+        onChangeRef.current?.(formatted, true);
+      };
+
+      renderToolbox(formatQueryFn);
+
+      return { dom, top: false };
+    };
+
     const extensions = [
       lineNumbers(),
       // Start with no tables; reconfigured async once tables are fetched
       sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
+      showPanel.of(toolboxProps ? makeToolboxPanel : null),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           onChangeRef.current?.(update.state.doc.toString(), true);
@@ -127,10 +164,15 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
       EditorView.theme({
         '&': { width: '100%', height: '100%', fontSize: '13px' },
         '.cm-scroller': { overflow: 'auto' },
-        '.cm-editor': { background: theme.components.input.background },
+        '.cm-editor': {
+          //background: theme.components.input.background
+        },
         '.cm-gutters': {
-          background: theme.colors.background.secondary,
+          //background: theme.colors.background.secondary,
           borderRight: `1px solid ${theme.colors.border.weak}`,
+        },
+        '&.cm-editor .cm-panels.cm-panels-bottom': {
+          borderTop: `1px solid ${theme.colors.border.weak}`,
         },
       }),
     ];
@@ -156,6 +198,8 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     }
 
     return () => {
+      panelRootRef.current?.unmount();
+      panelRootRef.current = null;
       view.destroy();
       viewRef.current = null;
     };
@@ -173,22 +217,29 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     }
   }, [query]);
 
-  const formatQuery = useCallback(async () => {
-    const view = viewRef.current;
-    if (!language?.formatter || !view) {
+  // Keep toolbox re-rendered when query changes (for copy button etc.)
+  useEffect(() => {
+    const root = panelRootRef.current;
+    const props = toolboxProps;
+    if (!root || !props) {
       return;
     }
-    const formatted = await language.formatter(view.state.doc.toString());
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: formatted } });
-    onChangeRef.current?.(formatted, true);
-  }, [language, onChangeRef]);
+    const formatQueryFn = async () => {
+      const view = viewRef.current;
+      const lang = languageRef.current;
+      if (!lang?.formatter || !view) {
+        return;
+      }
+      const formatted = await lang.formatter(view.state.doc.toString());
+      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: formatted } });
+      onChangeRef.current?.(formatted, true);
+    };
+    root.render(<QueryToolbox query={props.query} onFormatCode={formatQueryFn} />);
+  }, [toolboxProps, languageRef, onChangeRef]);
 
   return (
-    <div style={{ width, display: 'flex', flexDirection: 'column' }}>
-      <div className={styles.container} style={{ height }}>
-        <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-      </div>
-      {children?.({ formatQuery })}
+    <div className={styles.container} style={{ width, height }}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }
