@@ -87,8 +87,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 
 	t.Run("editor can create job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Action: provisioning.JobActionFixFolderMetadata,
 		})
 
 		var statusCode int
@@ -109,8 +108,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 
 	t.Run("viewer cannot create job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Action: provisioning.JobActionFixFolderMetadata,
 		})
 
 		var statusCode int
