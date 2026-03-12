@@ -160,6 +160,7 @@ describe('useShortcuts', () => {
   describe('time range zoom shortcuts with feature toggle', () => {
     beforeEach(() => {
       mockUseAssistant.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: jest.fn(),
         closeAssistant: jest.fn(),
