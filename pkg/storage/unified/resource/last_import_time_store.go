@@ -92,7 +92,10 @@ func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	if err != nil {
 		return err
 	}
-	writer.Write([]byte{1})
+	_, err = writer.Write([]byte{1})
+	if err != nil {
+		return err
+	}
 	return writer.Close()
 }
 
