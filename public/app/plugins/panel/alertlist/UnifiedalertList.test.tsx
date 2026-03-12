@@ -1,6 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import {
@@ -170,11 +169,7 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 
   const props = { ...defaultProps, options: { ...defaultOptions, ...options } };
 
-  return render(
-    <Provider store={store}>
-      <UnifiedAlertListPanel {...props} />
-    </Provider>
-  );
+  return render(<UnifiedAlertListPanel {...props} />, { store });
 };
 
 describe('UnifiedAlertList', () => {
@@ -266,11 +261,7 @@ describe('UnifiedAlertList', () => {
       stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false, recovering: false },
     };
 
-    const { rerender } = render(
-      <Provider store={store}>
-        <UnifiedAlertListPanel {...{ ...defaultProps, options: initialOptions }} />
-      </Provider>
-    );
+    const { rerender } = render(<UnifiedAlertListPanel {...{ ...defaultProps, options: initialOptions }} />, { store });
 
     await waitFor(() => expect(subscribeMock).toHaveBeenCalledTimes(1));
     expect(subscribeMock.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
@@ -280,11 +271,7 @@ describe('UnifiedAlertList', () => {
       stateFilter: { firing: true, pending: true, noData: true, normal: true, error: true, recovering: true },
     };
 
-    rerender(
-      <Provider store={store}>
-        <UnifiedAlertListPanel {...{ ...defaultProps, options: updatedOptions }} />
-      </Provider>
-    );
+    rerender(<UnifiedAlertListPanel {...{ ...defaultProps, options: updatedOptions }} />);
 
     // The old subscription should be cleaned up
     await waitFor(() => expect(unsubscribeMock).toHaveBeenCalled());

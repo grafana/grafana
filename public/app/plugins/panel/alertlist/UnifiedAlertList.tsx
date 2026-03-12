@@ -13,6 +13,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
+  Link,
   LoadingPlaceholder,
   ScrollContainer,
   useStyles2,
@@ -313,9 +314,9 @@ function StatView({
   if (enhancementsEnabled) {
     const href = buildAlertingListUrl(options, dashboardUid);
     return (
-      <a href={href} className={styles.statLink}>
+      <Link href={href} className={styles.statLink}>
         {bigValue}
-      </a>
+      </Link>
     );
   }
 
