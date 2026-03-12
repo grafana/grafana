@@ -180,11 +180,8 @@ func (c *jobsConnector) Connect(
 					targetRef = spec.Push.Branch
 				}
 			case provisioning.JobActionMigrate:
-				// Migrate operates on the default branch (no ref)
 				targetRef = ""
 			default:
-				// Read-only operations (Pull, PullRequest, FixFolderMetadata) don't reach here
-				// due to requiresWrite check, but include default for exhaustive linter
 				targetRef = ""
 			}
 
@@ -312,6 +309,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 	}
 	return nil
 }
+
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
 // Used for job types that are restricted to administrators.
