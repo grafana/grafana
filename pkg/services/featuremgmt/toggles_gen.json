@@ -4714,6 +4714,20 @@
     },
     {
       "metadata": {
+        "name": "vizLegendFacetedFilter",
+        "resourceVersion": "1773129262183",
+        "creationTimestamp": "2026-03-10T07:54:22Z"
+      },
+      "spec": {
+        "description": "Enable faceted labels filter for series visibility in the legend",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizLegendSeriesLimit",
         "resourceVersion": "1772507615654",
         "creationTimestamp": "2026-03-03T03:13:35Z"
