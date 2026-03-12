@@ -16,6 +16,7 @@ const kwSource = keywordCompletionSource(MySQL, true);
 
 export interface SQLEditorV2CompletionProvider {
   getTables: () => Promise<string[]>;
+  getColumns: (table: string) => Promise<string[]>;
   getFunctions?: () => string[];
 }
 
@@ -40,7 +41,17 @@ function isAfterFromOrJoin(doc: Text, pos: number): boolean {
   return /\b(FROM|JOIN)$/i.test(textBefore);
 }
 
-function makeCompletionSource(tables: string[], fnCompletions: Completion[]) {
+// Extract table names from the FROM clause of the full query
+function getFromTables(doc: Text): string[] {
+  const text = doc.toString();
+  return Array.from(text.matchAll(/\bFROM\s+(\w+)/gi), (m) => m[1]);
+}
+
+function makeCompletionSource(
+  tables: string[],
+  getColumns: (table: string) => Promise<string[]>,
+  fnCompletions: Completion[]
+) {
   const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
 
   return async (context: CompletionContext): Promise<CompletionResult | null> => {
@@ -53,19 +64,30 @@ function makeCompletionSource(tables: string[], fnCompletions: Completion[]) {
       return { from: word.from, options: tableCompletions };
     }
 
-    // Everywhere else: SQL keywords + functions
+    // Fetch columns for tables referenced in FROM
+    const fromTables = getFromTables(context.state.doc);
+    const columnCompletions: Completion[] = (await Promise.all(fromTables.map(getColumns)))
+      .flat()
+      .map((col) => ({ label: col, type: 'property' }));
+
+    // SQL keywords + functions + columns
     const kwResult = await kwSource(context);
+    const extra = [...columnCompletions, ...fnCompletions];
     if (!kwResult) {
-      return fnCompletions.length > 0 ? { from: word.from, options: fnCompletions } : null;
+      return extra.length > 0 ? { from: word.from, options: extra } : null;
     }
-    return { ...kwResult, options: [...kwResult.options, ...fnCompletions] };
+    return { ...kwResult, options: [...kwResult.options, ...extra] };
   };
 }
 
-function buildSqlExtension(tables: string[], fnCompletions: Completion[]) {
+function buildSqlExtension(
+  tables: string[],
+  getColumns: (table: string) => Promise<string[]>,
+  fnCompletions: Completion[]
+) {
   return [
     sql({ dialect: MySQL }),
-    autocompletion({ override: [makeCompletionSource(tables, fnCompletions)], defaultKeymap: true }),
+    autocompletion({ override: [makeCompletionSource(tables, getColumns, fnCompletions)], defaultKeymap: true }),
   ];
 }
 
@@ -89,7 +111,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     const extensions = [
       lineNumbers(),
       // Start with no tables; reconfigured async once tables are fetched
-      sqlCompartment.of(buildSqlExtension([], [])),
+      sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
       EditorView.updateListener.of((update: ViewUpdate) => {
@@ -127,7 +149,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
         }));
         if (viewRef.current) {
           viewRef.current.dispatch({
-            effects: sqlCompartment.reconfigure(buildSqlExtension(tables, fnCompletions)),
+            effects: sqlCompartment.reconfigure(buildSqlExtension(tables, provider.getColumns, fnCompletions)),
           });
         }
       });
