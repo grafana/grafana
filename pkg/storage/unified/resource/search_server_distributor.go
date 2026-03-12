@@ -47,11 +47,13 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
-
-	ringWatcher := services.NewFailureWatcher()
-	ringWatcher.WatchService(s.ring)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
+		ringWatcher := services.NewFailureWatcher()
+		ringWatcher.WatchService(s.ring)
 		defer ringWatcher.Close()
+		if state := s.ring.State(); state != services.Running {
+			return fmt.Errorf("ring is not running: state=%s", state)
+		}
 		select {
 		case err := <-ringWatcher.Chan():
 			return fmt.Errorf("ring failure: %w", err)
