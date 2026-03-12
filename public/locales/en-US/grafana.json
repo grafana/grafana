@@ -12451,12 +12451,12 @@
         "latestReleaseDate": "Latest release date:",
         "latestVersion": "Latest Version",
         "license": "License",
-        "moreDetails": "Do you find Plugin Insights usefull? Please share your feedback <2>here</2>.",
+        "moreDetails": "Plugin Insights are currently in preview, share your feedback to help us surface the most useful information <2>here</2>.",
         "pluginInsights": {
           "header": "Plugin insights"
         },
-        "pluginInsightsSuccessTooltip": "All relevant signals are present and verified",
-        "pluginInsightsWarningTooltip": "One or more signals are missing or need attention",
+        "pluginInsightsSuccessTooltip": "All relevant checks are present and verified",
+        "pluginInsightsWarningTooltip": "One or more checks need attention",
         "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
