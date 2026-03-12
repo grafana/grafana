@@ -44,7 +44,6 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -235,7 +234,6 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -333,7 +331,6 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -425,8 +422,8 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Only run for Unified Storage modes that support search (Mode3+)
-	modes := []rest.DualWriterMode{rest.Mode3, rest.Mode4, rest.Mode5}
+	// Only run for Unified Storage modes that support search (Mode4+)
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		runSearchPermissionTest(t, mode)
 	}
@@ -445,7 +442,6 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageEnableSearch: true,
 		})
 		defer helper.Shutdown()
 

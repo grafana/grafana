@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { ComponentProps, useMemo } from 'react';
 
 import { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Alert, Combobox, ComboboxOption } from '@grafana/ui';
+import { Alert, Combobox, ComboboxOption, MultiCombobox } from '@grafana/ui';
 
 import { CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { USER_DEFINED_TREE_NAME } from '../../consts';
@@ -10,7 +10,13 @@ import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-export type RoutingTreeSelectorProps = CustomComboBoxProps<RoutingTree>;
+type SingleSelectProps = CustomComboBoxProps<RoutingTree> & { multi?: false };
+type MultiSelectProps = Omit<ComponentProps<typeof MultiCombobox<string>>, 'options' | 'loading' | 'onChange'> & {
+  multi: true;
+  onChange: (trees: RoutingTree[]) => void;
+};
+
+export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 
 /**
  * Routing Tree Combobox which lists all available notification policy trees.
@@ -22,11 +28,21 @@ export type RoutingTreeSelectorProps = CustomComboBoxProps<RoutingTree>;
  * The default routing tree (named "user-defined") is displayed as "Default policy"
  * and is always listed first.
  *
+ * Supports both single-select (default) and multi-select modes via the `multi` prop.
+ *
  * @example
  * ```tsx
+ * // Single select
  * <RoutingTreeSelector
  *   value={selectedTreeName}
  *   onChange={(tree) => setSelectedTree(tree)}
+ * />
+ *
+ * // Multi select
+ * <RoutingTreeSelector
+ *   multi
+ *   value={selectedTreeNames}
+ *   onChange={(trees) => setSelectedTrees(trees)}
  * />
  * ```
  */
@@ -82,6 +98,29 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     return { options: opts, treeLookup: lookup };
   }, [routingTrees?.items]);
 
+  if (isError) {
+    return (
+      <Alert
+        severity="warning"
+        title={t('alerting.routing-tree-selector.error', 'Failed to load notification policies')}
+      />
+    );
+  }
+
+  if (props.multi) {
+    const { multi: _, onChange, ...rest } = props;
+
+    const handleChange = (selectedOptions: Array<ComboboxOption<string>>) => {
+      const trees = selectedOptions
+        .map((opt) => treeLookup.get(opt.value))
+        .filter((tree): tree is RoutingTree => tree != null);
+      onChange(trees);
+    };
+
+    // @ts-expect-error TypeScript cannot narrow rest-spread from discriminated unions with conditional width types
+    return <MultiCombobox {...rest} loading={isLoading} options={options} onChange={handleChange} />;
+  }
+
   const handleChange = (selectedOption: ComboboxOption<string> | null) => {
     if (selectedOption == null && props.isClearable) {
       props.onChange(null);
@@ -98,15 +137,6 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
       props.onChange(tree);
     }
   };
-
-  if (isError) {
-    return (
-      <Alert
-        severity="warning"
-        title={t('alerting.routing-tree-selector.error', 'Failed to load notification policies')}
-      />
-    );
-  }
 
   return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
 }

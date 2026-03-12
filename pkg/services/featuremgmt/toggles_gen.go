@@ -39,6 +39,10 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
+	// FlagAlertingRuleGroupSortByFolderFullpath
+	// Sort alert rule groups by folder full path in the Prometheus rules API
+	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
+
 	// FlagLiveAPIServer
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
@@ -258,6 +262,10 @@ const (
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagReportRenderBinding
+	// Enables render binding support for report rendering
+	FlagReportRenderBinding = "reportRenderBinding"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -630,6 +638,10 @@ const (
 	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
+	// FlagKubernetesAuthZRoleBindingsRedirect
+	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
@@ -802,6 +814,10 @@ const (
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
+	// FlagKubernetesTeamsApi
+	// Enables team APIs in the app platform
+	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
+
 	// FlagKubernetesTeamsHandlerRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
@@ -809,6 +825,14 @@ const (
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
+	// FlagKubernetesServiceAccountsApi
+	// Enables service account APIs in the app platform
+	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"
+
+	// FlagKubernetesServiceAccountTokensApi
+	// Enables service account token APIs in the app platform
+	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
@@ -826,6 +850,10 @@ const (
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
+	// FlagAppPluginAPIServer
+	// Registers an API server for each backend app plugin exposing a settings endpoint
+	FlagAppPluginAPIServer = "appPluginAPIServer"
+
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
@@ -837,6 +865,10 @@ const (
 	// FlagAlertingNotificationHistoryGlobal
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
+
+	// FlagAlertingNotificationHistoryTriage
+	// Enables the notification history timeline in the triage instance details drawer
+	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
@@ -857,4 +889,20 @@ const (
 	// FlagDsAbstractionApp
 	// Registers the dsabstraction app for querying datasources via unified SQL
 	FlagDsAbstractionApp = "dsAbstractionApp"
+
+	// FlagDatasourcesApiServerEnableHealthEndpoint
+	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
+
+	// FlagAnalyticsFramework
+	// Enables new analytics framework
+	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagInlineLogDetailsNoScrolls
+	// Enables an inline version of Log Details that creates no new scrolls
+	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )

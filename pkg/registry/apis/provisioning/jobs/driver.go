@@ -174,7 +174,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	defer rollback()
 
 	namespace := claimedJob.GetNamespace()
-	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace)
+	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
 	d.currentJob = claimedJob
 
@@ -208,12 +208,11 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 
 	// Process the job with lease loss detection
 	err = d.processJobWithLeaseCheck(jobctx, recorder, leaseExpired)
-	end := time.Now()
-	logger.Debug("job processed", "duration", end.Sub(recorder.Started()), "error", err)
+	duration := time.Since(recorder.Started())
 
 	// Check if parent context was cancelled (graceful shutdown)
 	if ctx.Err() != nil {
-		logger.Debug("context cancel - job will retry")
+		logger.Warn("context cancelled - job will retry", "duration", duration)
 		// Don't complete the job - let it be retried by another worker
 		d.mu.Lock()
 		d.currentJob = nil
@@ -229,6 +228,9 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
+		logger.Error("job failed", "duration", duration, "error", err)
+	} else {
+		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
@@ -240,10 +242,10 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	}()
 
 	// Save the finished job
-	err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy())
-	if err != nil {
-		// We're not going to return this as it is not critical. Not ideal, but not critical.
+	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
 		logger.Warn("failed to write historic job", "error", err)
+	} else {
+		logger.Debug("historic job saved")
 	}
 
 	// Mark the job as completed.
@@ -251,7 +253,6 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 		span.RecordError(err)
 		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
 	}
-	logger.Info("job complete")
 
 	return nil
 }
@@ -366,10 +367,16 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		}
 
 		r := repo.Config()
+		connName := r.ConnectionName()
+		logger = logger.With("connection", connName, "repositoryType", r.Spec.Type)
+		ctx = logging.Context(ctx, logger)
+		span.SetAttributes(
+			attribute.String("job.connection", connName),
+			attribute.String("repository.type", string(r.Spec.Type)),
+		)
+
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
 			logger.Info("repository marked for deletion - skip job",
-				"name", r.Name,
-				"namespace", r.Namespace,
 				"deletionTimestamp", r.DeletionTimestamp,
 			)
 			return nil
@@ -424,7 +431,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 			updated, err := d.store.Update(ctx, job)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-					// Conflict detected, retry with fresh data
+					d.mu.Unlock()
 					logging.FromContext(ctx).Debug("progress update conflict, retrying", "attempt", attempt+1)
 					continue
 				}

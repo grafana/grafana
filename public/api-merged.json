@@ -13538,6 +13538,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -23939,6 +23942,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },

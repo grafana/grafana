@@ -125,11 +125,11 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
 /**
  * Get previous variable values given the current repeated state
  */
-function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSingle[] {
+function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSingle[] | undefined {
   const values: VariableValueSingle[] = [];
 
   if (!mainRow.state.repeatedRows) {
-    return [];
+    return undefined;
   }
 
   function collectVariableValue(row: RowItem) {

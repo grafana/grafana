@@ -4,7 +4,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { CONTENT_KINDS } from '../interactions';
+import { CONTENT_KINDS } from '../constants';
 import { GnetDashboard } from '../types';
 
 function getPanelDatasourceTypes(scene: DashboardScene): string[] {

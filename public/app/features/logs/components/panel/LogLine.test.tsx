@@ -18,6 +18,10 @@ import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
@@ -95,6 +99,26 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with no level when showLevel is false', () => {
+    render(
+      <LogListContextProvider {...contextProps} showLevel={false}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).not.toBeInTheDocument();
+  });
+
+  test('Renders a log line with level by default', () => {
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).toBeInTheDocument();
   });
 
   test('Renders a log line with millisecond timestamps', () => {

@@ -7,10 +7,10 @@ import { AlertLabels } from '@grafana/alerting/unstable';
 import {
   CreateNotificationqueryMatcher,
   CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationEntryAlert,
+  CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   AdHocFiltersVariable,
@@ -24,8 +24,11 @@ import {
 import {
   Alert,
   Badge,
+  Icon,
+  LinkButton,
   LoadingBar,
   Pagination,
+  Spinner,
   Stack,
   Text,
   TextLink,
@@ -34,12 +37,15 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 
+import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
+import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { stringifyErrorLike } from '../utils/misc';
+import { createRelativeUrl } from '../utils/url';
 
 import { isNotificationOutcome, isNotificationStatus, matcherToAPIFormat } from './NotificationsRuntimeDataSource';
 import { LABELS_FILTER, OUTCOME_FILTER, RECEIVER_FILTER, STATUS_FILTER } from './constants';
@@ -55,6 +61,7 @@ interface NotificationsListProps {
   statusFilter: string;
   outcomeFilter: string;
   receiverFilter: string;
+  ruleUID?: string;
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
@@ -64,9 +71,13 @@ export const NotificationsList = React.memo(function NotificationsList({
   statusFilter,
   outcomeFilter,
   receiverFilter,
+  ruleUID,
   onLabelClick,
 }: NotificationsListProps) {
   const [createNotificationQuery, { data, isLoading, isError, error }] = useCreateNotificationqueryMutation();
+
+  const fromUnix = timeRange?.from?.unix();
+  const toUnix = timeRange?.to?.unix();
 
   // Fetch notifications when filters change
   React.useEffect(() => {
@@ -94,10 +105,11 @@ export const NotificationsList = React.memo(function NotificationsList({
         createNotificationqueryRequestBody: {
           from: fromDate,
           to: toDate,
-          limit: 1000,
+          limit: 100,
           status: isNotificationStatus(statusFilter) ? statusFilter : undefined,
           outcome: isNotificationOutcome(outcomeFilter) ? outcomeFilter : undefined,
           receiver: receiverFilter && receiverFilter !== 'all' ? receiverFilter : undefined,
+          ruleUID: ruleUID,
           groupLabels,
         },
       });
@@ -106,7 +118,7 @@ export const NotificationsList = React.memo(function NotificationsList({
     }
     // Don't include createNotificationQuery in deps to avoid infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange?.from?.unix(), timeRange?.to?.unix(), statusFilter, outcomeFilter, receiverFilter, labelFilter]);
+  }, [fromUnix, toUnix, statusFilter, outcomeFilter, receiverFilter, labelFilter, ruleUID]);
 
   // Extract entries from API response (data is properly typed from the generated client)
   const entriesArray: NotificationEntry[] = React.useMemo(() => {
@@ -199,6 +211,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
+      <div className={styles.viewCol}>{/* View link column */}</div>
     </div>
   );
 }
@@ -255,6 +268,18 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         <div className={styles.receiverCol}>
           <Text>{record.receiver || '-'}</Text>
         </div>
+        <div className={styles.viewCol}>
+          <LinkButton
+            href={createRelativeUrl(
+              `/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`
+            )}
+            size="sm"
+            variant="secondary"
+            icon="eye"
+          >
+            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+          </LinkButton>
+        </div>
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
@@ -285,15 +310,14 @@ interface NotificationDetailsProps {
 function NotificationDetails({ record }: NotificationDetailsProps) {
   const styles = useStyles2(getStyles);
 
-  // Split alerts into firing and resolved
-  const firingAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'firing'
-  );
-  const resolvedAlerts = record.alerts.filter(
-    (alert: CreateNotificationqueryNotificationEntryAlert) => alert.status === 'resolved'
-  );
+  const {
+    alerts,
+    firingAlerts,
+    resolvedAlerts,
+    isLoading: alertsLoading,
+  } = useNotificationAlerts(record.uuid, record.timestamp);
 
-  const renderAlert = (alert: CreateNotificationqueryNotificationEntryAlert, index: number) => {
+  const renderAlert = (alert: CreateNotificationsqueryalertsNotificationEntryAlert, index: number) => {
     const ruleUid = alert.labels?.__alert_rule_uid__;
     const alertName = alert.labels?.alertname || 'Alert';
     const folderName = alert.labels?.grafana_folder || '';
@@ -375,14 +399,12 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           )}
           {alert.startsAt && (
             <Text variant="bodySmall" color="secondary">
-              <Trans
-                i18nKey="alerting.notifications-scene.started"
-                values={{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
-              >
-                Started: {{ value: dateTime(alert.startsAt).format('YYYY-MM-DD HH:mm:ss') }}
+              <Trans i18nKey="alerting.notifications-scene.started" values={{ value: dateTimeFormat(alert.startsAt) }}>
+                Started: {{ value: dateTimeFormat(alert.startsAt) }}
               </Trans>
             </Text>
           )}
+          {alert.enrichments && <AlertEnrichments enrichments={alert.enrichments} />}
         </Stack>
       </div>
     );
@@ -395,13 +417,25 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
           {record.error}
         </Alert>
       )}
+      {alertsLoading && <Spinner />}
+      {!alertsLoading && alerts.length < record.alertCount && (
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Icon name="info-circle" size="xs" />
+          <Text variant="bodySmall" color="secondary">
+            <Trans
+              i18nKey="alerting.notifications-scene.showing-alerts"
+              values={{ showing: alerts.length, total: record.alertCount }}
+            >
+              {'Showing {{ showing }} out of {{ total }} alerts'}
+            </Trans>
+          </Text>
+        </Stack>
+      )}
       {/* Firing alerts section */}
       {firingAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.firing-alerts" values={{ count: firingAlerts.length }}>
-              Firing Alerts ({{ count: firingAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.firing-alerts">Firing Alerts</Trans>
           </Text>
           {firingAlerts.map(renderAlert)}
         </Stack>
@@ -410,9 +444,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
       {resolvedAlerts.length > 0 && (
         <Stack direction="column" gap={2}>
           <Text variant="h6">
-            <Trans i18nKey="alerting.notifications-scene.resolved-alerts" values={{ count: resolvedAlerts.length }}>
-              Resolved Alerts ({{ count: resolvedAlerts.length }})
-            </Trans>
+            <Trans i18nKey="alerting.notifications-scene.resolved-alerts">Resolved Alerts</Trans>
           </Text>
           {resolvedAlerts.map(renderAlert)}
         </Stack>
@@ -426,7 +458,7 @@ interface TimestampProps {
 }
 
 const Timestamp = ({ time }: TimestampProps) => {
-  const formattedDate = time ? dateTime(time).format('YYYY-MM-DD HH:mm:ss') : '-';
+  const formattedDate = time ? dateTimeFormat(time) : '-';
 
   return (
     <Text variant="body" weight="light">
@@ -484,7 +516,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     receiverCol: css({
-      width: '250px',
+      width: '200px',
+    }),
+    viewCol: css({
+      width: '80px',
     }),
     expandedRow: css({
       padding: theme.spacing(2),
@@ -524,7 +559,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
 /**
  * This is a scene object that displays a list of notification events.
  */
-interface NotificationsListObjectState extends SceneObjectState {}
+interface NotificationsListObjectState extends SceneObjectState {
+  ruleUID?: string;
+}
 
 export class NotificationsListObject extends SceneObjectBase<NotificationsListObjectState> {
   public static Component = NotificationsListObjectRenderer;
@@ -535,7 +572,7 @@ export class NotificationsListObject extends SceneObjectBase<NotificationsListOb
 }
 
 export function NotificationsListObjectRenderer({ model }: SceneComponentProps<NotificationsListObject>) {
-  model.useState();
+  const { ruleUID } = model.useState();
 
   const timeRangeObj = sceneGraph.getTimeRange(model);
   const { value: timeRange } = timeRangeObj.useState();
@@ -592,6 +629,7 @@ export function NotificationsListObjectRenderer({ model }: SceneComponentProps<N
         statusFilter={statusFilterVariable.state.value.toString()}
         outcomeFilter={outcomeFilterVariable.state.value.toString()}
         receiverFilter={receiverFilterVariable.state.value.toString()}
+        ruleUID={ruleUID}
         onLabelClick={onLabelClick}
       />
     );

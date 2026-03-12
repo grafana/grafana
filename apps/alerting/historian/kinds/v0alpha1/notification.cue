@@ -9,12 +9,17 @@ import (
 #NotificationOutcome: "success" | "error" @cog(kind="enum",memberNames="Success|Error")
 
 #NotificationQuery: {
+    // Type of query to perform (default: entries)
+    type?: "entries" | "counts" | "range_counts" @cog(kind="enum",memberNames="Entries|Counts|RangeCounts")
+
     // From is the starting timestamp for the query.
     from?: time.Time
     // To is the starting timestamp for the query.
     to?: time.Time
     // Limit is the maximum number of entries to return.
     limit?: int64    
+    // Step is the step interval in seconds for range_counts queries.
+    step?: int64
     // Receiver optionally filters the entries by receiver title (contact point).
     receiver?: string
     // Status optionally filters the entries to only either firing or resolved.
@@ -27,10 +32,22 @@ import (
     groupLabels?: #Matchers
     // Labels optionally filters the entries by matching alert labels.
     labels?: #Matchers
+
+    // GroupBy specifies how to aggregate counts queries.
+    groupBy?: {
+        receiver: bool
+        integration: bool
+        integrationIndex: bool
+        status: bool
+        outcome: bool
+        error: bool
+        ruleUID: bool
+    }
 }
 
 #NotificationQueryResult: {
     entries: [...#NotificationEntry]
+    counts: [...#NotificationCount]
 }
 
 #NotificationEntry: {
@@ -66,6 +83,30 @@ import (
     pipelineTime: time.Time
     // GroupKey uniquely idenifies the dispatcher alert group.
     groupKey: string
+}
+
+#NotificationCount: {
+    receiver?: string
+    integration?: string
+    integrationIndex?: int
+    status?: #NotificationStatus
+    outcome?: #NotificationOutcome
+    error?: string
+    ruleUID?: string
+
+    // Count is the number of notification attempts in the time period. Set for counts queries.
+    count: int
+
+    // Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.
+    values: [...#NotificationRangeValue]
+}
+
+// NotificationRangeValue is a single (timestamp, count) data point in a range count series.
+#NotificationRangeValue: {
+    // Timestamp is the Unix epoch in seconds for this data point.
+    timestamp: int64
+    // Count is the number of notification attempts at this point in time.
+    count: int
 }
 
 #AlertQuery: {

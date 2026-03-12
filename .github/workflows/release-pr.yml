@@ -132,13 +132,12 @@ jobs:
           fetch-depth: '0'
           path: .grafana-main
 
-      - name: Setup nodejs environment
-        uses: actions/setup-node@v6
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
         with:
-          node-version-file: .nvmrc
-      - uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
+          cache-build: 'false'
       - name: Configure git user
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"

@@ -77,6 +77,8 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   {{ else }}
   {{ if .Query.UID }}
   AND dashboard.uid = {{ .Arg .Query.UID }}
+  {{ else if .Query.DeprecatedInternalID }}
+  AND dashboard.id = {{ .Arg .Query.DeprecatedInternalID }}
   {{ else if .Query.LastID }}
   AND dashboard.id < {{ .Arg .Query.LastID }}
   {{ end }}

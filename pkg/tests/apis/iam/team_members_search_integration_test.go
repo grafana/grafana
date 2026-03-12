@@ -30,7 +30,7 @@ type teamMembersResponse struct {
 func TestIntegrationTeamMembers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("With dual writer mode %d", mode), func(t *testing.T) {
@@ -55,7 +55,6 @@ func TestIntegrationTeamMembers(t *testing.T) {
 					featuremgmt.FlagKubernetesTeamBindings,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() { helper.Shutdown() })

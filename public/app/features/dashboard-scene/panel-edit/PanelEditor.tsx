@@ -1,9 +1,11 @@
+import deepEqual from 'fast-deep-equal';
 import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -21,10 +23,10 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -40,6 +42,7 @@ import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -52,7 +55,7 @@ export interface PanelEditorState extends SceneObjectState {
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
-  pluginLoadErrror?: string;
+  pluginLoadError?: string;
   /**
    * Waiting for library panel or panel plugin to load
    */
@@ -166,7 +169,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (retry < 100) {
         setTimeout(() => this.waitForPlugin(retry + 1), retry * 10);
       } else {
-        this.setState({ pluginLoadErrror: 'Failed to load panel plugin' });
+        this.setState({ pluginLoadError: 'Failed to load panel plugin' });
       }
       return;
     }
@@ -192,8 +195,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _setupChangeDetection() {
     const panel = this.state.panelRef.resolve();
     const performSaveModelDiff = () => {
-      const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(panel));
-      this.setState({ isDirty: hasChanges });
+      this.setState({ isDirty: !deepEqual(this._originalSaveModel, vizPanelToPanel(panel)) });
     };
 
     const performSaveModelDiffDebounced = this.debounceSaveModelDiff
@@ -237,7 +239,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         panelRef: this.state.panelRef,
         searchQuery: '',
         listMode: OptionFilter.All,
-        isVizPickerOpen: this.state.isNewPanel,
+        isVizPickerOpen: panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID,
         isNewPanel: this.state.isNewPanel,
       });
 
@@ -317,9 +319,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
+
+    // clear pending suggestions
+    vizSuggestionsTracker.record(panel.state.key!, undefined);
 
     if (this.state.isNewPanel) {
-      getDashboardSceneFor(this).removePanel(panel);
+      dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
       this._layoutItem!.setState(this._layoutItemState!);
@@ -396,6 +402,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
    */
   public onToggleQueryEditorVersion = () => {
     const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
+    trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
     this.setState({
@@ -410,7 +417,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
-    useQueryExperienceNext: config.featureToggles.queryEditorNext,
+    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

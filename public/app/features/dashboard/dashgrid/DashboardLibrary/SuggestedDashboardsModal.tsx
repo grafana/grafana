@@ -11,7 +11,7 @@ import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/man
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { DashboardLibrarySection } from './DashboardLibrarySection';
-import { ContentKind, EventLocation } from './interactions';
+import { ContentKind, EventLocation } from './constants';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {

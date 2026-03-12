@@ -1132,6 +1132,44 @@
           "$ref": "#/components/schemas/CreateNotificationqueryMatcher"
         }
       },
+      "CreateNotificationqueryNotificationCount": {
+        "type": "object",
+        "required": ["count", "values"],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts in the time period. Set for counts queries.",
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "integration": {
+            "type": "string"
+          },
+          "integrationIndex": {
+            "type": "integer"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/CreateNotificationqueryNotificationOutcome"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "ruleUID": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreateNotificationqueryNotificationStatus"
+          },
+          "values": {
+            "description": "Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateNotificationqueryNotificationRangeValue"
+            }
+          }
+        }
+      },
       "CreateNotificationqueryNotificationEntry": {
         "type": "object",
         "required": [
@@ -1274,6 +1312,21 @@
         "type": "string",
         "enum": ["success", "error"]
       },
+      "CreateNotificationqueryNotificationRangeValue": {
+        "description": "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
+        "type": "object",
+        "required": ["timestamp", "count"],
+        "properties": {
+          "count": {
+            "description": "Count is the number of notification attempts at this point in time.",
+            "type": "integer"
+          },
+          "timestamp": {
+            "description": "Timestamp is the Unix epoch in seconds for this data point.",
+            "type": "integer"
+          }
+        }
+      },
       "CreateNotificationqueryNotificationStatus": {
         "type": "string",
         "enum": ["firing", "resolved"]
@@ -1285,6 +1338,34 @@
             "description": "From is the starting timestamp for the query.",
             "type": "string",
             "format": "date-time"
+          },
+          "groupBy": {
+            "description": "GroupBy specifies how to aggregate counts queries.",
+            "type": "object",
+            "required": ["receiver", "integration", "integrationIndex", "status", "outcome", "error", "ruleUID"],
+            "properties": {
+              "error": {
+                "type": "boolean"
+              },
+              "integration": {
+                "type": "boolean"
+              },
+              "integrationIndex": {
+                "type": "boolean"
+              },
+              "outcome": {
+                "type": "boolean"
+              },
+              "receiver": {
+                "type": "boolean"
+              },
+              "ruleUID": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "boolean"
+              }
+            }
           },
           "groupLabels": {
             "description": "GroupLabels optionally filters the entries by matching group labels.",
@@ -1330,17 +1411,32 @@
               }
             ]
           },
+          "step": {
+            "description": "Step is the step interval in seconds for range_counts queries.",
+            "type": "integer"
+          },
           "to": {
             "description": "To is the starting timestamp for the query.",
             "type": "string",
             "format": "date-time"
+          },
+          "type": {
+            "description": "Type of query to perform (default: entries)",
+            "type": "string",
+            "enum": ["entries", "counts", "range_counts"]
           }
         }
       },
       "CreateNotificationqueryResponse": {
         "type": "object",
-        "required": ["entries"],
+        "required": ["entries", "counts"],
         "properties": {
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateNotificationqueryNotificationCount"
+            }
+          },
           "entries": {
             "type": "array",
             "items": {
