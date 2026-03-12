@@ -54,7 +54,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 			attribute.Bool("readUnified", d.readUnified)))
 	defer span.End()
 
-	log := logging.FromContext(ctx).With("method", "Get", "name", name, "resource", d.gr)
+	log := logging.FromContext(ctx).With("method", "Get", "name", name, "resource", d.gr.String())
 	// If we read from unified, we can just do that and return.
 	if d.readUnified {
 		return d.unified.Get(ctx, name, options)
@@ -72,7 +72,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 			defer cancel()
 			if _, err := d.unified.Get(ctxBg, name, options); err != nil {
 				log.Error("failed background GET to unified", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "Get").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "GET").Inc()
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return legacyGet, nil
@@ -97,7 +97,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	var (
 		legacyOptions  = options.DeepCopy()
 		unifiedOptions = options.DeepCopy()
-		log            = logging.FromContext(ctx).With("method", "List", "options", options, "resource", d.gr)
+		log            = logging.FromContext(ctx).With("method", "List", "options", options, "resource", d.gr.String())
 	)
 
 	legacyToken, unifiedToken, err := parseContinueTokens(options.Continue)
@@ -164,14 +164,14 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 			unifiedList, err := d.unified.List(ctxBg, unifiedOptions)
 			if err != nil {
 				log.Error("failed background LIST to unified", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "List").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "LIST").Inc()
 				return
 			}
 			unifiedMeta, err := meta.ListAccessor(unifiedList)
 			if err != nil {
 				log.Error("failed background LIST to unified", "err",
 					fmt.Errorf("failed to access unified List MetaData: %w", err))
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "List").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "LIST").Inc()
 			}
 			out <- unifiedMeta.GetContinue()
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
@@ -215,7 +215,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return d.unified.Create(ctx, in, createValidation, options)
 	}
 
-	log := logging.FromContext(ctx).With("method", "Create", "resource", d.gr)
+	log := logging.FromContext(ctx).With("method", "Create", "resource", d.gr.String())
 
 	accIn, err := utils.MetaAccessor(in)
 	if err != nil {
@@ -308,7 +308,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 			defer cancel()
 			if _, err := d.unified.Create(ctxBg, createdCopy, createValidation, options); err != nil {
 				log.With("objectInfo", objectInfo(createdCopy)).Error("failed to CREATE object in unified storage", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "Create").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "CREATE").Inc()
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 	} else {
@@ -354,7 +354,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 		return d.unified.Delete(ctx, name, deleteValidation, options)
 	}
 
-	log := logging.FromContext(ctx).With("method", "Delete", "name", name, "resource", d.gr)
+	log := logging.FromContext(ctx).With("method", "Delete", "name", name, "resource", d.gr.String())
 	ctx = utils.SetFolderRemovePermissions(ctx, false)
 
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
@@ -380,7 +380,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 			defer cancel()
 			if _, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options); err != nil && !apierrors.IsNotFound(err) {
 				log.Error("failed background DELETE in unified storage", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "Delete").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "DELETE").Inc()
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return objFromLegacy, asyncLegacy, nil
@@ -414,7 +414,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		return d.unified.Update(ctx, name, dryRunInfo, createValidation, updateValidation, dryRunForceCreate, options)
 	}
 
-	log := logging.FromContext(ctx).With("method", "Update", "name", name, "resource", d.gr)
+	log := logging.FromContext(ctx).With("method", "Update", "name", name, "resource", d.gr.String())
 	// update in legacy first, and then unistore. Will return a failure if either fails.
 	//
 	// we want to update in legacy first, otherwise if the update from unistore was successful,
@@ -471,7 +471,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			defer cancel()
 			if _, _, err := d.unified.Update(ctxBg, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options); err != nil {
 				log.With("objectInfo", objectInfo(objFromLegacy)).Error("failed background UPDATE to unified storage", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "Update").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "UPDATE").Inc()
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return objFromLegacy, createdLegacy, nil
@@ -507,7 +507,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	}
 
-	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion, "resource", d.gr)
+	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion, "resource", d.gr.String())
 
 	// delete from legacy first, and anything that is successful can be deleted in unistore too.
 	//
@@ -530,7 +530,7 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 			defer cancel()
 			if _, err := d.unified.DeleteCollection(ctxBg, deleteValidation, options, listOptions); err != nil {
 				log.With("objectInfo", objectInfo(deletedLegacy)).Error("failed background DELETE collection to unified storage", "err", err)
-				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "DeleteCollection").Inc()
+				d.metrics.backgroundErrors.WithLabelValues(d.gr.String(), "DELETE_COLLECTION").Inc()
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return deletedLegacy, nil

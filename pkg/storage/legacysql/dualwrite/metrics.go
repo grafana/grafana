@@ -12,10 +12,8 @@ type dualWriterMetrics struct {
 func provideDualWriterMetrics(reg prometheus.Registerer) *dualWriterMetrics {
 	return &dualWriterMetrics{
 		backgroundErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "grafana",
-			Subsystem: "dualwriter",
-			Name:      "background_errors_total",
-			Help:      "Total number of failed background operations in unified storage",
+			Name: "dualwriter_background_errors_total",
+			Help: "Total number of failed background operations in unified storage",
 		}, []string{"resource", "method"}),
 	}
 }
