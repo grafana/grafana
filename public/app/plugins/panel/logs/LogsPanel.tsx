@@ -53,6 +53,7 @@ import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
+  isGrammar,
   isIsFilterLabelActive,
   isLogLineMenuCustomItems,
   isOnClickFilterLabel,
