@@ -1195,6 +1195,21 @@
     },
     {
       "metadata": {
+        "name": "colorblindThemes",
+        "resourceVersion": "1770395198316",
+        "creationTimestamp": "2026-02-06T16:26:38Z"
+      },
+      "spec": {
+        "description": "Enables the new colorblind-friendly themes",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -2477,7 +2492,8 @@
       "metadata": {
         "name": "kubernetesAuthzCoreRolesApi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-12T08:00:51Z"
+        "creationTimestamp": "2026-01-12T08:00:51Z",
+        "deletionTimestamp": "2026-03-11T20:37:53Z"
       },
       "spec": {
         "description": "Registers AuthZ Core Roles /apis endpoint",

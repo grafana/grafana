@@ -1163,11 +1163,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
@@ -1667,4 +1662,9 @@ export interface FeatureToggles {
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }
