@@ -130,10 +130,10 @@ func makeMimirDS(uid string, orgID int64, url string) *datasources.DataSource {
 	jd := simplejson.New()
 	jd.Set("implementation", "mimir")
 	return &datasources.DataSource{
-		UID:   uid,
-		OrgID: orgID,
-		Type:  datasources.DS_ALERTMANAGER,
-		URL:   url,
+		UID:      uid,
+		OrgID:    orgID,
+		Type:     datasources.DS_ALERTMANAGER,
+		URL:      url,
 		JsonData: jd,
 	}
 }
@@ -396,4 +396,3 @@ func TestBuildMimirConfigURL(t *testing.T) {
 		})
 	}
 }
-

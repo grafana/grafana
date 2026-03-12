@@ -114,11 +114,11 @@ type MultiOrgAlertmanager struct {
 	alertsBroadcastChannel alertingCluster.ClusterChannel
 	settleCancel           context.CancelFunc
 
-	configStore     AlertingStore
-	orgStore        store.OrgStore
-	kvStore         kvstore.KVStore
+	configStore      AlertingStore
+	orgStore         store.OrgStore
+	kvStore          kvstore.KVStore
 	adminConfigStore store.AdminConfigurationStore
-	factory         OrgAlertmanagerFactory
+	factory          OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
