@@ -1,7 +1,7 @@
-import { autocompletion, completeFromList, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import { MySQL, sql, SQLNamespace } from '@codemirror/lang-sql';
+import { autocompletion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState, Text } from '@codemirror/state';
 import { oneDarkHighlightStyle, oneDarkTheme } from '@codemirror/theme-one-dark';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { css } from '@emotion/css';
@@ -14,7 +14,6 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 export interface SQLEditorV2CompletionProvider {
   getTables: () => Promise<string[]>;
   getColumns: (table: string) => Promise<string[]>;
-  getFunctions?: () => string[];
 }
 
 export interface SQLEditorV2LanguageDefinition {
@@ -33,52 +32,38 @@ export interface SQLEditorV2Props {
   height?: number;
 }
 
-async function buildCompletionSource(
-  provider: SQLEditorV2CompletionProvider,
-  context: CompletionContext
-): Promise<CompletionResult | null> {
-  const tables = await provider.getTables();
+// Returns true if the cursor is in a table name position (after FROM or JOIN)
+function isAfterFromOrJoin(doc: Text, pos: number): boolean {
+  // Strip the partial word being typed, then check what keyword precedes it
+  const textBefore = doc.sliceString(0, pos).replace(/\w*$/, '').trimEnd();
+  return /\b(FROM|JOIN)$/i.test(textBefore);
+}
 
-  // Build a SQLNamespace: { tableName: [col1, col2, ...] }
-  const schema: SQLNamespace = {};
-  for (const table of tables) {
-    const columns = await provider.getColumns(table);
-    schema[table] = columns;
-  }
+function makeCompletionSource(tables: string[]) {
+  const tableCompletions = tables.map((t) => ({ label: t, type: 'type' as const }));
+  const kwSource = keywordCompletionSource(MySQL, true);
 
-  // Delegate to lang-sql's built-in schema completion
-  const { schemaCompletionSource } = await import('@codemirror/lang-sql');
-  const schemaSource = schemaCompletionSource({ schema, dialect: MySQL });
-  const schemaResult = schemaSource(context);
+  return (context: CompletionContext): CompletionResult | null => {
+    const word = context.matchBefore(/\w*/);
+    if (!word || (word.from === word.to && !context.explicit)) {
+      return null;
+    }
 
-  const functions = provider.getFunctions?.() ?? [];
-  if (functions.length === 0) {
-    return schemaResult instanceof Promise ? await schemaResult : schemaResult;
-  }
+    if (isAfterFromOrJoin(context.state.doc, context.pos)) {
+      // Only table names after FROM/JOIN
+      return { from: word.from, options: tableCompletions };
+    }
 
-  // Merge function completions
-  const fnSource = completeFromList(functions.map((f) => ({ label: f, type: 'function' })));
-  const fnRaw = fnSource(context);
-
-  const [resolvedSchema, fnResult] = await Promise.all([
-    schemaResult instanceof Promise ? schemaResult : Promise.resolve(schemaResult),
-    fnRaw instanceof Promise ? fnRaw : Promise.resolve(fnRaw),
-  ]);
-
-  if (!resolvedSchema && !fnResult) {
-    return null;
-  }
-  if (!resolvedSchema) {
-    return fnResult;
-  }
-  if (!fnResult) {
-    return resolvedSchema;
-  }
-
-  return {
-    from: resolvedSchema.from,
-    options: [...resolvedSchema.options, ...fnResult.options],
+    // Everywhere else: SQL keywords
+    return kwSource(context);
   };
+}
+
+function buildSqlExtension(tables: string[]) {
+  return [
+    sql({ dialect: MySQL }),
+    autocompletion({ override: [makeCompletionSource(tables)], defaultKeymap: true }),
+  ];
 }
 
 export function SQLEditorV2({ query, onChange, onBlur, language, children, width, height }: SQLEditorV2Props) {
@@ -96,15 +81,13 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
       return;
     }
 
-    const completionSource = languageRef.current?.completionProvider
-      ? (context: CompletionContext) => buildCompletionSource(languageRef.current!.completionProvider!, context)
-      : null;
+    const sqlCompartment = new Compartment();
 
     const extensions = [
-      sql({ dialect: MySQL, upperCaseKeywords: true }),
+      // Start with no tables; reconfigured async once tables are fetched
+      sqlCompartment.of(buildSqlExtension([])),
       theme.isDark ? oneDarkTheme : [],
       syntaxHighlighting(theme.isDark ? oneDarkHighlightStyle : defaultHighlightStyle),
-      autocompletion({ override: completionSource ? [completionSource] : undefined }),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           onChangeRef.current?.(update.state.doc.toString(), true);
@@ -129,6 +112,18 @@ export function SQLEditorV2({ query, onChange, onBlur, language, children, width
     const state = EditorState.create({ doc: query, extensions });
     const view = new EditorView({ state, parent: containerRef.current });
     viewRef.current = view;
+
+    // Async: fetch tables then reconfigure completion with real data
+    const provider = languageRef.current?.completionProvider;
+    if (provider) {
+      provider.getTables().then((tables) => {
+        if (viewRef.current) {
+          viewRef.current.dispatch({
+            effects: sqlCompartment.reconfigure(buildSqlExtension(tables)),
+          });
+        }
+      });
+    }
 
     return () => {
       view.destroy();
