@@ -51,7 +51,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
     await waitForTableLoad(page);
 
-    const longTextColIdx = await getColumnIdx(page, 'Long Text');
+    const table = page.locator('.rdg');
+    const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
@@ -72,7 +73,6 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // test that hover overflow works.
-    const table = page.locator('.rdg');
     const loremIpsumCell = getCell(table, 1, longTextColIdx);
     await loremIpsumCell.scrollIntoViewIfNeeded();
     await loremIpsumCell.hover();
@@ -295,12 +295,12 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await disableAllTextWrap(page, selectors);
 
-    const infoColumnIdx = await getColumnIdx(page, 'Info');
-    const pillColIdx = await getColumnIdx(page, 'Pills');
-    const dataLinkColIdx = await getColumnIdx(page, 'Data Link');
+    const table = page.locator('.rdg');
+    const infoColumnIdx = await getColumnIdx(table, 'Info');
+    const pillColIdx = await getColumnIdx(table, 'Pills');
+    const dataLinkColIdx = await getColumnIdx(table, 'Data Link');
 
     // Info column has a single DataLink by default.
-    const table = page.locator('.rdg');
     const infoCell = getCell(table, 1, infoColumnIdx);
     await expect(infoCell.locator('a')).toBeVisible();
     expect(infoCell.locator('a')).toHaveAttribute('href');
@@ -430,8 +430,10 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const infoColumnIdx = await getColumnIdx(page, 'Info');
-    const dataLinkColumnIdx = await getColumnIdx(page, 'Data Link');
+    const table = page.locator('.rdg');
+
+    const infoColumnIdx = await getColumnIdx(table, 'Info');
+    const dataLinkColumnIdx = await getColumnIdx(table, 'Data Link');
     const stateColumnHeader = page.getByRole('columnheader').nth(infoColumnIdx);
 
     // filter to only "Up," which we have a style override on.
@@ -445,7 +447,6 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await filterContainer.getByTitle('up', { exact: true }).locator('label').click();
     await filterContainer.getByRole('button', { name: 'Ok' }).click();
 
-    const table = page.locator('.rdg');
     const cell = getCell(table, 1, dataLinkColumnIdx);
     await expect(cell).toBeVisible();
     await expect(cell).toHaveCSS('text-decoration', /line-through/);
