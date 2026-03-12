@@ -310,7 +310,6 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 	return nil
 }
 
-
 // authorizeAdminJob checks that the requesting user has admin privileges.
 // Used for job types that are restricted to administrators.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
@@ -321,7 +320,6 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 		Namespace: cfg.Namespace,
 	}, "")
 }
-
 
 // authorizeResourceJob checks that the requesting user has the required permissions
 // for operations that read and write all supported resource types (export and migrate).
