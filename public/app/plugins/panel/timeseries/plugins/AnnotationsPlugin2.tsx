@@ -47,7 +47,7 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   let vals = {} as T;
   frame.fields.forEach((f) => {
-    // @ts-ignore
+    // @ts-expect-error data frames have unknown value types but we can assert that they have string indices since the annotation fields spec is hardcoded.
     vals[f.name] = f.values;
   });
 
