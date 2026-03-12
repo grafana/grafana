@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DefaultValueEditor, DefaultValueEditorProps } from './DefaultValueEditor';
+import { DefaultGroupByValueEditor, DefaultGroupByValueEditorProps } from './DefaultGroupByValueEditor';
 
-describe('DefaultValueEditor', () => {
-  const defaultProps: DefaultValueEditorProps = {
+describe('DefaultGroupByValueEditor', () => {
+  const defaultProps: DefaultGroupByValueEditorProps = {
     values: [],
     options: [],
     onChange: jest.fn(),
@@ -25,10 +25,10 @@ describe('DefaultValueEditor', () => {
     });
   });
 
-  function setup(overrides?: Partial<DefaultValueEditorProps>) {
+  function setup(overrides?: Partial<DefaultGroupByValueEditorProps>) {
     const props = { ...defaultProps, ...overrides, onChange: overrides?.onChange ?? jest.fn() };
     return {
-      renderer: render(<DefaultValueEditor {...props} />),
+      renderer: render(<DefaultGroupByValueEditor {...props} />),
       user: userEvent.setup(),
       onChange: props.onChange,
     };
