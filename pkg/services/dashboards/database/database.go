@@ -939,10 +939,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{
-		Dialect:                   d.store.GetDialect(),
-		Filters:                   filters,
-		Features:                  d.features,
-		ForceDashboardTitleIndex:  d.cfg.DatabaseForceDashboardTitleIndex,
+		Dialect:                  d.store.GetDialect(),
+		Filters:                  filters,
+		Features:                 d.features,
+		ForceDashboardTitleIndex: d.cfg.DatabaseForceDashboardTitleIndex,
 	}
 
 	limit := query.Limit
