@@ -4,10 +4,11 @@ import (
 	"context"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // Validator interface validates migration results.
