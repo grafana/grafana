@@ -589,6 +589,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Renders ad hoc filters and group by in a single unified control
+  * @default false
+  */
+  dashboardUnifiedDrilldownControls?: boolean;
+  /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
   */
@@ -1158,11 +1163,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
@@ -1648,8 +1648,23 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
+  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }
