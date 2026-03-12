@@ -42,13 +42,6 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Kind:       "CoreRole",
-					Plural:     "CoreRoles",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
 					Kind:       "Role",
 					Plural:     "Roles",
 					Scope:      "Namespaced",
@@ -673,7 +666,6 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
 	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":                 v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),

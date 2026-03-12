@@ -329,6 +329,16 @@ describe('Combobox', () => {
 
       expect(initialWidth).toBe(newWidth);
     });
+
+    it('should show "No options found" when filtering returns no results', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'zzz');
+
+      expect(screen.getByText('No options found.')).toBeInTheDocument();
+    });
   });
 
   describe('with a value already selected', () => {
