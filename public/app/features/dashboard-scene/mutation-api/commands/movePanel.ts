@@ -18,6 +18,7 @@ import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
+import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -79,30 +80,6 @@ function resolveEffectivePosition(
   return undefined;
 }
 
-/**
- * Serialize the current layout item for a panel based on its parent type.
- * Includes the v2beta1 element reference so the response is self-describing.
- * Used by ADD_PANEL, MOVE_PANEL, UPDATE_PANEL, and LIST_PANELS.
- */
-export function serializeResultLayoutItem(panel: VizPanel, elementName: string) {
-  const elementRef = { kind: 'ElementReference' as const, name: elementName };
-  const gridItem = panel.parent;
-  if (gridItem instanceof DashboardGridItem) {
-    return {
-      kind: 'GridLayoutItem' as const,
-      spec: {
-        x: gridItem.state.x ?? 0,
-        y: gridItem.state.y ?? 0,
-        width: gridItem.state.width ?? 0,
-        height: gridItem.state.height ?? 0,
-        element: elementRef,
-      },
-    };
-  }
-
-  return { kind: 'AutoGridLayoutItem' as const, spec: { element: elementRef } };
-}
-
 function emitLayoutItemKindWarnings(
   layoutItemKind: string | undefined,
   isAutoGrid: boolean,
@@ -161,7 +138,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
 
         emitLayoutItemKindWarnings(payload.layoutItem?.kind, isAutoGrid, isDefaultGrid, warnings);
 
-        const previousPosition = serializeResultLayoutItem(vizPanel, elementName);
+        const previousPosition = serializeResultLayoutItem(vizPanel);
 
         if (effectivePosition) {
           if (isAutoGrid) {
@@ -171,7 +148,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
           }
         }
 
-        const resultLayoutItem = serializeResultLayoutItem(vizPanel, elementName);
+        const resultLayoutItem = serializeResultLayoutItem(vizPanel);
         const fullElements = getElements(scene.state.body, scene);
         const elementData = fullElements[elementName];
 
@@ -181,9 +158,9 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
           changes: effectivePosition
             ? [
                 {
-                  path: `/elements/${elementName}/position`,
-                  previousValue: previousPosition.spec,
-                  newValue: effectivePosition,
+                  path: `/elements/${elementName}`,
+                  previousValue: previousPosition,
+                  newValue: resultLayoutItem,
                 },
               ]
             : [],
@@ -198,7 +175,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
 
       emitLayoutItemKindWarnings(payload.layoutItem?.kind, isTargetAutoGrid, isTargetDefaultGrid, warnings);
 
-      const previousLayoutItem = serializeResultLayoutItem(vizPanel, elementName);
+      const previousLayoutItem = serializeResultLayoutItem(vizPanel);
 
       const sourceGridItem = vizPanel.parent;
       const originalSize =
@@ -226,7 +203,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         applyGridPosition(panelClone, originalSize);
       }
 
-      const resultLayoutItem = serializeResultLayoutItem(panelClone, elementName);
+      const resultLayoutItem = serializeResultLayoutItem(panelClone);
       const fullElements = getElements(scene.state.body, scene);
       const elementData = fullElements[elementName];
 
@@ -237,7 +214,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
           {
             path: `/elements/${elementName}`,
             previousValue: previousLayoutItem,
-            newValue: { parent: toParent },
+            newValue: resultLayoutItem,
           },
         ],
         warnings: warnings.length > 0 ? warnings : undefined,
