@@ -12746,7 +12746,7 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
+      "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12805,8 +12805,8 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
-      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories"
     },
     "connect-step": {
       "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
@@ -12974,21 +12974,11 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
-      "free-tier-limit": {
-        "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,"
-      },
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
-    },
-    "free-tier-limit": {
-      "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
-      "message-connection": "Free-tier accounts are limited to 1 connection. To add more connections,",
-      "message-resource": "Free-tier accounts are limited to 20 resources per folder. To add more resources,",
-      "note": "Note:",
-      "upgrade-link": "upgrade your account"
     },
     "get-default-values": {
       "title": {
@@ -13143,6 +13133,26 @@
           "repository-request-failed": "Repository request failed"
         }
       }
+    },
+    "quota-limit": {
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_other": "and {{count}} synced resources per repository.",
+      "message-repositories-info_one": "Your account is limited to {{count}} connected repository",
+      "message-repositories-info_other": "Your account is limited to {{count}} connected repositories",
+      "message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
+      "message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "note": "Note:",
+      "note-message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "note-message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "note-message-both-resources_one": "and {{count}} synced resource per repository. To increase limits,",
+      "note-message-both-resources_other": "and {{count}} synced resources per repository. To increase limits,",
+      "note-message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
+      "note-message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "note-message-resource_one": "Your account is limited to {{count}} synced resource per repository. To add more resources,",
+      "note-message-resource_other": "Your account is limited to {{count}} synced resources per repository. To add more resources,",
+      "upgrade-link": "upgrade your account"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
