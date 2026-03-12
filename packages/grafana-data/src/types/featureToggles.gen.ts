@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroDatasourceSelector?: boolean;
   /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
-  /**
   * Enable Faro session replay for Grafana
   * @default false
   */
