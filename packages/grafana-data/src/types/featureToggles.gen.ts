@@ -1403,6 +1403,11 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */

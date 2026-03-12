@@ -2213,6 +2213,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "vizLegendFacetedFilter",
+			Description:  "Enable faceted labels filter for series visibility in the legend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
