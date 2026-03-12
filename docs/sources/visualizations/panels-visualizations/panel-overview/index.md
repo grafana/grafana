@@ -34,14 +34,14 @@ To get started adding panels, ensure that you have configured a data source:
 - For more information about managing data sources as an administrator, refer to [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 
   {{< admonition type="note" >}}
-  [Data source management](https://grafana.comhttps://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/) is only available in [Grafana Enterprise](https://grafana.comhttps://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.comhttps://grafana.com/docs/grafana-cloud/).
+  [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/) is only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
   {{< /admonition >}}
 
 ## Panel feature overview
 
 The following image and descriptions highlight the panel features:
 
-![Annotated panel with time series visualization](/mediahttps://grafana.com/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v11.0.png)
+![Annotated panel with time series visualization](/media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v11.0.png)
 
 1. **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. **Panel description** - You can create your own panel descriptions or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards)
@@ -115,11 +115,11 @@ The following screen recordings show this interaction in the time series and can
 
 Time series
 
-{{< video-embed src="/mediahttps://grafana.com/docs/grafana/panels-visualizations/recording-ts-time-zoom-in-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-in-mouse.mp4" >}}
 
 Candlestick
 
-{{< video-embed src="/mediahttps://grafana.com/docs/grafana/panels-visualizations/recording-candle-panel-time-zoom-in-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-candle-panel-time-zoom-in-mouse.mp4" >}}
 
 ### Zoom out
 
@@ -135,11 +135,11 @@ The following screen recordings demonstrate the preceding example in the time se
 
 Time series
 
-{{< video-embed src="/mediahttps://grafana.com/docs/grafana/panels-visualizations/recording-ts-time-zoom-out-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-out-mouse.mp4" >}}
 
 Heatmap
 
-{{< video-embed src="/mediahttps://grafana.com/docs/grafana/panels-visualizations/recording-heatmap-panel-time-zoom-out-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-heatmap-panel-time-zoom-out-mouse.mp4" >}}
 
 ### Pan
 
@@ -152,20 +152,20 @@ The following screen recordings show this interaction in the time series visuali
 
 Time series
 
-{{< video-embed src="/mediahttps://grafana.com/docs/grafana/panels-visualizations/recording-ts-time-pan-mouse.mp4" >}}
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-pan-mouse.mp4" >}}
 
 ## Add a panel
 
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:
 
-![Empty dashboard state](/mediahttps://grafana.com/docs/grafana/dashboards/empty-dashboard-10.2.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Add** drop-down and select **Visualization**:
 
-   ![Add dropdown](/mediahttps://grafana.com/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
+   ![Add dropdown](/media/docs/grafana/panels-visualizations/screenshot-add-dropdown-11.2.png)
 
 ## Panel configuration
 
