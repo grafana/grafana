@@ -241,18 +241,21 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		if spec.Move != nil {
 			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 		}
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
+		// Read-only operations don't require pre-flight resource authorization.
 	}
 	return nil
 }
 
-// newJobAuthorizer creates an Authorizer for the given repository. Returns an error
-// if the repository does not implement Reader.
-func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
+// newJobAuthorizer creates an Authorizer for the given repository. The ref parameter
+// specifies the branch to read folder metadata from. Returns an error if the
+// repository does not implement Reader.
+func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository, ref string) (resources.Authorizer, error) {
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support reading")
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled), nil
+	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled, ref), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
@@ -307,7 +310,11 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 		return nil
 	}
 
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	var ref string
+	if spec.Push != nil {
+		ref = spec.Push.Branch
+	}
+	authorizer, err := c.newJobAuthorizer(repo, cfg, ref)
 	if err != nil {
 		return err
 	}
@@ -319,7 +326,7 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
 func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	authorizer, err := c.newJobAuthorizer(repo, cfg, opts.Ref)
 	if err != nil {
 		return err
 	}
@@ -335,7 +342,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	authorizer, err := c.newJobAuthorizer(repo, cfg, opts.Ref)
 	if err != nil {
 		return err
 	}
