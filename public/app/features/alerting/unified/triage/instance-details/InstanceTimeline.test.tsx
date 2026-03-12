@@ -261,7 +261,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    expect(screen.queryByText(/^Delivered$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
   });
 
   it('shows outcome label when there are failed notifications', () => {
