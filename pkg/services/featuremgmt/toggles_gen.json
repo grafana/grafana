@@ -895,6 +895,23 @@
     },
     {
       "metadata": {
+        "name": "annotationsClustering",
+        "resourceVersion": "1773352347788",
+        "creationTimestamp": "2026-03-12T21:45:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 21:52:27.788294 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables annotation clustering and switches to refactored annotation code",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-14T10:47:18Z"
