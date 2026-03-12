@@ -247,15 +247,14 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	return nil
 }
 
-// newJobAuthorizer creates an Authorizer for the given repository. The ref parameter
-// specifies the branch to read folder metadata from. Returns an error if the
-// repository does not implement Reader.
-func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository, ref string) (resources.Authorizer, error) {
+// newJobAuthorizer creates an Authorizer for the given repository. Returns an error
+// if the repository does not implement Reader.
+func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support reading")
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled, ref), nil
+	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
@@ -303,18 +302,20 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 	return nil
 }
 
-// authorizeResourceJob checks read + create permissions on all supported resource
-// types for export and migrate jobs.
+// authorizeResourceJob checks that the requesting user has the required permissions
+// for operations that read and write all supported resource types (export and migrate).
+// This runs at job creation time while the user's identity is still in the request
+// context, since the job executes later as the provisioning service identity.
+//
+// Delegates to the resources.Authorizer which checks:
+//  1. Read permission on all supported resource types at root level.
+//  2. Create permission on all supported resource types in the target folder.
 func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
 	if spec.Push == nil && spec.Migrate == nil {
 		return nil
 	}
 
-	var ref string
-	if spec.Push != nil {
-		ref = spec.Push.Branch
-	}
-	authorizer, err := c.newJobAuthorizer(repo, cfg, ref)
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
 func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg, opts.Ref)
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
 	if err != nil {
 		return err
 	}
@@ -342,7 +343,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg, opts.Ref)
+	authorizer, err := c.newJobAuthorizer(repo, cfg)
 	if err != nil {
 		return err
 	}

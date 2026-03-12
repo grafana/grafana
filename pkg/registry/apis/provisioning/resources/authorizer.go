@@ -15,6 +15,24 @@ import (
 
 // Authorizer handles authorization checks for provisioning file and folder operations.
 //
+// # Security: folder metadata is always read from the configured branch
+//
+// All folder-based permission checks resolve folder IDs by reading _folder.json
+// from the repository's configured branch — never from a caller-supplied ref.
+// This is intentional: folder metadata on arbitrary branches is user-controlled
+// and can be manipulated to spoof folder UIDs, which would cause permission
+// checks to run against the wrong Grafana folder.
+//
+// Example attack vector: a user edits _folder.json on a feature branch to replace
+// a restricted folder's UID with one where they have Editor access. If the
+// authorizer read metadata from that branch, the permission check would pass
+// against the spoofed folder instead of the real one.
+//
+// Reading from the configured branch ensures the folder structure matches what
+// has been synced to Grafana, mirroring the same principle used by
+// AuthorizeResource which checks against the resource's actual database location
+// rather than file metadata.
+//
 // Permission Model:
 //   - Permissions on a parent folder grant at least that level of access to all children
 //   - Children can have elevated permissions, but never reduced permissions
@@ -91,18 +109,15 @@ type ProvisioningAuthorizer struct {
 	repo                  *provisioning.Repository
 	reader                repository.Reader
 	access                auth.AccessChecker
-	ref                   string
 	folderMetadataEnabled bool
 }
 
-// NewAuthorizer creates a new ProvisioningAuthorizer. The ref parameter specifies
-// the git branch/commit to read folder metadata from; pass "" for the default branch.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool, ref string) Authorizer {
+// NewAuthorizer creates a new ProvisioningAuthorizer.
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
-		ref:                   ref,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -128,6 +143,7 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 //   - Checks: update permission on "team-a" (actual location)
 //   - Result: DENIED (prevents permission bypass)
 func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error {
+	// Determine the resource name for the authorization check
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
@@ -135,6 +151,9 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		name = parsed.Obj.GetName()
 	}
 
+	// Determine the folder for the authorization check.
+	// For new resources, use the folder from the file metadata.
+	// For existing resources, use the folder where the resource actually exists.
 	folder := parsed.Meta.GetFolder()
 	if parsed.Existing != nil {
 		if meta, err := utils.MetaAccessor(parsed.Existing); err == nil && meta != nil {
@@ -142,6 +161,7 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		}
 	}
 
+	// Perform the authorization check
 	return a.access.Check(ctx, authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
@@ -150,32 +170,47 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 	}, folder)
 }
 
-// authorizeFolder checks if the user has permission to perform the specified verb
-// on the folder at the given path.
+// getFolderID resolves the folder ID for the given path, always reading
+// from the configured branch (ref=""). See the Authorizer doc comment
+// for why we never use a caller-supplied ref here.
+func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (string, error) {
+	return GetFolderID(ctx, a.reader, path, "", a.folderMetadataEnabled)
+}
+
+// authorizeFolder is a private helper that checks if the user has permission to perform
+// the specified verb on the folder at the given path.
 //
 // Authorization model:
 //   - For delete: Checks permission in the parent folder context (removing from parent)
 //   - For update: Checks permission using the folder's own ID as context (modifying the folder)
 //   - For create: Should be checked on the parent folder instead
-func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path string, verb string) error {
-	folderID, err := GetFolderID(ctx, a.reader, path, a.ref, a.folderMetadataEnabled)
+//
+// When folder metadata is enabled, folder IDs are determined by reading _folder.json.
+// Otherwise, it falls back to hash-based ID.
+func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb string) error {
+	// Get the folder's ID
+	folderID, err := a.getFolderID(ctx, path)
 	if err != nil {
 		return fmt.Errorf("get folder ID: %w", err)
 	}
 
+	// Determine the folder context based on the verb
 	var folderContext string
 	switch verb {
 	case utils.VerbDelete:
+		// For delete, check in the parent folder context
 		parentPath := safepath.Dir(path)
 		if parentPath == "" {
+			// Root-level folder
 			folderContext = ""
 		} else {
-			folderContext, err = GetFolderID(ctx, a.reader, parentPath, a.ref, a.folderMetadataEnabled)
+			folderContext, err = a.getFolderID(ctx, parentPath)
 			if err != nil {
 				return fmt.Errorf("get parent folder ID: %w", err)
 			}
 		}
 	default:
+		// For update and other verbs, use the folder's own ID as context
 		folderContext = folderID
 	}
 
@@ -188,14 +223,26 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path strin
 }
 
 // AuthorizeCreateFolder checks if the user has permission to create a folder at the
-// specified path. Authorization is checked against the parent folder.
+// specified path.
+//
+// Authorization is checked against the parent folder: to create a new folder, the user
+// must have create permissions on the parent folder where it will be placed.
+//
+// When folder metadata is enabled, the parent folder ID is determined by reading
+// the _folder.json file if it exists. Otherwise, it falls back to hash-based ID.
+//
+// Example:
+//   - Creating "team-a/new-project/" requires create permission on "team-a"
+//   - Creating "top-level-folder/" requires create permission on root
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
+	// For create operations, check permission on the parent folder
 	if path == "" {
 		return fmt.Errorf("path cannot be empty")
 	}
 
 	parentPath := safepath.Dir(path)
 	if parentPath == "" {
+		// Creating at root - check root folder permission
 		return a.access.Check(ctx, authlib.CheckRequest{
 			Group:    FolderResource.Group,
 			Resource: FolderResource.Resource,
@@ -204,41 +251,27 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path
 		}, RootFolder(a.repo))
 	}
 
+	// Check create permission on the parent folder
 	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
 // authorizeDeleteFolder checks if the user has permission to delete the folder at the
-// specified path. Permissions on the parent folder grant at least that level of access
-// to all children, so checking the folder is sufficient — nested resources are not
-// checked individually.
+// specified path.
+//
+// Authorization is checked only against the folder itself. Permissions on the parent folder
+// grant at least that level of access to all children, so checking the folder is sufficient.
+// Individual nested resources are not checked separately.
+//
+// When folder metadata is enabled, the folder ID is determined by reading _folder.json.
+//
+// Example:
+//
+//	Deleting "team-a/project-x/" (containing dashboards A, B, C):
+//	- Checks: delete permission on "team-a/project-x"
+//	- Does NOT check: permissions on dashboard A, B, or C
+//	- Reason: Parent folder permissions apply to all contents
 func (a *ProvisioningAuthorizer) authorizeDeleteFolder(ctx context.Context, path string) error {
 	return a.authorizeFolder(ctx, path, utils.VerbDelete)
-}
-
-// authorizeMoveFolder checks if the user has permission to move a folder from
-// originalPath to targetPath:
-//  1. Update permission on the source folder
-//  2. Create permission on the target parent folder
-func (a *ProvisioningAuthorizer) authorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
-	if err := a.authorizeFolder(ctx, originalPath, utils.VerbUpdate); err != nil {
-		return err
-	}
-
-	if targetPath == "" {
-		return fmt.Errorf("target path cannot be empty")
-	}
-
-	parentPath := safepath.Dir(targetPath)
-	if parentPath == "" {
-		return a.access.Check(ctx, authlib.CheckRequest{
-			Group:    FolderResource.Group,
-			Resource: FolderResource.Resource,
-			Name:     "",
-			Verb:     utils.VerbCreate,
-		}, RootFolder(a.repo))
-	}
-
-	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
 // AuthorizeDeleteByPath checks if the user has permission to delete the target
@@ -257,7 +290,7 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path
 		folderID = RootFolder(a.repo)
 	} else {
 		var err error
-		folderID, err = GetFolderID(ctx, a.reader, parentPath, a.ref, a.folderMetadataEnabled)
+		folderID, err = a.getFolderID(ctx, parentPath)
 		if err != nil {
 			return fmt.Errorf("get parent folder ID for %q: %w", path, err)
 		}
@@ -268,6 +301,50 @@ func (a *ProvisioningAuthorizer) AuthorizeDeleteByPath(ctx context.Context, path
 		Resource: DashboardResource.Resource,
 		Verb:     utils.VerbDelete,
 	}, folderID)
+}
+
+// authorizeMoveFolder checks if the user has permission to move a folder from
+// originalPath to targetPath.
+//
+// Moving a folder requires two permissions:
+//  1. Update permission on the source folder (the folder being moved)
+//  2. Create permission on the target parent folder (where it's being moved to)
+//
+// Individual nested resources are not checked separately. Permissions on the source folder
+// apply to all its contents, so checking the folder itself is sufficient.
+//
+// When folder metadata is enabled, folder IDs are determined by reading _folder.json files.
+//
+// Example:
+//
+//	Moving "team-a/old-project/" to "team-b/new-project/":
+//	- Checks: update permission on "team-a/old-project"
+//	- Checks: create permission on "team-b" (parent of target)
+//	- Does NOT check: permissions on contents of "old-project"
+func (a *ProvisioningAuthorizer) authorizeMoveFolder(ctx context.Context, originalPath, targetPath string) error {
+	// Check update permission on the source folder
+	if err := a.authorizeFolder(ctx, originalPath, utils.VerbUpdate); err != nil {
+		return err
+	}
+
+	// Check create permission on the target parent folder
+	if targetPath == "" {
+		return fmt.Errorf("target path cannot be empty")
+	}
+
+	parentPath := safepath.Dir(targetPath)
+	if parentPath == "" {
+		// Moving to root - check root folder permission
+		return a.access.Check(ctx, authlib.CheckRequest{
+			Group:    FolderResource.Group,
+			Resource: FolderResource.Resource,
+			Name:     "",
+			Verb:     utils.VerbCreate,
+		}, RootFolder(a.repo))
+	}
+
+	// Check create permission on the target parent folder
+	return a.authorizeFolder(ctx, parentPath, utils.VerbCreate)
 }
 
 // AuthorizeMoveByPath checks if the user has permission to move the source path
@@ -287,7 +364,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		sourceFolderID = RootFolder(a.repo)
 	} else {
 		var err error
-		sourceFolderID, err = GetFolderID(ctx, a.reader, sourceParent, a.ref, a.folderMetadataEnabled)
+		sourceFolderID, err = a.getFolderID(ctx, sourceParent)
 		if err != nil {
 			return fmt.Errorf("get source folder ID for %q: %w", sourcePath, err)
 		}
@@ -307,7 +384,7 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 		targetFolderID = RootFolder(a.repo)
 	} else {
 		var err error
-		targetFolderID, err = GetFolderID(ctx, a.reader, targetParent, a.ref, a.folderMetadataEnabled)
+		targetFolderID, err = a.getFolderID(ctx, targetParent)
 		if err != nil {
 			return fmt.Errorf("get target folder ID for %q: %w", targetPath, err)
 		}
