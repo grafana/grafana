@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -144,13 +144,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
-  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', false);
-  const analyticsEnabledRef = useRef<boolean>(isAnalyticsFrameworkEnabled);
-
-  // Keep ref up-to-date
-  useEffect(() => {
-    analyticsEnabledRef.current = isAnalyticsFrameworkEnabled;
-  }, [isAnalyticsFrameworkEnabled]);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
@@ -167,7 +161,7 @@ export function useStaticActions(): CommandPaletteAction[] {
           section: t('command-palette.section.actions', 'Actions'),
           priority: ACTIONS_PRIORITY,
           perform: () => {
-            analyticsEnabledRef.current
+            isAnalyticsFrameworkEnabled
               ? NewDashboardLibraryInteractions.entryPointClicked({
                   entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
                   contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
@@ -196,5 +190,5 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
     return [...getGlobalActions(), ...navBarActions];
-  }, [navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, navBarTree]);
 }
