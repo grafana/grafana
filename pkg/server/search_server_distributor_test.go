@@ -398,6 +398,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
+	cfg.DisablePruner = dbType == "sqlite3"
 	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
