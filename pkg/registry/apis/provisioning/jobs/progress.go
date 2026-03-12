@@ -140,36 +140,38 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.maybeNotify(ctx)
 }
 
-// emitMetrics increments per-record Prometheus counters for success, warning,
-// and error outcomes. metrics and action are immutable after construction, so
-// no lock is needed.
+// emitMetrics increments the per-record Prometheus counter. metrics and action
+// are immutable after construction, so no lock is needed.
 func (r *jobProgressRecorder) emitMetrics(result JobResourceResult) {
 	if r.metrics == nil {
 		return
 	}
 
+	operation := string(result.Action())
+	group := result.Group()
+	kind := result.Kind()
+
 	if result.Error() != nil {
 		if result.Action() != repository.FileActionIgnored {
-			r.metrics.RecordResourceErrors(r.action)
+			r.metrics.RecordResourceOperation(r.action, operation, "error", "", group, kind)
 		}
 		return
 	}
 
 	if result.Warning() != nil {
-		if reason := result.WarningReason(); reason != "" {
-			r.metrics.RecordResourceWarnings(r.action, reason)
-		}
+		reason := result.WarningReason()
+		r.metrics.RecordResourceOperation(r.action, operation, "warning", reason, group, kind)
 		return
 	}
 
 	switch result.Action() {
 	case repository.FileActionRenamed:
-		r.metrics.RecordResourceSuccess(r.action, "deleted")
-		r.metrics.RecordResourceSuccess(r.action, "created")
+		r.metrics.RecordResourceOperation(r.action, "deleted", "success", "", group, kind)
+		r.metrics.RecordResourceOperation(r.action, "created", "success", "", group, kind)
 	case repository.FileActionIgnored:
-		r.metrics.RecordResourceSuccess(r.action, "noop")
+		r.metrics.RecordResourceOperation(r.action, "noop", "success", "", group, kind)
 	default:
-		r.metrics.RecordResourceSuccess(r.action, string(result.Action()))
+		r.metrics.RecordResourceOperation(r.action, operation, "success", "", group, kind)
 	}
 }
 

@@ -25,36 +25,16 @@ func TestRegisterJobMetrics(t *testing.T) {
 	})
 }
 
-func TestRecordResourceWarnings(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	m := RegisterJobMetrics(reg)
-
-	m.RecordResourceWarnings("pull", "MissingFolderMetadata")
-	m.RecordResourceWarnings("pull", "MissingFolderMetadata")
-	m.RecordResourceWarnings("pull", "ResourceInvalid")
-
-	metrics, err := reg.Gather()
-	require.NoError(t, err)
-
-	counter := findMetric(metrics, "grafana_provisioning_jobs_resource_warnings_total")
-	require.NotNil(t, counter, "resource warnings counter should be registered")
-
-	pairs := counterValues(counter)
-	require.Len(t, pairs, 2, "should have two label combinations")
-
-	missingKey := labelKey(map[string]string{"action": "pull", "reason": "MissingFolderMetadata"})
-	invalidKey := labelKey(map[string]string{"action": "pull", "reason": "ResourceInvalid"})
-
-	assert.InDelta(t, 2.0, pairs[missingKey], 0.001, "MissingFolderMetadata should be 1+1=2")
-	assert.InDelta(t, 1.0, pairs[invalidKey], 0.001, "ResourceInvalid should be 1")
-}
-
 func TestRecordResourceOperation(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := RegisterJobMetrics(reg)
 
-	m.RecordResourceOperation("pull", "replaced", "folder_metadata_id_migration", "folder.grafana.app", "Folder")
-	m.RecordResourceOperation("pull", "created", "sync", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", "created", "success", "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", "created", "success", "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("pull", "updated", "success", "", "folder.grafana.app", "Folder")
+	m.RecordResourceOperation("pull", "created", "warning", "MissingFolderMetadata", "folder.grafana.app", "Folder")
+	m.RecordResourceOperation("pull", "created", "error", "", "dashboard.grafana.app", "Dashboard")
+	m.RecordResourceOperation("export", "deleted", "success", "", "dashboard.grafana.app", "Dashboard")
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
@@ -63,73 +43,32 @@ func TestRecordResourceOperation(t *testing.T) {
 	require.NotNil(t, counter, "resource_operations_total counter should be registered")
 
 	pairs := counterValues(counter)
-	require.Len(t, pairs, 2)
-
-	folderKey := labelKey(map[string]string{
-		"action": "pull", "operation": "replaced",
-		"reason": "folder_metadata_id_migration",
-		"group":  "folder.grafana.app", "kind": "Folder",
-	})
-	dashKey := labelKey(map[string]string{
-		"action": "pull", "operation": "created",
-		"reason": "sync",
-		"group":  "dashboard.grafana.app", "kind": "Dashboard",
-	})
-
-	assert.InDelta(t, 1.0, pairs[folderKey], 0.001)
-	assert.InDelta(t, 1.0, pairs[dashKey], 0.001)
-}
-
-func TestRecordResourceSuccess(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	m := RegisterJobMetrics(reg)
-
-	m.RecordResourceSuccess("pull", "created")
-	m.RecordResourceSuccess("pull", "created")
-	m.RecordResourceSuccess("pull", "updated")
-	m.RecordResourceSuccess("pull", "deleted")
-	m.RecordResourceSuccess("pull", "noop")
-	m.RecordResourceSuccess("export", "created")
-
-	metrics, err := reg.Gather()
-	require.NoError(t, err)
-
-	counter := findMetric(metrics, "grafana_provisioning_jobs_resource_success_total")
-	require.NotNil(t, counter, "resource success counter should be registered")
-
-	pairs := counterValues(counter)
 	require.Len(t, pairs, 5)
 
-	assert.InDelta(t, 2.0, pairs[labelKey(map[string]string{"action": "pull", "operation": "created"})], 0.001)
-	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{"action": "pull", "operation": "updated"})], 0.001)
-	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{"action": "pull", "operation": "deleted"})], 0.001)
-	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{"action": "pull", "operation": "noop"})], 0.001)
-	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{"action": "export", "operation": "created"})], 0.001)
-}
+	assert.InDelta(t, 2.0, pairs[labelKey(map[string]string{
+		"action": "pull", "operation": "created", "outcome": "success",
+		"reason": "", "group": "dashboard.grafana.app", "kind": "Dashboard",
+	})], 0.001, "pull/created/success/Dashboard should be 2")
 
-func TestRecordResourceErrors(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	m := RegisterJobMetrics(reg)
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "pull", "operation": "updated", "outcome": "success",
+		"reason": "", "group": "folder.grafana.app", "kind": "Folder",
+	})], 0.001)
 
-	m.RecordResourceErrors("pull")
-	m.RecordResourceErrors("pull")
-	m.RecordResourceErrors("pull")
-	m.RecordResourceErrors("export")
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "pull", "operation": "created", "outcome": "warning",
+		"reason": "MissingFolderMetadata", "group": "folder.grafana.app", "kind": "Folder",
+	})], 0.001)
 
-	metrics, err := reg.Gather()
-	require.NoError(t, err)
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "pull", "operation": "created", "outcome": "error",
+		"reason": "", "group": "dashboard.grafana.app", "kind": "Dashboard",
+	})], 0.001)
 
-	counter := findMetric(metrics, "grafana_provisioning_jobs_resource_errors_total")
-	require.NotNil(t, counter, "resource errors counter should be registered")
-
-	pairs := counterValues(counter)
-	require.Len(t, pairs, 2, "should have two label combinations")
-
-	pullKey := labelKey(map[string]string{"action": "pull"})
-	exportKey := labelKey(map[string]string{"action": "export"})
-
-	assert.InDelta(t, 3.0, pairs[pullKey], 0.001, "pull should be 3")
-	assert.InDelta(t, 1.0, pairs[exportKey], 0.001, "export should be 1")
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "export", "operation": "deleted", "outcome": "success",
+		"reason": "", "group": "dashboard.grafana.app", "kind": "Dashboard",
+	})], 0.001)
 }
 
 // --- helpers ---

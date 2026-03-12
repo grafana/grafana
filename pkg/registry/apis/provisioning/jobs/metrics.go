@@ -16,10 +16,7 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
-	resourceSuccessTotal  *prometheus.CounterVec // successful resource operations by action and operation
-	resourceWarningsTotal *prometheus.CounterVec // resource warnings by action and reason
-	resourceErrorsTotal *prometheus.CounterVec // resource errors by action
-	resourceOpsTotal    *prometheus.CounterVec // notable resource operations
+	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
 }
 
 type QueueMetrics struct {
@@ -114,39 +111,12 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	)
 	registry.MustRegister(syncDurationHist)
 
-	resourceSuccessTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_jobs_resource_success_total",
-			Help: "Total successful resource operations during provisioning job runs",
-		},
-		[]string{"action", "operation"},
-	)
-	registry.MustRegister(resourceSuccessTotal)
-
-	resourceWarningsTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_jobs_resource_warnings_total",
-			Help: "Total resource warnings during provisioning job runs, broken down by action and reason",
-		},
-		[]string{"action", "reason"},
-	)
-	registry.MustRegister(resourceWarningsTotal)
-
-	resourceErrorsTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_jobs_resource_errors_total",
-			Help: "Total resource errors during provisioning job runs",
-		},
-		[]string{"action"},
-	)
-	registry.MustRegister(resourceErrorsTotal)
-
 	resourceOpsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_jobs_resource_operations_total",
-			Help: "Total notable resource operations performed during provisioning job runs",
+			Help: "Total resource operations performed during provisioning job runs",
 		},
-		[]string{"action", "operation", "reason", "group", "kind"},
+		[]string{"action", "operation", "outcome", "reason", "group", "kind"},
 	)
 	registry.MustRegister(resourceOpsTotal)
 
@@ -157,10 +127,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 		syncDurationHist:                 syncDurationHist,
-		resourceSuccessTotal:             resourceSuccessTotal,
-		resourceWarningsTotal:            resourceWarningsTotal,
-		resourceErrorsTotal: resourceErrorsTotal,
-		resourceOpsTotal:    resourceOpsTotal,
+		resourceOpsTotal:                 resourceOpsTotal,
 	}
 }
 
@@ -185,24 +152,9 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
 }
 
-// RecordResourceSuccess increments the successful resource operations counter.
-func (m *JobMetrics) RecordResourceSuccess(action, operation string) {
-	m.resourceSuccessTotal.WithLabelValues(action, operation).Inc()
-}
-
-// RecordResourceWarnings increments the resource warnings counter.
-func (m *JobMetrics) RecordResourceWarnings(action, reason string) {
-	m.resourceWarningsTotal.WithLabelValues(action, reason).Inc()
-}
-
-// RecordResourceErrors increments the resource errors counter.
-func (m *JobMetrics) RecordResourceErrors(action string) {
-	m.resourceErrorsTotal.WithLabelValues(action).Inc()
-}
-
 // RecordResourceOperation increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action, operation, reason, group, kind string) {
-	m.resourceOpsTotal.WithLabelValues(action, operation, reason, group, kind).Inc()
+func (m *JobMetrics) RecordResourceOperation(action, operation, outcome, reason, group, kind string) {
+	m.resourceOpsTotal.WithLabelValues(action, operation, outcome, reason, group, kind).Inc()
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
