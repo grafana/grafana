@@ -2760,7 +2760,7 @@ ha_engine_password: $__file{/your/redis/password/secret/mount}
 
 #### `allowed_targets`
 
-Comma-separated list of targets that a repository can control. `folder` by default. Use `folder` if you want the repository to only control a folder within the Grafana instance. Use `instance` if you want the repository to control the whole Grafana instance. 
+Comma-separated list of targets that a repository can control. `folder` by default. Use `folder` if you want the repository to only control a folder within the Grafana instance. Use `instance` if you want the repository to control the whole Grafana instance.
 
 #### `allow_image_rendering`
 
