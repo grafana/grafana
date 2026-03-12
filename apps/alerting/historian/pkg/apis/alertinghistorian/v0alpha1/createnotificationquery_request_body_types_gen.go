@@ -57,6 +57,8 @@ type CreateNotificationqueryRequestBody struct {
 	To *time.Time `json:"to,omitempty"`
 	// Limit is the maximum number of entries to return.
 	Limit *int64 `json:"limit,omitempty"`
+	// Step is the step interval in seconds for range_counts queries.
+	Step *int64 `json:"step,omitempty"`
 	// Receiver optionally filters the entries by receiver title (contact point).
 	Receiver *string `json:"receiver,omitempty"`
 	// Status optionally filters the entries to only either firing or resolved.
@@ -90,6 +92,7 @@ type CreateNotificationqueryRequestV0alpha1BodyGroupBy struct {
 	Status           bool `json:"status"`
 	Outcome          bool `json:"outcome"`
 	Error            bool `json:"error"`
+	RuleUID          bool `json:"ruleUID"`
 }
 
 // NewCreateNotificationqueryRequestV0alpha1BodyGroupBy creates a new CreateNotificationqueryRequestV0alpha1BodyGroupBy object.
@@ -119,8 +122,9 @@ func (CreateNotificationqueryRequestMatcherType) OpenAPIModelName() string {
 type CreateNotificationqueryRequestBodyType string
 
 const (
-	CreateNotificationqueryRequestBodyTypeEntries CreateNotificationqueryRequestBodyType = "entries"
-	CreateNotificationqueryRequestBodyTypeCounts  CreateNotificationqueryRequestBodyType = "counts"
+	CreateNotificationqueryRequestBodyTypeEntries     CreateNotificationqueryRequestBodyType = "entries"
+	CreateNotificationqueryRequestBodyTypeCounts      CreateNotificationqueryRequestBodyType = "counts"
+	CreateNotificationqueryRequestBodyTypeRangeCounts CreateNotificationqueryRequestBodyType = "range_counts"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for CreateNotificationqueryRequestBodyType.

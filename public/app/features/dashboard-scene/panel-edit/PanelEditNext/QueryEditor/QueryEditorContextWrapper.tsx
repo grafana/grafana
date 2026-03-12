@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
@@ -39,9 +39,13 @@ export function getNextSelectedQueryRefId(
  */
 export function QueryEditorContextWrapper({
   dataPane,
+  onSwitchToClassic,
+  showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
+  onSwitchToClassic?: () => void;
+  showVersionBanner?: boolean;
   children: ReactNode;
 }) {
   const { panelRef, datasource, dsSettings, dsError } = dataPane.useState();
@@ -84,7 +88,6 @@ export function QueryEditorContextWrapper({
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading || queryRunnerState?.data?.state === undefined,
       queryError,
     }),
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
@@ -208,7 +211,7 @@ export function QueryEditorContextWrapper({
         // Clear query and transformation selection when selecting an alert
         setSelectedQueryRefId(null);
         setSelectedTransformationId(null);
-        // Reset transformation-specific UI when switching transformations
+        // Reset transformation-specific UI when switching alerts
         setTransformTogglesState({ showHelp: false, showDebug: false });
         // Abandon pending flows when selecting a card
         clearPendingExpression();
@@ -263,6 +266,7 @@ export function QueryEditorContextWrapper({
         setPendingTransformation(pending);
       },
       finalizePendingTransformation,
+      showVersionBanner: Boolean(showVersionBanner),
     }),
     [
       selectedQuery,
@@ -288,11 +292,13 @@ export function QueryEditorContextWrapper({
       setPendingTransformation,
       finalizePendingTransformation,
       clearPendingTransformation,
+      showVersionBanner,
     ]
   );
 
   const actions = useMemo(
     () => ({
+      onSwitchToClassic,
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
@@ -325,7 +331,7 @@ export function QueryEditorContextWrapper({
       updateTransformation: dataPane.updateTransformation,
       reorderTransformations: dataPane.reorderTransformations,
     }),
-    [dataPane, findTransformationIndex, addTransformationAction]
+    [onSwitchToClassic, dataPane, findTransformationIndex, addTransformationAction]
   );
 
   return (

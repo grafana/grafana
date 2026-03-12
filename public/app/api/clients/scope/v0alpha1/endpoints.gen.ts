@@ -611,15 +611,11 @@ export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
 export type GetFindScopeDashboardBindingsResultsApiResponse = /** status 200 OK */ FindScopeDashboardBindingsResults;
 export type GetFindScopeDashboardBindingsResultsApiArg = {
-  /** name of the FindScopeDashboardBindingsResults */
-  name: string;
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
 };
 export type GetFindScopeNavigationsResultsApiResponse = /** status 200 OK */ FindScopeNavigationsResults;
 export type GetFindScopeNavigationsResultsApiArg = {
-  /** name of the FindScopeNavigationsResults */
-  name: string;
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
 };

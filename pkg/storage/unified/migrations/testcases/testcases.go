@@ -19,6 +19,8 @@ type ResourceMigratorTestCase interface {
 	Resources() []schema.GroupVersionResource
 	// FeatureToggles returns feature toggles required for the K8s API to be registered
 	FeatureToggles() []string
+	// RenameTables returns the legacy tables that should be renamed after migration
+	RenameTables() []string
 	// Setup creates test resources in legacy storage (Mode0)
 	Setup(t *testing.T, helper *apis.K8sTestHelper)
 	// Verify checks that resources exist (or don't exist) in unified storage

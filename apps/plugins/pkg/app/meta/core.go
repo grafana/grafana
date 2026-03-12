@@ -71,6 +71,11 @@ func (p *CoreProvider) Init(ctx context.Context) error {
 	return nil
 }
 
+// Name returns the name of the provider.
+func (p *CoreProvider) Name() string {
+	return "core"
+}
+
 // GetMeta retrieves plugin metadata for core plugins.
 func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
 	p.mu.RLock()

@@ -18,7 +18,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/alerting/http/v0mimir1"
+	"github.com/grafana/alerting/http/v0mimir"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -294,7 +294,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+	encryptedReceivers, err := encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -305,6 +305,15 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	config := func(cfg []byte) *ngmodels.AlertConfiguration {
 		return &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(cfg)}
+	}
+
+	expectedSentConfig := func(cfg string) client.GrafanaAlertmanagerConfig {
+		postable, err := notifier.Load([]byte(cfg))
+		require.NoError(t, err)
+		return client.GrafanaAlertmanagerConfig{
+			AlertmanagerConfig: postable.AlertmanagerConfig,
+			Templates:          postable.GetMergedTemplateDefinitions(),
+		}
 	}
 
 	// ApplyConfig performs a readiness check at startup.
@@ -357,9 +366,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	// The sent configuration should be unencrypted and promoted.
 	verifyAutogenExistsAndRemove(t, &configSent)
-	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
-	require.NoError(t, err)
-	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
+	require.Empty(t, cmp.Diff(expectedSentConfig(testGrafanaConfigWithSecret), configSent.GrafanaAlertmanagerConfig, cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(time.Location{})))
 	require.True(t, configSent.Promoted)
 
 	// Grafana's URL, email "from" address, and static headers should be sent alongside the configuration.
@@ -423,17 +430,28 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	var got string
+	var gotCnt int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+			b, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			require.NoError(t, r.Body.Close())
+			got = string(b)
+		} else if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/config") {
+			w.Header().Add("content-type", "application/json")
+			configSent := client.UserGrafanaConfig{}
+			if got != "" {
+				require.NoError(t, json.Unmarshal([]byte(got), &configSent))
+			}
+
+			require.NoError(t, json.NewEncoder(w).Encode(configSent))
+			return
+		}
+
 		w.Header().Add("content-type", "application/json")
-
-		b, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
-		require.NoError(t, r.Body.Close())
-		got = string(b)
-
-		_, err = w.Write([]byte(`{"status": "success"}`))
-		require.NoError(t, err)
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
 	}))
 
 	cfg := AlertmanagerConfig{
@@ -454,7 +472,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	// Create a config with correctly encrypted and encoded secrets.
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+	encryptedReceivers, err := encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 	testGrafanaConfigWithEncryptedSecret := cloneConfig(inputCfg)
@@ -481,9 +499,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
 	require.NoError(t, err)
 	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
 		AlertmanagerConfig: r.Config,
-		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+		Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 	}
 
 	tests := []struct {
@@ -634,9 +651,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					require.NoError(t, err)
 					r.Config.InhibitRules = legacy_storage.WithManagedInhibitionRules(r.Config.InhibitRules, importedRules)
 					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
 						AlertmanagerConfig: r.Config,
-						Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 					}
 					return cfgWithExtraMerged
 				}(),
@@ -688,9 +704,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 						"imported": {Receiver: "grafana-default-email"},
 					})
 					cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-						TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
 						AlertmanagerConfig: r.Config,
-						Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+						Templates:          cfgWithExtraUnmerged.GetMergedTemplateDefinitions(),
 					}
 					return cfgWithExtraMerged
 				}(),
@@ -739,16 +754,16 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					cmpopts.IgnoreUnexported(
 						time.Location{},
 						labels.Matcher{},
-						v0mimir1.ProxyConfig{},
+						v0mimir.ProxyConfig{},
 						common_config.ProxyConfig{})))
 
-				got1 := got
+				gotCnt1 := gotCnt
 				got = ""
 				err = moa.ApplyConfig(ctx, 1, dbConfig)
 				require.NoError(t, err)
 
-				got2 := got
-				require.Equalf(t, got1, got2, "Configuration is not idempotent")
+				gotCnt2 := gotCnt
+				require.Equal(t, gotCnt1, gotCnt2, "Configuration is not idempotent, should not have updated config")
 				return
 			}
 			for _, expErr := range test.expErrContains {
@@ -783,7 +798,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+	encryptedReceivers, err := encryptedGrafanaReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -1246,6 +1261,15 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
 	}
 
+	expectedSentConfig := func(cfg string) client.GrafanaAlertmanagerConfig {
+		postable, err := notifier.Load([]byte(cfg))
+		require.NoError(t, err)
+		return client.GrafanaAlertmanagerConfig{
+			AlertmanagerConfig: postable.AlertmanagerConfig,
+			Templates:          postable.GetMergedTemplateDefinitions(),
+		}
+	}
+
 	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
 	// We call it as if the Alertmanager were starting.
 	{
@@ -1261,9 +1285,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		verifyAutogenExistsAndRemove(t, config)
 
-		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
-		require.NoError(t, err)
-		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
+		require.Empty(t, cmp.Diff(expectedSentConfig(testGrafanaConfig), config.GrafanaAlertmanagerConfig, cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(time.Location{})))
 		require.False(t, config.Default)
 
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
@@ -1289,9 +1311,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		verifyAutogenExistsAndRemove(t, config)
 
-		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
-		require.NoError(t, err)
-		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
+		require.Empty(t, cmp.Diff(expectedSentConfig(testGrafanaConfig), config.GrafanaAlertmanagerConfig, cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(time.Location{})))
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.False(t, config.Default)
 
@@ -1306,7 +1326,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
+		encryptedReceivers, err := encryptedGrafanaReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 		postableCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 		require.NoError(t, err)
 
@@ -1330,10 +1350,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 		verifyAutogenExistsAndRemove(t, config)
 
-		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
-		require.NoError(t, err)
-
-		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
+		require.Empty(t, cmp.Diff(expectedSentConfig(testGrafanaConfigWithSecret), config.GrafanaAlertmanagerConfig, cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(time.Location{})))
 
 		require.False(t, config.Default)
 	}
