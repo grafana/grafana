@@ -649,6 +649,11 @@ export interface FeatureToggles {
   */
   dashboardTemplatesAssistantButton?: boolean;
   /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */

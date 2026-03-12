@@ -1016,6 +1016,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "suggestedDashboardsAssistantButton",
+			Description:  "Enables the 'Customize with Assistant' button on suggested dashboard cards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,

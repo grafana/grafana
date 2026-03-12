@@ -4374,6 +4374,23 @@
     },
     {
       "metadata": {
+        "name": "suggestedDashboardsAssistantButton",
+        "resourceVersion": "1773330648535",
+        "creationTimestamp": "2026-03-12T15:47:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 15:50:48.535908189 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the 'Customize with Assistant' button on suggested dashboard cards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-13T09:33:14Z"
