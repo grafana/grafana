@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DashboardLink, DashboardLinkPlacement } from '@grafana/schema';
@@ -45,8 +45,9 @@ function renderLinksList(links: DashboardLink[] = []) {
     user,
     elements: {
       dashboardScene,
-      aboveListItems: () => renderResult.getAllByTestId('links-list-visible-link-name'),
-      controlsMenuListItems: () => renderResult.getAllByTestId('links-list-controls-menu-link-name'),
+      aboveListItems: () => within(renderResult.getByTestId('links-list-visible')).getAllByTestId('link-title'),
+      controlsMenuListItems: () =>
+        within(renderResult.getByTestId('links-list-controls-menu')).getAllByTestId('link-title'),
     },
   };
 }

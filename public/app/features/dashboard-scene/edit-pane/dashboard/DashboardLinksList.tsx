@@ -85,9 +85,8 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard ({{count}})', {
           count: visible.length,
         })}
-        dataTestId={`${ID_VISIBLE_LIST}-link-name`}
         onClickItem={onClickLink}
-        renderItemLabel={(l) => l.title}
+        renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={controlsMenu}
@@ -95,13 +94,14 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu ({{count}})', {
           count: controlsMenu.length,
         })}
-        dataTestId={`${ID_CONTROLS_MENU_LIST}-link-name`}
         onClickItem={onClickLink}
-        renderItemLabel={(l) => l.title}
+        renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
   );
 }
+
+const renderItemLabel = (l: DashboardLink) => <span data-testid="link-title">{l.title}</span>;
 
 export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddLink = useCallback(() => {
