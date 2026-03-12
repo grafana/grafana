@@ -20,6 +20,7 @@ export function getAnnotationTooltip(
   const annoId = annoVals.id?.[annoIdx];
   const dashboardUID = annoVals.dashboardUID?.[annoIdx] ?? undefined;
   const timeEnd = annoVals.timeEnd?.[annoIdx];
+  const isRegion = annoVals.isRegion?.[annoIdx] && timeEnd != null;
 
   // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
   const canUpdateAnno = dashboardUID !== undefined && annoId != null && annoId > 0;
@@ -29,7 +30,7 @@ export function getAnnotationTooltip(
   let time: string = timeFormatter(annoVals.time[annoIdx], timeZone);
   let text: string = annoVals.text?.[annoIdx] ?? '';
 
-  if (annoVals.isRegion?.[annoIdx] && timeEnd != null) {
+  if (isRegion) {
     time += ' - ' + timeFormatter(timeEnd, timeZone);
   }
 
