@@ -4,7 +4,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { getWrapper } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, setBackendSrv } from '@grafana/runtime';
+import { config, getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -256,14 +256,14 @@ describe('useCreateTeamOrchestrate', () => {
       });
 
       expect(result.current.folderCreationStatus?.state).toBe('success');
-      expect(typeof result.current.folderCreationStatus?.data).toBe('string');
+      expect(
+        result.current.folderCreationStatus?.state === 'success' && typeof result.current.folderCreationStatus?.data
+      ).toBe('string');
     });
 
-    it('reports error when the folder API returns a response with no url', async () => {
-      // The hook checks `folderError || !folderData?.url` — a response with no url triggers the error branch.
-      // Note: the legacy folder mutation throws on HTTP error responses rather than returning { error },
-      // so we simulate error conditions via a missing url in an otherwise successful response.
-      server.use(http.post('/api/folders', () => HttpResponse.json({})));
+    it('reports error when the legacy folder API returns an error response', async () => {
+      // The legacy folder mutation throws on HTTP error responses, caught by the try/catch in the hook.
+      server.use(http.post('/api/folders', () => HttpResponse.json({}, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 
@@ -272,6 +272,24 @@ describe('useCreateTeamOrchestrate', () => {
       });
 
       expect(result.current.folderCreationStatus?.state).toBe('error');
+    });
+
+    it('reports error when the app platform folder API returns an error response', async () => {
+      config.featureToggles.foldersAppPlatformAPI = true;
+      server.use(
+        http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', () =>
+          HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
+        )
+      );
+
+      const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
+
+      await act(async () => {
+        await result.current.trigger(formModel);
+      });
+
+      expect(result.current.folderCreationStatus?.state).toBe('error');
+      config.featureToggles.foldersAppPlatformAPI = false;
     });
 
     it('skips folder creation when autocreateTeamFolder is false', async () => {
