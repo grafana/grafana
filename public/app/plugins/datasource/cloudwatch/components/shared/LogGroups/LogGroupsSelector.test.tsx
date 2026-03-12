@@ -111,7 +111,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something' });
+    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', listAllLogGroups: true, logGroupPattern: 'something' });
   });
 
   it('calls fetchLogGroups with an account when selected', async () => {
@@ -140,7 +140,11 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     secondCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
+    expect(fetchLogGroups).toBeCalledWith({
+      accountId: 'account-id123',
+      listAllLogGroups: true,
+      logGroupPattern: '',
+    });
   });
 
   it('shows a log group as checked after the user checks it', async () => {
@@ -187,8 +191,7 @@ describe('LogGroupsSelector', () => {
     ]);
   });
 
-  const labelText =
-    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
+  const labelText = 'All matching log groups are shown and ordered alphabetically.';
   it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {

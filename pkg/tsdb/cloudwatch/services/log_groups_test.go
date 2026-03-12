@@ -178,6 +178,89 @@ func TestGetLogGroups(t *testing.T) {
 			},
 		}, resp)
 	})
+
+	t.Run("Should sort paginated log groups alphabetically by name and account", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			Limit:            2,
+			ListAllLogGroups: true,
+		}
+
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit: aws.Int32(req.Limit),
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:222:log-group:group_b"), LogGroupName: utils.Pointer("group_b")},
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:333:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+			},
+			NextToken: utils.Pointer("token"),
+		}, nil)
+
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:     aws.Int32(req.Limit),
+			NextToken: utils.Pointer("token"),
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+			},
+		}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
+			{
+				AccountId: utils.Pointer("111"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
+			},
+			{
+				AccountId: utils.Pointer("333"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:333:log-group:group_a", Name: "group_a"},
+			},
+			{
+				AccountId: utils.Pointer("222"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:222:log-group:group_b", Name: "group_b"},
+			},
+		}, resp)
+	})
+
+	t.Run("Should prioritize exact matches over partial matches", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			LogGroupNamePrefix: utils.Pointer("group"),
+		}
+
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:              aws.Int32(0),
+			LogGroupNamePrefix: req.LogGroupNamePrefix,
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []cloudwatchlogstypes.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group-extra"), LogGroupName: utils.Pointer("group-extra")},
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:222:log-group:group"), LogGroupName: utils.Pointer("group")},
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:333:log-group:group-app"), LogGroupName: utils.Pointer("group-app")},
+			},
+		}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
+			{
+				AccountId: utils.Pointer("222"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:222:log-group:group", Name: "group"},
+			},
+			{
+				AccountId: utils.Pointer("333"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:333:log-group:group-app", Name: "group-app"},
+			},
+			{
+				AccountId: utils.Pointer("111"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group-extra", Name: "group-extra"},
+			},
+		}, resp)
+	})
 }
 
 func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
