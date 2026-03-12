@@ -811,7 +811,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	persistInitialConfig(t, amConfig)
+	persistInitialConfig(t, amConfig, helper.Org1.Admin)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -1161,7 +1161,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	persistInitialConfig(t, amConfig)
+	persistInitialConfig(t, amConfig, helper.Org1.Admin)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -1529,12 +1529,10 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig) {
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, user apis.User) {
 	ctx := context.Background()
 
-	helper := getTestHelper(t)
-
-	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
 		if receiver.Name == "empty" {
@@ -1569,7 +1567,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 		}
 	}
 
-	test_common.UpdateDefaultRoute(t, helper.Org1.Admin, amConfig.AlertmanagerConfig.Route)
+	test_common.UpdateDefaultRoute(t, user, amConfig.AlertmanagerConfig.Route)
 }
 
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v0alpha1.ReceiverIntegration {

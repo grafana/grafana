@@ -92,6 +92,9 @@ export const versionedComponents = {
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
+    paste: {
+      '12.1.0': 'data-testid EditPaneHeader paste',
+    },
   },
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,

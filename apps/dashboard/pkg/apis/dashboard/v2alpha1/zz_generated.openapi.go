@@ -3032,6 +3032,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardMatcherConfig(ref common.Refere
 							Format:      "",
 						},
 					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The matcher options. This is specific to the matcher implementation.",

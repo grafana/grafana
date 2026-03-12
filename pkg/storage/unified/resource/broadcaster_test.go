@@ -72,17 +72,9 @@ func TestBroadcaster(t *testing.T) {
 		close(ch)
 	})
 
-	b, err := NewBroadcaster(ctx, func(out chan<- int) error {
-		go func() {
-			for v := range ch {
-				out <- v
-			}
-		}()
-		return nil
-	})
-	require.NoError(t, err)
+	b := NewBroadcaster(ctx, ch)
 
-	sub, err := b.Subscribe(ctx)
+	sub, err := b.Subscribe(ctx, "test")
 	require.NoError(t, err)
 
 	for _, expected := range input {
@@ -97,27 +89,57 @@ func TestBroadcaster(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestBroadcasterUnsubscribe(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	b := NewBroadcaster(ctx, ch)
+
+	// subscribe three, then unsubscribe all
+	sub1, err := b.Subscribe(ctx, "sub1")
+	require.NoError(t, err)
+	sub2, err := b.Subscribe(ctx, "sub2")
+	require.NoError(t, err)
+	sub3, err := b.Subscribe(ctx, "sub3")
+	require.NoError(t, err)
+
+	b.Unsubscribe(sub1)
+	b.Unsubscribe(sub2)
+	b.Unsubscribe(sub3)
+
+	// all subscriber channels should be closed
+	_, ok := <-sub1
+	require.False(t, ok)
+	_, ok = <-sub2
+	require.False(t, ok)
+	_, ok = <-sub3
+	require.False(t, ok)
+
+	// broadcaster should still work — new subscriber receives data
+	sub4, err := b.Subscribe(ctx, "sub4")
+	require.NoError(t, err)
+
+	ch <- 42
+	v, ok := <-sub4
+	require.True(t, ok)
+	require.Equal(t, 42, v)
+}
+
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	ch := make(chan int)
-	b, err := NewBroadcaster(ctx, func(out chan<- int) error {
-		go func() {
-			defer close(out)
-			for v := range ch {
-				out <- v
-			}
-		}()
-		return nil
-	})
-	require.NoError(t, err)
+	b := NewBroadcaster(ctx, ch)
 
 	// Create 101 subscribers that never read — more than the
 	// unsubscribe channel buffer (100) in the original code.
 	const numSubs = chanBufferLen + 1
 	for i := 0; i < numSubs; i++ {
-		_, err := b.Subscribe(ctx)
+		_, err := b.Subscribe(ctx, "test")
 		require.NoError(t, err)
 	}
 

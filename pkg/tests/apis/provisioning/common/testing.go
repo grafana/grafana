@@ -793,6 +793,11 @@ func WithLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
+func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+}
+
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types

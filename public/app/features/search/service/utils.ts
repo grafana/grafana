@@ -1,5 +1,5 @@
 import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
+import { DataFrame, DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -231,4 +231,40 @@ export function filterSearchResults(
   }
 
   return filtered;
+}
+
+/**
+ * Appends rows from `frame` into `target`, aligning fields that may differ between frames.
+ * New fields are backfilled with null for existing rows; missing fields are padded with null for new rows.
+ */
+export function appendFrame(target: DataFrame, frame: DataFrame): void {
+  const existingLength = target.length;
+  const newLength = existingLength + frame.length;
+
+  // Add new fields from the incoming frame that don't exist in the target yet
+  for (const f of frame.fields) {
+    if (!target.fields.find((vf) => vf.name === f.name)) {
+      target.fields.push({
+        ...f,
+        values: new Array(existingLength).fill(null).concat(f.values),
+      });
+    }
+  }
+
+  // Append values from matching fields
+  for (const f of frame.fields) {
+    const field = target.fields.find((vf) => vf.name === f.name);
+    if (field && field.values.length === existingLength) {
+      field.values.push(...f.values);
+    }
+  }
+
+  // Pad fields that don't exist in the incoming frame with null
+  for (const field of target.fields) {
+    while (field.values.length < newLength) {
+      field.values.push(null);
+    }
+  }
+
+  target.length = newLength;
 }
