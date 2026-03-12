@@ -1826,14 +1826,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthzGlobalRolesApi",
 			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2642,6 +2634,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+		}, {
+			Name:            "colorblindThemes",
+			Description:     "Enables the new colorblind-friendly themes",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaFrontendPlatformSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 	}
 )

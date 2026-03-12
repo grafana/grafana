@@ -32,10 +32,6 @@ var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
-
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
@@ -58,7 +54,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore                  *team.LegacyStore
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
-	coreRolesStorage                 CoreRoleStorageBackend
 	roleApiInstaller                 RoleApiInstaller
 	globalRoleApiInstaller           GlobalRoleApiInstaller
 	teamLBACApiInstaller             TeamLBACApiInstaller

@@ -240,18 +240,6 @@ func NewMapperRegistry() MapperRegistry {
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
-			"coreroles": translation{
-				resource:  "roles",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbGet:   "roles:read",
-					utils.VerbList:  "roles:read",
-					utils.VerbWatch: "roles:read",
-				},
-				folderSupport: false,
-				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
-				skipScopeOnVerb: nil,
-			},
 			"globalroles": translation{
 				resource:  "roles",
 				attribute: "uid",
