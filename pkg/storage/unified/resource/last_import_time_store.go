@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
