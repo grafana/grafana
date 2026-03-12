@@ -1,5 +1,7 @@
 import { DashboardPage, E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
+import { setupAnnotationApiMock } from '../utils/annotation-api-mock';
+
 const DASHBOARD_UID = 'ad7p5pjk';
 
 /**
@@ -220,36 +222,14 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
     });
 
     test.describe('wip annotations', () => {
-      // We have to keep multiple runners from executing this test at the same time or it will fail! This shouldn't be a problem in CI, but it will fail if you run it locally with multiple retries and multiple workers.
-      // clean up existing wip annos from previous attempts.
-      test.beforeEach(async ({ request }) => {
-        const response = await request.get('/api/annotations', {
-          params: {
-            dashboardUID: DASHBOARD_UID,
-            from: 0,
-            to: 9999999999999,
-            limit: 1000,
-          },
-        });
-        if (!response.ok()) {
-          return;
-        }
-        const annotations = await response.json();
-        if (!Array.isArray(annotations) || annotations.length === 0) {
-          return;
-        }
-        for (const annotation of annotations) {
-          if (annotation.id) {
-            await request.delete(`/api/annotations/${annotation.id}`);
-          }
-        }
-      });
-      // DO NOT MAKE OTHER TESTS THAT USE THIS PANEL OR THIS WILL FAIL!
       test('can edit locally created (wip) annotations from the clustered tooltip', async ({
         page,
         gotoDashboardPage,
         selectors,
       }) => {
+        // Mock annotation API to avoid shared DB state in parallel executions
+        await setupAnnotationApiMock(page);
+
         const dashboardPage = await gotoDashboardPage({
           uid: DASHBOARD_UID,
           queryParams: new URLSearchParams({ editPanel: 'panel-18' }),
