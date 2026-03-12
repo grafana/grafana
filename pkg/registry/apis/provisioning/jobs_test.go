@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -210,5 +212,44 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		err := c.authorizeResourceJob(ctx, mockRepo, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
+	})
+}
+
+func TestAuthorizeAdminJob(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("admin is authorized", func(t *testing.T) {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == "create" &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName() &&
+				req.Namespace == cfg.Namespace
+		}), "").Return(nil)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeAdminJob(ctx, cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("non-admin is forbidden", func(t *testing.T) {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == "create" &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName()
+		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("admin role is required")))
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeAdminJob(ctx, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
 	})
 }
