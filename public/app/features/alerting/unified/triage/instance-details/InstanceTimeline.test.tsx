@@ -248,7 +248,8 @@ describe('InstanceTimeline component', () => {
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
     expect(screen.getByText('1 notification')).toBeInTheDocument();
-    expect(screen.getAllByText('my-slack-receiver').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
+    expect(screen.getByText('· Slack #1')).toBeInTheDocument();
   });
 
   it('does not show outcome label when all notifications succeed', () => {
