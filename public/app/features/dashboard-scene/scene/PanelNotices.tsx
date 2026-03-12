@@ -35,24 +35,24 @@ function PanelNoticesRenderer({ model }: SceneComponentProps<PanelNotices>) {
   const dataObject = sceneGraph.getData(model);
   const data = dataObject.useState();
 
-  const prevSeries = usePrevious(data.data?.series);
+  // const prevSeries = usePrevious(data.data?.series);
 
-  if (
-    prevSeries != null &&
-    prevSeries.length > 0 &&
-    prevSeries !== data.data?.series &&
-    prevSeries[0].fields[0].values !== data.data?.series[0].fields[0].values
-  ) {
-    for (let i = 0; i < prevSeries.length; i++) {
-      let fields = prevSeries[i].fields;
+  // if (
+  //   prevSeries != null &&
+  //   prevSeries.length > 0 &&
+  //   prevSeries !== data.data?.series &&
+  //   prevSeries[0].fields[0].values !== data.data?.series[0].fields[0].values
+  // ) {
+  //   for (let i = 0; i < prevSeries.length; i++) {
+  //     let fields = prevSeries[i].fields;
 
-      for (let i = 0; i < fields.length; i++) {
-        fields[i].values.length = 0;
-      }
-    }
+  //     for (let i = 0; i < fields.length; i++) {
+  //       fields[i].values.length = 0;
+  //     }
+  //   }
 
-    prevSeries.length = 0;
-  }
+  //   prevSeries.length = 0;
+  // }
 
   if (!panel) {
     return null;
