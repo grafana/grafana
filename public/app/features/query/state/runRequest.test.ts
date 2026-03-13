@@ -466,6 +466,52 @@ describe('runRequest', () => {
       expect(ctx.results[0].series[1].name).toBe('DataB-2');
     });
   });
+
+  runRequestScenario('When errors are present but there is no data', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [],
+        errors: [{ message: 'expression A failed' }],
+      });
+    });
+
+    it('should set state to Error when there is no data', () => {
+      expect(ctx.results[0].state).toBe(LoadingState.Error);
+    });
+
+    it('should include the errors', () => {
+      expect(ctx.results[0].errors).toHaveLength(1);
+      expect(ctx.results[0].errors?.[0].message).toBe('expression A failed');
+    });
+
+    it('should have no series', () => {
+      expect(ctx.results[0].series).toHaveLength(0);
+    });
+  });
+
+  runRequestScenario('When both packet.error and packet.errors are present alongside data', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataB-1', refId: 'B' } as DataFrame],
+        error: { message: 'primary error' },
+        errors: [{ message: 'expression A failed' }, { message: 'expression C failed' }],
+      });
+    });
+
+    it('should set state to Done because data is present', () => {
+      expect(ctx.results[0].state).toBe(LoadingState.Done);
+    });
+
+    it('should capture packet.error', () => {
+      expect(ctx.results[0].error?.message).toBe('primary error');
+    });
+
+    it('should capture both entries from packet.errors', () => {
+      expect(ctx.results[0].errors).toHaveLength(2);
+    });
+  });
 });
 
 describe('callQueryMethodWithMigration', () => {
