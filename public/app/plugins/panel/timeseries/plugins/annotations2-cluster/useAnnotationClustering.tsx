@@ -82,7 +82,6 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
               field.values.push(valMapping?.[field.name]?.() ?? null);
             }
           }
-
           // Set data frame length
           timeEndFrame.length = timeEndFrame.fields[0].values.length;
           clusteredAnnotations.push(timeEndFrame);
