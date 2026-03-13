@@ -4,10 +4,12 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { AdHocFiltersController } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
@@ -18,6 +20,7 @@ export interface AdHocVariableFormProps {
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  originFiltersController?: AdHocFiltersController;
   inline?: boolean;
   datasourceSupported: boolean;
 }
@@ -29,6 +32,7 @@ export function AdHocVariableForm({
   onDataSourceChange,
   onDefaultKeysChange,
   onAllowCustomValueChange,
+  originFiltersController,
   defaultKeys,
   inline,
   datasourceSupported,
@@ -80,6 +84,10 @@ export function AdHocVariableForm({
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && originFiltersController && (
+        <AdHocOriginFiltersEditor controller={originFiltersController} />
+      )}
 
       {datasourceSupported && onDefaultKeysChange && (
         <>
