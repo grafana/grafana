@@ -91,6 +91,7 @@ type KV interface {
 
 	// Save a new value - returns a WriteCloser to write the value to.
 	// Existent keys will be overwritten with the new value.
+	// Trying to save a key without a value returns an error
 	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
 
 	// Delete a value.
@@ -108,6 +109,7 @@ type KV interface {
 	// Batch executes all operations atomically within a single transaction.
 	// If any operation fails, all operations are rolled back.
 	// Operations are executed in order; the batch stops on first failure.
+	// Put/Create/Update without a value will return an error
 	//
 	// Operation semantics:
 	//   - BatchOpPut: Upsert (create or update), never fails on key state
