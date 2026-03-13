@@ -601,6 +601,14 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1923,6 +1931,14 @@ var (
 		{
 			Name:         "alertEnrichmentConditional",
 			Description:  "Enable conditional alert enrichment steps.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertEnrichmentPreview",
+			Description:  "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
