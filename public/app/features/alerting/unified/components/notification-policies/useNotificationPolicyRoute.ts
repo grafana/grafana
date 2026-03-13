@@ -57,8 +57,8 @@ const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 // Alertmanagers are configured — each AM calls the function with a different route object,
 // and evictions cause new references on every render, triggering infinite re-renders in
 // useAsync. WeakMap has no size limit and automatically GCs entries when keys are released.
-const k8sRouteToRouteCache = new WeakMap<Parameters<typeof k8sRouteToRoute>[0], Route>();
-function memoK8sRouteToRoute(route: Parameters<typeof k8sRouteToRoute>[0]): Route {
+const k8sRouteToRouteCache = new WeakMap<RoutingTree, Route>();
+function memoK8sRouteToRoute(route: RoutingTree): Route {
   const cached = k8sRouteToRouteCache.get(route);
   if (cached) {
     return cached;
