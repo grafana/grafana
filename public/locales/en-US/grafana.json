@@ -14761,6 +14761,7 @@
       "label-role": "Role",
       "role-creation-success": "Roles created successfully.",
       "roles-create-failed": "Failed to create roles: ",
+      "roles-create-permission-issue": "You don't have permissions to set roles",
       "roles-creation-loading": "Creating roles...",
       "team-creation-link": "Open team details",
       "team-creation-loading": "Creating team...",
