@@ -10,12 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/authn"
@@ -71,13 +69,11 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	traceId := span.SpanContext().TraceID()
 	connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 
-	// Read the namespace from the path
-	ns := mux.Vars(httpreq)["namespace"]
-	if ns == "" {
-		errhttp.Write(ctx, fmt.Errorf("missing namespace"), w)
+	ctx, err := withNamespaceInContext(ctx, httpreq)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
-	ctx = request.WithNamespace(ctx, ns)
 
 	responder := newResponderWrapper(ctx, w,
 		func(statusCode *int, obj runtime.Object) {

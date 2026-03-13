@@ -1,13 +1,18 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/authlib/types"
 
 	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -193,4 +198,25 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		},
 	})
 	return routes
+}
+
+func withNamespaceInContext(ctx context.Context, r *http.Request) (context.Context, error) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if ok {
+		return ctx, nil // no need for anything special
+	}
+
+	// Try parsing the variables
+	ns = mux.Vars(r)["namespace"]
+	if ns == "" {
+		user, ok := types.AuthInfoFrom(ctx)
+		if !ok || user == nil {
+			return nil, errors.NewBadRequest("missing user")
+		}
+		ns = user.GetNamespace()
+		if ns == "" {
+			return nil, errors.NewBadRequest("user is missing namespace")
+		}
+	}
+	return request.WithNamespace(ctx, ns), nil
 }
