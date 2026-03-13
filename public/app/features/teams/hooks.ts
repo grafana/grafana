@@ -2,7 +2,6 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import {
   API_GROUP,
   API_VERSION,
