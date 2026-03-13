@@ -18,8 +18,8 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
-import { AlertsListSection, OverviewSection } from './NotificationDetailAlerts';
 import { NotificationActionsMenu } from './NotificationDetailActions';
+import { AlertsListSection, OverviewSection } from './NotificationDetailAlerts';
 import { NotificationHeader } from './NotificationDetailHeader';
 import { NotificationDetailSidebar } from './NotificationDetailSidebar';
 import { RelatedNotificationsSidebar } from './RelatedNotificationsSidebar';
@@ -202,8 +202,7 @@ function NotificationDetail({
     } else {
       onHeaderDataChange(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notification, relatedNotifications]);
+  }, [notification, relatedNotifications, onHeaderDataChange, onRelatedCountChange]);
 
   useEffect(() => {
     let cancelled = false;

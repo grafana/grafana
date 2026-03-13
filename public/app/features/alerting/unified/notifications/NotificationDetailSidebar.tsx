@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Collapse, Icon, IconName, Stack, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, IconName, Stack, Text, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { DetailText } from '../components/common/DetailText';
@@ -36,11 +36,11 @@ export function NotificationDetailSidebar({ notification }: NotificationDetailSi
               className={isError ? styles.errorIcon : styles.successIcon}
               size="sm"
             />
-            <span>
+            <Text>
               {isError
                 ? t('alerting.notification-detail.sidebar-delivery-failed', 'Delivery failed')
                 : t('alerting.notification-detail.sidebar-delivery-success', 'Delivered successfully')}
-            </span>
+            </Text>
           </Stack>
         }
       />
@@ -63,10 +63,10 @@ export function NotificationDetailSidebar({ notification }: NotificationDetailSi
         value={
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name={integrationIcon} size="sm" />
-            <span>
+            <Text>
               {receiverTypeNames[notification.integration] ?? notification.integration} #
               {notification.integrationIndex + 1}
-            </span>
+            </Text>
           </Stack>
         }
       />
