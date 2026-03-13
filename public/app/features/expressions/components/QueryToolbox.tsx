@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, useStyles2, Stack, InlineToast, Tooltip, Icon } from '@grafana/ui';
+import { Icon, IconButton, InlineToast, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
 
@@ -93,8 +93,6 @@ export const QueryToolbox = ({ onFormatCode, onExpand, isExpanded, query }: Quer
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderTop: 'none',
     padding: theme.spacing(1),
     display: 'flex',
     flexGrow: 1,

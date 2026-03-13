@@ -34,6 +34,11 @@ const esModules = [
   'earcut',
   'pbf',
   'geotiff',
+  '@codemirror/state',
+  '@codemirror/view',
+  '@codemirror/lang-sql',
+  '@codemirror/language',
+  '@lezer/highlight',
 ].join('|');
 
 module.exports = {
