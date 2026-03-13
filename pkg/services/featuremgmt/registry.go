@@ -1937,6 +1937,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertEnrichmentPreview",
+			Description:  "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingImportAlertmanagerAPI",
 			Description:  "Enables the API to import Alertmanager configuration",
 			Stage:        FeatureStageExperimental,
