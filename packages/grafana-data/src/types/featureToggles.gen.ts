@@ -394,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardTemplatesAssistantButton?: boolean;
+  /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
   /**
   * Enables the new alert list view design
   * @default false

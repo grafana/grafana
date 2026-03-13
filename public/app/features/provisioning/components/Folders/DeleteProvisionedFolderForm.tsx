@@ -121,6 +121,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
         paramName: 'new_pull_request_url',
         paramValue: prUrl,
         repoType: info.repoType,
+        action: 'delete',
       });
       navigate(url);
     }

@@ -601,6 +601,14 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1010,6 +1018,14 @@ var (
 		{
 			Name:         "dashboardTemplatesAssistantButton",
 			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "suggestedDashboardsAssistantButton",
+			Description:  "Enables the 'Customize with Assistant' button on suggested dashboard cards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
