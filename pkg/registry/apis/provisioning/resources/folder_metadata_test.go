@@ -453,7 +453,7 @@ func TestParseFolderResource(t *testing.T) {
 			description:          "When metadata exists with custom title, preserve it instead of using path-based title",
 		},
 		{
-			name:                  "metadata enabled with empty title - preserves empty title from metadata",
+			name:                  "metadata enabled with empty title - falls back to path-based title",
 			path:                  testPath,
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
@@ -472,10 +472,10 @@ func TestParseFolderResource(t *testing.T) {
 			},
 			expectedFolderID:     "stable-uid-123",
 			expectedAction:       "update",
-			expectedTitle:        "",
+			expectedTitle:        "project-x",
 			expectedParentFolder: "parent-uid-456",
 			expectedErr:          false,
-			description:          "When metadata exists but title is empty, the metadata object is used as-is",
+			description:          "When metadata exists but title is empty, fall back to path-based title",
 		},
 		{
 			name:                  "parent folder ID error propagates",

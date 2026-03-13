@@ -228,6 +228,8 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	// If no metadata object exists, create a minimal folder object
 	if folderObj == nil {
 		folderObj = NewFolderManifest(folderID, folderTitle)
+	} else if folderObj.Spec.Title == "" {
+		folderObj.Spec.Title = folderTitle
 	}
 
 	// Convert to unstructured
