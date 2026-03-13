@@ -203,11 +203,18 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public enableSelection() {
-    // Enable element selection
+    if (this.state.selectionContext.enabled) {
+      return;
+    }
+
     this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
   }
 
   public disableSelection() {
+    if (!this.state.selectionContext.enabled) {
+      return;
+    }
+
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
       selection: undefined,

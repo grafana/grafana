@@ -1,5 +1,4 @@
 import { act, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -80,17 +79,20 @@ describe('DashboardEditPaneRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
-  it('Should render sidebar with dock toggle when editing', async () => {
-    const user = userEvent.setup();
+  it('Should sync sidebar docked state with edit pane state', async () => {
     const scene = buildTestScene();
 
     act(() => activateFullSceneTree(scene));
 
     render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
 
-    await user.click(screen.getByLabelText('Outline'));
+    act(() => screen.getByLabelText('Outline').click());
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+
+    act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
+
+    expect(scene.state.editPane.state.isDocked).toBe(true);
   });
 
   // describe('outline interactions tracking', () => {
