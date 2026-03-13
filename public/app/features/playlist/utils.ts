@@ -1,8 +1,23 @@
 import { Playlist } from '../../api/clients/playlist/v1';
+import { contextSrv } from '../../core/services/context_srv';
+import { AccessControlAction } from '../../types/accessControl';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { SearchQuery } from '../search/service/types';
 
 import { PlaylistItemUI } from './types';
+
+/**
+ * Returns true if the current user can create, edit, or delete playlists.
+ *
+ * Uses playlists:read as a signal that the backend has registered playlist RBAC.
+ * If the permission is absent (old backend not yet deployed), falls back to the
+ * legacy isEditor check to avoid regressions during a mixed-version rollout.
+ */
+export function canWritePlaylists(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.PlaylistsRead)
+    ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
+    : contextSrv.isEditor;
+}
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
