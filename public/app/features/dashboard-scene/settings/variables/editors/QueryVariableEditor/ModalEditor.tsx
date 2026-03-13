@@ -5,7 +5,7 @@ import { lastValueFrom } from 'rxjs';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { QueryVariable } from '@grafana/scenes';
+import { QueryVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -95,7 +95,9 @@ export function ModalEditor(props: ModalEditorProps) {
               </Trans>
             </div>
             <Button
-              variant="secondary"
+              variant={isLoading ? 'secondary' : 'primary'}
+              fill="outline"
+              size="sm"
               onClick={previewValues}
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
             >
@@ -114,7 +116,7 @@ export function ModalEditor(props: ModalEditorProps) {
                 {!options.length ? (
                   <div className={styles.noOptions}>
                     <Trans i18nKey="dashboard-scene.modal-editor.no-options-hint">
-                      Provide a valid query and click the &quot;Run query&quot; button to see the preview.
+                      Provide a valid query and/or static options and click &quot;Run query&quot; to see the preview.
                     </Trans>
                   </div>
                 ) : (
@@ -122,7 +124,13 @@ export function ModalEditor(props: ModalEditorProps) {
                 )}
               </div>
             </div>
-            <div {...splitterProps} />
+            <div
+              {...splitterProps}
+              style={{ ...splitterProps.style }}
+              title={t('dashboard-scene.modal-editor.content-drag-to-resize', 'Drag to resize')}
+            >
+              <div className={styles.fadeOverlay} />
+            </div>
             <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
               <div className={styles.splitContainer}>
                 <TabsBar>
@@ -303,12 +311,22 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     buttonsRow: css({
       flexShrink: 0,
+      marginBottom: theme.spacing(1),
     }),
     variableName: css({
       fontSize: theme.typography.h4.fontSize,
     }),
     previewTitle: css({
       fontSize: '16px',
+    }),
+    fadeOverlay: css({
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: theme.spacing(3),
+      height: `calc(${theme.spacing(3)} + 48px)`,
+      background: `linear-gradient(transparent, ${theme.colors.background.primary})`,
+      pointerEvents: 'none',
     }),
   };
 }
