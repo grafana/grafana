@@ -31,7 +31,7 @@ After you configure the Tempo data source and instrument your application, verif
 1. Confirm that the **Profiles for this span** button appears in the span details.
 1. Confirm that an embedded flame graph appears in the span details section.
 
-If the span attribute `pyroscope.profile.id` isn't present on the span, the OTel bridge package isn't configured correctly. Refer to [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) for per-language setup instructions.
+If the span attribute `pyroscope.profile.id` isn't present on the span, the OpenTelemetry bridge package isn't configured correctly. Refer to [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/) for per-language setup instructions.
 
 ## Troubleshoot trace to profiles
 
