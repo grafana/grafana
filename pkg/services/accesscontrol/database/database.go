@@ -11,8 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/database")
@@ -82,7 +80,7 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	buildSpan.End()
 
 	_, querySpan := tracer.Start(ctx, "accesscontrol.database.GetUserPermissions.query")
-	result, err := s.getUserPermissionsRaw(ctx, s.sql.GetEngine(), s.sql.GetDialect(), q, params)
+	result, err := s.getUserPermissionsRaw(ctx, q, params)
 	if err != nil {
 		querySpan.End()
 		return nil, err
@@ -93,15 +91,12 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, nil
 }
 
-// getUserPermissionsRaw runs the permission query with engine.DB().QueryContext and scans
-// rows directly into []Permission. This avoids xorm's Find() reflection over 10k+ rows,
-// which was adding tens of ms after the DB had already returned.
-// For Postgres, the query is rewritten from ? to $1, $2, ... placeholders.
-func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, engine *xorm.Engine, dialect migrator.Dialect, q string, params []any) ([]accesscontrol.Permission, error) {
-	if dialect.DriverName() == migrator.Postgres {
-		q = replacePlaceholdersForPostgres(q)
-	}
-	rows, err := engine.DB().QueryContext(ctx, q, params...)
+// getUserPermissionsRaw runs the permission query via sqlx (which rebinds ?
+// to the correct placeholders per driver, e.g. $1,$2 for Postgres) and scans
+// rows directly into []Permission. This avoids xorm's Find() reflection over
+// 10k+ rows, which was adding tens of ms after the DB had already returned.
+func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, q string, params []any) ([]accesscontrol.Permission, error) {
+	rows, err := s.sql.GetSqlxSession().Query(ctx, q, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -120,24 +115,6 @@ func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, engine *
 		return nil, err
 	}
 	return out, nil
-}
-
-// replacePlaceholdersForPostgres converts ? style placeholders to $1, $2, ...
-// so the query can be executed with database/sql against a Postgres driver.
-func replacePlaceholdersForPostgres(q string) string {
-	var b strings.Builder
-	b.Grow(len(q) + 8) // rough guess: each ? becomes $n (n up to 2 digits)
-	n := 1
-	for _, r := range q {
-		if r == '?' {
-			b.WriteString("$")
-			b.WriteString(strconv.Itoa(n))
-			n++
-		} else {
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
 }
 
 func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
