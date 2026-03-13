@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
@@ -10,11 +10,6 @@ import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 import { FreeTierLimitNote } from './FreeTierLimitNote';
 import { RepoIcon } from './RepoIcon';
-
-function preventCardNavigation(e: React.MouseEvent) {
-  e.preventDefault();
-  e.stopPropagation();
-}
 
 interface RepositoryTypeCardsProps {
   disabled?: boolean;
@@ -54,11 +49,12 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       Configure with {'{{ provider }}'}
                     </Trans>
                     {config.tooltip && (
-                      <Tooltip content={config.tooltip}>
-                        <span className={styles.infoIcon} onClick={preventCardNavigation}>
-                          <Icon name="info-circle" size="sm" />
-                        </span>
-                      </Tooltip>
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                      />
                     )}
                   </Stack>
                 </Card.Heading>
@@ -101,11 +97,12 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       </Trans>
                     )}
                     {config.tooltip && (
-                      <Tooltip content={config.tooltip}>
-                        <span className={styles.infoIcon} onClick={preventCardNavigation}>
-                          <Icon name="info-circle" size="sm" />
-                        </span>
-                      </Tooltip>
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                      />
                     )}
                   </Stack>
                 </Card.Heading>
