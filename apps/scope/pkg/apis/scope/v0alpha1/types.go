@@ -111,15 +111,16 @@ func (ScopeDashboardBindingList) OpenAPIModelName() string {
 // The Grafana connect handlers do not currently consume these via
 // NewConnectOptions; they parse query params from the request URL directly.
 type ScopeNavigationOptions struct {
-	// Extra levels of sub-scope items to include beyond the direct scope.
-	// 0 or omitted returns items for the requested scopes only.
-	// 1 returns items for the requested scopes plus their immediate sub-scopes.
+	// Depth represents the current nesting level in the rendered navigation
+	// tree. 0 or omitted means the request is for a top-level (non-nested)
+	// navigation. 1 means the first level of sub-scope expansion,
+	// 2 means a sub-scope within a sub-scope, and so on.
 	Depth int32 `json:"depth,omitempty"`
-	// Root scope for hierarchical navigation context. When navigating into
-	// sub-scopes, this identifies the original top-level scope the user
-	// started from, allowing the backend to optimize response payloads
-	// (e.g., skipping expensive dashboard resolution for deep sub-nodes).
-	// If omitted, no root scope context is applied.
+	// RootScope identifies the top-level navigation scope the user started
+	// from. When navigating into sub-scopes, this stays constant and tells
+	// the backend which scope initiated the navigation session. This allows
+	// the backend to tailor its response based on the navigation origin.
+	// Omitted for top-level navigation requests.
 	RootScope string `json:"rootScope,omitempty"`
 }
 
