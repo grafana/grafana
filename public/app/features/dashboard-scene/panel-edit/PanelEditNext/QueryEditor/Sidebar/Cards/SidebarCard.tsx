@@ -23,8 +23,9 @@ interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
   isSelected: boolean;
+  isPartOfSelection?: boolean;
   item: ActionItem;
-  onClick: () => void;
+  onSelect: (modifiers?: { multi?: boolean; range?: boolean }) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
@@ -35,8 +36,9 @@ export const SidebarCard = ({
   children,
   id,
   isSelected,
+  isPartOfSelection,
   item,
-  onClick,
+  onSelect,
   onDelete,
   onDuplicate,
   onToggleHide,
@@ -46,7 +48,7 @@ export const SidebarCard = ({
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
-  const styles = useStyles2(getStyles, { isSelected, item });
+  const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -72,7 +74,7 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onClick();
+      onSelect?.({});
     }
   };
 
@@ -96,7 +98,14 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={onClick}
+        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
+        onMouseDown={(e) => {
+          // Prevent the browser's native text-selection behaviour when Shift is held
+          // (Shift+Click is used for range-selection of cards, not text).
+          if (e.shiftKey) {
+            e.preventDefault();
+          }
+        }}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -104,7 +113,7 @@ export const SidebarCard = ({
         tabIndex={0}
         data-query-sidebar-card={id}
         aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected}
+        aria-pressed={isSelected || isPartOfSelection}
       >
         <div className={styles.cardContent}>{children}</div>
         {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
@@ -141,9 +150,11 @@ function getStyles(
   theme: GrafanaTheme2,
   {
     isSelected,
+    isPartOfSelection,
     item,
   }: {
     isSelected?: boolean;
+    isPartOfSelection?: boolean;
     item: ActionItem;
   }
 ) {
@@ -193,9 +204,12 @@ function getStyles(
     },
   });
 
+  const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
     ? `1px solid color-mix(in srgb, ${QUERY_EDITOR_COLORS.error} 50%, transparent)`
-    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
+    : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
+
+  const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
 
   return {
     cardContentIcons: css({
@@ -256,7 +270,7 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
-      background: isSelected ? selectedBg : themeColors.card.bg,
+      background: isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
 
