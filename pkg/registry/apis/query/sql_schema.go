@@ -20,17 +20,11 @@ func (b *QueryAPIBuilder) GetSQLSchemas(w http.ResponseWriter, r *http.Request) 
 	ctx, span := b.tracer.Start(r.Context(), "QueryService.GetSQLSchemas")
 	defer span.End()
 
-	ctx, err := withNamespaceInContext(ctx, r)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
 	traceId := span.SpanContext().TraceID()
 	connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", r.Header.Get("X-Rule-Uid"))
 
 	raw := &query.QueryDataRequest{}
-	err = web.Bind(r, raw)
+	err := web.Bind(r, raw)
 	if err != nil {
 		connectLogger.Error("Hit unexpected error when reading query", "err", err)
 		err = errorsK8s.NewBadRequest("error reading query")

@@ -69,12 +69,6 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	traceId := span.SpanContext().TraceID()
 	connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 
-	ctx, err := withNamespaceInContext(ctx, httpreq)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
 	responder := newResponderWrapper(ctx, w,
 		func(statusCode *int, obj runtime.Object) {
 			if *statusCode/100 == 4 {
@@ -128,7 +122,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		})
 
 	raw := &query.QueryDataRequest{}
-	err = web.Bind(httpreq, raw)
+	err := web.Bind(httpreq, raw)
 	if err != nil {
 		connectLogger.Error("Hit unexpected error when reading query", "err", err)
 		err = errorsK8s.NewBadRequest("error reading query")
