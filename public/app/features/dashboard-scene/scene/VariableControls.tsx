@@ -177,7 +177,10 @@ function VariableLabel({
   const controlsLayout = layout ?? 'horizontal';
   const descriptionSuffix =
     state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip description={state.description} placement={controlsLayout === 'vertical' ? 'top' : 'bottom'} />
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
     ) : undefined;
 
   return (

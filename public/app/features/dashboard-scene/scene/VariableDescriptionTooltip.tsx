@@ -88,7 +88,12 @@ function appendTextWithBareLinks(
   }
 }
 
-function renderExternalLinkOrText(label: string, url: string, linkClassName: string, key: number): string | JSX.Element {
+function renderExternalLinkOrText(
+  label: string,
+  url: string,
+  linkClassName: string,
+  key: number
+): string | JSX.Element {
   const safeUrl = getSafeExternalUrl(url);
 
   if (!safeUrl) {
