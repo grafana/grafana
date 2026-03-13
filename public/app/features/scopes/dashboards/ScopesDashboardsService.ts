@@ -206,8 +206,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       // nesting depth: ['', folderA] → depth 1, ['', folderA, folderB] → depth 2.
       const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
         ? await this.apiClient.fetchScopeNavigations([subScopeName], {
-            depth: path.length - 1,
-            rootScope: this.state.navigationScope,
+            ...(path.length - 1 > 0 && { depth: path.length - 1 }),
+            ...(this.state.navigationScope && { rootScope: this.state.navigationScope }),
           })
         : await this.apiClient.fetchDashboards([subScopeName]);
 

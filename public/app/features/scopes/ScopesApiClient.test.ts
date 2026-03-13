@@ -640,6 +640,22 @@ describe('ScopesApiClient', () => {
       );
     });
 
+    it('should omit depth when it is 0', async () => {
+      const mockSubscription = createMockSubscription({
+        data: { items: [] },
+      });
+      (scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate as jest.Mock).mockReturnValue(
+        mockSubscription
+      );
+
+      await apiClient.fetchScopeNavigations(['mimir'], { depth: 0, rootScope: 'cloud' });
+
+      expect(scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate).toHaveBeenCalledWith(
+        { scope: ['mimir'], rootScope: 'cloud' },
+        { subscribe: false }
+      );
+    });
+
     it('should not include depth or rootScope when options are omitted', async () => {
       const mockSubscription = createMockSubscription({
         data: { items: [] },
@@ -651,7 +667,7 @@ describe('ScopesApiClient', () => {
       await apiClient.fetchScopeNavigations(['mimir']);
 
       expect(scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate).toHaveBeenCalledWith(
-        { scope: ['mimir'], depth: undefined, rootScope: undefined },
+        { scope: ['mimir'] },
         { subscribe: false }
       );
     });

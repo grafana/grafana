@@ -1040,10 +1040,10 @@ describe('ScopesDashboardsService', () => {
       // Wait for the preload to complete
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      // rootScope is undefined here because fetchDashboards was called directly,
+      // rootScope is omitted here because fetchDashboards was called directly,
       // not via setNavigationScope which sets state.navigationScope first.
       // See 'should pass rootScope when navigationScope is set' test for the non-undefined case.
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: undefined });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1 });
 
       // Verify the folder now has content from the preloaded items
       const folderKey = Object.keys(service.state.folders[''].folders).find((key) => key.includes('mimir'));
@@ -1201,8 +1201,8 @@ describe('ScopesDashboardsService', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify all levels were fetched
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level1'], { depth: 1, rootScope: undefined });
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level2'], { depth: 2, rootScope: undefined });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level1'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['level2'], { depth: 2 });
     });
 
     it('should handle multiple folders with preLoadSubScopeChildren', async () => {
@@ -1272,8 +1272,8 @@ describe('ScopesDashboardsService', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify both subScopes were fetched
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: undefined });
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['loki'], { depth: 1, rootScope: undefined });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['loki'], { depth: 1 });
     });
 
     it('should handle preload errors gracefully', async () => {
@@ -1383,8 +1383,8 @@ describe('ScopesDashboardsService', () => {
 
       // Verify the chain of preloads occurred
       expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['scope1']);
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['parent'], { depth: 1, rootScope: undefined });
-      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['child'], { depth: 2, rootScope: undefined });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['parent'], { depth: 1 });
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['child'], { depth: 2 });
     });
   });
 

@@ -236,8 +236,8 @@ export class ScopesApiClient {
       scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
         {
           scope: scopeNames,
-          depth: options?.depth,
-          rootScope: options?.rootScope,
+          ...(options?.depth && { depth: options.depth }),
+          ...(options?.rootScope && { rootScope: options.rootScope }),
         },
         { subscribe: false }
       )
