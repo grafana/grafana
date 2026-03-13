@@ -13269,14 +13269,19 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "Connect to Bitbucket repositories",
+      "bitbucket-tooltip": "Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
+      "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
+      "gitlab-tooltip": "Enhanced GitLab integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "local": "Local",
       "local-description": "Configure file provisioning",
+      "local-tooltip": "Provision dashboards from local file system without Git.",
       "pure-git": "Pure Git",
-      "pure-git-description": "Connect to any Git repository"
+      "pure-git-description": "Connect to any Git repository",
+      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-tree": {
       "header-hash": "Hash",
