@@ -4040,6 +4040,12 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "presets": {
+      "fixed-purple-hue": "Fixed purple hue",
+      "palette-classic": "Palette classic",
+      "palette-classic-stacked": "Palette classic stacked",
+      "viridis-hue": "Viridis hue"
+    },
     "suggestions": {
       "horizontal": "Horizontal bar chart",
       "hz-stacked": "Horizontal bar chart - stacked",
