@@ -200,14 +200,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "enableDatagridEditing",
-			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "faroSessionReplay",
 			Description:  "Enable Faro session replay for Grafana",
 			Stage:        FeatureStageExperimental,
@@ -607,6 +599,14 @@ var (
 			RequiresDevMode: false,
 			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
+		},
+		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
 		},
 		{
 			Name:         "dashboardScene",
@@ -1018,6 +1018,14 @@ var (
 		{
 			Name:         "dashboardTemplatesAssistantButton",
 			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "suggestedDashboardsAssistantButton",
+			Description:  "Enables the 'Customize with Assistant' button on suggested dashboard cards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
@@ -2221,6 +2229,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "vizLegendFacetedFilter",
+			Description:  "Enable faceted labels filter for series visibility in the legend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
@@ -2634,6 +2650,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+		},
+		{
+			Name:        "advisorDatasourceIntegration",
+			Description: "Enables the advisor report integration with datasource pages",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "inlineLogDetailsNoScrolls",
