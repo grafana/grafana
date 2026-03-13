@@ -31,7 +31,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid, type, slug]);
+  }, [stateManager, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
