@@ -60,10 +60,18 @@ export interface SQLEditorV2Props {
   height?: number;
 }
 
-// Returns true if the cursor is in a table name position (after FROM or JOIN)
+// Returns true if the cursor is in a table name position (after FROM/JOIN, or in a comma-separated list)
 function isAfterFromOrJoin(doc: Text, pos: number): boolean {
   const textBefore = doc.sliceString(0, pos).replace(/\w*$/, '').trimEnd();
-  return /\b(FROM|JOIN)$/i.test(textBefore);
+  // Directly after FROM or JOIN
+  if (/\b(FROM|JOIN)$/i.test(textBefore)) {
+    return true;
+  }
+  // In a comma-separated table list: FROM A, <cursor>
+  if (/\bFROM\s+[\w\s,]+,$/i.test(textBefore)) {
+    return true;
+  }
+  return false;
 }
 
 // Extract table names from the FROM clause of the full query
@@ -82,12 +90,28 @@ function makeCompletionSource(
   languageRef: RefObject<SQLEditorV2LanguageDefinition | undefined>
 ) {
   return async (context: CompletionContext): Promise<CompletionResult | null> => {
+    const provider = languageRef.current?.completionProvider;
+
+    // Detect table-qualified column: A.col — must run before the word guard
+    const dotMatch = context.matchBefore(/(\w+)\.\w*/);
+    if (dotMatch) {
+      const tableName = dotMatch.text.split('.')[0];
+      const tables = (await provider?.getTables()) ?? [];
+      if (tables.includes(tableName)) {
+        const cols = await (provider?.getColumns ?? (() => Promise.resolve([])))(tableName);
+        const colCompletions: Completion[] = cols.map((col) => ({
+          label: col.label,
+          apply: col.apply,
+          type: 'property',
+        }));
+        return { from: dotMatch.from + tableName.length + 1, options: colCompletions };
+      }
+    }
+
     const word = context.matchBefore(/\w*/);
     if (!word || (word.from === word.to && !context.explicit)) {
       return null;
     }
-
-    const provider = languageRef.current?.completionProvider;
 
     if (isAfterFromOrJoin(context.state.doc, context.pos)) {
       const tables = (await provider?.getTables()) ?? [];
