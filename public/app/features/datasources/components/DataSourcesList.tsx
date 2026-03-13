@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -12,12 +12,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
+import { useAdvisorHealthStatus } from '../hooks/useAdvisorHealthStatus';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';
-import { DataSourcesListHeader } from './DataSourcesListHeader';
+import { DataSourcesListHeader, type HealthFilter } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
   const { isLoading } = useLoadDataSources();
@@ -33,6 +34,7 @@ export function DataSourcesList() {
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+  const advisorHealth = useAdvisorHealthStatus();
 
   return (
     <DataSourcesListView
@@ -45,6 +47,7 @@ export function DataSourcesList() {
       showFavoritesOnly={showFavoritesOnly}
       handleFavoritesCheckboxChange={handleFavoritesCheckboxChange}
       favoriteDataSources={favoriteDataSources}
+      advisorHealth={advisorHealth}
     />
   );
 }
@@ -59,6 +62,7 @@ export type ViewProps = {
   showFavoritesOnly?: boolean;
   handleFavoritesCheckboxChange?: (value: boolean) => void;
   favoriteDataSources?: FavoriteDatasources;
+  advisorHealth?: { healthMap: Map<string, string>; isAvailable: boolean };
 };
 
 export function DataSourcesListView({
@@ -71,9 +75,13 @@ export function DataSourcesListView({
   showFavoritesOnly,
   handleFavoritesCheckboxChange,
   favoriteDataSources,
+  advisorHealth,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const { healthMap, isAvailable } = advisorHealth ?? { healthMap: new Map<string, string>(), isAvailable: false };
+  const showHealthFilter = Boolean(config.featureToggles.grafanaAdvisor) && contextSrv.hasRole('Admin');
+  const [healthFilter, setHealthFilter] = useState<HealthFilter>('all');
   const favoritesCheckbox =
     favoriteDataSources?.enabled && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
       ? {
@@ -84,12 +92,23 @@ export function DataSourcesListView({
       : undefined;
 
   // Filter data sources based on favorites when enabled
-  const dataSources = useMemo(() => {
+  const favFilteredDataSources = useMemo(() => {
     if (!showFavoritesOnly || !favoriteDataSources?.enabled) {
       return allDataSources;
     }
     return allDataSources.filter((dataSource) => favoriteDataSources?.isFavoriteDatasource(dataSource.uid));
   }, [allDataSources, showFavoritesOnly, favoriteDataSources]);
+
+  // Filter data sources based on health status
+  const dataSources = useMemo(() => {
+    if (!isAvailable || healthFilter === 'all') {
+      return favFilteredDataSources;
+    }
+    return favFilteredDataSources.filter((ds) => {
+      const isUnhealthy = healthMap.has(ds.uid);
+      return healthFilter === 'unhealthy' ? isUnhealthy : !isUnhealthy;
+    });
+  }, [favFilteredDataSources, healthMap, healthFilter, isAvailable]);
 
   useEffect(() => {
     trackDataSourcesListViewed({
@@ -129,21 +148,28 @@ export function DataSourcesListView({
         .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
     }
 
-    return dataSources.map((dataSource) => (
-      <li key={dataSource.uid}>
-        <DataSourcesListCard
-          dataSource={dataSource}
-          hasWriteRights={hasWriteRights}
-          hasExploreRights={hasExploreRights}
-        />
-      </li>
-    ));
+    return dataSources.map((dataSource) => {
+      return (
+        <li key={dataSource.uid}>
+          <DataSourcesListCard
+            dataSource={dataSource}
+            hasWriteRights={hasWriteRights}
+            hasExploreRights={hasExploreRights}
+            isUnhealthy={isAvailable && healthMap.has(dataSource.uid)}
+          />
+        </li>
+      );
+    });
   };
 
   return (
     <>
       {/* List Header */}
-      <DataSourcesListHeader filterCheckbox={favoritesCheckbox} />
+      <DataSourcesListHeader
+        filterCheckbox={favoritesCheckbox}
+        healthFilter={showHealthFilter ? healthFilter : undefined}
+        onHealthFilterChange={showHealthFilter ? setHealthFilter : undefined}
+      />
 
       {/* List */}
       {dataSources.length === 0 && !isLoading ? (
