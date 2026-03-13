@@ -17,9 +17,9 @@ const (
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true, // enabled by default
-	FolderResource:    true,
-	DashboardResource: true,
+	PlaylistResource:  true,  // Only Mode5!
+	FolderResource:    true,  // enabled by default
+	DashboardResource: true,  // enabled by default
 	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 

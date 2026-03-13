@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// Run with:
+//
+// go test --tags "pro" -timeout 60s -run ^TestIntegrationTeamSearch$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationTeamSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -36,7 +39,7 @@ func TestIntegrationTeamSearch(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 				},
 			})
 			doTeamSearchTests(t, helper)
@@ -218,6 +221,7 @@ func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 				},
 			})
 

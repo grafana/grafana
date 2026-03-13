@@ -91,6 +91,20 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichmentPreview",
+        "resourceVersion": "1772750000943",
+        "creationTimestamp": "2026-03-05T22:33:20Z"
+      },
+      "spec": {
+        "description": "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-03-05T14:15:26Z"
