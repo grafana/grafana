@@ -202,7 +202,7 @@ You have two options to reset the basic roles permissions to their default.
 
 > Warning: If this option is left to true, permissions will be reset on every boot.
 
-Use the [reset_basic_roles](ref:configure-rbac-configure-rbac-in-grafana) option to reset basic roles permissions to their default on Grafana instance boot up.
+Use the [`reset_basic_roles`](ref:configure-rbac-configure-rbac-in-grafana) option to reset basic roles permissions to their default on Grafana instance boot up.
 
 1. Open you configuration file and update the rbac section as follow:
 
