@@ -70,6 +70,14 @@ describe('parseInitFromOptions', () => {
       expect(parseInitFromOptions({ method, data, withCredentials, credentials, url: '' })).toEqual(expected);
     }
   );
+
+  it('should remove content-type header when data is FormData', () => {
+    const formData = new FormData();
+    formData.append('key', 'value');
+    const result = parseInitFromOptions({ method: 'POST', data: formData, url: '' });
+    expect(result.body).toBe(formData);
+    expect((result.headers as Headers).has('content-type')).toBe(false);
+  });
 });
 
 describe('parseHeaders', () => {
@@ -125,6 +133,8 @@ describe('parseBody', () => {
     ${{ data: { id: '0' } }}                        | ${false}  | ${new URLSearchParams({ id: '0' })}
     ${{ data: { id: '0' } }}                        | ${true}   | ${'{"id":"0"}'}
     ${{ data: new Blob([new Uint8Array([1, 1])]) }} | ${false}  | ${new Blob([new Uint8Array([1, 1])])}
+    ${{ data: new FormData() }}                     | ${false}  | ${new FormData()}
+    ${{ data: new FormData() }}                     | ${true}   | ${new FormData()}
   `(
     "when called with options: '$options' and isAppJson: '$isAppJson' then the result should be '$expected'",
     ({ options, isAppJson, expected }) => {
