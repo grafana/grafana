@@ -34,7 +34,7 @@ An RBAC permission comprises and action and a scope:
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
-If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific, ad-hoc sets of permissions.
+If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific sets of permissions.
 
 To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
