@@ -3,7 +3,7 @@ import { useToggle } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -36,16 +36,16 @@ function RuleList() {
       <AlertsActivityBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
-        <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+        <Stack direction="row" grow={1} minHeight={0}>
           {filterV2Enabled && <RulesFilterSidebar />}
-          <div style={{ flex: 1, minWidth: 0, paddingLeft: filterV2Enabled ? '16px' : undefined }}>
+          <Box flex={1} minWidth={0} paddingLeft={filterV2Enabled ? 2 : undefined}>
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />
             ) : (
               <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
             )}
-          </div>
-        </div>
+          </Box>
+        </Stack>
       </Stack>
     </Stack>
   );

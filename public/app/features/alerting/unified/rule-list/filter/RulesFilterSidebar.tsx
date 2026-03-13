@@ -152,12 +152,16 @@ function FilterSidebarForm() {
                 )}
               />
             </SidebarField>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.state">State</Trans>}>
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.state">State</Trans>}
+              labelId="filter-label-state"
+            >
               <Controller
                 name="ruleState"
                 control={control}
                 render={({ field }) => (
                   <ToggleButtonGroup<AdvancedFilters['ruleState']>
+                    aria-labelledby="filter-label-state"
                     value={field.value}
                     onChange={field.onChange}
                     options={[
@@ -241,12 +245,16 @@ function FilterSidebarForm() {
           <div className={styles.divider} />
 
           <SidebarSection>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}>
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
+              labelId="filter-label-rule-source"
+            >
               <Controller
                 name="ruleSource"
                 control={control}
                 render={({ field }) => (
                   <ToggleButtonGroup<AdvancedFilters['ruleSource']>
+                    aria-labelledby="filter-label-rule-source"
                     value={field.value}
                     onChange={field.onChange}
                     options={[
@@ -366,12 +374,16 @@ function FilterSidebarForm() {
           )}
 
           <SidebarSection>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}>
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}
+              labelId="filter-label-rule-type"
+            >
               <Controller
                 name="ruleType"
                 control={control}
                 render={({ field }) => (
                   <ToggleButtonGroup<AdvancedFilters['ruleType']>
+                    aria-labelledby="filter-label-rule-type"
                     value={field.value}
                     onChange={field.onChange}
                     options={[
@@ -384,12 +396,16 @@ function FilterSidebarForm() {
               />
             </SidebarField>
 
-            <SidebarField label={<Trans i18nKey="alerting.search.property.rule-health">Health</Trans>}>
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.rule-health">Health</Trans>}
+              labelId="filter-label-rule-health"
+            >
               <Controller
                 name="ruleHealth"
                 control={control}
                 render={({ field }) => (
                   <ToggleButtonGroup<AdvancedFilters['ruleHealth']>
+                    aria-labelledby="filter-label-rule-health"
                     value={field.value}
                     onChange={field.onChange}
                     options={[
@@ -408,12 +424,16 @@ function FilterSidebarForm() {
             <>
               <div className={styles.divider} />
               <SidebarSection>
-                <SidebarField label={<Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>}>
+                <SidebarField
+                  label={<Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>}
+                  labelId="filter-label-plugins"
+                >
                   <Controller
                     name="plugins"
                     control={control}
                     render={({ field }) => (
                       <ToggleButtonGroup<AdvancedFilters['plugins']>
+                        aria-labelledby="filter-label-plugins"
                         value={field.value}
                         onChange={field.onChange}
                         options={[
@@ -450,25 +470,23 @@ function SidebarSection({ children }: { children: React.ReactNode }) {
 
 function SidebarField({
   label,
-  isActive,
   children,
+  labelId,
 }: {
   label: React.ReactNode;
-  isActive?: boolean;
   children: React.ReactNode;
+  labelId?: string;
 }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.field}>
-      <Label className={styles.fieldLabel}>{label}</Label>
-      <div className={cx(styles.fieldValue, isActive && styles.fieldValueActive)}>{children}</div>
+      <Label id={labelId} className={styles.fieldLabel}>
+        {label}
+      </Label>
+      <div className={styles.fieldValue}>{children}</div>
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// ToggleButtonGroup — vertical list of toggle buttons (single-select)
-// ---------------------------------------------------------------------------
 
 interface ToggleOption<T> {
   label: string;
@@ -481,37 +499,38 @@ interface ToggleButtonGroupProps<T> {
   options: Array<ToggleOption<T>>;
   value: T;
   onChange: (value: T) => void;
+  'aria-labelledby': string;
 }
 
-function ToggleButtonGroup<T>({ options, value, onChange }: ToggleButtonGroupProps<T>) {
+function ToggleButtonGroup<T>({ options, value, onChange, 'aria-labelledby': labelledBy }: ToggleButtonGroupProps<T>) {
   const styles = useStyles2(getStyles);
   return (
-    <Stack direction="column" gap={0.5}>
-      {options.map((opt) => {
-        const isActive = opt.value === value;
-        return (
-          <button
-            key={String(opt.value)}
-            type="button"
-            className={cx(styles.toggleButton, isActive && styles.toggleButtonActive)}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.icon && (
-              <Text color={opt.color}>
-                <Icon name={opt.icon} size="sm" className={styles.toggleButtonIcon} />
-              </Text>
-            )}
-            <span className={styles.toggleButtonLabel}>{opt.label}</span>
-          </button>
-        );
-      })}
-    </Stack>
+    <div role="radiogroup" aria-labelledby={labelledBy}>
+      <Stack direction="column" gap={0.5}>
+        {options.map((opt) => {
+          const isActive = opt.value === value;
+          return (
+            <button
+              key={String(opt.value)}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              className={cx(styles.toggleButton, isActive && styles.toggleButtonActive)}
+              onClick={() => onChange(opt.value)}
+            >
+              {opt.icon && (
+                <Text color={opt.color}>
+                  <Icon name={opt.icon} size="sm" className={styles.toggleButtonIcon} aria-hidden="true" />
+                </Text>
+              )}
+              <span className={styles.toggleButtonLabel}>{opt.label}</span>
+            </button>
+          );
+        })}
+      </Stack>
+    </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 
 function getStyles(theme: GrafanaTheme2) {
   return {

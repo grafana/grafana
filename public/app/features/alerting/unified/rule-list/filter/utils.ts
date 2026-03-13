@@ -26,7 +26,7 @@ export function formAdvancedFiltersToRuleFilter(
 export const emptyAdvancedFilters: AdvancedFilters = {
   namespace: null,
   groupName: null,
-  ruleName: undefined,
+  ruleName: '',
   ruleType: '*',
   ruleState: '*',
   dataSourceNames: [],
@@ -42,7 +42,7 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
   return {
     namespace: filterState.namespace ?? null,
     groupName: filterState.groupName ?? null,
-    ruleName: filterState.ruleName,
+    ruleName: filterState.ruleName ?? '',
     ruleType: filterState.ruleType ?? '*',
     ruleState: filterState.ruleState ?? '*',
     dataSourceNames: filterState.dataSourceNames,
