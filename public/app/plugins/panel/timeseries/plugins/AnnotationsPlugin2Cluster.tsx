@@ -46,10 +46,10 @@ const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8
 function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   let vals = {} as T;
-  frame.fields.forEach((f) => {
+  for (const f of frame.fields) {
     // @ts-expect-error data frames have unknown value types but we can assert that they have string indices since the annotation fields spec is hardcoded.
     vals[f.name] = f.values;
-  });
+  }
 
   return vals;
 }
@@ -326,8 +326,7 @@ const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
     // We don't currently cluster region annotations
     !vals.isRegion?.[i] &&
     // We use the clusterIdx to define when an annotation is a cluster
-    vals.clusterIdx?.[i] !== undefined &&
-    vals.clusterIdx?.[i] !== null &&
+    vals.clusterIdx?.[i] != null &&
     vals.clusterIdx?.[i] >= 0
   );
 };

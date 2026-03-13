@@ -7,7 +7,8 @@ import (
 const OpenAPIPrefix = "com.github.grafana.grafana.apps.scope.pkg.apis.scope.v0alpha1."
 
 /*
-Please keep pkg/promlib/models/query.go and pkg/promlib/models/scope.go in sync
+Please keep https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models/query.go and
+https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models/scope.go in sync
 with this file until this package is out of the grafana/grafana module.
 */
 

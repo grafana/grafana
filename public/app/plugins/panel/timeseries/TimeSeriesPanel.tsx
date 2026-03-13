@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import {
-  PanelProps,
-  DataFrameType,
+  alignTimeRangeCompareData,
   DashboardCursorSync,
   DataFrame,
-  alignTimeRangeCompareData,
+  DataFrameType,
+  FieldType,
+  PanelProps,
   shouldAlignTimeCompare,
   useDataLinksContext,
-  FieldType,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
@@ -16,16 +16,15 @@ import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
-  XAxisInteractionAreaPlugin,
   usePanelContext,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
-import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
-import { AnnotationsPlugin2Cluster } from './plugins/AnnotationsPlugin2Cluster';
+import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
@@ -217,27 +216,16 @@ export const TimeSeriesPanel = ({
             )}
             {!isVerticallyOriented && (
               <>
-                {config.featureToggles.annotationsClustering ? (
-                  <AnnotationsPlugin2Cluster
-                    replaceVariables={replaceVariables}
-                    options={options.annotations}
-                    annotations={data.annotations ?? []}
-                    config={uplotConfig}
-                    timeZone={timeZone}
-                    newRange={newAnnotationRange}
-                    setNewRange={setNewAnnotationRange}
-                  />
-                ) : (
-                  <AnnotationsPlugin2
-                    replaceVariables={replaceVariables}
-                    multiLane={options.annotations?.multiLane}
-                    annotations={data.annotations ?? []}
-                    config={uplotConfig}
-                    timeZone={timeZone}
-                    newRange={newAnnotationRange}
-                    setNewRange={setNewAnnotationRange}
-                  />
-                )}
+                <AnnotationsPlugin
+                  replaceVariables={replaceVariables}
+                  options={options.annotations}
+                  annotations={data.annotations ?? []}
+                  config={uplotConfig}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin

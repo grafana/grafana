@@ -16,8 +16,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     avatar: css({
       borderRadius: theme.shape.radius.circle,
-      width: 16,
-      height: 16,
+      width: theme.spacing(4),
+      height: theme.spacing(4),
       marginRight: theme.spacing(1),
     }),
   };
