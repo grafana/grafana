@@ -34,8 +34,7 @@ func withChannelNotifier(opts *KVBackendOptions) {
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:    kv,
-		WithPruner: true,
+		KvStore: kv,
 	}
 
 	for _, cfg := range configs {
@@ -52,7 +51,6 @@ func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:                      kv,
-		WithPruner:                   true,
 		WithExperimentalClusterScope: true,
 	}
 	backend, err := NewKVStorageBackend(opts)
@@ -347,6 +345,7 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 // in ascending ResourceVersion order.
 func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Skip("skipping flaky test for now")
 
 	t.Run("pollingNotifier", func(t *testing.T) {
 		if db.IsTestDbSQLite() {

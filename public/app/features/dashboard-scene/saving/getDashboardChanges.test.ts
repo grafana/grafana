@@ -1,4 +1,6 @@
-import { Dashboard } from '@grafana/schema';
+import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Dashboard, VariableModel } from '@grafana/schema';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
 
@@ -433,5 +435,93 @@ describe('getDashboardChanges', () => {
     const result = getRawDashboardChanges(initial, changed, false, true, false);
 
     expect(result).toEqual(expectedChanges);
+  });
+});
+
+describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+  const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
+    return {
+      id: 1,
+      title: 'Dashboard',
+      time: { from: 'now-7d', to: 'now' },
+      refresh: '1h',
+      version: 1,
+      schemaVersion: 1,
+      templating: {
+        list: [{ name: 'adhoc0', type: 'adhoc', filters } as unknown as VariableModel],
+      },
+    };
+  };
+
+  afterEach(() => {
+    config.featureToggles.adHocFilterDefaultValues = false;
+  });
+
+  describe('when feature flag is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+    });
+
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should report variable value changes when runtime filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(true);
+    });
+
+    it('should keep both origin and runtime filters when saveVariables is true', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, true, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+  });
+
+  describe('when feature flag is disabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = false;
+    });
+
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should reset all filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'a', operator: '=', value: '1' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'a', operator: '=', value: '1' },
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
+    });
   });
 });

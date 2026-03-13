@@ -1850,8 +1850,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3622,6 +3620,7 @@
     "category-alert-state-filter": "경보 상태 필터",
     "category-filter": "필터",
     "category-options": "옵션",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "이 대시보드에 연결된 경보만 표시",
     "description-alert-instance-label": "레이블 쿼리를 사용하여 경보 인스턴스를 필터링합니다. 예: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "이 텍스트가 포함된 경보를 필터링하기",
@@ -3632,6 +3631,9 @@
     "description-max-items": "표시할 경보 최대 한도",
     "description-show-inactive-alerts": "인스턴스가 0(영)인 경보 규칙을 포함합니다. 이러한 규칙에는 인스턴스가 없으므로, 경보 인스턴스 레이블 필터가 구성된 경우 숨겨진 상태로 유지됩니다.",
     "description-sort-order": "경보 및 경보 인스턴스 순서 정렬하기",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "목록 보기와 통계 보기 간 전환",
     "group-by": {
       "aria-label-group-by-label-keys": "레이블 키별로 그룹화",
@@ -3657,6 +3659,9 @@
     "name-recovering": "복구 중",
     "name-show-inactive-alerts": "인스턴스가 0개인 경보 표시",
     "name-sort-order": "정렬 순서",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "보기 모드",
     "sort-order-options": {
       "label-alphabetical-asc": "알파벳순(오름차순)",
@@ -3664,6 +3669,12 @@
       "label-importance": "중요",
       "label-time-asc": "시간(오름차순)",
       "label-time-desc": "시간(내림차순)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "<1>{{duration}}</1> 동안 지속",
@@ -4055,6 +4066,20 @@
     },
     "name-show-unfilled-area": "미채움 영역 표시",
     "name-value-display": "값 표시",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "막대 게이지",
       "lcd": "막대 게이지 - LCD"
@@ -6568,10 +6593,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "다음과 같이 유효하지 않은 문자는 포함할 수 없습니다. '~', '^', ':', '?', '*', '[', '\\\\', ']'",
@@ -6727,6 +6750,12 @@
     },
     "description-label": {
       "description": "설명"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7408,10 +7437,6 @@
       "title-controls-menu_other": "",
       "title-hidden_other": ""
     },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
-    },
     "version-history": {
       "comparison": {
         "button-restore": "{{version}} 버전으로 복구"
@@ -7590,25 +7615,6 @@
     },
     "empty-state": {
       "message": "데이터 소스를 찾을 수 없습니다."
-    }
-  },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "열 이름"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "열 지우기",
-        "label-clear-row": "행 지우기",
-        "label-remove-all-data": "모든 데이터 제거",
-        "label-search": "검색..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "열 지우기",
-        "label-delete-column": "열 삭제",
-        "label-rename-column": "열 이름 변경",
-        "label-set-field-type": "필드 유형 설정"
-      }
     }
   },
   "datasources": {
@@ -10187,7 +10193,15 @@
       "remove-button": "{{children}} 제거"
     },
     "viz-legend": {
-      "right-axis-indicator": "(오른쪽 y축)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(오른쪽 y축)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "정말 {{ actionTitle }} 작업을 실행하시겠어요?",
@@ -12638,6 +12652,7 @@
     "preview-banner": {
       "behind-branch-text": "이 리소스는 {{repoType}}의 브랜치보다 이전 상태입니다.",
       "branch-text": "브랜치:",
+      "delete-from-branch": "",
       "not-saved": "이 브랜치가 머지될 때까지 조직의 다른 Grafana 사용자에게는 구성된 기본 브랜치에 저장된 현재 버전이 계속 표시됩니다",
       "open-in-repo-button": "{{repoType}}에서 열기",
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
@@ -12645,6 +12660,7 @@
       "view-pull-request-in-repo": "{{repoType}}에서 풀 요청 보기"
     },
     "title-created-branch-in-repo": "{{repoType}}의 브랜치에 새 리소스가 생성되었습니다.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "이 리소스는 방금 {{repoType}}에 생성한 브랜치에서 로드되며 본인만 볼 수 있습니다"
   },
   "provisioning": {
@@ -12733,8 +12749,8 @@
     },
     "connect-repository-button": {
       "configure": "구성",
-      "free-tier-limit-tooltip": "무료 티어 계정은 연결을 1개로 제한합니다.",
-      "instance-fully-managed-tooltip": "해당 인스턴스는 완전 관리형이므로 설정이 비활성화되어 있습니다."
+      "instance-fully-managed-tooltip": "해당 인스턴스는 완전 관리형이므로 설정이 비활성화되어 있습니다.",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12899,21 +12915,11 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "쿼리와 일치하는 결과가 없습니다",
       "partial-managed": "{{managedCount}}/{{resourceCount}}개 리소스는 Git 동기화로 관리됩니다.",
       "placeholder-search": "검색",
       "all-resources-managed_other": "전체 {{count}}개 리소스가 관리됩니다",
       "unmanaged-resources_other": "{{count}}개 리소스는 Git 동기화로 관리되지 않습니다."
-    },
-    "free-tier-limit": {
-      "message": "무료 티어 계정은 연결을 1개로 제한하고 폴더당 리소스를 20개로 제한합니다.",
-      "message-connection": "",
-      "message-resource": "무료 티어 계정은 폴더당 리소스를 20개로 제한합니다. 더 많은 리소스를 추가하려면,",
-      "note": "참고:",
-      "upgrade-link": "계정을 업그레이드하세요"
     },
     "get-default-values": {
       "title": {
@@ -13068,6 +13074,18 @@
           "repository-request-failed": "리포지토리 요청 실패"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_other": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_other": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "이 리소스는 읽기 전용이며 파일 프로비저닝을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
     "read-only-remote-tooltip": "이 리소스는 읽기 전용이며 Git을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
@@ -14395,6 +14413,18 @@
       "label-same-as-value": "값과 동일",
       "label-standard": "표준"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "통계",
       "stat-color-background": "통계 - 배경 색상",
@@ -14852,6 +14882,11 @@
         "label-threshold": "임계값"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "대시",
@@ -14870,16 +14905,22 @@
       "zoom-to-data": "데이터 확대/축소"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

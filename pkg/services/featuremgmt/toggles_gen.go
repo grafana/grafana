@@ -75,10 +75,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableDatagridEditing
-	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditing = "enableDatagridEditing"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -195,9 +191,9 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -690,6 +686,10 @@ const (
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
+
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
@@ -846,6 +846,10 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
@@ -897,6 +901,10 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls
