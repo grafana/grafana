@@ -8831,6 +8831,7 @@
       "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     },
+    "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
