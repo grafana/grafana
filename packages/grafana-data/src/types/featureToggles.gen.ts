@@ -394,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -1227,6 +1232,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichmentConditional?: boolean;
+  /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
