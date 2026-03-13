@@ -127,7 +127,10 @@ export function OverviewSection({ alerts, groupLabels, isLoading }: SectionProps
       {enrichedAlerts.length > 0 && (
         <div className={styles.alertDetail}>
           {enrichedAlerts.map((alert, index) => (
-            <AlertEnrichments key={`${alert.labels?.__alert_rule_uid__}-${alert.startsAt}-${index}`} enrichments={alert.enrichments!} />
+            <AlertEnrichments
+              key={`${alert.labels?.__alert_rule_uid__}-${alert.startsAt}-${index}`}
+              enrichments={alert.enrichments!}
+            />
           ))}
         </div>
       )}
@@ -151,7 +154,11 @@ export function AlertsListSection({ alerts, groupLabels, isLoading }: SectionPro
   return (
     <Stack direction="column" gap={1}>
       {alerts.map((alert, index) => (
-        <AlertCard key={`${alert.labels?.__alert_rule_uid__}-${alert.startsAt}-${index}`} alert={alert} groupLabels={groupLabels} />
+        <AlertCard
+          key={`${alert.labels?.__alert_rule_uid__}-${alert.startsAt}-${index}`}
+          alert={alert}
+          groupLabels={groupLabels}
+        />
       ))}
     </Stack>
   );
