@@ -33,7 +33,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.github-description', 'Connect to GitHub repositories'),
     tooltip: t(
       'provisioning.repository-types.github-tooltip',
-      'Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations. GitHub Enterprise Server is currently supported through Pure Git — a dedicated enhanced integration is planned.'
+      'Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
     ),
     icon: 'github' as const,
   },

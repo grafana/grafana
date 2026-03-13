@@ -13213,7 +13213,7 @@
       "bitbucket-tooltip": "Integration with deep links to source files. Enhanced features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
-      "github-tooltip": "Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations. GitHub Enterprise Server is currently supported through Pure Git — a dedicated enhanced integration is planned.",
+      "github-tooltip": "Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
       "gitlab-tooltip": "Integration with deep links to source files. Enhanced features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
