@@ -147,10 +147,10 @@ const ElementReferenceSchema = z.object({
 const GridLayoutItemKindSchema = z.object({
   kind: z.literal('GridLayoutItem'),
   spec: z.object({
-    x: z.number(),
-    y: z.number(),
-    width: z.number(),
-    height: z.number(),
+    x: z.number().int().min(0),
+    y: z.number().int().min(0),
+    width: z.number().int().min(0),
+    height: z.number().int().min(0),
     element: ElementReferenceSchema,
   }),
 }) satisfies z.ZodType<GridLayoutItemKind>;
