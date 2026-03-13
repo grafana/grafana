@@ -201,7 +201,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     let subScopeFolders: SuggestedNavigationsFoldersMap | undefined;
 
     try {
-      // Fetch navigations for this subScope
+      // Fetch navigations for this subScope.
+      // path includes the root key ('') at index 0, so path.length - 1 gives the
+      // nesting depth: ['', folderA] → depth 1, ['', folderA, folderB] → depth 2.
       const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
         ? await this.apiClient.fetchScopeNavigations([subScopeName], {
             depth: path.length - 1,
