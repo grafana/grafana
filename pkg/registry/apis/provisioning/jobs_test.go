@@ -24,6 +24,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// testDashboardFileInfo returns a FileInfo containing a classic dashboard JSON
+// that ParseFileResource recognises as a dashboard resource.
+func testDashboardFileInfo() *repository.FileInfo {
+	return &repository.FileInfo{
+		Data: []byte(`{"uid":"test","schemaVersion":7,"panels":[],"tags":[]}`),
+	}
+}
+
 func newTestRepo(name, namespace string) *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -242,6 +250,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
@@ -258,6 +267,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
@@ -345,6 +355,8 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dash1.json", "").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, "team-b/dash2.json", "").Return(testDashboardFileInfo(), nil).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
@@ -398,6 +410,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "src/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
@@ -415,6 +428,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
+		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		clientsMock := resources.NewMockClientFactory(t)
 
