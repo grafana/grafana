@@ -21,7 +21,7 @@ import {
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
-import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { getPropertiesFromOptions, VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { Editor } from './QueryVariableEditor';
 import { VariableOptionsSpreadsheet } from './VariableOptionsSpreadsheet';
@@ -186,6 +186,13 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
 
   const updateVariable = async (targetVariable: QueryVariable, stateUpdate?: Partial<QueryVariable['state']>) => {
     if (stateUpdate) {
+      if (stateUpdate.staticOptions && stateUpdate.options) {
+        const validProperties = getPropertiesFromOptions(stateUpdate.options, stateUpdate.staticOptions);
+        stateUpdate = {
+          ...stateUpdate,
+          staticOptions: reconcileStaticOptionsProperties(stateUpdate.staticOptions, validProperties),
+        };
+      }
       targetVariable.setState(stateUpdate);
     }
     setIsLoading(true);
@@ -243,6 +250,24 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     },
     onClickApply,
   };
+}
+
+function reconcileStaticOptionsProperties(
+  staticOptions: VariableValueOption[],
+  validProperties: string[]
+): VariableValueOption[] {
+  const propertyKeys = validProperties.filter((p) => p !== 'value' && p !== 'text');
+  if (propertyKeys.length === 0) {
+    return staticOptions.map(({ properties: _, ...rest }) => rest);
+  }
+
+  return staticOptions.map((option) => {
+    const reconciled: VariableValueOptionProperties = {};
+    for (const key of propertyKeys) {
+      reconciled[key] = option.properties?.[key] ?? '';
+    }
+    return { ...option, properties: reconciled };
+  });
 }
 
 function getStyles(theme: GrafanaTheme2) {
