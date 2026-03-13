@@ -20,20 +20,20 @@ export function ConnectRepositoryButton({ items }: Props) {
   const isButtonDisabled = state.instanceConnected || state.maxReposReached;
 
   const availableTypes = frontendSettings?.availableRepositoryTypes || DEFAULT_REPOSITORY_TYPES;
-  const { orderedConfigs } = getOrderedRepositoryConfigs(availableTypes);
+  const { orderedConfigs: repoTypes } = getOrderedRepositoryConfigs(availableTypes);
 
   return (
     <Dropdown
       overlay={
         <Menu>
-          {orderedConfigs.map((config) => {
+          {repoTypes.map((repoType) => {
             return (
               <Menu.Item
-                key={config.type}
-                icon={config.icon}
-                label={config.label}
+                key={repoType.type}
+                icon={repoType.icon}
+                label={repoType.label}
                 onClick={() => {
-                  navigate(`${CONNECT_URL}/${config.type}`);
+                  navigate(`${CONNECT_URL}/${repoType.type}`);
                 }}
               />
             );
@@ -44,7 +44,7 @@ export function ConnectRepositoryButton({ items }: Props) {
       <Button
         variant="primary"
         disabled={isButtonDisabled}
-        tooltip={getConfigureRepoTooltip({
+        tooltip={getConnectRepoTooltip({
           instanceConnected: state.instanceConnected,
           maxReposReached: state.maxReposReached,
           count: state.repoCount,
@@ -59,7 +59,7 @@ export function ConnectRepositoryButton({ items }: Props) {
   );
 }
 
-export function getConfigureRepoTooltip({
+export function getConnectRepoTooltip({
   instanceConnected,
   maxReposReached,
   count,

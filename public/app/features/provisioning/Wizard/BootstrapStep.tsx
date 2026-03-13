@@ -9,7 +9,7 @@ import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
-import { UPGRADE_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL } from '../constants';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
@@ -107,7 +107,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         },
         action: {
           label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
-          href: UPGRADE_URL,
+          href: CONFIGURE_GRAFANA_DOCS_URL,
           external: true,
         },
       });

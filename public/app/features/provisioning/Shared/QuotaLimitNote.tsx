@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { UPGRADE_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL } from '../constants';
 
 export interface QuotaLimitNoteProps {
   maxRepositories?: number;
@@ -14,10 +14,7 @@ export interface QuotaLimitNoteProps {
 export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository = 0 }: QuotaLimitNoteProps) {
   const styles = useStyles2(getStyles);
 
-  const hasRepoLimit = maxRepositories > 0;
-  const hasResourceLimit = maxResourcesPerRepository > 0;
-
-  if (!hasRepoLimit && !hasResourceLimit) {
+  if (maxRepositories <= 0 && maxResourcesPerRepository <= 0) {
     return null;
   }
 
@@ -25,33 +22,47 @@ export function QuotaLimitNote({ maxRepositories = 0, maxResourcesPerRepository 
     <Stack direction="row" alignItems="flex-start">
       <Icon name="exclamation-triangle" className={styles.warningIcon} size="sm" />
       <Text variant="bodySmall">
-        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans> {/* Generic message about resource quota */}
-        {hasRepoLimit && hasResourceLimit ? (
-          <>
-            <Trans i18nKey="provisioning.quota-limit.note-message-both-repositories" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories
-            </Trans>{' '}
-            <Trans i18nKey="provisioning.quota-limit.note-message-both-resources" count={maxResourcesPerRepository}>
-              and {{ count: maxResourcesPerRepository }} synced resources per repository. To increase limits,
-            </Trans>
-          </>
-        ) : hasResourceLimit ? (
-          <Trans i18nKey="provisioning.quota-limit.note-message-resource" count={maxResourcesPerRepository}>
-            Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add
-            more resources,
-          </Trans>
-        ) : (
-          <Trans i18nKey="provisioning.quota-limit.note-message-repository" count={maxRepositories}>
-            Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
-          </Trans>
-        )}
-        {/* Upgrade Link */}
-        <a href={UPGRADE_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
+        <Trans i18nKey="provisioning.quota-limit.note">Note:</Trans>{' '}
+        {getQuotaDescription(maxRepositories, maxResourcesPerRepository)}
+        <a href={CONFIGURE_GRAFANA_DOCS_URL} target="_blank" rel="noopener noreferrer" className={styles.link}>
           <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>{' '}
           <Icon name="external-link-alt" size="xs" />
         </a>
       </Text>
     </Stack>
+  );
+}
+
+function getQuotaDescription(maxRepositories: number, maxResourcesPerRepository: number) {
+  const hasRepoLimit = maxRepositories > 0;
+  const hasResourceLimit = maxResourcesPerRepository > 0;
+
+  if (hasRepoLimit && hasResourceLimit) {
+    return (
+      <>
+        <Trans i18nKey="provisioning.quota-limit.note-message-both-repositories" count={maxRepositories}>
+          Your account is limited to {{ count: maxRepositories }} connected repositories
+        </Trans>{' '}
+        <Trans i18nKey="provisioning.quota-limit.note-message-both-resources" count={maxResourcesPerRepository}>
+          and {{ count: maxResourcesPerRepository }} synced resources per repository. To increase limits,
+        </Trans>
+      </>
+    );
+  }
+
+  if (hasResourceLimit) {
+    return (
+      <Trans i18nKey="provisioning.quota-limit.note-message-resource" count={maxResourcesPerRepository}>
+        Your account is limited to {{ count: maxResourcesPerRepository }} synced resources per repository. To add more
+        resources,
+      </Trans>
+    );
+  }
+
+  return (
+    <Trans i18nKey="provisioning.quota-limit.note-message-repository" count={maxRepositories}>
+      Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
+    </Trans>
   );
 }
 

@@ -6,7 +6,7 @@ import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisi
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
-import { UPGRADE_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 
@@ -23,8 +23,8 @@ export function RepositoryList({ items }: Props) {
   const maxResourcesPerRepository = items[0]?.status?.quota?.maxResourcesPerRepository;
   const isRepoLimitHit = !!maxRepositories && items.length >= maxRepositories;
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
-  const isEmpty = items.length === 0;
-  if (isEmpty) {
+
+  if (items.length === 0) {
     return (
       <EmptyState
         variant="not-found"
@@ -32,74 +32,22 @@ export function RepositoryList({ items }: Props) {
       />
     );
   }
+
   const { instanceConnected } = checkSyncSettings(items);
   const hasInstanceSyncRepo = items.some((item) => item.spec?.sync?.target === 'instance');
 
-  const getResourceCountSection = () => {
-    if (isProvisionedInstance) {
-      return (
-        <Box marginBottom={2}>
-          <Stack alignItems="center">
-            <Icon name="check" color="green" />
-            <Trans i18nKey="provisioning.folder-repository-list.all-resources-managed" count={resourceCount}>
-              All {{ count: resourceCount }} resources are managed
-            </Trans>
-          </Stack>
-        </Box>
-      );
-    }
-
-    if (filteredItems.length) {
-      return (
-        <Stack>
-          <Alert title={''} severity="info">
-            <Trans
-              i18nKey="provisioning.folder-repository-list.partial-managed"
-              values={{ managedCount, resourceCount }}
-            >
-              {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
-            </Trans>
-            {unmanagedCount > 0 && (
-              <>
-                {' '}
-                <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
-                  {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
-                </Trans>
-              </>
-            )}
-            {isRepoLimitHit && (
-              <>
-                {' '}
-                {!!maxResourcesPerRepository ? (
-                  <>
-                    <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
-                      Your account is limited to {{ count: maxRepositories }} connected repositories
-                    </Trans>{' '}
-                    <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
-                      and {{ count: maxResourcesPerRepository }} synced resources per repository.
-                    </Trans>
-                  </>
-                ) : (
-                  <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
-                    Your account is limited to {{ count: maxRepositories }} connected repositories. To add more
-                    repositories,
-                  </Trans>
-                )}{' '}
-                <TextLink href={UPGRADE_URL} external>
-                  <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-                </TextLink>
-              </>
-            )}
-          </Alert>
-        </Stack>
-      );
-    }
-    return null;
-  };
-
   return (
     <>
-      {getResourceCountSection()}
+      <ResourceCountSection
+        isProvisionedInstance={isProvisionedInstance}
+        resourceCount={resourceCount}
+        managedCount={managedCount}
+        unmanagedCount={unmanagedCount}
+        isRepoLimitHit={isRepoLimitHit}
+        maxRepositories={maxRepositories}
+        maxResourcesPerRepository={maxResourcesPerRepository}
+        hasItems={filteredItems.length > 0}
+      />
       {hasInstanceSyncRepo && (
         <Alert
           title={t('provisioning.instance-sync-deprecation.title', 'Instance sync is not fully supported')}
@@ -135,6 +83,93 @@ export function RepositoryList({ items }: Props) {
           )}
         </Stack>
       </Stack>
+    </>
+  );
+}
+
+interface ResourceCountSectionProps {
+  isProvisionedInstance: boolean;
+  resourceCount: number;
+  managedCount: number;
+  unmanagedCount: number;
+  isRepoLimitHit: boolean;
+  maxRepositories: number | undefined;
+  maxResourcesPerRepository: number | undefined;
+  hasItems: boolean;
+}
+
+function ResourceCountSection({
+  isProvisionedInstance,
+  resourceCount,
+  managedCount,
+  unmanagedCount,
+  isRepoLimitHit,
+  maxRepositories,
+  maxResourcesPerRepository,
+  hasItems,
+}: ResourceCountSectionProps) {
+  if (isProvisionedInstance) {
+    return (
+      <Box marginBottom={2}>
+        <Stack alignItems="center">
+          <Icon name="check" color="green" />
+          <Trans i18nKey="provisioning.folder-repository-list.all-resources-managed" count={resourceCount}>
+            All {{ count: resourceCount }} resources are managed
+          </Trans>
+        </Stack>
+      </Box>
+    );
+  }
+
+  if (!hasItems) {
+    return null;
+  }
+
+  return (
+    <Stack>
+      <Alert title={''} severity="info">
+        <Trans i18nKey="provisioning.folder-repository-list.partial-managed" values={{ managedCount, resourceCount }}>
+          {{ managedCount }}/{{ resourceCount }} resources managed by Git sync.
+        </Trans>
+        {unmanagedCount > 0 && (
+          <>
+            {' '}
+            <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
+              {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
+            </Trans>
+          </>
+        )}
+        {isRepoLimitHit && (
+          <>
+            {' '}
+            {getQuotaMessage(maxRepositories, maxResourcesPerRepository)}{' '}
+            <TextLink href={CONFIGURE_GRAFANA_DOCS_URL} external>
+              <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
+            </TextLink>
+          </>
+        )}
+      </Alert>
+    </Stack>
+  );
+}
+
+function getQuotaMessage(maxRepositories: number | undefined, maxResourcesPerRepository: number | undefined) {
+  if (!maxResourcesPerRepository) {
+    return (
+      <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
+        Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
+      </Trans>
+    );
+  }
+
+  return (
+    <>
+      <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+        Your account is limited to {{ count: maxRepositories }} connected repositories
+      </Trans>{' '}
+      <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+        and {{ count: maxResourcesPerRepository }} synced resources per repository.
+      </Trans>
     </>
   );
 }
