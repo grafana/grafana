@@ -95,7 +95,7 @@ refs:
 
 # Data sources
 
-A _data source_ in Grafana is a connection to a storage backend that holds your data, such as a Prometheus server, a Loki instance, a SQL database, or a cloud monitoring service. Grafana queries data sources to retrieve the metrics, logs, traces, and profiles that it then visualizes in dashboards and Explore.
+A _data source_ in Grafana is a connection to a storage backend that holds your data, such as a Prometheus server, a Loki instance, a SQL database, or a cloud monitoring service. Grafana queries data sources to retrieve the stored data (e.g. metrics, logs, traces, and profiles) that it then visualizes in dashboards and Explore.
 
 Grafana comes with built-in support for many data sources.
 If you need other data sources, you can also install one of the many data source plugins.
