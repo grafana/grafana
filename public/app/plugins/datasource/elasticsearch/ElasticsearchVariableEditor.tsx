@@ -20,7 +20,7 @@ export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEdi
     const metricTypeChanged = newQuery.metrics?.[0]?.type !== query.metrics?.[0]?.type;
     const queryTypeChanged = newQuery.queryType !== query.queryType;
     if (metricTypeChanged || queryTypeChanged) {
-      props.onChange({ ...newQuery, meta: {} });
+      props.onChange({ ...newQuery, meta: undefined });
     } else {
       props.onChange(newQuery);
     }

@@ -127,7 +127,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -388,7 +387,6 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideRoutePermissionsService,
 	wire.Bind(new(accesscontrol.RoutePermissionsService), new(*ossaccesscontrol.RoutePermissionsService)),
 	starimpl.ProvideService,
-	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,

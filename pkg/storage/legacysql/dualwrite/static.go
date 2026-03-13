@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,7 +21,7 @@ func NewStaticStorage(
 	legacy rest.Storage,
 	unified rest.Storage,
 ) (rest.Storage, error) {
-	m := &staticService{}
+	m := &staticService{metrics: provideDualWriterMetrics(prometheus.NewRegistry())}
 	m.SetMode(gr, mode)
 	return m.NewStorage(gr, legacy, unified)
 }
@@ -28,6 +29,7 @@ func NewStaticStorage(
 type staticService struct {
 	cfg          *setting.Cfg
 	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *dualWriterMetrics
 
 	// resourceModesCache holds the resolved StorageMode per resource
 	resourceModesCache sync.Map // map[string]unifiedmigrations.StorageMode
@@ -79,7 +81,8 @@ func (m *staticService) NewStorage(gr schema.GroupResource, legacy rest.Storage,
 	case unifiedmigrations.StorageModeUnified:
 		return unified, nil
 	case unifiedmigrations.StorageModeDualWrite:
-		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true}, nil
+		m.metrics.initResource(gr.String())
+		return &dualWriter{legacy: legacy, unified: unified, errorIsOK: true, gr: gr, metrics: m.metrics}, nil
 	default:
 		return legacy, nil
 	}
