@@ -38,7 +38,7 @@ func TestIntegrationTeamService(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamsApi,
 					featuremgmt.FlagKubernetesTeamService,
 				},
 			})
