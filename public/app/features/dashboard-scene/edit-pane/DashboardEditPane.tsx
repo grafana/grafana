@@ -110,6 +110,13 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       this.performPanelEditAction(this.panelEditAction);
       this.panelEditAction = undefined;
     }
+
+    return () => {
+      if (this.state.selection) {
+        this.clearSelection(true);
+      }
+      this.disableSelection();
+    };
   }
 
   private performPanelEditAction(action: DashboardEditActionEvent) {
