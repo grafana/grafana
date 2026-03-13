@@ -6,14 +6,7 @@ import {
   VisualizationSuggestion,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  AxisColorMode,
-  AxisPlacement,
-  GraphGradientMode,
-  GraphThresholdsStyleMode,
-  ScaleDistribution,
-  StackingMode,
-} from '@grafana/schema';
+import { AxisPlacement, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { FieldConfig, Options } from './panelcfg.gen';
@@ -30,27 +23,15 @@ function makePreset(
   return { ...preset, cardOptions: { previewModifier } };
 }
 
-const BASE_CUSTOM: Partial<FieldConfig> = {
-  fillOpacity: 100,
-  axisPlacement: AxisPlacement.Auto,
-  axisLabel: '',
-  axisColorMode: AxisColorMode.Text,
-  axisBorderShow: false,
-  scaleDistribution: { type: ScaleDistribution.Linear },
-  axisCenteredZero: false,
-  hideFrom: { tooltip: false, viz: false, legend: false },
-  thresholdsStyle: { mode: GraphThresholdsStyleMode.Off },
-};
-
 const CLASSIC_CUSTOM: Partial<FieldConfig> = {
-  ...BASE_CUSTOM,
   lineWidth: 0,
+  fillOpacity: 100,
   gradientMode: GraphGradientMode.None,
 };
 
 const HUE_CUSTOM: Partial<FieldConfig> = {
-  ...BASE_CUSTOM,
   lineWidth: 1,
+  fillOpacity: 100,
   gradientMode: GraphGradientMode.Hue,
 };
 
@@ -60,6 +41,7 @@ const CLASSIC_OPTIONS: Partial<Options> = {
   barWidth: 0.95,
   barRadius: 0.05,
   xField: 'time',
+  stacking: StackingMode.None,
 };
 
 const CLASSIC_STACKED_OPTIONS: Partial<Options> = {
@@ -72,6 +54,7 @@ const HUE_OPTIONS: Partial<Options> = {
   groupWidth: 0.8,
   barWidth: 0.9,
   barRadius: 0,
+  stacking: StackingMode.None,
   xField: 'time',
 };
 
