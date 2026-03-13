@@ -18,6 +18,7 @@ import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
     openAssistant: jest.fn(),
   }),
