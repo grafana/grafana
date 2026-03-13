@@ -10,14 +10,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"github.com/gorilla/mux"
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
