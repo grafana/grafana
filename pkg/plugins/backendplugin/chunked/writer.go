@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -14,7 +16,9 @@ import (
 const CONTENT_TYPE = "text/jsonl"
 
 func IsRequestingChunkedResponse(accept string) bool {
-	return accept == CONTENT_TYPE
+	return slices.Contains(strings.FieldsFunc(accept, func(r rune) bool {
+		return r == ';' || r == ',' || r == ' '
+	}), CONTENT_TYPE)
 }
 
 var (
@@ -90,10 +94,10 @@ func (r *rawChunkWriter) writeField(f string, v string) {
 
 // WriteError implements [backend.ChunkedDataWriter].
 func (r *rawChunkWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	return fmt.Errorf("unexpected callback (WriteError)")
+	return fmt.Errorf("rawChunkWriter does not support: WriteError")
 }
 
 // WriteFrame implements [backend.ChunkedDataWriter].
 func (r *rawChunkWriter) WriteFrame(ctx context.Context, refID string, frameID string, f *data.Frame) error {
-	return fmt.Errorf("unexpected callback (WriteFrame)")
+	return fmt.Errorf("rawChunkWriter does not support: WriteFrame")
 }
