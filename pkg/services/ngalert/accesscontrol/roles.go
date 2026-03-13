@@ -350,7 +350,7 @@ var (
 	alertingProvisionerRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.provisioning:writer",
-			DisplayName: "Access to alert rules provisioning API",
+			DisplayName: "Write via Provisioning API",
 			Description: "Manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{

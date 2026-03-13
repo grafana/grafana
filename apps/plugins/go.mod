@@ -106,14 +106,14 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260306155606-142355827498 // indirect
+	github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c // indirect
 	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.290.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.290.1 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect

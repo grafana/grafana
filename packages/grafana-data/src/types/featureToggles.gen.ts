@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroDatasourceSelector?: boolean;
   /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
-  /**
   * Enable Faro session replay for Grafana
   * @default false
   */
@@ -314,10 +309,10 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
-  * Does not register datasource apis that use the numeric id
+  * Register legacy datasource apis that use the numeric id
   * @default false
   */
-  datasourceDisableIdApi?: boolean;
+  datasourceLegacyIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -399,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -418,6 +418,11 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables CSV export using scenes dashboard architecture
+  * @default false
+  */
+  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardTemplatesAssistantButton?: boolean;
+  /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
   /**
   * Enables the new alert list view design
   * @default false
@@ -1163,11 +1173,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
@@ -1227,6 +1232,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichmentConditional?: boolean;
+  /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
@@ -1408,6 +1418,11 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
@@ -1583,6 +1598,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
+  * Use the new team service that uses the app platform APIs
+  * @default false
+  */
+  kubernetesTeamService?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
@@ -1663,8 +1683,18 @@ export interface FeatureToggles {
   */
   flameGraphWithCallTree?: boolean;
   /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
+  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }
