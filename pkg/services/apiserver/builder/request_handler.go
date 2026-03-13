@@ -176,22 +176,6 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			routeBuilder = routeBuilder.Doc(operation.Description)
 		}
 
-		// Check if namespace parameter is already in the OpenAPI spec
-		hasNamespaceParam := false
-		if operation.Parameters != nil {
-			for _, param := range operation.Parameters {
-				if param.Name == "namespace" && param.In == "path" {
-					hasNamespaceParam = true
-					break
-				}
-			}
-		}
-
-		// Add namespace parameter for namespaced routes if not already in spec
-		if isNamespaced && !hasNamespaceParam {
-			routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
-		}
-
 		// Add parameters from OpenAPI spec
 		if operation.Parameters != nil {
 			for _, param := range operation.Parameters {
@@ -218,8 +202,24 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		// We don't duplicate that information here since restful uses the route metadata
 		// for OpenAPI generation, which is handled separately in this codebase.
 
-		// Add the namespace to context, matching standard k8s behavior
 		if isNamespaced {
+			// Check if namespace parameter is already in the OpenAPI spec
+			hasNamespaceParam := false
+			if operation.Parameters != nil {
+				for _, param := range operation.Parameters {
+					if param.Name == "namespace" && param.In == "path" {
+						hasNamespaceParam = true
+						break
+					}
+				}
+			}
+
+			// Add namespace parameter for namespaced routes if not already in spec
+			if !hasNamespaceParam {
+				routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
+			}
+
+			// Add the namespace to context, matching standard k8s behavior
 			routeBuilder = routeBuilder.Filter(func(req *restful.Request, resp *restful.Response, next *restful.FilterChain) {
 				ns := req.PathParameter("namespace")
 				if ns == "" {
