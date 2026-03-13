@@ -37,15 +37,9 @@ const ALERT_ANNOTATIONS_COUNTS = {
   },
 };
 
-test.use({
-  featureToggles: {
-    annotationsClustering: true,
-  },
-});
+test.use({ viewport: { width: 1000, height: 1440 }, featureToggles: { annotationsClustering: true } });
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
-  test.use({ viewport: { width: 1000, height: 1440 } });
-
   test.describe('width: 1000', () => {
     test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
@@ -295,6 +289,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
         // enable clustering
         await page.getByText('Enable annotation clustering').click();
+        await expect(page.getByRole('switch', { name: 'Enable annotation clustering' })).toBeChecked();
         await expect(markersLocator, 'after enabling clustering only one marker should be visible').toHaveCount(1);
         await markersLocator.click();
         await expect(

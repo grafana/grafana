@@ -74,7 +74,7 @@
       "maxDataPoints": 30,
       "options": {
         "annotations": {
-          "clustering": false,
+          "clustering": -1,
           "multiLane": false,
           "regionOpacity": 10,
           "showLine": true,
@@ -185,7 +185,7 @@
       "maxDataPoints": 30,
       "options": {
         "annotations": {
-          "clustering": true,
+          "clustering": 24,
           "multiLane": false,
           "regionOpacity": 10,
           "showLine": true,
@@ -296,7 +296,7 @@
       "maxDataPoints": 30,
       "options": {
         "annotations": {
-          "clustering": false,
+          "clustering": -1,
           "multiLane": true,
           "regionOpacity": 10,
           "showLine": true,
@@ -407,7 +407,7 @@
       "maxDataPoints": 30,
       "options": {
         "annotations": {
-          "clustering": true,
+          "clustering": 24,
           "multiLane": true,
           "regionOpacity": 10,
           "showLine": true,
@@ -523,7 +523,7 @@
       "id": 13,
       "options": {
         "annotations": {
-          "clustering": false,
+          "clustering": -1,
           "multiLane": false,
           "regionOpacity": 10,
           "showLine": true,
@@ -639,7 +639,7 @@
       "id": 17,
       "options": {
         "annotations": {
-          "clustering": true,
+          "clustering": 24,
           "multiLane": false,
           "regionOpacity": 10,
           "showLine": true,
@@ -749,7 +749,7 @@
       "id": 18,
       "options": {
         "annotations": {
-          "clustering": false,
+          "clustering": -1,
           "multiLane": false
         },
         "legend": {
