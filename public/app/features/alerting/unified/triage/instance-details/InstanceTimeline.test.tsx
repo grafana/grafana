@@ -12,12 +12,16 @@ type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
 let notificationCounter = 0;
 
-function makeRecord(timestamp: number, previous: string, current: string): LogRecord {
+function makeRecord(
+  timestamp: number,
+  previous: GrafanaAlertStateWithReason,
+  current: GrafanaAlertStateWithReason
+): LogRecord {
   return {
     timestamp,
     line: {
-      previous: previous as GrafanaAlertStateWithReason,
-      current: current as GrafanaAlertStateWithReason,
+      previous,
+      current,
     },
   };
 }
@@ -245,6 +249,7 @@ describe('InstanceTimeline component', () => {
 
     expect(screen.getByText('1 notification')).toBeInTheDocument();
     expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
+    expect(screen.getByText('· Slack #1')).toBeInTheDocument();
   });
 
   it('does not show outcome label when all notifications succeed', () => {
@@ -256,19 +261,29 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    expect(screen.queryByText(/delivered/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
   });
 
   it('shows outcome label when there are failed notifications', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
     const notifications = [
-      makeNotification({ timestamp: '1970-01-01T00:00:01.500Z', outcome: 'success' }),
-      makeNotification({ timestamp: '1970-01-01T00:00:01.600Z', outcome: 'error' }),
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01.500Z',
+        outcome: 'success',
+        integration: 'slack',
+        integrationIndex: 0,
+      }),
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01.600Z',
+        outcome: 'error',
+        integration: 'webhook',
+        integrationIndex: 1,
+      }),
     ];
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    expect(screen.getByText('(1 delivered, 1 failed)')).toBeInTheDocument();
+    expect(screen.getByText('(Webhook #2 failed)')).toBeInTheDocument();
   });
 
   it('expands notification details when clicking on the summary row', async () => {

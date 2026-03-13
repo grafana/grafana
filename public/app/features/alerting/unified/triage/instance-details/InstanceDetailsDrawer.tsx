@@ -46,10 +46,8 @@ const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
-  //first add the padding from the Page (32px)
   const calculatedWidth = rightColumnWidth + 32;
-  // now clamp the width to a max of 1400px
-  return Math.min(calculatedWidth, 1400);
+  return Math.max(700, Math.min(calculatedWidth, 1400));
 }
 
 interface InstanceDetailsDrawerProps {

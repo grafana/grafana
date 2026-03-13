@@ -1868,7 +1868,7 @@
       "timeline-filter-notifications": "Notifications",
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
-      "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
+      "timeline-mixed-outcome-named": "{{failedNames}} failed",
       "timeline-n-notifications_one": "{{count}} notifications",
       "timeline-n-notifications_other": "{{count}} notifications",
       "timeline-n-receivers_one": "{{count}} receivers",
