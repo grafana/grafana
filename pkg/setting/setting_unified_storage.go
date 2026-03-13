@@ -32,23 +32,27 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 
-// read storage configs from ini file. They look like:
-// [unified_storage.<group>.<resource>]
-// <field> = <value>
-// e.g.
-// [unified_storage.playlists.playlist.grafana.app]
-// dualWriterMode = 2
 // applyUnifiedStorageEnvOverrides scans environment variables matching
 // GF_UNIFIED_STORAGE_<resource>_<key> and creates the corresponding ini
 // sections and keys. This allows users to configure unified_storage resource
 // sections purely via environment variables without pre-defining them in an
 // ini file.
 //
-// This works because Kubernetes resource names (e.g., "dashboards.dashboard.grafana.app")
-// never contain underscores — only dots and lowercase alphanumerics — so every underscore
-// in the resource portion of the env var name maps unambiguously back to a dot.
-// The key names are matched from a known list (knownUnifiedStorageKeys) to preserve
-// their original camelCase.
+// Storage configs in the ini file look like:
+//
+//	[unified_storage.<group>.<resource>]
+//	<field> = <value>
+//
+// For example:
+//
+//	[unified_storage.playlists.playlist.grafana.app]
+//	dualWriterMode = 2
+//
+// Kubernetes resource names (e.g., "dashboards.dashboard.grafana.app") never
+// contain underscores — only dots and lowercase alphanumerics — so every
+// underscore in the resource portion of the env var name maps unambiguously
+// back to a dot. The key names are matched from a known list
+// ([knownUnifiedStorageKeys]) to preserve their original camelCase.
 func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	envPrefix := EnvSectionPrefix("unified_storage")
 
