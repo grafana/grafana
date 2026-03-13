@@ -11,7 +11,11 @@ import { DOCS_URL_PROVISION_ALERTING } from '../../utils/docs';
 import { createRelativeUrl } from '../../utils/url';
 
 const RecordingRulesButtons = () => {
-  const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
+  const { canCreateGrafanaRules, canCreateCloudRules: canCreateCloudRulesBase } = useRulesAccess();
+
+  // When alertingDisableDMAinUI is enabled, data source-managed rules are hidden from the UI
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+  const canCreateCloudRules = canCreateCloudRulesBase && !isDisableDMAinUIEnabled;
 
   const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
@@ -137,7 +141,9 @@ export function GrafanaNoRulesCTA() {
 
 export function CloudNoRulesCTA({ dataSourceName }: { dataSourceName: string }) {
   const styles = useStyles2(getCloudNoRulesStyles);
-  const { canCreateCloudRules } = useRulesAccess();
+  const { canCreateCloudRules: canCreateCloudRulesBase } = useRulesAccess();
+  // When alertingDisableDMAinUI is enabled, data source-managed rules are hidden from the UI
+  const canCreateCloudRules = canCreateCloudRulesBase && !(config.featureToggles.alertingDisableDMAinUI ?? false);
 
   const newAlertingRuleUrl = getNewDataSourceRuleUrl(dataSourceName, RuleFormType.cloudAlerting);
   const newRecordingRuleUrl = getNewDataSourceRuleUrl(dataSourceName, RuleFormType.cloudRecording);
