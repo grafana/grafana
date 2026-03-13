@@ -241,8 +241,8 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 
 	// TEMPORARY: Enable migration of data sources, without needing breaking changes on the API contract.
 	if len(names) == 1 && names[0] == "*" {
-		if err := s.secureValueService.DeleteAllOwnedBy(ctx, owner); err != nil {
-			return fmt.Errorf("deleting all when owned by owner %v: %w", owner, err)
+		if err := s.secureValueService.DeleteAllFromGroup(ctx, xkube.Namespace(owner.Namespace), owner.APIGroup); err != nil {
+			return fmt.Errorf("deleting all from group %q in namespace %q: %w", owner.APIGroup, owner.Namespace, err)
 		}
 
 		return nil

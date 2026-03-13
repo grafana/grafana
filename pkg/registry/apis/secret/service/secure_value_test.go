@@ -177,23 +177,26 @@ func TestCrud(t *testing.T) {
 		require.NotNil(t, sv)
 	})
 
-	t.Run("delete all owned by owner", func(t *testing.T) {
+	t.Run("delete all from group", func(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
 
+		apiGroup := "prometheus.datasource.grafana.app"
+		ns := "ns1"
+
 		owner := common.ObjectReference{
-			APIGroup:   "prometheus.datasource.grafana.app",
+			APIGroup:   apiGroup,
 			APIVersion: "v0alpha1",
 			Kind:       "DataSource",
 			Name:       "test-ds",
-			Namespace:  "ns1",
+			Namespace:  ns,
 		}
 
-		// Create 2 owned secure values
+		// Create 2 owned secure values from the same API group
 		owned1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
 			cfg.Sv.Name = "owned-1"
-			cfg.Sv.Namespace = owner.Namespace
+			cfg.Sv.Namespace = ns
 			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
 		})
 		require.NoError(t, err)
@@ -201,26 +204,26 @@ func TestCrud(t *testing.T) {
 
 		owned2, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
 			cfg.Sv.Name = "owned-2"
-			cfg.Sv.Namespace = owner.Namespace
+			cfg.Sv.Namespace = ns
 			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
 		})
 		require.NoError(t, err)
 		require.NotNil(t, owned2)
 
-		// Create 1 shared secure value in the same ns
+		// Create 1 shared secure value in the same ns (no owner)
 		shared, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
 			cfg.Sv.Name = "shared"
-			cfg.Sv.Namespace = owner.Namespace
+			cfg.Sv.Namespace = ns
 		})
 		require.NoError(t, err)
 		require.NotNil(t, shared)
 
-		// Delete all owned by owner
-		err = sut.SecureValueService.DeleteAllOwnedBy(t.Context(), owner)
+		// Delete all from group
+		err = sut.SecureValueService.DeleteAllFromGroup(t.Context(), xkube.Namespace(ns), apiGroup)
 		require.NoError(t, err)
 
-		// Owned ones should be (softed) deleted
-		list, err := sut.SecureValueMetadataStorage.List(t.Context(), xkube.Namespace(owned1.Namespace))
+		// Owned ones should be (soft) deleted
+		list, err := sut.SecureValueMetadataStorage.List(t.Context(), xkube.Namespace(ns))
 		require.NoError(t, err)
 
 		names := make([]string, 0, len(list))

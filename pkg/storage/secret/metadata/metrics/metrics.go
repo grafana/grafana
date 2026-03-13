@@ -27,13 +27,13 @@ type StorageMetrics struct {
 	KeeperMetadataListDuration            *prometheus.HistogramVec
 	KeeperMetadataGetKeeperConfigDuration *prometheus.HistogramVec
 
-	SecureValueMetadataCreateDuration *prometheus.HistogramVec
-	SecureValueMetadataGetDuration    *prometheus.HistogramVec
-	SecureValueMetadataListDuration   *prometheus.HistogramVec
-	SecureValueSetExternalIDDuration  *prometheus.HistogramVec
-	SecureValueSetStatusDuration      *prometheus.HistogramVec
-	SecureValueDeleteDuration                *prometheus.HistogramVec
-	SecureValueSetInactiveAllOwnedByDuration *prometheus.HistogramVec
+	SecureValueMetadataCreateDuration          *prometheus.HistogramVec
+	SecureValueMetadataGetDuration             *prometheus.HistogramVec
+	SecureValueMetadataListDuration            *prometheus.HistogramVec
+	SecureValueSetExternalIDDuration           *prometheus.HistogramVec
+	SecureValueSetStatusDuration               *prometheus.HistogramVec
+	SecureValueDeleteDuration                  *prometheus.HistogramVec
+	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -127,11 +127,11 @@ func newStorageMetrics() *StorageMetrics {
 			Help:      "Duration of secure value delete operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
-		SecureValueSetInactiveAllOwnedByDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		SecureValueSetInactiveAllFromGroupDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "secure_value_set_inactive_all_owned_by_duration_seconds",
-			Help:      "Duration of secure value set inactive all owned by operations",
+			Name:      "secure_value_set_inactive_all_from_group_duration_seconds",
+			Help:      "Duration of secure value set inactive all from group operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
 
@@ -170,7 +170,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.SecureValueDeleteDuration,
-				m.SecureValueSetInactiveAllOwnedByDuration,
+				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.DecryptDuration,
 			)
 		}

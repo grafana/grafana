@@ -15,7 +15,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service/metrics"
@@ -382,42 +381,36 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	return sv, nil
 }
 
-func (s *SecureValueService) DeleteAllOwnedBy(ctx context.Context, owner common.ObjectReference) (deleteAllErr error) {
+func (s *SecureValueService) DeleteAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) (deleteAllErr error) {
 	start := time.Now()
 
-	ctx, span := s.tracer.Start(ctx, "SecureValueService.DeleteAllOwnedBy", trace.WithAttributes(
-		attribute.String("namespace", owner.Namespace),
-		attribute.String("owner.apiGroup", owner.APIGroup),
-		attribute.String("owner.apiVersion", owner.APIVersion),
-		attribute.String("owner.kind", owner.Kind),
-		attribute.String("owner.name", owner.Name),
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.DeleteAllFromGroup", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("apiGroup", apiGroup),
 	))
 	defer span.End()
 
 	defer func() {
 		args := []any{
-			"namespace", owner.Namespace,
-			"owner.apiGroup", owner.APIGroup,
-			"owner.apiVersion", owner.APIVersion,
-			"owner.kind", owner.Kind,
-			"owner.name", owner.Name,
+			"namespace", namespace.String(),
+			"apiGroup", apiGroup,
 		}
 
 		success := deleteAllErr == nil
 		args = append(args, "success", success)
 		if !success {
-			span.SetStatus(codes.Error, "SecureValueService.DeleteAllOwnedBy failed")
+			span.SetStatus(codes.Error, "SecureValueService.DeleteAllFromGroup failed")
 			span.RecordError(deleteAllErr)
 			args = append(args, "error", deleteAllErr)
 		}
 
-		logging.FromContext(ctx).Debug("SecureValueService.DeleteAllOwnedBy finished", args...)
+		logging.FromContext(ctx).Debug("SecureValueService.DeleteAllFromGroup finished", args...)
 
-		s.metrics.SecureValueDeleteAllOwnedByDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueDeleteAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	if err := s.secureValueMetadataStorage.SetInactiveAllOwnedBy(ctx, owner); err != nil {
-		return fmt.Errorf("deleting all secure values owned by %v: %w", owner, err)
+	if err := s.secureValueMetadataStorage.SetInactiveAllFromGroup(ctx, namespace, apiGroup); err != nil {
+		return fmt.Errorf("deleting all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
 	}
 
 	return nil
