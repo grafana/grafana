@@ -46,11 +46,19 @@ export function useDefaultValues({
     };
   }
 
-  if (!repository || status === RepoViewStatus.Error) {
+  if (status === RepoViewStatus.Error) {
     return {
       values: null,
       status: RepoViewStatus.Error,
       error,
+    };
+  }
+
+  if (!repository) {
+    return {
+      values: null,
+      status: RepoViewStatus.Error,
+      error: new Error('No repository found for this dashboard'),
     };
   }
 
