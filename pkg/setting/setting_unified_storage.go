@@ -3,6 +3,7 @@ package setting
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -132,13 +133,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
-	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
+	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" && isTargetEligibleForMigrations(cfg.Target) {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
 		cfg.enforceMigrationToUnifiedConfigs()
 	} else {
 		// Helper log to find instances disabling migration
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
 	}
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
@@ -240,6 +241,10 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 			AutoMigrationThreshold: resourceCfg.AutoMigrationThreshold,
 		}
 	}
+}
+
+func isTargetEligibleForMigrations(targets []string) bool {
+	return slices.Contains(targets, "all") || slices.Contains(targets, "core")
 }
 
 // UnifiedStorageType returns the configured storage type without creating or mutating keys.
