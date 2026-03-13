@@ -58,6 +58,19 @@ func NewFakeMigrationStatusReader(resourceModes ...interface{}) unifiedmigration
 	return &fakeMigrationStatusReader{modes: m}
 }
 
+// NewConfigBasedMigrationStatusReader creates a MigrationStatusReader that derives
+// storage modes from the config's UnifiedStorage map. This is used in standalone
+// APIServer paths where there is no legacy database for migration log checks.
+func NewConfigBasedMigrationStatusReader(cfg *setting.Cfg) unifiedmigrations.MigrationStatusReader {
+	m := make(map[string]unifiedmigrations.StorageMode)
+	if cfg != nil {
+		for key, config := range cfg.UnifiedStorage {
+			m[key] = storageModeFromConfigMode(config.DualWriterMode)
+		}
+	}
+	return &fakeMigrationStatusReader{modes: m}
+}
+
 func NewFakeConfig() *setting.Cfg {
 	return &setting.Cfg{
 		UnifiedStorage: make(map[string]setting.UnifiedStorageConfig),
