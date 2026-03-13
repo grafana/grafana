@@ -1,6 +1,37 @@
 import { Text } from '@codemirror/state';
+import React from 'react';
+import { act, render, waitFor } from 'test/test-utils';
 
-import { getFromTables, isAfterFromOrJoin, isAtClauseStart } from './SQLEditorV2';
+import { getFromTables, isAfterFromOrJoin, isAtClauseStart, SQLEditorV2 } from './SQLEditorV2';
+
+const originalGetClientRects = Range.prototype.getClientRects;
+
+function emptyClientRects(): DOMRectList {
+  const rects = [] as unknown as DOMRectList & DOMRect[];
+  rects.item = (index: number) => rects[index] ?? null;
+  return rects;
+}
+
+beforeAll(() => {
+  if (!originalGetClientRects) {
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: emptyClientRects,
+    });
+  }
+});
+
+afterAll(() => {
+  if (originalGetClientRects) {
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: originalGetClientRects,
+    });
+    return;
+  }
+
+  delete (Range.prototype as Range & { getClientRects?: () => DOMRectList }).getClientRects;
+});
 
 describe('isAfterFromOrJoin', () => {
   function check(text: string, pos?: number) {
@@ -122,5 +153,48 @@ describe('isAtClauseStart', () => {
 
   it('returns false in SELECT clause', () => {
     expect(check('SELECT ')).toBe(false);
+  });
+});
+
+describe('SQLEditorV2 completion behavior', () => {
+  it('accepts a completion with Enter and leaves the dropdown closed', async () => {
+    const onChange = jest.fn();
+    const language = {
+      completionProvider: {
+        getTables: jest.fn(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          return ['users'];
+        }),
+        getColumns: jest.fn(async () => []),
+      },
+    };
+
+    const { container, user } = render(React.createElement(SQLEditorV2, { query: '', onChange, language }));
+    const editor = container.querySelector('[contenteditable="true"]') as HTMLElement | null;
+
+    expect(editor).not.toBeNull();
+
+    await user.click(editor!);
+    await user.type(editor!, 'SELECT * FROM u');
+
+    await waitFor(() => {
+      expect(container.querySelector('.cm-tooltip-autocomplete')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    });
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('SELECT * FROM users', true);
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    });
+
+    expect(container.querySelector('.cm-tooltip-autocomplete')).not.toBeInTheDocument();
   });
 });

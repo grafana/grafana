@@ -303,7 +303,6 @@ function buildSqlExtension(
       override: [makeCompletionSource(languageRef)],
       defaultKeymap: true,
       activateOnTyping: true,
-      activateOnCompletion: () => true,
     }),
   ];
 }
