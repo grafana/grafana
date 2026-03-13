@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { CONNECT_URL } from '../constants';
@@ -10,6 +10,11 @@ import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 import { FreeTierLimitNote } from './FreeTierLimitNote';
 import { RepoIcon } from './RepoIcon';
+
+function preventCardNavigation(e: React.MouseEvent) {
+  e.preventDefault();
+  e.stopPropagation();
+}
 
 interface RepositoryTypeCardsProps {
   disabled?: boolean;
@@ -48,6 +53,13 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                     >
                       Configure with {'{{ provider }}'}
                     </Trans>
+                    {config.tooltip && (
+                      <Tooltip content={config.tooltip}>
+                        <span className={styles.infoIcon} onClick={preventCardNavigation}>
+                          <Icon name="info-circle" size="sm" />
+                        </span>
+                      </Tooltip>
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -88,6 +100,13 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                         Configure with {'{{ provider }}'}
                       </Trans>
                     )}
+                    {config.tooltip && (
+                      <Tooltip content={config.tooltip}>
+                        <span className={styles.infoIcon} onClick={preventCardNavigation}>
+                          <Icon name="info-circle" size="sm" />
+                        </span>
+                      </Tooltip>
+                    )}
                   </Stack>
                 </Card.Heading>
               </Card>
@@ -112,6 +131,14 @@ function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
           color: theme.colors.text.secondary,
         },
       }),
+    }),
+    infoIcon: css({
+      display: 'inline-flex',
+      color: theme.colors.text.secondary,
+      cursor: 'help',
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
 }
