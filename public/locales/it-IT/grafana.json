@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3648,6 +3646,7 @@
     "category-alert-state-filter": "Filtro stato avviso",
     "category-filter": "Filtro",
     "category-options": "Opzioni",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Mostra solo gli avvisi collegati a questa dashboard",
     "description-alert-instance-label": "Filtra le istanze di avviso utilizzando la query dell'etichetta, ad esempio: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filtra per avvisi contenenti questo testo",
@@ -3658,6 +3657,9 @@
     "description-max-items": "Numero massimo di avvisi da visualizzare",
     "description-show-inactive-alerts": "Includi regole di avviso che hanno 0 (zero) istanze. Poiché queste regole non hanno istanze, rimangono nascoste se è configurato il filtro dell'etichetta dell'istanza di Avviso.",
     "description-sort-order": "Ordina gli avvisi e le istanze di avviso",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Alterna le modalità di visualizzazione elenco e statistiche",
     "group-by": {
       "aria-label-group-by-label-keys": "raggruppa per chiavi di etichetta",
@@ -3683,6 +3685,9 @@
     "name-recovering": "In fase di recupero",
     "name-show-inactive-alerts": "Mostra avvisi con 0 istanze",
     "name-sort-order": "Ordinamento",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Modalità di visualizzazione",
     "sort-order-options": {
       "label-alphabetical-asc": "Alfabetico (asc)",
@@ -3690,6 +3695,12 @@
       "label-importance": "Importanza",
       "label-time-asc": "Ora (asc)",
       "label-time-desc": "Ora (disc)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "per <1>{{duration}}</1>",
@@ -4081,6 +4092,20 @@
     },
     "name-show-unfilled-area": "Mostra area non riempita",
     "name-value-display": "Visualizzazione del valore",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Indicatore a barre",
       "lcd": "Indicatore a barre – LCD"
@@ -6604,10 +6629,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Non può contenere caratteri non validi: \"~\", \"^\", \":\", \"?\", \"*\", \"[\", \"\\\\\" o \"]\".",
@@ -6766,6 +6789,12 @@
     },
     "description-label": {
       "description": "Descrizione"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7452,10 +7481,6 @@
       "title-controls-menu_other": "",
       "title-hidden_one": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10225,7 +10250,15 @@
       "remove-button": "Rimuovi {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(asse y destro)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(asse y destro)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Vuoi davvero {{ actionTitle }}?",
@@ -12687,6 +12720,7 @@
     "preview-banner": {
       "behind-branch-text": "Questa risorsa è dietro il ramo in {{repoType}}.",
       "branch-text": "ramo:",
+      "delete-from-branch": "",
       "not-saved": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente salvata nel ramo predefinito configurato fino a quando questo ramo non verrà unito",
       "open-in-repo-button": "Apri in {{repoType}}",
       "open-pull-request-in-repo": "Apri richiesta pull in {{repoType}}",
@@ -12694,6 +12728,7 @@
       "view-pull-request-in-repo": "Visualizza richiesta pull in {{repoType}}"
     },
     "title-created-branch-in-repo": "È stata creata una nuova risorsa in un ramo in {{repoType}}.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te"
   },
   "provisioning": {
@@ -12785,8 +12820,8 @@
     },
     "connect-repository-button": {
       "configure": "Configura",
-      "free-tier-limit-tooltip": "Gli account di livello gratuito sono limitati a una connessione",
-      "instance-fully-managed-tooltip": "La configurazione è disabilitata perché questa istanza è completamente gestita"
+      "instance-fully-managed-tooltip": "La configurazione è disabilitata perché questa istanza è completamente gestita",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12952,9 +12987,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} risorse gestite da Git Sync.",
       "placeholder-search": "Cerca",
@@ -12962,13 +12994,6 @@
       "all-resources-managed_other": "Tutte e {{count}} le risorse sono gestite",
       "unmanaged-resources_one": "{{count}} risorsa non è gestita da Git sync.",
       "unmanaged-resources_other": "{{count}} risorse non sono gestite da Git sync."
-    },
-    "free-tier-limit": {
-      "message": "Gli account di livello gratuito hanno un limite di 1 connessione e 20 risorse per cartella",
-      "message-connection": "",
-      "message-resource": "Gli account di livello gratuito hanno un limite di 20 risorse per cartella. Per aggiungere più risorse,",
-      "note": "Nota:",
-      "upgrade-link": "aggiorna il tuo account"
     },
     "get-default-values": {
       "title": {
@@ -13123,6 +13148,26 @@
           "repository-request-failed": "Richiesta del repository non riuscita"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -14457,6 +14502,18 @@
       "label-same-as-value": "Uguale al valore",
       "label-standard": "Standard"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – colore sfondo",
@@ -14915,6 +14972,11 @@
         "label-threshold": "Soglia"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Trattino",
@@ -14933,16 +14995,22 @@
       "zoom-to-data": "Ingrandisci sui dati"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

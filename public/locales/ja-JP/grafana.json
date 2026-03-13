@@ -1850,8 +1850,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3622,6 +3620,7 @@
     "category-alert-state-filter": "アラート状態フィルター",
     "category-filter": "フィルター",
     "category-options": "オプション",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "このダッシュボードにリンクされているアラートのみを表示",
     "description-alert-instance-label": "ラベルクエリでアラートインスタンスをフィルタリング（例: {severity=\"critical\", instance=~\"cluster-us-.+\"}）",
     "description-alert-name": "このテキストを含むアラートでフィルタリング",
@@ -3632,6 +3631,9 @@
     "description-max-items": "表示する最大アラート数",
     "description-show-inactive-alerts": "インスタンスが0（ゼロ）のアラートルールを含めます。これらのルールにはインスタンスがないため、アラートインスタンスラベルフィルターが設定されている場合は非表示になります。",
     "description-sort-order": "アラートとアラートインスタンスの並び順",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "リストビューと統計ビューの切り替え",
     "group-by": {
       "aria-label-group-by-label-keys": "ラベルキーでグループ化",
@@ -3657,6 +3659,9 @@
     "name-recovering": "復旧中",
     "name-show-inactive-alerts": "インスタンス数が0のアラートを表示",
     "name-sort-order": "並び順",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "表示モード",
     "sort-order-options": {
       "label-alphabetical-asc": "アルファベット順（昇順）",
@@ -3664,6 +3669,12 @@
       "label-importance": "重要度",
       "label-time-asc": "時間（昇順）",
       "label-time-desc": "時間（降順）"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "<1>{{duration}}</1>間",
@@ -4055,6 +4066,20 @@
     },
     "name-show-unfilled-area": "未入力の領域を表示",
     "name-value-display": "値を表示",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "バーゲージ",
       "lcd": "バーゲージ - LCD"
@@ -6568,10 +6593,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "無効な文字 (「~」、「^」、「:」、「?」、「*」、「[」、「\\\\」、「]」) を含めることはできません。",
@@ -6727,6 +6750,12 @@
     },
     "description-label": {
       "description": "説明"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7407,10 +7436,6 @@
       "title-above-dashboard_other": "",
       "title-controls-menu_other": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10168,7 +10193,15 @@
       "remove-button": "{{children}}を削除"
     },
     "viz-legend": {
-      "right-axis-indicator": "（右y軸）"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "（右y軸）",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "本当に{{ actionTitle }}を実行してもよろしいですか？",
@@ -12619,6 +12652,7 @@
     "preview-banner": {
       "behind-branch-text": "このリソースは{{repoType}}内の該当ブランチよりも古いバージョンです。",
       "branch-text": "ブランチ：",
+      "delete-from-branch": "",
       "not-saved": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、デフォルトブランチに保存された現在のバージョンが表示されます",
       "open-in-repo-button": "{{repoType}}で開く",
       "open-pull-request-in-repo": "{{repoType}}でプルリクエストを開く",
@@ -12626,6 +12660,7 @@
       "view-pull-request-in-repo": "{{repoType}}でプルリクエストを表示する"
     },
     "title-created-branch-in-repo": "{{repoType}}のブランチに新しいリソースが作成されました。",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "このリソースは{{repoType}}で作成したブランチから読み込まれており、あなたにのみ表示されます"
   },
   "provisioning": {
@@ -12714,8 +12749,8 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "free-tier-limit-tooltip": "無料利用枠のアカウントは1つの接続に制限されています",
-      "instance-fully-managed-tooltip": "このインスタンスは完全に管理されているため、設定は無効です"
+      "instance-fully-managed-tooltip": "このインスタンスは完全に管理されているため、設定は無効です",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12880,21 +12915,11 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "クエリに一致する結果なし",
       "partial-managed": "{{managedCount}}/{{resourceCount}}件のリソースがGit同期によって管理されています。",
       "placeholder-search": "検索",
       "all-resources-managed_other": "{{count}}件のリソースすべてが管理されています",
       "unmanaged-resources_other": "{{count}}件のリソースはGit同期によって管理されていません。"
-    },
-    "free-tier-limit": {
-      "message": "無料利用枠のアカウントは、1つの接続、フォルダあたり20個のリソースに制限されています",
-      "message-connection": "",
-      "message-resource": "無料利用枠のアカウントは、フォルダごとに20個のリソースに制限されています。さらにリソースを追加するには、",
-      "note": "注：",
-      "upgrade-link": "アカウントをアップグレードしてください"
     },
     "get-default-values": {
       "title": {
@@ -13049,6 +13074,18 @@
           "repository-request-failed": "リポジトリのリクエストに失敗しました"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_other": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_other": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -14376,6 +14413,18 @@
       "label-same-as-value": "値と同じ",
       "label-standard": "標準"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "統計",
       "stat-color-background": "統計 - 背景色",
@@ -14833,6 +14882,11 @@
         "label-threshold": "しきい値"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "破線",
@@ -14851,16 +14905,22 @@
       "zoom-to-data": "データにズーム"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
