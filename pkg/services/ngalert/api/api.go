@@ -202,13 +202,4 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(convertSrv), m)
 
-<<<<<<< HEAD
-||||||| parent of 0457a9d7a1d (Alerting: add background worker to auto-sync Mimir Alertmanager datasource config)
-=======
-	api.registerDatasourceSyncEndpoints(&DatasourceSyncSrv{
-		store:             api.DatasourceSyncStore,
-		featureManager:    api.FeatureManager,
-		datasourceService: api.DatasourceService,
-	}, m)
->>>>>>> 0457a9d7a1d (Alerting: add background worker to auto-sync Mimir Alertmanager datasource config)
 }
