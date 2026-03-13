@@ -183,7 +183,9 @@ export function QueryEditorContextWrapper({
       },
       setSelectedAlert: (alert: AlertRule | null) => {
         setSelectedAlertId(alert?.alertId ?? null);
-        onCardSelectionChange(null, null);
+        setSelectedQueryRefIds([]);
+        setSelectedTransformationIds([]);
+        clearSideEffects();
       },
       queryOptions: {
         options: queryOptions,
