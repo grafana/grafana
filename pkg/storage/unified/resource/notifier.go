@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultSettleDelay = 5 * time.Second
+	defaultSettleDelay = 3 * time.Second
 	defaultMinBackoff  = 100 * time.Millisecond
 	defaultMaxBackoff  = 5 * time.Second
 	defaultBufferSize  = 10000
