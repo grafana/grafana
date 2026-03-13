@@ -121,6 +121,39 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
+		// Set env vars for a resource that has NO ini section defined.
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION", "false")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		value, exists := cfg.UnifiedStorage[DashboardResource]
+		assert.True(t, exists, "dashboards.dashboard.grafana.app should exist from env var")
+		// Note: enforceMigrationToUnifiedConfigs may override dualWriterMode to 5
+		// for migrated resources. We test the enableMigration was correctly parsed as false.
+		assert.Equal(t, false, value.EnableMigration)
+	})
+
+	t.Run("env vars work for unknown resource names", func(t *testing.T) {
+		// A resource not in MigratedUnifiedResources, configured purely via env vars.
+		t.Setenv("GF_UNIFIED_STORAGE_WIDGETS_WIDGET_CUSTOM_IO_DUALWRITERMODE", "2")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		value, exists := cfg.UnifiedStorage["widgets.widget.custom.io"]
+		assert.True(t, exists, "widgets.widget.custom.io should exist from env var")
+		assert.Equal(t, rest.DualWriterMode(2), value.DualWriterMode)
+	})
+
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
