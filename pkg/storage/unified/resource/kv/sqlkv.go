@@ -254,7 +254,7 @@ func (w *sqlWriteCloser) Close() error {
 	w.closed = true
 	value := w.buf.Bytes()
 	if len(value) == 0 {
-		return nil
+		return ErrEmptyValue
 	}
 
 	if w.section == LastImportTimeSection {

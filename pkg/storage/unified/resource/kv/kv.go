@@ -14,6 +14,8 @@ import (
 )
 
 var ErrNotFound = errors.New("key not found")
+var ErrEmptyValue = errors.New("key must have a value")
+var ErrKeyAlreadyExists = errors.New("key already exists")
 
 // KeyValue represents a key-value pair returned by BatchGet
 type KeyValue struct {
@@ -58,9 +60,6 @@ type BatchOp struct {
 
 // Maximum limit for batch operations
 const MaxBatchOps = 20
-
-// ErrKeyAlreadyExists is returned when BatchOpCreate is used on an existing key
-var ErrKeyAlreadyExists = errors.New("key already exists")
 
 // BatchError wraps errors from Batch operations with context about which operation failed
 type BatchError struct {
@@ -245,7 +244,7 @@ func (w *badgerWriteCloser) Close() error {
 
 	data := w.buf.Bytes()
 	if len(data) == 0 {
-		return nil
+		return ErrEmptyValue
 	}
 
 	txn := w.db.NewTransaction(true)
