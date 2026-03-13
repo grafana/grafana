@@ -772,7 +772,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("non-existent file skips authorization", func(t *testing.T) {
+	t.Run("non-existent file returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
@@ -785,7 +785,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
 
-		assert.NoError(t, err, "non-existent files should skip authorization")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "read file")
 	})
 
 	t.Run("unsupported resource type returns error", func(t *testing.T) {
