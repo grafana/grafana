@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { useFailedDatasourcesUIDs } from '../../connections/hooks/useFailedDatasourcesUIDs';
+import { useFailedDatasourcesUIDs } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';

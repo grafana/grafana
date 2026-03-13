@@ -2,9 +2,12 @@ import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 
+import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
+
 type DataSourceInfo = {
   dataSourcePluginName: string;
   alertingSupported: boolean;
+  advisorFailureSeverity?: FailureSeverity;
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
@@ -31,6 +34,28 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
             : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
         }
       ></Badge>
+    ),
+  });
+
+  info.push({
+    label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
+    value: (
+      <Badge
+        color={
+          dataSourceInfo.advisorFailureSeverity === 'high'
+            ? 'red'
+            : dataSourceInfo.advisorFailureSeverity === 'low'
+              ? 'orange'
+              : 'green'
+        }
+        text={
+          dataSourceInfo.advisorFailureSeverity === 'high'
+            ? t('datasources.use-data-source-info.badge-text-failed', 'Failed')
+            : dataSourceInfo.advisorFailureSeverity === 'low'
+              ? t('datasources.use-data-source-info.badge-text-warn', 'Warn')
+              : t('datasources.use-data-source-info.badge-text-success', 'Success')
+        }
+      />
     ),
   });
 

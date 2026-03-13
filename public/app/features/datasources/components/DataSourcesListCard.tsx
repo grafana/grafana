@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
-import { FailureSeverity } from '../../connections/hooks/useFailedDatasourcesUIDs';
+import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 

@@ -1,16 +1,22 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 
-import { Check, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { Check, useListCheckQuery, useUpdateCheckMutation } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
-import { useLatestDatasourceCheck, useFailedDatasourcesUIDs } from './useFailedDatasourcesUIDs';
+import {
+  useLatestDatasourceCheck,
+  useFailedDatasourcesUIDs,
+  useRetryDatasourceAdvisorCheck,
+} from './useDatasourceAdvisorChecks';
 
 jest.mock('@grafana/api-clients/rtkq/advisor/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/advisor/v0alpha1'),
   useListCheckQuery: jest.fn(),
+  useUpdateCheckMutation: jest.fn(),
 }));
 
 const useListCheckMock = useListCheckQuery as jest.Mock;
+const useUpdateCheckMutationMock = useUpdateCheckMutation as jest.Mock;
 
 function makeCheck(overrides: { name?: string; creationTimestamp?: string; failures?: Check['status'] }): Check {
   return {
@@ -36,6 +42,7 @@ describe('useLatestDatasourceCheck', () => {
       grafanaAdvisor: true,
       advisorDatasourceIntegration: true,
     };
+    useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
   });
 
   afterEach(() => {
@@ -94,6 +101,7 @@ describe('useFailedDatasourcesUIDs', () => {
       grafanaAdvisor: true,
       advisorDatasourceIntegration: true,
     };
+    useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
   });
 
   afterEach(() => {
@@ -180,5 +188,80 @@ describe('useFailedDatasourcesUIDs', () => {
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
     expect(result.current.isLoading).toBe(false);
+  });
+});
+
+describe('useRetryDatasourceAdvisorCheck', () => {
+  const originalFeatureToggles = config.featureToggles;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles = {
+      ...originalFeatureToggles,
+      grafanaAdvisor: true,
+      advisorDatasourceIntegration: true,
+    };
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+  });
+
+  it('sends a patch with the correct check name, path and datasource UID', async () => {
+    const check = makeCheck({ name: 'check-sk5fn' });
+    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+
+    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
+    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
+
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+
+    await act(async () => {
+      await result.current('P7DC3E4760CFAC4AF');
+    });
+
+    expect(updateCheckFn).toHaveBeenCalledWith({
+      name: 'check-sk5fn',
+      patch: [
+        {
+          op: 'add',
+          path: '/metadata/annotations/advisor.grafana.app~1retry',
+          value: 'P7DC3E4760CFAC4AF',
+        },
+      ],
+    });
+  });
+
+  it('does not send a patch when advisor is disabled', async () => {
+    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
+
+    const check = makeCheck({ name: 'check-sk5fn' });
+    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+
+    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
+    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
+
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+
+    await act(async () => {
+      await result.current('some-uid');
+    });
+
+    expect(updateCheckFn).not.toHaveBeenCalled();
+  });
+
+  it('does not send a patch when no latest check exists', async () => {
+    useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
+
+    const updateCheckFn = jest.fn().mockReturnValue({ unwrap: () => Promise.resolve() });
+    useUpdateCheckMutationMock.mockReturnValue([updateCheckFn, {}]);
+
+    const { result } = renderHook(() => useRetryDatasourceAdvisorCheck());
+
+    await act(async () => {
+      await result.current('some-uid');
+    });
+
+    expect(updateCheckFn).not.toHaveBeenCalled();
   });
 });
