@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -102,6 +103,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 	}
 
 	return team.Team{
+		ID:            getTeamID(&created),
 		UID:           created.Name,
 		OrgID:         cmd.OrgID,
 		Name:          created.Spec.Title,
@@ -154,3 +156,10 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 }
 
 func (s *TeamK8sService) RegisterDelete(query string) {}
+
+func getTeamID(team *iamv0alpha1.Team) int64 {
+	if meta, err := utils.MetaAccessor(team); err == nil {
+		return meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+	return 0
+}
