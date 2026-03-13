@@ -22,7 +22,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.pure-git-description', 'Connect to any Git repository'),
     tooltip: t(
       'provisioning.repository-types.pure-git-tooltip',
-      'Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links). GitHub Enterprise Server is currently supported through Pure Git — a dedicated integration is planned.'
+      'Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links).'
     ),
     icon: 'git' as const,
     logo: gitSvg,
@@ -33,7 +33,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.github-description', 'Connect to GitHub repositories'),
     tooltip: t(
       'provisioning.repository-types.github-tooltip',
-      'Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+      'Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations. GitHub Enterprise Server is currently supported through Pure Git — a dedicated enhanced integration is planned.'
     ),
     icon: 'github' as const,
   },
