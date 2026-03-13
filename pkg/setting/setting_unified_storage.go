@@ -124,6 +124,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
+	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(100 * time.Millisecond)
 	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
 

@@ -150,6 +150,7 @@ func NewStorageBackend(
 			DryRun:           cfg.GarbageCollectionDryRun,
 			Interval:         cfg.GarbageCollectionInterval,
 			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
 			MaxAge:           cfg.GarbageCollectionMaxAge,
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
