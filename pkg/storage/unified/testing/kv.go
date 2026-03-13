@@ -239,10 +239,13 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		emptyKey := namespacedKey(nsPrefix, "empty-key")
 
 		// Save a key with empty data
-		saveKVHelper(t, kv, ctx, testSection, emptyKey, strings.NewReader(""))
+		writer, err := kv.Save(ctx, testSection, emptyKey)
+		require.NoError(t, err)
+		err = writer.Close()
+		assert.Error(t, err, kvpkg.ErrEmptyValue)
 
 		// Verify it was NOT saved
-		_, err := kv.Get(ctx, testSection, emptyKey)
+		_, err = kv.Get(ctx, testSection, emptyKey)
 		assert.Error(t, err)
 		assert.Equal(t, resource.ErrNotFound, err)
 	})
