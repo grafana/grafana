@@ -1601,6 +1601,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableResourceEndpointAPIRedirect",
+        "resourceVersion": "1773322344906",
+        "creationTimestamp": "2026-03-12T13:32:24Z"
+      },
+      "spec": {
+        "description": "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpointFrontend",
         "resourceVersion": "1771492008460",
         "creationTimestamp": "2026-02-19T09:06:48Z"

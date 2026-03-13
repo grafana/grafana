@@ -21,6 +21,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -118,6 +119,62 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 	}
 
 	return &ds, nil
+}
+
+// callK8sDataSourceResourceHandler returns a handler that proxies
+// /api/datasources/uid/:uid/resources/* to
+// /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid}/resource/*
+// when the feature toggle is enabled.
+func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpointAPIRedirect) {
+		return hs.CallDatasourceResourceWithUID
+	}
+
+	return func(c *contextmodel.ReqContext) {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("callK8sDataSourceResourceHandler"), time.Since(start).Seconds())
+		}()
+
+		dsUID := web.Params(c.Req)[":uid"]
+		if !util.IsValidShortUID(dsUID) {
+			c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+			return
+		}
+
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)
+				return
+			}
+			c.JsonApiErr(http.StatusInternalServerError, "Failed to lookup datasource connection", err)
+			return
+		}
+
+		if len(conns.Items) > 1 {
+			c.JsonApiErr(http.StatusConflict, "duplicate datasource connections found with this name", nil)
+			return
+		}
+
+		if len(conns.Items) == 0 {
+			c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)
+			return
+		}
+
+		conn := conns.Items[0]
+		namespace := hs.namespacer(c.GetOrgID())
+		subPath := web.Params(c.Req)["*"]
+
+		k8sPath := fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/resources",
+			conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+		if subPath != "" {
+			k8sPath += "/" + subPath
+		}
+
+		c.Req.URL.Path = k8sPath
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
+	}
 }
 
 // handleK8sError converts K8s API errors to HTTP responses
