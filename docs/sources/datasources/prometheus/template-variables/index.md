@@ -16,6 +16,7 @@ labels:
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
+review_date: 2026-03-10
 ---
 
 # Prometheus template variables
@@ -31,28 +32,49 @@ Grafana supports several types of variables, but Query variables are specificall
 
 Select a Prometheus data source query type and enter the required inputs:
 
-| Query Type      | Input(\* required)        | Description                                                                                                                                                   | Used API endpoints                             |
-| --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`   | `metric`                  | Returns a list of all label names matching the specified `metric` regex.                                                                                      | /api/v1/labels                                 |
-| `Label values`  | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric.                                                                         | /api/v1/label/`label`/values or /api/v1/series |
-| `Metrics`       | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                                                                                              | /api/v1/label/\_\_name\_\_/values              |
-| `Query result`  | `query`                   | Returns a list of Prometheus query result for the `query`.                                                                                                    | /api/v1/query                                  |
-| `Series query`  | `metric`, `label` or both | Returns a list of time series associated with the entered data.                                                                                               | /api/v1/series                                 |
-| `Classic query` | classic query string      | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
+| Query Type      | Input(\* required)                   | Description                                                                                                                                                   | Used API endpoints                             |
+| --------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `Label names`   | `metric regex`                       | Returns a list of all label names, optionally filtered by the specified metric regex.                                                                         | /api/v1/labels                                 |
+| `Label values`  | `label`\*, `metric`, `label filters` | Returns a list of label values for the `label` in all metrics, optionally filtered by metric and label filters.                                               | /api/v1/label/`label`/values or /api/v1/series |
+| `Metrics`       | `metric regex`                       | Returns a list of metrics matching the specified metric regex.                                                                                                | /api/v1/label/\_\_name\_\_/values              |
+| `Query result`  | `query`                              | Returns a list of Prometheus query results for the `query`. Can include Prometheus functions such as `sum(go_goroutines)`.                                    | /api/v1/query                                  |
+| `Series query`  | series selector                      | Enter a metric with labels, only a metric, or only labels (for example, `go_goroutines{instance="localhost:9090"}`). Returns a list of matching time series.  | /api/v1/series                                 |
+| `Classic query` | classic query string                 | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
 
-For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+
+### Query type examples
+
+**Label values -- Instance dropdown for a specific job**
+
+Create a variable named `instance` that lists all instances for the `node_exporter` job:
+
+- **Query type:** `Label values`
+- **Label:** `instance`
+- **Metric:** `node_cpu_seconds_total`
+- **Label filters:** `job = node_exporter`
+
+Use the variable in a query: `rate(node_cpu_seconds_total{instance=~"$instance", job="node_exporter"}[$__rate_interval])`
+
+**Metrics -- Metric name picker**
+
+Create a variable named `metric` that lists all HTTP-related metrics:
+
+- **Query type:** `Metrics`
+- **Metric regex:** `http_.*`
+
+Use the variable in a query: `rate($metric[$__rate_interval])`
 
 ### Query options
 
 With the query variable type, you can set the following query options:
 
-| Option                | Description                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Data source**       | Select your data source from the drop-down list.                                                        |
-| **Select query type** | Options are `default`, `value` and `metric name`. Each query type hits a different Prometheus endpoint. |
-| **Regex**             | Optional, if you want to extract part of a series name or metric node segment.                          |
-| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
-| **Refresh**           | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
+| Option          | Description                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| **Data source** | Select your Prometheus data source from the drop-down list.                                             |
+| **Regex**       | Optional, if you want to extract part of a series name or metric node segment.                          |
+| **Sort**        | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
+| **Refresh**     | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
 
 ### Selection options
 
@@ -86,11 +108,11 @@ query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
 Regex: /"([^"]+)"/
 ```
 
-Populate a variable with the instances having a certain state over the time range shown in the dashboard, using `$__range_s`:
+Populate a variable with instances where memory usage exceeded 80% during the dashboard's time range:
 
 ```
-query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
-Regex:
+query_result(max_over_time(((1 - node_memory_AvailableBytes / node_memory_MemTotal) * 100)[${__range_s}s:]) > 80)
+Regex: /\{instance="([^"]+)"/
 ```
 
 ## Use `$__rate_interval`
@@ -137,8 +159,8 @@ For details, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate q
 
 The Prometheus data source supports two variable syntaxes for use in the **Query** field:
 
-- `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
-- `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$_rate_interval])`
+- `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$__rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
+- `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])`
 
 If you've enabled the `Multi-value` or `Include all value` options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.
 
