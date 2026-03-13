@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { autoUpdate } from '@floating-ui/dom';
 import { useFloating } from '@floating-ui/react';
 import * as React from 'react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { ActionModel, DataFrame, GrafanaTheme2, InterpolateFunction, LinkModel } from '@grafana/data';
@@ -103,8 +103,9 @@ export const AnnotationMarker2 = ({
   // wip will not have an id to set, so we need to pass in the raw idx of this annotation, as long as wip is not already clustered, this should continue to work
   const editIdx = _editIdx !== undefined && _editIdx > -1 ? _editIdx : annoIdx;
 
-  const contents =
-    !isEditing && showTooltip && isClustering ? (
+  let contents: ReactNode | null = null;
+  if (!isEditing && showTooltip && isClustering) {
+    contents = (
       <AnnotationTooltip2Cluster
         actions={actions}
         links={links}
@@ -115,7 +116,9 @@ export const AnnotationMarker2 = ({
         timeZone={timeZone}
         onEdit={(annotationId: number) => setEditAnnotationId(annotationId)}
       />
-    ) : showTooltip ? (
+    );
+  } else if (showTooltip) {
+    contents = (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -126,7 +129,9 @@ export const AnnotationMarker2 = ({
         links={links}
         actions={actions}
       />
-    ) : isEditing ? (
+    );
+  } else if (isEditing) {
+    contents = (
       <AnnotationEditor2
         annoIdx={editIdx}
         annoVals={annoVals}
@@ -137,7 +142,8 @@ export const AnnotationMarker2 = ({
           onClose();
         }}
       />
-    ) : null;
+    );
+  }
 
   return (
     <button
