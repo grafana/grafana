@@ -155,7 +155,7 @@ The uploaded certificate is used by Microsoft Entra ID to validate the client as
 
 #### Certificate formats
 
-The Azure Monitor data source supports these certificate formats:
+The Azure Monitor data source supports the following certificate formats:
 
 - **PEM:** Provide both the certificate and private key in PEM text format.
 - **PFX:** Provide a base64-encoded PFX payload in the **Client Certificate** field, and provide the certificate password.
