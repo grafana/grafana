@@ -87,6 +87,18 @@ describe('<DataSourcesList>', () => {
     expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 
+  it('should virtualize long datasource lists', async () => {
+    setup({
+      dataSources: getMockDataSources(200),
+      dataSourcesCount: 200,
+    });
+
+    const listItems = await screen.findAllByRole('listitem');
+    expect(listItems.length).toBeGreaterThan(0);
+    expect(listItems.length).toBeLessThan(200);
+    expect(screen.queryByRole('link', { name: 'dataSource-199' })).not.toBeInTheDocument();
+  });
+
   describe('Favorites functionality', () => {
     beforeEach(() => {
       config.featureToggles.favoriteDatasources = true;
