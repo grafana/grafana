@@ -738,23 +738,6 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	return err
 }
 
-// findTable returns the actual table name for a base name that may have been
-// renamed to <base>_legacy after unified storage migration. Returns "" if
-// neither variant exists.
-func (d *dashboardStore) findTable(base string) string {
-	for _, name := range []string{base, base + "_legacy"} {
-		exists, err := d.store.GetEngine().IsTableExist(name)
-		if err != nil {
-			d.log.Warn("Failed to check table existence", "table", name, "error", err)
-			continue
-		}
-		if exists {
-			return name
-		}
-	}
-	return ""
-}
-
 func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard) error {
 	var dashIds []struct {
 		Id  int64

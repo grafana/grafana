@@ -828,23 +828,6 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 	return err
 }
 
-// findTable returns the actual table name for a base name that may have been
-// renamed to <base>_legacy after unified storage migration. Returns "" if
-// neither variant exists.
-func (ss *sqlStore) findTable(base string) string {
-	for _, name := range []string{base, base + "_legacy"} {
-		exists, err := ss.db.GetEngine().IsTableExist(name)
-		if err != nil {
-			ss.log.Warn("Failed to check table existence", "table", name, "error", err)
-			continue
-		}
-		if exists {
-			return name
-		}
-	}
-	return ""
-}
-
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.
 func (ss *sqlStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
