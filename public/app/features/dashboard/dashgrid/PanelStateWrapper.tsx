@@ -330,6 +330,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Done:
+        // Surface partial errors (some queries succeeded, some failed)
+        const { errors: doneErrors, error: doneError } = data;
+        if (doneErrors?.length) {
+          errorMessage =
+            doneErrors.length === 1
+              ? doneErrors[0].message
+              : 'Multiple errors found. Click for more details';
+        } else if (doneError) {
+          errorMessage = doneError.message;
+        }
         // If we are doing a snapshot save data in panel model
         if (dashboard.snapshot) {
           panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
