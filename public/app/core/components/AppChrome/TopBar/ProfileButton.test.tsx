@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { ProfileButton } from './ProfileButton';
 
@@ -16,12 +17,24 @@ jest.mock('app/plugins/panel/news/feed', () => ({
 describe('ProfileButton', () => {
   let mainView: HTMLDivElement;
   let user: ReturnType<typeof userEvent.setup>;
+  const originalContextSrvUser = { ...contextSrv.user };
   const defaultProps = {
     profileNode: {
       id: 'profile',
       text: 'Test User',
       url: '/profile',
-      children: [],
+      children: [
+        {
+          id: 'profile/settings',
+          text: 'Profile settings',
+          url: '/profile',
+        },
+        {
+          id: 'profile/password',
+          text: 'Change password',
+          url: '/profile/password',
+        },
+      ],
     },
     onToggleKioskMode: jest.fn(),
   };
@@ -38,6 +51,7 @@ describe('ProfileButton', () => {
 
   afterEach(() => {
     document.body.removeChild(mainView);
+    contextSrv.user = { ...originalContextSrvUser };
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {
@@ -59,5 +73,15 @@ describe('ProfileButton', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
     expect(profileButton).toHaveFocus();
+  });
+
+  it('should hide change password entry for external users', async () => {
+    contextSrv.user = { ...contextSrv.user, authenticatedBy: 'oauth_google' };
+    render(<ProfileButton {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /profile/i }));
+
+    expect(screen.queryByRole('menuitem', { name: /change password/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /profile settings/i })).toBeInTheDocument();
   });
 });

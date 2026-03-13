@@ -14,6 +14,8 @@ import { NewsContainer } from '../News/NewsDrawer';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
 
+const CHANGE_PASSWORD_NODE_ID = 'profile/password';
+
 export interface Props {
   profileNode: NavModelItem;
   onToggleKioskMode: () => void;
@@ -24,13 +26,17 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
   const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
+  const shouldHideChangePassword = contextSrv.isExternalUser();
 
   if (!node) {
     return null;
   }
 
   const renderMenu = () => (
-    <TopNavBarMenu node={profileNode}>
+    <TopNavBarMenu
+      node={profileNode}
+      filterItem={(item) => !shouldHideChangePassword || item.id !== CHANGE_PASSWORD_NODE_ID}
+    >
       <>
         {config.featureToggles.grafanaconThemes && (
           <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />

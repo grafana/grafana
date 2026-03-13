@@ -29,13 +29,19 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function ChangePasswordPage({ loadUser, isUpdating, user, changePassword }: Props) {
   useMount(() => loadUser());
+  const isExternalUser = Boolean(user?.isExternal);
 
   return (
     <Page navId="profile/password">
       <Page.Contents isLoading={!Boolean(user)}>
         {user ? (
           <>
-            <ChangePasswordForm user={user} onChangePassword={changePassword} isSaving={isUpdating} />
+            <ChangePasswordForm
+              user={user}
+              onChangePassword={changePassword}
+              isSaving={isUpdating}
+              isExternalUser={isExternalUser}
+            />
           </>
         ) : null}
       </Page.Contents>
