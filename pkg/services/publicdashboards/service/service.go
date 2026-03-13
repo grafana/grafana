@@ -454,7 +454,7 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
-func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, dashboardUid string) error {
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Delete")
 	defer span.End()
 	// get existing public dashboard if exists
@@ -464,6 +464,11 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 	}
 	if existingPubdash == nil {
 		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
+	}
+
+	// validate the public dashboard belongs to the requested org
+	if existingPubdash.OrgId != orgId {
+		return ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", orgId)
 	}
 
 	// validate the public dashboard belongs to the dashboard
