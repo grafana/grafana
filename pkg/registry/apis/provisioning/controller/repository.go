@@ -36,6 +36,11 @@ const loggerName = "provisioning-repository-controller"
 
 const (
 	maxAttempts = 3
+
+	// labelPendingDelete mirrors the label written by the tenant watcher
+	// (pkg/storage/unified/resource/tenant_watcher.go) to signal that a
+	// namespace/stack is being soft-deleted by the cloud platform.
+	labelPendingDelete = "cloud.grafana.com/pending-delete"
 )
 
 type queueItem struct {
@@ -589,6 +594,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	if obj.DeletionTimestamp != nil {
 		return rc.handleDelete(ctx, obj)
+	}
+
+	// Skip reconciliation for resources whose namespace is being soft-deleted.
+	if obj.Labels[labelPendingDelete] == "true" {
+		logger.Info("skipping reconciliation: namespace is pending deletion")
+		return nil
 	}
 
 	// Check quota state early - before trigger evaluation
