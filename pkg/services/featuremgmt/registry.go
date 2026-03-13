@@ -2245,6 +2245,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "panelQuickEdit",
+			Description:  "Enable quick edit options for panel plugins in the dashboard edit pane",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
