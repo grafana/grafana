@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3648,6 +3646,7 @@
     "category-alert-state-filter": "Varningstillståndsfilter",
     "category-filter": "Filtrera",
     "category-options": "Alternativ",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Visa endast varningar kopplade till denna instrumentpanel",
     "description-alert-instance-label": "Filtrera varningsinstanser med etikettförfrågan, t.ex.: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filtrera efter varningar som innehåller denna text",
@@ -3658,6 +3657,9 @@
     "description-max-items": "Maximalt antal larm att visa",
     "description-show-inactive-alerts": "Inkludera larmregler som har 0 (noll) instanser. Eftersom dessa regler inte har några instanser förblir de dolda om etikettfiltret för varningsinstans har konfigurerats.",
     "description-sort-order": "Sorteringsordning för larm och larminstanser",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Växla mellan listvy och statistikvy",
     "group-by": {
       "aria-label-group-by-label-keys": "gruppera efter etikettnycklar",
@@ -3683,6 +3685,9 @@
     "name-recovering": "Återställer",
     "name-show-inactive-alerts": "Visa varningar med 0 instanser",
     "name-sort-order": "Sorteringsordning",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Visningsläge",
     "sort-order-options": {
       "label-alphabetical-asc": "Alfabetiskt (stigande)",
@@ -3690,6 +3695,12 @@
       "label-importance": "Betydelse",
       "label-time-asc": "Tid (stigande)",
       "label-time-desc": "Tid (fallande)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "för <1>{{duration}}</1>",
@@ -4081,6 +4092,20 @@
     },
     "name-show-unfilled-area": "Visa ofyllt område",
     "name-value-display": "Värdevisning",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Stapelmätare",
       "lcd": "Stapelmätare – LCD"
@@ -6604,10 +6629,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Det kan inte innehålla ogiltiga tecken: ”~”, ”^”, ”:”, ”?”, ”*”, ”[”, ”\\\\” eller ”]”.",
@@ -6766,6 +6789,12 @@
     },
     "description-label": {
       "description": "Beskrivning"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7452,10 +7481,6 @@
       "title-controls-menu_other": "",
       "title-hidden_one": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10225,7 +10250,15 @@
       "remove-button": "Ta bort {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(höger y-axel)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(höger y-axel)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Är du säker på att du vill {{ actionTitle }}?",
@@ -12687,6 +12720,7 @@
     "preview-banner": {
       "behind-branch-text": "Den här resursen ligger bakom grenen i {{repoType}}.",
       "branch-text": "gren:",
+      "delete-from-branch": "",
       "not-saved": "Resten av Grafana-användarna i din organisation kommer fortfarande att se den aktuella versionen som sparats i den konfigurerade standardgrenen tills den här grenen slås samman",
       "open-in-repo-button": "Öppna i {{repoType}}",
       "open-pull-request-in-repo": "Öppna pull-begäran i {{repoType}}",
@@ -12694,6 +12728,7 @@
       "view-pull-request-in-repo": "Visa pull-begäran i {{repoType}}"
     },
     "title-created-branch-in-repo": "En ny resurs har skapats i en gren i {{repoType}}.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Den här resursen laddas från den gren du just skapade i {{repoType}} och den är bara synlig för dig"
   },
   "provisioning": {
@@ -12785,8 +12820,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurera",
-      "free-tier-limit-tooltip": "Gratis konton är begränsade till en anslutning",
-      "instance-fully-managed-tooltip": "Konfigurationen är inaktiverad eftersom den här instansen är fullt hanterad"
+      "instance-fully-managed-tooltip": "Konfigurationen är inaktiverad eftersom den här instansen är fullt hanterad",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12952,9 +12987,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resurser hanteras av Git Sync.",
       "placeholder-search": "Sök",
@@ -12962,13 +12994,6 @@
       "all-resources-managed_other": "Samtliga {{count}} resurser är hanterade",
       "unmanaged-resources_one": "{{count}} resurs hanteras inte av Git Sync.",
       "unmanaged-resources_other": "{{count}} resurser hanteras inte av Git Sync."
-    },
-    "free-tier-limit": {
-      "message": "Gratiskonton är begränsade till 1 anslutning och 20 resurser per mapp",
-      "message-connection": "",
-      "message-resource": "Gratiskonton är begränsade till 20 resurser per mapp. Om du vill lägga till fler resurser,",
-      "note": "Obs!",
-      "upgrade-link": "uppgradera ditt konto"
     },
     "get-default-values": {
       "title": {
@@ -13123,6 +13148,26 @@
           "repository-request-failed": "Begäran om lagringsplats misslyckades"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Den här resursen är skrivskyddad och tilldelas via filprovisionering. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "read-only-remote-tooltip": "Den här resursen är skrivskyddad och tilldelas via Git. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
@@ -14457,6 +14502,18 @@
       "label-same-as-value": "Samma som värde",
       "label-standard": "Standard"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat – bakgrundsfärg",
@@ -14915,6 +14972,11 @@
         "label-threshold": "Tröskel"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Kontrollpanel",
@@ -14933,16 +14995,22 @@
       "zoom-to-data": "Zooma till data"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

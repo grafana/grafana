@@ -13,7 +13,7 @@ import (
 func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t)
+	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
 
 	const repo = "fix-folder-metadata-test-repo"
 	testRepo := common.TestRepo{
