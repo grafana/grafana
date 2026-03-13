@@ -88,6 +88,18 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 				filtered[action] = scopes
 			}
 		}
+
+		// Debug: capture restriction filter state
+		span.SetAttributes(
+			attribute.Int("pre_filter_actions", len(grouped)),
+			attribute.Int("post_filter_actions", len(filtered)),
+			attribute.Int("grafana_restrictions", len(grafanaRestrictions)),
+			attribute.Int("k8s_restrictions", len(k8sRestrictions)),
+			attribute.Int("allowed_actions", len(allowedActions)),
+			attribute.StringSlice("allowed_action_list", allowedActions),
+			attribute.Int64("ident_orgID", ident.OrgID),
+		)
+
 		grouped = filtered
 	}
 	ident.Permissions[ident.OrgID] = grouped
