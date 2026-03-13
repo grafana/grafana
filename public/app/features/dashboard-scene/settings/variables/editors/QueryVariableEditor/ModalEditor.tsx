@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
@@ -126,7 +126,7 @@ export function ModalEditor(props: ModalEditorProps) {
             </div>
             <div
               {...splitterProps}
-              style={{ ...splitterProps.style }}
+              className={cx(splitterProps.className, styles.splitter)}
               title={t('dashboard-scene.modal-editor.content-drag-to-resize', 'Drag to resize')}
             >
               <div className={styles.fadeOverlay} />
@@ -318,6 +318,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     previewTitle: css({
       fontSize: '16px',
+    }),
+    splitter: css({
+      '&&::after': {
+        width: '400px',
+      },
     }),
     fadeOverlay: css({
       position: 'absolute',
