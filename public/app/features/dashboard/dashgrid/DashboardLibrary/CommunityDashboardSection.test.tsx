@@ -34,6 +34,10 @@ jest.mock('./interactions', () => ({
     compatibilityCheckTriggered: jest.fn(),
     compatibilityCheckCompleted: jest.fn(),
   },
+  SuggestedDashboardInteractions: {
+    loaded: jest.fn(),
+    itemClicked: jest.fn(),
+  },
 }));
 
 // Track the datasource type for mocking

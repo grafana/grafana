@@ -13,7 +13,8 @@ import { isGnetDashboard } from './dashboardLibraryHelpers';
  * Contains metadata about the dashboard template being used.
  */
 export interface TemplateContextData {
-  templateName: string;
+  templateName?: string;
+  name?: string;
   description?: string;
   datasource?: string;
   panelTypes?: string[];
@@ -70,7 +71,8 @@ export function buildTemplateContextData(
     } else {
       lines.push(
         'The dashboard is already rendered on the current page — it is loaded but not yet saved. ' +
-          "Your goal is to adapt the existing panels and queries to work with the user's available data sources. " +
+          "Your goal is to adapt its panels and queries to work with the user's available data sources. " +
+          'Prefer lightweight tools first — use a dashboard summary to understand the structure before reading individual panels, and avoid reading all panels at once. ' +
           "Do NOT save or create the dashboard — saving is the user's responsibility. " +
           'If you think additional panels would be valuable, ask the user before adding them. ' +
           'If the original datasource is unavailable and you are considering switching to a test datasource, ask the user for explicit permission first.'
@@ -81,7 +83,11 @@ export function buildTemplateContextData(
   };
 
   return {
-    templateName: isGnet ? dashboard.name : dashboard.title,
+    // For suggested dashboards, use `name` instead of `templateName` to avoid the LLM
+    // associating this with the template-dashboard tool and treating it as a template to create.
+    ...(kind === 'suggested_dashboard'
+      ? { name: isGnet ? dashboard.name : dashboard.title }
+      : { templateName: isGnet ? dashboard.name : dashboard.title }),
     description: dashboard.description,
     // Only include datasource for suggested dashboards where it's meaningful
     // template dashboards use generic "test data source" so we omit it

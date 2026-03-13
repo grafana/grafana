@@ -321,7 +321,7 @@ function getStyles(theme: GrafanaTheme2) {
     actionsContainer: css({
       marginTop: 0,
       alignItems: 'center',
-      flexWrap: 'nowrap',
+      flexWrap: 'wrap',
     }),
     detailsContainer: css({
       width: '340px',
