@@ -78,6 +78,14 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     selection,
   });
 
+  useEffect(() => {
+    if (isEditing || isAssistantEnabled) {
+      editPane.enableSelection();
+    } else {
+      editPane.disableSelection();
+    }
+  }, [isEditing, isAssistantEnabled, editPane]);
+
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane) && Boolean(isEditing),
     contentMargin: 1,
