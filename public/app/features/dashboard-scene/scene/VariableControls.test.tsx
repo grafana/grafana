@@ -13,6 +13,7 @@ import {
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls } from './VariableControls';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 
@@ -107,9 +108,13 @@ describe('VariableControls', () => {
       ],
     });
 
-    new RowItem({ $variables: variableSet });
+    const row = new RowItem({
+      repeatByVariable: 'custom0',
+      $variables: variableSet,
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
 
-    render(<SectionVariableControls variableSet={variableSet} />);
+    render(<SectionVariableControls variableSet={row.state.$variables!} />);
 
     expect(screen.queryAllByText('custom0')).toHaveLength(1);
   });

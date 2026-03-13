@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { CustomVariable, LocalValueVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
@@ -35,7 +36,11 @@ function buildRowWithVariables() {
     ],
   });
 
-  const row = new RowItem({ $variables: variableSet as never });
+  const row = new RowItem({
+    repeatByVariable: 'custom0',
+    $variables: variableSet,
+    layout: AutoGridLayoutManager.createEmpty(),
+  });
 
   new DashboardScene({
     body: new RowsLayoutManager({

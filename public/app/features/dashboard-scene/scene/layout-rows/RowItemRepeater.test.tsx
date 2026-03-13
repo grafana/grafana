@@ -149,15 +149,22 @@ describe('RowItemRepeater', () => {
       });
       const rowVariables = new SceneVariableSet({ variables: [sectionScopedVariable] });
 
-      renderScene({ variableQueryTime: 0 }, undefined, undefined, rowVariables);
+      const { rowToRepeat } = renderScene({ variableQueryTime: 0 }, undefined, undefined, rowVariables);
 
       await waitFor(() => {
-        expect(screen.queryByText('Row A')).toBeInTheDocument();
-        expect(screen.queryByText('Row B')).toBeInTheDocument();
-        expect(screen.queryByText('Row C')).toBeInTheDocument();
+        expect(screen.queryAllByText('Row row-scope')).toHaveLength(3);
       });
 
-      expect(screen.queryAllByText('Panel inside repeated row, server = row-scope')).toHaveLength(3);
+      const repeatedRows = [rowToRepeat, ...(rowToRepeat.state.repeatedRows ?? [])];
+      expect(repeatedRows).toHaveLength(3);
+
+      for (const row of repeatedRows) {
+        const variables = row.state.$variables?.state.variables;
+        expect(variables).toBeDefined();
+        expect(variables![0]).toBeInstanceOf(CustomVariable);
+        expect(variables![0].state.name).toBe('server');
+        expect(variables![0].getValue()).toBe('row-scope');
+      }
     });
   });
 });

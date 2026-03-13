@@ -444,7 +444,15 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
     return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
   }
 
-  return sceneGraph.interpolate(getDashboardSceneFor(scene), value, undefined, 'text');
+  // During transient edit operations, a section may be queried for
+  // slug/title interpolation before it is attached to a DashboardScene root.
+  // Fall back to local interpolation in that short window.
+  const root = scene.getRoot();
+  if (!(root instanceof DashboardScene)) {
+    return sceneGraph.interpolate(scene, value, undefined, 'text');
+  }
+
+  return sceneGraph.interpolate(root, value, undefined, 'text');
 }
 
 function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {

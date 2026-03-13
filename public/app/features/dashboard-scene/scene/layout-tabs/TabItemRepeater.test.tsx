@@ -149,7 +149,7 @@ describe('TabItemRepeater', () => {
       });
       const tabVariables = new SceneVariableSet({ variables: [sectionScopedVariable] });
 
-      renderScene({ variableQueryTime: 0 }, undefined, undefined, tabVariables);
+      const { tabToRepeat } = renderScene({ variableQueryTime: 0 }, undefined, undefined, tabVariables);
 
       await waitFor(() => {
         expect(screen.queryByText('Tab A')).toBeInTheDocument();
@@ -157,7 +157,16 @@ describe('TabItemRepeater', () => {
         expect(screen.queryByText('Tab C')).toBeInTheDocument();
       });
 
-      expect(screen.queryByText('Panel inside repeated tab, server = row-scope')).toBeInTheDocument();
+      const repeatedTabs = [tabToRepeat, ...(tabToRepeat.state.repeatedTabs ?? [])];
+      expect(repeatedTabs).toHaveLength(3);
+
+      for (const tab of repeatedTabs) {
+        const variables = tab.state.$variables?.state.variables;
+        expect(variables).toBeDefined();
+        expect(variables![0]).toBeInstanceOf(CustomVariable);
+        expect(variables![0].state.name).toBe('server');
+        expect(variables![0].getValue()).toBe('row-scope');
+      }
     });
   });
 });
