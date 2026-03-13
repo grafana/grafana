@@ -10257,8 +10257,7 @@
     },
     "viz-legend": {
       "all-series-selected": "All series selected",
-      "color-picker-closed": "Color picker closed",
-      "color-picker-open": "Color picker open",
+      "color-picker": "Edit color for {{seriesName}}",
       "only-this-series-selected": "Only {{label}} selected",
       "right-axis-indicator": "(right y-axis)"
     },
@@ -11895,13 +11894,8 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": {
-        "aria": "Add {{itemName}} to Bookmarks",
-        "tooltip": "Add to Bookmarks"
-      },
-      "remove-bookmark": {
-        "aria": "Remove {{itemName}} from Bookmarks",
-        "tooltip": "Remove from Bookmarks"
+      "bookmark": {
+        "tooltip": "Bookmark {{itemName}}"
       }
     },
     "kiosk": {

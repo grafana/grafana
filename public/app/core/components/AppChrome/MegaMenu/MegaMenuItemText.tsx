@@ -54,16 +54,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
           iconType={isPinned ? 'solid' : 'default'}
           onClick={() => onPin(url)}
           aria-pressed={isPinned}
-          aria-label={
-            isPinned
-              ? t('navigation.item.remove-bookmark.aria', 'Remove {{itemName}} from Bookmarks', { itemName })
-              : t('navigation.item.add-bookmark.aria', 'Add {{itemName}} to Bookmarks', { itemName })
-          }
-          tooltip={
-            isPinned
-              ? t('navigation.item.remove-bookmark.tooltip', 'Remove from Bookmarks')
-              : t('navigation.item.add-bookmark.tooltip', 'Add to Bookmarks')
-          }
+          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
         />
       )}
     </div>

@@ -42,11 +42,9 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
             <SeriesIcon
               tabIndex={0}
               role="button"
-              aria-label={
-                isOpen
-                  ? t('grafana-ui.viz-legend.color-picker-open', 'Color picker open')
-                  : t('grafana-ui.viz-legend.color-picker-closed', 'Color picker closed')
-              }
+              aria-label={t('grafana-ui.viz-legend.color-picker', 'Edit color for {{seriesName}}', { seriesName })}
+              aria-haspopup="menu"
+              aria-expanded={isOpen}
               color={color}
               className="pointer"
               ref={ref}
