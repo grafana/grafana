@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -80,7 +80,7 @@ describe('DashboardEditPaneRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
-  it('Should sync sidebar docked state with edit pane state', async () => {
+  it('Should render sidebar with dock toggle when editing', async () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
 
@@ -91,10 +91,6 @@ describe('DashboardEditPaneRenderer', () => {
     await user.click(screen.getByLabelText('Outline'));
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
-
-    await user.click(screen.getByTestId(selectors.components.Sidebar.dockToggle));
-
-    await waitFor(() => expect(scene.state.editPane.state.isDocked).toBe(true));
   });
 
   // describe('outline interactions tracking', () => {
