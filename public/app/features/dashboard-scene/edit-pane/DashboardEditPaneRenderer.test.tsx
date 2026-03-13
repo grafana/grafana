@@ -90,9 +90,13 @@ describe('DashboardEditPaneRenderer', () => {
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
+    // With defaultToDocked: true when editing, sidebar starts docked
+    expect(scene.state.editPane.state.isDocked).toBe(true);
+
+    // Clicking dock toggle should undock the sidebar
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    expect(scene.state.editPane.state.isDocked).toBe(false);
   });
 
   // describe('outline interactions tracking', () => {
