@@ -120,9 +120,10 @@ function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
       }),
     }),
     infoIcon: css({
+      position: 'relative',
+      zIndex: 1,
       display: 'inline-flex',
       color: theme.colors.text.secondary,
-      cursor: 'help',
       '&:hover': {
         color: theme.colors.text.primary,
       },
