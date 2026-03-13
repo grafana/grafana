@@ -20,6 +20,7 @@ import {
   DataQueryRequest,
   ScopedVars,
   AdHocVariableFilter,
+  Scope,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -2114,6 +2115,42 @@ describe('LokiDatasource', () => {
       await ds.getTagKeys({ filters, timeRange: mockTimeRange });
       expect(spy).toHaveBeenCalledWith({ streamSelector: '{}', timeRange: mockTimeRange });
     });
+
+    it('should use fetchSuggestions when scopes are present', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [{ key: 'job', operator: '=', value: 'grafana' }];
+      const scopes: Scope[] = [
+        {
+          metadata: { name: 'test-scope' },
+          spec: {
+            title: 'Test',
+            type: '',
+            description: '',
+            category: '',
+            filters: [{ key: 'namespace', operator: 'equals', value: 'prod' }],
+          },
+        },
+      ];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchSuggestions').mockResolvedValue(['label1', 'label2', 'job']);
+
+      const result = await ds.getTagKeys({ filters, timeRange: mockTimeRange, scopes });
+      expect(spy).toHaveBeenCalledWith(mockTimeRange, undefined, scopes, filters);
+      expect(result).toEqual([
+        { value: 'label1', text: 'label1' },
+        { value: 'label2', text: 'label2' },
+      ]);
+    });
+
+    it('should not use fetchSuggestions when scopes are empty', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [];
+      const fetchLabelsSpy = jest.spyOn(ds.languageProvider, 'fetchLabels').mockResolvedValue([]);
+      const fetchSuggestionsSpy = jest.spyOn(ds.languageProvider, 'fetchSuggestions');
+
+      await ds.getTagKeys({ filters, timeRange: mockTimeRange, scopes: [] });
+      expect(fetchSuggestionsSpy).not.toHaveBeenCalled();
+      expect(fetchLabelsSpy).toHaveBeenCalled();
+    });
   });
 
   describe('getTagValues', () => {
@@ -2139,6 +2176,42 @@ describe('LokiDatasource', () => {
 
       await ds.getTagValues({ key: 'label1', filters, timeRange: mockTimeRange });
       expect(spy).toHaveBeenCalledWith('label1', { streamSelector: '{}', timeRange: mockTimeRange });
+    });
+
+    it('should use fetchSuggestions when scopes are present', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [{ key: 'job', operator: '=', value: 'grafana' }];
+      const scopes: Scope[] = [
+        {
+          metadata: { name: 'test-scope' },
+          spec: {
+            title: 'Test',
+            type: '',
+            description: '',
+            category: '',
+            filters: [{ key: 'namespace', operator: 'equals', value: 'prod' }],
+          },
+        },
+      ];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchSuggestions').mockResolvedValue(['val1', 'val2']);
+
+      const result = await ds.getTagValues({ key: 'service_name', filters, timeRange: mockTimeRange, scopes });
+      expect(spy).toHaveBeenCalledWith(mockTimeRange, undefined, scopes, filters, 'service_name');
+      expect(result).toEqual([
+        { value: 'val1', text: 'val1' },
+        { value: 'val2', text: 'val2' },
+      ]);
+    });
+
+    it('should not use fetchSuggestions when scopes are empty', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [];
+      const fetchLabelValuesSpy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
+      const fetchSuggestionsSpy = jest.spyOn(ds.languageProvider, 'fetchSuggestions');
+
+      await ds.getTagValues({ key: 'label1', filters, timeRange: mockTimeRange, scopes: [] });
+      expect(fetchSuggestionsSpy).not.toHaveBeenCalled();
+      expect(fetchLabelValuesSpy).toHaveBeenCalled();
     });
   });
 });
