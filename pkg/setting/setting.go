@@ -874,6 +874,13 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 			continue
 		}
 
+		// Skip unified_storage env vars — they use camelCase key names
+		// and are handled by applyUnifiedStorageEnvOverrides which
+		// preserves the correct casing.
+		if strings.HasPrefix(envKey, EnvSectionPrefix("unified_storage")) {
+			continue
+		}
+
 		for _, m := range sectionMappings {
 			if strings.HasPrefix(envKey, m.prefix) {
 				keyName := strings.ToLower(envKey[len(m.prefix):])
