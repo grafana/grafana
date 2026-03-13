@@ -22,9 +22,9 @@ export function AnnotationTooltipBody({
       {alertText}
       <div>
         <Stack gap={0.5} wrap={true}>
-          {tags?.length
-            ? tags.map?.((t, i) => <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />)
-            : null}
+          {tags.map((t, i) => (
+            <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />
+          ))}
         </Stack>
       </div>
     </div>
