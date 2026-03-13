@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	stdsync "sync"
 	"syscall"
 	"time"
 
@@ -151,14 +152,21 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create concurrent job driver: %w", err)
 	}
 
+	var wg stdsync.WaitGroup
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		logger.Info("jobs controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
+		logger.Info("job driver stopped")
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		jobCleanupController := jobs.NewJobCleanupController(
 			jobStore,
 			jobHistoryWriter,
@@ -167,6 +175,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		if err := jobCleanupController.Run(ctx); err != nil {
 			logger.Error("job cleanup controller failed", "error", err)
 		}
+		logger.Info("job cleanup controller stopped")
 	}()
 
 	// Start informers
@@ -182,6 +191,23 @@ func RunJobController(deps server.OperatorDependencies) error {
 	deps.HealthNotifier.SetReady()
 
 	<-ctx.Done()
+	deps.HealthNotifier.SetNotReady()
+	logger.Info("shutdown signal received, waiting for goroutines to finish")
+
+	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("jobs operator shutdown complete")
+	case <-time.After(shutdownTimeout):
+		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	}
+
 	return nil
 }
 
