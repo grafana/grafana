@@ -55,7 +55,7 @@ func Test_GetHeuristics(t *testing.T) {
 		httpProvider := newHeuristicsSDKProvider(rt)
 		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(NewInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
 			logger: logger,
 		}
 
@@ -77,7 +77,7 @@ func Test_GetHeuristics(t *testing.T) {
 		httpProvider := newHeuristicsSDKProvider(rt)
 		logger := backend.NewLoggerWith("logger", "test")
 		s := &Service{
-			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			im:     datasource.NewInstanceManager(NewInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
 			logger: logger,
 		}
 

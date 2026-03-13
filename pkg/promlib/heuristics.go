@@ -48,7 +48,7 @@ func (s *Service) GetBuildInfo(ctx context.Context, req BuildInfoRequest) (*Buil
 }
 
 // getBuildInfo queries /api/v1/status/buildinfo
-func getBuildInfo(ctx context.Context, i *instance) (*BuildInfoResponse, error) {
+func getBuildInfo(ctx context.Context, i *Instance) (*BuildInfoResponse, error) {
 	resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
 		Path: "api/v1/status/buildinfo",
 	})
@@ -90,7 +90,7 @@ func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*He
 	return getHeuristics(ctx, ds, logger)
 }
 
-func getHeuristics(ctx context.Context, i *instance, logger log.Logger) (*Heuristics, error) {
+func getHeuristics(ctx context.Context, i *Instance, logger log.Logger) (*Heuristics, error) {
 	heuristics := Heuristics{
 		Application: "unknown",
 		Features: Features{

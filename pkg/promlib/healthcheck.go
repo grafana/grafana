@@ -53,7 +53,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	return hc, nil
 }
 
-func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
+func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *Instance) (*backend.CheckHealthResult, error) {
 	qm := models.QueryModel{
 		UtcOffsetSec: 0,
 		CommonQueryProperties: sdkapi.CommonQueryProperties{
