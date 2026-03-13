@@ -7,7 +7,7 @@ import {
   SetTeamRolesApiArg,
   useCreateTeamMutation,
   useSetTeamRolesMutation,
-} from '@grafana/api-clients/rtkq/legacy';
+} from '@grafana/api-clients/internal/rtkq/legacy';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
