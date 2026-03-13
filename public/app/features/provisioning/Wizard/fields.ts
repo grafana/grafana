@@ -104,7 +104,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'GitLab Project Access Token with repository permissions'
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.gitlab.token-required', 'GitLab token is required'),

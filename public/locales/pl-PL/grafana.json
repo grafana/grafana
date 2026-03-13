@@ -1874,8 +1874,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3700,6 +3698,7 @@
     "category-alert-state-filter": "Filtr stanu alertu",
     "category-filter": "Filtr",
     "category-options": "Opcje",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Pokaż tylko alerty powiązane z tym pulpitem",
     "description-alert-instance-label": "Filtruj wystąpienia alertów za pomocą zapytania o etykiety, np.: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filtruj alerty zawierające ten tekst",
@@ -3710,6 +3709,9 @@
     "description-max-items": "Maksymalna liczba wyświetlanych alertów",
     "description-show-inactive-alerts": "Uwzględnij reguły alertów, które mają 0 (zero) wystąpień. Te reguły nie mają wystąpień, więc pozostają ukryte, jeśli skonfigurowano filtr etykiet wystąpień alertu.",
     "description-sort-order": "Kolejność sortowania alertów i wystąpień alertów",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Przełącz między widokiem listy i widokiem statystycznym",
     "group-by": {
       "aria-label-group-by-label-keys": "grupuj według kluczy etykiet",
@@ -3735,6 +3737,9 @@
     "name-recovering": "Przywracanie",
     "name-show-inactive-alerts": "Pokaż alerty bez wystąpień",
     "name-sort-order": "Kolejność sortowania",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Tryb widoku",
     "sort-order-options": {
       "label-alphabetical-asc": "Alfabetycznie (rosnąco)",
@@ -3742,6 +3747,12 @@
       "label-importance": "Ważność",
       "label-time-asc": "Czas (rosnąco)",
       "label-time-desc": "Czas (malejąco)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "przez <1>{{duration}}</1>",
@@ -4133,6 +4144,20 @@
     },
     "name-show-unfilled-area": "Pokaż niewypełniony obszar",
     "name-value-display": "Wyświetlanie wartości",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Wskaźnik słupkowy",
       "lcd": "Wskaźnik słupkowy – LCD"
@@ -6676,10 +6701,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nie może zawierać nieprawidłowych znaków: „~”, „^”, „:”, „?”, „*”, „[”, „\\\\” lub „]”.",
@@ -6844,6 +6867,12 @@
     },
     "description-label": {
       "description": "Opis"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7542,10 +7571,6 @@
       "title-hidden_few": "",
       "title-hidden_many": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10339,7 +10364,15 @@
       "remove-button": "Usuń podrzędne: {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(prawa półoś OY)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(prawa półoś OY)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Na pewno chcesz to zrobić: {{ actionTitle }}?",
@@ -12823,6 +12856,7 @@
     "preview-banner": {
       "behind-branch-text": "Ten zasób znajduje się za gałęzią w repozytorium {{repoType}}.",
       "branch-text": "gałąź:",
+      "delete-from-branch": "",
       "not-saved": "Pozostali użytkownicy Grafany w Twojej organizacji nadal będą widzieć bieżącą wersję zapisaną w skonfigurowanej gałęzi domyślnej, dopóki ta gałąź nie zostanie scalona",
       "open-in-repo-button": "Otwórz w repozytorium {{repoType}}",
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
@@ -12830,6 +12864,7 @@
       "view-pull-request-in-repo": "Wyświetl żądanie pull w repozytorium {{repoType}}"
     },
     "title-created-branch-in-repo": "Utworzono nowy zasób w gałęzi w repozytorium {{repoType}}.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Ten zasób został wczytany z gałęzi, która właśnie została przez ciebie utworzona w repozytorium {{repoType}}, i jest widoczny tylko dla ciebie"
   },
   "provisioning": {
@@ -12927,8 +12962,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfiguruj",
-      "free-tier-limit-tooltip": "Konta bezpłatne są ograniczone do jednego połączenia",
-      "instance-fully-managed-tooltip": "Konfiguracja jest wyłączona, ponieważ ta instancja jest w pełni zarządzana"
+      "instance-fully-managed-tooltip": "Konfiguracja jest wyłączona, ponieważ ta instancja jest w pełni zarządzana",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13096,9 +13131,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Brak wyników pasujących do zapytania",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zasobów jest objętych zarządzaniem przez synchronizację z usługą Git.",
       "placeholder-search": "Szukaj",
@@ -13110,13 +13142,6 @@
       "unmanaged-resources_few": "{{count}} zasoby nie są objęte zarządzaniem przez synchronizację z usługą Git.",
       "unmanaged-resources_many": "{{count}} zasobów nie jest objętych zarządzaniem przez synchronizację z usługą Git.",
       "unmanaged-resources_other": "{{count}} zasobu nie jest objęte zarządzaniem przez synchronizację z usługą Git."
-    },
-    "free-tier-limit": {
-      "message": "Konta bezpłatne są ograniczone do 1 połączenia i 20 zasobów na folder",
-      "message-connection": "",
-      "message-resource": "Konta bezpłatne są ograniczone do 20 zasobów na folder. Aby dodać więcej zasobów,",
-      "note": "Uwaga:",
-      "upgrade-link": "przejdź na wyższy poziom konta"
     },
     "get-default-values": {
       "title": {
@@ -13271,6 +13296,42 @@
           "repository-request-failed": "Nie udało się wysłać żądania do repozytorium"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_few": "",
+      "message-both-repositories_many": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_few": "",
+      "message-both-resources_many": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_few": "",
+      "message-repositories-info_many": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_few": "",
+      "message-repository_many": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_few": "",
+      "note-message-both-repositories_many": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_few": "",
+      "note-message-both-resources_many": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_few": "",
+      "note-message-repository_many": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_few": "",
+      "note-message-resource_many": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Ten zasób jest tylko do odczytu i jest udostępniany poprzez aprowizację plików. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
     "read-only-remote-tooltip": "Ten zasób jest tylko do odczytu i jest aprowizowany przez usługę Git. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
@@ -14619,6 +14680,18 @@
       "label-same-as-value": "Taki sam jak wartość",
       "label-standard": "Standardowy"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "Statystyka",
       "stat-color-background": "Statystyka – kolor tła",
@@ -15079,6 +15152,11 @@
         "label-threshold": "Próg"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Myślnik",
@@ -15097,16 +15175,22 @@
       "zoom-to-data": "Powiększ do danych"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

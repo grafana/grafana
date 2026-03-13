@@ -38,7 +38,7 @@ const setup = () => {
 describe('CommandPalette', () => {
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
     // Mock assistant being available
-    (useAssistant as jest.Mock).mockReturnValue({ isAvailable: true });
+    (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     setup();
 
     // Check if empty state message is rendered
@@ -49,7 +49,7 @@ describe('CommandPalette', () => {
 
   it('should render empty state without AI Assistant button when assistant is not available', async () => {
     // Mock assistant being unavailable
-    (useAssistant as jest.Mock).mockReturnValue({ isAvailable: false });
+    (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
     setup();
 
     // Check if empty state message is rendered
