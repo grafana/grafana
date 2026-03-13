@@ -101,14 +101,16 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 
 	// Skip migration if the table does not exist
 	// This is common for deployments that stop creating the legacy table for new instances
-	for _, table := range lockTables {
-		found, err := sess.IsTableExist(table)
-		if err != nil {
-			return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
-		}
-		if !found {
-			r.log.Info("Migration is not required, the legacy SQL table does not exist", "table", table)
-			return nil
+	if r.definition.SkipWhenMissing {
+		for _, table := range lockTables {
+			found, err := sess.IsTableExist(table)
+			if err != nil {
+				return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
+			}
+			if !found {
+				r.log.Info("Migration is not required, the legacy SQL table does not exist", "table", table)
+				return nil
+			}
 		}
 	}
 
