@@ -63,10 +63,7 @@ export const AnnotationMarker2 = ({
   const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
   const [isHovering, setIsHovering] = useState(false);
   const isClustering =
-    annoVals.isRegion?.[annoIdx] &&
-    annoVals.clusterIdx?.[annoIdx] !== null &&
-    annoVals.clusterIdx?.[annoIdx] !== undefined &&
-    annoVals.clusterIdx?.[annoIdx] > -1;
+    annoVals.isRegion?.[annoIdx] && annoVals.clusterIdx?.[annoIdx] != null && annoVals.clusterIdx?.[annoIdx] > -1;
 
   const { refs, floatingStyles } = useFloating({
     open: true,
