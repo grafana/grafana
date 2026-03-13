@@ -12,6 +12,7 @@ export function getSelectableThemes() {
   }
 
   if (config.featureToggles.grafanaconThemes) {
+    allowedExtraThemes.push('brightpink');
     allowedExtraThemes.push('desertbloom');
     allowedExtraThemes.push('gildedgrove');
     allowedExtraThemes.push('sapphiredusk');

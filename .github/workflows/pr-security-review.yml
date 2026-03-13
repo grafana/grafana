@@ -1,0 +1,96 @@
+name: PR Security Review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions: {}
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Get PR diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr diff "${PR_NUMBER}" > pr_diff.txt
+          echo "Diff size: $(wc -l < pr_diff.txt) lines"
+
+      - name: Install Cursor CLI
+        run: curl https://cursor.com/install -fsS | bash
+
+      - name: Run security review with Cursor
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.actor }}
+        run: |
+          agent -p --output-format text \
+            "You are a security reviewer. Analyze the PR diff in ./pr_diff.txt for security vulnerabilities.
+
+          PR #${PR_NUMBER}: ${PR_TITLE} (by ${PR_AUTHOR})
+
+          Focus on:
+          - Injection vulnerabilities (SQL, command, XSS, template injection)
+          - Authentication and authorization issues
+          - Secrets or credentials accidentally committed
+          - Unsafe deserialization or file operations
+          - Insecure dependencies or configurations
+          - Race conditions or TOCTOU bugs
+
+          For each finding, provide:
+          1. Severity (Critical / High / Medium / Low)
+          2. File and line reference
+          3. Description of the vulnerability
+          4. Suggested fix
+
+          If no vulnerabilities are found, confirm the PR looks clean.
+          Write a concise summary." | tee security_review.txt
+
+      - name: Check for vulnerabilities
+        id: check-vulnerabilities
+        run: |
+          if grep -qiE '(critical|high|medium|low)\s*[:\-]|vulnerability|vulnerabilities found|injection|xss|insecure|unsafe|secret[s]? (exposed|committed|leaked)' security_review.txt \
+             && ! grep -qiE 'no (security )?(vulnerabilities|issues)|looks clean|no concerns' security_review.txt; then
+            echo "has_vulnerabilities=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vulnerabilities=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment review on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo "## 🔒 Security Review (Cursor CLI)"
+            echo ""
+            if [ "${{ steps.check-vulnerabilities.outputs.has_vulnerabilities }}" = "true" ]; then
+              cat security_review.txt
+            else
+              echo "**No security vulnerabilities found.** This PR looks clean."
+              echo ""
+              echo "<details>"
+              echo "<summary>Full review output</summary>"
+              echo ""
+              cat security_review.txt
+              echo ""
+              echo "</details>"
+            fi
+          } > comment_body.txt
+          gh pr comment "${PR_NUMBER}" --body-file comment_body.txt
