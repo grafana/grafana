@@ -11,6 +11,7 @@ import { Icon, LinkButton, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } 
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
+import { StateTag } from '../../components/StateTag';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
@@ -131,10 +132,25 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
   if (entry.type !== 'notifications' || !entry.notifications) {
     return <div className={styles.dot} />;
   }
-  const hasFailures = entry.notifications.some((n) => n.outcome !== 'success');
-  if (hasFailures) {
-    return <div className={styles.dotWarning} />;
+
+  const allFailed = entry.notifications.every((n) => n.outcome !== 'success');
+  const someFailed = entry.notifications.some((n) => n.outcome !== 'success');
+
+  if (allFailed) {
+    return (
+      <Tooltip content={t('alerting.instance-details.timeline-dot-all-failed', 'All notifications failed')}>
+        <Icon name="times-circle" size="sm" className={styles.dotIconError} />
+      </Tooltip>
+    );
   }
+  if (someFailed) {
+    return (
+      <Tooltip content={t('alerting.instance-details.timeline-dot-some-failed', 'Some notifications failed')}>
+        <Icon name="exclamation-triangle" size="sm" className={styles.dotIconWarning} />
+      </Tooltip>
+    );
+  }
+
   const isFiring = entry.notifications.some((n) => n.status === 'firing');
   return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
 }
@@ -304,18 +320,12 @@ function NotificationStatusGroup({
   }
 
   const isFiring = status === 'firing';
-  const hasFailures = failedCount > 0;
 
   const statusLabel = isFiring
     ? t('alerting.instance-details.timeline-status-firing', 'Firing')
     : t('alerting.instance-details.timeline-status-resolved', 'Resolved');
 
-  let variantStyle = styles.summaryRowFiring;
-  if (hasFailures) {
-    variantStyle = styles.summaryRowError;
-  } else if (!isFiring) {
-    variantStyle = styles.summaryRowResolved;
-  }
+  const variantStyle = isFiring ? styles.summaryRowFiring : styles.summaryRowResolved;
 
   return (
     <div>
@@ -327,10 +337,20 @@ function NotificationStatusGroup({
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
       >
         <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
-          <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
-          <Text variant="bodySmall" weight="medium">
+          <StateTag state={isFiring ? 'bad' : 'good'} size="sm">
             {statusLabel}
-          </Text>
+          </StateTag>
+          {outcomeLabel && (
+            <>
+              <Text variant="bodySmall" color="secondary">
+                ·
+              </Text>
+              <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+              <Text variant="bodySmall" color="error" weight="medium">
+                {outcomeLabel}
+              </Text>
+            </>
+          )}
           <Text variant="bodySmall" color="secondary">
             ·
           </Text>
@@ -353,11 +373,6 @@ function NotificationStatusGroup({
           <Text variant="bodySmall" color="secondary">
             · {integrationSummary}
           </Text>
-          {outcomeLabel && (
-            <Text variant="bodySmall" color="error">
-              ({outcomeLabel})
-            </Text>
-          )}
         </Stack>
         <Icon name={expanded ? 'angle-up' : 'angle-down'} size="sm" />
       </button>
@@ -390,18 +405,11 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
             {notification.integrationIndex + 1}
           </Text>
         </Stack>
-        {isSuccess ? (
+        {isSuccess && (
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name="check-circle" size="sm" className={styles.successIcon} />
             <Text variant="bodySmall" color="success">
               {t('alerting.instance-details.timeline-delivered', 'Delivered')}
-            </Text>
-          </Stack>
-        ) : (
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
-            <Text variant="bodySmall" color="error">
-              {t('alerting.instance-details.timeline-failed', 'Failed')}
             </Text>
           </Stack>
         )}
@@ -421,11 +429,11 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
           </LinkButton>
         </Tooltip>
       </div>
-      {!isSuccess && notification.error && (
+      {!isSuccess && (
         <div className={styles.notificationRowError}>
-          <Icon name="exclamation-triangle" size="xs" className={styles.errorIcon} />
-          <Text variant="bodySmall" color="secondary" truncate={false}>
-            {notification.error}
+          <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
+          <Text variant="bodySmall" color="error" truncate={false}>
+            {notification.error || t('alerting.instance-details.timeline-failed', 'Failed')}
           </Text>
         </div>
       )}
@@ -482,13 +490,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(0.75),
   }),
 
-  dotWarning: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.warning.main,
+  dotIconError: css({
+    color: theme.colors.error.main,
     flexShrink: 0,
-    marginTop: theme.spacing(0.75),
+    marginTop: theme.spacing(0.5),
+  }),
+
+  dotIconWarning: css({
+    color: theme.colors.warning.main,
+    flexShrink: 0,
+    marginTop: theme.spacing(0.5),
   }),
 
   connectorLine: css({
@@ -527,11 +538,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   summaryRowResolved: css({
     border: `1px solid ${theme.colors.success.border}`,
     backgroundColor: theme.colors.success.transparent,
-  }),
-
-  summaryRowError: css({
-    border: `1px solid ${theme.colors.warning.border}`,
-    backgroundColor: theme.colors.warning.transparent,
   }),
 
   notificationDetails: css({

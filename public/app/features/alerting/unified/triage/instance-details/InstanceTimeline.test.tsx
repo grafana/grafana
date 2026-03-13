@@ -283,7 +283,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} />);
 
-    expect(screen.getByText('(Webhook #2 failed)')).toBeInTheDocument();
+    expect(screen.getByText('Webhook #2 failed')).toBeInTheDocument();
   });
 
   it('expands notification details when clicking on the summary row', async () => {
