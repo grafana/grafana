@@ -204,11 +204,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		// After migration to unified storage, playlist tables may have been
-		// renamed to <table>_legacy or removed entirely.
-		playlistTbl := ss.findTable("playlist")
-		playlistItemTbl := ss.findTable("playlist_item")
-
 		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
 			"DELETE FROM dashboard_tag WHERE org_id = ?",
@@ -233,13 +228,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM team_role WHERE org_id = ?",
 			"DELETE FROM user_role WHERE org_id = ?",
 			"DELETE FROM builtin_role WHERE org_id = ?",
-		}
-
-		if playlistItemTbl != "" && playlistTbl != "" {
-			deletes = append(deletes, "DELETE FROM "+playlistItemTbl+" WHERE playlist_id IN (SELECT id FROM "+playlistTbl+" WHERE org_id = ?)")
-		}
-		if playlistTbl != "" {
-			deletes = append(deletes, "DELETE FROM "+playlistTbl+" WHERE org_id = ?")
 		}
 
 		deletes = append(deletes, ss.deletes...)

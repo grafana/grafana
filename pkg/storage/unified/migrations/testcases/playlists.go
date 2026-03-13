@@ -11,6 +11,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -49,7 +50,12 @@ func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 	}
 }
 
-func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *playlistsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
+	addPlaylistMigrations(mg)
+	addPlaylistUIDMigration(mg)
+}
+
+func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
 	// Get playlist service from the test environment
@@ -80,6 +86,8 @@ func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
 		{Type: "dashboard_by_tag", Value: "mixed-tag", Order: 2},
 	})
 	tc.playlistUIDs = append(tc.playlistUIDs, playlist3UID)
+
+	return false // the values do not exist over k8s apis
 }
 
 func (tc *playlistsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
