@@ -211,6 +211,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
       discoveryMethod: DISCOVERY_METHODS.BROWSE,
+      action: 'use_dashboard',
     });
 
     // Navigate to template route (existing flow)
@@ -241,7 +242,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       }
 
       // Track item click
-      SuggestedDashboardInteractions.itemClicked({
+      await SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [ds.type],
         libraryItemId: String(dashboard.id),
@@ -249,6 +250,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
         eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
         discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        action: 'use_dashboard',
       });
 
       await onUseCommunityDashboard({

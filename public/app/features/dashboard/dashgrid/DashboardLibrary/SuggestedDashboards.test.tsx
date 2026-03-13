@@ -57,6 +57,10 @@ jest.mock('./interactions', () => ({
     loaded: jest.fn(),
     itemClicked: jest.fn(),
   },
+  SuggestedDashboardInteractions: {
+    loaded: jest.fn(),
+    itemClicked: jest.fn(),
+  },
 }));
 
 const mockFetchProvisionedDashboards = fetchProvisionedDashboards as jest.MockedFunction<

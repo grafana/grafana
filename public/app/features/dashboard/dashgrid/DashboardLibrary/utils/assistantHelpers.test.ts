@@ -54,16 +54,22 @@ describe('assistantHelpers', () => {
   });
 
   describe('buildTemplateContextTitle', () => {
-    it('should use dashboard.name for GnetDashboard', () => {
+    it('should use dashboard.name for GnetDashboard with template_dashboard kind', () => {
       const gnetDashboard = createMockGnetDashboard({ name: 'Node Exporter Full' });
-      const title = buildTemplateContextTitle(gnetDashboard);
+      const title = buildTemplateContextTitle(gnetDashboard, 'template_dashboard');
       expect(title).toBe('Dashboard Template: Node Exporter Full');
     });
 
-    it('should use provided title for PluginDashboard', () => {
+    it('should use provided title for PluginDashboard with template_dashboard kind', () => {
       const pluginDashboard = createMockPluginDashboard({ title: 'My Plugin Dashboard' });
-      const title = buildTemplateContextTitle(pluginDashboard);
+      const title = buildTemplateContextTitle(pluginDashboard, 'template_dashboard');
       expect(title).toBe('Dashboard Template: My Plugin Dashboard');
+    });
+
+    it('should not use "Template" prefix for suggested_dashboard kind', () => {
+      const gnetDashboard = createMockGnetDashboard({ name: 'Node Exporter Full' });
+      const title = buildTemplateContextTitle(gnetDashboard, 'suggested_dashboard');
+      expect(title).toBe('Dashboard: Node Exporter Full');
     });
   });
 

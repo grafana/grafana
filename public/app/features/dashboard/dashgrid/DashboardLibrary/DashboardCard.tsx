@@ -79,7 +79,7 @@ function DashboardCardComponent({
     () =>
       createAssistantContextItem('structured', {
         hidden: false,
-        title: buildTemplateContextTitle(dashboard),
+        title: buildTemplateContextTitle(dashboard, kind),
         data: buildTemplateContextData(dashboard, kind),
       }),
     [dashboard, kind]
@@ -90,7 +90,7 @@ function DashboardCardComponent({
       openAssistant?.({
         origin: 'dashboard-library/use-dashboard',
         mode: 'dashboarding',
-        prompt: buildAssistantPrompt(),
+        prompt: buildAssistantPrompt(kind),
         context: [templateContext],
         autoSend: true,
       });

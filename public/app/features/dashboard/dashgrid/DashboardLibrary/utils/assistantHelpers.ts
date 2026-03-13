@@ -68,7 +68,13 @@ export function buildTemplateContextData(
           'Do not assume standard metric names exist.'
       );
     } else {
-      lines.push("Please adapt this template to the user's environment and available data sources.");
+      lines.push(
+        'The dashboard is already rendered on the current page — it is loaded but not yet saved. ' +
+          "Your goal is to adapt the existing panels and queries to work with the user's available data sources. " +
+          "Do NOT save or create the dashboard — saving is the user's responsibility. " +
+          'If you think additional panels would be valuable, ask the user before adding them. ' +
+          'If the original datasource is unavailable and you are considering switching to a test datasource, ask the user for explicit permission first.'
+      );
     }
 
     return lines.join('\n');
@@ -82,22 +88,34 @@ export function buildTemplateContextData(
     datasource: kind === 'suggested_dashboard' && isGnet ? dashboard.datasource : undefined,
     panelTypes: isGnet ? dashboard.panelTypeSlugs : undefined,
     author: isGnet ? dashboard.orgName || dashboard.userName : undefined,
-    instructions: `Use the following template details to create the dashboard: ${buildInstructions()}`,
+    instructions:
+      kind === 'suggested_dashboard'
+        ? `Use the following dashboard details to adapt this dashboard: ${buildInstructions()}`
+        : `Use the following template details to create the dashboard: ${buildInstructions()}`,
   };
 }
 
 /**
  * Builds the title for the assistant context item.
  */
-export function buildTemplateContextTitle(dashboard: PluginDashboard | GnetDashboard): string {
+export function buildTemplateContextTitle(
+  dashboard: PluginDashboard | GnetDashboard,
+  kind: 'template_dashboard' | 'suggested_dashboard'
+): string {
   const isGnet = isGnetDashboard(dashboard);
-  return `Dashboard Template: ${isGnet ? dashboard.name : dashboard.title}`;
+  const name = isGnet ? dashboard.name : dashboard.title;
+  return kind === 'suggested_dashboard' ? `Dashboard: ${name}` : `Dashboard Template: ${name}`;
 }
 
 /**
  * Builds the prompt for the Grafana Assistant when using a dashboard template.
+ * For suggested dashboards (already rendered), asks to adapt the existing dashboard.
+ * For template dashboards, asks to create a new dashboard from the template.
  */
-export function buildAssistantPrompt(): string {
+export function buildAssistantPrompt(kind: 'template_dashboard' | 'suggested_dashboard'): string {
+  if (kind === 'suggested_dashboard') {
+    return `Adapt this dashboard to my environment by connecting it to my available data sources and adjusting queries as needed.`;
+  }
   return `Create a new dashboard based on this dashboard template.`;
 }
 
