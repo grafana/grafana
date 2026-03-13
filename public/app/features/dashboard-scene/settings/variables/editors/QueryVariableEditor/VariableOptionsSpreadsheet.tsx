@@ -1,18 +1,18 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvidedDragHandleProps, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useCallback, useRef, useState } from 'react';
-import { firstValueFrom } from 'rxjs';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { CustomVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { useGetPropertiesFromOptions } from '../../components/VariableValuesPreview';
 
 import { SortSelector } from './SortSelector';
+import { detectClipboardTextFormat, parseClipboardText } from './clipboard';
 
 type SpreadsheetOption = VariableValueOption & {
   id: string;
@@ -33,47 +33,6 @@ function toSpreadsheetOptions(options: VariableValueOption[]): SpreadsheetOption
     ...o,
     properties: { ...o.properties, value: o.value, text: o.label },
   }));
-}
-
-function parseTsv(text: string, properties: string[]): VariableValueOption[] {
-  const lines = text.split('\n').filter((line) => line.trim());
-  if (!lines.length) {
-    return [];
-  }
-
-  const firstLineCols = lines[0].split('\t').map((c) => c.trim());
-  const hasHeader = firstLineCols.every((col) => properties.includes(col));
-
-  const headers = hasHeader ? firstLineCols : properties;
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-
-  return dataLines.map((line) => {
-    const cols = line.split('\t').map((c) => c.trim());
-    const props: VariableValueOptionProperties = {};
-    headers.forEach((key, i) => {
-      props[key] = cols[i] ?? '';
-    });
-
-    return {
-      label: String(props.text ?? props.value ?? ''),
-      value: String(props.value ?? ''),
-      properties: props,
-    };
-  });
-}
-
-async function parseClipboardText(text: string, properties: string[]): Promise<VariableValueOption[]> {
-  if (text.includes('\t')) {
-    return parseTsv(text, properties);
-  }
-
-  const valuesFormat = text.startsWith('[') ? 'json' : text.includes(',') ? 'csv' : undefined;
-  if (!valuesFormat) {
-    return [];
-  }
-
-  const draft = new CustomVariable({ query: text, valuesFormat });
-  return firstValueFrom(draft.getValueOptions({}));
 }
 
 function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
@@ -210,9 +169,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
   );
 
   const handlePaste = useCallback(
-    async (e: React.ClipboardEvent<HTMLInputElement>) => {
-      const text = e.clipboardData.getData('text/plain').trim();
-
+    async (text: string) => {
       let parsed: VariableValueOption[];
       try {
         parsed = await parseClipboardText(text, properties);
@@ -226,37 +183,19 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
         return;
       }
 
-      e.preventDefault();
-
-      const existingValues = new Set([
-        ...options.map((o) => String(o.value)),
-        ...internalOptions.map((o) => String(o.value)),
-      ]);
-
       const emptyProps = properties.reduce<VariableValueOptionProperties>((acc, p) => ({ ...acc, [p]: '' }), {});
 
-      const newOptions: SpreadsheetOption[] = parsed
-        .filter((o) => !existingValues.has(String(o.value)))
-        .map((o) => {
-          const stringifiedProps: VariableValueOptionProperties = {};
-          for (const [key, val] of Object.entries(o.properties ?? {})) {
-            stringifiedProps[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
-          }
-          return {
-            id: uuidv4(),
-            ...o,
-            properties: { ...emptyProps, ...stringifiedProps, value: o.value, text: o.label },
-          };
-        });
-
-      const skippedCount = parsed.length - newOptions.length;
-      if (skippedCount > 0) {
-        alert(
-          t('variables.static-options.paste-duplicates-warning', 'Skipped {{count}} duplicate value(s)', {
-            count: skippedCount,
-          })
-        );
-      }
+      const newOptions: SpreadsheetOption[] = parsed.map((o) => {
+        const stringifiedProps: VariableValueOptionProperties = {};
+        for (const [key, val] of Object.entries(o.properties ?? {})) {
+          stringifiedProps[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
+        }
+        return {
+          id: uuidv4(),
+          ...o,
+          properties: { ...emptyProps, ...stringifiedProps, value: o.value, text: o.label },
+        };
+      });
 
       if (!newOptions.length) {
         return;
@@ -265,7 +204,19 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
       emitChange([...internalOptions, ...newOptions]);
       setDraftOption(createEmptyOption());
     },
-    [options, internalOptions, properties, emitChange, createEmptyOption]
+    [internalOptions, properties, emitChange, createEmptyOption]
+  );
+
+  const onPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLInputElement>) => {
+      const text = e.clipboardData.getData('text/plain').trim();
+      if (!text) {
+        return;
+      }
+      e.preventDefault();
+      handlePaste(text);
+    },
+    [handlePaste]
   );
 
   const shouldFocusDraft = focusDraftRef.current;
@@ -286,6 +237,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     handleDraftChange,
     handleCellKeyDown,
     handlePaste,
+    onPaste,
   };
 }
 
@@ -304,6 +256,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
     handleDraftChange,
     handleCellKeyDown,
     handlePaste,
+    onPaste,
     shouldFocusDraft,
     gridRef,
   } = useVariableOptionsSpreadsheet(props);
@@ -321,7 +274,9 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                   {p}
                 </th>
               ))}
-              <th className={styles.headerIconCell} />
+              <th className={cx(styles.headerIconCell, styles.actionCell)}>
+                <PasteButton onClick={handlePaste} />
+              </th>
             </tr>
           </thead>
           <DragDropContext onDragEnd={handleReorder}>
@@ -370,7 +325,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                     onAdd={handleAdd}
                     onValueChange={(key, val) => handleDraftChange(key, val)}
                     onCellKeyDown={handleCellKeyDown}
-                    onFirstInputPaste={handlePaste}
+                    onFirstInputPaste={onPaste}
                     autoFocusFirst={shouldFocusDraft}
                   />
                 </tbody>
@@ -496,6 +451,98 @@ function SpreadsheetRow(props: SpreadsheetRowProps) {
         </tr>
       )}
     </Draggable>
+  );
+}
+
+function useClipboard(): { text: string; clear: () => void } {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      try {
+        const content = await navigator.clipboard.readText();
+        if (!cancelled) {
+          setText(content.trim());
+        }
+      } catch {
+        if (!cancelled) {
+          setText('');
+        }
+      }
+    }
+
+    check();
+
+    const onFocus = () => check();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
+
+  const clear = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText('');
+    } catch {
+      // noop
+    }
+    setText('');
+  }, []);
+
+  return { text, clear };
+}
+
+function getPasteTooltip(text: string): string {
+  const format = detectClipboardTextFormat(text);
+
+  switch (format) {
+    case 'csv':
+      return t(
+        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-csv',
+        'Add CSV data from clipboard to the options below'
+      );
+    case 'json':
+      return t(
+        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-json',
+        'Add JSON data from clipboard to the options below'
+      );
+    case 'tsv':
+      return t(
+        'dashboard-scene.variable-options-spreadsheet.tooltip-paste-spreadsheet',
+        'Add spreadsheet data from clipboard to the options below'
+      );
+    default:
+      return t('dashboard-scene.variable-options-spreadsheet.tooltip-nothing-to-paste', 'Nothing to paste');
+  }
+}
+
+function PasteButton({ onClick }: { onClick: (text: string) => void }) {
+  const { text, clear } = useClipboard();
+  const format = detectClipboardTextFormat(text);
+
+  const handleClick = useCallback(() => {
+    if (text) {
+      clear();
+      onClick(text);
+    }
+  }, [text, clear, onClick]);
+
+  return (
+    <IconButton
+      name="clipboard-alt"
+      disabled={!format}
+      onClick={handleClick}
+      aria-label={t(
+        'dashboard-scene.variable-options-spreadsheet.aria-label-paste-static-options-from-clipboard',
+        'Paste static options from clipboard'
+      )}
+      tooltip={getPasteTooltip(text)}
+      tooltipPlacement="top"
+    />
   );
 }
 

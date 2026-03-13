@@ -321,7 +321,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     buttonsRow: css({
       flexShrink: 0,
-      marginBottom: theme.spacing(1),
+      marginBottom: theme.spacing(1.5),
     }),
     variableName: css({
       fontSize: theme.typography.h4.fontSize,

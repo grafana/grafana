@@ -7353,6 +7353,13 @@
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Static options"
     },
+    "variable-options-spreadsheet": {
+      "aria-label-paste-static-options-from-clipboard": "Paste static options from clipboard",
+      "tooltip-nothing-to-paste": "Nothing to paste",
+      "tooltip-paste-csv": "Add CSV data from clipboard to the options below",
+      "tooltip-paste-json": "Add JSON data from clipboard to the options below",
+      "tooltip-paste-spreadsheet": "Add spreadsheet data from clipboard to the options below"
+    },
     "variable-type-select": {
       "name-variable-type": "Variable type"
     },
@@ -15933,8 +15940,6 @@
       "drag-and-drop": "Drag and drop to reorder",
       "label-header": "Display text",
       "label-placeholder": "Defaults to value",
-      "paste-duplicates-warning_one": "Skipped {{count}} duplicate value(s)",
-      "paste-duplicates-warning_other": "Skipped {{count}} duplicate value(s)",
       "paste-parse-error": "Failed to parse pasted data",
       "remove-option-button-label": "Remove option",
       "value-header": "Value",
