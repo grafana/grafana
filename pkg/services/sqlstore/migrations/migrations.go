@@ -93,8 +93,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
-	addFolderMigrations(mg)
-
 	anonservice.AddMigration(mg)
 	signingkeys.AddMigration(mg)
 
