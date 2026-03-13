@@ -242,6 +242,7 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		writer, err := kv.Save(ctx, testSection, emptyKey)
 		require.NoError(t, err)
 		err = writer.Close()
+		assert.Error(t, err)
 		assert.Equal(t, kvpkg.ErrEmptyValue, err)
 
 		// Verify it was NOT saved
