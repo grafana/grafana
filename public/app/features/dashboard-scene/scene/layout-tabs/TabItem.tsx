@@ -26,7 +26,7 @@ import { getElements } from '../../serialization/layoutSerializers/utils';
 import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -98,7 +98,7 @@ export class TabItem
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
-      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'layers',
       isHidden,
     };
@@ -121,7 +121,7 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Tab'));
+    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

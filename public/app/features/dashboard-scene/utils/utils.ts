@@ -423,6 +423,28 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
   return sceneGraph.interpolate(scene, title, undefined, 'text');
 }
 
+type RepeatableSectionState = SceneObjectState & {
+  repeatByVariable?: string;
+  repeatSourceKey?: string;
+};
+
+export function interpolateSectionTitle<T extends RepeatableSectionState>(
+  scene: SceneObject<T>,
+  value: string | undefined | null
+): string {
+  if (value === '' || value == null) {
+    return '';
+  }
+
+  // Repeated rows/tabs must keep local scope interpolation so each repeated instance
+  // resolves to a distinct title/slug and remains selectable.
+  if (scene.state.repeatByVariable || scene.state.repeatSourceKey) {
+    return sceneGraph.interpolate(scene, value, undefined, 'text');
+  }
+
+  return sceneGraph.interpolate(getDashboardSceneFor(scene), value, undefined, 'text');
+}
+
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
