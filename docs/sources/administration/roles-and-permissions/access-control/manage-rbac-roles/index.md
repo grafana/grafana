@@ -120,19 +120,19 @@ For a reference of basic and fixed role assignments, refer to [RBAC role definit
 
 ## Update role permissions
 
-### Update basic role permissions
+If the default basic role permissions don't meet your requirements you can change them.
 
-If the default basic role definitions do not meet your requirements, you can change their permissions.
+You can also change basic roles' permissions via configuration or using the API. Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
 
-**Before you begin:**
+### Update basic role permissions in the configuration file
 
-- Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions](ref:rbac-fixed-basic-role-definitions-basic-role-assignments).
+Before you begin, determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions](ref:rbac-fixed-basic-role-definitions-basic-role-assignments).
 
 {{< admonition type="note" >}}
 You cannot modify the `No Basic Role` permissions.
 {{< /admonition >}}
 
-**To change permissions from a basic role:**
+To change permissions for a basic role:
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -149,7 +149,11 @@ You cannot modify the `No Basic Role` permissions.
 
 1. Reload the provisioning configuration file. For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/admin/#reload-provisioning-configurations).
 
+#### Example: Modify the Grafana Admin role
+
 The following example modifies the `Grafana Admin` basic role permissions.
+
+In the new configuration:
 
 - Permissions to list, grant, and revoke roles to teams are removed.
 - Permission to read and write Grafana folders is added.
@@ -188,10 +192,6 @@ You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. T
 Make sure to **increment** the role version for the changes to be accounted for.
 {{< /admonition >}}
 
-You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
-
-### Update permissions bla bla
-
 ## Reset basic roles to their default
 
 You have two options to reset the basic roles permissions to their default.
@@ -202,8 +202,7 @@ You have two options to reset the basic roles permissions to their default.
 
 > Warning: If this option is left to true, permissions will be reset on every boot.
 
-Use the [reset_basic_roles](ref:configure-rbac-configure-rbac-in-grafana) option to reset
-basic roles permissions to their default on Grafana instance boot up.
+Use the [reset_basic_roles](ref:configure-rbac-configure-rbac-in-grafana) option to reset basic roles permissions to their default on Grafana instance boot up.
 
 1. Open you configuration file and update the rbac section as follow:
 

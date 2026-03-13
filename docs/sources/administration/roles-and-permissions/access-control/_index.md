@@ -100,7 +100,7 @@ refs:
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/migrate-api-keys/
 ---
 
-# Role-based access control (RBAC)
+# Role-based access control (RBAC) overview
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
@@ -205,6 +205,85 @@ For example:
 - The `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:read` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
 Consider creating a custom role only when fixed roles do not meet your permissions requirements. To learn more, refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles).
+
+## Permission propagation
+
+If you modify a specific basic role, the change is not propagated to the other basic roles. In other words, if you modify Viewer basic role and grant it additional permissions, Editors or Admins won't be updated with that additional grant.
+
+## New permissions
+
+When a new permission is created, it's added automatically to modified basic roles. This means that a feature you thought you removed can get new permissions added back.
+
+If you're using custom roles, new permissions are not added automatically. If a new feature that requires additional permissions is released, you will have to add the permissions to custom roles manually. 
+
+### Stop new features from being auto-enabled
+
+How to Stop New Plugin-Based Features from Being Auto-Enabled for Editors or Viewers in Grafana Cloud
+
+In some cases, like when managing restricted access for enterprise users, you may want to stop new plugins or apps from being automatically accessible to users with the default Editor or Viewer basic roles.
+
+This guide explains how to remove blanket plugin access from the basic_editor or basic_viewer role and grant access only to specific plugins.
+
+Limitations
+This will not prevent new core Grafana features or new permissions inside existing apps from appearing. It only limits plugin access.
+For core RBAC changes, you will need to manage drift manually or set up automation.
+
+Why this is needed
+By default, the basic_editor and basic_viewer roles often include:
+{
+"action": "plugins.app:access",
+"scope": "plugins:\*"
+}
+This allows access to all current and future plugins, including ones your users may not need or have licensed (for example, IRM, Machine Learning, Synthetics).
+To control this, you can:
+Remove the wildcard access.
+Add explicit plugin permissions for only the apps you want.
+
+Step-by-Step Instructions
+
+1. Get the current definition of the role
+   Use your admin service account token to fetch the existing role (replace with basic_viewer if needed):
+   curl -H "Authorization: Bearer <admin SA token>" \
+    https://<your-stack>.grafana.net/api/access-control/roles/basic_editor \
+
+   > editor_custom_role.json
+
+2. Modify the role definition
+   Open the downloaded JSON file and:
+   Remove this permission:
+   {
+   "action": "plugins.app:access",
+   "scope": "plugins:\*"
+   }
+   Add only the plugin IDs you want to keep access to, for example:
+   {
+   "action": "plugins.app:access",
+   "scope": "plugins:id:grafana-kowalski-app"
+   },
+   {
+   "action": "plugins.app:access",
+   "scope": "plugins:id:cloud-home-app"
+   }
+   Important: Make sure to include cloud-home-app or the homepage will result in a 404 error.
+
+3. (Optional) Add any specific role-based permissions required by the apps:
+   Example:
+   {
+   "action": "grafana-csp-app:read",
+   "scope": ""
+   }
+   You will need these if apps include fixed roles or granular actions.
+
+4. Bump the role version
+   Find the version field in the JSON and increment it by 1:
+   "version": 5 → "version": 6
+
+5. Update the modified role via API
+   curl -X PUT -H "Authorization: Bearer <admin SA token>" \
+    -H "Content-Type: application/json" \
+    https://<your-stack>.grafana.net/api/access-control/roles/basic_editor \
+    -d @editor_custom_role.json
+   (Replace basic_editor with basic_viewer if needed.)
 
 ## RBAC limitations
 

@@ -7,7 +7,68 @@ labels:
     - enterprise
 menuTitle: Create custom roles
 title: Create custom Grafana RBAC roles
-weight: 65
+weight: 55
+refs:
+  configure-rbac-configure-rbac-in-grafana:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/configure-rbac/#configure-rbac-in-grafana
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/configure-rbac/#configure-rbac-in-grafana
+  api-rbac-reset-basic-roles-to-their-default:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#reset-basic-roles-to-their-default
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#reset-basic-roles-to-their-default
+  api-rbac-delete-a-custom-role:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#delete-a-custom-role
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#delete-a-custom-role
+  api-rbac-update-a-role:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#update-a-role
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#update-a-role
+  api-rbac-get-a-role:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#get-a-role
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#get-a-role
+  api-rbac-create-a-new-custom-role:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#create-a-new-custom-role
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#create-a-new-custom-role
+  plan-rbac-rollout-strategy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
+  custom-role-actions-scopes:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+  rbac-terraform-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-terraform-provisioning/
+  rbac-grafana-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
+  rbac-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+  rbac-fixed-basic-role-definitions-basic-role-assignments:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
 ---
 
 # Create custom RBAC roles
@@ -16,11 +77,22 @@ weight: 65
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Create a custom role when basic roles and fixed roles do not meet your permissions requirements. Creating and editing custom roles is not currently possible in the Grafana UI. Instead, use one of the following methods:
+Create a custom RBAC role when basic roles and fixed roles do not meet your permissions requirements. For a list of the actions and scopes you can customize a role with, refer to [Grafana RBAC permission actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
-- Grafana provisioning using a YAML file.
-- The RBAC HTTP API.
-- TBC
+{{< admonition type="caution" >}}
+**Before creating custom roles**, consider whether you can meet your access requirements using:
+
+- **[Folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
+- **[Fixed roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
+
+Use custom roles only when you need fine-grained control that these options don't provide.
+{{< /admonition >}}
+
+Creating and editing custom roles is not currently possible in the Grafana UI. Instead, use one of the following methods:
+
+- The RBAC HTTP API
+- Terraform
+- Grafana provisioning using a YAML file
 
 ## Before you begin
 

@@ -36,15 +36,6 @@ An RBAC permission comprises and action and a scope:
 
 If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific, ad-hoc sets of permissions.
 
-{{< admonition type="caution" >}}
-**Before creating custom roles**, consider whether you can meet your access requirements using:
-
-- **[Folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
-- **[Fixed roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
-
-Use custom roles only when you need fine-grained control that these options don't provide.
-{{< /admonition >}}
-
 To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
 ## Action definitions
