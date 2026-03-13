@@ -78,7 +78,7 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
     );
   } else if (ds.hasFieldType(FieldType.string) && ds.hasFieldType(FieldType.number) && ds.frameCount === 1) {
     if (ds.rowCountTotal > MAX_STATS) {
-      // High row count — suggest aggregated stat instead of one card per row
+      // High row count — suggest aggregated stat
       suggestions.push(
         {
           name: t('stat.suggestions.stat', 'Stat'),
@@ -116,7 +116,10 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
           },
         },
         {
-          name: t('stat.suggestions.stat-discrete-values-color-background', 'Stat - discrete values - color background'),
+          name: t(
+            'stat.suggestions.stat-discrete-values-color-background',
+            'Stat - discrete values - color background'
+          ),
           options: {
             reduceOptions: {
               values: true,
