@@ -11,6 +11,11 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
   const body = parseBody(options, isAppJson);
   const credentials = parseCredentials(options);
 
+  // If sending FormData, remove Content-Type so browser sets multipart boundary automatically
+  if (options.data instanceof FormData) {
+    headers.delete('content-type');
+  }
+
   return {
     method,
     headers,
@@ -113,6 +118,9 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
     return options.data;
   }
   if (options.data instanceof Blob) {
+    return options.data;
+  }
+  if (options.data instanceof FormData) {
     return options.data;
   }
 
