@@ -253,10 +253,13 @@ You can nest up to two levels deep, which means a dashboard can have a maximum o
 - Panels
 
 You can only have one type of grouping at each level.
-Inside of those groupings however, you have to freedom to add different dashboard elements.
+Inside of those groupings however, you have the freedom to add different dashboard elements.
 Also, custom and auto grid panel layouts are supported for rows and tabs, so each grouping can have a different panel layout.
 
 <!-- {{< figure src="/media/docs/grafana/dashboards/screenshot-groupings-v12.4.png" alt="Dashboard with nested groupings" max-width="750px" >}} -->
+
+In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **Add panel** and **Group panels** buttons are visible.
+For tabs, actions like **Add tab** and **Ungroup tabs** are always visible on the tabs bar.
 
 The following sections describe:
 
@@ -301,7 +304,7 @@ To group panels, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Under a panel, click **Group panels**.
+1. Under a panel, hover your mouse to reveal the **Group panels** button, then click it.
 
    While grouping is typically used for multiple panels, you can start a grouping with just one panel.
 
@@ -369,6 +372,8 @@ Ungrouping behavior depends on whether you're working with first-level or nested
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-ungrouping-v12.4.png" alt="Dashboard with ungrouping behavior annotated" max-width="750px" >}}
 
+The **Ungroup rows** and **Ungroup tabs** buttons are only visible when you hover your mouse over the relevant row or tab area.
+
 {{< admonition type="caution" >}}
 If you delete a grouping, rather than ungrouping it, its panels are deleted as well.
 {{< /admonition >}}
@@ -379,8 +384,8 @@ To remove groupings, follow these steps:
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Do one of the following:
-   - Click **Ungroup rows** or **Ungroup tabs** at the bottom of the dashboard to ungroup all rows or tabs, including any nested groupings.
-   - Click in a grouping and click **Ungroup rows** or **Ungroup tabs** to ungroup only the tabs or rows nested in that grouping.
+   - Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it to ungroup all rows or tabs, including any nested groupings.
+   - Hover and click in a grouping to show and click **Ungroup rows** or **Ungroup tabs** to ungroup only the tabs or rows nested in that grouping.
 
 1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
 1. Click **Save**.
