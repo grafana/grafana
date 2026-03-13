@@ -163,7 +163,18 @@ VizAnnotations: {
 	multiLane?: bool
 	// Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
 	clustering?: number
+	// Controls indicator lines and shaded regions behavior
+	canvasControls?: AnnotationCanvasControls
 } @cuetsy(kind="interface")
+
+AnnotationCanvasControls: {
+    lines: {
+        width?: number
+    },
+    regions: {
+        opacity?: number
+    }
+}
 
 // TODO docs
 OptionsWithAnnotations: {
