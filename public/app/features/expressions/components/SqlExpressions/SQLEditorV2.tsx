@@ -10,7 +10,7 @@ import {
 } from '@codemirror/autocomplete';
 import { keywordCompletionSource, MySQL, sql } from '@codemirror/lang-sql';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { Compartment, EditorState, Text } from '@codemirror/state';
+import { EditorState, Text } from '@codemirror/state';
 import {
   Decoration,
   DecorationSet,
@@ -26,7 +26,7 @@ import {
 } from '@codemirror/view';
 import { css } from '@emotion/css';
 
-import { useEffect, useRef } from 'react';
+import { RefObject, useEffect, useRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { useLatest } from 'react-use';
 
@@ -67,29 +67,36 @@ function isAfterFromOrJoin(doc: Text, pos: number): boolean {
 }
 
 // Extract table names from the FROM clause of the full query
+// Handles comma-separated tables: FROM A, B, C
 function getFromTables(doc: Text): string[] {
   const text = doc.toString();
-  return Array.from(text.matchAll(/\bFROM\s+(\w+)/gi), (m) => m[1]);
+  const tables: string[] = [];
+  for (const match of text.matchAll(/\bFROM\s+([\w\s,]+)/gi)) {
+    const list = match[1].split(',').map((t) => t.trim().split(/\s/)[0]);
+    tables.push(...list.filter(Boolean));
+  }
+  return [...new Set(tables)];
 }
 
 function makeCompletionSource(
-  tables: string[],
-  getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>,
-  fnCompletions: Completion[]
+  languageRef: RefObject<SQLEditorV2LanguageDefinition | undefined>
 ) {
-  const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
-
   return async (context: CompletionContext): Promise<CompletionResult | null> => {
     const word = context.matchBefore(/\w*/);
     if (!word || (word.from === word.to && !context.explicit)) {
       return null;
     }
 
+    const provider = languageRef.current?.completionProvider;
+
     if (isAfterFromOrJoin(context.state.doc, context.pos)) {
+      const tables = (await provider?.getTables()) ?? [];
+      const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
       return { from: word.from, options: tableCompletions };
     }
 
-    // Fetch columns for tables referenced in FROM
+    // Fetch columns for tables referenced in FROM using the latest provider
+    const getColumns = provider?.getColumns ?? (() => Promise.resolve([]));
     const fromTables = getFromTables(context.state.doc);
     const columnResults = await Promise.allSettled(fromTables.map(getColumns));
     const columnCompletions: Completion[] = columnResults
@@ -102,6 +109,10 @@ function makeCompletionSource(
       }));
 
     // SQL keywords + functions + columns
+    const fnCompletions: Completion[] = (provider?.getFunctions?.() ?? []).map((f) => ({
+      label: f,
+      type: 'function',
+    }));
     const kwResult = await kwSource(context);
     const extra = [...columnCompletions, ...fnCompletions];
     if (!kwResult) {
@@ -230,14 +241,12 @@ function inlineGhostExtension(): import('@codemirror/state').Extension {
 }
 
 function buildSqlExtension(
-  tables: string[],
-  getColumns: (table: string) => Promise<Array<{ label: string; apply?: string }>>,
-  fnCompletions: Completion[]
+  languageRef: RefObject<SQLEditorV2LanguageDefinition | undefined>
 ) {
   return [
     sql({ dialect: MySQL }),
     autocompletion({
-      override: [makeCompletionSource(tables, getColumns, fnCompletions)],
+      override: [makeCompletionSource(languageRef)],
       defaultKeymap: true,
       activateOnTyping: true,
       activateOnCompletion: () => true,
@@ -261,8 +270,6 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
     if (!containerRef.current) {
       return;
     }
-
-    const sqlCompartment = new Compartment();
 
     // Panel factory for the QueryToolbox toolbar
     const makeToolboxPanel = (): Panel => {
@@ -297,8 +304,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
     const extensions = [
       lineNumbers(),
       highlightActiveLine(),
-      // Start with no tables; reconfigured async once tables are fetched
-      sqlCompartment.of(buildSqlExtension([], () => Promise.resolve([]), [])),
+      buildSqlExtension(languageRef),
       inlineGhostExtension(),
       oneDark,
       showPanel.of(toolboxProps ? makeToolboxPanel : null),
@@ -386,28 +392,7 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
     const view = new EditorView({ state, parent: containerRef.current });
     viewRef.current = view;
 
-    // Async: fetch tables then reconfigure completion with real data
-    let cancelled = false;
-    const provider = languageRef.current?.completionProvider;
-    if (provider) {
-      provider.getTables().then((tables) => {
-        if (cancelled) {
-          return;
-        }
-        const fnCompletions: Completion[] = (provider.getFunctions?.() ?? []).map((f) => ({
-          label: f,
-          type: 'function',
-        }));
-        if (viewRef.current) {
-          viewRef.current.dispatch({
-            effects: sqlCompartment.reconfigure(buildSqlExtension(tables, provider.getColumns, fnCompletions)),
-          });
-        }
-      });
-    }
-
     return () => {
-      cancelled = true;
       panelRootRef.current?.unmount();
       panelRootRef.current = null;
       view.destroy();
