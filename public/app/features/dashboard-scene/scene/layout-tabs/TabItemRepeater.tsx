@@ -168,8 +168,7 @@ export function createTabRepeats({
         variable,
         variableValues[tabIndex],
         variableTexts[tabIndex],
-        baseSectionVariables,
-        !isSourceTab
+        baseSectionVariables
       ),
       layout,
     });

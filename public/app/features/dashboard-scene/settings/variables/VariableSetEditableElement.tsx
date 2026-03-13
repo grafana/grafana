@@ -20,6 +20,7 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 import { openAddVariablePane } from './VariableAddEditableElement';
 import { isEditableVariableType } from './utils';
@@ -56,7 +57,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getOutlineChildren() {
     const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(
-      this.set.state.variables
+      filterSectionRepeatLocalVariables(this.set.state.variables, this.set)
         // filter out system and snapshot variables
         .filter((variable) => isEditableVariableType(variable.state.type))
     );
@@ -98,7 +99,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const { editableVariables, nonEditableVariables } = useMemo(() => {
     const editableVariables: SceneVariable[] = [];
     const nonEditableVariables: SceneVariable[] = [];
-    variables.forEach((variable) => {
+    filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
       if (isEditableVariableType(variable.state.type)) {
         editableVariables.push(variable);
       } else {
@@ -109,7 +110,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       editableVariables,
       nonEditableVariables,
     };
-  }, [variables]);
+  }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
 

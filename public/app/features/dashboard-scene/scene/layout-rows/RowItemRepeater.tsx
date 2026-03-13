@@ -113,8 +113,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
         variable,
         variableValues[rowIndex],
         variableTexts[rowIndex],
-        baseSectionVariables,
-        !isSourceRow
+        baseSectionVariables
       ),
       layout,
     });

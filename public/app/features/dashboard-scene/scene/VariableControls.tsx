@@ -15,6 +15,8 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
+
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 
@@ -193,7 +195,9 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   const { variables } = variableSet.useState();
   const styles = useStyles2(getSectionVariableStyles);
 
-  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.hideVariable);
+  const visibleVariables = filterSectionRepeatLocalVariables(variables, variableSet).filter(
+    (v) => v.state.hide !== VariableHide.hideVariable
+  );
 
   if (visibleVariables.length === 0) {
     return null;

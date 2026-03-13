@@ -23,6 +23,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -269,7 +270,11 @@ export class RowItem
     if (repeat) {
       this.setState({ repeatByVariable: repeat });
     } else {
-      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
+      this.setState({
+        repeatedRows: undefined,
+        $variables: removeRepeatLocalVariableFromSet(this.state.$variables, this.state.repeatByVariable),
+        repeatByVariable: undefined,
+      });
     }
   }
 

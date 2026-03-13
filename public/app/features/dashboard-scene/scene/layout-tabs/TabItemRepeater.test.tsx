@@ -4,7 +4,15 @@ import { render } from 'test/test-utils';
 import { VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneTimeRange, SceneVariableSet, TestVariable, VariableValueOption, PanelBuilders } from '@grafana/scenes';
+import {
+  CustomVariable,
+  LocalValueVariable,
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+  VariableValueOption,
+  PanelBuilders,
+} from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
@@ -104,6 +112,33 @@ describe('TabItemRepeater', () => {
       expect(tabToRepeat.state.repeatedTabs).toBe(undefined);
       expect(tabToRepeat.state.repeatByVariable).toBe(undefined);
     });
+
+    it('Should preserve section variable with duplicate name when removing repeats', () => {
+      const sectionScopedVariable = new CustomVariable({
+        name: 'server',
+        query: 'row-scope',
+        value: 'row-scope',
+        text: 'row-scope',
+      });
+      const tabToRepeat = new TabItem({
+        key: 'tab-1',
+        title: 'Tab $server',
+        repeatByVariable: 'server',
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: 'A1', text: 'A' }), sectionScopedVariable],
+        }),
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      tabToRepeat.onChangeRepeat(undefined);
+
+      expect(tabToRepeat.state.repeatedTabs).toBeUndefined();
+      expect(tabToRepeat.state.repeatByVariable).toBeUndefined();
+      expect(tabToRepeat.state.$variables?.state.variables).toHaveLength(1);
+      expect(tabToRepeat.state.$variables?.state.variables[0]).toBeInstanceOf(CustomVariable);
+      expect(tabToRepeat.state.$variables?.state.variables[0].state.name).toBe('server');
+      expect(tabToRepeat.state.$variables?.state.variables[0].getValue()).toBe('row-scope');
+    });
   });
 });
 
@@ -121,13 +156,15 @@ function buildTextPanel(key: string, content: string) {
 function renderScene(
   options: SceneOptions,
   variableOptions?: VariableValueOption[],
-  variableStateOverrides?: { isMulti: boolean }
+  variableStateOverrides?: { isMulti: boolean },
+  tabVariables?: SceneVariableSet
 ) {
   const tabs = [
     new TabItem({
       key: 'tab-1',
       title: 'Tab $server',
       repeatByVariable: 'server',
+      $variables: tabVariables,
       layout: new AutoGridLayoutManager({
         layout: new AutoGridLayout({
           children: [

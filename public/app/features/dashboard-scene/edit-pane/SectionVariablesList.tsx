@@ -6,6 +6,7 @@ import { Box, Button, Stack } from '@grafana/ui';
 import { openAddSectionVariablePane } from '../settings/variables/VariableAddEditableElement';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 export interface SectionVariablesCategoryTitleProps {
   /** Scene object that owns the section variables (e.g. RowItem, TabItem) */
@@ -15,7 +16,10 @@ export interface SectionVariablesCategoryTitleProps {
 
 export function SectionVariablesCategoryTitle({ sectionOwner, isExpanded }: SectionVariablesCategoryTitleProps) {
   const variableSet = sectionOwner.state.$variables;
-  const variableCount = variableSet instanceof SceneVariableSet ? variableSet.state.variables.length : 0;
+  const variableCount =
+    variableSet instanceof SceneVariableSet
+      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet).length
+      : 0;
   const dashboard = getDashboardSceneFor(sectionOwner);
 
   return (
@@ -47,7 +51,10 @@ export interface SectionVariablesListProps {
 
 export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps) {
   const variableSet = sectionOwner.state.$variables;
-  const variables = variableSet instanceof SceneVariableSet ? variableSet.useState().variables : [];
+  const variables =
+    variableSet instanceof SceneVariableSet
+      ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet)
+      : [];
   const dashboard = getDashboardSceneFor(sectionOwner);
 
   if (variables.length === 0) {
