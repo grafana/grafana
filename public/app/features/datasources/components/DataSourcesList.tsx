@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -82,6 +82,7 @@ export function DataSourcesListView({
   const theme = useTheme2();
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [keepAllRowsMounted, setKeepAllRowsMounted] = useState(false);
   const favoritesCheckbox =
     favoriteDataSources?.enabled && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
       ? {
@@ -106,6 +107,26 @@ export function DataSourcesListView({
     });
   }, [location]);
 
+  useEffect(() => {
+    const enableFullListForKeyboardNavigation = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        setKeepAllRowsMounted(true);
+      }
+    };
+
+    const enableVirtualizationForPointerNavigation = () => {
+      setKeepAllRowsMounted(false);
+    };
+
+    window.addEventListener('keydown', enableFullListForKeyboardNavigation);
+    window.addEventListener('pointerdown', enableVirtualizationForPointerNavigation);
+
+    return () => {
+      window.removeEventListener('keydown', enableFullListForKeyboardNavigation);
+      window.removeEventListener('pointerdown', enableVirtualizationForPointerNavigation);
+    };
+  }, []);
+
   const rowGap = Number.parseFloat(theme.spacing(1)) || 8;
   const rowVirtualizer = useVirtualizer({
     count: dataSources.length,
@@ -116,7 +137,7 @@ export function DataSourcesListView({
       const measuredHeight = element.getBoundingClientRect().height;
       return measuredHeight > 0 ? measuredHeight : ROW_ESTIMATE_HEIGHT;
     },
-    overscan: VIRTUAL_LIST_OVERSCAN,
+    overscan: keepAllRowsMounted ? dataSources.length : VIRTUAL_LIST_OVERSCAN,
     gap: rowGap,
     initialRect: VIRTUAL_LIST_INITIAL_RECT,
   });
@@ -155,11 +176,21 @@ export function DataSourcesListView({
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
       ) : isLoading ? (
         <ul className={styles.loadingList}>
-          {new Array(LOADING_SKELETON_COUNT)
-            .fill(null)
-            .map((_, index) => (
-              <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
-            ))}
+          {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
+            <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
+          ))}
+        </ul>
+      ) : keepAllRowsMounted ? (
+        <ul className={styles.fullList}>
+          {dataSources.map((dataSource, index) => (
+            <li key={dataSource.uid} aria-setsize={dataSources.length} aria-posinset={index + 1}>
+              <DataSourcesListCard
+                dataSource={dataSource}
+                hasWriteRights={hasWriteRights}
+                hasExploreRights={hasExploreRights}
+              />
+            </li>
+          ))}
         </ul>
       ) : (
         <div ref={scrollRef} className={styles.listContainer}>
@@ -205,6 +236,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
     }),
     loadingList: css({
+      listStyle: 'none',
+      display: 'grid',
+      gap: theme.spacing(1),
+      padding: 0,
+      margin: 0,
+    }),
+    fullList: css({
       listStyle: 'none',
       display: 'grid',
       gap: theme.spacing(1),

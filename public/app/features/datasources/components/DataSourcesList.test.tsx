@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
@@ -97,6 +98,21 @@ describe('<DataSourcesList>', () => {
     expect(listItems.length).toBeGreaterThan(0);
     expect(listItems.length).toBeLessThan(200);
     expect(screen.queryByRole('link', { name: 'dataSource-199' })).not.toBeInTheDocument();
+  });
+
+  it('should keep all datasource rows mounted during keyboard navigation', async () => {
+    setup({
+      dataSources: getMockDataSources(200),
+      dataSourcesCount: 200,
+    });
+
+    expect((await screen.findAllByRole('listitem')).length).toBeLessThan(200);
+
+    const user = userEvent.setup();
+    await user.tab();
+
+    expect(await screen.findByRole('link', { name: 'dataSource-199' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('listitem')).toHaveLength(200);
   });
 
   describe('Favorites functionality', () => {
