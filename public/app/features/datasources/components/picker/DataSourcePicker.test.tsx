@@ -45,7 +45,7 @@ const mockDS1 = createDS('mock.datasource.1', 1, false);
 const mockDS2 = createDS('mock.datasource.2', 2, false);
 const MockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
-const mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
+let mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
 
 async function setupOpenDropdown(user: UserEvent, props: DataSourcePickerProps) {
   const dropdown = render(<DataSourcePicker {...props}></DataSourcePicker>);
@@ -90,6 +90,7 @@ beforeAll(() => {
 const getListMock = jest.fn();
 const getInstanceSettingsMock = jest.fn();
 beforeEach(() => {
+  mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
   getListMock.mockReturnValue(mockDSList);
   getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
@@ -285,6 +286,16 @@ describe('DataSourcePicker', () => {
       expect(await screen.findByText('Configure a new data source')).toBeInTheDocument();
       // It should point to the new data source page including any sub url configured
       expect(screen.getByRole('link')).toHaveAttribute('href', '/my-sub-path/connections/datasources/new');
+    });
+
+    it('should virtualize large data source lists', async () => {
+      mockDSList = Array.from({ length: 160 }, (_, index) => createDS(`mock.datasource.${index}`, index, false));
+
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      const renderedCards = screen.getAllByTestId('data-source-card');
+      expect(renderedCards.length).toBeLessThan(mockDSList.length);
+      expect(renderedCards.length).toBeLessThan(30);
     });
 
     it('should open the modal when open advanced is clicked', async () => {

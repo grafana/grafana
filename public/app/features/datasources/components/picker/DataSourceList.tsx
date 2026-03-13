@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +16,10 @@ import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './DataSourcePicker';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
+
+const VIRTUALIZATION_MIN_ITEMS = 100;
+const DATA_SOURCE_ROW_HEIGHT = 72;
+const MAX_VISIBLE_ROWS = 8;
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -50,14 +55,10 @@ export interface DataSourceListProps {
 
 export function DataSourceList(props: DataSourceListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
-    keyboardEvents: props.keyboardEvents,
-    containerRef: containerRef,
-  });
+  const virtualizedListRef = useRef<FixedSizeList<DataSourceRowData>>(null);
+  const [selectedVirtualizedIndex, setSelectedVirtualizedIndex] = useState(0);
 
   const theme = useTheme2();
-  const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA, favoriteDataSources } = props;
   const dataSources = useDatasources(
@@ -78,7 +79,90 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const dataSourceVariableIDs = useMemo(() => getDataSourceVariableIDs(), []);
+  const favoriteDataSourceIDs = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
+
+  const filteredAndSortedDataSources = useMemo(() => {
+    const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+    return [...filteredDataSources].sort(
+      getDataSourceCompareFn(current, recentlyUsedDataSources, dataSourceVariableIDs, favoriteDataSourceIDs)
+    );
+  }, [props.filter, dataSources, current, recentlyUsedDataSources, dataSourceVariableIDs, favoriteDataSourceIDs]);
+
+  const shouldVirtualize = filteredAndSortedDataSources.length >= VIRTUALIZATION_MIN_ITEMS;
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
+    keyboardEvents: shouldVirtualize ? undefined : props.keyboardEvents,
+    containerRef: containerRef,
+  });
+  const styles = getStyles(theme, selectedItemCssSelector);
+
+  const selectDataSource = useCallback(
+    (ds: DataSourceInstanceSettings) => {
+      pushRecentlyUsedDataSource(ds);
+      onChange(ds);
+    },
+    [onChange, pushRecentlyUsedDataSource]
+  );
+
+  useEffect(() => {
+    if (!shouldVirtualize || !enableKeyboardNavigation) {
+      return;
+    }
+
+    setSelectedVirtualizedIndex(0);
+    virtualizedListRef.current?.scrollToItem(0, 'auto');
+  }, [filteredAndSortedDataSources, shouldVirtualize, enableKeyboardNavigation]);
+
+  useEffect(() => {
+    if (!shouldVirtualize || !enableKeyboardNavigation || !props.keyboardEvents) {
+      return;
+    }
+
+    const sub = props.keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        if (filteredAndSortedDataSources.length === 0) {
+          return;
+        }
+
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            setSelectedVirtualizedIndex((previousIndex) => {
+              const nextIndex = Math.min(previousIndex + 1, filteredAndSortedDataSources.length - 1);
+              virtualizedListRef.current?.scrollToItem(nextIndex, 'smart');
+              return nextIndex;
+            });
+            keyEvent.preventDefault();
+            break;
+          }
+          case 'ArrowUp': {
+            setSelectedVirtualizedIndex((previousIndex) => {
+              const nextIndex = previousIndex > 0 ? previousIndex - 1 : 0;
+              virtualizedListRef.current?.scrollToItem(nextIndex, 'smart');
+              return nextIndex;
+            });
+            keyEvent.preventDefault();
+            break;
+          }
+          case 'Enter': {
+            const selectedDs = filteredAndSortedDataSources[selectedVirtualizedIndex];
+            if (selectedDs) {
+              selectDataSource(selectedDs);
+            }
+            break;
+          }
+        }
+      },
+    });
+
+    return () => sub.unsubscribe();
+  }, [
+    shouldVirtualize,
+    enableKeyboardNavigation,
+    props.keyboardEvents,
+    filteredAndSortedDataSources,
+    selectedVirtualizedIndex,
+    selectDataSource,
+  ]);
 
   return (
     <div
@@ -86,26 +170,17 @@ export function DataSourceList(props: DataSourceListProps) {
       className={cx(className, styles.container)}
       data-testid={selectors.components.DataSourcePicker.dataSourceList}
     >
-      {filteredDataSources.length === 0 && (
+      {filteredAndSortedDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
-      {filteredDataSources
-        .sort(
-          getDataSourceCompareFn(
-            current,
-            recentlyUsedDataSources,
-            getDataSourceVariableIDs(),
-            favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-          )
-        )
-        .map((ds) => (
+      {!shouldVirtualize &&
+        filteredAndSortedDataSources.map((ds) => (
           <DataSourceCard
             data-testid="data-source-card"
             key={ds.uid}
             ds={ds}
             onClick={() => {
-              pushRecentlyUsedDataSource(ds);
-              onChange(ds);
+              selectDataSource(ds);
             }}
             selected={isDataSourceMatch(ds, current)}
             isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
@@ -126,6 +201,75 @@ export function DataSourceList(props: DataSourceListProps) {
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
+      {shouldVirtualize && (
+        <FixedSizeList
+          ref={virtualizedListRef}
+          width="100%"
+          itemCount={filteredAndSortedDataSources.length}
+          itemSize={DATA_SOURCE_ROW_HEIGHT}
+          height={Math.min(filteredAndSortedDataSources.length, MAX_VISIBLE_ROWS) * DATA_SOURCE_ROW_HEIGHT}
+          itemData={{
+            current,
+            dataSources: filteredAndSortedDataSources,
+            selectedIndex: selectedVirtualizedIndex,
+            onChange: selectDataSource,
+            favoriteDataSources,
+            enableKeyboardNavigation,
+          }}
+        >
+          {VirtualizedDataSourceRow}
+        </FixedSizeList>
+      )}
+    </div>
+  );
+}
+
+interface DataSourceRowData {
+  current: DataSourceListProps['current'];
+  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  selectedIndex: number;
+  onChange: (ds: DataSourceInstanceSettings) => void;
+  favoriteDataSources: FavoriteDatasources;
+  enableKeyboardNavigation?: boolean;
+}
+
+function VirtualizedDataSourceRow({ index, style, data }: ListChildComponentProps<DataSourceRowData>) {
+  const ds = data.dataSources[index];
+
+  if (!ds) {
+    return null;
+  }
+
+  return (
+    <div style={style}>
+      <DataSourceCard
+        data-testid="data-source-card"
+        key={ds.uid}
+        ds={ds}
+        onClick={() => data.onChange(ds)}
+        selected={isDataSourceMatch(ds, data.current)}
+        isFavorite={data.favoriteDataSources.enabled ? data.favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
+        onToggleFavorite={
+          data.favoriteDataSources.enabled
+            ? () => {
+                reportInteraction(INTERACTION_EVENT_NAME, {
+                  item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+                  ds_type: ds.type,
+                  is_favorite: !data.favoriteDataSources.isFavoriteDatasource(ds.uid),
+                });
+                data.favoriteDataSources.isFavoriteDatasource(ds.uid)
+                  ? data.favoriteDataSources.removeFavoriteDatasource(ds)
+                  : data.favoriteDataSources.addFavoriteDatasource(ds);
+              }
+            : undefined
+        }
+        {...(data.enableKeyboardNavigation
+          ? {
+              'data-role': 'keyboardSelectableItem',
+              'data-selecteditem': index === data.selectedIndex ? 'true' : 'false',
+            }
+          : {})}
+      />
     </div>
   );
 }
@@ -170,6 +314,7 @@ function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      minHeight: 0,
       padding: theme.spacing(0.5),
       [`${selectedItemCssSelector}`]: {
         backgroundColor: theme.colors.action.focus,
