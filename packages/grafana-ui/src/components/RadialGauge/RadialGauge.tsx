@@ -73,8 +73,6 @@ export interface RadialGaugeProps {
    * this is most useful when you need to show positive and negative values on a gauge.
    */
   neutral?: number;
-  /** For data links */
-  onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
 }
 
@@ -99,7 +97,6 @@ export function RadialGauge(props: RadialGaugeProps) {
     showScaleLabels = false,
     neutral,
     endpointMarker,
-    onClick,
     values,
   } = props;
   const theme = useTheme2();
@@ -288,8 +285,6 @@ export function RadialGauge(props: RadialGaugeProps) {
       justifyContent="center"
       alignItems="center"
       data-testid={selectors.components.Panels.Visualization.Gauge.Container}
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
     >
       <svg
         viewBox={`0 0 ${width} ${height}`}
