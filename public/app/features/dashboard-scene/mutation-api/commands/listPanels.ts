@@ -191,8 +191,13 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
       if (payload.evaluateVariables) {
         const evaluated: unknown[] = [];
         for (const [elementName, element] of elementEntries) {
-          const plain = structuredClone(element);
-          const queries = plain?.spec?.data?.spec?.queries;
+          const spec = element?.spec;
+          if (!spec || !('data' in spec)) {
+            continue;
+          }
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- PanelSpec.data is typed; LibraryPanelKindSpec is excluded above
+          const dataSpec = (spec.data as { spec?: { queries?: unknown[] } })?.spec;
+          const queries = dataSpec?.queries;
           if (!Array.isArray(queries) || queries.length === 0) {
             continue;
           }

@@ -164,6 +164,9 @@ describe('Panel mutation commands', () => {
   beforeEach(() => {
     jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({
       onRefresh: jest.fn(),
+      subscribeToState: jest.fn(() => ({ unsubscribe: jest.fn() })),
+      useState: jest.fn(() => ({})),
+      state: { from: 'now-6h', to: 'now', value: {} },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });

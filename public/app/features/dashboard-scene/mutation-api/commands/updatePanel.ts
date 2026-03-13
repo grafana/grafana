@@ -155,7 +155,6 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       if (dataSpec) {
         const dataPipeline = vizPanel.state.$data;
         const queryRunner = getQueryRunnerFor(vizPanel);
-
         if (dataSpec.queries && queryRunner) {
           const queries = dataSpec.queries.map((pq: PanelQueryKind) => panelQueryKindToSceneQuery(pq));
           queryRunner.setState({ queries });
@@ -204,8 +203,6 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
               hoverHeader: getUpdatedHoverHeader(vizPanel.state.title, timeRange),
             });
           }
-
-          queryRunner.runQueries();
         }
       }
 
