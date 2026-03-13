@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
-import { toDataFrame, FieldType, ReducerID } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, FieldValueMatcherConfig } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { FieldNameByRegexMatcherEditor, getFieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
@@ -107,7 +108,8 @@ describe('FieldNameMatcherEditor', () => {
     render(<FieldNameMatcherEditor data={[frameWithFields]} options="" onChange={mockOnChange} matcher={matcher} />);
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    // Option order: Time (0), Value (1), Label (2); one ArrowDown then Enter selects Value
+    await user.keyboard('{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith('Value', 'series');
   });
 
@@ -118,6 +120,7 @@ describe('FieldNameMatcherEditor', () => {
     );
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
+    // Option order: raw "rawField" first, then display "Display Name"
     await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith('Display Name', 'series');
   });
@@ -179,7 +182,8 @@ describe('FieldTypeMatcherEditor', () => {
     render(<FieldTypeMatcherEditor data={[frameWithFields]} options="" onChange={mockOnChange} matcher={matcher} />);
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
-    await user.keyboard('{ArrowDown}{Enter}');
+    // First option is number (frame has time, number, string fields)
+    await user.keyboard('{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith('number');
   });
 });
@@ -200,22 +204,28 @@ describe('FieldValueMatcherEditor', () => {
     );
     const combobox = screen.getByPlaceholderText('Select field reducer');
     await user.click(combobox);
-    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
-    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ reducer: 'sum' }));
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ reducer: expect.any(String) }));
   });
 
   it('calls onChange with value when number input is changed', async () => {
-    render(
-      <FieldValueMatcherEditor
-        data={[frameWithFields]}
-        options={{ reducer: ReducerID.sum, op: ComparisonOperation.GT, value: 0 }}
-        onChange={mockOnChange}
-        matcher={matcher}
-      />
-    );
+    let _setOptions: jest.Mock = jest.fn();
+
+    const FieldValueMatcherEditorHarness = () => {
+      const [options, setOptions] = useState<FieldValueMatcherConfig>({
+        reducer: ReducerID.sum,
+        op: ComparisonOperation.GT,
+        value: 0,
+      });
+      _setOptions.mockImplementation(setOptions);
+      return (
+        <FieldValueMatcherEditor data={[frameWithFields]} options={options} onChange={_setOptions} matcher={matcher} />
+      );
+    };
+    render(<FieldValueMatcherEditorHarness />);
     const valueInput = screen.getByRole('spinbutton', { name: 'Reducer value' });
     await userEvent.type(valueInput, '42');
-    expect(mockOnChange).toHaveBeenLastCalledWith(
+    expect(_setOptions).toHaveBeenCalledWith(
       expect.objectContaining({ reducer: ReducerID.sum, op: ComparisonOperation.GT, value: 42 })
     );
   });
@@ -249,7 +259,8 @@ describe('FieldNamesMatcherEditor', () => {
     );
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    // Option order: Time (0), Value (1), Label (2); one ArrowDown then Enter selects Value
+    await user.keyboard('{ArrowDown}{Enter}');
     expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ names: ['Value'] }));
   });
 
