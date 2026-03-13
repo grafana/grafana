@@ -65,7 +65,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.local-description', 'Configure file provisioning'),
     tooltip: t(
       'provisioning.repository-types.local-tooltip',
-      'Provision dashboards from local file storage without Git.'
+      'Provision dashboards from local file system without Git.'
     ),
     icon: 'file-alt' as const,
   },

@@ -13219,7 +13219,7 @@
       "gitlab-tooltip": "Enhanced GitLab integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "local": "Local",
       "local-description": "Configure file provisioning",
-      "local-tooltip": "Provision dashboards from local file storage without Git.",
+      "local-tooltip": "Provision dashboards from local file system without Git.",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
