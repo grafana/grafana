@@ -667,6 +667,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/RadialGauge/RadialGauge.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -3762,6 +3767,16 @@
       "count": 1
     }
   },
+  "public/app/plugins/panel/alertlist/AlertInstances.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/alertlist/unified-alerting/UngroupedView.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -3792,6 +3807,11 @@
   },
   "public/app/plugins/panel/canvas/CanvasPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/canvas/components/CanvasTooltip.tsx": {
+    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -3865,6 +3885,9 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
+    },
+    "no-restricted-imports": {
+      "count": 1
     }
   },
   "public/app/plugins/panel/geomap/components/ObservablePropsWrapper.tsx": {
@@ -3915,8 +3938,21 @@
       "count": 2
     }
   },
+  "public/app/plugins/panel/geomap/utils/uiUtils.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/gettingstarted/GettingStarted.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    },
     "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/gettingstarted/components/DocsCard.tsx": {
+    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -3960,7 +3996,20 @@
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
+    "no-restricted-imports": {
+      "count": 1
+    },
     "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/logs/LogsPanel.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/news/component/News.tsx": {
+    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -4004,6 +4053,16 @@
       "count": 4
     }
   },
+  "public/app/plugins/panel/text/TextPanel.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/text/TextPanelEditor.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/text/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -4019,6 +4078,11 @@
   },
   "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx": {
+    "no-restricted-imports": {
       "count": 1
     }
   },
@@ -4043,6 +4107,9 @@
   "public/app/plugins/panel/xychart/SeriesEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4
+    },
+    "no-restricted-imports": {
+      "count": 1
     },
     "no-restricted-syntax": {
       "count": 5
