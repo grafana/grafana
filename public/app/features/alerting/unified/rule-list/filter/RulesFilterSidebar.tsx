@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { PropsOf } from '@emotion/react';
-import { useCallback, useEffect, useRef } from 'react';
-import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,12 +29,11 @@ import {
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
+import { RuleHealth, RuleSource, RulesFilter } from '../../search/rulesSearchParser';
 
 import { AdvancedFilters } from './types';
 import {
-  emptyAdvancedFilters,
-  formAdvancedFiltersToRuleFilter,
+  advancedFiltersToRulesFilter,
   searchQueryToDefaultValues,
   usePluginsFilterStatus,
   usePortalContainer,
@@ -47,11 +45,11 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
 
 /**
  * Persistent filter sidebar for the alert rule list v2.
- * All filters apply immediately on change.
+ * All filters apply immediately on change; rule name applies on blur or Enter.
  */
 export function RulesFilterSidebar() {
   const styles = useStyles2(getStyles);
-  const { hasActiveFilters, clearAll } = useRulesFilter();
+  const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
   return (
     <div className={styles.sidebar}>
@@ -61,395 +59,403 @@ export function RulesFilterSidebar() {
             <Trans i18nKey="alerting.rules-filter-sidebar.clear-filters">Clear filters</Trans>
           </Button>
         </Stack>
-        <FilterSidebarForm />
+        {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
+            so defaultValues always reflect the current URL state — no sync effects needed */}
+        <FilterSidebarForm key={searchQuery} filterState={filterState} />
       </Stack>
     </div>
   );
 }
 
-function FilterSidebarForm() {
+interface FilterSidebarFormProps {
+  filterState: RulesFilter;
+}
+
+function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { filterState, updateFilters } = useRulesFilter();
+
+  const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const isApplyingRef = useRef(false);
 
   // Create portal container for combobox dropdowns
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
 
-  const defaultValues = searchQueryToDefaultValues(filterState);
+  const { control, watch, register } = useForm<AdvancedFilters>({
+    defaultValues: searchQueryToDefaultValues(filterState),
+  });
 
-  const methods = useForm<AdvancedFilters>({ defaultValues });
-  const { reset, control, register } = methods;
-
-  // Sync form when filterState changes externally (e.g., search query typed in top bar)
-  useEffect(() => {
-    if (isApplyingRef.current) {
-      return;
-    }
-    reset(searchQueryToDefaultValues(filterState));
-  }, [filterState, reset]);
-
-  // Watch all values and apply immediately on change
-  const values = useWatch({ control });
-
-  const applyFilters = useCallback(
-    (nextValues: Partial<AdvancedFilters>) => {
-      isApplyingRef.current = true;
-
-      const merged: AdvancedFilters = { ...emptyAdvancedFilters, ...nextValues };
-      const ruleFilter = formAdvancedFiltersToRuleFilter(merged, filterState.freeFormWords);
-
-      trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: ruleFilter, filterVariant: 'v2' });
-      updateFilters(ruleFilter);
-
-      // Reset the flag after the next render cycle
-      setTimeout(() => {
-        isApplyingRef.current = false;
-      }, 0);
-    },
-    [filterState.freeFormWords, updateFilters]
-  );
-
-  // Apply on every change of any field value
-  const prevValuesRef = useRef<Partial<AdvancedFilters>>(defaultValues);
-  useEffect(() => {
-    // Shallow compare to avoid re-applying on mount
-    if (JSON.stringify(values) !== JSON.stringify(prevValuesRef.current)) {
-      prevValuesRef.current = values;
-      applyFilters(values);
-    }
-  }, [values, applyFilters]);
+  function applyFormValues(overrides: Partial<AdvancedFilters> = {}) {
+    const formValues = watch();
+    const ruleFilter = advancedFiltersToRulesFilter({ ...formValues, ...overrides }, filterState.freeFormWords);
+    trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: ruleFilter, filterVariant: 'v2' });
+    updateFilters(ruleFilter);
+  }
 
   const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
   const { labelOptions } = useLabelOptions();
   const dataSourceOptions = useAlertingDataSourceOptions();
 
   return (
-    <FormProvider {...methods}>
-      <form>
-        <Stack direction="column" gap={2}>
-          <SidebarSection>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.rule-name">Rule name</Trans>}>
-              <Input
-                {...register('ruleName')}
-                placeholder={t('alerting.rule-list.filter-sidebar.rule-name-placeholder', 'Filter by name...')}
-                data-testid="rule-name-filter-input"
-              />
-            </SidebarField>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.labels">Labels</Trans>}>
-              <Controller
-                name="labels"
-                control={control}
-                render={({ field }) => (
-                  <MultiCombobox
-                    options={labelOptions}
-                    value={field.value}
-                    onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-                    placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
-                    portalContainer={portalContainer}
-                  />
-                )}
-              />
-            </SidebarField>
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.state">State</Trans>}
-              labelId="filter-label-state"
-            >
-              <Controller
-                name="ruleState"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleState']>
-                    aria-labelledby="filter-label-state"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={[
-                      { label: t('common.all', 'All'), value: '*' },
-                      {
-                        label: t('alerting.rules.state.firing', 'Firing'),
-                        value: PromAlertingRuleState.Firing,
-                        icon: 'exclamation-circle',
-                        color: 'error',
-                      },
-                      {
-                        label: t('alerting.rules.state.normal', 'Normal'),
-                        value: PromAlertingRuleState.Inactive,
-                        icon: 'check-circle',
-                        color: 'success',
-                      },
-                      {
-                        label: t('alerting.rules.state.pending', 'Pending'),
-                        value: PromAlertingRuleState.Pending,
-                        icon: 'circle',
-                        color: 'warning',
-                      },
-                      {
-                        label: t('alerting.rules.state.recovering', 'Recovering'),
-                        value: PromAlertingRuleState.Recovering,
-                        icon: 'arrow-up',
-                        color: 'info',
-                      },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
-          </SidebarSection>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFormValues();
+      }}
+    >
+      <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
+      <Stack direction="column" gap={2}>
+        <SidebarSection>
+          <SidebarField label={<Trans i18nKey="alerting.search.property.rule-name">Rule name</Trans>}>
+            <Input
+              {...register('ruleName')}
+              onBlur={() => applyFormValues()}
+              placeholder={t('alerting.rule-list.filter-sidebar.rule-name-placeholder', 'Filter by name...')}
+              data-testid="rule-name-filter-input"
+            />
+          </SidebarField>
+          <SidebarField label={<Trans i18nKey="alerting.search.property.labels">Labels</Trans>}>
+            <Controller
+              name="labels"
+              control={control}
+              render={({ field }) => (
+                <MultiCombobox
+                  options={labelOptions}
+                  value={field.value}
+                  onChange={(selections) => {
+                    const labels = selections.map((s) => s.value);
+                    field.onChange(labels);
+                    applyFormValues({ labels });
+                  }}
+                  placeholder={t('alerting.rules-filter.placeholder-labels', 'Select labels')}
+                  portalContainer={portalContainer}
+                />
+              )}
+            />
+          </SidebarField>
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.state">State</Trans>}
+            labelId="filter-label-state"
+          >
+            <Controller
+              name="ruleState"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleState']>
+                  aria-labelledby="filter-label-state"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    applyFormValues({ ruleState: value });
+                  }}
+                  options={[
+                    { label: t('common.all', 'All'), value: '*' },
+                    {
+                      label: t('alerting.rules.state.firing', 'Firing'),
+                      value: PromAlertingRuleState.Firing,
+                      icon: 'exclamation-circle',
+                      color: 'error',
+                    },
+                    {
+                      label: t('alerting.rules.state.normal', 'Normal'),
+                      value: PromAlertingRuleState.Inactive,
+                      icon: 'check-circle',
+                      color: 'success',
+                    },
+                    {
+                      label: t('alerting.rules.state.pending', 'Pending'),
+                      value: PromAlertingRuleState.Pending,
+                      icon: 'circle',
+                      color: 'warning',
+                    },
+                    {
+                      label: t('alerting.rules.state.recovering', 'Recovering'),
+                      value: PromAlertingRuleState.Recovering,
+                      icon: 'arrow-up',
+                      color: 'info',
+                    },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
+        </SidebarSection>
 
-          <div className={styles.divider} />
+        <div className={styles.divider} />
 
-          <SidebarSection>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.namespace">Folder / Namespace</Trans>}>
-              <Controller
-                name="namespace"
-                control={control}
-                render={({ field }) => (
-                  <Combobox<string>
-                    placeholder={namespacePlaceholder}
-                    options={namespaceOptions}
-                    onChange={(option) => {
-                      if (!option?.infoOption) {
-                        field.onChange(option?.value ?? null);
-                      }
-                    }}
-                    value={field.value}
-                    isClearable
-                    portalContainer={portalContainer}
-                  />
-                )}
-              />
-            </SidebarField>
-            <SidebarField label={<Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>}>
-              <Controller
-                name="groupName"
-                control={control}
-                render={({ field }) => (
-                  <Combobox<string>
-                    placeholder={groupPlaceholder}
-                    options={groupOptions}
-                    onChange={(option) => {
-                      if (!option?.infoOption) {
-                        field.onChange(option?.value ?? null);
-                      }
-                    }}
-                    value={field.value}
-                    isClearable
-                    portalContainer={portalContainer}
-                  />
-                )}
-              />
-            </SidebarField>
-          </SidebarSection>
-
-          <div className={styles.divider} />
-
-          <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
-              labelId="filter-label-rule-source"
-            >
-              <Controller
-                name="ruleSource"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleSource']>
-                    aria-labelledby="filter-label-rule-source"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={[
-                      { label: t('common.all', 'All'), value: null },
-                      {
-                        label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
-                        value: RuleSource.Grafana,
-                      },
-                      {
-                        label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
-                        value: RuleSource.DataSource,
-                      },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
-
-            <SidebarField
-              label={
-                <Stack gap={0.5} alignItems="center">
-                  <span>
-                    <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
-                  </span>
-                  <Tooltip
-                    content={
-                      <div>
-                        <p>
-                          <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                            Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                            rules are stored and evaluated in the data source itself.
-                          </Trans>
-                        </p>
-                        <p>
-                          <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                            In these data sources, you can select Manage alerts via Alerting UI to be able to manage
-                            these alert rules in the Grafana UI as well as in the data source where they were
-                            configured.
-                          </Trans>
-                        </p>
-                      </div>
+        <SidebarSection>
+          <SidebarField label={<Trans i18nKey="alerting.search.property.namespace">Folder / Namespace</Trans>}>
+            <Controller
+              name="namespace"
+              control={control}
+              render={({ field }) => (
+                <Combobox<string>
+                  placeholder={namespacePlaceholder}
+                  options={namespaceOptions}
+                  onChange={(option) => {
+                    if (!option?.infoOption) {
+                      const namespace = option?.value ?? null;
+                      field.onChange(namespace);
+                      applyFormValues({ namespace });
                     }
-                  >
-                    <Icon
-                      name="info-circle"
-                      size="sm"
-                      title={t(
-                        'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                        'Search by data sources help'
-                      )}
-                    />
-                  </Tooltip>
-                </Stack>
-              }
-            >
-              <Controller
-                name="dataSourceNames"
-                control={control}
-                render={({ field }) => (
-                  <MultiCombobox
-                    options={dataSourceOptions}
-                    value={field.value}
-                    onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-                    placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
-                    portalContainer={portalContainer}
-                  />
-                )}
-              />
-            </SidebarField>
-          </SidebarSection>
+                  }}
+                  value={field.value}
+                  isClearable
+                  portalContainer={portalContainer}
+                />
+              )}
+            />
+          </SidebarField>
+          <SidebarField label={<Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>}>
+            <Controller
+              name="groupName"
+              control={control}
+              render={({ field }) => (
+                <Combobox<string>
+                  placeholder={groupPlaceholder}
+                  options={groupOptions}
+                  onChange={(option) => {
+                    if (!option?.infoOption) {
+                      const groupName = option?.value ?? null;
+                      field.onChange(groupName);
+                      applyFormValues({ groupName });
+                    }
+                  }}
+                  value={field.value}
+                  isClearable
+                  portalContainer={portalContainer}
+                />
+              )}
+            />
+          </SidebarField>
+        </SidebarSection>
 
-          <div className={styles.divider} />
+        <div className={styles.divider} />
 
-          {canRenderContactPointSelector && (
-            <>
-              <SidebarSection>
-                <SidebarField
-                  label={
-                    <Stack gap={0.5} alignItems="center">
-                      <span>
-                        <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                      </span>
-                      <Tooltip
-                        content={
-                          <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                            Filters alert rules which route directly to the selected contact point. Alert rules routed
-                            to notification policies will not be displayed.
-                          </Trans>
-                        }
-                      >
-                        <Icon
-                          name="info-circle"
-                          size="sm"
-                          title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
-                        />
-                      </Tooltip>
-                    </Stack>
+        <SidebarSection>
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
+            labelId="filter-label-rule-source"
+          >
+            <Controller
+              name="ruleSource"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleSource']>
+                  aria-labelledby="filter-label-rule-source"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    applyFormValues({ ruleSource: value });
+                  }}
+                  options={[
+                    { label: t('common.all', 'All'), value: null },
+                    {
+                      label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
+                      value: RuleSource.Grafana,
+                    },
+                    {
+                      label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                      value: RuleSource.DataSource,
+                    },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
+
+          <SidebarField
+            label={
+              <Stack gap={0.5} alignItems="center">
+                <span>
+                  <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <div>
+                      <p>
+                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </Trans>
+                      </p>
+                      <p>
+                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </Trans>
+                      </p>
+                    </div>
                   }
                 >
-                  <Controller
-                    name="contactPoint"
-                    control={control}
-                    render={({ field }) => (
-                      <ContactPointSelector
-                        placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
-                        value={field.value}
-                        isClearable
-                        onChange={(cp) => field.onChange(cp?.spec.title ?? null)}
-                        portalContainer={portalContainer}
-                      />
+                  <Icon
+                    name="info-circle"
+                    size="sm"
+                    title={t(
+                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                      'Search by data sources help'
                     )}
                   />
-                </SidebarField>
-              </SidebarSection>
-              <div className={styles.divider} />
-            </>
-          )}
+                </Tooltip>
+              </Stack>
+            }
+          >
+            <Controller
+              name="dataSourceNames"
+              control={control}
+              render={({ field }) => (
+                <MultiCombobox
+                  options={dataSourceOptions}
+                  value={field.value}
+                  onChange={(selections) => {
+                    const dataSourceNames = selections.map((s) => s.value);
+                    field.onChange(dataSourceNames);
+                    applyFormValues({ dataSourceNames });
+                  }}
+                  placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
+                  portalContainer={portalContainer}
+                />
+              )}
+            />
+          </SidebarField>
+        </SidebarSection>
 
-          <SidebarSection>
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}
-              labelId="filter-label-rule-type"
-            >
-              <Controller
-                name="ruleType"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleType']>
-                    aria-labelledby="filter-label-rule-type"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={[
-                      { label: t('common.all', 'All'), value: '*' },
-                      { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
-                      { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
+        <div className={styles.divider} />
 
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.rule-health">Health</Trans>}
-              labelId="filter-label-rule-health"
-            >
-              <Controller
-                name="ruleHealth"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleHealth']>
-                    aria-labelledby="filter-label-rule-health"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={[
-                      { label: t('common.all', 'All'), value: '*' },
-                      { label: t('alerting.rules.health.ok', 'OK'), value: RuleHealth.Ok },
-                      { label: t('alerting.rules.health.no-data', 'No data'), value: RuleHealth.NoData },
-                      { label: t('alerting.rules.health.error', 'Error'), value: RuleHealth.Error },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
-          </SidebarSection>
-
-          {pluginsFilterEnabled && (
-            <>
-              <div className={styles.divider} />
-              <SidebarSection>
-                <SidebarField
-                  label={<Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>}
-                  labelId="filter-label-plugins"
-                >
-                  <Controller
-                    name="plugins"
-                    control={control}
-                    render={({ field }) => (
-                      <ToggleButtonGroup<AdvancedFilters['plugins']>
-                        aria-labelledby="filter-label-plugins"
-                        value={field.value}
-                        onChange={field.onChange}
-                        options={[
-                          { label: t('alerting.rules-filter.label.show', 'Show'), value: 'show' },
-                          { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
-                        ]}
+        {canRenderContactPointSelector && (
+          <>
+            <SidebarSection>
+              <SidebarField
+                label={
+                  <Stack gap={0.5} alignItems="center">
+                    <span>
+                      <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                    </span>
+                    <Tooltip
+                      content={
+                        <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                          Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                          notification policies will not be displayed.
+                        </Trans>
+                      }
+                    >
+                      <Icon
+                        name="info-circle"
+                        size="sm"
+                        title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
                       />
-                    )}
-                  />
-                </SidebarField>
-              </SidebarSection>
-            </>
-          )}
-        </Stack>
-      </form>
-    </FormProvider>
+                    </Tooltip>
+                  </Stack>
+                }
+              >
+                <Controller
+                  name="contactPoint"
+                  control={control}
+                  render={({ field }) => (
+                    <ContactPointSelector
+                      placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
+                      value={field.value}
+                      isClearable
+                      onChange={(cp) => {
+                        const contactPoint = cp?.spec.title ?? null;
+                        field.onChange(contactPoint);
+                        applyFormValues({ contactPoint });
+                      }}
+                      portalContainer={portalContainer}
+                    />
+                  )}
+                />
+              </SidebarField>
+            </SidebarSection>
+            <div className={styles.divider} />
+          </>
+        )}
+
+        <SidebarSection>
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}
+            labelId="filter-label-rule-type"
+          >
+            <Controller
+              name="ruleType"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleType']>
+                  aria-labelledby="filter-label-rule-type"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    applyFormValues();
+                  }}
+                  options={[
+                    { label: t('common.all', 'All'), value: '*' },
+                    { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
+                    { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
+
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.rule-health">Health</Trans>}
+            labelId="filter-label-rule-health"
+          >
+            <Controller
+              name="ruleHealth"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleHealth']>
+                  aria-labelledby="filter-label-rule-health"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    applyFormValues();
+                  }}
+                  options={[
+                    { label: t('common.all', 'All'), value: '*' },
+                    { label: t('alerting.rules.health.ok', 'OK'), value: RuleHealth.Ok },
+                    { label: t('alerting.rules.health.no-data', 'No data'), value: RuleHealth.NoData },
+                    { label: t('alerting.rules.health.error', 'Error'), value: RuleHealth.Error },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
+        </SidebarSection>
+
+        {pluginsFilterEnabled && (
+          <>
+            <div className={styles.divider} />
+            <SidebarSection>
+              <SidebarField
+                label={<Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>}
+                labelId="filter-label-plugins"
+              >
+                <Controller
+                  name="plugins"
+                  control={control}
+                  render={({ field }) => (
+                    <ToggleButtonGroup<AdvancedFilters['plugins']>
+                      aria-labelledby="filter-label-plugins"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        applyFormValues();
+                      }}
+                      options={[
+                        { label: t('alerting.rules-filter.label.show', 'Show'), value: 'show' },
+                        { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
+                      ]}
+                    />
+                  )}
+                />
+              </SidebarField>
+            </SidebarSection>
+          </>
+        )}
+      </Stack>
+    </form>
   );
 }
 

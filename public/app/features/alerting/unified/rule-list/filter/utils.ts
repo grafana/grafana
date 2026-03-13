@@ -38,6 +38,24 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   ruleSource: null,
 };
 
+export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
+  return {
+    freeFormWords,
+    ruleName: values.ruleName || undefined,
+    namespace: values.namespace || undefined,
+    groupName: values.groupName || undefined,
+    ruleType: values.ruleType === '*' ? undefined : values.ruleType,
+    ruleState: values.ruleState === '*' ? undefined : values.ruleState,
+    dataSourceNames: values.dataSourceNames ?? [],
+    labels: values.labels ?? [],
+    ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
+    dashboardUid: values.dashboardUid || undefined,
+    plugins: values.plugins === 'show' ? undefined : 'hide',
+    contactPoint: values.contactPoint || undefined,
+    ruleSource: values.ruleSource ?? undefined,
+  };
+}
+
 export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFilters {
   return {
     namespace: filterState.namespace ?? null,
