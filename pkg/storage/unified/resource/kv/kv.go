@@ -437,6 +437,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 
 		switch op.Mode {
 		case BatchOpCreate:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Check that key doesn't exist, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if err == nil {
@@ -450,6 +453,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 			}
 
 		case BatchOpUpdate:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Check that key exists, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if errors.Is(err, badger.ErrKeyNotFound) {
@@ -463,6 +469,9 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 			}
 
 		case BatchOpPut:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
 			// Upsert: create or update
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
 				return &BatchError{Err: err, Index: i, Op: op}
