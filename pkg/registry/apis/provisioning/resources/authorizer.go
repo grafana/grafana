@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
@@ -183,12 +184,19 @@ func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (
 // resolveFileGVR reads the file at path from the configured branch and parses it
 // to determine its Kubernetes resource type.
 //
-// Returns an error if the file cannot be read, cannot be parsed, or its resource
-// type is not in SupportedProvisioningResources — we never authorize operations
-// on unrecognisable or unsupported types.
+// Returns an empty GVR (no error) when the file does not exist on the configured
+// branch — the caller should skip authorization since there is nothing to protect
+// and the job executor will handle the missing file at runtime.
+//
+// Returns an error if the file exists but cannot be parsed, or its resource type
+// is not in SupportedProvisioningResources — we never authorize operations on
+// unrecognisable or unsupported types.
 func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string) (schema.GroupVersionResource, error) {
 	info, err := a.reader.Read(ctx, path, "")
 	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) {
+			return schema.GroupVersionResource{}, nil
+		}
 		return schema.GroupVersionResource{}, fmt.Errorf("read file %q: %w", path, err)
 	}
 
@@ -215,12 +223,18 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path string
 // within the given folder context. It reads the file to determine the actual resource
 // type (dashboard, library panel, etc.) rather than assuming dashboards.
 //
-// Returns an error if the resource type cannot be determined (file not found,
-// unparseable, or unsupported type).
+// When the file does not exist on the configured branch, authorization is skipped
+// (the job executor handles missing files at runtime). Returns an error if the file
+// exists but is unparseable or contains an unsupported resource type.
 func (a *ProvisioningAuthorizer) authorizeFileVerb(ctx context.Context, path, folderID, verb string) error {
 	gvr, err := a.resolveFileGVR(ctx, path)
 	if err != nil {
 		return err
+	}
+
+	// File does not exist on the configured branch — nothing to protect.
+	if gvr.Group == "" {
+		return nil
 	}
 
 	return a.access.Check(ctx, authlib.CheckRequest{

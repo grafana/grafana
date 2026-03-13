@@ -772,7 +772,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("unresolvable file returns error", func(t *testing.T) {
+	t.Run("non-existent file skips authorization", func(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
@@ -785,8 +785,49 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
 
+		assert.NoError(t, err, "non-existent files should skip authorization")
+	})
+
+	t.Run("unsupported resource type returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "bad/widget.json", "").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"custom.example.io/v1","kind":"Widget","metadata":{"name":"w"}}`),
+			}, nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "bad/widget.json")
+
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "read file")
+		assert.Contains(t, err.Error(), "unsupported resource type")
+	})
+
+	t.Run("folder resource in file returns error", func(t *testing.T) {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "sneaky/folder.json", "").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"f"},"spec":{"title":"F"}}`),
+			}, nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "sneaky/folder.json")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unsupported resource type")
 	})
 
 	t.Run("file path with folder metadata uses stable UID", func(t *testing.T) {
