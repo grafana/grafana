@@ -428,6 +428,56 @@ func TestParseFolderResource(t *testing.T) {
 			description:          "Root-level folder has empty parent folder ID",
 		},
 		{
+			name:                  "metadata enabled with custom title - preserves metadata title instead of path",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				customFolder := NewFolderManifest("stable-uid-123", "My Custom Project Title")
+				customBytes, _ := json.Marshal(customFolder)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{
+						Data: customBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentBytes, _ := json.Marshal(parentFolder)
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: parentBytes}, nil)
+			},
+			expectedFolderID:     "stable-uid-123",
+			expectedAction:       "update",
+			expectedTitle:        "My Custom Project Title",
+			expectedParentFolder: "parent-uid-456",
+			expectedErr:          false,
+			description:          "When metadata exists with custom title, preserve it instead of using path-based title",
+		},
+		{
+			name:                  "metadata enabled with empty title - preserves empty title from metadata",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				emptyTitleFolder := NewFolderManifest("stable-uid-123", "")
+				emptyBytes, _ := json.Marshal(emptyTitleFolder)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{
+						Data: emptyBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentBytes, _ := json.Marshal(parentFolder)
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: parentBytes}, nil)
+			},
+			expectedFolderID:     "stable-uid-123",
+			expectedAction:       "update",
+			expectedTitle:        "",
+			expectedParentFolder: "parent-uid-456",
+			expectedErr:          false,
+			description:          "When metadata exists but title is empty, the metadata object is used as-is",
+		},
+		{
 			name:                  "parent folder ID error propagates",
 			path:                  testPath,
 			folderMetadataEnabled: true,

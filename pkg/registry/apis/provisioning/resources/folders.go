@@ -108,6 +108,8 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if meta.Name != "" {
 			f.ID = meta.Name
 		}
+		// We use folder metadata here only to check if the folder exists
+		// for new folders, we'll be using the safepath.Walk below, so we don't need to set the title here for now.
 	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
 		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
 	}
@@ -120,6 +122,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
 			if meta.Name != "" {
 				f.ID = meta.Name
+			}
+			if meta.Spec.Title != "" {
+				f.Title = meta.Spec.Title
 			}
 		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
