@@ -842,7 +842,7 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 	// This allows env vars to add new config keys without requiring them to be
 	// pre-defined in defaults.ini or custom.ini.
 
-	// Build a map from env-style section prefix to ini section.
+	// Build a mapping from env-style section prefix to ini section.
 	type sectionMapping struct {
 		prefix  string
 		section *ini.Section
