@@ -261,18 +261,13 @@ function NotificationStatusGroup({
       : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
   const integrations = [...new Set(notifications.map((n) => n.integration))];
 
-  let outcomeLabel: string;
-  if (failedCount === 0) {
-    outcomeLabel =
-      successCount === 1
-        ? t('alerting.instance-details.timeline-all-delivered', 'delivered')
-        : t('alerting.instance-details.timeline-all-delivered-plural', 'all delivered');
-  } else if (successCount === 0) {
+  let outcomeLabel: string | undefined;
+  if (failedCount > 0 && successCount === 0) {
     outcomeLabel =
       failedCount === 1
         ? t('alerting.instance-details.timeline-all-failed', 'failed')
         : t('alerting.instance-details.timeline-all-failed-plural', 'all failed');
-  } else {
+  } else if (failedCount > 0) {
     outcomeLabel = t(
       'alerting.instance-details.timeline-mixed-outcome',
       '{{successCount}} delivered, {{failedCount}} failed',
@@ -303,7 +298,7 @@ function NotificationStatusGroup({
         aria-expanded={expanded}
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
       >
-        <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
           <Icon name={isFiring ? 'fire' : 'check-circle'} size="sm" />
           <Text variant="bodySmall" weight="medium">
             {statusLabel}
@@ -318,18 +313,20 @@ function NotificationStatusGroup({
                   count: notifications.length,
                 })}
           </Text>
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Text variant="bodySmall" color="secondary">
-              →
-            </Text>
-            {integrations.map((integration) => (
-              <IntegrationIcon key={integration} integration={integration} />
-            ))}
-            <Text variant="bodySmall">{receiverLabel}</Text>
-          </Stack>
-          <Text variant="bodySmall" color={hasFailures ? 'error' : 'success'}>
-            ({outcomeLabel})
+          <Text variant="bodySmall" color="secondary">
+            →
           </Text>
+          {integrations.map((integration) => (
+            <IntegrationIcon key={integration} integration={integration} />
+          ))}
+          <Text variant="bodySmall" truncate>
+            {receiverLabel}
+          </Text>
+          {outcomeLabel && (
+            <Text variant="bodySmall" color="error">
+              ({outcomeLabel})
+            </Text>
+          )}
         </Stack>
         <Icon name={expanded ? 'angle-up' : 'angle-down'} size="sm" />
       </button>
@@ -388,7 +385,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
             size="sm"
             icon="eye"
             href={createRelativeUrl(
-              `/alerting/notifications-history/view/${notification.uuid}/${encodeURIComponent(notification.timestamp)}`
+              `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
             )}
           >
             {t('alerting.instance-details.view-notification-detail', 'Details')}
@@ -413,11 +410,12 @@ function IntegrationIcon({ integration }: { integration: string }) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   timestampCol: css({
-    width: '140px',
+    width: 'auto',
     flexShrink: 0,
     paddingTop: theme.spacing(0.5),
     textAlign: 'right',
     paddingRight: theme.spacing(1.5),
+    whiteSpace: 'nowrap',
   }),
 
   connectorCol: css({
@@ -528,7 +526,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.5, 1.5),
   }),
 
   notificationRowError: css({

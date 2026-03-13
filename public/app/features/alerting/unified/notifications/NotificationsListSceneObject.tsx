@@ -271,7 +271,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         <div className={styles.viewCol}>
           <LinkButton
             href={createRelativeUrl(
-              `/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`
+              `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
             )}
             size="sm"
             variant="secondary"

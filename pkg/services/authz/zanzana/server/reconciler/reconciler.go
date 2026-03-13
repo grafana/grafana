@@ -39,10 +39,11 @@ type Reconciler struct {
 
 // Config holds the reconciler configuration.
 type Config struct {
-	Workers        int
-	Interval       time.Duration
-	WriteBatchSize int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize      int // Size of the buffered work queue for namespaces (default 1000)
+	Workers             int
+	Interval            time.Duration
+	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 1000)
 }
 
 func (c Config) queueSize() int {
@@ -50,6 +51,13 @@ func (c Config) queueSize() int {
 		return 1000
 	}
 	return c.QueueSize
+}
+
+func (c Config) zanzanaReadPageSize() int32 {
+	if c.ZanzanaReadPageSize <= 0 {
+		return 1000
+	}
+	return int32(c.ZanzanaReadPageSize)
 }
 
 // GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
@@ -222,35 +230,28 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 }
 
 // reconcileNamespace performs reconciliation for a single namespace.
-// This is implemented in namespace.go.
+// It builds the expected tuple map from CRDs, then streams current tuples from Zanzana
+// page-by-page to compute the diff
 func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.reconcileNamespace")
 	defer span.End()
 
-	// 1. First, read all current tuples from Zanzana
-	currentTuples, err := r.readAllTuplesFromZanzana(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to read current tuples: %w", err)
-	}
-
-	r.logger.Debug("Read current tuples from Zanzana",
-		"namespace", namespace,
-		"currentTuples", len(currentTuples),
-	)
-
-	// 2. Then, fetch CRDs from Unistore and translate to tuples
-	expectedTuples, err := r.fetchAndTranslateTuples(ctx, namespace)
+	// 1. Build expected tuple map from CRDs
+	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to fetch and translate CRDs: %w", err)
 	}
 
 	r.logger.Debug("Fetched and translated CRDs to tuples",
 		"namespace", namespace,
-		"expectedTuples", len(expectedTuples),
+		"expectedTuples", len(expectedMap),
 	)
 
-	// 3. Compute diff
-	toAdd, toDelete := ComputeDiff(expectedTuples, currentTuples)
+	// 2. Stream current tuples from Zanzana and compute diff
+	toAdd, toDelete, err := r.computeDiffStreaming(ctx, namespace, expectedMap)
+	if err != nil {
+		return fmt.Errorf("failed to compute diff: %w", err)
+	}
 
 	r.logger.Info("Computed reconciliation diff",
 		"namespace", namespace,
@@ -258,7 +259,7 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 		"toDelete", len(toDelete),
 	)
 
-	// 4. Apply changes if needed
+	// 3. Apply changes if needed
 	if len(toAdd) == 0 && len(toDelete) == 0 {
 		r.logger.Info("Namespace is in sync, no changes needed", "namespace", namespace)
 		return nil
