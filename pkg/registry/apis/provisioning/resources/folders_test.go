@@ -624,6 +624,131 @@ func TestCreateFolderWithUID(t *testing.T) {
 	})
 }
 
+func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("uses spec.title from _folder.json instead of directory name", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Custom Title"}}`)}, nil)
+
+		var createdFolder Folder
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+			createdFolder = folder
+			return nil
+		}), WithFolderMetadataEnabled(true))
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parent)
+		require.Equal(t, "Custom Title", createdFolder.Title)
+		require.Equal(t, "stable-uid", createdFolder.ID)
+	})
+
+	t.Run("falls back to directory name when spec.title is empty", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":""}}`)}, nil)
+
+		var createdFolder Folder
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+			createdFolder = folder
+			return nil
+		}), WithFolderMetadataEnabled(true))
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parent)
+		require.Equal(t, "my-folder", createdFolder.Title)
+	})
+
+	t.Run("uses directory name when no _folder.json exists", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		var createdFolder Folder
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+			createdFolder = folder
+			return nil
+		}), WithFolderMetadataEnabled(true))
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		require.NoError(t, err)
+		require.Equal(t, "my-folder", createdFolder.Title)
+		require.NotEmpty(t, parent)
+	})
+
+	t.Run("uses spec.title from _folder.json inside walk for nested folders", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Pre-walk reads leaf folder metadata — not found so we walk
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+		// Walk reads parent folder metadata — has custom title
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent Custom"}}`)}, nil)
+
+		var createdFolders []Folder
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
+			createdFolders = append(createdFolders, folder)
+			return nil
+		}), WithFolderMetadataEnabled(true))
+
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		require.NoError(t, err)
+		require.Len(t, createdFolders, 2)
+		// First created folder is "parent" — should have custom title from _folder.json
+		require.Equal(t, "Parent Custom", createdFolders[0].Title)
+		require.Equal(t, "parent-uid", createdFolders[0].ID)
+		// Second created folder is "child" — no metadata, uses directory name
+		require.Equal(t, "child", createdFolders[1].Title)
+	})
+}
+
 func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 	ctx := context.Background()
 

@@ -54,6 +54,7 @@ describe('QueryActionAssistantButton', () => {
     // Default: feature toggle enabled, assistant available
     mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
     } as unknown as AssistantHook);
@@ -62,6 +63,7 @@ describe('QueryActionAssistantButton', () => {
   it('should render nothing when feature toggle is disabled', () => {
     mockConfig.featureToggles.queryWithAssistant = false;
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
     } as unknown as AssistantHook);
@@ -79,6 +81,7 @@ describe('QueryActionAssistantButton', () => {
   it('should render nothing when Assistant is not available', () => {
     mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: undefined,
     } as unknown as AssistantHook);
@@ -91,6 +94,7 @@ describe('QueryActionAssistantButton', () => {
   it('should render nothing when openAssistant is not provided', () => {
     mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: undefined,
     } as unknown as AssistantHook);
@@ -104,6 +108,7 @@ describe('QueryActionAssistantButton', () => {
     mockConfig.featureToggles.queryWithAssistant = true;
     const mockOpenAssistant = jest.fn();
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: mockOpenAssistant,
     } as unknown as AssistantHook);
