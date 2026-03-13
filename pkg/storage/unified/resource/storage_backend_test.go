@@ -1743,16 +1743,16 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
 
-			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted1", nsr, "resources", "test-data", 0)
-			deleteRV1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted1", nsr, "resources", "test-data", rv1)
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted2", nsr, "resources", "test-data", 0)
+			deleteRV1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted2", nsr, "resources", "test-data", rv1)
 
-			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted2", nsr, "resources", "test-data", 0)
-			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted2", nsr, "resources", "test-data", rv2)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted1", nsr, "resources", "test-data", 0)
+			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted1", nsr, "resources", "test-data", rv2)
 
-			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-alive", nsr, "resources", "test-data", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-live", nsr, "resources", "test-data", 0)
 
-			rv4 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
-			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-other-type", otherNSR, "other-resources", "test-data", rv4)
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-other-type", otherNSR, "other-resources", "test-data", rv3)
 
 			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
@@ -1768,11 +1768,11 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 
 			require.Len(t, items, 2) // deleted1 and deleted2
 
-			// deleted2 first (most recent event)
-			require.Equal(t, "resource-deleted2", items[0].name)
+			// deleted1 first (most recent event)
+			require.Equal(t, "resource-deleted1", items[0].name)
 			require.Equal(t, deleteRV2, items[0].resourceVersion)
 
-			require.Equal(t, "resource-deleted1", items[1].name)
+			require.Equal(t, "resource-deleted2", items[1].name)
 			require.Equal(t, deleteRV1, items[1].resourceVersion)
 		})
 
