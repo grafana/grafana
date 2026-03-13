@@ -48,10 +48,7 @@ describe('useLatestDatasourceCheck', () => {
 
     const { result } = renderHook(() => useLatestDatasourceCheck());
 
-    expect(useListCheckMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ skip: true })
-    );
+    expect(useListCheckMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ skip: true }));
     expect(result.current.check).toBeUndefined();
     expect(result.current.isLoading).toBe(false);
   });

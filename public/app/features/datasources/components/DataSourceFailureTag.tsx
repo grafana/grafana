@@ -20,18 +20,23 @@ export function DataSourceFailureTag({ severity }: Props) {
     <Tooltip
       content={
         isHigh
-          ? t('datasources.list.failed-high-tooltip', 'This data source has critical failures reported by Grafana Advisor.')
-          : t('datasources.list.failed-low-tooltip', 'This data source has non-critical issues reported by Grafana Advisor.')
+          ? t(
+              'datasources.list.failed-high-tooltip',
+              'This data source has critical failures reported by Grafana Advisor.'
+            )
+          : t(
+              'datasources.list.failed-low-tooltip',
+              'This data source has non-critical issues reported by Grafana Advisor.'
+            )
       }
       placement="top"
     >
-      <a href={`${config.appSubUrl}${ADVISOR_APP_URL}?summaryOpen${isHigh ? 'high' : 'low'}=true`} className={styles.link}>
+      <a
+        href={`${config.appSubUrl}${ADVISOR_APP_URL}?summaryOpen${isHigh ? 'high' : 'low'}=true`}
+        className={styles.link}
+      >
         <Tag
-          name={
-            isHigh
-              ? t('datasources.list.failed-high', 'failed')
-              : t('datasources.list.failed-low', 'warn')
-          }
+          name={isHigh ? t('datasources.list.failed-high', 'failed') : t('datasources.list.failed-low', 'warn')}
           colorIndex={isHigh ? 25 : 7}
         />
       </a>
