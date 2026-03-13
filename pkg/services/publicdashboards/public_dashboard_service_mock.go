@@ -52,17 +52,17 @@ func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.Signed
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, uid, dashboardUid
-func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string, dashboardUid string) error {
-	ret := _m.Called(ctx, uid, dashboardUid)
+// Delete provides a mock function with given fields: ctx, orgId, uid, dashboardUid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error {
+	ret := _m.Called(ctx, orgId, uid, dashboardUid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, uid, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, string) error); ok {
+		r0 = rf(ctx, orgId, uid, dashboardUid)
 	} else {
 		r0 = ret.Error(0)
 	}

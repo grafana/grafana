@@ -1233,30 +1233,42 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 		ExpectedErrResp error
 		mockFindStore   *mockFindResponse
 		mockDeleteStore *mockDeleteResponse
+		orgId           int64
 	}{
 		{
 			Name:            "Successfully deletes a public dashboard",
 			ExpectedErrResp: nil,
 			mockFindStore:   &mockFindResponse{pubdash, nil},
 			mockDeleteStore: &mockDeleteResponse{1, nil},
+			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard not found",
 			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID: error"),
 			mockFindStore:   &mockFindResponse{pubdash, errors.New("error")},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
+			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard not found by UID",
 			ExpectedErrResp: ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
 			mockFindStore:   &mockFindResponse{nil, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
+			orgId:           1,
 		},
 		{
 			Name:            "Public dashboard UID does not belong to the dashboard",
 			ExpectedErrResp: ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard"),
 			mockFindStore:   &mockFindResponse{&PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "wrong"}, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
+			orgId:           1,
+		},
+		{
+			Name:            "Public dashboard belongs to another org",
+			ExpectedErrResp: ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", 2),
+			mockFindStore:   &mockFindResponse{&PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}, nil},
+			mockDeleteStore: &mockDeleteResponse{0, nil},
+			orgId:           2,
 		},
 
 		{
@@ -1264,6 +1276,7 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: pubdashUID db error!"),
 			mockFindStore:   &mockFindResponse{pubdash, nil},
 			mockDeleteStore: &mockDeleteResponse{1, errors.New("db error!")},
+			orgId:           1,
 		},
 	}
 
@@ -1275,8 +1288,7 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 				store.On("Delete", mock.Anything, mock.Anything).Return(tt.mockDeleteStore.AffectedRowsResp, tt.mockDeleteStore.StoreRespErr)
 			}
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, store, nil, nil)
-
-			err := service.Delete(context.Background(), "pubdashUID", "uid")
+			err := service.Delete(context.Background(), tt.orgId, "pubdashUID", "uid")
 			if tt.ExpectedErrResp != nil {
 				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
 			} else {
