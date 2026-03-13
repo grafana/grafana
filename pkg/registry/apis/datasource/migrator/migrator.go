@@ -12,6 +12,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -66,28 +67,33 @@ func ProvideDataSourceMigrator(
 // types found in the database, grouping by type and using per-plugin converters.
 func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating datasources...")
-	rows, err := m.listDataSources(ctx, orgId)
-	if rows != nil {
-		defer func() {
-			_ = rows.Close()
-		}()
-	}
+	datasources, err := m.listDataSources(ctx, orgId)
 	if err != nil {
 		return err
 	}
 
-	group := "datasource.grafana.app"
-	count := 0
-	for rows.Next() {
-		ds, err := scanDataSource(rows)
-		if err != nil {
-			return fmt.Errorf("scanning datasource row: %w", err)
-		}
+	plugins := map[string]bool{}
+	for _, ds := range datasources {
+		plugins[ds.Type] = true
+	}
 
+	for count, ds := range datasources {
+		group := ds.Type + ".datasource.grafana.app"
 		dsConverter := converter.NewConverter(m.namespaceMapper, group, ds.Type, nil)
 		obj, err := dsConverter.AsDataSource(ds)
 		if err != nil {
 			return fmt.Errorf("converting datasource %s (type=%s): %w", ds.UID, ds.Type, err)
+		}
+
+		// Set TypeMeta with the per-plugin group
+		obj.TypeMeta = metav1.TypeMeta{
+			APIVersion: group + "/" + datasourceV0.VERSION,
+			Kind:       "DataSource",
+		}
+
+		gv, err := schema.ParseGroupVersion(obj.APIVersion)
+		if err != nil {
+			return fmt.Errorf("invalid apiVersion: %w", err)
 		}
 
 		// TODO: this assumes we've cleaned up all secrets from previous migrations.
@@ -97,12 +103,12 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		}
 		if len(dsSecrets) > 0 {
 			objRef := common.ObjectReference{
-				APIGroup:   group,
-				APIVersion: datasourceV0.VERSION,
-				Kind:       ds.Type,
-				Namespace:  obj.GetNamespace(),
-				Name:       obj.GetName(),
-				UID:        obj.GetUID(),
+				APIGroup:   gv.Group,
+				APIVersion: gv.Version,
+				Kind:       obj.Kind,
+				Namespace:  obj.Namespace,
+				Name:       obj.Name,
+				UID:        obj.UID,
 			}
 			secure, err := m.createSecrets(ctx, dsSecrets, objRef)
 			if err != nil {
@@ -125,8 +131,8 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		req := &resourcepb.BulkRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
-				Group:     group,
-				Resource:  ds.Type,
+				Group:     gv.Group,
+				Resource:  "datasources",
 				Name:      ds.UID,
 			},
 			Value:  body,
@@ -134,7 +140,6 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		}
 
 		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", ds.Type, ds.Name, len(req.Value), req.Key))
-		count++
 
 		err = stream.Send(req)
 		if err != nil {
@@ -145,11 +150,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		}
 	}
 
-	if err = rows.Err(); err != nil {
-		return err
-	}
-
-	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", count))
+	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(datasources)))
 	return nil
 }
 
@@ -233,7 +234,7 @@ func newDataSourceQueryReq(sql *legacysql.LegacyDatabaseHelper, query *dataSourc
 	}
 }
 
-func (m *dataSourceMigrator) listDataSources(ctx context.Context, orgID int64) (*sql.Rows, error) {
+func (m *dataSourceMigrator) listDataSources(ctx context.Context, orgID int64) ([]*datasources.DataSource, error) {
 	helper, err := m.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -248,5 +249,27 @@ func (m *dataSourceMigrator) listDataSources(ctx context.Context, orgID int64) (
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryDataSources.Name(), err)
 	}
 
-	return helper.DB.GetSqlxSession().Query(ctx, rawQuery, req.GetArgs()...)
+	rows, err := helper.DB.GetSqlxSession().Query(ctx, rawQuery, req.GetArgs()...)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	datasources := make([]*datasources.DataSource, 0, 100)
+	for rows.Next() {
+		ds, err := scanDataSource(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scanning datasource row: %w", err)
+		}
+		if err = rows.Err(); err != nil {
+			return nil, err
+		}
+		datasources = append(datasources, ds)
+	}
+
+	return datasources, nil
 }
