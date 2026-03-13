@@ -37,8 +37,7 @@ func TestEnsureHttpMethodMiddleware(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, res)
 		require.Equal(t, res.StatusCode, http.StatusMethodNotAllowed)
-		if res.Body != nil {
-			require.NoError(t, res.Body.Close())
-		}
+		require.NotNil(t, res.Body, "Body must not be nil to avoid panics in callers")
+		require.NoError(t, res.Body.Close())
 	})
 }

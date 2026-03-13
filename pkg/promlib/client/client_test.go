@@ -28,17 +28,16 @@ func (doer *MockDoer) Do(req *http.Request) (*http.Response, error) {
 
 func TestClient(t *testing.T) {
 	t.Run("QueryResource", func(t *testing.T) {
-		doer := &MockDoer{}
-		// The method here does not really matter for resource calls
-		client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+		t.Run("POST-configured client forwards POST request as POST", func(t *testing.T) {
+			doer := &MockDoer{}
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
 
-		t.Run("sends correct POST request", func(t *testing.T) {
 			req := &backend.CallResourceRequest{
 				PluginContext: backend.PluginContext{},
 				Path:          "/api/v1/series",
 				Method:        http.MethodPost,
 				URL:           "/api/v1/series",
-				Body:          []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
+				Body:          []byte("match%5B%5D=ALERTS&start=1655271408&end=1655293008"),
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
@@ -53,11 +52,40 @@ func TestClient(t *testing.T) {
 			require.Equal(t, http.MethodPost, doer.Req.Method)
 			body, err := io.ReadAll(doer.Req.Body)
 			require.NoError(t, err)
-			require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
+			require.Equal(t, "match%5B%5D=ALERTS&start=1655271408&end=1655293008", string(body))
 			require.Equal(t, "http://localhost:9090/api/v1/series", doer.Req.URL.String())
 		})
 
-		t.Run("sends correct GET request", func(t *testing.T) {
+		t.Run("GET-configured client converts incoming POST to GET", func(t *testing.T) {
+			doer := &MockDoer{}
+			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "/api/v1/query",
+				Method:        http.MethodPost,
+				URL:           "/api/v1/query",
+				Body:          []byte("query=up&time=1234567890"),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err)
+			require.NotNil(t, doer.Req)
+			require.Equal(t, http.MethodGet, doer.Req.Method)
+			require.Contains(t, doer.Req.URL.RawQuery, "query=up")
+			require.Contains(t, doer.Req.URL.RawQuery, "time=1234567890")
+		})
+
+		t.Run("GET request is always respected regardless of configured method", func(t *testing.T) {
+			doer := &MockDoer{}
+			client := NewClient(doer, http.MethodPost, "http://localhost:9090", "60s")
+
 			req := &backend.CallResourceRequest{
 				PluginContext: backend.PluginContext{},
 				Path:          "/api/v1/series",
@@ -79,6 +107,32 @@ func TestClient(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, []byte{}, body)
 			require.Equal(t, "http://localhost:9090/api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158", doer.Req.URL.String())
+		})
+
+		t.Run("GET-configured client preserves existing query params when converting POST", func(t *testing.T) {
+			doer := &MockDoer{}
+			client := NewClient(doer, http.MethodGet, "http://localhost:9090", "60s")
+
+			req := &backend.CallResourceRequest{
+				PluginContext: backend.PluginContext{},
+				Path:          "/api/v1/query",
+				Method:        http.MethodPost,
+				URL:           "/api/v1/query?timeout=30",
+				Body:          []byte("query=up"),
+			}
+			res, err := client.QueryResource(context.Background(), req)
+			defer func() {
+				if res != nil && res.Body != nil {
+					if err := res.Body.Close(); err != nil {
+						fmt.Println("Error", "err", err)
+					}
+				}
+			}()
+			require.NoError(t, err)
+			require.NotNil(t, doer.Req)
+			require.Equal(t, http.MethodGet, doer.Req.Method)
+			require.Contains(t, doer.Req.URL.RawQuery, "timeout=30")
+			require.Contains(t, doer.Req.URL.RawQuery, "query=up")
 		})
 	})
 
