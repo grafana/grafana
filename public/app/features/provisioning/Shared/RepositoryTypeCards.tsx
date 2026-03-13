@@ -49,12 +49,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       Configure with {'{{ provider }}'}
                     </Trans>
                     {config.tooltip && (
-                      <IconButton
-                        name="info-circle"
-                        size="sm"
-                        tooltip={config.tooltip}
-                        className={styles.infoIcon}
-                      />
+                      <IconButton name="info-circle" size="sm" tooltip={config.tooltip} className={styles.infoIcon} />
                     )}
                   </Stack>
                 </Card.Heading>
@@ -97,12 +92,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       </Trans>
                     )}
                     {config.tooltip && (
-                      <IconButton
-                        name="info-circle"
-                        size="sm"
-                        tooltip={config.tooltip}
-                        className={styles.infoIcon}
-                      />
+                      <IconButton name="info-circle" size="sm" tooltip={config.tooltip} className={styles.infoIcon} />
                     )}
                   </Stack>
                 </Card.Heading>
