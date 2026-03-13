@@ -94,19 +94,21 @@ export function ModalEditor(props: ModalEditorProps) {
                 Preview of values ({'{{ optionsCount }}'})
               </Trans>
             </div>
-            <Button
-              variant={isLoading ? 'secondary' : 'primary'}
-              fill="outline"
-              size="sm"
-              onClick={previewValues}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-            >
-              {isLoading ? (
-                <Spinner inline />
-              ) : (
-                <Trans i18nKey="dashboard-scene.modal-editor.run-query">Run query</Trans>
-              )}
-            </Button>
+            {options.length > 0 && (
+              <Button
+                variant={isLoading ? 'secondary' : 'primary'}
+                fill="outline"
+                size="sm"
+                onClick={previewValues}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+              >
+                {isLoading ? (
+                  <Spinner inline />
+                ) : (
+                  <Trans i18nKey="dashboard-scene.modal-editor.refresh-preview">Refresh preview</Trans>
+                )}
+              </Button>
+            )}
           </Stack>
         </div>
         <div className={styles.content}>
@@ -115,9 +117,18 @@ export function ModalEditor(props: ModalEditorProps) {
               <div className={styles.splitContainer}>
                 {!options.length ? (
                   <div className={styles.noOptions}>
-                    <Trans i18nKey="dashboard-scene.modal-editor.no-options-hint">
-                      Provide a valid query and/or static options and click &quot;Run query&quot; to see the preview.
-                    </Trans>
+                    <Button
+                      variant="secondary"
+                      fill="outline"
+                      onClick={previewValues}
+                      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+                    >
+                      {isLoading ? (
+                        <Spinner inline />
+                      ) : (
+                        <Trans i18nKey="dashboard-scene.modal-editor.show-preview">Show preview</Trans>
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} noPagination hideTitle />
@@ -307,7 +318,6 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       width: '100%',
       height: '100%',
-      color: theme.colors.text.secondary,
     }),
     buttonsRow: css({
       flexShrink: 0,

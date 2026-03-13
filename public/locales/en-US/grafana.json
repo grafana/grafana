@@ -6897,11 +6897,12 @@
     },
     "modal-editor": {
       "apply": "Apply",
+      "content-drag-to-resize": "Drag to resize",
       "discard": "Discard",
       "label-static-options": "Static options ({{staticOptionsCount}})",
-      "no-options-hint": "Provide a valid query and click the \"Run query\" button to see the preview.",
       "preview-of-values": "Preview of values ({{ optionsCount }})",
-      "run-query": "Run query"
+      "refresh-preview": "Refresh preview",
+      "show-preview": "Show preview"
     },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
@@ -15934,7 +15935,7 @@
       "label-placeholder": "Defaults to value",
       "paste-duplicates-warning_one": "Skipped {{count}} duplicate value(s)",
       "paste-duplicates-warning_other": "Skipped {{count}} duplicate value(s)",
-      "paste-parse-error": "Failed to parse pasted data: {{error}}",
+      "paste-parse-error": "Failed to parse pasted data",
       "remove-option-button-label": "Remove option",
       "value-header": "Value",
       "value-placeholder": "Value"
