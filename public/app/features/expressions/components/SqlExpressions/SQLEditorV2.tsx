@@ -86,6 +86,29 @@ export function getFromTables(doc: Text): string[] {
   return [...new Set(tables)];
 }
 
+// Returns true when the cursor is at a position where a new SQL clause is expected
+// (e.g. after FROM A, B — expecting WHERE, GROUP BY, ORDER BY, LIMIT, etc.)
+export function isAtClauseStart(doc: Text, pos: number): boolean {
+  const textBefore = doc.sliceString(0, pos).replace(/\w*$/, '').trimEnd();
+  // Check that there's a FROM clause with at least one table, and we're past it
+  // (not still in a comma list, and not right after FROM itself)
+  if (/\bFROM\b/i.test(textBefore) && !/\b(FROM|JOIN)$/i.test(textBefore) && !textBefore.endsWith(',')) {
+    return true;
+  }
+  return false;
+}
+
+const CLAUSE_KEYWORDS: Completion[] = [
+  { label: 'WHERE', type: 'keyword', boost: 50 },
+  { label: 'GROUP BY', type: 'keyword', boost: 49 },
+  { label: 'ORDER BY', type: 'keyword', boost: 48 },
+  { label: 'HAVING', type: 'keyword', boost: 47 },
+  { label: 'LIMIT', type: 'keyword', boost: 46 },
+  { label: 'JOIN', type: 'keyword', boost: 45 },
+  { label: 'LEFT JOIN', type: 'keyword', boost: 44 },
+  { label: 'INNER JOIN', type: 'keyword', boost: 43 },
+];
+
 function makeCompletionSource(
   languageRef: RefObject<SQLEditorV2LanguageDefinition | undefined>
 ) {
@@ -117,6 +140,13 @@ function makeCompletionSource(
       const tables = (await provider?.getTables()) ?? [];
       const tableCompletions: Completion[] = tables.map((t) => ({ label: t, type: 'type' }));
       return { from: word.from, options: tableCompletions };
+    }
+
+    // At a clause boundary — suggest clause keywords first
+    if (isAtClauseStart(context.state.doc, context.pos)) {
+      const kwResult = await kwSource(context);
+      const kwOptions = kwResult?.options ?? [];
+      return { from: word.from, options: [...CLAUSE_KEYWORDS, ...kwOptions] };
     }
 
     // Fetch columns for tables referenced in FROM using the latest provider

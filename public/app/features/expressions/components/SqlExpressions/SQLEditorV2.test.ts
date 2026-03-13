@@ -1,6 +1,6 @@
 import { Text } from '@codemirror/state';
 
-import { getFromTables, isAfterFromOrJoin } from './SQLEditorV2';
+import { getFromTables, isAfterFromOrJoin, isAtClauseStart } from './SQLEditorV2';
 
 describe('isAfterFromOrJoin', () => {
   function check(text: string, pos?: number) {
@@ -87,5 +87,40 @@ describe('getFromTables', () => {
 
   it('stops at SQL keywords after table list', () => {
     expect(check('SELECT * FROM A, B WHERE x = 1')).toEqual(['A', 'B']);
+  });
+});
+
+describe('isAtClauseStart', () => {
+  function check(text: string, pos?: number) {
+    const doc = Text.of(text.split('\n'));
+    return isAtClauseStart(doc, pos ?? text.length);
+  }
+
+  it('returns true after FROM table list on same line', () => {
+    expect(check('SELECT * FROM A, B ')).toBe(true);
+  });
+
+  it('returns true after single table in FROM', () => {
+    expect(check('SELECT * FROM A ')).toBe(true);
+  });
+
+  it('returns true after multiline FROM table list', () => {
+    expect(check('SELECT *\nFROM\n  A, B\n')).toBe(true);
+  });
+
+  it('returns true when starting to type a clause keyword', () => {
+    expect(check('SELECT * FROM A, B GR')).toBe(true);
+  });
+
+  it('returns false in the middle of a FROM list (after comma)', () => {
+    expect(check('SELECT * FROM A, ')).toBe(false);
+  });
+
+  it('returns false directly after FROM keyword', () => {
+    expect(check('SELECT * FROM ')).toBe(false);
+  });
+
+  it('returns false in SELECT clause', () => {
+    expect(check('SELECT ')).toBe(false);
   });
 });
