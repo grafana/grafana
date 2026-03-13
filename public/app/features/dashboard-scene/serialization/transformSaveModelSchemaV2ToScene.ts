@@ -370,6 +370,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
+    if (variable.spec.groupBy) {
+      adhocVariableState.groupBy = {
+        current: {
+          value: variable.spec.groupBy.current.value,
+          text: variable.spec.groupBy.current.text,
+        },
+      };
+    }
     return new AdHocFiltersVariable(adhocVariableState);
   }
 

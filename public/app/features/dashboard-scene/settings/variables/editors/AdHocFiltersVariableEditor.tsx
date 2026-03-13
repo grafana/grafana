@@ -18,7 +18,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue, groupBy } = variable.useState();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
   const [originalFilters, setOriginalFilters] = useState(() => variable.getOriginalFilters());
@@ -63,6 +63,8 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
     : 'This data source does not support ad hoc filters.';
 
+  const groupByDatasourceSupported = datasourceSettings?.getGroupByKeys ? true : false;
+
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
 
@@ -82,6 +84,12 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
 
+  const onGroupByEnabledChange = (enabled: boolean) => {
+    variable.setState({
+      groupBy: enabled ? { current: { value: [], text: [] } } : undefined,
+    });
+  };
+
   return (
     <AdHocVariableForm
       datasource={datasourceRef ?? undefined}
@@ -94,6 +102,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       originFiltersController={originFiltersController}
       inline={props.inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
+      groupByEnabled={groupBy !== undefined}
+      onGroupByEnabledChange={onGroupByEnabledChange}
+      groupByDatasourceSupported={groupByDatasourceSupported}
     />
   );
 }
