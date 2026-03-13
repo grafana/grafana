@@ -162,11 +162,11 @@ func ReportAssetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 
 	u, err := url.ParseRequestURI(p.BaseURL)
 	if err == nil && u.Host != "" {
-		metrics.SetPluginAssetInformation(p.ID, "remote")
+		metrics.SetPluginAssetInformation(p.ID, "remote", p.Info.Version)
 		return p, nil
 	}
 
-	metrics.SetPluginAssetInformation(p.ID, "local")
+	metrics.SetPluginAssetInformation(p.ID, "local", p.Info.Version)
 	return p, nil
 }
 

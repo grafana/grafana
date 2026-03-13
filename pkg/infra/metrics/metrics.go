@@ -581,7 +581,7 @@ func init() {
 		Name:      "plugin_asset_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId and asset source",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "asset_source"})
+	}, []string{"plugin_id", "asset_source", "plugin_version"})
 
 	grafanaPluginProvisioningInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_provisioning_info",
@@ -754,8 +754,8 @@ func SetPluginFSInformation(pluginID, fsType string) {
 	grafanaPluginFileSystemInfoDesc.WithLabelValues(pluginID, fsType).Set(1)
 }
 
-func SetPluginAssetInformation(pluginID, assetSrc string) {
-	grafanaPluginAssetInfoDesc.WithLabelValues(pluginID, assetSrc).Set(1)
+func SetPluginAssetInformation(pluginID, assetSrc, version string) {
+	grafanaPluginAssetInfoDesc.WithLabelValues(pluginID, assetSrc, version).Set(1)
 }
 
 func SetPluginProvisioningInformation(pluginID, provisioningMethod string) {
