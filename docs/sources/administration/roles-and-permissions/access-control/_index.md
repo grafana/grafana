@@ -106,7 +106,7 @@ refs:
 Available in [Grafana Enterprise](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
 {{< /admonition >}}
 
-Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources such as dashboards, reports, and administrative settings. RBAC extends the permissions of basic roles included in Grafana OSS, and enables more granular control of users’ actions. 
+Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources such as dashboards, reports, and administrative settings. RBAC extends the permissions of basic roles included in Grafana OSS, and enables more granular control of users’ actions.
 
 You can use RBAC to:
 
@@ -121,15 +121,15 @@ RBAC roles are associated to multiple permissions, each of which has an action a
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
-For more information refer to [Grafana RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/custom-role-actions-scopes).   
+For more information refer to [RBAC permission's actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
-## Available roles
+## Available RBAC roles
 
 You can assign the following RBAC roles in Grafana:
 
-- **Basic role**: [Basic roles](#basic-roles) are the standard roles available in Grafana OSS. 
-- **Fixed role**: If you're using Grafana Enterprise or Grafana Cloud, you can assign discrete [fixed roles](#fixed-roles) to users, teams, and service accounts for improved control over user permissions than you cannot have with basic roles alone. 
-- **Custom role**: If you're using Grafana Enterprise or Grafana Cloud, use [custom roles](#custom-roles) to create unique combinations of permission _actions_ and _scopes_. 
+- **Basic role**: [Basic roles](#basic-roles) are the standard roles available in Grafana OSS.
+- **Fixed role**: If you're using Grafana Enterprise or Grafana Cloud, you can assign discrete [fixed roles](#fixed-roles) to users, teams, and service accounts for improved control over user permissions than you cannot have with basic roles alone.
+- **Custom role**: If you're using Grafana Enterprise or Grafana Cloud, use [custom roles](#custom-roles) to create unique combinations of permission _actions_ and _scopes_.
 - **Plugin RBAC roles**: Plugin RBAC roles are available for Grafana Cloud app plugins. Plugin roles control access to specific plugin features and can be assigned to users, teams, or basic roles. For more information refer to [RBAC for app plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins).
 
 ### Basic roles
@@ -158,9 +158,9 @@ For a compehensive list of the basic role permissions refer to [Permissions asso
 
 #### Modify basic roles
 
-You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, the change is not propagated to the other basic roles. In other words, if you modify Viewer basic role and grant it additional permissions, Editors or Admins won't be updated with that additional grant. You can't delete basic roles. 
+You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, the change is not propagated to the other basic roles. In other words, if you modify Viewer basic role and grant it additional permissions, Editors or Admins won't be updated with that additional grant. You can't delete basic roles.
 
-You can modify basic roles via the UI or using the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/manage-rbac-roles) to learn how. 
+You can modify basic roles via the UI or using the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/manage-rbac-roles) to learn how.
 
 Note that:
 
@@ -197,21 +197,14 @@ To learn more about the permissions you can grant for each resource, refer to [R
 
 ### Custom roles
 
-If you're using Grafana Enterprise or Grafana Cloud, you can create custom roles to manage user permissions in a way that meets your security requirements. Custom roles contain unique combinations of permissions _actions_ (the allowed task) and _scopes_ (where to perform the task). 
+If you're using Grafana Enterprise or Grafana Cloud, you can create custom roles to manage user permissions in a way that meets your security requirements. Custom roles contain unique combinations of permissions _actions_ (the allowed task) and _scopes_ (where to perform the task).
 
-For example: 
+For example:
 
 - The `teams.roles:read` action allows a user to see a list of roles associated with each team.
 - The `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:read` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
-Consider creating a custom role only when fixed roles do not meet your permissions requirements.
-
-#### Create a custom role
-
-You can use either of the following methods to create, assign, and manage custom roles:
-
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles](ref:rbac-manage-rbac-roles). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles](ref:rbac-assign-rbac-roles).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API](ref:api-rbac).
+Consider creating a custom role only when fixed roles do not meet your permissions requirements. To learn more, refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles).
 
 ## RBAC limitations
 

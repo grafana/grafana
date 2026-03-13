@@ -91,7 +91,7 @@ The following table lists app plugins that have fine-grained RBAC support:
 
 To list all the permissions granted to a basic role, use the [HTTP API endpoint to query for the role](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#get-a-role). Basic role UIDs are listed in [RBAC role definitions list](ref:rbac-role-definitions).
 
-To remove any undesired plugin permissions from a basic role, [update the basic role's permissions](ref:manage-rbac-roles-update-basic-role-permissions). 
+To remove any undesired plugin permissions from a basic role, [update the basic role's permissions](ref:manage-rbac-roles-update-basic-role-permissions).
 
 ## Grant additional access to app plugins
 

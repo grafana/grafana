@@ -8,8 +8,8 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: Basic and fixed roles permissions 
-title: Basic and fixed roles permissions 
+menuTitle: Basic and fixed roles permissions
+title: Basic and fixed roles permissions
 weight: 20
 refs:
   rbac-basic-roles:
@@ -39,7 +39,7 @@ refs:
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
 ---
 
-# Basic and fixed roles permissions 
+# Basic and fixed roles permissions
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud).
@@ -47,7 +47,9 @@ Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERS
 
 The following tables list permissions associated with basic and fixed roles. This does not include basic role assignments added by plugins or apps.
 
-## Permissions associated to basic roles 
+For an overview of each type of role refer to [Available RBAC roles in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#available-rbac-roles).
+
+## Permissions associated to basic roles
 
 | Basic role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | UID                                                                                                                                                      | Associated fixed roles                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Description                                                                     |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -64,7 +66,7 @@ Grafana Cloud stacks include additional plugin role assignments not shown here. 
 
 To view the full definition of a basic role including all permissions, refer to [Manage RBAC roles](ref:rbac-manage-rbac-roles).
 
-## Permissions associated to fixed roles 
+## Permissions associated to fixed roles
 
 The following table has the existing built-in fixed role definitions. Other fixed roles might be added by plugins installed in Grafana.
 The UUID presented here can be used as an identifier for [Terraform provisioning](ref:rbac-terraform-provisioning).
