@@ -6,14 +6,12 @@ import { ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
-import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
-import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import {
+  DashboardVariablesList,
   partitionVariablesByDisplay,
   partitionVariablesByEditability,
-  DashboardVariablesList,
 } from './DashboardVariablesList';
 
 jest.mock('../../settings/variables/VariableAddEditableElement', () => ({
@@ -44,7 +42,7 @@ function renderVariablesList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.editPane, 'selectObject');
 
-  const renderResult = render(<DashboardVariablesList set={variableSet} />);
+  const renderResult = render(<DashboardVariablesList variableSet={variableSet} />);
 
   return {
     ...renderResult,
@@ -54,7 +52,6 @@ function renderVariablesList(variables: SceneVariable[] = []) {
       aboveListItems: () => renderResult.getAllByTestId('variables-list-visible-variable-name'),
       controlsMenuListItems: () => renderResult.getAllByTestId('variables-list-controls-menu-variable-name'),
       hiddenListItems: () => renderResult.getAllByTestId('variables-list-hidden-variable-name'),
-      addVariableButton: () => renderResult.getByRole('button', { name: /add variable/i }),
     },
   };
 }
@@ -70,7 +67,7 @@ function buildTestVariables() {
 }
 
 describe('<DashboardVariablesList />', () => {
-  test('renders 3 sections (one per variable display type) and an "Add variable" button', () => {
+  test('renders 3 sections (one per variable display type)', () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
     const { getByRole, elements } = renderVariablesList([hiddenVar1, controlsMenuVar1, visibleVar2, visibleVar1]);
 
@@ -86,8 +83,6 @@ describe('<DashboardVariablesList />', () => {
 
     const hiddenNames = Array.from(elements.hiddenListItems()).map((item) => item.textContent);
     expect(hiddenNames).toEqual(['ninjaVar1']);
-
-    expect(elements.addVariableButton()).toBeInTheDocument();
   });
 
   test('always renders all 3 section titles even when some are empty', () => {
@@ -111,24 +106,6 @@ describe('<DashboardVariablesList />', () => {
           visibleVar1,
           visibleVar1.state.key
         );
-      });
-    });
-
-    describe('when the "Add variable" button is clicked', () => {
-      test('opens the add variable pane', async () => {
-        const { user, elements } = renderVariablesList([]);
-
-        await user.click(elements.addVariableButton());
-
-        expect(openAddVariablePane).toHaveBeenCalledWith(elements.dashboardScene);
-      });
-
-      test('calls DashboardInteractions.addVariableButtonClicked ', async () => {
-        const { user, elements } = renderVariablesList([]);
-
-        await user.click(elements.addVariableButton());
-
-        expect(DashboardInteractions.addVariableButtonClicked).toHaveBeenCalledWith({ source: 'edit_pane' });
       });
     });
 

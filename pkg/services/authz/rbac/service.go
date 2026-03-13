@@ -587,8 +587,8 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 
 	t, ok := s.mapper.Get(group, resource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", group, "resource", resource)
-		return "", nil, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", group, "resource", resource)
+		t = newK8sNativeMapping(group, resource)
 	}
 
 	action, ok := t.Action(verb)
@@ -722,12 +722,12 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 	return res.(map[string]bool), nil
 }
 
-// Renderer is granted permissions to read all dashboards and folders, and no other permissions
+// Renderer permissions are not stored in the database and are instead derived from the action being checked.
 func (s *Service) getRendererPermissions(ctx context.Context, action string) (map[string]bool, error) {
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" {
+	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
@@ -858,8 +858,8 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 
 	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
-		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
-		return false, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource)
+		t = newK8sNativeMapping(req.Group, req.Resource)
 	}
 
 	if req.Name == "" && req.Verb != utils.VerbCreate {
@@ -1019,8 +1019,8 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
-		ctxLogger.Error("unsupported resource", "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.NotFound, "unsupported resource")
+		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource)
+		t = newK8sNativeMapping(req.Group, req.Resource)
 	}
 
 	var tree folderTree

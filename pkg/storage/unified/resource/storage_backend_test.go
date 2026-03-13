@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var appsNamespace = NamespacedResource{
@@ -336,6 +339,142 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
+// concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
+// in ascending ResourceVersion order.
+func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Skip("skipping flaky test for now")
+
+	t.Run("pollingNotifier", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite uses channel notifier")
+		}
+		sqlKV := setupSqlKV(t)
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.KvStore = sqlKV
+		})
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+
+	t.Run("channelNotifier", func(t *testing.T) {
+		sqlKV := setupSqlKV(t)
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.KvStore = sqlKV
+		}, withChannelNotifier)
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+}
+
+func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	const numEvents = 500
+
+	// Pre-create all WriteEvent structs.
+	writeEvents := make([]WriteEvent, numEvents)
+	for i := range numEvents {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		writeEvents[i] = WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		}
+	}
+
+	// Start watching before any writes.
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	// Write events in batches of fixed concurrency until all are written.
+	const concurrency = 20
+	writtenRVs := make(map[int64]bool, numEvents)
+	for batch := 0; batch < numEvents; batch += concurrency {
+		end := batch + concurrency
+		if end > numEvents {
+			end = numEvents
+		}
+		batchSize := end - batch
+
+		type writeResult struct {
+			rv  int64
+			err error
+		}
+		results := make(chan writeResult, batchSize)
+		var wg sync.WaitGroup
+		for i := batch; i < end; i++ {
+			wg.Go(func() {
+				rv, err := backend.WriteEvent(ctx, writeEvents[i])
+				results <- writeResult{rv: rv, err: err}
+			})
+		}
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			require.NoError(t, res.err, "all WriteEvent calls must succeed")
+			require.Greater(t, res.rv, int64(0))
+			writtenRVs[res.rv] = true
+		}
+	}
+	require.Len(t, writtenRVs, numEvents, "each write must produce a unique RV")
+
+	// Collect events from the watch stream.
+	received := make([]*WrittenEvent, 0, numEvents)
+	receiveCtx, stop := context.WithTimeout(ctx, 15*time.Second)
+	defer stop()
+	for len(received) < numEvents {
+		select {
+		case evt := <-stream:
+			received = append(received, evt)
+		case <-receiveCtx.Done():
+			t.Fatalf("timed out: received %d/%d events", len(received), numEvents)
+		}
+	}
+
+	// Assert completeness: every written RV was received.
+	receivedRVs := make(map[int64]bool, len(received))
+	for _, evt := range received {
+		receivedRVs[evt.ResourceVersion] = true
+	}
+
+	require.Equal(t, writtenRVs, receivedRVs, "should have received all written RVs")
+
+	// Assert ascending RV order.
+	for i := 1; i < len(received); i++ {
+		require.Greater(t, received[i].ResourceVersion, received[i-1].ResourceVersion,
+			"events must arrive in ascending RV order: event[%d].RV=%d should be > event[%d].RV=%d",
+			i, received[i].ResourceVersion, i-1, received[i-1].ResourceVersion)
+	}
+
+	// Assert correct resource names.
+	receivedNames := make(map[string]bool, len(received))
+	for _, evt := range received {
+		receivedNames[evt.Key.Name] = true
+	}
+	for i := range numEvents {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		require.True(t, receivedNames[name], "event for resource %q was not received", name)
 	}
 }
 
@@ -930,7 +1069,9 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
 	ctx := context.Background()
 
 	ns := NamespacedResource{
@@ -1053,7 +1194,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	// whose latest RV is slightly before sinceRv. Add these to each
 	// expectation's changes map so the test can validate them.
 	for _, expect := range expectations {
-		lookbackRv := subtractDurationFromSnowflake(expect.rv, listModifiedSinceLookback)
+		lookbackRv := subtractDurationFromSnowflake(expect.rv, backend.searchLookback)
 		for name, mr := range allResources {
 			if _, ok := expect.changes[name]; ok {
 				continue // already expected
@@ -1173,7 +1314,9 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
 	ctx := t.Context()
 
 	ns := NamespacedResource{
