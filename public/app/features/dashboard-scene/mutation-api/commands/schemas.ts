@@ -697,7 +697,10 @@ export const fieldConfigSchema = z
 export const vizConfigKindSchema = z
   .object({
     kind: z.literal('VizConfig').optional().default('VizConfig'),
-    group: z.string().describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
+    group: z
+      .string()
+      .min(1)
+      .describe('Plugin ID (e.g., "timeseries", "stat", "gauge", "table", "barchart", "piechart")'),
     version: z.string().optional().default(''),
     spec: z
       .object({

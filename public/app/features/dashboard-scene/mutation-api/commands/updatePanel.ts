@@ -12,6 +12,8 @@ import { z } from 'zod';
 
 import { FieldConfigSource } from '@grafana/data';
 
+import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
@@ -168,6 +170,42 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           }));
           dataPipeline.setState({ transformations });
           dataPipeline.reprocessTransformations();
+        }
+
+        if (dataSpec.queryOptions && queryRunner) {
+          const qo = dataSpec.queryOptions;
+          const runnerUpdate: Record<string, unknown> = {};
+
+          if (qo.maxDataPoints !== undefined) {
+            runnerUpdate.maxDataPoints = qo.maxDataPoints;
+          }
+          if (qo.interval !== undefined) {
+            runnerUpdate.minInterval = qo.interval;
+          }
+          if (qo.cacheTimeout !== undefined) {
+            runnerUpdate.cacheTimeout = qo.cacheTimeout;
+          }
+          if (qo.queryCachingTTL !== undefined) {
+            runnerUpdate.queryCachingTTL = qo.queryCachingTTL;
+          }
+
+          if (Object.keys(runnerUpdate).length > 0) {
+            queryRunner.setState(runnerUpdate);
+          }
+
+          if (qo.timeFrom !== undefined || qo.timeShift !== undefined) {
+            const timeRange = new PanelTimeRange({
+              timeFrom: qo.timeFrom,
+              timeShift: qo.timeShift,
+              hideTimeOverride: qo.hideTimeOverride,
+            });
+            vizPanel.setState({
+              $timeRange: timeRange,
+              hoverHeader: getUpdatedHoverHeader(vizPanel.state.title, timeRange),
+            });
+          }
+
+          queryRunner.runQueries();
         }
       }
 

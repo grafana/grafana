@@ -191,7 +191,7 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
       if (payload.evaluateVariables) {
         const evaluated: unknown[] = [];
         for (const [elementName, element] of elementEntries) {
-          const plain = JSON.parse(JSON.stringify(element));
+          const plain = structuredClone(element);
           const queries = plain?.spec?.data?.spec?.queries;
           if (!Array.isArray(queries) || queries.length === 0) {
             continue;

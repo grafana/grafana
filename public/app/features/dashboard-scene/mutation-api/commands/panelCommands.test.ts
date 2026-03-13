@@ -4,6 +4,8 @@ import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
 
@@ -569,6 +571,75 @@ describe('Panel mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
+    });
+
+    it('applies maxDataPoints via queryOptions', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const elementName = await addPanel(client, 'QO Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: { data: { kind: 'QueryGroup', spec: { queryOptions: { maxDataPoints: 500 } } } },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const queryRunner = getQueryRunnerFor(body.getVizPanels()[0]);
+      expect(queryRunner?.state.maxDataPoints).toBe(500);
+    });
+
+    it('maps queryOptions.interval to minInterval on SceneQueryRunner', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const elementName = await addPanel(client, 'Interval Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: { data: { kind: 'QueryGroup', spec: { queryOptions: { interval: '30s' } } } },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const queryRunner = getQueryRunnerFor(body.getVizPanels()[0]);
+      expect(queryRunner?.state.minInterval).toBe('30s');
+    });
+
+    it('creates PanelTimeRange from queryOptions.timeFrom', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const elementName = await addPanel(client, 'TimeFrom Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: { data: { kind: 'QueryGroup', spec: { queryOptions: { timeFrom: '1h' } } } },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const vizPanel = body.getVizPanels()[0];
+      expect(vizPanel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+
+      const tr = vizPanel.state.$timeRange as PanelTimeRange;
+      expect(tr.state.timeFrom).toBe('1h');
     });
   });
 
