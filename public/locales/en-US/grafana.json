@@ -2227,6 +2227,8 @@
       "menu-copy-link": "Copy link",
       "menu-silence": "Silence notifications",
       "menu-view-contact-point": "View contact point",
+      "menu-view-rule": "View alert rule",
+      "menu-view-rule-n": "View alert rule ({{n}})",
       "more-details-heading": "More details",
       "no": "No",
       "no-common-data": "No common labels or annotations across alerts.",

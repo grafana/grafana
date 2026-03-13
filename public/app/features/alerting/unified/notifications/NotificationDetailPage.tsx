@@ -114,11 +114,7 @@ function NotificationDetailPage() {
     });
   }
 
-  const subTitle = headerData ? (
-    <NotificationHeader
-      notification={headerData.notification}
-    />
-  ) : undefined;
+  const subTitle = headerData ? <NotificationHeader notification={headerData.notification} /> : undefined;
 
   return (
     <AlertingPageWrapper
@@ -135,7 +131,10 @@ function NotificationDetailPage() {
           uuid={uuid}
           timestamp={timestamp}
           activeTab={activeTab}
-          onTitleChange={(short, full) => { setDisplayTitle(short); setPageTitle(full); }}
+          onTitleChange={(short, full) => {
+            setDisplayTitle(short);
+            setPageTitle(full);
+          }}
           onNotificationLoaded={setNotification}
           onAlertCountChange={setAlertCount}
           onRelatedCountChange={setRelatedCount}

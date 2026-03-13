@@ -64,7 +64,8 @@ export function NotificationDetailSidebar({ notification }: NotificationDetailSi
           <Stack direction="row" gap={0.5} alignItems="center">
             <Icon name={integrationIcon} size="sm" />
             <span>
-              {receiverTypeNames[notification.integration] ?? notification.integration} #{notification.integrationIndex + 1}
+              {receiverTypeNames[notification.integration] ?? notification.integration} #
+              {notification.integrationIndex + 1}
             </span>
           </Stack>
         }
