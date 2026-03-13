@@ -95,7 +95,7 @@ describe('AppChrome', () => {
     const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('button', { name: 'Open menu' })).toHaveFocus();
+    expect(await screen.findByRole('button', { name: 'Main menu' })).toHaveFocus();
   });
 
   it('should not render a skip link if the page is chromeless', async () => {

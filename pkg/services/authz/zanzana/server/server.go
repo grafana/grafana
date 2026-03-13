@@ -178,17 +178,44 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	var mtReconciler zanzana.MTReconciler
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		reconcilerLogger := log.New("zanzana.mt-reconciler")
+
+		var leaderElector reconciler.LeaderElector
+		if cfg.ZanzanaReconciler.LeaderElectionEnabled {
+			restCfg, err := clientrest.InClusterConfig()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
+			}
+			leaderElector, err = reconciler.NewKubernetesLeaderElector(
+				restCfg,
+				cfg.ZanzanaReconciler.LeaderElectionLeaseName,
+				cfg.ZanzanaReconciler.LeaderElectionNamespace,
+				cfg.ZanzanaReconciler.LeaderElectionIdentity,
+				cfg.ZanzanaReconciler.LeaseDuration,
+				cfg.ZanzanaReconciler.RenewDeadline,
+				cfg.ZanzanaReconciler.RetryPeriod,
+				reconcilerLogger,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create leader elector: %w", err)
+			}
+		} else {
+			leaderElector = reconciler.NewNoopLeaderElector()
+		}
+
 		mtReconciler = reconciler.NewReconciler(
 			s,
 			clientFactory,
 			reconciler.Config{
-				Workers:        cfg.ZanzanaReconciler.Workers,
-				Interval:       cfg.ZanzanaReconciler.Interval,
-				WriteBatchSize: cfg.ZanzanaReconciler.WriteBatchSize,
-				QueueSize:      cfg.ZanzanaReconciler.QueueSize,
+				Workers:             cfg.ZanzanaReconciler.Workers,
+				Interval:            cfg.ZanzanaReconciler.Interval,
+				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
+				ZanzanaReadPageSize: cfg.ZanzanaReconciler.ZanzanaReadPageSize,
+				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
 			},
 			reconcilerLogger,
 			tracer,
+			reg,
+			leaderElector,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()

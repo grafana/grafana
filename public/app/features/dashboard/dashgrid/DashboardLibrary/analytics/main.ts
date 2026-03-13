@@ -34,13 +34,13 @@ export const NewTemplateDashboardInteractions = {
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
 };
 
-export const NewSuggestedDashboardsInteractions = {
+export const NewSuggestedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
   itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('suggested_item_clicked'),
   loaded: newDashboardLibraryInteraction<LoadedProperties>('suggested_loaded'),
 };
 
-export const NewBasicProvisionedDashboardsInteractions = {
+export const NewBasicProvisionedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
   itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('basic_provisioned_item_clicked'),
   loaded: newDashboardLibraryInteraction<LoadedProperties>('basic_provisioned_loaded'),

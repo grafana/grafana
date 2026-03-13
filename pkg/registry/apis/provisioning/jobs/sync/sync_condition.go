@@ -43,5 +43,9 @@ func resolveWarnings(resultReasons []string) (string, string) {
 	if slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded) {
 		return provisioning.ReasonQuotaExceeded, "Pull completed with quota exceeded"
 	}
+	if slices.Contains(resultReasons, provisioning.ReasonMissingFolderMetadata) && len(resultReasons) == 1 {
+		return provisioning.ReasonMissingFolderMetadata,
+			"Pull completed with folders missing _folder.json metadata; folder UIDs may be unstable"
+	}
 	return provisioning.ReasonCompletedWithWarnings, "Pull completed with warnings"
 }

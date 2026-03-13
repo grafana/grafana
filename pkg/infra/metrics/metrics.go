@@ -36,12 +36,6 @@ var (
 	// MApiUserSignUpInvite is a metric amount of users who have been invited
 	MApiUserSignUpInvite prometheus.Counter
 
-	// MApiDashboardSave is a metric summary for dashboard save duration
-	MApiDashboardSave prometheus.Summary
-
-	// MApiDashboardGet is a metric summary for dashboard get duration
-	MApiDashboardGet prometheus.Summary
-
 	// MApiDashboardSearch is a metric summary for dashboard search duration
 	MApiDashboardSearch prometheus.Summary
 
@@ -308,20 +302,6 @@ func init() {
 		Name:      "api_user_signup_invite_total",
 		Help:      "amount of users who have been invited",
 		Namespace: ExporterName,
-	})
-
-	MApiDashboardSave = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       "api_dashboard_save_milliseconds",
-		Help:       "summary for dashboard save duration",
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
-	})
-
-	MApiDashboardGet = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       "api_dashboard_get_milliseconds",
-		Help:       "summary for dashboard get duration",
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
 	})
 
 	MApiDashboardSearch = prometheus.NewSummary(prometheus.SummaryOpts{
@@ -791,8 +771,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MApiUserSignUpStarted,
 		MApiUserSignUpCompleted,
 		MApiUserSignUpInvite,
-		MApiDashboardSave,
-		MApiDashboardGet,
 		MApiDashboardSearch,
 		MDataSourceProxyReqTimer,
 		MAlertingExecutionTime,

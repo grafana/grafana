@@ -435,6 +435,9 @@ export type DashboardDataQueryKind = {
   datasource?: DashboardV2Beta1DataQueryKindDatasource;
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: {
     [key: string]: object;
   };
@@ -504,6 +507,8 @@ export type DashboardMatcherConfig = {
   id: string;
   /** The matcher options. This is specific to the matcher implementation. */
   options?: object;
+  /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
+  scope?: string;
 };
 export type DashboardDataTransformerConfig = {
   /** Disabled transformations are skipped */
@@ -879,6 +884,9 @@ export type DashboardAdhocVariableKind = {
   datasource?: DashboardV2Beta1AdhocVariableKindDatasource;
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: DashboardAdhocVariableSpec;
 };
 export type DashboardStringOrArrayOfString = {
@@ -971,6 +979,9 @@ export type DashboardGroupByVariableKind = {
   datasource?: DashboardV2Beta1GroupByVariableKindDatasource;
   group: string;
   kind: string;
+  labels?: {
+    [key: string]: string;
+  };
   spec: DashboardGroupByVariableSpec;
 };
 export type DashboardIntervalVariableSpec = {

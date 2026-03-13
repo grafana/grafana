@@ -68,6 +68,14 @@ var ErrServerUnavailable error = &apierrors.StatusError{ErrStatus: metav1.Status
 	Message: "server unavailable",
 }}
 
+// ErrTooManyItems indicates that pagination limits were exceeded.
+var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusBadRequest,
+	Reason:  metav1.StatusReasonBadRequest,
+	Message: "maximum number of items exceeded",
+}}
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.

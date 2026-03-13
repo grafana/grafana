@@ -8,7 +8,7 @@ import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } fr
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
+import { DashboardInput, DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
 import { validateTitle } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
@@ -89,13 +89,13 @@ export const ImportDashboardFormV2 = ({
             return null;
           }
 
-          const dataSourceOption = `datasource-${input.pluginId}`;
+          const dataSourceOption = `datasource-${input.name}`;
 
           return (
             <Field
               label={input.name}
               description={input.description}
-              key={input.pluginId}
+              key={dataSourceOption}
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
               noMargin
@@ -108,12 +108,12 @@ export const ImportDashboardFormV2 = ({
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
-                    current={selectedDataSources[input.pluginId]}
+                    current={selectedDataSources[dataSourceOption]}
                     onChange={(ds) => {
                       field.onChange(ds);
                       setSelectedDataSources((prev) => ({
                         ...prev,
-                        [input.pluginId]: {
+                        [dataSourceOption]: {
                           uid: ds.uid,
                           type: ds.type,
                           name: ds.name,
@@ -125,6 +125,22 @@ export const ImportDashboardFormV2 = ({
                 control={control}
                 rules={{ required: true }}
               />
+            </Field>
+          );
+        })}
+
+      {inputs.constants &&
+        inputs.constants.map((input: DashboardInput) => {
+          const constantKey = `constant-${input.name}`;
+          return (
+            <Field
+              label={input.label}
+              key={constantKey}
+              invalid={!!errors[constantKey]}
+              error={errors[constantKey] ? `${input.label} needs a value` : undefined}
+              noMargin
+            >
+              <Input {...register(constantKey, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}

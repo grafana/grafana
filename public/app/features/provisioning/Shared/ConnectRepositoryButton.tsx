@@ -13,9 +13,9 @@ interface Props {
 }
 
 export function ConnectRepositoryButton({ items }: Props) {
-  const state = checkSyncSettings(items);
   const navigate = useNavigate();
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const state = checkSyncSettings(items, frontendSettings?.maxRepositories);
 
   const isButtonDisabled = state.instanceConnected || state.maxReposReached;
 
@@ -77,8 +77,8 @@ export function getConfigureRepoTooltip({
 
   if (maxReposReached) {
     return t(
-      'provisioning.connect-repository-button.free-tier-limit-tooltip',
-      'Free-tier accounts are restricted to one connection'
+      'provisioning.connect-repository-button.max-repos-reached-tooltip',
+      'Your account has reached the maximum number of connected repositories'
     );
   }
 

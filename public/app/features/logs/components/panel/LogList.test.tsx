@@ -24,9 +24,14 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/f
 
 import { LogList, Props } from './LogList';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
   }),
 }));
@@ -82,6 +87,7 @@ describe('LogList', () => {
       enableLogDetails: true,
       logs,
       showControls: false,
+      showLevel: true,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
       timeRange: getDefaultTimeRange(),
@@ -552,10 +558,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close log details sidebar'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
     });
 
     test('Supports showing inline log details', async () => {
@@ -595,10 +601,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close details for this log'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close details for this log')).not.toBeInTheDocument();
     });
 
     test('Allows people to select text without opening log details', async () => {
@@ -616,7 +622,7 @@ describe('LogList', () => {
       expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
       expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
 
       spy.mockRestore();
     });
