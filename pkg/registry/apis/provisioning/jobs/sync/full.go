@@ -33,6 +33,7 @@ func FullSync(
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -60,14 +61,32 @@ func FullSync(
 
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	var changes []ResourceFileChange
+	var missingFolderMetadata []string
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef)
 		return
 	}, metrics)
 	compareSpan.End()
 
 	if err != nil {
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
+	}
+
+	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		changeActions := make(map[string]repository.FileAction, len(changes))
+		for _, c := range changes {
+			changeActions[c.Path] = c.Action
+		}
+		for _, p := range missingFolderMetadata {
+			builder := jobs.NewFolderResult(p).
+				WithWarning(resources.NewMissingFolderMetadata(p))
+			if action, ok := changeActions[p]; ok {
+				builder = builder.WithAction(action)
+			} else {
+				builder = builder.WithAction(repository.FileActionIgnored)
+			}
+			progress.Record(ctx, builder.Build())
+		}
 	}
 
 	if len(changes) == 0 {

@@ -321,6 +321,21 @@ if (config.featureToggles.alertingTriage) {
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 
+### Date/Time Formatting
+
+Use `dateTimeFormat()` / `dateTimeFormatTimeAgo()` from `@grafana/data` instead of `dateTime().format()` — they respect the user's configured timezone.
+
+```typescript
+// Good - respects user timezone
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+dateTimeFormat(timestamp);
+dateTimeFormatTimeAgo(timestamp);
+
+// Bad - ignores user timezone setting
+import { dateTime } from '@grafana/data';
+dateTime(timestamp).format('YYYY-MM-DD HH:mm:ss');
+```
+
 ### Data Source Abstractions
 
 ```typescript
@@ -537,6 +552,16 @@ gh pr list --search "fixes #12345"
 gh pr view 67890
 gh pr diff 67890
 ```
+
+## Learning from Corrections
+
+When the user corrects a mistake you made (wrong API, wrong pattern, wrong approach), assess whether the correction represents a recurring pattern worth documenting. If so, propose a concise addition to this AGENTS.md — but do **NOT** apply it without explicit approval.
+
+Skip proposing an update if the correction is:
+
+- A one-off or highly context-specific fix
+- Already documented in this file
+- A personal preference rather than a project convention
 
 ## Getting Help
 

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -73,8 +75,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	}
 
 	// Clean up leftover state from previous test runs (e.g., renamed _legacy tables).
+	// Also register cleanup to run after this test, so other packages sharing the same
+	// MySQL/Postgres test DB don't see the renamed tables (e.g. short_url_legacy).
+	// Failing to do so may cause subsequent tests to fail in environments where the database is shared between tests.
 	if !db.IsTestDbSQLite() {
 		cleanupLegacyTables(t, testCases)
+		t.Cleanup(func() { cleanupLegacyTables(t, testCases) })
 	}
 
 	// Collect feature toggles required by all test cases
@@ -435,6 +441,85 @@ func cleanupLegacyTables(t *testing.T, testCases []testcases.ResourceMigratorTes
 			}
 		}
 	}
+}
+
+// TestUnifiedMigration_Migrate_CancelsStreamContext tests that
+// when BulkProcess or a migrator function fails, the stream
+// context is canceled so the server-side handler releases its bulk lock.
+func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "tests"}
+
+	tests := []struct {
+		name        string
+		streamErr   error
+		migratorErr error
+	}{
+		{
+			name:      "stream error",
+			streamErr: fmt.Errorf("simulated stream error"),
+		},
+		{
+			name:        "migrator error",
+			migratorErr: fmt.Errorf("simulated migration failure"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := resource.NewMockResourceClient(t)
+
+			var capturedCtx context.Context
+			bulkStream := &noopBulkProcessClient{}
+			var streamResult resourcepb.BulkStore_BulkProcessClient
+			if tt.streamErr == nil {
+				streamResult = bulkStream
+			}
+
+			mockClient.EXPECT().
+				BulkProcess(mock.Anything).
+				Run(func(ctx context.Context, opts ...grpc.CallOption) {
+					capturedCtx = ctx
+				}).
+				Return(streamResult, tt.streamErr)
+
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(migrations.MigrationDefinition{
+				ID:          "test-migration",
+				MigrationID: "test migration",
+				Resources: []migrations.ResourceInfo{
+					{GroupResource: gr},
+				},
+				Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+					gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+						return tt.migratorErr
+					},
+				},
+			})
+
+			migrator := migrations.ProvideUnifiedMigrator(mockClient, registry)
+			_, err := migrator.Migrate(context.Background(), migrations.MigrateOptions{
+				Namespace: "default",
+				Resources: []schema.GroupResource{gr},
+			})
+
+			require.Error(t, err)
+			require.NotNil(t, capturedCtx, "BulkProcess should have been called")
+			require.Error(t, capturedCtx.Err(), "stream context should be canceled after Migrate returns an error")
+		})
+	}
+}
+
+// noopBulkProcessClient is a minimal BulkStore_BulkProcessClient for testing.
+type noopBulkProcessClient struct {
+	grpc.ClientStream
+}
+
+func (n *noopBulkProcessClient) Send(*resourcepb.BulkRequest) error {
+	return nil
+}
+
+func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
 }
 
 func TestUnifiedMigration_RebuildIndexes(t *testing.T) {

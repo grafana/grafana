@@ -23,14 +23,15 @@ import (
 func TestIntegrationTeamBindings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Add rest.Mode4 when it's supported
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	// TODO: Add rest.Mode5 when it's supported
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"teambindings.iam.grafana.app": {
 						DualWriterMode: mode,

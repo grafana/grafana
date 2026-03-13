@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -38,13 +37,101 @@ var RESOURCEGROUP = gvr.GroupResource().String()
 func TestIntegrationPlaylist(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
-		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     false, // required for  unified storage
-			DisableAnonymous:      true,
-			APIServerStorageType:  options.StorageTypeUnified, // use the entity api tables
+	t.Run("default setup", func(t *testing.T) {
+		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true, // do not start extra port 6443
+			DisableAnonymous:     true,
+			EnableFeatureToggles: []string{},
 		}))
+
+		// The accepted verbs will change when dual write is enabled
+		disco, err := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		require.NoError(t, err)
+		// t.Logf("%s", disco)
+		require.JSONEq(t, `[
+          {
+            "freshness": "Current",
+            "resources": [
+              {
+                "resource": "playlists",
+                "responseKind": {
+                  "group": "",
+                  "kind": "Playlist",
+                  "version": ""
+                },
+                "scope": "Namespaced",
+                "singularResource": "playlist",
+                "subresources": [
+                  {
+                    "responseKind": {
+                      "group": "",
+                      "kind": "Playlist",
+                      "version": ""
+                    },
+                    "subresource": "status",
+                    "verbs": [
+                      "get",
+                      "patch",
+                      "update"
+                    ]
+                  }
+                ],
+                "verbs": [
+                  "create",
+                  "delete",
+                  "deletecollection",
+                  "get",
+                  "list",
+                  "patch",
+                  "update",
+                  "watch"
+                ]
+              }
+            ],
+            "version": "v1"
+          },
+		  {
+            "freshness": "Current",
+            "resources": [
+              {
+                "resource": "playlists",
+                "responseKind": {
+                  "group": "",
+                  "kind": "Playlist",
+                  "version": ""
+                },
+                "scope": "Namespaced",
+                "singularResource": "playlist",
+                "subresources": [
+                  {
+                    "responseKind": {
+                      "group": "",
+                      "kind": "Playlist",
+                      "version": ""
+                    },
+                    "subresource": "status",
+                    "verbs": [
+                      "get",
+                      "patch",
+                      "update"
+                    ]
+                  }
+                ],
+                "verbs": [
+                  "create",
+                  "delete",
+                  "deletecollection",
+                  "get",
+                  "list",
+                  "patch",
+                  "update",
+                  "watch"
+                ]
+              }
+            ],
+            "version": "v0alpha1"
+          }
+        ]`, disco)
 	})
 }
 

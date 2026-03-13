@@ -33,15 +33,11 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import {
-  PanelSuggestionInfo,
-  VizSuggestionsInteractions,
-} from 'app/features/panel/components/VizTypePicker/interactions';
 import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { ShowConfirmModalEvent } from 'app/types/events';
+import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   AnnoKeyManagerAllowsEdits,
@@ -168,7 +164,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
-  layoutOrchestrator?: DashboardLayoutOrchestrator;
+  layoutOrchestrator: DashboardLayoutOrchestrator;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
@@ -201,11 +197,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
-
-  /**
-   * Panels with an accepted suggestion
-   */
-  private _panelSuggestionsReceipts = new Map<string, PanelSuggestionInfo>();
 
   protected _renderBeforeActivation = true;
 
@@ -315,14 +306,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.startTrackingChanges();
   };
 
-  public recordPanelSuggestion(panelKey: string, info: PanelSuggestionInfo | undefined) {
-    if (info) {
-      this._panelSuggestionsReceipts.set(panelKey, info);
-    } else {
-      this._panelSuggestionsReceipts.delete(panelKey);
-    }
-  }
-
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     this.serializer.onSaveComplete(saveModel, result);
 
@@ -342,11 +325,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       },
       overlay: undefined,
     });
-
-    for (const info of this._panelSuggestionsReceipts.values()) {
-      VizSuggestionsInteractions.panelSaved(info);
-    }
-    this._panelSuggestionsReceipts.clear();
 
     this.state.editPanel?.dashboardSaved();
 
@@ -433,6 +411,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      appEvents.publish(new DashboardDiscardedEvent());
     } else {
       // Do not restore
       this.setState({ isEditing: false });
