@@ -203,6 +203,10 @@ func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, gu
 		qb.dialect.Placeholder(7), // action
 		qb.dialect.Placeholder(8), // folder
 	)
+	// SQL backend stores cluster scoped resources as ""
+	if namespace == "__cluster__" {
+		namespace = ""
+	}
 	return query, []interface{}{guid, value, group, resource, namespace, name, action, folder}
 }
 

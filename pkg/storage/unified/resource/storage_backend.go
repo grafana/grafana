@@ -59,9 +59,8 @@ func convertClusterNamespaceToEmpty(namespace string) string {
 }
 
 // convertEmptyToClusterNamespace converts empty namespace to the internal __cluster__ namespace
-// for cluster-scoped resources when WithExperimentalClusterScope is enabled
-func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterScope bool) string {
-	if withExperimentalClusterScope && namespace == "" {
+func convertEmptyToClusterNamespace(namespace string) string {
+	if namespace == "" {
 		return clusterScopeNamespace
 	}
 	return namespace
@@ -69,21 +68,20 @@ func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterSco
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake                    *snowflake.Node
-	kv                           KV
-	bulkLock                     *BulkLock
-	dataStore                    *dataStore
-	eventStore                   *eventStore
-	notifier                     notifier
-	log                          log.Logger
-	withPruner                   bool
-	eventRetentionPeriod         time.Duration
-	eventPruningInterval         time.Duration
-	historyPruner                Pruner
-	garbageCollection            GarbageCollectionConfig
-	withExperimentalClusterScope bool
-	lastImportStore              *lastImportStore
-	lastImportTimeMaxAge         time.Duration
+	snowflake            *snowflake.Node
+	kv                   KV
+	bulkLock             *BulkLock
+	dataStore            *dataStore
+	eventStore           *eventStore
+	notifier             notifier
+	log                  log.Logger
+	withPruner           bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	garbageCollection    GarbageCollectionConfig
+	lastImportStore      *lastImportStore
+	lastImportTimeMaxAge time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -110,15 +108,14 @@ type KVBackend interface {
 }
 
 type KVBackendOptions struct {
-	KvStore                      KV
-	WithPruner                   bool
-	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
-	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Tracer                       trace.Tracer          // TODO add tracing
-	Reg                          prometheus.Registerer // TODO add metrics
-	Log                          log.Logger
-	GarbageCollection            GarbageCollectionConfig
+	KvStore              KV
+	WithPruner           bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+	Log                  log.Logger
+	GarbageCollection    GarbageCollectionConfig
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -185,23 +182,22 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                           kv,
-		bulkLock:                     NewBulkLock(),
-		dataStore:                    newDataStore(kv),
-		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:                    opts.WatchOptions.normalize(),
-		snowflake:                    s,
-		log:                          logger,
-		eventRetentionPeriod:         eventRetentionPeriod,
-		eventPruningInterval:         eventPruningInterval,
-		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
-		rvManager:                    opts.RvManager,
-		dbKeepAlive:                  opts.DBKeepAlive,
-		lastImportStore:              newLastImportStore(kv),
-		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
-		searchLookback:               opts.SearchLookback,
+		kv:                   kv,
+		bulkLock:             NewBulkLock(),
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:            opts.WatchOptions.normalize(),
+		snowflake:            s,
+		log:                  logger,
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+		rvManager:            opts.RvManager,
+		dbKeepAlive:          opts.DBKeepAlive,
+		lastImportStore:      newLastImportStore(kv),
+		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
+		garbageCollection:    opts.GarbageCollection,
+		searchLookback:       opts.SearchLookback,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -600,7 +596,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	rv := k.snowflake.Generate().Int64()
 
-	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := convertEmptyToClusterNamespace(event.Key.Namespace)
 
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
@@ -788,7 +784,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := convertEmptyToClusterNamespace(req.Key.Namespace)
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {
@@ -864,14 +860,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Options.Key.Namespace, k.withExperimentalClusterScope)
-
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
 			Resource:  req.Options.Key.Resource,
-			Namespace: namespace,
+			Namespace: req.Options.Key.Namespace,
 			Name:      req.Options.Key.Name,
 		},
 		ResourceVersion: req.ResourceVersion,

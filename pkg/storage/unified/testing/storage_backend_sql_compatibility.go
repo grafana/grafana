@@ -80,6 +80,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
 		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 		{"bulk import compatibility", runTestBulkImportCompatibility},
+		{"cluster scoped resources compatibility", runTestClusterScopedResources},
 	}
 
 	for _, tc := range cases {
@@ -1973,6 +1974,166 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 		queryDesc = "(all)"
 	}
 	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
+}
+
+// runTestClusterScopedResources tests cluster-scoped resources (empty namespace)
+// with both SQL and KV backends to verify cross-backend compatibility.
+func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, dbConn sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	clusterKey := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: "",
+			Name:      name,
+		}
+	}
+
+	clusterResourceJSON := func(name, uid, title string) []byte {
+		return fmt.Appendf(nil, `{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "%s",
+				"namespace": "",
+				"uid": "%s",
+				"generation": 1
+			},
+			"spec": {
+				"title": "%s"
+			}
+		}`, name, uid, title)
+	}
+
+	listClusterResources := func(t *testing.T, server resource.ResourceServer) *resourcepb.ListResponse {
+		t.Helper()
+		resp, err := server.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+					Namespace: "",
+				},
+			},
+		})
+		require.NoError(t, err)
+		return resp
+	}
+
+	t.Run("Write to SQL backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-sql-1", "SQL Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "SQL Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		require.JSONEq(t, string(sqlResp.Value), string(kvResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("Write to KV backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-kv-1"
+		created, err := kvServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-kv-1", "KV Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "KV Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		require.JSONEq(t, string(kvResp.Value), string(sqlResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("List from both backends", func(t *testing.T) {
+		sqlList := listClusterResources(t, sqlServer)
+		require.Nil(t, sqlList.Error, "SQL List error: %v", sqlList.Error)
+		t.Logf("SQL backend: listed %d cluster-scoped resources", len(sqlList.Items))
+
+		kvList := listClusterResources(t, kvServer)
+		require.Nil(t, kvList.Error, "KV List error: %v", kvList.Error)
+		t.Logf("KV backend: listed %d cluster-scoped resources", len(kvList.Items))
+
+		require.Equal(t, len(sqlList.Items), len(kvList.Items), "list count mismatch between backends")
+
+		// Verify items match
+		sqlItems := make(map[string][]byte)
+		for _, item := range sqlList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlItems[name] = item.Value
+		}
+		for _, item := range kvList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlVal, exists := sqlItems[name]
+			require.True(t, exists, "item %s from KV not found in SQL list", name)
+			require.JSONEq(t, string(sqlVal), string(item.Value), "payload mismatch for %s", name)
+		}
+	})
+
+	t.Run("Update and delete cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+
+		resp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+
+		// Update via SQL backend
+		updated, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-sql-1", "Updated SQL Cluster Resource"),
+			ResourceVersion: resp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error, "SQL Update error: %v", updated.Error)
+
+		// Read updated resource from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read after update error: %v", kvResp.Error)
+		require.Contains(t, string(kvResp.Value), "Updated SQL Cluster Resource")
+
+		// Delete via KV backend
+		deleted, err := kvServer.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             clusterKey(name),
+			ResourceVersion: kvResp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error, "KV Delete error: %v", deleted.Error)
+
+		// Verify deleted from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.NotNil(t, sqlResp.Error, "resource should be deleted")
+		require.Equal(t, int32(404), sqlResp.Error.Code)
+	})
 }
 
 // SearchServerFactory is a function that creates a ResourceServer with search enabled
