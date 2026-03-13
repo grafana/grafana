@@ -30,7 +30,8 @@ var (
 	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
 	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
-	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueDelete              = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueSetInactiveAllOwnedBy = mustTemplate("secure_value_set_inactive_all_owned_by.sql")
 	sqlSecureValueLeaseInactive    = mustTemplate("secure_value_lease_inactive.sql")
 	sqlSecureValueListByLeaseToken = mustTemplate("secure_value_list_by_lease_token.sql")
 
@@ -246,6 +247,20 @@ type deleteSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type setInactiveAllOwnedBySecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace                string
+	OwnerReferenceAPIGroup   string
+	OwnerReferenceAPIVersion string
+	OwnerReferenceKind       string
+	OwnerReferenceName       string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r setInactiveAllOwnedBySecureValue) Validate() error {
 	return nil // TODO
 }
 

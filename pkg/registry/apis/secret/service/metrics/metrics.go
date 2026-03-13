@@ -19,7 +19,8 @@ type SecureValueServiceMetrics struct {
 	SecureValueUpdateDuration *prometheus.HistogramVec
 	SecureValueReadDuration   *prometheus.HistogramVec
 	SecureValueListDuration   *prometheus.HistogramVec
-	SecureValueDeleteDuration *prometheus.HistogramVec
+	SecureValueDeleteDuration          *prometheus.HistogramVec
+	SecureValueDeleteAllOwnedByDuration *prometheus.HistogramVec
 }
 
 func newSecureValueServiceMetrics() *SecureValueServiceMetrics {
@@ -59,6 +60,13 @@ func newSecureValueServiceMetrics() *SecureValueServiceMetrics {
 			Help:      "Duration of Secure Value delete operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{successLabel}),
+		SecureValueDeleteAllOwnedByDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_delete_all_owned_by_duration_seconds",
+			Help:      "Duration of Secure Value delete all owned by operations",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{successLabel}),
 	}
 }
 
@@ -78,6 +86,7 @@ func NewSecureValueServiceMetrics(reg prometheus.Registerer) *SecureValueService
 				m.SecureValueUpdateDuration,
 				m.SecureValueListDuration,
 				m.SecureValueDeleteDuration,
+				m.SecureValueDeleteAllOwnedByDuration,
 			)
 		}
 		metricsInstance = m

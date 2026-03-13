@@ -268,6 +268,19 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueSetInactiveAllOwnedBy: {
+				{
+					Name: "set inactive all owned by",
+					Data: &setInactiveAllOwnedBySecureValue{
+						SQLTemplate:              mocks.NewTestingSQLTemplate(),
+						Namespace:                "ns",
+						OwnerReferenceAPIGroup:   "prometheus.datasource.grafana.app",
+						OwnerReferenceAPIVersion: "v0alpha1",
+						OwnerReferenceKind:       "DataSource",
+						OwnerReferenceName:       "prom-config",
+					},
+				},
+			},
 			sqlSecureValueLeaseInactive: {
 				{
 					Name: "lease inactive",

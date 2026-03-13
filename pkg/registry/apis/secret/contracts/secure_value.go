@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -40,6 +41,7 @@ type SecureValueMetadataStorage interface {
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
 	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
+	SetInactiveAllOwnedBy(ctx context.Context, owner common.ObjectReference) error
 	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
 }
 
@@ -49,6 +51,7 @@ type SecureValueService interface {
 	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	DeleteAllOwnedBy(ctx context.Context, owner common.ObjectReference) error
 }
 
 type SecureValueClient interface {

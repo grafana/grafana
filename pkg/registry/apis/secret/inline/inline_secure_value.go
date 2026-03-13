@@ -239,11 +239,16 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 		return err
 	}
 
-	for _, name := range names {
-		if name == "*" {
-			return s.deleteFromOwner(ctx, owner)
+	// TEMPORARY: Enable migration of data sources, without needing breaking changes on the API contract.
+	if len(names) == 1 && names[0] == "*" {
+		if err := s.secureValueService.DeleteAllOwnedBy(ctx, owner); err != nil {
+			return fmt.Errorf("deleting all when owned by owner %v: %w", owner, err)
 		}
 
+		return nil
+	}
+
+	for _, name := range names {
 		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
 		if err != nil {
 			return fmt.Errorf("error checking if secure value %s is owned by %v: %w", name, owner, err)
@@ -256,55 +261,5 @@ func (s *LocalInlineSecureValueService) DeleteWhenOwnedByResource(ctx context.Co
 		}
 	}
 
-	return nil
-}
-
-// DeleteFromOwner implements [contracts.SecureValueService].
-func (s *LocalInlineSecureValueService) deleteFromOwner(ctx context.Context, owner common.ObjectReference) error {
-	if owner.Namespace == "" {
-		return fmt.Errorf("namespace cannot be empty")
-	}
-	if owner.APIVersion == "" || owner.Kind == "" {
-		return fmt.Errorf("invalid owner reference")
-	}
-
-	ctx, span := s.tracer.Start(ctx, "InlineSecureValueService.deleteFromOwner", trace.WithAttributes(
-		attribute.String("owner", fmt.Sprintf("%+v", owner)),
-	))
-	defer span.End()
-
-	ns := xkube.Namespace(owner.Namespace)
-	ref := owner.ToOwnerReference()
-	matches := func(o metav1.OwnerReference) bool {
-		if ref.APIVersion != o.APIVersion {
-			return false
-		}
-		if ref.Kind != o.Kind {
-			return false
-		}
-		if ref.Name != "*" && ref.Name != o.Name {
-			return false
-		}
-		if ref.UID != "*" && ref.UID != o.UID {
-			return false
-		}
-		return true
-	}
-
-	// NOTE: should this use an index?
-	all, err := s.secureValueService.List(ctx, ns) // Continue token???
-	if err != nil {
-		return err
-	}
-	for _, v := range all.Items {
-		for _, o := range v.OwnerReferences {
-			if matches(o) {
-				if _, err = s.secureValueService.Delete(ctx, ns, v.Name); err != nil {
-					return err
-				}
-				break
-			}
-		}
-	}
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -582,6 +583,60 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	// Deleting is idempotent so modifiedCunt must be in {0, 1}
 	if modifiedCount > 1 {
 		return fmt.Errorf("secureValueMetadataStorage.Delete: delete more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	}
+
+	return nil
+}
+
+func (s *secureValueMetadataStorage) SetInactiveAllOwnedBy(ctx context.Context, owner common.ObjectReference) (err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetInactiveAllOwnedBy", trace.WithAttributes(
+		attribute.String("namespace", owner.Namespace),
+		attribute.String("owner.apiGroup", owner.APIGroup),
+		attribute.String("owner.apiVersion", owner.APIVersion),
+		attribute.String("owner.kind", owner.Kind),
+		attribute.String("owner.name", owner.Name),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+		args := []any{
+			"namespace", owner.Namespace,
+			"owner.apiGroup", owner.APIGroup,
+			"owner.apiVersion", owner.APIVersion,
+			"owner.kind", owner.Kind,
+			"owner.name", owner.Name,
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.SetInactiveAllOwnedBy failed")
+			span.RecordError(err)
+			args = append(args, "error", err)
+		}
+
+		logging.FromContext(ctx).Debug("SecureValueMetadataStorage.SetInactiveAllOwnedBy", args...)
+		s.metrics.SecureValueSetInactiveAllOwnedByDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	req := setInactiveAllOwnedBySecureValue{
+		SQLTemplate:              sqltemplate.New(s.dialect),
+		Namespace:                owner.Namespace,
+		OwnerReferenceAPIGroup:   owner.APIGroup,
+		OwnerReferenceAPIVersion: owner.APIVersion,
+		OwnerReferenceKind:       owner.Kind,
+		OwnerReferenceName:       owner.Name,
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueSetInactiveAllOwnedBy, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetInactiveAllOwnedBy.Name(), err)
+	}
+
+	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+		return fmt.Errorf("deleting all secure values owned by %v: %w", owner, err)
 	}
 
 	return nil

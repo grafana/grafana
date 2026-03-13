@@ -8,6 +8,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -174,6 +175,62 @@ func TestCrud(t *testing.T) {
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
 		require.NotNil(t, sv)
+	})
+
+	t.Run("delete all owned by owner", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		owner := common.ObjectReference{
+			APIGroup:   "prometheus.datasource.grafana.app",
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "test-ds",
+			Namespace:  "ns1",
+		}
+
+		// Create 2 owned secure values
+		owned1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "owned-1"
+			cfg.Sv.Namespace = owner.Namespace
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, owned1)
+
+		owned2, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "owned-2"
+			cfg.Sv.Namespace = owner.Namespace
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, owned2)
+
+		// Create 1 shared secure value in the same ns
+		shared, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "shared"
+			cfg.Sv.Namespace = owner.Namespace
+		})
+		require.NoError(t, err)
+		require.NotNil(t, shared)
+
+		// Delete all owned by owner
+		err = sut.SecureValueService.DeleteAllOwnedBy(t.Context(), owner)
+		require.NoError(t, err)
+
+		// Owned ones should be (softed) deleted
+		list, err := sut.SecureValueMetadataStorage.List(t.Context(), xkube.Namespace(owned1.Namespace))
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list))
+		for _, sv := range list {
+			names = append(names, sv.Name)
+		}
+
+		require.NotContains(t, names, owned1.Name)
+		require.NotContains(t, names, owned2.Name)
+		require.Contains(t, names, shared.Name)
 	})
 }
 
