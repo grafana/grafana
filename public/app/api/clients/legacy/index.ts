@@ -1,5 +1,5 @@
+import { generatedAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { RequestOptions } from '@grafana/api-clients/rtkq';
-import { generatedAPI, type CreateTeamApiArg, type SetTeamRolesApiArg } from '@grafana/api-clients/internal/rtkq/legacy';
 
 interface EndpointWithQuery {
   query?: (arg: Record<string, unknown>) => RequestOptions;
