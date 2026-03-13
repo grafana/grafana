@@ -14154,13 +14154,6 @@
           },
           {
             "in": "query",
-            "name": "includeMapped",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "in": "query",
             "name": "targetOrgId",
             "schema": {
               "format": "int64",
