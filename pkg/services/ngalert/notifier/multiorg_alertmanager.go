@@ -696,8 +696,8 @@ func (moa *MultiOrgAlertmanager) syncDatasourceConfigs(ctx context.Context) {
 
 		// Determine effective datasource UID: operator setting takes precedence.
 		uid := operatorUID
-		if uid == "" {
-			uid = cfg.DatasourceSyncUID
+		if uid == "" && cfg.DatasourceSyncUID != nil {
+			uid = *cfg.DatasourceSyncUID
 		}
 		if uid == "" {
 			continue

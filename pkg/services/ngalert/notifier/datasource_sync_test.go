@@ -164,11 +164,13 @@ func TestSyncDatasourceConfigs_FeatureFlagDisabled(t *testing.T) {
 	adminCfg.AssertExpectations(t)
 }
 
+func ptrTo[T any](v T) *T { return &v }
+
 func TestSyncDatasourceConfigs_NoUID_Skipped(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 	// Org 1 has no DatasourceSyncUID configured.
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: ""},
+		{OrgID: 1, DatasourceSyncUID: nil},
 	}, nil)
 
 	dsSvc := &dsfakes.FakeDataSourceService{}
@@ -191,7 +193,7 @@ func TestSyncDatasourceConfigs_DBUIDUsed(t *testing.T) {
 
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: "mimir-uid-1"},
+		{OrgID: 1, DatasourceSyncUID: ptrTo("mimir-uid-1")},
 	}, nil)
 
 	moa := buildTestMOA(t, []int64{1}, nil, adminCfg, dsSvc, true, "")
@@ -210,7 +212,7 @@ func TestSyncDatasourceConfigs_OperatorUIDOverridesDB(t *testing.T) {
 
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: "db-uid"},
+		{OrgID: 1, DatasourceSyncUID: ptrTo("db-uid")},
 	}, nil)
 
 	moa := buildTestMOA(t, []int64{1}, nil, adminCfg, dsSvc, true, "operator-uid")
@@ -223,7 +225,7 @@ func TestSyncDatasourceConfigs_OperatorUIDOverridesDB(t *testing.T) {
 func TestSyncDatasourceConfigs_DisabledOrgSkipped(t *testing.T) {
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 5, DatasourceSyncUID: "some-uid"},
+		{OrgID: 5, DatasourceSyncUID: ptrTo("some-uid")},
 	}, nil)
 
 	dsSvc := &dsfakes.FakeDataSourceService{}
@@ -271,8 +273,8 @@ func TestSyncDatasourceConfigs_PerOrgErrorIsolation(t *testing.T) {
 
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: "ds-1"},
-		{OrgID: 2, DatasourceSyncUID: "ds-2"},
+		{OrgID: 1, DatasourceSyncUID: ptrTo("ds-1")},
+		{OrgID: 2, DatasourceSyncUID: ptrTo("ds-2")},
 	}, nil)
 
 	moa := buildTestMOA(t, []int64{1, 2}, nil, adminCfg, dsSvc, true, "")
@@ -296,7 +298,7 @@ func TestSyncDatasourceConfigs_HTTPTimeout(t *testing.T) {
 
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: "slow-uid"},
+		{OrgID: 1, DatasourceSyncUID: ptrTo("slow-uid")},
 	}, nil)
 
 	moa := buildTestMOA(t, []int64{1}, nil, adminCfg, dsSvc, true, "")
@@ -341,7 +343,7 @@ func TestSyncDatasourceConfigs_SuccessPath(t *testing.T) {
 
 	adminCfg := &mockAdminConfigStore{}
 	adminCfg.On("GetAdminConfigurations").Return([]*ngmodels.AdminConfiguration{
-		{OrgID: 1, DatasourceSyncUID: "mimir-uid"},
+		{OrgID: 1, DatasourceSyncUID: ptrTo("mimir-uid")},
 	}, nil)
 
 	moa := buildTestMOA(t, []int64{1}, nil, adminCfg, dsSvc, true, "")

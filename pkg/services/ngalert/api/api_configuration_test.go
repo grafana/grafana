@@ -113,7 +113,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			sut := createAPIAdminSut(t, test.datasources, test.features)
 			resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-				AlertmanagersChoice: test.alertmanagerChoice,
+				AlertmanagersChoice: &test.alertmanagerChoice,
 			})
 			var res map[string]any
 			err := json.Unmarshal(resp.Body(), &res)
@@ -135,6 +135,8 @@ func createAPIAdminSut(t *testing.T,
 	}
 }
 
+func ptrTo[T any](v T) *T { return &v }
+
 func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 	mimirDS := &datasources.DataSource{
 		UID:   "mimir-ds-uid",
@@ -153,8 +155,8 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "mimir-ds-uid",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("mimir-ds-uid"),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -174,13 +176,13 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 
 		// First set it.
 		sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "mimir-ds-uid",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("mimir-ds-uid"),
 		})
 		// Then clear it.
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo(""),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -197,8 +199,8 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "nonexistent-uid",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("nonexistent-uid"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -217,8 +219,8 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "prom-uid",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("prom-uid"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -239,8 +241,8 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "vanilla-am",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("vanilla-am"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -254,8 +256,8 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: definitions.InternalAlertmanager,
-			DatasourceSyncUID:   "any-uid",
+			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
+			DatasourceSyncUID:   ptrTo("any-uid"),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 	})
@@ -264,7 +266,7 @@ func TestDatasourceSyncUID_PostAndGet(t *testing.T) {
 		adminStore := store.NewFakeAdminConfigStore(t)
 		adminStore.Configs[1] = &ngmodels.AdminConfiguration{
 			OrgID:             1,
-			DatasourceSyncUID: "stored-uid",
+			DatasourceSyncUID: ptrTo("stored-uid"),
 		}
 		sut := ConfigSrv{
 			datasourceService: &fakeDatasources.FakeDataSourceService{},
