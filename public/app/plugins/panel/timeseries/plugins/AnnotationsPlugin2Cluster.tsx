@@ -326,8 +326,7 @@ const skipClusteredAnno = (vals: AnnotationVals, i: number) => {
     // We don't currently cluster region annotations
     !vals.isRegion?.[i] &&
     // We use the clusterIdx to define when an annotation is a cluster
-    vals.clusterIdx?.[i] !== undefined &&
-    vals.clusterIdx?.[i] !== null &&
+    vals.clusterIdx?.[i] != null &&
     vals.clusterIdx?.[i] >= 0
   );
 };
