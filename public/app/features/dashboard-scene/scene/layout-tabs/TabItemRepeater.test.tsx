@@ -139,6 +139,26 @@ describe('TabItemRepeater', () => {
       expect(tabToRepeat.state.$variables?.state.variables[0].state.name).toBe('server');
       expect(tabToRepeat.state.$variables?.state.variables[0].getValue()).toBe('row-scope');
     });
+
+    it('Should prefer section variable in repeated tab content on name collision', async () => {
+      const sectionScopedVariable = new CustomVariable({
+        name: 'server',
+        query: 'row-scope',
+        value: 'row-scope',
+        text: 'row-scope',
+      });
+      const tabVariables = new SceneVariableSet({ variables: [sectionScopedVariable] });
+
+      renderScene({ variableQueryTime: 0 }, undefined, undefined, tabVariables);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Tab A')).toBeInTheDocument();
+        expect(screen.queryByText('Tab B')).toBeInTheDocument();
+        expect(screen.queryByText('Tab C')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Panel inside repeated tab, server = row-scope')).toBeInTheDocument();
+    });
   });
 });
 

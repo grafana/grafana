@@ -1,15 +1,17 @@
-import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel, ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
+  LocalValueVariable,
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
   SceneObject,
   SceneObjectState,
   SceneQueryRunner,
+  SceneVariableSet,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
@@ -439,10 +441,29 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
   // Repeated rows/tabs must keep local scope interpolation so each repeated instance
   // resolves to a distinct title/slug and remains selectable.
   if (scene.state.repeatByVariable || scene.state.repeatSourceKey) {
-    return sceneGraph.interpolate(scene, value, undefined, 'text');
+    return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
   }
 
   return sceneGraph.interpolate(getDashboardSceneFor(scene), value, undefined, 'text');
+}
+
+function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
+  const variableSet = scene.state.$variables;
+  if (!(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  const repeatLocalVariable = variableSet.state.variables.find((variable) => variable instanceof LocalValueVariable);
+  if (!(repeatLocalVariable instanceof LocalValueVariable)) {
+    return undefined;
+  }
+
+  return {
+    [repeatLocalVariable.state.name]: {
+      value: repeatLocalVariable.getValue(),
+      text: repeatLocalVariable.state.text,
+    },
+  };
 }
 
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {

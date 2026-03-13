@@ -84,7 +84,7 @@ export function getRepeatVariableValueSet(
   return new SceneVariableSet({
     // Always clone base variables to avoid attaching the same SceneObject instance
     // to multiple SceneVariableSet parents during repeat updates.
-    variables: [...localVariables, ...baseSet.state.variables.map((v) => v.clone())],
+    variables: [...baseSet.state.variables.map((v) => v.clone()), ...localVariables],
   });
 }
 
