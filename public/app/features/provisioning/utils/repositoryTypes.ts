@@ -43,7 +43,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
     tooltip: t(
       'provisioning.repository-types.gitlab-tooltip',
-      'Enhanced integration with webhook-driven sync, PR comments, and deep links to source files.'
+      'Integration with webhook-driven sync and deep links to source files. Enhanced features like PR comments are coming soon.'
     ),
     icon: 'gitlab' as const,
     logo: gitlabSvg,
@@ -54,7 +54,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.bitbucket-description', 'Connect to Bitbucket repositories'),
     tooltip: t(
       'provisioning.repository-types.bitbucket-tooltip',
-      'Enhanced integration with webhook-driven sync, PR comments, and deep links to source files.'
+      'Integration with webhook-driven sync and deep links to source files. Enhanced features like PR comments are coming soon.'
     ),
     icon: 'bitbucket' as const,
     logo: bitbucketSvg,
