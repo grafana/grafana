@@ -2531,6 +2531,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUserSync",
+			Description:  "Use the new APIs for user sync",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,

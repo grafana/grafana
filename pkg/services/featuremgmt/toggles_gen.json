@@ -2939,6 +2939,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUserSync",
+        "resourceVersion": "1770989386836",
+        "creationTimestamp": "2026-02-13T13:29:46Z"
+      },
+      "spec": {
+        "description": "Use the new APIs for user sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUsersApi",
         "resourceVersion": "1772099076728",
         "creationTimestamp": "2026-02-26T09:44:36Z"

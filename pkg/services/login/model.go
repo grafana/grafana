@@ -86,6 +86,7 @@ type UpdateAuthInfoCommand struct {
 	AuthModule  string
 	AuthId      string
 	UserId      int64
+	UserUID     string
 	OAuthToken  *oauth2.Token
 	ExternalUID string
 }

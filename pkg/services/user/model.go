@@ -86,10 +86,11 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID         int64 `json:"-"`
-	IsDisabled     *bool `json:"-"`
-	EmailVerified  *bool `json:"-"`
-	IsGrafanaAdmin *bool `json:"-"`
+	UserID         int64  `json:"-"`
+	UserUID        string `json:"-"`
+	IsDisabled     *bool  `json:"-"`
+	EmailVerified  *bool  `json:"-"`
+	IsGrafanaAdmin *bool  `json:"-"`
 	// If password is included it will be validated, hashed and updated for user.
 	Password *Password `json:"-"`
 	// If old password is included it will be validated against users current password.
@@ -101,8 +102,9 @@ type UpdateUserCommand struct {
 }
 
 type UpdateUserLastSeenAtCommand struct {
-	UserID int64
-	OrgID  int64
+	UserID  int64
+	UserUID string
+	OrgID   int64
 }
 
 type ListUserResult struct {
@@ -194,10 +196,11 @@ type BatchDisableUsersCommand struct {
 }
 
 type GetSignedInUserQuery struct {
-	UserID int64 `xorm:"user_id"`
-	Login  string
-	Email  string
-	OrgID  int64 `xorm:"org_id"`
+	UserID  int64  `xorm:"user_id"`
+	UserUID string `xorm:"user_uid"`
+	Login   string
+	Email   string
+	OrgID   int64 `xorm:"org_id"`
 }
 
 type AnalyticsSettings struct {
