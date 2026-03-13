@@ -46,8 +46,7 @@ func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:    kv,
-		WithPruner: true,
+		KvStore: kv,
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: WatchOptions{SettleDelay: time.Millisecond},
 	}
