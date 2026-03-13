@@ -9,7 +9,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -38,6 +38,7 @@ interface VariableEditorFormProps {
 export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
+  const [nameWarning, setNameWarning] = useState<string>();
   const { name, type, label, description, hide: display } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
@@ -55,8 +56,11 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
       if (result.errorMessage !== nameError) {
         setNameError(result.errorMessage);
       }
+      if (result.warningMessage !== nameWarning) {
+        setNameWarning(result.warningMessage);
+      }
     },
-    [variable, nameError]
+    [variable, nameError, nameWarning]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
@@ -105,6 +109,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         invalid={!!nameError}
         error={nameError}
       />
+      {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
       <VariableTextField
         name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
         description={t(

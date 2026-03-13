@@ -1,12 +1,19 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneVariableSet,
+  VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { getSectionBaseVariables } from '../../variables/utils';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -89,6 +96,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
   const clonedRows: RowItem[] = [];
+  const baseSectionVariables = getSectionBaseVariables(row);
 
   // Loop through variable values and create repeats
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
@@ -107,7 +115,12 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
 
     rowClone.setState({
-      $variables: getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]),
+      $variables: getRepeatVariableValueSet(
+        variable,
+        variableValues[rowIndex],
+        variableTexts[rowIndex],
+        baseSectionVariables
+      ),
       layout,
     });
 
@@ -133,12 +146,9 @@ function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSi
   }
 
   function collectVariableValue(row: RowItem) {
-    const variable = sceneGraph.lookupVariable(varName, row);
-    if (variable) {
-      const value = variable.getValue();
-      if (value != null && !Array.isArray(value)) {
-        values.push(value);
-      }
+    const value = getRepeatLocalVariableValue(row, varName);
+    if (value != null && !Array.isArray(value)) {
+      values.push(value);
     }
   }
 
@@ -149,4 +159,27 @@ function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSi
   }
 
   return values;
+}
+
+function getRepeatLocalVariableValue(row: RowItem, varName: string): VariableValueSingle | undefined {
+  const variableSet = row.state.$variables;
+  if (variableSet instanceof SceneVariableSet) {
+    const localVariable = variableSet.state.variables.find(
+      (variable) => variable instanceof LocalValueVariable && variable.state.name === varName
+    );
+    if (localVariable instanceof LocalValueVariable) {
+      const localValue = localVariable.getValue();
+      if (localValue != null && !Array.isArray(localValue)) {
+        return localValue;
+      }
+      return undefined;
+    }
+  }
+
+  const value = sceneGraph.lookupVariable(varName, row)?.getValue();
+  if (value != null && !Array.isArray(value)) {
+    return value;
+  }
+
+  return undefined;
 }

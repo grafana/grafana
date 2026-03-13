@@ -1,3 +1,4 @@
+import { SceneVariableSet } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -95,5 +96,66 @@ describe('deserialization', () => {
     const deserialized = deserializeTabsLayout(layout, {}, false);
     expect(deserialized).toBeInstanceOf(TabsLayoutManager);
     expect(deserialized.state.tabs).toHaveLength(0);
+  });
+
+  it('should deserialize tab with section variables', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'TabsLayout',
+      spec: {
+        tabs: [
+          {
+            kind: 'TabsLayoutTab',
+            spec: {
+              title: 'Tab with vars',
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              variables: [
+                {
+                  kind: 'CustomVariable',
+                  spec: {
+                    name: 'env',
+                    label: 'Environment',
+                    query: 'dev,staging,prod',
+                    current: { text: 'dev', value: 'dev' },
+                    options: [],
+                    multi: false,
+                    includeAll: false,
+                    hide: 'dontHide',
+                    skipUrlSync: false,
+                    allowCustomValue: true,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const deserialized = deserializeTabsLayout(layout, {}, false);
+
+    const tab = deserialized.state.tabs[0];
+    expect(tab.state.$variables).toBeInstanceOf(SceneVariableSet);
+    expect(tab.state.$variables!.state.variables).toHaveLength(1);
+    expect(tab.state.$variables!.state.variables[0].state.name).toBe('env');
+  });
+
+  it('should deserialize tab without section variables as undefined $variables', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'TabsLayout',
+      spec: {
+        tabs: [
+          {
+            kind: 'TabsLayoutTab',
+            spec: {
+              title: 'Tab without vars',
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+            },
+          },
+        ],
+      },
+    };
+    const deserialized = deserializeTabsLayout(layout, {}, false);
+
+    const tab = deserialized.state.tabs[0];
+    expect(tab.state.$variables).toBeUndefined();
   });
 });

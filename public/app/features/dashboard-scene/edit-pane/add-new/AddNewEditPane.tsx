@@ -19,11 +19,12 @@ import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
+  selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
   onPastePanel: () => void;
 }
 
-export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEditPaneProps) {
+export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(dashboard);
@@ -113,7 +114,7 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
         </DragDropContext>
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
-        <AddVariable dashboardScene={dashboardScene} />
+        <AddVariable dashboardScene={dashboardScene} selectedElement={selectedElement} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
         <AddLink dashboardScene={dashboardScene} />
       </AddNewSection>
