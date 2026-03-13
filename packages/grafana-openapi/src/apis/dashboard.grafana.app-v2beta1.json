@@ -2646,6 +2646,10 @@
           "options": {
             "description": "The matcher options. This is specific to the matcher implementation.",
             "type": "object"
+          },
+          "scope": {
+            "description": "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
+            "type": "string"
           }
         }
       },

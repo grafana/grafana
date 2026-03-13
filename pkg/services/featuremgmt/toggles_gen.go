@@ -75,10 +75,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableDatagridEditing
-	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditing = "enableDatagridEditing"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -195,9 +191,9 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -259,9 +255,17 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagReportRenderBinding
+	// Enables render binding support for report rendering
+	FlagReportRenderBinding = "reportRenderBinding"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -634,6 +638,10 @@ const (
 	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
+	// FlagKubernetesAuthZRoleBindingsRedirect
+	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
@@ -641,10 +649,6 @@ const (
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
-
-	// FlagKubernetesAuthzCoreRolesApi
-	// Registers AuthZ Core Roles /apis endpoint
-	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
 
 	// FlagKubernetesAuthzGlobalRolesApi
 	// Registers AuthZ Global Roles /apis endpoint
@@ -681,6 +685,10 @@ const (
 	// FlagAlertEnrichmentConditional
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
+
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -806,6 +814,10 @@ const (
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
+	// FlagKubernetesTeamsApi
+	// Enables team APIs in the app platform
+	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
+
 	// FlagKubernetesTeamsHandlerRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
@@ -813,6 +825,14 @@ const (
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
+	// FlagKubernetesServiceAccountsApi
+	// Enables service account APIs in the app platform
+	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"
+
+	// FlagKubernetesServiceAccountTokensApi
+	// Enables service account token APIs in the app platform
+	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
@@ -825,6 +845,10 @@ const (
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
@@ -870,7 +894,23 @@ const (
 	// Registers the dsabstraction app for querying datasources via unified SQL
 	FlagDsAbstractionApp = "dsAbstractionApp"
 
+	// FlagDatasourcesApiServerEnableHealthEndpoint
+	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
+
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
+
+	// FlagInlineLogDetailsNoScrolls
+	// Enables an inline version of Log Details that creates no new scrolls
+	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )

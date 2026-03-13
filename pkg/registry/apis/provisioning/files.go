@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -172,8 +173,9 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
-	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, c.access, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -218,6 +220,13 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
 func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
+	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
+		return nil, apierrors.NewForbidden(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			opts.Path,
+			errors.New("folder metadata is managed by the system and cannot be modified directly"),
+		)
+	}
 	switch r.Method {
 	case http.MethodGet:
 		return c.handleGet(ctx, opts, dualReadWriter)
