@@ -8,7 +8,7 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alph
 import { CONNECT_URL } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
-import { FreeTierLimitNote } from './FreeTierLimitNote';
+import { QuotaLimitNote } from './QuotaLimitNote';
 import { RepoIcon } from './RepoIcon';
 
 interface RepositoryTypeCardsProps {
@@ -96,7 +96,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
         </Stack>
       )}
 
-      {disabled && <FreeTierLimitNote limitType="connection" />}
+      {disabled && <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />}
     </Stack>
   );
 }

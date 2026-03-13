@@ -3646,6 +3646,7 @@
     "category-alert-state-filter": "Alert state filter",
     "category-filter": "Filter",
     "category-options": "Options",
+    "category-stat-styles": "Stat styles",
     "descriptino-alerts-linked-to-dashboard": "Only show alerts linked to this dashboard",
     "description-alert-instance-label": "Filter alert instances using label querying, ex: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filter for alerts containing this text",
@@ -3656,6 +3657,9 @@
     "description-max-items": "Maximum alerts to display",
     "description-show-inactive-alerts": "Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.",
     "description-sort-order": "Sort order of alerts and alert instances",
+    "description-stat-color-mode": "Control how the stat value or background is colored",
+    "description-stat-thresholds": "Define thresholds to color the stat value based on the alert count",
+    "description-stat-value-mappings": "Modify the display text based on the alert count",
     "description-view-mode": "Toggle between list view and stat view",
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
@@ -3681,6 +3685,9 @@
     "name-recovering": "Recovering",
     "name-show-inactive-alerts": "Show alerts with 0 instances",
     "name-sort-order": "Sort order",
+    "name-stat-color-mode": "Color mode",
+    "name-stat-thresholds": "Thresholds",
+    "name-stat-value-mappings": "Value mappings",
     "name-view-mode": "View mode",
     "sort-order-options": {
       "label-alphabetical-asc": "Alphabetical (asc)",
@@ -3688,6 +3695,12 @@
       "label-importance": "Importance",
       "label-time-asc": "Time (asc)",
       "label-time-desc": "Time (desc)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "Background Gradient",
+      "label-background-solid": "Background Solid",
+      "label-none": "None",
+      "label-value": "Value"
     },
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
@@ -6616,10 +6629,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "Drag to reorder",
       "name-builtin": "{{annoName}} (Built-in)",
-      "name-disabled": "(Disabled) {{annoName}}",
-      "select": "Select"
+      "name-disabled": "(Disabled) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
@@ -6778,6 +6789,12 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-item": {
+      "drag-to-reorder": "Drag to reorder"
+    },
+    "draggable-items-list": {
+      "select": "Select"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7465,10 +7482,6 @@
       "title-hidden_one": "Hidden ({{count}})",
       "title-hidden_other": "Hidden ({{count}})"
     },
-    "variables-section": {
-      "content-drag-to-reorder": "Drag to reorder",
-      "select": "Select"
-    },
     "version-history": {
       "comparison": {
         "button-restore": "Restore to version {{version}}"
@@ -7647,25 +7660,6 @@
     },
     "empty-state": {
       "message": "No data sources found"
-    }
-  },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Column name"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-clear-row": "Clear row",
-        "label-remove-all-data": "Remove all data",
-        "label-search": "Search..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Clear column",
-        "label-delete-column": "Delete column",
-        "label-rename-column": "Rename column",
-        "label-set-field-type": "Set field type"
-      }
     }
   },
   "datasources": {
@@ -10256,7 +10250,15 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(right y-axis)"
+      "clear-filters": "Clear all",
+      "faceted-by-labels": "By labels",
+      "faceted-by-name": "By name",
+      "faceted-deselect-all": "Deselect all",
+      "faceted-select-all": "Select all",
+      "pin-filter": "Pin to sidebar",
+      "right-axis-indicator": "(right y-axis)",
+      "series-visibility": "Series visibility",
+      "unpin-sidebar": "Unpin"
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Are you sure you want to {{ actionTitle }}?",
@@ -12718,6 +12720,7 @@
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
       "branch-text": "branch:",
+      "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
@@ -12725,6 +12728,7 @@
       "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
@@ -12757,7 +12761,7 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.",
+      "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12816,8 +12820,8 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
-      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
+      "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
+      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories"
     },
     "connect-step": {
       "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
@@ -12985,21 +12989,11 @@
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
-      "free-tier-limit": {
-        "message-connection": "Free-tier accounts are limited to 20 resources per folder. To add more resources per folder,"
-      },
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
       "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
       "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
-    },
-    "free-tier-limit": {
-      "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
-      "message-connection": "Free-tier accounts are limited to 1 connection. To add more connections,",
-      "message-resource": "Free-tier accounts are limited to 20 resources per folder. To add more resources,",
-      "note": "Note:",
-      "upgrade-link": "upgrade your account"
     },
     "get-default-values": {
       "title": {
@@ -13154,6 +13148,26 @@
           "repository-request-failed": "Repository request failed"
         }
       }
+    },
+    "quota-limit": {
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_other": "and {{count}} synced resources per repository.",
+      "message-repositories-info_one": "Your account is limited to {{count}} connected repository",
+      "message-repositories-info_other": "Your account is limited to {{count}} connected repositories",
+      "message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
+      "message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "note": "Note:",
+      "note-message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "note-message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "note-message-both-resources_one": "and {{count}} synced resource per repository. To increase limits,",
+      "note-message-both-resources_other": "and {{count}} synced resources per repository. To increase limits,",
+      "note-message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
+      "note-message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "note-message-resource_one": "Your account is limited to {{count}} synced resource per repository. To add more resources,",
+      "note-message-resource_other": "Your account is limited to {{count}} synced resources per repository. To add more resources,",
+      "upgrade-link": "upgrade your account"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -14488,6 +14502,18 @@
       "label-same-as-value": "Same as Value",
       "label-standard": "Standard"
     },
+    "presets": {
+      "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "list": "List",
+      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "threshold-background": "Threshold background",
+      "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-value": "Threshold value",
+      "threshold-value-sparkline": "Threshold value with sparkline",
+      "wide-list": "Wide list",
+      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",
@@ -14945,6 +14971,11 @@
         "label-never": "Never",
         "label-threshold": "Threshold"
       }
+    },
+    "legend": {
+      "category": "Legend",
+      "description-faceted-filter": "Show series visibility filter based on labels",
+      "name-faceted-filter": "Faceted filter"
     },
     "line-style-editor": {
       "line-fill-options": {

@@ -101,20 +101,34 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		}
 	}
 
+	addSubscriber := func(sub subscription[T]) {
+		// send initial batch of cached items
+		if !b.cache.readInto(sub.ch) {
+			close(sub.ch)
+			return
+		}
+		b.subs[sub.ch] = sub
+	}
+
 	for {
 		select {
 		case <-b.shouldTerminate: // service context cancelled
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			// send initial batch of cached items
-			if !b.cache.readInto(sub.ch) {
-				close(sub.ch)
-				continue
-			}
-			b.subs[sub.ch] = sub
+			addSubscriber(sub)
 
 		case recv := <-b.unsubscribe: // unsubscribe
+			// Drain pending subscribes so we don't miss one that was
+			// buffered before this unsubscribe.
+			for drained := false; !drained; {
+				select {
+				case sub := <-b.subscribe:
+					addSubscriber(sub)
+				default:
+					drained = true
+				}
+			}
 			unsubscribe(recv)
 
 		case item, ok := <-input: // data arrived, send to subscribers
