@@ -1,5 +1,6 @@
 import { Page } from 'app/core/components/Page/Page';
 import { useDataSourceSettingsNav } from 'app/features/connections/hooks/useDataSourceSettingsNav';
+import { useFailedDatasourcesUIDs } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
@@ -14,10 +15,12 @@ export interface Props {
 
 export function DataSourceTabPage({ uid, pageId }: Props) {
   const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
+  const { datasourceFailureByUID } = useFailedDatasourcesUIDs();
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
+    advisorFailureSeverity: datasourceFailureByUID.get(uid),
   });
 
   return (

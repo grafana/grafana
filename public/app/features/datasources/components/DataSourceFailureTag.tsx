@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { FailureSeverity } from '../../connections/hooks/useFailedDatasourcesUIDs';
+import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
 
 interface Props {
   severity: FailureSeverity;

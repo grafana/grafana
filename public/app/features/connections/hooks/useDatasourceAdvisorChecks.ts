@@ -1,18 +1,22 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { Check, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import { Check, useListCheckQuery, useUpdateCheckMutation } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';
 
 const EMPTY_MAP = new Map<string, FailureSeverity>();
 
+function isAdvisorEnabled(): boolean {
+  return Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
+}
+
 /**
  * Fetches all datasource-type advisor checks and returns the most recent one
  * (by creationTimestamp). Skips the query when the Advisor feature is disabled.
  */
 export function useLatestDatasourceCheck(): { check: Check | undefined; isLoading: boolean } {
-  const enabled = Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
+  const enabled = isAdvisorEnabled();
 
   const { data, isLoading } = useListCheckQuery(
     { labelSelector: 'advisor.grafana.app/type=datasource', limit: 1000 },
@@ -66,4 +70,35 @@ export function useFailedDatasourcesUIDs(): DatasourceFailuresResult {
   }, [check]);
 
   return { datasourceFailureByUID, isLoading };
+}
+
+/**
+ * Returns a callback that PATCHes the latest datasource advisor check to add a
+ * retry annotation for the given datasource UID.
+ * No-ops when advisor is disabled or no check exists yet.
+ */
+export function useRetryDatasourceAdvisorCheck(): (datasourceUID: string) => Promise<void> {
+  const { check } = useLatestDatasourceCheck();
+  const [updateCheck] = useUpdateCheckMutation();
+
+  return useCallback(
+    async (datasourceUID: string) => {
+      const checkName = check?.metadata.name;
+      if (!isAdvisorEnabled() || !checkName) {
+        return;
+      }
+
+      await updateCheck({
+        name: checkName,
+        patch: [
+          {
+            op: 'add',
+            path: '/metadata/annotations/advisor.grafana.app~1retry',
+            value: datasourceUID,
+          },
+        ],
+      }).unwrap();
+    },
+    [check?.metadata.name, updateCheck]
+  );
 }
