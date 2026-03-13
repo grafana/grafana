@@ -207,6 +207,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       return new AdHocFiltersVariable({
         ...initialState,
         layout: 'combobox',
+        groupBy: { current: { value: [], text: [] } },
       });
     case 'groupby':
       return new GroupByVariable(initialState);

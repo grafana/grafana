@@ -1026,12 +1026,24 @@ GroupByVariableKind: {
 	spec: GroupByVariableSpec
 }
 
+// GroupBy selection state stored in the adhoc variable schema
+AdHocGroupBy: {
+	current: {
+		value: [...string] | *[]
+		text:  [...string] | *[]
+	}
+}
+
 // Adhoc variable specification
 AdhocVariableSpec: {
 	name:        string | *""
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
+	// Optional static list of keys available for group-by (mirrors defaultKeys for filters)
+	defaultGroupByKeys?: [...MetricFindValue]
+	// Currently selected group-by dimensions
+	groupBy?: AdHocGroupBy
 	label?:       string
 	hide:         VariableHide
 	skipUrlSync:  bool | *false

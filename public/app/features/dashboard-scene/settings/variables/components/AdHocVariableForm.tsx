@@ -23,6 +23,9 @@ export interface AdHocVariableFormProps {
   originFiltersController?: AdHocFiltersController;
   inline?: boolean;
   datasourceSupported: boolean;
+  groupByEnabled?: boolean;
+  onGroupByEnabledChange?: (enabled: boolean) => void;
+  groupByDatasourceSupported?: boolean;
 }
 
 export function AdHocVariableForm({
@@ -36,6 +39,9 @@ export function AdHocVariableForm({
   defaultKeys,
   inline,
   datasourceSupported,
+  groupByEnabled,
+  onGroupByEnabledChange,
+  groupByDatasourceSupported,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
@@ -49,7 +55,6 @@ export function AdHocVariableForm({
     },
     [onDefaultKeysChange]
   );
-
   return (
     <Stack direction="column" gap={2}>
       {!inline && (
@@ -146,6 +151,19 @@ export function AdHocVariableForm({
               selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
             }
           />
+        </Field>
+      )}
+
+      {groupByDatasourceSupported && onGroupByEnabledChange && (
+        <Field
+          label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+          description={t(
+            'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+            'Show a group by selector alongside the ad hoc filters'
+          )}
+          noMargin
+        >
+          <Switch value={groupByEnabled ?? false} onChange={(e) => onGroupByEnabledChange(e.currentTarget.checked)} />
         </Field>
       )}
     </Stack>
