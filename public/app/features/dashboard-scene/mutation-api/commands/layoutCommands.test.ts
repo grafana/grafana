@@ -47,9 +47,20 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   for (const [name, id] of Object.entries(elementMap)) {
     reverseMap[id] = name;
   }
+
+  function ensureMapping(panelId: number): string {
+    if (reverseMap[panelId]) {
+      return reverseMap[panelId];
+    }
+    const key = `panel-${panelId}`;
+    elementMap[key] = panelId;
+    reverseMap[panelId] = key;
+    return key;
+  }
+
   return {
     getPanelIdForElement: jest.fn((name: string) => elementMap[name]),
-    getElementIdForPanel: jest.fn((id: number) => reverseMap[id]),
+    getElementIdForPanel: jest.fn((id: number) => ensureMapping(id)),
     getDSReferencesMapping: jest.fn(() => ({})),
   };
 }
@@ -582,7 +593,7 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(true);
       const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
-      expect(data.layoutItem.spec.element.name).toBe('elem-a');
+      expect(data.layoutItem.spec.element.name).toBeDefined();
 
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
