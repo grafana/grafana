@@ -211,6 +211,8 @@ In this example:
 
 #### Provision App Registration (client certificate) with YAML
 
+To provision the Azure Monitor data source with client certificate authentication, use the following configuration:
+
 ```yaml
 apiVersion: 1
 
