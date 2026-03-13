@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { DataFrame, EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
@@ -119,6 +119,47 @@ describe('PanelStateWrapper', () => {
           subject.next({
             state: LoadingState.Error,
             series: [],
+            errors: scenario.errors,
+            timeRange: getDefaultTimeRange(),
+          });
+        });
+
+        const newProps = { ...props, isInView: true };
+        rerender(
+          <Provider store={store}>
+            <PanelStateWrapper {...newProps} />
+          </Provider>
+        );
+
+        const button = screen.getByTestId(selectors.components.Panels.Panel.status('error'));
+        expect(button).toBeInTheDocument();
+        await act(async () => {
+          fireEvent.focus(button);
+        });
+        expect(await screen.findByText(scenario.expectedMessage)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('when state is Done but partial errors are present', () => {
+    [
+      {
+        errors: [{ message: 'expression C failed' }],
+        expectedMessage: 'expression C failed',
+      },
+      {
+        errors: [{ message: 'expression C failed' }, { message: 'expression D failed' }],
+        expectedMessage: 'Multiple errors found. Click for more details',
+      },
+    ].forEach((scenario) => {
+      it(`then it should show error status: ${scenario.expectedMessage}`, async () => {
+        const { rerender, props, subject, store } = setupTestContext({});
+
+        act(() => {
+          subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
+          subject.next({
+            state: LoadingState.Done,
+            series: [{ name: 'DataB-1', fields: [] } as DataFrame],
             errors: scenario.errors,
             timeRange: getDefaultTimeRange(),
           });
