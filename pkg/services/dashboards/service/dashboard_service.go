@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/exp/maps"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -1349,16 +1350,12 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 	}
 
 	// search only returns the metadata, need to get the dashboard.Data too
-	results := make([]*dashboards.Dashboard, len(dashs))
+	uids := make([]string, len(dashs))
 	for i, d := range dashs {
-		dash, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: d.OrgID, UID: d.UID})
-		if err != nil {
-			return nil, err
-		}
-		results[i] = dash
+		uids[i] = d.UID
 	}
 
-	return results, nil
+	return dr.getDashboardsBatchThroughK8s(ctx, query.OrgID, uids)
 }
 
 // (sometimes) called by the k8s storage engine after creating an object
@@ -1511,16 +1508,12 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	}
 
 	// search only returns the metadata, need to get the dashboard.Data too
-	results := make([]*dashboards.Dashboard, len(dashs))
+	uids := make([]string, len(dashs))
 	for i, d := range dashs {
-		dash, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: d.OrgID, UID: d.UID})
-		if err != nil {
-			return nil, err
-		}
-		results[i] = dash
+		uids[i] = d.UID
 	}
 
-	return results, nil
+	return dr.getDashboardsBatchThroughK8s(ctx, query.OrgID, uids)
 }
 
 func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.DashboardRef, error) {
@@ -1896,6 +1889,93 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 // -----------------------------------------------------------------------------------------
 // Dashboard k8s functions
 // -----------------------------------------------------------------------------------------
+
+// getDashboardsBatchThroughK8s fetches multiple dashboards concurrently by their UIDs.
+// This avoids the N+1 query problem of calling getDashboardThroughK8s in a loop.
+func (dr *DashboardServiceImpl) getDashboardsBatchThroughK8s(ctx context.Context, orgID int64, uids []string) ([]*dashboards.Dashboard, error) {
+	if len(uids) == 0 {
+		return []*dashboards.Dashboard{}, nil
+	}
+
+	// Concurrently fetch all dashboards via K8s Get
+	const maxConcurrentGets = 10
+	items := make([]*unstructured.Unstructured, len(uids))
+	errs := make([]error, len(uids))
+
+	var g errgroup.Group
+	g.SetLimit(maxConcurrentGets)
+
+	for i, uid := range uids {
+		i := i
+		uid := uid
+		g.Go(func() error {
+			out, err := dr.k8sclient.Get(ctx, uid, orgID, v1.GetOptions{}, "")
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					errs[i] = dashboards.ErrDashboardNotFound
+					return nil
+				}
+				errs[i] = err
+				return nil
+			}
+			if out == nil {
+				errs[i] = dashboards.ErrDashboardNotFound
+				return nil
+			}
+			items[i] = out
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	for _, err := range errs {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Batch-resolve users for all items at once instead of per-item
+	unstructuredItems := make([]unstructured.Unstructured, len(items))
+	for i, item := range items {
+		unstructuredItems[i] = *item
+	}
+	users, err := dr.getUsersForList(ctx, unstructuredItems, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert all items to legacy dashboards
+	results := make([]*dashboards.Dashboard, len(items))
+	for i, item := range items {
+		dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle version conversion status (same logic as UnstructuredToLegacyDashboard)
+		gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
+		if gv.Version != "" {
+			dash.APIVersion = gv.Version
+		}
+		conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
+		if ok && conversion != nil {
+			failed, _, _ := unstructured.NestedBool(conversion, "failed")
+			if failed {
+				dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
+				body, ok, _ := unstructured.NestedMap(conversion, "source")
+				if ok {
+					dash.Data = simplejson.NewFromAny(body)
+				}
+			}
+		}
+
+		results[i] = dash
+	}
+
+	return results, nil
+}
 
 func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	// get uid if not passed in
