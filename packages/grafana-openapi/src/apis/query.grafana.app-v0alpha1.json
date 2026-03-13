@@ -91,6 +91,7 @@
         "tags": ["Query"],
         "description": "Query any datasources (with expressions)",
         "operationId": "queryDatasources",
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
