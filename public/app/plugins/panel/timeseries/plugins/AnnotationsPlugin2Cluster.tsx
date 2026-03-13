@@ -130,8 +130,8 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.clip();
 
       // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !options?.multiLane || options.clustering;
-      const shouldRenderLine = !options?.multiLane || options.clustering;
+      const shouldRenderRegion = !options?.multiLane;
+      const shouldRenderLine = !options?.multiLane;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -139,8 +139,8 @@ export const AnnotationsPlugin2Cluster = ({
 
         // render line
         if (shouldRenderLine) {
-          let y0 = u.bbox.top;
-          let y1 = y0 + u.bbox.height;
+          const y0 = u.bbox.top;
+          const y1 = y0 + u.bbox.height;
 
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
@@ -177,18 +177,18 @@ export const AnnotationsPlugin2Cluster = ({
 
       // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
       xyAnnos.forEach((frame) => {
-        let vals = getVals<XYAnnoVals>(frame);
+        const vals = getVals<XYAnnoVals>(frame);
 
-        let xKey = config.scales[0].props.scaleKey;
-        let yKey = config.scales[1].props.scaleKey;
+        const xKey = config.scales[0].props.scaleKey;
+        const yKey = config.scales[1].props.scaleKey;
 
         for (let i = 0; i < frame.length; i++) {
-          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+          const color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-          let x0 = u.valToPos(vals.xMin?.[i], xKey, true);
-          let x1 = u.valToPos(vals.xMax?.[i], xKey, true);
-          let y0 = u.valToPos(vals.yMax?.[i], yKey, true);
-          let y1 = u.valToPos(vals.yMin?.[i], yKey, true);
+          const x0 = u.valToPos(vals.xMin?.[i], xKey, true);
+          const x1 = u.valToPos(vals.xMax?.[i], xKey, true);
+          const y0 = u.valToPos(vals.yMax?.[i], yKey, true);
+          const y1 = u.valToPos(vals.yMin?.[i], yKey, true);
 
           ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
           ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
@@ -226,7 +226,7 @@ export const AnnotationsPlugin2Cluster = ({
     }
   }, [xAnnos, plot]);
 
-  if (plot) {
+  if (plot && xAxisRef.current) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
@@ -252,13 +252,13 @@ export const AnnotationsPlugin2Cluster = ({
         let isVisible = true;
 
         if (isRegion && timeEnd != null) {
-          let right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
+          const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
 
           isVisible = left < plot.rect.width && right > 0;
 
           if (isVisible) {
-            let clampedLeft = Math.max(0, left);
-            let clampedRight = Math.min(plot.rect.width, right);
+            const clampedLeft = Math.max(0, left);
+            const clampedRight = Math.min(plot.rect.width, right);
 
             style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
           }
@@ -310,7 +310,7 @@ export const AnnotationsPlugin2Cluster = ({
       return markers;
     });
 
-    return createPortal(markers, xAxisRef.current!);
+    return createPortal(markers, xAxisRef.current);
   }
 
   return null;

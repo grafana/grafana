@@ -2,10 +2,10 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
+import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
-import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
-import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/rtkq/legacy/preferences';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';

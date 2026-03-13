@@ -5,13 +5,17 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, MultiSelect, Stack } from '@grafana/ui';
 
-export interface DefaultValueEditorProps {
+export interface DefaultGroupByValueEditorProps {
   values: Array<SelectableValue<string>>;
   options?: Array<SelectableValue<string>>;
   onChange: (values: Array<SelectableValue<string>>) => void;
 }
 
-export function DefaultValueEditor({ values, options = [], onChange }: DefaultValueEditorProps): ReactElement {
+export function DefaultGroupByValueEditor({
+  values,
+  options = [],
+  onChange,
+}: DefaultGroupByValueEditorProps): ReactElement {
   return (
     <Stack
       direction="column"

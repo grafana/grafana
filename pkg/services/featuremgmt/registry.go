@@ -1937,6 +1937,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertEnrichmentPreview",
+			Description:  "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingImportAlertmanagerAPI",
 			Description:  "Enables the API to import Alertmanager configuration",
 			Stage:        FeatureStageExperimental,
@@ -2517,6 +2525,14 @@ var (
 		{
 			Name:         "kubernetesTeamSync",
 			Description:  "Use the new APIs for syncing users to teams",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamService",
+			Description:  "Use the new team service that uses the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
