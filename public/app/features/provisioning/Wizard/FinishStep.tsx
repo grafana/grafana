@@ -23,13 +23,7 @@ export const FinishStep = memo(function FinishStep() {
   } = useFormContext<WizardFormData>();
   const settings = useGetFrontendSettingsQuery();
 
-  const [type, readOnly, pushToConfiguredEnables, prWorkflow, generatePreviews] = watch([
-    'repository.type',
-    'repository.readOnly',
-    'repository.enablePushToConfiguredBranch',
-    'repository.prWorkflow',
-    'repository.generateDashboardPreviews',
-  ]);
+  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -43,10 +37,16 @@ export const FinishStep = memo(function FinishStep() {
   }, [setValue]);
 
   useEffect(() => {
-    if (hasStepError) {
-      setStepStatusInfo({ status: 'idle' });
+    if (!hasStepError) {
+      return;
     }
-  }, [pushToConfiguredEnables, prWorkflow, generatePreviews, setStepStatusInfo, hasStepError]);
+    const subscription = watch((_value, { name }) => {
+      if (name) {
+        setStepStatusInfo({ status: 'idle' });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, hasStepError, setStepStatusInfo]);
 
   // Get field configurations for git-based providers
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
