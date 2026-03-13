@@ -9,6 +9,10 @@ import (
 
 	"google.golang.org/grpc"
 
+	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -18,6 +22,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -29,9 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -133,12 +135,23 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		org1 = &helper.Org1
 		orgB = &helper.OrgB
 
+		// create legacy tables (the ones that are no longer setup by default)
+		env := helper.GetEnv()
+		mg := migrator.NewScopedMigrator(env.SQLStore.GetEngine(), env.Cfg, "unified_migrator_tests")
+		mg.AddCreateMigration()
+		for _, v := range testStates {
+			v.tc.AddLegacySQLMigrations(mg)
+		}
+		err := mg.RunMigrations(t.Context(), false, 5000)
+		require.NoError(t, err, "error running migrations")
+
+		// Setup
 		for i := range testStates {
 			state := &testStates[i]
 			t.Run(state.tc.Name(), func(t *testing.T) {
-				state.tc.Setup(t, helper)
+				inK8s := state.tc.Setup(t, helper)
 				// Verify resources were created in legacy storage
-				state.tc.Verify(t, helper, true)
+				state.tc.Verify(t, helper, inK8s)
 			})
 		}
 	})
