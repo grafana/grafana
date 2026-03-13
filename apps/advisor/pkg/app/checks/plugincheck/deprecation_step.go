@@ -48,6 +48,9 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 		return nil, nil
 	}
 
+	if true {
+		return []advisor.CheckReportFailure{}, fmt.Errorf("test error")
+	}
 	if !s.updateChecker.IsUpdatable(ctx, *p) {
 		return nil, nil
 	}
