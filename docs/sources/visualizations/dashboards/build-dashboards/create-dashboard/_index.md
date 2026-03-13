@@ -155,13 +155,13 @@ When the dashboard is in edit mode, you can dock and undock.
 The following table describes how the sidebar behaves when docked or undocked:
 
 | Undocked | Docked |
-|--------- |---------|
+| --------- | ---------|
 | The sidebar opens when you click a dashboard element, and closes if no element is selected | Sidebar stays open regardless of where you click |
 | Panels can be hidden by the sidebar | Panels resize to the space left available by the sidebar |
 | Dashboard options are only displayed in the sidebar when you click the **Dashboard options** icon | Dashboard options are displayed in the sidebar when you click the dashboard canvas |
 
 When you dock the sidebar, even if you close it, it remains docked the next time you open it.
-This choice persists you change it.
+This choice persists when you change it.
 
 {{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
 
@@ -212,6 +212,8 @@ To edit a dashboard, follow these steps:
 
 ## Panel layouts
 
+<!---should this be called dashboard layouts-->
+
 Panel layouts control the size and arrangement of panels in the dashboard.
 There are two panel layout options:
 
@@ -245,6 +247,8 @@ To update the panel layout, follow these steps:
 1. Click **Exit edit**
 
 ## Panel groupings
+
+<!--should this be dashboard groupings and should groupings live on their own page to give this page room to breathe -->
 
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
