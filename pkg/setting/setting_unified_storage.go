@@ -17,9 +17,9 @@ const (
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true, // enabled by default
-	FolderResource:    true,
-	DashboardResource: true,
+	PlaylistResource:  true,  // Only Mode5!
+	FolderResource:    true,  // enabled by default
+	DashboardResource: true,  // enabled by default
 	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 
@@ -129,6 +129,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
+	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
+
+	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
+	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)

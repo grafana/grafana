@@ -1045,10 +1045,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		// Wait for dashboard to be created
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-			if err != nil {
-				collect.Errorf("could not list dashboards error: %s", err.Error())
-				return
-			}
+			require.NoError(collect, err, "should list dashboards")
 			found := false
 			for _, dash := range dashboards.Items {
 				if dash.GetName() == "security-test-dashboard" {
@@ -1060,8 +1057,9 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be created")
 
 		// Now try to update the dashboard as Editor, but claim it's in a different folder
-		// The file claims "public-folder" (where editor has permissions)
-		// But the actual dashboard is in "restricted-folder" (where editor has NO permissions)
+		// The file is at path "security-test.json" (root level, no folder)
+		// The file content claims "public-folder" in metadata
+		// Authorization should check the ACTUAL path location (root), not the claimed folder
 		maliciousDashboard := `{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind": "Dashboard",
@@ -1076,7 +1074,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			}
 		}`
 
-		_ = helper.EditorREST.Put().
+		result = helper.EditorREST.Put().
 			Namespace("default").
 			Resource("repositories").
 			Name(repo).
@@ -1085,10 +1083,11 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
-		// Authorization should check the actual folder (restricted-folder), not the claimed folder (public-folder)
-		// Since Editor has wildcard permissions in this test, this might pass
-		// The key is that authorization checks the ACTUAL location, not the claimed one
-		// In a real scenario with proper folder-level permissions, this would be denied
+		// The request should succeed because editor has permissions
+		// The key validation is that authorization checks the ACTUAL path location (root folder)
+		// and not the claimed folder from the file content ("public-folder" in metadata)
+		require.NoError(t, result.Error(), "editor should be able to update dashboard")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 
 		// Clean up
 		helper.AdminREST.Delete().
@@ -1103,7 +1102,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -1224,7 +1223,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
@@ -1285,6 +1284,35 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 		uid, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
 		require.NotEmpty(t, uid)
 	})
+
+	rootFolderBody := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
+
+	for _, tc := range []struct {
+		name   string
+		method string
+		body   []byte
+	}{
+		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootFolderBody},
+		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootFolderBody},
+		{name: "DELETE of root _folder.json is blocked", method: http.MethodDelete},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var bodyReader io.Reader
+			if tc.body != nil {
+				bodyReader = bytes.NewReader(tc.body)
+			}
+			req, err := http.NewRequest(tc.method, filesURL("_folder.json"), bodyReader)
+			require.NoError(t, err)
+			if tc.body != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+			require.Equal(t, http.StatusForbidden, resp.StatusCode)
+		})
+	}
 }
 
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
@@ -1314,7 +1342,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var helper *common.ProvisioningTestHelper
 			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, withProvisioningFolderMetadata)
+				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 			} else {
 				helper = common.RunGrafana(t)
 			}

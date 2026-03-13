@@ -192,8 +192,16 @@
   {
     "grant": "Editor",
     "roles": [
+      "fixed:alerting.inhibition-rules:writer",
+      "fixed:alerting.instances:writer",
+      "fixed:alerting.legacy:writer",
+      "fixed:alerting.notifications.external:writer",
       "fixed:alerting.provisioning.provenance:writer",
-      "fixed:alerting:writer"
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting.templates:writer",
+      "fixed:alerting.time-intervals:writer"
     ],
     "permissions": [
       {
@@ -339,7 +347,15 @@
   {
     "grant": "Viewer",
     "roles": [
-      "fixed:alerting:reader"
+      "fixed:alerting.inhibition-rules:reader",
+      "fixed:alerting.instances:reader",
+      "fixed:alerting.legacy:reader",
+      "fixed:alerting.notifications.external:reader",
+      "fixed:alerting.receivers:reader",
+      "fixed:alerting.routes:reader",
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.templates:reader",
+      "fixed:alerting.time-intervals:reader"
     ],
     "permissions": [
       {

@@ -4,10 +4,12 @@ import {
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardInteractions } from '../utils/interactions';
+import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
 import { ElementSelection } from './ElementSelection';
 import {
@@ -333,6 +335,29 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection?.markAsNewElement();
+  }
+
+  public addNewPanel(targetElement?: SceneObject) {
+    const panel = getDefaultVizPanel();
+    const dashboard = getDashboardSceneFor(this);
+    if (targetElement) {
+      const layout = getLayoutForObject(targetElement) ?? dashboard;
+      layout.addPanel(panel);
+    } else {
+      dashboard.addPanel(panel);
+    }
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(targetElement));
+  }
+
+  public pastePanel(targetElement?: SceneObject, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+    const dashboard = getDashboardSceneFor(this);
+    if (targetElement) {
+      const layout = getLayoutForObject(targetElement) ?? dashboard;
+      layout.pastePanel();
+    } else {
+      dashboard.pastePanel();
+    }
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(targetElement), 'click');
   }
 }
 

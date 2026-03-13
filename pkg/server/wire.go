@@ -126,7 +126,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -262,7 +261,6 @@ var wireBasicSet = wire.NewSet(
 	mysql.ProvideService,
 	mssql.ProvideService,
 	store.ProvideEntityEventsService,
-	legacydualwrite.ProvideMetrics,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -386,7 +384,6 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideReceiverPermissionsService,
 	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
 	starimpl.ProvideService,
-	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,

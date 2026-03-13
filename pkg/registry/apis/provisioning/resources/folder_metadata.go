@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,13 +20,88 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	folderMetadataFileName = "_folder.json"
+)
+
+// ErrMissingFolderMetadata is a sentinel error for missing _folder.json files.
+var ErrMissingFolderMetadata = errors.New("missing folder metadata")
+
+// MissingFolderMetadata is returned when a folder in the repository does not
+// have a _folder.json file and thus has an unstable hash-derived UID.
+type MissingFolderMetadata struct {
+	Path string
+}
+
+func (e *MissingFolderMetadata) Error() string {
+	return fmt.Sprintf("folder %q is missing folder metadata file - folder UID will be auto-generated and may change on next sync.", e.Path)
+}
+
+// Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
+func (e *MissingFolderMetadata) Unwrap() error {
+	return ErrMissingFolderMetadata
+}
+
+// NewMissingFolderMetadata creates a MissingFolderMetadata error for the given folder path.
+func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
+	return &MissingFolderMetadata{Path: path}
+}
+
+// ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.
+var ErrFolderMetadataConflict = errors.New("folder metadata conflict")
+
+// FolderMetadataConflict is returned when the folder metadata in the repository
+// conflicts with the folder state in Grafana (e.g., ID mismatch, user deleted
+// or changed the folder ID).
+type FolderMetadataConflict struct {
+	Path   string
+	Reason string
+}
+
+func (e *FolderMetadataConflict) Error() string {
+	return fmt.Sprintf("folder metadata conflict at %q: %s", e.Path, e.Reason)
+}
+
+// Unwrap supports errors.Is(err, ErrFolderMetadataConflict).
+func (e *FolderMetadataConflict) Unwrap() error {
+	return ErrFolderMetadataConflict
+}
+
+// FindFoldersMissingMetadata returns folder paths from source that do not have
+// a corresponding _folder.json metadata file.
+func FindFoldersMissingMetadata(source []repository.FileTreeEntry) []string {
+	seenFolders := make([]string, 0)
+	foldersWithMeta := make(map[string]struct{})
+
+	for _, file := range source {
+		path := file.Path
+		if !file.Blob {
+			if !strings.HasSuffix(path, "/") {
+				path += "/"
+			}
+			seenFolders = append(seenFolders, path)
+		} else if IsFolderMetadataFile(path) {
+			parent := safepath.Dir(path)
+			if parent != "" {
+				foldersWithMeta[parent] = struct{}{}
+			}
+		}
+	}
+
+	var missing []string
+	for _, f := range seenFolders {
+		if _, ok := foldersWithMeta[f]; !ok {
+			missing = append(missing, f)
+		}
+	}
+	return missing
+}
+
 // IsFolderMetadataEnabled reports whether the provisioningFolderMetadata feature flag is on.
 func IsFolderMetadataEnabled(cfg *setting.Cfg) bool {
 	//nolint:staticcheck // The usage of this function is deprecated, but we don't plan to keep it for long.
 	return cfg.IsFeatureToggleEnabled(featuremgmt.FlagProvisioningFolderMetadata)
 }
-
-const folderMetadataFileName = "_folder.json"
 
 // IsFolderMetadataFile reports whether path refers to a _folder.json file.
 func IsFolderMetadataFile(path string) bool {
@@ -65,7 +141,7 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 	return &f, nil
 }
 
-// WriteFolderMetadata writes _folder.json into folderPath and returns the stable UID.
+// WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
 func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
 	data, err := marshalFolderManifest(folder)
 	if err != nil {
