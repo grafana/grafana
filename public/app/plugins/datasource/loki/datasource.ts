@@ -798,6 +798,18 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
   async getTagKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
+    if ((options?.scopes?.length ?? 0) > 0) {
+      const suggestions = await this.languageProvider.fetchSuggestions(
+        options?.timeRange,
+        options?.queries,
+        options?.scopes,
+        options?.filters
+      );
+      return suggestions
+        .filter((labelName) => !!labelName && !options?.filters?.find((filter) => filter.key === labelName))
+        .map((k) => ({ value: k, text: k }));
+    }
+
     let streamSelector = '{}';
     for (const filter of options?.filters ?? []) {
       streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);
@@ -815,6 +827,18 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
   async getTagValues(options: DataSourceGetTagValuesOptions<LokiQuery>): Promise<MetricFindValue[]> {
+    if ((options?.scopes?.length ?? 0) > 0) {
+      return (
+        await this.languageProvider.fetchSuggestions(
+          options.timeRange,
+          options.queries,
+          options.scopes,
+          options.filters,
+          options.key
+        )
+      ).map((v) => ({ value: v, text: v }));
+    }
+
     let streamSelector = '{}';
     for (const filter of options?.filters ?? []) {
       streamSelector = addLabelToQuery(streamSelector, filter.key, filter.operator, filter.value);

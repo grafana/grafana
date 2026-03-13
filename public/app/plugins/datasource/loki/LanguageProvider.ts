@@ -1,7 +1,18 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { AbstractQuery, getDefaultTimeRange, KeyValue, LanguageProvider, ScopedVars, TimeRange } from '@grafana/data';
+import {
+  AbstractQuery,
+  AdHocVariableFilter,
+  getDefaultTimeRange,
+  KeyValue,
+  LanguageProvider,
+  Scope,
+  ScopedVars,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
+  TimeRange,
+} from '@grafana/data';
 import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { LokiQueryType } from './dataquery.gen';
@@ -443,6 +454,52 @@ export default class LokiLanguageProvider extends LanguageProvider {
     });
     this.labelsPromisesCache.set(cacheKey, labelValuesPromise);
     return labelValuesPromise;
+  }
+
+  /**
+   * Fetch label names or label values using the suggestions resource endpoint,
+   * which applies scopes and ad-hoc filters server-side.
+   */
+  async fetchSuggestions(
+    timeRange?: TimeRange,
+    queries?: LokiQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string
+  ): Promise<string[]> {
+    const range = timeRange ?? this.getDefaultTimeRange();
+    const timeRangeParams = this.datasource.getTimeRangeParams(range);
+
+    const body: Record<string, unknown> = {
+      labelName,
+      scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+        if (scope.spec.filters) {
+          acc.push(...scope.spec.filters);
+        }
+        return acc;
+      }, []),
+      adhocFilters: adhocFilters?.map((filter) => ({
+        key: filter.key,
+        operator: scopeFilterOperatorMap[filter.operator],
+        value: filter.value,
+        values: filter.values,
+      })),
+      start: String(timeRangeParams.start),
+      end: String(timeRangeParams.end),
+    };
+
+    const query = queries?.[0]?.expr;
+    if (query) {
+      body.query = this.datasource.interpolateString(query);
+    }
+
+    try {
+      const res = await this.datasource.postResource<{ data?: string[] }>('suggestions', body);
+      return res?.data ?? [];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
   }
 
   /**
