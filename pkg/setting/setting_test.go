@@ -138,6 +138,36 @@ func TestLoadingSettings(t *testing.T) {
 		require.Contains(t, cfg.appliedEnvOverrides, "GF_SERVER_MY_CUSTOM_SETTING=custom_value")
 	})
 
+	t.Run("Should not create duplicate lowercase key for unified_storage env vars", func(t *testing.T) {
+		// unified_storage keys use camelCase (e.g. enableMigration). The generic
+		// second pass would lowercase them, creating a duplicate key. These env
+		// vars should be skipped in the generic pass and handled only by
+		// applyUnifiedStorageEnvOverrides.
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION", "false")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+
+		section, err := cfg.Raw.GetSection("unified_storage.dashboards.dashboard.grafana.app")
+		require.NoError(t, err)
+
+		// The correctly-cased key should exist (set by applyUnifiedStorageEnvOverrides).
+		require.Equal(t, "false", section.Key("enableMigration").Value())
+
+		// The lowercased key should NOT have been created by the generic second pass.
+		require.Equal(t, "", section.Key("enablemigration").Value())
+
+		// Should only appear once in appliedEnvOverrides.
+		count := 0
+		for _, o := range cfg.appliedEnvOverrides {
+			if strings.Contains(o, "GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION") {
+				count++
+			}
+		}
+		require.Equal(t, 1, count, "env var should be applied exactly once")
+	})
+
 	t.Run("Should match env var to most specific section", func(t *testing.T) {
 		// GF_AUTH_GOOGLE_MY_KEY should match [auth.google] not [auth]
 		t.Setenv("GF_AUTH_GOOGLE_MY_KEY", "google_value")
