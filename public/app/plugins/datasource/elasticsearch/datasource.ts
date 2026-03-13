@@ -1162,7 +1162,7 @@ export class ElasticDatasource
       datasource: this.getRef(),
       query:
         query.queryType === 'esql'
-          ? this.interpolateEsqlQuery(query.query || '', scopedVars)
+          ? this.addAdHocFilters(this.interpolateEsqlQuery(query.query || '', scopedVars), filters)
           : this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };

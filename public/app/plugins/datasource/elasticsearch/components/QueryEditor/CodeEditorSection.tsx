@@ -50,7 +50,7 @@ export const CodeEditorSection = ({
         }
 
         // Return boilerplate text for editor-local population on focus; this avoids dispatching and triggering a query run.
-        return 'FROM $index ';
+        return 'FROM $__index ';
       },
       onRunQuery,
       onFormatReady,

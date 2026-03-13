@@ -93,7 +93,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if len(regularQueries) > 0 {
 		regularResponse, err := e.executeRegularQueries(regularQueries, start)
 		if err != nil {
-			return response, nil
+			return response, err
 		}
 		for refID, resp := range regularResponse.Responses {
 			response.Responses[refID] = resp
@@ -138,7 +138,7 @@ func (e *elasticsearchDataQuery) resolveEsqlIndexPlaceholder(query string) strin
 		return query
 	}
 
-	return strings.ReplaceAll(query, "$index", e.datasourceIndex)
+	return strings.ReplaceAll(query, "$__index", e.datasourceIndex)
 }
 
 func (e *elasticsearchDataQuery) executeRegularQueries(queries []*Query, start time.Time) (*backend.QueryDataResponse, error) {

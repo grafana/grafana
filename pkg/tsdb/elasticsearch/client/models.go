@@ -362,6 +362,6 @@ type EsqlColumn struct {
 
 // EsqlResponse represents an ES|QL query response
 type EsqlResponse struct {
-	Columns []EsqlColumn    `json:"columns"`
-	Values  [][]interface{} `json:"values"`
+	Columns []EsqlColumn `json:"columns"`
+	Values  [][]any      `json:"values"`
 }
