@@ -135,7 +135,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" && isTargetEligibleForMigrations(cfg.Target) {
 		// Helper log to find instances running migrations in the future
-		cfg.Logger.Info("Unified migration configs enforced")
+		cfg.Logger.Info("Unified migration configs enforced", "storage_type", cfg.UnifiedStorageType(), "target", cfg.Target)
 		cfg.enforceMigrationToUnifiedConfigs()
 	} else {
 		// Helper log to find instances disabling migration
