@@ -9,6 +9,7 @@ import { defaultGaugePanelEffects, defaultOptions, Options } from '../panelcfg.g
 import { EffectsEditor } from './EffectsEditor';
 import { GaugePanel } from './GaugePanel';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
+import { gaugePresetsSupplier } from './presets';
 import { gaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(GaugePanel)
@@ -205,5 +206,6 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
   })
   .setSuggestionsSupplier(gaugeSuggestionsSupplier)
+  .setPresetsSupplier(gaugePresetsSupplier)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);

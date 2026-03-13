@@ -43,7 +43,7 @@ function NotificationDetailPage() {
   const pageNav = { text: pageTitle };
 
   return (
-    <AlertingPageWrapper navId="alerts-notifications" pageNav={pageNav} isLoading={false}>
+    <AlertingPageWrapper navId="alerts-history" pageNav={pageNav} isLoading={false}>
       {uuid ? (
         <NotificationDetail uuid={uuid} timestamp={timestamp} onTitleChange={setPageTitle} />
       ) : (

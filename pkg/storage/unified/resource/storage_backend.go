@@ -105,7 +105,7 @@ var _ KVBackend = &kvStorageBackend{}
 
 type KVBackend interface {
 	StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	Stop()
 }
 

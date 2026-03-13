@@ -199,7 +199,7 @@ func TestTeamBinding_BeforeUpdate(t *testing.T) {
 			authz := NewTeamBindingAuthorizer(accessClient)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
-			err := authz.BeforeUpdate(ctx, binding)
+			err := authz.BeforeUpdate(ctx, binding, binding)
 			if tt.shouldAllow {
 				require.NoError(t, err)
 			} else {

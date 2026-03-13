@@ -148,6 +148,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
 		tracingService := tracing.NewNoopTracerService()
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
+		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
@@ -401,6 +402,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
+	if opts.RBACSingleOrganization {
+		_, err = rbacSect.NewKey("single_organization", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -832,6 +837,7 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	RBACSingleOrganization                bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
