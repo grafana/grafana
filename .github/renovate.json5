@@ -103,6 +103,11 @@
       minimumReleaseAge: "7 days",
     },
     {
+      groupName: "nx",
+      matchPackageNames: ["nx", "@nx/{/,}**"],
+      minimumReleaseAge: "7 days",
+    },
+    {
       "matchDepTypes": ["devDependencies"],
       "prPriority": -1
     },
