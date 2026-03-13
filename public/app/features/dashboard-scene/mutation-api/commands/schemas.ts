@@ -22,11 +22,7 @@
 
 import { z } from 'zod';
 
-import type {
-  AutoGridLayoutItemKind,
-  ElementReference,
-  GridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 export const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
@@ -428,7 +424,7 @@ export const emptyPayloadSchema = z.object({}).strict();
 export const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference').optional().default('ElementReference'),
   name: z.string().describe('Element key in the dashboard elements map'),
-}) satisfies z.ZodType<ElementReference>;
+});
 
 export const layoutPathSchema = z
   .string()
@@ -877,11 +873,22 @@ export const removePanelPayloadSchema = z.object({
 });
 
 export const listPanelsPayloadSchema = z.object({
+  elements: z
+    .array(z.string())
+    .optional()
+    .describe('Element names to return (e.g. ["panel-1", "panel-5"]). Omit to return all.'),
   evaluateVariables: z
     .boolean()
     .optional()
     .default(false)
     .describe('When true, include evaluatedQueries with template variables resolved to current values'),
+  includeStatus: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      'When true, include runtime status (isLoading, hasError, hasNoData, errors) and data frame schema per panel'
+    ),
 });
 
 export const movePanelPayloadSchema = z.object({
@@ -930,4 +937,5 @@ export const payloads = {
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),
+  getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
 };

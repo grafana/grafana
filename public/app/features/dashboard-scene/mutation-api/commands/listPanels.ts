@@ -1,17 +1,20 @@
 /**
  * LIST_PANELS command
  *
- * Returns all elements on the dashboard (panels, library panels, etc.)
+ * Returns elements on the dashboard (panels, library panels, etc.)
  * as an array of { element, layoutItem } entries. The element name is
  * embedded in layoutItem.spec.element.name (v2beta1 ElementReference).
  *
- * When evaluateVariables is true, an evaluatedQueries array is included
- * with template variables resolved to their current values.
+ * Optional filters:
+ *  - elements: return only named elements
+ *  - evaluateVariables: include evaluatedQueries with resolved template vars
+ *  - includeStatus: include runtime status and data frame schema per panel
  */
 
 import { z } from 'zod';
 
-import { sceneGraph, type SceneObject } from '@grafana/scenes';
+import { type DataFrame, LoadingState } from '@grafana/data';
+import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -41,6 +44,97 @@ function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
   return value;
 }
 
+interface PanelRuntimeStatus {
+  isLoading: boolean;
+  hasError: boolean;
+  hasNoData: boolean;
+  errors?: string[];
+}
+
+interface FieldSchema {
+  name: string;
+  type: string;
+  labels?: Record<string, string>;
+}
+
+interface FrameSchema {
+  name?: string;
+  fields: FieldSchema[];
+}
+
+function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
+  const dataProvider = vizPanel.state.$data;
+  if (!dataProvider) {
+    return undefined;
+  }
+
+  const innerProvider = dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
+  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+
+  if (!panelData) {
+    return { isLoading: true, hasError: false, hasNoData: false };
+  }
+
+  const { state, errors, error, series } = panelData;
+
+  const isLoading =
+    state === LoadingState.Loading || state === LoadingState.Streaming || state === LoadingState.NotStarted;
+  if (isLoading) {
+    return { isLoading: true, hasError: false, hasNoData: false };
+  }
+
+  const allErrors: string[] = [];
+  if (errors?.length) {
+    for (const e of errors) {
+      if (e.message) {
+        allErrors.push(e.message);
+      }
+    }
+  } else if (error?.message) {
+    allErrors.push(error.message);
+  }
+
+  const hasData = Array.isArray(series) && series.some((s: DataFrame) => s.fields.length > 0);
+
+  return {
+    isLoading: false,
+    hasError: allErrors.length > 0,
+    hasNoData: !hasData,
+    ...(allErrors.length > 0 && { errors: allErrors }),
+  };
+}
+
+function getDataFrameSchema(vizPanel: VizPanel): FrameSchema[] | undefined {
+  const dataProvider = vizPanel.state.$data;
+  if (!dataProvider) {
+    return undefined;
+  }
+
+  const innerProvider = dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
+  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+
+  if (!panelData?.series || !Array.isArray(panelData.series)) {
+    return undefined;
+  }
+
+  const schemas: FrameSchema[] = [];
+  for (const frame of panelData.series) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- series comes from untyped SceneDataProvider state
+    const df = frame as DataFrame;
+    const fields: FieldSchema[] = df.fields.map((field) => ({
+      name: field.name ?? '',
+      type: field.type ?? 'unknown',
+      ...(field.labels && Object.keys(field.labels).length > 0 && { labels: field.labels }),
+    }));
+    schemas.push({
+      ...(df.name ? { name: df.name } : {}),
+      fields,
+    });
+  }
+
+  return schemas.length > 0 ? schemas : undefined;
+}
+
 export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
   name: 'LIST_PANELS',
   description: payloads.listPanels.description ?? '',
@@ -57,9 +151,13 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
       const fullElements = getElements(body, scene);
       const allPanels = body.getVizPanels();
 
-      const elements: Array<{ element: unknown; layoutItem: unknown }> = [];
+      const filterSet = payload.elements ? new Set(payload.elements) : undefined;
 
-      for (const [elementName, element] of Object.entries(fullElements)) {
+      const elementEntries = Object.entries(fullElements).filter(([name]) => !filterSet || filterSet.has(name));
+
+      const elements: Array<Record<string, unknown>> = [];
+
+      for (const [elementName, element] of elementEntries) {
         const panelId = scene.serializer.getPanelIdForElement(elementName);
         const expectedKey = panelId !== undefined ? getVizPanelKeyForPanelId(panelId) : undefined;
         const vizPanel = expectedKey ? allPanels.find((p) => p.state.key === expectedKey) : undefined;
@@ -71,14 +169,28 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
               spec: { element: { kind: 'ElementReference' as const, name: elementName } },
             };
 
-        elements.push({ element, layoutItem });
+        const entry: Record<string, unknown> = { element, layoutItem };
+
+        if (payload.includeStatus && vizPanel) {
+          const status = getPanelRuntimeStatus(vizPanel);
+          if (status) {
+            entry.status = status;
+          }
+
+          const dataSchema = getDataFrameSchema(vizPanel);
+          if (dataSchema) {
+            entry.dataSchema = dataSchema;
+          }
+        }
+
+        elements.push(entry);
       }
 
       const data: Record<string, unknown> = { elements };
 
       if (payload.evaluateVariables) {
         const evaluated: unknown[] = [];
-        for (const [elementName, element] of Object.entries(fullElements)) {
+        for (const [elementName, element] of elementEntries) {
           const plain = JSON.parse(JSON.stringify(element));
           const queries = plain?.spec?.data?.spec?.queries;
           if (!Array.isArray(queries) || queries.length === 0) {

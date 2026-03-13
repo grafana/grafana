@@ -209,6 +209,41 @@ describe('Panel mutation commands', () => {
       expect(data.elements[0].layoutItem.kind).toBe('GridLayoutItem');
       expect(data.elements[0].layoutItem.spec.element.name).toBeDefined();
     });
+
+    it('filters by element names when elements is provided', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const nameA = await addPanel(client, 'Panel A');
+      await addPanel(client, 'Panel B');
+      await addPanel(client, 'Panel C');
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [nameA] },
+      });
+
+      expect(result.success).toBe(true);
+      const data = result.data as PanelElementsData;
+      expect(data.elements).toHaveLength(1);
+      expect(data.elements[0].layoutItem.spec.element.name).toBe(nameA);
+    });
+
+    it('returns empty array when elements filter matches nothing', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      await addPanel(client, 'Panel A');
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: ['nonexistent'] },
+      });
+
+      expect(result.success).toBe(true);
+      const data = result.data as PanelElementsData;
+      expect(data.elements).toHaveLength(0);
+    });
   });
 
   describe('ADD_PANEL', () => {

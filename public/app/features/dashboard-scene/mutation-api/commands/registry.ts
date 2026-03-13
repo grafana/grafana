@@ -10,6 +10,7 @@ import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
+import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
@@ -49,6 +50,7 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updatePanelCommand,
   removePanelCommand,
   listPanelsCommand,
+  getDashboardInfoCommand,
 ];
 
 /** All valid command names. */

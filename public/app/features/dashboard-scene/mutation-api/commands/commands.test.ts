@@ -38,7 +38,8 @@ describe('Command consistency', () => {
         cmd.name === 'LIST_VARIABLES' ||
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
-        cmd.name === 'LIST_PANELS'
+        cmd.name === 'LIST_PANELS' ||
+        cmd.name === 'GET_DASHBOARD_INFO'
       ) {
         const result = cmd.payloadSchema.safeParse({});
         expect(result.success).toBe(true);
@@ -54,6 +55,7 @@ describe('Command consistency', () => {
       'ADD_TAB',
       'ADD_VARIABLE',
       'ENTER_EDIT_MODE',
+      'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
       'LIST_PANELS',
       'LIST_VARIABLES',

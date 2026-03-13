@@ -591,12 +591,24 @@ If some elements fail while others succeed, `success` is `true` and partial fail
 
 ### `LIST_PANELS`
 
-List all elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.
+List elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.
 
-**Request:**
+**Request (all panels):**
 
 ```json
 { "type": "LIST_PANELS", "payload": {} }
+```
+
+**Request (filtered by element names):**
+
+```json
+{ "type": "LIST_PANELS", "payload": { "elements": ["panel-1", "panel-5"] } }
+```
+
+**Request (with runtime status and data schema):**
+
+```json
+{ "type": "LIST_PANELS", "payload": { "includeStatus": true } }
 ```
 
 **Response:**
@@ -624,7 +636,17 @@ List all elements on the dashboard (panels, library panels, etc.) as an array of
             "height": 8,
             "element": { "kind": "ElementReference", "name": "panel-1" }
           }
-        }
+        },
+        "status": { "isLoading": false, "hasError": false, "hasNoData": false },
+        "dataSchema": [
+          {
+            "name": "response_time",
+            "fields": [
+              { "name": "Time", "type": "time" },
+              { "name": "Value", "type": "number" }
+            ]
+          }
+        ]
       },
       {
         "element": { "kind": "Panel", "spec": { "title": "Error count", "...": "..." } },
@@ -639,6 +661,10 @@ List all elements on the dashboard (panels, library panels, etc.) as an array of
 }
 ```
 
+`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+
+````
+
 Each entry uses the same `{ element, layoutItem }` shape as write commands. The element name is in `layoutItem.spec.element.name`.
 
 ### `MOVE_PANEL`
@@ -652,7 +678,7 @@ Move a panel to a different group or reposition it within a grid. The `layoutIte
   "type": "MOVE_PANEL",
   "payload": { "element": { "name": "panel-abc" }, "toParent": "/rows/1" }
 }
-```
+````
 
 **Reposition within the current grid using layoutItem:**
 
@@ -835,6 +861,39 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
         }
       }
     ]
+  },
+  "changes": []
+}
+```
+
+---
+
+## Metadata
+
+### `GET_DASHBOARD_INFO`
+
+Get dashboard metadata. Read-only, no permissions required.
+
+**Request:**
+
+```json
+{ "type": "GET_DASHBOARD_INFO", "payload": {} }
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "title": "My Dashboard",
+    "description": "Dashboard description",
+    "uid": "abc123",
+    "tags": ["production", "monitoring"],
+    "folderTitle": "Infrastructure",
+    "folderUid": "folder-1",
+    "created": "2025-01-15T10:00:00Z",
+    "updated": "2025-03-13T14:30:00Z"
   },
   "changes": []
 }
