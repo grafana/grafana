@@ -64,6 +64,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
 
+  /**
+   * Adds star button and left side actions to app chrome breadcrumb area
+   */
   useUpdateAppChromeActions(dashboard);
 
   const { selectionContext, openPane, selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
@@ -83,6 +86,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     onClosePane: () => editPane.closePane(),
   });
 
+  /**
+   * Sync docked state to editPane state
+   */
   useEffect(() => {
     editPane.setState({ isDocked: sidebarContext.isDocked });
   }, [sidebarContext.isDocked, editPane]);
@@ -104,6 +110,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   function renderBody() {
     const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
+    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
     if (renderWithoutSidebar) {
       return (
         <div
@@ -238,6 +245,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
+      // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
     }),
     scrollContainerNoSidebar: css({
@@ -250,6 +258,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       gap: theme.spacing(1),
       boxSizing: 'border-box',
       flexDirection: 'column',
+      // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 2, 2, 2),
     }),
     bodyEditing: css({
@@ -261,6 +270,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
     controlsWrapperSticky: css({

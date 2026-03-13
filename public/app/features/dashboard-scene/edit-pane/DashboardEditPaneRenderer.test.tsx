@@ -35,6 +35,16 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn().mockReturnValue(80),
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    isLoading: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+}));
+
 export function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),
@@ -71,7 +81,10 @@ describe('DashboardEditPaneRenderer', () => {
 
   it('Should sync sidebar docked state with edit pane state', async () => {
     const scene = buildTestScene();
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
 
     act(() => screen.getByLabelText('Outline').click());
 
