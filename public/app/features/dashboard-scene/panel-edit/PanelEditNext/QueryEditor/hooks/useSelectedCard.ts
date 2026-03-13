@@ -8,11 +8,13 @@ import { AlertRule, EMPTY_ALERT, Transformation } from '../types';
  * Resolves the primary selected query, transformation, and alert from the current selection state.
  *
  * "Primary" means the last element of the respective selection array — the most recently
- * touched item, which is shown in the editor pane. See useMultiSelection for the ordering rules.
+ * touched item, which is shown in the editor pane. Multi-select (added in a later PR)
+ * appends to the end, preserving this invariant.
  *
  * Query selection has an auto-select fallback: when nothing is explicitly selected and no other
  * type or picker is active, it defaults to queries[0] so the editor pane is never empty.
- * If a selected query is deleted, its refId is no longer found and the fallback kicks in.
+ * When a query is deleted, upstream code removes its refId from the selection array. As a
+ * safety net, if a refId in the array no longer matches any query, the fallback kicks in.
  *
  * @param hasPendingPicker - Suppresses the query auto-select fallback while an expression or
  *   transformation type picker is active, so the content area shows the picker instead.

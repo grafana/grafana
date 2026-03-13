@@ -3,8 +3,8 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
