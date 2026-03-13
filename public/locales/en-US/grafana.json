@@ -5483,6 +5483,10 @@
           "title": "Row header"
         }
       },
+      "section-variables": {
+        "add-tooltip": "Add variable",
+        "title": "Variables"
+      },
       "variable": {
         "custom-options": {
           "apply": "Apply",
@@ -6011,7 +6015,6 @@
           "title": "Title"
         },
         "section-variables": {
-          "add-tooltip": "Add variable",
           "title": "Variables"
         },
         "title-not-unique": "Title should be unique",
@@ -6158,7 +6161,6 @@
           }
         },
         "section-variables": {
-          "add-tooltip": "Add variable",
           "title": "Variables"
         },
         "title-not-unique": "Title should be unique",

@@ -17,6 +17,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import {
@@ -294,6 +295,8 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
 
 function VariableDisplayInput({ variable }: VariableInputProps) {
   const { hide: display = VariableHide.dontHide } = variable.useState();
+  const set = variable.parent;
+  const isSectionVariable = set instanceof SceneVariableSet && !(set.parent instanceof DashboardScene);
 
   const onChange = (option: VariableHide) => {
     dashboardEditActions.changeVariableHideValue({
@@ -303,7 +306,14 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
     });
   };
 
-  return <VariableDisplaySelect display={display} type={variable.state.type} onChange={onChange} />;
+  return (
+    <VariableDisplaySelect
+      display={display}
+      type={variable.state.type}
+      hideControlsMenuOption={isSectionVariable}
+      onChange={onChange}
+    />
+  );
 }
 
 function useVariableTypeCategory(variable: SceneVariable) {
