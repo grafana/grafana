@@ -162,7 +162,6 @@ describe('useShortcuts', () => {
       mockUseAssistant.mockReturnValue({
         isLoading: false,
         isAvailable: false,
-        isLoading: false,
         openAssistant: jest.fn(),
         closeAssistant: jest.fn(),
         toggleAssistant: jest.fn(),
