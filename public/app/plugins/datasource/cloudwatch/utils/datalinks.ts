@@ -7,7 +7,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { AwsUrl, encodeUrl } from '../aws_url';
 import { CloudWatchLogsQuery } from '../dataquery.gen';
@@ -46,7 +46,7 @@ export async function addDataLinksToLogsResponse(
     }
 
     // add a link to the cloudwatch console as a separate field that will be displayed as a link
-    if (dataFrame.fields.length) {
+    if (config.featureToggles.cloudWatchLogsInsightsDataLinks && dataFrame.fields.length) {
       dataFrame.fields.push({
         name: '',
         type: FieldType.string,

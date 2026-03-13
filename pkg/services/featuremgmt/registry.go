@@ -2689,6 +2689,15 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:         "cloudWatchLogsInsightsDataLinks",
+			Description:  "Enables data links for CloudWatch Logs data: this is a safety toggle in case we need to put it back",
+			Stage:        FeatureStageExperimental,
+			Owner:        awsDatasourcesSquad,
+			HideFromDocs: true,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 
