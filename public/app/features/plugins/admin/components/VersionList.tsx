@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState, useMemo } from 'react';
-import { major, compare, gt } from 'semver';
+import { major, compare, lte } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -220,15 +220,17 @@ function shouldDisableVersionInstallation({
   updateStrategy,
   managedPluginsV2,
 }: ShouldDisableVersionInstallationArgs) {
-  if (!managedPluginsV2 || !config.pluginAdminExternalManageEnabled || !installedVersion) {
+  if (!managedPluginsV2 || !config.pluginAdminExternalManageEnabled) {
     return false;
   }
 
   if (updateStrategy === PluginUpdateStrategy.MajorAligned) {
-    if (latestMajorVersions.has(version.version) && gt(version.version, installedVersion)) {
-      return false;
-    }
-    return true;
+    const lessThanInstalledVersion = installedVersion && lte(version.version, installedVersion);
+    const isLatestMajorVersion = latestMajorVersions.has(version.version);
+
+    // should disable the install when the version is lower than the current installed
+    // or when the version is not among the the latest major versions
+    return lessThanInstalledVersion || !isLatestMajorVersion;
   }
 
   if (updateStrategy === PluginUpdateStrategy.Assigned) {
