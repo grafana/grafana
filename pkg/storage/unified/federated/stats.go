@@ -90,7 +90,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 		// Legacy folder table
 		if !s.isFoldersFallbackDisabled() {
-			err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
+			err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=true", group, "folders", true)
 			if err != nil {
 				return err
 			}
