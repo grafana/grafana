@@ -644,10 +644,10 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
-		}))
+		}), WithFolderMetadataEnabled(true))
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
 		require.NoError(t, err)
@@ -673,10 +673,10 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
-		}))
+		}), WithFolderMetadataEnabled(true))
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
 		require.NoError(t, err)
@@ -701,10 +701,10 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolder = folder
 			return nil
-		}))
+		}), WithFolderMetadataEnabled(true))
 
 		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
 		require.NoError(t, err)
@@ -733,10 +733,10 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			},
 		}
 
-		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), true, WithBeforeCreate(func(_ context.Context, folder Folder) error {
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			createdFolders = append(createdFolders, folder)
 			return nil
-		}))
+		}), WithFolderMetadataEnabled(true))
 
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
 		require.NoError(t, err)
