@@ -50,11 +50,8 @@ func TestSearchHandler(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	adapter := &k8sRESTAdapter{
-		store:        store,
-		accessClient: &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }},
-	}
-	handler := newSearchHandler(adapter)
+	accessClient := &fakeAccessClient{fn: func(_ authtypes.CheckRequest) bool { return true }}
+	handler := newSearchHandler(store, accessClient)
 
 	tests := []struct {
 		name          string

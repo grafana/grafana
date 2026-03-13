@@ -99,7 +99,7 @@ func RegisterAppInstaller(
 	tagHandler := newTagsHandler(tagProvider)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(installer.k8sAdapter)
+	searchHandler := newSearchHandler(store, accessClient)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -499,7 +499,7 @@ func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation 
 
 // canAccessAnnotation checks that the caller has permission to perform verb on anno,
 // using the legacy annotation authorization model (dashboard-scoped or org-scoped).
-func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
+func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClient, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
 	if anno == nil {
 		return false, apierrors.NewBadRequest("annotation must not be nil")
 	}
@@ -532,10 +532,14 @@ func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace stri
 		}
 	}
 
-	resp, err := s.accessClient.Check(ctx, authInfo, checkReq, "")
+	resp, err := accessClient.Check(ctx, authInfo, checkReq, "")
 	if err != nil {
 		return false, fmt.Errorf("authz check failed: %w", err)
 	}
 
 	return resp.Allowed, nil
+}
+
+func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
+	return canAccessAnnotation(ctx, s.accessClient, namespace, anno, verb)
 }

@@ -6,27 +6,28 @@ import (
 	"net/url"
 	"strconv"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func newSearchHandler(adapter *k8sRESTAdapter) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
+func newSearchHandler(store Store, accessClient authtypes.AccessClient) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
 		namespace := request.ResourceIdentifier.Namespace
 
 		queryParams := request.URL.Query()
 		opts := listOptionsFromQueryParams(queryParams)
 
-		result, err := adapter.store.List(ctx, namespace, opts)
+		result, err := store.List(ctx, namespace, opts)
 		if err != nil {
 			return err
 		}
 
 		filtered := make([]annotationV0.Annotation, 0, len(result.Items))
 		for _, anno := range result.Items {
-			allowed, err := adapter.canAccessAnnotation(ctx, namespace, &anno, utils.VerbList)
+			allowed, err := canAccessAnnotation(ctx, accessClient, namespace, &anno, utils.VerbList)
 			if err != nil {
 				return err
 			}
