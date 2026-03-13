@@ -193,6 +193,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
