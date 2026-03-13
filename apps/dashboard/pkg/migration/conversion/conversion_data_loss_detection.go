@@ -8,6 +8,7 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2beta2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta2"
 )
 
 // Conversion Data Loss Detection Strategy for Dashboard Conversions
@@ -343,6 +344,38 @@ func collectStatsV2beta1(spec dashv2beta1.DashboardSpec) dashboardStats {
 	}
 }
 
+func countPanelsV2beta2(elements map[string]dashv2beta2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count++
+		} else if element.LibraryPanelKind != nil {
+			count++
+		}
+	}
+	return count
+}
+
+func countQueriesV2beta2(elements map[string]dashv2beta2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count += len(element.PanelKind.Spec.Data.Spec.Queries)
+		}
+	}
+	return count
+}
+
+func collectStatsV2beta2(spec dashv2beta2.DashboardSpec) dashboardStats {
+	return dashboardStats{
+		panelCount:      countPanelsV2beta2(spec.Elements),
+		queryCount:      countQueriesV2beta2(spec.Elements),
+		annotationCount: len(spec.Annotations),
+		linkCount:       len(spec.Links),
+		variableCount:   len(spec.Variables),
+	}
+}
+
 // detectConversionDataLoss detects if critical dashboard data was lost during conversion
 // Note: We only check for DATA LOSS (target < source), not additions (target > source).
 // Conversions may add default values (like built-in annotations) which is expected behavior.
@@ -450,6 +483,8 @@ func collectDashboardStats(dashboard interface{}) dashboardStats {
 		return collectStatsV2alpha1(d.Spec)
 	case *dashv2beta1.Dashboard:
 		return collectStatsV2beta1(d.Spec)
+	case *dashv2beta2.Dashboard:
+		return collectStatsV2beta2(d.Spec)
 	}
 	return dashboardStats{}
 }
