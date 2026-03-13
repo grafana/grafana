@@ -136,6 +136,8 @@ jobs:
         uses: ./.github/actions/setup-node
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - name: Configure git user
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"

@@ -95,7 +95,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
-	require.Equal(t, 16, fileCount, "file count from %s", devenv)
+	require.Equal(t, 17, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
 	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {

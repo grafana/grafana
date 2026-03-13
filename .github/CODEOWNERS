@@ -174,7 +174,6 @@
 /pkg/services/navtree/ @grafana/grafana-backend-group @grafana/grafana-frontend-navigation
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
-/pkg/services/playlist/ @grafana/grafana-app-platform-squad
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
@@ -241,7 +240,6 @@
 /devenv/dev-dashboards/panel-bargauge @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-candlestick @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-canvas @grafana/dataviz-squad
-/devenv/dev-dashboards/panel-datagrid @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-gauge @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-geomap @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-graph @grafana/dataviz-squad
@@ -442,6 +440,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/PanelSandboxDashboard.json @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/TestDashboard.json @grafana/dashboards-squad @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards/TestV2Dashboard.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashRowsWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
@@ -695,7 +694,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/cloudwatch @grafana/aws-datasources
 /packages/grafana-schema/src/**/dashboard @grafana/dashboards-squad
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-frontend-navigation
-/packages/grafana-schema/src/**/datagrid @grafana/dataviz-squad
 /packages/grafana-schema/src/**/debug @ryantxu
 /packages/grafana-schema/src/**/elasticsearch @grafana/partner-datasources
 /packages/grafana-schema/src/**/gauge @grafana/dataviz-squad
@@ -772,6 +770,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
+/.madgerc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
 /nx.json @grafana/frontend-ops
 /project.json @grafana/frontend-ops
@@ -1002,7 +1001,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/debug/ @ryantxu
-/public/app/plugins/panel/datagrid/ @grafana/dataviz-squad
 /public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
@@ -1239,6 +1237,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-backend-group
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-group
+/.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
 /.github/actions/change-detection @grafana/grafana-developer-enablement-squad
@@ -1307,7 +1306,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform

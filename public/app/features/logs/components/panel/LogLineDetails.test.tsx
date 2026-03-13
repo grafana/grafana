@@ -30,6 +30,10 @@ import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('../fieldSelector/FieldSelector');
 jest.mock('../fieldSelector/fieldSelectorUtils');
 
@@ -39,6 +43,7 @@ jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
     useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
     }),

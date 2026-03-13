@@ -1,5 +1,6 @@
-import { css, cx } from '@emotion/css';
-import { useId, ReactNode } from 'react';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
+import { createElement, useId, ReactNode } from 'react';
 
 import {
   DisplayValueAlignmentFactors,
@@ -115,7 +116,9 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   let effectiveTextMode = textMode;
   if (effectiveTextMode === 'auto') {
-    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+    const firstValue: FieldDisplay | undefined = values[0];
+    // in auto mode, we should show value_and_name if there are multiple values or the first value has a display name
+    effectiveTextMode = vizCount > 1 || firstValue?.field?.displayName != null ? 'value_and_name' : 'value';
   }
 
   const startAngle = shape === 'gauge' ? ARC_START : 0;
@@ -305,23 +308,14 @@ export function RadialGauge(props: RadialGaugeProps) {
     </>
   );
 
-  if (onClick) {
-    return (
-      <button onClick={onClick} className={cx(styles.clearButton, styles.vizWrapper)} style={{ width, height }}>
-        {body}
-      </button>
-    );
-  }
+  const containerProps = {
+    style: { width, height },
+    'data-testid': selectors.components.Panels.Visualization.Gauge.Container,
+    className: clsx(styles.vizWrapper, onClick ? styles.clearButton : ''),
+    onClick,
+  };
 
-  return (
-    <div
-      data-testid={selectors.components.Panels.Visualization.Gauge.Container}
-      className={styles.vizWrapper}
-      style={{ width, height }}
-    >
-      {body}
-    </div>
-  );
+  return createElement(onClick ? 'button' : 'div', containerProps, body);
 }
 
 function getStyles(theme: GrafanaTheme2) {
