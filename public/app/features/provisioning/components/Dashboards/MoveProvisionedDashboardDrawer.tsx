@@ -1,7 +1,9 @@
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
+import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
 
 export interface Props {
@@ -19,11 +21,19 @@ export function MoveProvisionedDashboardDrawer({
   onDismiss,
   onSuccess,
 }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, canPushToConfiguredBranch, isNew, repository } =
-    useProvisionedDashboardData(dashboard);
+  const {
+    defaultValues,
+    loadedFromRef,
+    readOnly,
+    canPushToConfiguredBranch,
+    isNew,
+    repository,
+    repoDataStatus,
+    error,
+  } = useProvisionedDashboardData(dashboard);
 
-  if (!defaultValues) {
-    return null;
+  if (!defaultValues || repoDataStatus === RepoViewStatus.Error) {
+    return <FormLoadingErrorAlert error={error} />;
   }
 
   return (
