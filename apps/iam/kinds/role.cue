@@ -13,15 +13,6 @@ roleKind: {
 	}
 }
 
-coreroleKind: {
-	kind:       "CoreRole"
-	pluralName: "CoreRoles"
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
-}
-
 globalroleKind: {
 	kind:       "GlobalRole"
 	pluralName: "GlobalRoles"
@@ -38,14 +29,8 @@ rolev0alpha1: roleKind & {
 	}
 }
 
-corerolev0alpha1: coreroleKind & {
-	schema: {
-		spec:   v0alpha1.RoleSpec
-	}
-}
-
 globalrolev0alpha1: globalroleKind & {
 	schema: {
-		spec:   v0alpha1.RoleSpec
+		spec:   v0alpha1.GlobalRoleSpec
 	}
 }

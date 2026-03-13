@@ -16,6 +16,7 @@ import (
 	openapi "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -40,6 +40,7 @@ type DataSourceAPIBuilderConfig struct {
 	LoadQueryTypes         bool
 	UseDualWriter          bool
 	EnableResourceEndpoint bool
+	EnableHealthEndpoint   bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -108,6 +109,7 @@ func RegisterAPIService(
 				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
 				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},
 		)
 		if err != nil {
@@ -245,10 +247,13 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
 		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+	}
+
+	if b.cfg.EnableHealthEndpoint {
+		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
 
 	// FIXME: temporarily register both "datasources" and "connections" query paths

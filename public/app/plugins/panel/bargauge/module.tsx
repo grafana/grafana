@@ -9,6 +9,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
 import { Options, defaultOptions } from './panelcfg.gen';
+import { barGaugePresetsSupplier } from './presets';
 import { barGaugeSugggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(BarGaugePanel)
@@ -152,4 +153,5 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
   .setMigrationHandler(barGaugePanelMigrationHandler)
-  .setSuggestionsSupplier(barGaugeSugggestionsSupplier);
+  .setSuggestionsSupplier(barGaugeSugggestionsSupplier)
+  .setPresetsSupplier(barGaugePresetsSupplier);

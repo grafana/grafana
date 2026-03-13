@@ -46,6 +46,8 @@
   {
     "action": "alert.notifications.external:read",
     "roles": [
+      "fixed:alerting.notifications.external:reader",
+      "fixed:alerting.notifications.external:writer",
       "fixed:alerting.notifications:reader",
       "fixed:alerting.notifications:writer",
       "fixed:alerting:admin",
@@ -56,6 +58,7 @@
   {
     "action": "alert.notifications.external:write",
     "roles": [
+      "fixed:alerting.notifications.external:writer",
       "fixed:alerting.notifications:writer",
       "fixed:alerting:admin",
       "fixed:alerting:writer"
@@ -281,6 +284,8 @@
   {
     "action": "alert.notifications:read",
     "roles": [
+      "fixed:alerting.legacy:reader",
+      "fixed:alerting.legacy:writer",
       "fixed:alerting.notifications:reader",
       "fixed:alerting.notifications:writer",
       "fixed:alerting:admin",
@@ -291,6 +296,7 @@
   {
     "action": "alert.notifications:write",
     "roles": [
+      "fixed:alerting.legacy:writer",
       "fixed:alerting.notifications:writer",
       "fixed:alerting:admin",
       "fixed:alerting:writer"
