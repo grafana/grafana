@@ -137,15 +137,14 @@ func NewStorageBackend(
 	}
 
 	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:                      sqlkv,
-		Tracer:                       tracer,
-		Reg:                          reg,
-		UseChannelNotifier:           !isHA,
-		WithExperimentalClusterScope: true, // Enable cluster-scoped resources (empty namespace)
-		Log:                          log.New("storage-backend"),
-		DBKeepAlive:                  eDB,
-		LastImportTimeMaxAge:         cfg.MaxFileIndexAge,
-		TenantWatcherConfig:          resource.NewTenantWatcherConfig(cfg),
+		KvStore:              sqlkv,
+		Tracer:               tracer,
+		Reg:                  reg,
+		UseChannelNotifier:   !isHA,
+		Log:                  log.New("storage-backend"),
+		DBKeepAlive:          eDB,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
@@ -186,9 +185,8 @@ func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
 
 	kvStore := resource.NewBadgerKV(db)
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore:                      kvStore,
-		WithExperimentalClusterScope: true, // Enable cluster-scoped resources (empty namespace)
-		Log:                          log.New("storage-backend"),
+		KvStore: kvStore,
+		Log:     log.New("storage-backend"),
 	})
 }
 
