@@ -59,17 +59,17 @@ All Grafana users belong to at least one organization. An organization is an ent
 
 Permissions assigned to a user within an organization control the extent to which the user has access to and can update the following organization resources:
 
-- dashboards and folders
-- alerts
-- playlists
-- users within that organization
-- data sources
-- teams
-- organization and team settings
-- plugins
-- annotations
-- library panels
-- service accounts
+- Dashboards and folders
+- Alerts
+- Playlists
+- Users within that organization
+- Data sources
+- Teams
+- Organization and team settings
+- Plugins
+- Annotations
+- Library panels
+- Service accounts
 
 For more information about managing organization users, refer to [User management](../user-management/manage-org-users/).
 

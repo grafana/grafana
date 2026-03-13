@@ -103,7 +103,7 @@ refs:
 # Role-based access control (RBAC) overview
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com//docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com//docs/grafana-cloud).
 {{< /admonition >}}
 
 Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources such as dashboards, reports, and administrative settings. RBAC extends the permissions of basic roles included in Grafana OSS, and enables more granular control of users’ actions.
@@ -130,7 +130,8 @@ You can assign the following RBAC roles in Grafana:
 - **Basic role**: [Basic roles](#basic-roles) are the standard roles available in Grafana OSS.
 - **Fixed role**: If you're using Grafana Enterprise or Grafana Cloud, you can assign discrete [fixed roles](#fixed-roles) to users, teams, and service accounts for improved control over user permissions than you cannot have with basic roles alone.
 - **Custom role**: If you're using Grafana Enterprise or Grafana Cloud, use [custom roles](#custom-roles) to create unique combinations of permission _actions_ and _scopes_.
-- **Plugin RBAC roles**: Plugin RBAC roles are available for Grafana Cloud app plugins. Plugin roles control access to specific plugin features and can be assigned to users, teams, or basic roles. For more information refer to [RBAC for app plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins).
+
+Additionally, if you're using Grafana Cloud app plugins, there's roles to control access to specific plugin features and can be assigned to users, teams, or basic roles. For more information refer to [RBAC for app plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins).
 
 ### Basic roles
 
@@ -144,21 +145,21 @@ Grafana includes the following basic roles:
 - Viewer
 - None
 
+{{< admonition type="caution" >}}
+All Grafana users must have a basic role assigned. Use the `None` role for users with no permissions.
+{{< /admonition >}}
+
 Each basic role is comprised of a number of _permissions_. For example, the viewer basic role contains the following permissions, among others:
 
 - `Action: datasources.id:read, Scope: datasources:*`: Enables the viewer to see the ID of a data source.
 - `Action: orgs:read`: Enables the viewer to see their organization details
 - `Action: annotations:read, Scope: annotations:*`: Enables the viewer to see annotations that other users have added to a dashboard.
 
-{{< admonition type="note" >}}
-All Grafana users must have a basic role assigned. Use the `None` role for users with no permissions.
-{{< /admonition >}}
-
 For a comprehensive list of the basic role permissions refer to [Permissions associated to basic roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definition#permissions-associated-to-basic-roles).
 
 #### Modify basic roles
 
-You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, the change is not propagated to the other basic roles. In other words, if you modify Viewer basic role and grant it additional permissions, Editors or Admins won't be updated with that additional grant. You can't delete basic roles.
+You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, [the change is not propagated to the other basic roles](#permission-propagation). You can't delete basic roles.
 
 You can modify basic roles via the UI or using the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
 
@@ -240,7 +241,7 @@ To do so, follow these steps:
 
 1. Get the current definition of the role. Refer to [View role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles#view-basic-role-definitions) for more details.
 
-1. Modify the role definition. Open the JSON file, remove this permission, and add only the plugin IDs you want to keep access to, for example:
+1. Modify the role definition. Open the JSON file, remove this permission, and add only the plugin IDs you want to keep access to. Make sure to include cloud-home-app or the homepage will result in a 404 error. For example:
 
    ```
    {
@@ -252,8 +253,6 @@ To do so, follow these steps:
    "scope": "plugins:id:cloud-home-app"
    }
    ```
-
-   Make sure to include cloud-home-app or the homepage will result in a 404 error.
 
 1. Optionally, if apps include fixed roles or granular actions, specify the required role-based permissions.
 

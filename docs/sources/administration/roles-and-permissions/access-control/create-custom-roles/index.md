@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../manage-rbac-roles#create-custom-roles
 description: Create custom RBAC roles.
 labels:
   products:
@@ -147,7 +148,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     "global": true,
     "permissions": [
         {
-            "action": "users:create"
+            "action": "users:create",
             "updated": "2021-05-17T22:07:31.569936+02:00",
             "created": "2021-05-17T22:07:31.569935+02:00"
         }
