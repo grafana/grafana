@@ -237,7 +237,7 @@ The following table summarizes the features each built-in core data source suppo
 | [AWS CloudWatch](aws-cloudwatch/) | Yes | Yes | No | No | Yes | Yes |
 | [Azure Monitor](azure-monitor/) | Yes | Yes | Yes | No | Yes | Yes |
 | [Elasticsearch](elasticsearch/) | Yes | Yes | No | No | Yes | Yes |
-| [Google Cloud Monitoring](google-cloud-monitoring/) | Yes | Yes | No | No | Yes | Yes |
+| [Google Cloud Monitoring](google-cloud-monitoring/) | Yes | No | No | No | Yes | Yes |
 | [Graphite](graphite/) | Yes | No | No | No | Yes | Yes |
 | [InfluxDB](influxdb/) | Yes | Yes | No | No | Yes | Yes |
 | [Jaeger](jaeger/) | No | No | Yes | No | No | No |
