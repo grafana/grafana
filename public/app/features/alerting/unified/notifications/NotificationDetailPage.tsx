@@ -73,7 +73,9 @@ interface HeaderData {
 }
 
 function NotificationDetailPage() {
-  const { uuid, timestamp } = useParams<{ uuid: string; timestamp?: string }>();
+  const { uuid } = useParams<{ uuid: string }>();
+  const [queryParams] = useQueryParams();
+  const timestamp = typeof queryParams.ts === 'string' ? queryParams.ts : undefined;
   const defaultTitle = t('alerting.notification-detail.page-title', 'View');
   const [pageTitle, setPageTitle] = useState(defaultTitle);
   const [displayTitle, setDisplayTitle] = useState(defaultTitle);
@@ -213,7 +215,7 @@ function NotificationDetail({
       let from: string;
       let to: string;
       if (timestamp) {
-        const ts = new Date(timestamp).getTime();
+        const ts = Number(timestamp);
         from = new Date(ts - 1000).toISOString();
         to = new Date(ts + 1000).toISOString();
       } else {

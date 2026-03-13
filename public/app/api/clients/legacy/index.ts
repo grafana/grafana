@@ -1,5 +1,5 @@
 import { RequestOptions } from '@grafana/api-clients/rtkq';
-import { generatedAPI, type CreateTeamApiArg, type SetTeamRolesApiArg } from '@grafana/api-clients/rtkq/legacy';
+import { generatedAPI, type CreateTeamApiArg, type SetTeamRolesApiArg } from '@grafana/api-clients/internal/rtkq/legacy';
 
 interface EndpointWithQuery {
   query?: (arg: Record<string, unknown>) => RequestOptions;
@@ -37,4 +37,4 @@ export const legacyAPI = generatedAPI.enhanceEndpoints({
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export * from '@grafana/api-clients/rtkq/legacy';
+export * from '@grafana/api-clients/internal/rtkq/legacy';
