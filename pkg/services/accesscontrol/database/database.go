@@ -103,7 +103,7 @@ func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, q string
 	defer func() { _ = rows.Close() }()
 
 	// Pre-allocate with a reasonable capacity to limit reallocations for large result sets.
-	out := make([]accesscontrol.Permission, 0, 4096)
+	out := make([]accesscontrol.Permission, 0, 512)
 	var action, scope string
 	for rows.Next() {
 		if err := rows.Scan(&action, &scope); err != nil {
