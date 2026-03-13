@@ -1,12 +1,21 @@
 package setting
 
 import (
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
+
+// knownUnifiedStorageKeys maps uppercased env-var-style key suffixes to their
+// actual camelCase ini key names used in [unified_storage.*] sections.
+var knownUnifiedStorageKeys = map[string]string{
+	"DUALWRITERMODE":  "dualWriterMode",
+	"ENABLEMIGRATION": "enableMigration",
+}
 
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
@@ -23,13 +32,73 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 
-// read storage configs from ini file. They look like:
-// [unified_storage.<group>.<resource>]
-// <field> = <value>
-// e.g.
-// [unified_storage.playlists.playlist.grafana.app]
-// dualWriterMode = 2
+// applyUnifiedStorageEnvOverrides scans environment variables matching
+// GF_UNIFIED_STORAGE_<resource>_<key> and creates the corresponding ini
+// sections and keys. This allows users to configure unified_storage resource
+// sections purely via environment variables without pre-defining them in an
+// ini file.
+//
+// Storage configs in the ini file look like:
+//
+//	[unified_storage.<group>.<resource>]
+//	<field> = <value>
+//
+// For example:
+//
+//	[unified_storage.playlists.playlist.grafana.app]
+//	dualWriterMode = 2
+//
+// Kubernetes resource names (e.g., "dashboards.dashboard.grafana.app") never
+// contain underscores — only dots and lowercase alphanumerics — so every
+// underscore in the resource portion of the env var name maps unambiguously
+// back to a dot. The key names are matched from a known list
+// ([knownUnifiedStorageKeys]) to preserve their original camelCase.
+func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
+	envPrefix := EnvSectionPrefix("unified_storage")
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, envPrefix) {
+			continue
+		}
+		eqIdx := strings.IndexByte(env, '=')
+		if eqIdx < 0 {
+			continue
+		}
+		envKey := env[:eqIdx]
+		envValue := env[eqIdx+1:]
+		if envValue == "" {
+			continue
+		}
+
+		remainder := envKey[len(envPrefix):]
+
+		// Try to match a known key suffix. The key is always the last component
+		// after the final underscore that matches a known key name.
+		for envKeySuffix, iniKeyName := range knownUnifiedStorageKeys {
+			suffix := "_" + envKeySuffix
+			if !strings.HasSuffix(remainder, suffix) {
+				continue
+			}
+			resourceEnv := remainder[:len(remainder)-len(suffix)]
+			if resourceEnv == "" {
+				continue
+			}
+			// Reconstruct the resource name: lowercase with underscores → dots.
+			resourceName := strings.ToLower(strings.ReplaceAll(resourceEnv, "_", "."))
+			sectionName := "unified_storage." + resourceName
+			cfg.Raw.Section(sectionName).Key(iniKeyName).SetValue(envValue)
+			cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+				fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			break
+		}
+	}
+}
+
 func (cfg *Cfg) setUnifiedStorageConfig() {
+	// Pre-create sections from GF_UNIFIED_STORAGE_* env vars so that
+	// resource sections can be configured purely via environment variables.
+	cfg.applyUnifiedStorageEnvOverrides()
+
 	storageConfig := make(map[string]UnifiedStorageConfig)
 	sections := cfg.Raw.Sections()
 	for _, section := range sections {
