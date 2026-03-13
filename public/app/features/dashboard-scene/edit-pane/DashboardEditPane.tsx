@@ -66,6 +66,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
 
+    if (dashboard.state.isEditing) {
+      this.enableSelection();
+    }
+
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         this.handleEditAction(payload);
