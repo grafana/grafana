@@ -174,6 +174,27 @@ describe('getAutoGridItemFromClipboard(dashboardScene)', () => {
       expect(result.state.body.state.pluginId).toBe('table');
     });
   });
+
+  test('throws when deserialization fails', () => {
+    const clipboard = { ...buildAutoGridClipboard(), elements: {} };
+    const { dashboardScene } = setup(clipboard);
+
+    expect.assertions(4);
+
+    try {
+      getAutoGridItemFromClipboard(dashboardScene);
+    } catch (error) {
+      const thrown = error as Error;
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown.message).toBe('Error pasting panel from clipboard, please try to copy again.');
+
+      expect(thrown.cause).toBeInstanceOf(Error);
+      expect((thrown.cause as Error).message).toBe(
+        'Panel with uid panel-auto-grid not found in the dashboard elements'
+      );
+    }
+  });
 });
 
 describe('getDashboardGridItemFromClipboard(dashboardScene, gridCell)', () => {
@@ -259,5 +280,26 @@ describe('getDashboardGridItemFromClipboard(dashboardScene, gridCell)', () => {
         expect(result.state.body.state.pluginId).toBe('timeseries');
       });
     });
+  });
+
+  test('throws when deserialization fails', () => {
+    const clipboard = { ...buildCustomGridClipboard(), elements: {} };
+    const { dashboardScene } = setup(clipboard);
+
+    expect.assertions(4);
+
+    try {
+      getAutoGridItemFromClipboard(dashboardScene);
+    } catch (error) {
+      const thrown = error as Error;
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown.message).toBe('Error pasting panel from clipboard, please try to copy again.');
+
+      expect(thrown.cause).toBeInstanceOf(Error);
+      expect((thrown.cause as Error).message).toBe(
+        'Panel with uid panel-custom-grid not found in the dashboard elements'
+      );
+    }
   });
 });

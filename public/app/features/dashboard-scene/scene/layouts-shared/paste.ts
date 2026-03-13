@@ -55,25 +55,25 @@ export function getRowFromClipboard(scene: DashboardScene): RowItem {
   try {
     row = deserializeRow(jsonObj.row, jsonObj.elements, false, panelIdGenerator);
   } catch (error) {
-    throw new Error('Error pasting row from clipboard, please try to copy again');
+    throw new Error(`Error pasting row from clipboard. Please try to copy again.`, { cause: error });
   }
-
   return row;
 }
 
 export function getTabFromClipboard(scene: DashboardScene): TabItem {
   const jsonData = store.get(LS_TAB_COPY_KEY);
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const jsonObj: TabStore = JSON.parse(jsonData) as TabStore;
   clearClipboard();
   const panelIdGenerator = dashboardSceneGraph.getPanelIdGenerator(scene);
+
   let tab;
   try {
     tab = deserializeTab(jsonObj.tab, jsonObj.elements, false, panelIdGenerator);
   } catch (error) {
-    throw new Error('Error pasting tab from clipboard, please try to copy again');
+    throw new Error(`Error pasting tab from clipboard. Please try to copy again.`, { cause: error });
   }
-
   return tab;
 }
 
@@ -89,9 +89,8 @@ function getGridItemFromClipboard(scene: DashboardScene) {
         ? deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene))
         : deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
   } catch (error) {
-    throw new Error('Error pasting panel from clipboard, please try to copy again');
+    throw new Error('Error pasting panel from clipboard, please try to copy again.', { cause: error });
   }
-
   return deserializedGridItem;
 }
 
