@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/sql"
 )
 
 var ErrSeriesMustBeWide = errors.New("input data must be a wide series")
@@ -92,6 +93,30 @@ func MakeParseError(refID string, err error) error {
 	}
 
 	return ParseError.Build(data)
+}
+
+var graphBuildErrStr = "failed to build expression pipeline: {{ .Public.error }}"
+
+var GraphBuildError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.graphBuildError").MustTemplate(
+	graphBuildErrStr,
+	errutil.WithPublic(graphBuildErrStr))
+
+func makeGraphBuildError(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"error": err.Error(),
+		},
+		Error: err,
+	}
+	return GraphBuildError.Build(data)
+}
+
+// makeSQLGraphBuildError is like makeGraphBuildError but also wraps the error
+// as a sql.ErrorWithCategory so that instrumentation can count it against SQL metrics.
+// Use this only when the error is directly caused by a SQL expression node.
+func makeSQLGraphBuildError(err error) error {
+	return sql.NewErrorWithCategory(sql.ErrCategoryInvalidGraph, makeGraphBuildError(err))
 }
 
 var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
