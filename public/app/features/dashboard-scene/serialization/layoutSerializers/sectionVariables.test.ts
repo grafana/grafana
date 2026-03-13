@@ -1,29 +1,66 @@
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
-import { CustomVariableKind, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { ConstantVariableKind, CustomVariableKind, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
 
-describe('serializeSectionVariables', () => {
-  it('should return undefined when called with undefined', () => {
-    expect(serializeSectionVariables(undefined)).toBeUndefined();
+const makeVariableSet = (...variables: Array<CustomVariable | ConstantVariable>) => new SceneVariableSet({ variables });
+
+const makeCustomVariable = (overrides: Partial<ConstructorParameters<typeof CustomVariable>[0]> = {}) =>
+  new CustomVariable({
+    name: 'env',
+    label: 'Environment',
+    query: 'dev,staging,prod',
+    ...overrides,
   });
 
-  it('should return undefined for an empty SceneVariableSet', () => {
-    const set = new SceneVariableSet({ variables: [] });
-    expect(serializeSectionVariables(set)).toBeUndefined();
+const makeConstantVariable = (overrides: Partial<ConstructorParameters<typeof ConstantVariable>[0]> = {}) =>
+  new ConstantVariable({
+    name: 'version',
+    label: 'Version',
+    value: '1.0.0',
+    ...overrides,
+  });
+
+const makeCustomVariableKind = (overrides: Partial<CustomVariableKind['spec']> = {}): CustomVariableKind => ({
+  kind: 'CustomVariable',
+  spec: {
+    name: 'env',
+    label: 'Environment',
+    query: 'dev,staging,prod',
+    current: { text: 'dev', value: 'dev' },
+    options: [],
+    multi: false,
+    includeAll: false,
+    hide: 'dontHide',
+    skipUrlSync: false,
+    allowCustomValue: true,
+    ...overrides,
+  },
+});
+
+const makeConstantVariableKind = (overrides: Partial<ConstantVariableKind['spec']> = {}): ConstantVariableKind => ({
+  kind: 'ConstantVariable',
+  spec: {
+    name: 'version',
+    label: 'Version',
+    query: '1.0.0',
+    current: { text: '1.0.0', value: '1.0.0' },
+    hide: 'dontHide',
+    skipUrlSync: false,
+    ...overrides,
+  },
+});
+
+describe('serializeSectionVariables', () => {
+  it.each([
+    ['undefined input', undefined],
+    ['empty SceneVariableSet', makeVariableSet()],
+  ])('should return undefined for %s', (_, input) => {
+    expect(serializeSectionVariables(input)).toBeUndefined();
   });
 
   it('should serialize a single CustomVariable', () => {
-    const set = new SceneVariableSet({
-      variables: [
-        new CustomVariable({
-          name: 'env',
-          label: 'Environment',
-          description: 'Target environment',
-          query: 'dev,staging,prod',
-        }),
-      ],
-    });
+    const set = makeVariableSet(makeCustomVariable({ description: 'Target environment' }));
 
     const result = serializeSectionVariables(set);
 
@@ -34,20 +71,7 @@ describe('serializeSectionVariables', () => {
   });
 
   it('should serialize multiple variables', () => {
-    const set = new SceneVariableSet({
-      variables: [
-        new CustomVariable({
-          name: 'env',
-          label: 'Environment',
-          query: 'dev,staging,prod',
-        }),
-        new ConstantVariable({
-          name: 'version',
-          label: 'Version',
-          value: '1.0.0',
-        }),
-      ],
-    });
+    const set = makeVariableSet(makeCustomVariable(), makeConstantVariable());
 
     const result = serializeSectionVariables(set);
 
@@ -58,33 +82,15 @@ describe('serializeSectionVariables', () => {
 });
 
 describe('createSectionVariables', () => {
-  it('should return undefined when called with undefined', () => {
-    expect(createSectionVariables(undefined)).toBeUndefined();
-  });
-
-  it('should return undefined for an empty array', () => {
-    expect(createSectionVariables([])).toBeUndefined();
+  it.each([
+    ['undefined input', undefined],
+    ['empty array', []],
+  ])('should return undefined for %s', (_, input) => {
+    expect(createSectionVariables(input)).toBeUndefined();
   });
 
   it('should create a SceneVariableSet from a single CustomVariableKind', () => {
-    const variables: VariableKind[] = [
-      {
-        kind: 'CustomVariable',
-        spec: {
-          name: 'env',
-          label: 'Environment',
-          description: 'Target environment',
-          query: 'dev,staging,prod',
-          current: { text: 'dev', value: 'dev' },
-          options: [],
-          multi: false,
-          includeAll: false,
-          hide: 'dontHide',
-          skipUrlSync: false,
-          allowCustomValue: true,
-        },
-      },
-    ];
+    const variables: VariableKind[] = [makeCustomVariableKind({ description: 'Target environment' })];
 
     const result = createSectionVariables(variables);
 
@@ -94,34 +100,7 @@ describe('createSectionVariables', () => {
   });
 
   it('should create a SceneVariableSet with multiple variables', () => {
-    const variables: VariableKind[] = [
-      {
-        kind: 'CustomVariable',
-        spec: {
-          name: 'env',
-          label: 'Environment',
-          query: 'dev,staging,prod',
-          current: { text: 'dev', value: 'dev' },
-          options: [],
-          multi: false,
-          includeAll: false,
-          hide: 'dontHide',
-          skipUrlSync: false,
-          allowCustomValue: true,
-        },
-      },
-      {
-        kind: 'ConstantVariable',
-        spec: {
-          name: 'version',
-          label: 'Version',
-          query: '1.0.0',
-          current: { text: '1.0.0', value: '1.0.0' },
-          hide: 'dontHide',
-          skipUrlSync: false,
-        },
-      },
-    ];
+    const variables: VariableKind[] = [makeCustomVariableKind(), makeConstantVariableKind()];
 
     const result = createSectionVariables(variables);
 
@@ -134,20 +113,15 @@ describe('createSectionVariables', () => {
 
 describe('round-trip: serialize → deserialize', () => {
   it('should preserve CustomVariable properties through a round trip', () => {
-    const original = new SceneVariableSet({
-      variables: [
-        new CustomVariable({
-          name: 'env',
-          label: 'Environment',
-          description: 'Target environment',
-          query: 'dev,staging,prod',
-          value: 'dev',
-          text: 'dev',
-          includeAll: true,
-          isMulti: true,
-        }),
-      ],
-    });
+    const original = makeVariableSet(
+      makeCustomVariable({
+        description: 'Target environment',
+        value: 'dev',
+        text: 'dev',
+        includeAll: true,
+        isMulti: true,
+      })
+    );
 
     const serialized = serializeSectionVariables(original);
     expect(serialized).toBeDefined();
@@ -163,21 +137,10 @@ describe('round-trip: serialize → deserialize', () => {
   });
 
   it('should preserve multiple variables through a round trip', () => {
-    const original = new SceneVariableSet({
-      variables: [
-        new CustomVariable({
-          name: 'env',
-          label: 'Environment',
-          query: 'dev,staging,prod',
-        }),
-        new ConstantVariable({
-          name: 'version',
-          label: 'Version',
-          description: 'App version',
-          value: '2.0.0',
-        }),
-      ],
-    });
+    const original = makeVariableSet(
+      makeCustomVariable(),
+      makeConstantVariable({ description: 'App version', value: '2.0.0' })
+    );
 
     const serialized = serializeSectionVariables(original);
     expect(serialized).toBeDefined();
