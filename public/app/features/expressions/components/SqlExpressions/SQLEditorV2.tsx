@@ -61,7 +61,7 @@ export interface SQLEditorV2Props {
 }
 
 // Returns true if the cursor is in a table name position (after FROM/JOIN, or in a comma-separated list)
-function isAfterFromOrJoin(doc: Text, pos: number): boolean {
+export function isAfterFromOrJoin(doc: Text, pos: number): boolean {
   const textBefore = doc.sliceString(0, pos).replace(/\w*$/, '').trimEnd();
   // Directly after FROM or JOIN
   if (/\b(FROM|JOIN)$/i.test(textBefore)) {
@@ -76,7 +76,7 @@ function isAfterFromOrJoin(doc: Text, pos: number): boolean {
 
 // Extract table names from the FROM clause of the full query
 // Handles comma-separated tables: FROM A, B, C
-function getFromTables(doc: Text): string[] {
+export function getFromTables(doc: Text): string[] {
   const text = doc.toString();
   const tables: string[] = [];
   for (const match of text.matchAll(/\bFROM\s+([\w\s,]+)/gi)) {
