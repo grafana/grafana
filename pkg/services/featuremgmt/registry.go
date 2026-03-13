@@ -2327,6 +2327,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "elasticsearchESQLQuery",
+			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
