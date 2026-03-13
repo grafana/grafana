@@ -1040,7 +1040,9 @@ describe('ScopesDashboardsService', () => {
       // Wait for the preload to complete
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      // Verify that fetchScopeNavigations was called for the subScope
+      // rootScope is undefined here because fetchDashboards was called directly,
+      // not via setNavigationScope which sets state.navigationScope first.
+      // See 'should pass rootScope when navigationScope is set' test for the non-undefined case.
       expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: undefined });
 
       // Verify the folder now has content from the preloaded items
@@ -1053,6 +1055,52 @@ describe('ScopesDashboardsService', () => {
         expect(folder.folders['General']).toBeDefined();
         expect(folder.folders['General'].suggestedNavigations['/d/mimir-dashboard-1']).toBeDefined();
       }
+    });
+
+    it('should pass rootScope when navigationScope is set', async () => {
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: {
+            url: '/d/dashboard1',
+            scope: 'scope1',
+            subScope: 'mimir',
+            preLoadSubScopeChildren: true,
+          },
+          status: {
+            title: 'Mimir Dashboards',
+          },
+          metadata: {
+            name: 'nav1',
+          },
+        },
+      ];
+
+      const mimirItems: ScopeNavigation[] = [
+        {
+          metadata: { name: 'mimir-item-1' },
+          spec: { scope: 'mimir', url: '/d/mimir-dashboard-1' },
+          status: { title: 'Mimir Dashboard 1', groups: ['General'] },
+        },
+      ];
+
+      mockApiClient.fetchScopeNavigations.mockImplementation((scopeNames: string[]) => {
+        if (scopeNames.includes('scope1')) {
+          return Promise.resolve(mockNavigations);
+        }
+        if (scopeNames.includes('mimir')) {
+          return Promise.resolve(mimirItems);
+        }
+        return Promise.resolve([]);
+      });
+
+      // Use setNavigationScope so that navigationScope is set before sub-scope fetch
+      await service.setNavigationScope('scope1');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockApiClient.fetchScopeNavigations).toHaveBeenCalledWith(['mimir'], {
+        depth: 1,
+        rootScope: 'scope1',
+      });
     });
 
     it('should not fetch subScope items for folders without preLoadSubScopeChildren', async () => {
