@@ -1850,8 +1850,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3622,6 +3620,7 @@
     "category-alert-state-filter": "警报状态筛选条件",
     "category-filter": "筛选条件",
     "category-options": "选项",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "仅显示与此数据面板关联的警报",
     "description-alert-instance-label": "使用标签查询筛选警报实例，例如：Monitoring{severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "筛选包含此文本的警报",
@@ -3632,6 +3631,9 @@
     "description-max-items": "可显示的最大警报数",
     "description-show-inactive-alerts": "包括具有 0（零）个实例的警报规则。由于这些规则没有实例，如果配置了警报实例标签筛选条件，它们将保持隐藏状态。",
     "description-sort-order": "警报和警报实例的排序顺序",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "在列表视图和统计视图之间切换",
     "group-by": {
       "aria-label-group-by-label-keys": "按标签键分组",
@@ -3657,6 +3659,9 @@
     "name-recovering": "正在恢复",
     "name-show-inactive-alerts": "显示带有 0 个实例的警报",
     "name-sort-order": "排序顺序",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "查看模式",
     "sort-order-options": {
       "label-alphabetical-asc": "按字母顺序（升序）",
@@ -3664,6 +3669,12 @@
       "label-importance": "重要性",
       "label-time-asc": "时间（升序）",
       "label-time-desc": "时间（降序）"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "有效时长：<1>{{duration}}</1>",
@@ -4055,6 +4066,20 @@
     },
     "name-show-unfilled-area": "显示未填充区域",
     "name-value-display": "值显示",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "条形仪表",
       "lcd": "条形仪表 - LCD"
@@ -6568,10 +6593,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "它不能包含无效字符：“~”、“^”、“:”、“?”、“*”、“[”、“\\\\”或“]”。",
@@ -6727,6 +6750,12 @@
     },
     "description-label": {
       "description": "描述"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7407,10 +7436,6 @@
       "title-above-dashboard_other": "",
       "title-controls-menu_other": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10168,7 +10193,15 @@
       "remove-button": "移除 {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "（右侧 Y 轴）"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "（右侧 Y 轴）",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "您确定要 {{ actionTitle }} 吗？",
@@ -12619,6 +12652,7 @@
     "preview-banner": {
       "behind-branch-text": "此资源位于 {{repoType}} 的分支之后。",
       "branch-text": "分支：",
+      "delete-from-branch": "",
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
@@ -12626,6 +12660,7 @@
       "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}"
     },
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见"
   },
   "provisioning": {
@@ -12714,8 +12749,8 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "free-tier-limit-tooltip": "免费层级账户仅限使用一个连接",
-      "instance-fully-managed-tooltip": "配置已禁用，因为此实例已完全托管"
+      "instance-fully-managed-tooltip": "配置已禁用，因为此实例已完全托管",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12880,21 +12915,11 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 个资源由 Git 同步管理。",
       "placeholder-search": "搜索",
       "all-resources-managed_other": "所有 {{count}} 个资源均受管理",
       "unmanaged-resources_other": "{{count}} 个资源不由 Git 同步管理。"
-    },
-    "free-tier-limit": {
-      "message": "免费层级账户仅限使用 1 个连接，且每个文件夹仅限 20 个资源",
-      "message-connection": "",
-      "message-resource": "免费层级账户每个文件夹最多仅支持 20 个资源。要添加更多资源，",
-      "note": "注意：",
-      "upgrade-link": "升级您的账户"
     },
     "get-default-values": {
       "title": {
@@ -13049,6 +13074,18 @@
           "repository-request-failed": "存储库请求失败"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_other": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_other": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -14376,6 +14413,18 @@
       "label-same-as-value": "与值相同",
       "label-standard": "标准"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "统计",
       "stat-color-background": "统计 - 颜色背景",
@@ -14833,6 +14882,11 @@
         "label-threshold": "阈值"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "控制板",
@@ -14851,16 +14905,22 @@
       "zoom-to-data": "缩放到数据"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -17,6 +18,18 @@ type DashboardSnapshotWithDeleteKey struct {
 
 func (DashboardSnapshotWithDeleteKey) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DashboardSnapshotWithDeleteKey"
+}
+
+func (in *DashboardSnapshotWithDeleteKey) DeepCopyObject() runtime.Object {
+	if in == nil {
+		return nil
+	}
+	// nolint:staticcheck // explicit selector needed to avoid recursion with promoted DeepCopy
+	out := &DashboardSnapshotWithDeleteKey{
+		Snapshot:  *in.Snapshot.DeepCopy(),
+		DeleteKey: in.DeleteKey,
+	}
+	return out
 }
 
 // Each tenant, may have different sharing options

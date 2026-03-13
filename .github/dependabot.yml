@@ -34,7 +34,6 @@ updates:
       - "/pkg/build/wire"
       - "/pkg/codegen"
       - "/pkg/plugins/codegen"
-      - "/pkg/promlib"
       - "/pkg/semconv"
       - "/pkg/util/xorm"
       - "/scripts/go-workspace"
