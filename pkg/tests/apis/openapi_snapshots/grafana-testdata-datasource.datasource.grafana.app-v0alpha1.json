@@ -971,6 +971,12 @@
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
                 }
+              },
+              "text/jsonl": {
+                "schema": {
+                  "description": "Each line is a valid JSON event",
+                  "type": "string"
+                }
               }
             }
           }

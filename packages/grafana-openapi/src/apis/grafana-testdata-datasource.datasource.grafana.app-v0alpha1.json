@@ -897,6 +897,12 @@
                 "schema": {
                   "$ref": "#/components/schemas/QueryDataResponse"
                 }
+              },
+              "text/jsonl": {
+                "schema": {
+                  "description": "Each line is a valid JSON event",
+                  "type": "string"
+                }
               }
             }
           }
