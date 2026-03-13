@@ -847,7 +847,7 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 		prefix  string
 		section *ini.Section
 	}
-	var sectionMappings []sectionMapping
+	sectionMappings := make([]sectionMapping, 0, len(file.Sections()))
 	for _, section := range file.Sections() {
 		prefix := EnvSectionPrefix(section.Name())
 		sectionMappings = append(sectionMappings, sectionMapping{prefix: prefix, section: section})
