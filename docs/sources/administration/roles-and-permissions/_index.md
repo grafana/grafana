@@ -26,7 +26,7 @@ You can assign a user one of three types of permission sets:
 - **Dashboard and folder permissions** to manage access to dashboards and folders. For a detailed explanation of how folders work as the primary permission boundary, refer to [Folder access control]({{< relref "./folder-access-control" >}}).
 
 {{< admonition type="note" >}}
-If you're using Grafana Enterprise or Grafana Cloud, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. 
+If you're using Grafana Enterprise or Grafana Cloud, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources.
 
 For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
 {{< /admonition >}}
