@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvidedDragHandleProps, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -12,7 +12,7 @@ import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variable
 import { useGetPropertiesFromOptions } from '../../components/VariableValuesPreview';
 
 import { SortSelector } from './SortSelector';
-import { detectClipboardTextFormat, parseClipboardText } from './clipboard';
+import { ClipboardTextFormat, detectClipboardTextFormat, parseClipboardText, useClipboard } from './clipboard';
 
 type SpreadsheetOption = VariableValueOption & {
   id: string;
@@ -38,7 +38,6 @@ function toSpreadsheetOptions(options: VariableValueOption[]): SpreadsheetOption
 function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
   const { options, staticOptions, onStaticOptionsChange, staticOptionsOrder, onStaticOptionsOrderChange } = props;
   const properties = useGetPropertiesFromOptions(options, staticOptions);
-
   const [internalOptions, setInternalOptions] = useState<SpreadsheetOption[]>(() =>
     toSpreadsheetOptions(staticOptions ?? [])
   );
@@ -204,17 +203,16 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
       emitChange([...internalOptions, ...newOptions]);
       setDraftOption(createEmptyOption());
     },
-    [internalOptions, properties, emitChange, createEmptyOption]
+    [properties, emitChange, internalOptions, createEmptyOption]
   );
 
   const onPaste = useCallback(
     (e: React.ClipboardEvent<HTMLInputElement>) => {
       const text = e.clipboardData.getData('text/plain').trim();
-      if (!text) {
-        return;
+      if (text && detectClipboardTextFormat(text)) {
+        e.preventDefault();
+        handlePaste(text);
       }
-      e.preventDefault();
-      handlePaste(text);
     },
     [handlePaste]
   );
@@ -454,51 +452,7 @@ function SpreadsheetRow(props: SpreadsheetRowProps) {
   );
 }
 
-function useClipboard(): { text: string; clear: () => void } {
-  const [text, setText] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function check() {
-      try {
-        const content = await navigator.clipboard.readText();
-        if (!cancelled) {
-          setText(content.trim());
-        }
-      } catch {
-        if (!cancelled) {
-          setText('');
-        }
-      }
-    }
-
-    check();
-
-    const onFocus = () => check();
-    window.addEventListener('focus', onFocus);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
-
-  const clear = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText('');
-    } catch {
-      // noop
-    }
-    setText('');
-  }, []);
-
-  return { text, clear };
-}
-
-function getPasteTooltip(text: string): string {
-  const format = detectClipboardTextFormat(text);
-
+function getPasteTooltip(format: ClipboardTextFormat): string {
   switch (format) {
     case 'csv':
       return t(
@@ -521,15 +475,13 @@ function getPasteTooltip(text: string): string {
 }
 
 function PasteButton({ onClick }: { onClick: (text: string) => void }) {
-  const { text, clear } = useClipboard();
-  const format = detectClipboardTextFormat(text);
+  const { text, format } = useClipboard();
 
   const handleClick = useCallback(() => {
     if (text) {
-      clear();
       onClick(text);
     }
-  }, [text, clear, onClick]);
+  }, [text, onClick]);
 
   return (
     <IconButton
@@ -540,7 +492,7 @@ function PasteButton({ onClick }: { onClick: (text: string) => void }) {
         'dashboard-scene.variable-options-spreadsheet.aria-label-paste-static-options-from-clipboard',
         'Paste static options from clipboard'
       )}
-      tooltip={getPasteTooltip(text)}
+      tooltip={getPasteTooltip(format)}
       tooltipPlacement="top"
     />
   );

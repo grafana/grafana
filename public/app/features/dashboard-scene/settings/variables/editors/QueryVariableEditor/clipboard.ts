@@ -1,63 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { CustomVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 
-type ClipboardTextFormat = 'tsv' | 'json' | 'csv' | undefined;
-
-export function useClipboard(): { text: string; clear: () => void } {
-  const [text, setText] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function check() {
-      try {
-        const content = await navigator.clipboard.readText();
-        if (!cancelled) {
-          setText(content.trim());
-        }
-      } catch {
-        if (!cancelled) {
-          setText('');
-        }
-      }
-    }
-
-    check();
-
-    const onFocus = () => check();
-    window.addEventListener('focus', onFocus);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
-
-  const clear = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText('');
-    } catch {
-      // noop
-    }
-    setText('');
-  }, []);
-
-  return { text, clear };
-}
+export type ClipboardTextFormat = 'tsv' | 'json' | 'csv' | undefined;
 
 export function detectClipboardTextFormat(text: string): ClipboardTextFormat {
   if (text.includes('\t')) {
     return 'tsv';
   }
   if (text.startsWith('[')) {
-    return 'json';
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.every((o) => typeof o === 'object' && o !== null)) {
+        return 'json';
+      }
+    } catch {
+      // not valid JSON, fall through to csv or
+    }
   }
-  if (text.includes(',')) {
-    return 'csv';
-  }
-  return undefined;
+  return text.includes(',') ? 'csv' : undefined;
 }
 
 export async function parseClipboardText(text: string, properties: string[]): Promise<VariableValueOption[]> {
@@ -101,4 +63,53 @@ function parseTsv(text: string, properties: string[]): VariableValueOption[] {
       properties: props,
     };
   });
+}
+
+export function useClipboard(): { text: string; format: ClipboardTextFormat; clear: () => Promise<void> } {
+  const [text, setText] = useState('');
+  const format = useMemo(() => detectClipboardTextFormat(text), [text]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function readClipboard() {
+      if (!document.hasFocus()) {
+        return;
+      }
+      try {
+        const content = await navigator.clipboard.readText();
+        if (!cancelled) {
+          setText(content.trim());
+        }
+      } catch {
+        if (!cancelled) {
+          setText('');
+        }
+      }
+    }
+
+    readClipboard();
+
+    window.addEventListener('focus', readClipboard);
+    document.addEventListener('copy', readClipboard);
+    document.addEventListener('cut', readClipboard);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', readClipboard);
+      document.removeEventListener('copy', readClipboard);
+      document.removeEventListener('cut', readClipboard);
+    };
+  }, []);
+
+  const clear = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText('');
+    } catch {
+      // noop
+    }
+    setText('');
+  }, []);
+
+  return { text, format, clear };
 }
