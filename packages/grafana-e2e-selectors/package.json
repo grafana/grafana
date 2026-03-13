@@ -46,18 +46,18 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "16.0.1",
-    "@types/node": "24.10.1",
-    "@types/semver": "7.7.1",
-    "esbuild": "0.25.8",
-    "rimraf": "6.0.1",
-    "rollup": "^4.22.4",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0"
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@types/node": "catalog:",
+    "@types/semver": "catalog:",
+    "esbuild": "catalog:",
+    "rimraf": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-esbuild": "catalog:",
+    "rollup-plugin-node-externals": "catalog:"
   },
   "dependencies": {
     "semver": "^7.7.0",
-    "tslib": "2.8.1",
-    "typescript": "5.9.2"
+    "tslib": "catalog:",
+    "typescript": "catalog:"
   }
 }
