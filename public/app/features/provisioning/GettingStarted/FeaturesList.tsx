@@ -43,9 +43,15 @@ export const FeaturesList = ({
         </li>
         {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories
-            </Trans>
+            {isOnPrem() ? (
+              <Trans i18nKey="provisioning.quota-limit.message-repositories-info-onprem" count={maxRepositories}>
+                Your instance is limited to {{ count: maxRepositories }} connected repositories
+              </Trans>
+            ) : (
+              <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
+                Your account is limited to {{ count: maxRepositories }} connected repositories
+              </Trans>
+            )}
           </li>
         )}
       </ul>

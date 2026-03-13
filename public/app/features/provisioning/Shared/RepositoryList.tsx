@@ -6,9 +6,10 @@ import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisi
 
 import { RepositoryListItem } from '../Repository/RepositoryListItem';
 import { useResourceStats } from '../Wizard/hooks/useResourceStats';
-import { UPGRADE_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
 import { useIsProvisionedInstance } from '../hooks/useIsProvisionedInstance';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { isOnPrem } from '../utils/isOnPrem';
 
 interface Props {
   items: Repository[];
@@ -68,27 +69,10 @@ export function RepositoryList({ items }: Props) {
               </>
             )}
             {isRepoLimitHit && (
-              <>
-                {' '}
-                {!!maxResourcesPerRepository ? (
-                  <>
-                    <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
-                      Your account is limited to {{ count: maxRepositories }} connected repositories
-                    </Trans>{' '}
-                    <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
-                      and {{ count: maxResourcesPerRepository }} synced resources per repository.
-                    </Trans>
-                  </>
-                ) : (
-                  <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
-                    Your account is limited to {{ count: maxRepositories }} connected repositories. To add more
-                    repositories,
-                  </Trans>
-                )}{' '}
-                <TextLink href={UPGRADE_URL} external>
-                  <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
-                </TextLink>
-              </>
+              <RepoLimitMessage
+                maxRepositories={maxRepositories}
+                maxResourcesPerRepository={maxResourcesPerRepository}
+              />
             )}
           </Alert>
         </Stack>
@@ -136,5 +120,77 @@ export function RepositoryList({ items }: Props) {
         </Stack>
       </Stack>
     </>
+  );
+}
+
+function RepoLimitMessage({
+  maxRepositories,
+  maxResourcesPerRepository,
+}: {
+  maxRepositories: number;
+  maxResourcesPerRepository?: number;
+}) {
+  const onPrem = isOnPrem();
+
+  return (
+    <>
+      {' '}
+      <RepoLimitText
+        onPrem={onPrem}
+        maxRepositories={maxRepositories}
+        maxResourcesPerRepository={maxResourcesPerRepository}
+      />{' '}
+      {onPrem ? (
+        <TextLink href={CONFIGURE_GRAFANA_DOCS_URL} external>
+          <Trans i18nKey="provisioning.quota-limit.update-configuration-link">update your Grafana configuration</Trans>
+        </TextLink>
+      ) : (
+        <TextLink href={UPGRADE_URL} external>
+          <Trans i18nKey="provisioning.quota-limit.upgrade-link">upgrade your account</Trans>
+        </TextLink>
+      )}
+    </>
+  );
+}
+
+function RepoLimitText({
+  onPrem,
+  maxRepositories,
+  maxResourcesPerRepository,
+}: {
+  onPrem: boolean;
+  maxRepositories: number;
+  maxResourcesPerRepository?: number;
+}) {
+  if (maxResourcesPerRepository) {
+    return onPrem ? (
+      <>
+        <Trans i18nKey="provisioning.quota-limit.message-both-repositories-onprem" count={maxRepositories}>
+          Your instance is limited to {{ count: maxRepositories }} connected repositories
+        </Trans>{' '}
+        <Trans i18nKey="provisioning.quota-limit.message-both-resources-onprem" count={maxResourcesPerRepository}>
+          and {{ count: maxResourcesPerRepository }} synced resources per repository.
+        </Trans>
+      </>
+    ) : (
+      <>
+        <Trans i18nKey="provisioning.quota-limit.message-both-repositories" count={maxRepositories}>
+          Your account is limited to {{ count: maxRepositories }} connected repositories
+        </Trans>{' '}
+        <Trans i18nKey="provisioning.quota-limit.message-both-resources" count={maxResourcesPerRepository}>
+          and {{ count: maxResourcesPerRepository }} synced resources per repository.
+        </Trans>
+      </>
+    );
+  }
+
+  return onPrem ? (
+    <Trans i18nKey="provisioning.quota-limit.message-repository-onprem" count={maxRepositories}>
+      Your instance is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
+    </Trans>
+  ) : (
+    <Trans i18nKey="provisioning.quota-limit.message-repository" count={maxRepositories}>
+      Your account is limited to {{ count: maxRepositories }} connected repositories. To add more repositories,
+    </Trans>
   );
 }
