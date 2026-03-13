@@ -235,6 +235,62 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 	}
 }
 
+// nonExecutableNode implements Node but not ExecutableNode, to test that
+// the pipeline handles non-executable nodes gracefully per-node instead of
+// returning a global error.
+type nonExecutableNode struct {
+	id      int64
+	refID   string
+	ntype   NodeType
+	inputTo map[string]struct{}
+}
+
+func (n *nonExecutableNode) ID() int64          { return n.id }
+func (n *nonExecutableNode) NodeType() NodeType { return n.ntype }
+func (n *nonExecutableNode) RefID() string      { return n.refID }
+func (n *nonExecutableNode) String() string     { return n.refID }
+func (n *nonExecutableNode) NeedsVars() []string { return nil }
+func (n *nonExecutableNode) SetInputTo(refID string) {
+	if n.inputTo == nil {
+		n.inputTo = make(map[string]struct{})
+	}
+	n.inputTo[refID] = struct{}{}
+}
+func (n *nonExecutableNode) IsInputTo() map[string]struct{} { return n.inputTo }
+
+func TestUnexpectedNodeTypeIsPerNodeError(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+
+	queries := []Query{
+		{
+			RefID:      "C",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "42" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	// Inject a non-executable node into the pipeline before the math node.
+	badNode := &nonExecutableNode{id: 99, refID: "X", ntype: TypeCMDNode}
+	pl = append(DataPipeline{badNode}, pl...)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	// Should not return a global error — per-node errors only
+	require.NoError(t, err)
+
+	// X should have a per-node error
+	require.Error(t, res.Responses["X"].Error)
+	require.ErrorContains(t, res.Responses["X"].Error, "expected executable node type")
+
+	// C should still succeed independently
+	require.NoError(t, res.Responses["C"].Error)
+	require.Equal(t, fp(42), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
 func fp(f float64) *float64 {
 	return &f
 }
