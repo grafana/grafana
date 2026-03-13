@@ -1,14 +1,11 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import { ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
@@ -63,17 +60,15 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
+  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
 
   const renderResult = render(
-    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-      <KBarProvider>
-        <TestProvider grafanaContext={context}>
-          <AppChrome>
-            <div data-testid="page-children">{children}</div>
-          </AppChrome>
-        </TestProvider>
-      </KBarProvider>
-    </OpenFeatureProvider>
+    <KBarProvider>
+      <AppChrome>
+        <div data-testid="page-children">{children}</div>
+      </AppChrome>
+    </KBarProvider>,
+    { wrapper }
   );
 
   return { renderResult, context };
