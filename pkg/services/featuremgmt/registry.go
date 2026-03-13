@@ -601,6 +601,14 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageGeneralAvailability,

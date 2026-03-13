@@ -2,8 +2,9 @@ import { memo, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
@@ -21,6 +22,7 @@ export const ConnectStep = memo(function ConnectStep() {
     setValue,
   } = useFormContext<WizardFormData>();
 
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
   const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
@@ -135,7 +137,7 @@ export const ConnectStep = memo(function ConnectStep() {
         </Field>
       )}
 
-      <FreeTierLimitNote limitType="connection" />
+      <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />
     </Stack>
   );
 });

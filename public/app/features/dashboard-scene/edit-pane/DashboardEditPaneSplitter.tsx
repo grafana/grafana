@@ -90,7 +90,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     hasOpenPane: Boolean(openPane) && Boolean(isEditing),
     contentMargin: 1,
     position: 'right',
-    persistanceKey: 'dashboard',
+    persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
   });
 
