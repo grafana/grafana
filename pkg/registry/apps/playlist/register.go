@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -17,10 +18,12 @@ import (
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
-	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
@@ -34,18 +37,28 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service playlistsvc.Service
+	cfg           *setting.Cfg
+	service       playlistsvc.Service
+	accessControl accesscontrol.AccessControl
+	logger        log.Logger
 }
 
 func RegisterAppInstaller(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	accessControlService accesscontrol.Service,
+	ac accesscontrol.AccessControl,
 ) (*AppInstaller, error) {
+	if err := DeclareFixedRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("declaring fixed roles: %w", err)
+	}
+
 	installer := &AppInstaller{
-		cfg:     cfg,
-		service: p,
+		cfg:           cfg,
+		service:       p,
+		accessControl: ac,
+		logger:        log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -68,8 +81,39 @@ func RegisterAppInstaller(
 }
 
 func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	//nolint:staticcheck // not yet migrated to Resource Authorizer
-	return roleauthorizer.NewRoleAuthorizer()
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			if !attr.IsResourceRequest() {
+				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			var action string
+			switch attr.GetVerb() {
+			case "get", "list", "watch":
+				action = ActionPlaylistsRead
+			case "create", "update", "patch", "delete", "deletecollection":
+				action = ActionPlaylistsWrite
+			default:
+				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
+			}
+
+			hasAccess, err := p.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+			if err != nil {
+				p.logger.Error("failed to evaluate permission", "error", err)
+				return authorizer.DecisionDeny, "permission evaluation failed", err
+			}
+			if !hasAccess {
+				return authorizer.DecisionDeny, "insufficient permissions", nil
+			}
+
+			return authorizer.DecisionAllow, "", nil
+		},
+	)
 }
 
 // GetLegacyStorage returns the legacy storage for the playlist app.
