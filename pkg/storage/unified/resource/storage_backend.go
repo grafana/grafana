@@ -1151,6 +1151,8 @@ func (k *kvStorageBackend) getHistoryKeys(ctx context.Context, key ListRequestKe
 		historyKeys = append(historyKeys, dataKey)
 	}
 
+	sortByResourceVersion(historyKeys, sortAscending)
+
 	// Apply live history filter: for each name that has a deletion,
 	// keep only entries with RV after that name's latest delete.
 	if len(latestDeleteRV) > 0 {

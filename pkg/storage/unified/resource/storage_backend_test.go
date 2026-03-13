@@ -1601,14 +1601,17 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
 
-			// resource-a: create (rv1), update (rv2) — alive, should appear with 2 history entries
-			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
-			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-a", nsr, "resources", "test-data", rv1)
+			// resource-c: create (rv1), update (rv2) — alive, should appear with 2 history entries
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-c", nsr, "resources", "test-data", 0)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-c", nsr, "resources", "test-data", rv1)
+
+			// resource-a: create (rv3)
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
 
 			// resource-b: create (rv3), update (rv4), delete (rv5) — deleted
-			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
-			rv4 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-b", nsr, "resources", "test-data", rv3)
-			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv4)
+			rv4 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
+			rv5 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-b", nsr, "resources", "test-data", rv4)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv5)
 
 			// resource-other-type: create — different resource type, should NOT appear
 			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
@@ -1625,13 +1628,17 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 				Limit:  10,
 			})
 
-			// resource-a's create (rv1) and update (rv2) should appear.
+			// resource-a's create (rv3) and resource-c's create (rv1)
+			// and update (rv2) should appear.
 			// resource-b is deleted so its live history is empty.
-			require.Len(t, items, 2)
+			// The events should be ordered by RV, not name.
+			require.Len(t, items, 3)
 			require.Equal(t, "resource-a", items[0].name)
-			require.Equal(t, rv2, items[0].resourceVersion) // descending: rv2 first
-			require.Equal(t, "resource-a", items[1].name)
-			require.Equal(t, rv1, items[1].resourceVersion)
+			require.Equal(t, rv3, items[0].resourceVersion) // descending: rv3 first
+			require.Equal(t, "resource-c", items[1].name)
+			require.Equal(t, rv2, items[1].resourceVersion)
+			require.Equal(t, "resource-c", items[2].name)
+			require.Equal(t, rv1, items[2].resourceVersion)
 		})
 
 		t.Run("ascending order", func(t *testing.T) {
