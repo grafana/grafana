@@ -438,21 +438,12 @@ export function interpolateSectionTitle<T extends RepeatableSectionState>(
     return '';
   }
 
-  // Repeated rows/tabs must keep local scope interpolation so each repeated instance
-  // resolves to a distinct title/slug and remains selectable.
+  // Section titles/slugs should resolve in local scene scope so they can
+  // use ancestor section variables (including repeat-local variables).
   if (scene.state.repeatByVariable || scene.state.repeatSourceKey) {
     return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
   }
-
-  // During transient edit operations, a section may be queried for
-  // slug/title interpolation before it is attached to a DashboardScene root.
-  // Fall back to local interpolation in that short window.
-  const root = scene.getRoot();
-  if (!(root instanceof DashboardScene)) {
-    return sceneGraph.interpolate(scene, value, undefined, 'text');
-  }
-
-  return sceneGraph.interpolate(root, value, undefined, 'text');
+  return sceneGraph.interpolate(scene, value, undefined, 'text');
 }
 
 function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
