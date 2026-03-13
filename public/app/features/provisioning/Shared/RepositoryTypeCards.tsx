@@ -49,7 +49,13 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       Configure with {'{{ provider }}'}
                     </Trans>
                     {config.tooltip && (
-                      <IconButton name="info-circle" size="sm" tooltip={config.tooltip} className={styles.infoIcon} />
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
                     )}
                   </Stack>
                 </Card.Heading>
@@ -92,7 +98,13 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                       </Trans>
                     )}
                     {config.tooltip && (
-                      <IconButton name="info-circle" size="sm" tooltip={config.tooltip} className={styles.infoIcon} />
+                      <IconButton
+                        name="info-circle"
+                        size="sm"
+                        tooltip={config.tooltip}
+                        className={styles.infoIcon}
+                        variant="secondary"
+                      />
                     )}
                   </Stack>
                 </Card.Heading>
@@ -120,13 +132,7 @@ function getStyles(theme: GrafanaTheme2, disabled?: boolean) {
       }),
     }),
     infoIcon: css({
-      position: 'relative',
       zIndex: 1,
-      display: 'inline-flex',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
     }),
   };
 }
