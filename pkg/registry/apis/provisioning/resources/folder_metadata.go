@@ -183,6 +183,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	var (
 		folderObj    *folders.Folder
 		folderID     string
+		folderTitle  string
 		err          error
 		folderExists bool
 	)
@@ -193,9 +194,10 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 			return nil, fmt.Errorf("read folder metadata: %w", err)
 		}
 
-		// If metadata was found, use its stable UID and mark folder as existing
+		// If metadata was found, use its stable UID and title and mark folder as existing
 		if folderObj != nil && folderObj.Name != "" {
 			folderID = folderObj.Name
+			folderTitle = folderObj.Spec.Title
 			folderExists = true
 		}
 	}
@@ -218,15 +220,15 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	if folderID == "" {
 		folderID = ParseFolder(path, config.Name).ID
 	}
-
-	// Determine the folder title from the path (last part of the path)
-	folderTitle := safepath.Base(path)
+	// If no metadata exists or metadata is disabled, use the path-based title
+	if folderTitle == "" {
+		folderTitle = safepath.Base(path)
+	}
 
 	// If no metadata object exists, create a minimal folder object
 	if folderObj == nil {
 		folderObj = NewFolderManifest(folderID, folderTitle)
-	} else {
-		// Update the title to match the path, even if metadata exists
+	} else if folderObj.Spec.Title == "" {
 		folderObj.Spec.Title = folderTitle
 	}
 

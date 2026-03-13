@@ -66,7 +66,6 @@ func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:                      kv,
-		WithPruner:                   true,
 		WithExperimentalClusterScope: true,
 	}
 	backend, err := NewKVStorageBackend(opts)

@@ -91,6 +91,20 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichmentPreview",
+        "resourceVersion": "1772750000943",
+        "creationTimestamp": "2026-03-05T22:33:20Z"
+      },
+      "spec": {
+        "description": "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-03-05T14:15:26Z"
@@ -891,6 +905,23 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "annotationsClustering",
+        "resourceVersion": "1773352347788",
+        "creationTimestamp": "2026-03-12T21:45:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 21:52:27.788294 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables annotation clustering and switches to refactored annotation code",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2844,6 +2875,23 @@
       },
       "spec": {
         "description": "Redirects the request of the team group sync endpoints to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamService",
+        "resourceVersion": "1773147086908",
+        "creationTimestamp": "2026-03-06T08:45:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-10 12:51:26.908818 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the new team service that uses the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
