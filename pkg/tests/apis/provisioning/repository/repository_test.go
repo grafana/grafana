@@ -1710,11 +1710,14 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	}
 	helper.CreateRepo(t, testRepo)
 
-	jobSpec := provisioning.JobSpec{
+	adminJobBody := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
-	}
-	body := common.AsJSON(jobSpec)
+	})
+
+	editorJobBody := common.AsJSON(provisioning.JobSpec{
+		Action: provisioning.JobActionFixFolderMetadata,
+	})
 
 	t.Run("editor can POST jobs", func(t *testing.T) {
 		var statusCode int
@@ -1723,7 +1726,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -1745,7 +1748,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -1761,7 +1764,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(adminJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -44,6 +45,35 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 			},
 		},
 	}
+}
+
+func TestPullRequestJobRejected(t *testing.T) {
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("PullRequest action returns bad request", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+		}
+
+		err := validateJobAction(spec, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "pull request jobs cannot be created via the API")
+	})
+
+	t.Run("Pull action is not rejected", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		}
+
+		err := validateJobAction(spec, cfg)
+		require.NoError(t, err)
+	})
 }
 
 func TestAuthorizeResourceJob(t *testing.T) {
@@ -543,4 +573,43 @@ func (m *mockDynamic) Apply(context.Context, string, *unstructured.Unstructured,
 }
 func (m *mockDynamic) ApplyStatus(context.Context, string, *unstructured.Unstructured, metav1.ApplyOptions) (*unstructured.Unstructured, error) {
 	return nil, nil
+}
+
+func TestAuthorizeAdminJob(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("admin is authorized", func(t *testing.T) {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == "create" &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName() &&
+				req.Namespace == cfg.Namespace
+		}), "").Return(nil)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeAdminJob(ctx, cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("non-admin is forbidden", func(t *testing.T) {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == "create" &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName()
+		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("admin role is required")))
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeAdminJob(ctx, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
 }

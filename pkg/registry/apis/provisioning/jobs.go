@@ -13,9 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -147,6 +150,14 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
+		// Pull jobs trigger a repository sync and require admin privileges.
+		if spec.Action == provisioning.JobActionPull {
+			if err := c.authorizeAdminJob(r.Context(), cfg); err != nil {
+				responder.Error(err)
+				return
+			}
+		}
+
 		// Validate write operations before queueing the job
 		requiresWrite := spec.Action == provisioning.JobActionDelete ||
 			spec.Action == provisioning.JobActionMove ||
@@ -169,11 +180,8 @@ func (c *jobsConnector) Connect(
 					targetRef = spec.Push.Branch
 				}
 			case provisioning.JobActionMigrate:
-				// Migrate operates on the default branch (no ref)
 				targetRef = ""
 			default:
-				// Read-only operations (Pull, PullRequest, FixFolderMetadata) don't reach here
-				// due to requiresWrite check, but include default for exhaustive linter
 				targetRef = ""
 			}
 
@@ -228,8 +236,12 @@ var (
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
 
-// authorizeJob dispatches pre-flight authorization checks based on the job action.
+// authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if err := validateJobAction(spec, cfg); err != nil {
+		return err
+	}
+
 	switch spec.Action {
 	case provisioning.JobActionPush, provisioning.JobActionMigrate:
 		return c.authorizeResourceJob(ctx, repo, cfg, spec)
@@ -243,6 +255,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		}
 	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
 		// Read-only operations don't require pre-flight resource authorization.
+		// Pull is authorized inline in Connect; PullRequest is rejected by validateJobAction above.
 	}
 	return nil
 }
@@ -298,6 +311,27 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
 			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
 		}
+	}
+	return nil
+}
+
+// authorizeAdminJob checks that the requesting user has admin privileges.
+// Used for job types that are restricted to administrators.
+func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
+	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
+		Verb:      "create",
+		Group:     provisioning.GROUP,
+		Resource:  provisioning.JobResourceInfo.GetName(),
+		Namespace: cfg.Namespace,
+	}, "")
+}
+
+// validateJobAction checks that the job action is allowed to be created via the API.
+// Some job types are only triggered internally (e.g., by webhooks) and should not be
+// user-creatable.
+func validateJobAction(spec provisioning.JobSpec, _ *provisioning.Repository) error {
+	if spec.Action == provisioning.JobActionPullRequest {
+		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
 	}
 	return nil
 }
