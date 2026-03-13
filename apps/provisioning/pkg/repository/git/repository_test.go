@@ -78,6 +78,52 @@ func TestIsValidGitURL(t *testing.T) {
 	}
 }
 
+func TestIsAzureDevOpsURL(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{
+			name: "Azure DevOps URL",
+			url:  "https://dev.azure.com/org/project/_git/MyRepo",
+			want: true,
+		},
+		{
+			name: "Legacy Visual Studio URL",
+			url:  "https://org.visualstudio.com/project/_git/MyRepo",
+			want: true,
+		},
+		{
+			name: "On-premises Azure DevOps Server with _git path",
+			url:  "https://tfs.company.com/collection/project/_git/MyRepo",
+			want: true,
+		},
+		{
+			name: "GitHub URL",
+			url:  "https://github.com/owner/repo",
+			want: false,
+		},
+		{
+			name: "GitLab URL",
+			url:  "https://gitlab.com/owner/repo",
+			want: false,
+		},
+		{
+			name: "invalid URL",
+			url:  "://bad-url",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isAzureDevOpsURL(tt.url)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestNewGit(t *testing.T) {
 	ctx := context.Background()
 

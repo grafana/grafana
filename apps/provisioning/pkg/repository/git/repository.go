@@ -62,6 +62,12 @@ func NewRepository(
 		opts = append(opts, options.WithBasicAuth(tokenUser, string(gitConfig.Token)))
 	}
 
+	// Azure DevOps treats ".git" as a literal part of the repository name,
+	// so we must not append it automatically.
+	if isAzureDevOpsURL(gitConfig.URL) {
+		opts = append(opts, options.WithoutGitSuffix())
+	}
+
 	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
@@ -171,6 +177,27 @@ func isValidGitURL(gitURL string) bool {
 	}
 
 	return true
+}
+
+// isAzureDevOpsURL returns true if the given URL points to an Azure DevOps Git repository.
+// Azure DevOps uses "/_git/" in its repository paths and treats ".git" as a literal
+// part of the repository name rather than a suffix to strip.
+func isAzureDevOpsURL(rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(parsed.Host)
+	// dev.azure.com is the current Azure DevOps domain;
+	// visualstudio.com is the legacy domain.
+	if strings.HasSuffix(host, "dev.azure.com") || strings.HasSuffix(host, "visualstudio.com") {
+		return true
+	}
+
+	// Also match by path pattern for on-premises Azure DevOps Server instances
+	// that use /_git/ in their URL structure.
+	return strings.Contains(parsed.Path, "/_git/")
 }
 
 // Test implements provisioning.Repository.
