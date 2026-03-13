@@ -1874,8 +1874,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3700,6 +3698,7 @@
     "category-alert-state-filter": "Filtr stavu výstrahy",
     "category-filter": "Filtrovat",
     "category-options": "Možnosti",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Zobrazit pouze výstrahy propojené s touto nástěnkou",
     "description-alert-instance-label": "Filtrovat instance výstrah pomocí dotazování na štítky, např.: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filtrovat výstrahy obsahující tento text",
@@ -3710,6 +3709,9 @@
     "description-max-items": "Maximální počet výstrah k zobrazení",
     "description-show-inactive-alerts": "Zahrnout pravidla výstrah, která mají 0 (nula) instancí. Protože tato pravidla nemají žádné instance, zůstanou skryta, pokud je nakonfigurován filtr štítků výstrahy instance.",
     "description-sort-order": "Pořadí řazení výstrah a jejich instancí",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Přepínání mezi zobrazením seznamu a statistik",
     "group-by": {
       "aria-label-group-by-label-keys": "seřadit podle klíčů štítků",
@@ -3735,6 +3737,9 @@
     "name-recovering": "Probíhá obnovení",
     "name-show-inactive-alerts": "Zobrazit výstrahy s 0 instancemi",
     "name-sort-order": "Pořadí řazení",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Režim zobrazení",
     "sort-order-options": {
       "label-alphabetical-asc": "Abecedně (vzestupně)",
@@ -3742,6 +3747,12 @@
       "label-importance": "Důležitost",
       "label-time-asc": "Čas (vzestupně)",
       "label-time-desc": "Čas (sestupně)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "po dobu <1>{{duration}}</1>",
@@ -4133,6 +4144,20 @@
     },
     "name-show-unfilled-area": "Zobrazit nevyplněnou oblast",
     "name-value-display": "Zobrazení hodnoty",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Sloupcové metriky",
       "lcd": "Sloupcové metriky – LCD"
@@ -6676,10 +6701,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nemůže obsahovat neplatné znaky: „~“, „^“, „:“, „?“, „*“, „[“, „\\“ nebo „]“.",
@@ -6844,6 +6867,12 @@
     },
     "description-label": {
       "description": "Popis"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7542,10 +7571,6 @@
       "title-hidden_few": "",
       "title-hidden_many": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10339,7 +10364,15 @@
       "remove-button": "Odebrat {{children}}"
     },
     "viz-legend": {
-      "right-axis-indicator": "(pravá osa y)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(pravá osa y)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Opravdu chcete {{ actionTitle }}?",
@@ -12823,6 +12856,7 @@
     "preview-banner": {
       "behind-branch-text": "Tento zdroj je za větví v úložišti {{repoType}}.",
       "branch-text": "větev:",
+      "delete-from-branch": "",
       "not-saved": "Zbytek uživatelů Grafany ve vaší organizaci bude i nadále vidět aktuální verzi uloženou do nakonfigurované výchozí větve, dokud nebude tato větev sloučena",
       "open-in-repo-button": "Otevřít v úložišti {{repoType}}",
       "open-pull-request-in-repo": "Otevřít žádost o stažení v úložišti {{repoType}}",
@@ -12830,6 +12864,7 @@
       "view-pull-request-in-repo": "Zobrazit žádost o stažení v úložišti {{repoType}}"
     },
     "title-created-branch-in-repo": "Ve větvi úložiště {{repoType}} byl vytvořen nový zdroj.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Tento zdroj je načten z větve, kterou jste právě vytvořili v úložišti {{repoType}}, a je viditelný pouze pro vás"
   },
   "provisioning": {
@@ -12927,8 +12962,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "free-tier-limit-tooltip": "Bezplatné účty jsou omezeny na jedno připojení",
-      "instance-fully-managed-tooltip": "Konfigurace je zakázána, protože tato instance je plně spravována"
+      "instance-fully-managed-tooltip": "Konfigurace je zakázána, protože tato instance je plně spravována",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13096,9 +13131,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zdrojů je spravováno synchronizací Git.",
       "placeholder-search": "Hledat",
@@ -13110,13 +13142,6 @@
       "unmanaged-resources_few": "Zdroje (celkem {{count}}) nejsou spravovány synchronizací Git.",
       "unmanaged-resources_many": "Zdroje (celkem {{count}}) nejsou spravovány synchronizací Git.",
       "unmanaged-resources_other": "Zdroje (celkem {{count}}) nejsou spravovány synchronizací Git."
-    },
-    "free-tier-limit": {
-      "message": "Bezplatné účty jsou omezeny na 1 připojení a 20 zdrojů na složku",
-      "message-connection": "",
-      "message-resource": "Bezplatné účty jsou omezeny na 20 zdrojů na složku. Chcete-li přidat další zdroje,",
-      "note": "Poznámka:",
-      "upgrade-link": "aktualizujte svůj účet"
     },
     "get-default-values": {
       "title": {
@@ -13271,6 +13296,42 @@
           "repository-request-failed": "Požadavek na úložiště se nezdařil"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_few": "",
+      "message-both-repositories_many": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_few": "",
+      "message-both-resources_many": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_few": "",
+      "message-repositories-info_many": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_few": "",
+      "message-repository_many": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_few": "",
+      "note-message-both-repositories_many": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_few": "",
+      "note-message-both-resources_many": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_few": "",
+      "note-message-repository_many": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_few": "",
+      "note-message-resource_many": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "read-only-remote-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím Gitu. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
@@ -14619,6 +14680,18 @@
       "label-same-as-value": "Stejné jako hodnota",
       "label-standard": "Standardní"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "Statistika",
       "stat-color-background": "Statistika – barevné pozadí",
@@ -15079,6 +15152,11 @@
         "label-threshold": "Prahová hodnota"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Pomlčka",
@@ -15097,16 +15175,22 @@
       "zoom-to-data": "Přiblížit na data"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
