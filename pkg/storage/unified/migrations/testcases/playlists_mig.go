@@ -1,4 +1,4 @@
-package migrations
+package testcases
 
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 

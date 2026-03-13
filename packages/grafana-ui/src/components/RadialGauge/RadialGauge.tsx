@@ -116,7 +116,9 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   let effectiveTextMode = textMode;
   if (effectiveTextMode === 'auto') {
-    effectiveTextMode = vizCount === 1 ? 'value' : 'value_and_name';
+    const firstValue: FieldDisplay | undefined = values[0];
+    // in auto mode, we should show value_and_name if there are multiple values or the first value has a display name
+    effectiveTextMode = vizCount > 1 || firstValue?.field?.displayName != null ? 'value_and_name' : 'value';
   }
 
   const startAngle = shape === 'gauge' ? ARC_START : 0;
