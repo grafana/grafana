@@ -485,6 +485,9 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor apply button',
+            },
             closeButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
             },
