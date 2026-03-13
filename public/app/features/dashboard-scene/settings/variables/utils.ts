@@ -154,8 +154,6 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'groupby',
 ];
 
-export const FILTER_VARIABLE_TYPES: EditableVariableType[] = ['adhoc', 'groupby'];
-
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
   const editableVariables = getEditableVariables();
   const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType) => ({
@@ -165,25 +163,11 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
   }));
 
   if (!config.featureToggles.groupByVariable) {
+    // Remove group by variable type if feature toggle is off
     return results.filter((option) => option.value !== 'groupby');
   }
 
   return results;
-}
-
-export function getFilterTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
-  const editableVariables = getEditableVariables();
-  const result = FILTER_VARIABLE_TYPES.map((variableType) => ({
-    label: editableVariables[variableType].name,
-    value: variableType,
-    description: editableVariables[variableType].description,
-  }));
-
-  if (!config.featureToggles.groupByVariable) {
-    return result.filter((option) => option.value !== 'groupby');
-  }
-
-  return result;
 }
 
 export function getVariableEditor(type: EditableVariableType) {
