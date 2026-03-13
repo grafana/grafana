@@ -597,6 +597,10 @@ func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
+func (s *service) IsReady() bool {
+	return s.handler != nil
+}
+
 func (s *service) running(ctx context.Context) error {
 	select {
 	case err := <-s.stoppedCh:
