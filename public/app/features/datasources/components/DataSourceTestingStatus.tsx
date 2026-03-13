@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import {
   DataSourceSettings as DataSourceSettingsType,
@@ -13,11 +12,13 @@ import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config, usePluginLinks, usePluginComponents, renderLimitedComponents } from '@grafana/runtime';
-import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
+import { AlertVariant, Alert, useTheme2, Link, useStyles2, Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { trackCreateDashboardClicked } from '../tracking';
+
+import { SuggestedDashboardsLoader } from './SuggestedDashboardsLoader';
 
 export type Props = {
   testingStatus?: TestingStatus;
@@ -30,6 +31,8 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   severity?: AlertVariant;
   exploreUrl: string;
   dataSourceId: string;
+  hasDashboards: boolean;
+  openModal: () => void;
   onDashboardLinkClicked: () => void;
   extensionLinks?: PluginExtensionLink[];
 }
@@ -54,53 +57,83 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
   };
 };
 
-const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
+const AlertSuccessMessage = ({
+  title,
+  exploreUrl,
+  dataSourceId,
+  hasDashboards,
+  openModal,
+  onDashboardLinkClicked,
+}: AlertMessageProps) => {
   const theme = useTheme2();
-  const [searchParams] = useSearchParams();
 
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
 
-  const suggestedDashboardsHref = (() => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('dashboardLibraryDatasourceUid', dataSourceId);
-    return `?${newParams.toString()}`;
-  })();
-
   return (
     <div className={styles.content}>
-      <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
-        Next, you can start to visualize data by{' '}
-        <Link
-          aria-label={t('datasources.alert-success-message.aria-label-create-a-dashboard', 'Create a dashboard')}
-          href={`/dashboard/new-with-ds/${dataSourceId}`}
-          className="external-link"
-          onClick={onDashboardLinkClicked}
-        >
-          building a dashboard from scratch
-        </Link>
-        , viewing{' '}
-        <Link
-          aria-label={t('datasources.alert-success-message.aria-label-suggested-dashboards', 'Suggested dashboards')}
-          href={suggestedDashboardsHref}
-          className="external-link"
-        >
-          suggested dashboards
-        </Link>{' '}
-        or by querying data in the{' '}
-        <Link
-          aria-label={t('datasources.alert-success-message.aria-label-explore-data', 'Explore data')}
-          className={cx('external-link', {
-            [`${styles.disabled}`]: !canExploreDataSources,
-            'test-disabled': !canExploreDataSources,
-          })}
-          href={exploreUrl}
-        >
-          Explore view
-        </Link>
-        .
-      </Trans>
+      {hasDashboards ? (
+        <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
+          Next, you can start to visualize data by{' '}
+          <Link
+            aria-label={t('datasources.alert-success-message.aria-label-create-a-dashboard', 'Create a dashboard')}
+            href={`/dashboard/new-with-ds/${dataSourceId}`}
+            className="external-link"
+            onClick={onDashboardLinkClicked}
+          >
+            building a dashboard from scratch
+          </Link>
+          , viewing{' '}
+          <Link
+            aria-label={t('datasources.alert-success-message.aria-label-suggested-dashboards', 'Suggested dashboards')}
+            href="#"
+            className="external-link"
+            onClick={(e) => {
+              e.preventDefault();
+              openModal();
+            }}
+          >
+            suggested dashboards
+          </Link>{' '}
+          or by querying data in the{' '}
+          <Link
+            aria-label={t('datasources.alert-success-message.aria-label-explore-data', 'Explore data')}
+            className={cx('external-link', {
+              [`${styles.disabled}`]: !canExploreDataSources,
+              'test-disabled': !canExploreDataSources,
+            })}
+            href={exploreUrl}
+          >
+            Explore view
+          </Link>
+          .
+        </Trans>
+      ) : (
+        <Trans i18nKey="data-source-testing-status-page.success-more-details-links-no-suggestions">
+          Next, you can start to visualize data by{' '}
+          <Link
+            aria-label={t('datasources.alert-success-message.aria-label-create-a-dashboard', 'Create a dashboard')}
+            href={`/dashboard/new-with-ds/${dataSourceId}`}
+            className="external-link"
+            onClick={onDashboardLinkClicked}
+          >
+            building a dashboard from scratch
+          </Link>{' '}
+          or by querying data in the{' '}
+          <Link
+            aria-label={t('datasources.alert-success-message.aria-label-explore-data', 'Explore data')}
+            className={cx('external-link', {
+              [`${styles.disabled}`]: !canExploreDataSources,
+              'test-disabled': !canExploreDataSources,
+            })}
+            href={exploreUrl}
+          >
+            Explore view
+          </Link>
+          .
+        </Trans>
+      )}
     </div>
   );
 };
@@ -229,12 +262,22 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
             <>
               {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
-                <AlertSuccessMessage
-                  title={message}
-                  exploreUrl={exploreUrl}
-                  dataSourceId={dataSource.uid}
-                  onDashboardLinkClicked={onDashboardLinkClicked}
-                />
+                <SuggestedDashboardsLoader dataSource={dataSource} fetchOnMount>
+                  {({ fetchStatus, hasDashboards, openModal }) =>
+                    fetchStatus === 'loading' || fetchStatus === 'idle' ? (
+                      <Spinner />
+                    ) : (
+                      <AlertSuccessMessage
+                        title={message ?? ''}
+                        exploreUrl={exploreUrl}
+                        dataSourceId={dataSource.uid}
+                        hasDashboards={hasDashboards}
+                        openModal={openModal}
+                        onDashboardLinkClicked={onDashboardLinkClicked}
+                      />
+                    )
+                  }
+                </SuggestedDashboardsLoader>
               ) : null}
               {severity === 'error' && errorDetailsLink ? <ErrorDetailsLink link={String(errorDetailsLink)} /> : null}
               {detailsVerboseMessage ? (

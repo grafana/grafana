@@ -8,7 +8,6 @@ import { config, useFavoriteDatasources, FavoriteDatasources } from '@grafana/ru
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
-import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 import { AccessControlAction } from 'app/types/accessControl';
 import { StoreState, useSelector } from 'app/types/store';
 
@@ -152,8 +151,6 @@ export function DataSourcesListView({
       ) : (
         <ul className={styles.list}>{getDataSourcesList()}</ul>
       )}
-
-      <SuggestedDashboardsModal defaultTab="datasource" />
     </>
   );
 }

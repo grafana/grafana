@@ -7669,7 +7669,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard from scratch</2>, viewing <5>suggested dashboards</5> or by querying data in the <9>Explore view</9>."
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard from scratch</2>, viewing <5>suggested dashboards</5> or by querying data in the <9>Explore view</9>.",
+    "success-more-details-links-no-suggestions": "Next, you can start to visualize data by <2>building a dashboard from scratch</2> or by querying data in the <6>Explore view</6>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7700,6 +7701,11 @@
       "basic-settings-name-placeholder-name": "Name",
       "label-default": "Default",
       "label-name": "Name"
+    },
+    "build-a-dashboard-button": {
+      "blank": "Blank",
+      "build-a-dashboard": "Build a dashboard",
+      "from-suggestions": "From suggestions"
     },
     "build-categories": {
       "categories": {
@@ -7786,15 +7792,11 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Build a dashboard",
       "explore": "Explore"
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "blank": "Blank",
-      "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
-      "from-suggestions": "From suggestions",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
     },

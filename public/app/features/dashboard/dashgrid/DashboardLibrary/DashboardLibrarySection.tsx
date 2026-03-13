@@ -20,9 +20,16 @@ import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHel
 // Constants for datasource-provided dashboards pagination
 const PAGE_SIZE = 9;
 
-export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggestedBanner?: boolean }) => {
+interface DashboardLibrarySectionProps {
+  suggestedBanner?: boolean;
+  dashboards?: PluginDashboard[];
+  datasourceUid?: string;
+}
+
+export const DashboardLibrarySection = ({ suggestedBanner = false, dashboards, datasourceUid: datasourceUidProp }: DashboardLibrarySectionProps) => {
   const [searchParams] = useSearchParams();
-  const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  const datasourceUidFromUrl = searchParams.get('dashboardLibraryDatasourceUid');
+  const datasourceUid = datasourceUidProp ?? datasourceUidFromUrl;
 
   const [currentPage, setCurrentPage] = useState(1);
   const hasTrackedLoaded = useRef(false);
@@ -37,18 +44,18 @@ export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggested
   }, [datasourceUid]);
 
   const { value: templateDashboards, loading } = useAsync(async (): Promise<PluginDashboard[]> => {
+    if (dashboards !== undefined) {
+      return dashboards;
+    }
     if (!datasourceUid) {
       return [];
     }
-
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
     if (!ds) {
       return [];
     }
-
-    const dashboards = await fetchProvisionedDashboards(ds.type);
-    return dashboards;
-  }, [datasourceUid]);
+    return fetchProvisionedDashboards(ds.type);
+  }, [datasourceUid, dashboards]);
 
   // Track analytics only once on first successful load
   useEffect(() => {
@@ -69,11 +76,10 @@ export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggested
   const totalPages = Math.ceil(totalDashboards / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
-  const dashboardsToShow = templateDashboards?.slice(startIndex, endIndex);
+  const dashboardsToShow = templateDashboards?.slice(startIndex, endIndex) ?? [];
 
   const styles = useStyles2(getStyles);
 
-  // Determine what to show
   const showEmptyState = !loading && (!templateDashboards || templateDashboards.length === 0);
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
@@ -134,14 +140,13 @@ export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggested
           gap={4}
           columns={{
             xs: 1,
-            sm: loading ? 2 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
-            lg: loading ? 3 : (dashboardsToShow?.length || 1) >= 3 ? 3 : (dashboardsToShow?.length || 1) >= 2 ? 2 : 1,
+            sm: loading ? 2 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
+            lg: loading ? 3 : (dashboardsToShow.length || 1) >= 3 ? 3 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
           }}
         >
           {loading && !templateDashboards
             ? Array.from({ length: 9 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
-            : dashboardsToShow?.map((dashboard, index) => {
-                // Use global index for consistent image assignment across pages
+            : dashboardsToShow.map((dashboard, index) => {
                 const globalIndex = startIndex + index;
                 const imageUrl = getProvisionedDashboardImageUrl(globalIndex);
 
@@ -155,7 +160,7 @@ export const DashboardLibrarySection = ({ suggestedBanner = false }: { suggested
                     kind="suggested_dashboard"
                   />
                 );
-              }) || []}
+              })}
         </Grid>
       )}
       {!showEmptyState && totalPages > 1 && (

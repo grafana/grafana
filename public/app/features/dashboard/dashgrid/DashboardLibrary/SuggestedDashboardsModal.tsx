@@ -1,23 +1,28 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
 import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
+import { PluginDashboard } from 'app/types/plugins';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { DashboardLibrarySection } from './DashboardLibrarySection';
 import { ContentKind, EventLocation } from './constants';
+import { GnetDashboard } from './types';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {
+  isOpen: boolean;
+  onDismiss: () => void;
+  datasourceUid?: string;
   initialMappingContext?: MappingContext | null;
   entryPoint?: 'datasource-page' | string;
-  defaultTab?: 'datasource' | 'community';
+  provisionedDashboards?: PluginDashboard[];
+  communityDashboards?: GnetDashboard[];
 }
 
 type ModalView = 'datasource' | 'community' | 'mapping';
@@ -35,26 +40,17 @@ export interface MappingContext {
 }
 
 export const SuggestedDashboardsModal = ({
+  isOpen,
+  onDismiss,
+  datasourceUid,
   initialMappingContext,
   entryPoint,
-  defaultTab = 'datasource',
+  provisionedDashboards,
+  communityDashboards,
 }: SuggestedDashboardsModalProps) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
-  const isOpen = datasourceUid !== null;
-  const showCommunityTab = config.featureToggles.suggestedDashboards && config.featureToggles.dashboardLibrary;
-
-  const [activeView, setActiveView] = useState<ModalView>(initialMappingContext ? 'mapping' : defaultTab);
+  const [activeView, setActiveView] = useState<ModalView>();
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
-
-  const handleDismiss = () => {
-    setSearchParams((params) => {
-      const newParams = new URLSearchParams(params);
-      newParams.delete('dashboardLibraryDatasourceUid');
-      return newParams;
-    });
-  };
 
   // Get datasource info for modal title and search
   const datasourceInfo = useMemo(() => {
@@ -72,23 +68,21 @@ export const SuggestedDashboardsModal = ({
     if (initialMappingContext) {
       setMappingContext(initialMappingContext);
       setActiveView('mapping');
-    } else if (isOpen) {
-      // When modal opens, set to defaultTab
-      setActiveView(defaultTab);
+      return;
+    }
+
+    if (isOpen) {
+      const view: ModalView =
+        communityDashboards?.length && !provisionedDashboards?.length ? 'community' : 'datasource';
+      setActiveView(view);
     } else {
       // Reset when modal closes
       setMappingContext(null);
     }
-  }, [initialMappingContext, isOpen, defaultTab]);
+  }, [initialMappingContext, isOpen, communityDashboards, provisionedDashboards]);
 
   const onTabChange = (tab: 'datasource' | 'community') => {
     setActiveView(tab);
-    // Update URL to reflect current tab
-    setSearchParams((params) => {
-      const newParams = new URLSearchParams(params);
-      newParams.set('dashboardLibraryTab', tab);
-      return newParams;
-    });
   };
 
   const handleShowMapping = (context: MappingContext) => {
@@ -117,50 +111,48 @@ export const SuggestedDashboardsModal = ({
             : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
       isOpen={isOpen}
-      onDismiss={handleDismiss}
+      onDismiss={onDismiss}
       className={styles.modal}
       contentClassName={styles.modalContent}
     >
       {activeView !== 'mapping' && (
         <div className={styles.stickyHeader}>
           <Text element="p">
-            {showCommunityTab ? (
-              <Trans i18nKey="dashboard-library.modal.description">
-                Browse and select from data-source provided or community dashboards
-              </Trans>
-            ) : (
-              <Trans i18nKey="dashboard-library.modal.description-datasource-only">
-                Browse and select from data-source provided dashboards
-              </Trans>
-            )}
+            <Trans i18nKey="dashboard-library.modal.description">
+              Browse and select from data-source provided or community dashboards
+            </Trans>
           </Text>
-
-          {showCommunityTab && (
-            <TabsBar>
-              <Tab
-                label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
-                icon="apps"
-                active={activeView === 'datasource'}
-                onChangeTab={() => onTabChange('datasource')}
-              />
-              <Tab
-                label={t('dashboard-library.modal.tab-community', 'Community')}
-                icon="users-alt"
-                active={activeView === 'community'}
-                onChangeTab={() => onTabChange('community')}
-              />
-            </TabsBar>
-          )}
+          <TabsBar>
+            <Tab
+              label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
+              icon="apps"
+              active={activeView === 'datasource'}
+              onChangeTab={() => onTabChange('datasource')}
+            />
+            <Tab
+              label={t('dashboard-library.modal.tab-community', 'Community')}
+              icon="users-alt"
+              active={activeView === 'community'}
+              onChangeTab={() => onTabChange('community')}
+            />
+          </TabsBar>
         </div>
       )}
 
       <TabContent className={styles.tabContent}>
-        {activeView === 'datasource' && <DashboardLibrarySection suggestedBanner={entryPoint === 'datasource-page'} />}
-        {showCommunityTab && activeView === 'community' && (
+        {activeView === 'datasource' && (
+          <DashboardLibrarySection
+            suggestedBanner={entryPoint === 'datasource-page'}
+            dashboards={provisionedDashboards}
+            datasourceUid={datasourceUid ?? undefined}
+          />
+        )}
+        {activeView === 'community' && (
           <CommunityDashboardSection
             onShowMapping={handleShowMapping}
             datasourceType={datasourceInfo.type}
-            suggestedBanner={entryPoint === 'datasource-page'}
+            dashboards={communityDashboards}
+            datasourceUid={datasourceUid ?? undefined}
           />
         )}
         {activeView === 'mapping' && mappingContext && (

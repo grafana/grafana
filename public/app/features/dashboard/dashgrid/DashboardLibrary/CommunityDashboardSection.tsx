@@ -29,6 +29,8 @@ import {
 interface Props {
   onShowMapping: (context: MappingContext) => void;
   datasourceType?: string;
+  dashboards?: GnetDashboard[];
+  datasourceUid?: string;
 }
 
 const SEARCH_DEBOUNCE_MS = 500;
@@ -37,14 +39,11 @@ const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_LOGO = true;
 const INCLUDE_SCREENSHOTS = true;
 
-export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
-  const [searchParams] = useSearchParams();
-  const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashboards, datasourceUid }: Props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
 
-  // New state for compatibility badge feature
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const hasAutoCheckedRef = useRef(false);
@@ -71,10 +70,14 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     error,
     retry,
   } = useAsyncRetry(async () => {
+    // Use pre-fetched data when available and no search query is active
+    if (dashboards !== undefined && !debouncedSearchQuery.trim()) {
+      return { dashboards, datasourceType: datasourceType ?? '' };
+    }
+
     if (!datasourceUid) {
       return null;
     }
-
     const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
     if (!ds) {
       return null;
@@ -92,7 +95,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         filter: debouncedSearchQuery.trim() || undefined,
       });
 
-      // Track search if query is present
       if (debouncedSearchQuery.trim()) {
         DashboardLibraryInteractions.searchPerformed({
           datasourceTypes: [ds.type],
@@ -111,7 +113,9 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       console.error('Error loading community dashboards', err);
       throw err;
     }
-  }, [datasourceUid, debouncedSearchQuery]);
+  }, [datasourceUid, debouncedSearchQuery, dashboards]);
+
+  const displayedDashboards = response?.dashboards ?? [];
 
   // Track analytics only once on first successful load
   useEffect(() => {
@@ -129,8 +133,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
   const styles = useStyles2(getStyles);
 
-  // Determine what to show in results area
-  const dashboards = Array.isArray(response?.dashboards) ? response.dashboards : [];
   const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !loading && error;
 
@@ -140,7 +142,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         return;
       }
 
-      // Track item click
       SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [response.datasourceType],
@@ -169,10 +170,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         return;
       }
 
-      // Set loading state
       setCompatibilityMap((prev) => new Map(prev).set(dashboard.id, { status: 'loading' }));
 
-      // Track analytics: check triggered
       DashboardLibraryInteractions.compatibilityCheckTriggered({
         dashboardId: String(dashboard.id),
         dashboardTitle: dashboard.name,
@@ -184,7 +183,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       try {
         const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
 
-        // Call compatibility API directly
         const result = await checkDashboardCompatibility(interpolatedDashboard, [
           {
             uid: datasourceUid,
@@ -193,13 +191,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           },
         ]);
 
-        // Calculate metrics from first datasource result
         const dsResult = result.datasourceResults[0];
         const score = Math.round(dsResult.compatibilityScore * 100);
         const metricsFound = dsResult.foundMetrics;
         const metricsTotal = dsResult.totalMetrics;
 
-        // Update state with success
         setCompatibilityMap((prev) =>
           new Map(prev).set(dashboard.id, {
             status: 'success',
@@ -209,7 +205,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           })
         );
 
-        // Track analytics: check completed
         DashboardLibraryInteractions.compatibilityCheckCompleted({
           dashboardId: String(dashboard.id),
           dashboardTitle: dashboard.name,
@@ -251,9 +246,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       isCompatibilityAppEnabled
     ) {
       hasAutoCheckedRef.current = true;
-
-      // Trigger checks for all dashboards on initial load
-      // currently 6 dashboards in total
       response.dashboards.forEach((dashboard) => {
         handleCheckCompatibility(dashboard, 'auto_initial_load');
       });
@@ -351,18 +343,17 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
               gap={4}
               columns={{
                 xs: 1,
-                sm: dashboards.length >= 2 ? 2 : 1,
-                lg: dashboards.length >= 3 ? 3 : dashboards.length >= 2 ? 2 : 1,
+                sm: displayedDashboards.length >= 2 ? 2 : 1,
+                lg: displayedDashboards.length >= 3 ? 3 : displayedDashboards.length >= 2 ? 2 : 1,
               }}
             >
-              {dashboards.map((dashboard) => {
+              {displayedDashboards.map((dashboard) => {
                 const thumbnailUrl = getThumbnailUrl(dashboard);
                 const logoUrl = getLogoUrl(dashboard);
                 const imageUrl = thumbnailUrl || logoUrl;
                 const isLogo = !thumbnailUrl;
                 const details = buildDashboardDetails(dashboard);
 
-                // Only show badge for Prometheus datasources
                 const showBadge =
                   isCompatibilityAppEnabled && !!datasourceUid && response?.datasourceType === 'prometheus';
 
