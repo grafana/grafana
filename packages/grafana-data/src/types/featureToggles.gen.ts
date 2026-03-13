@@ -1697,4 +1697,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }

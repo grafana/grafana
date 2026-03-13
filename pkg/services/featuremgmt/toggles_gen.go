@@ -913,4 +913,8 @@ const (
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )
