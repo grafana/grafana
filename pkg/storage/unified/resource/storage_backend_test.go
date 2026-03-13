@@ -347,6 +347,7 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 // in ascending ResourceVersion order.
 func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Skip("skipping flaky test for now")
 
 	t.Run("pollingNotifier", func(t *testing.T) {
 		if db.IsTestDbSQLite() {

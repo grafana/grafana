@@ -65,3 +65,22 @@ jobs:
       env:
         LANG: en_US
       run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+
+  storybook-a11y-result:
+    name: "Storybook a11y tests"
+    runs-on: ubuntu-x64-small
+    if: always()
+    needs:
+      - detect-changes
+      - test-storybook-a11y
+    steps:
+      - name: No frontend changes detected
+        if: needs.detect-changes.outputs.changed != 'true'
+        run: echo "No frontend changes detected, skipping storybook a11y tests"
+      - name: Check test suites
+        if: needs.detect-changes.outputs.changed == 'true'
+        uses: grafana/grafana/.github/actions/check-jobs@main
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more storybook a11y test suites have failed"
+          success-message: "All storybook a11y test suites completed successfully"

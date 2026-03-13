@@ -5,18 +5,19 @@ import { Trans } from '@grafana/i18n';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
-import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
   isConnectionLimitExceeded?: boolean;
+  maxRepositories?: number;
   onSetupFeatures: () => void;
 }
 
 export const FeaturesList = ({
   hasRequiredFeatures,
   isConnectionLimitExceeded,
+  maxRepositories = 0,
   onSetupFeatures,
 }: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
@@ -40,10 +41,10 @@ export const FeaturesList = ({
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
-        {isFreeTierLicense() && (
+        {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.free-tier-limit.message">
-              Free-tier accounts are capped to 1 connection, and 20 resources per folder
+            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories
             </Trans>
           </li>
         )}

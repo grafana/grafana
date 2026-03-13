@@ -43,7 +43,7 @@ type ResourceClient interface {
 type SearchClient interface {
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
-	resourcepb.DiagnosticsClient
+	resourcepb.DiagnosticsClient //nolint:staticcheck
 }
 
 // Internal implementation
