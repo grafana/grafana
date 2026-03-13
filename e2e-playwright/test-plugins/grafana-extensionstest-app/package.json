@@ -16,16 +16,16 @@
     "@types/lodash": "4.17.7",
     "@types/node": "24.9.2",
     "@types/prismjs": "1.26.4",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",
     "glob": "10.5.0",
-    "i18next-cli": "^1.48.0",
-    "ts-node": "10.9.2",
+    "i18next-cli": "catalog:",
+    "ts-node": "catalog:",
     "typescript": "5.5.4",
-    "webpack": "^5.105.0",
-    "webpack-merge": "5.10.0"
+    "webpack": "catalog:",
+    "webpack-merge": "catalog:"
   },
   "engines": {
     "node": ">= 22 <25"
@@ -37,9 +37,9 @@
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-router-dom": "^6.26.1",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router-dom": "catalog:",
     "rxjs": "7.8.1",
     "tslib": "2.6.3"
   },

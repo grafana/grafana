@@ -267,17 +267,17 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "16.0.1",
-    "esbuild": "0.25.8",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "esbuild": "catalog:",
     "glob": "^11.0.0",
-    "rimraf": "6.0.1",
-    "rollup": "^4.22.4",
-    "rollup-plugin-copy": "3.5.0",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "5.9.2"
+    "rimraf": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-copy": "catalog:",
+    "rollup-plugin-esbuild": "catalog:",
+    "rollup-plugin-node-externals": "catalog:",
+    "typescript": "catalog:"
   },
   "dependencies": {
-    "tslib": "2.8.1"
+    "tslib": "catalog:"
   }
 }

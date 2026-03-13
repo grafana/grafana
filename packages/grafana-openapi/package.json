@@ -54,7 +54,7 @@
   },
   "packageManager": "yarn@4.11.0",
   "devDependencies": {
-    "openapi-types": "^12.1.3",
-    "prettier": "3.6.2"
+    "openapi-types": "catalog:",
+    "prettier": "catalog:"
   }
 }
