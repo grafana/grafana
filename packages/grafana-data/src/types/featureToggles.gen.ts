@@ -394,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
