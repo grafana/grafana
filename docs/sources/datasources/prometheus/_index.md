@@ -26,12 +26,12 @@ Grafana provides native support for Prometheus, so you don't need to install a p
 
 ## Supported features
 
-| Feature | Supported |
-|---------|-----------|
-| Metrics | Yes |
-| Alerting | Yes |
-| Annotations | Yes |
-| Exemplars | Yes |
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Alerting    | Yes       |
+| Annotations | Yes       |
+| Exemplars   | Yes       |
 
 ## Get started
 

@@ -54,20 +54,18 @@ If you are using Azure authentication, don't enable `Forward OAuth identity`. Bo
 
    **App Registration settings:**
 
-   | Setting                     | Description                     | Example                                |
-   | --------------------------- | ------------------------------- | -------------------------------------- |
+   | Setting                     | Description                     | Example                                       |
+   | --------------------------- | ------------------------------- | --------------------------------------------- |
    | **Azure Cloud**             | Your Azure cloud environment    | `Azure`, `Azure China`, `Azure US Government` |
-   | **Directory (tenant) ID**   | Your Entra ID tenant ID         | `12345678-1234-1234-1234-123456789012` |
-   | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321` |
-   | **Client Secret**           | Your app registration secret    | `your-client-secret`                   |
+   | **Directory (tenant) ID**   | Your Entra ID tenant ID         | `12345678-1234-1234-1234-123456789012`        |
+   | **Application (client) ID** | Your app registration client ID | `87654321-4321-4321-4321-210987654321`        |
+   | **Client Secret**           | Your app registration secret    | `your-client-secret`                          |
 
    **Managed Identity settings:**
-
    - No additional configuration required if using system-assigned identity.
    - For user-assigned identity, provide the **Client ID**.
 
    **Workload Identity settings:**
-
    - No additional configuration required. Workload identity uses the credentials provided by the Kubernetes environment.
 
 1. Set the **Prometheus server URL** to your Azure Monitor workspace endpoint:

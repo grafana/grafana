@@ -48,13 +48,13 @@ To add a Prometheus annotation to your dashboard:
 
 The Prometheus annotation query editor provides the following configuration fields.
 
-| Field | Description |
-|-------|-------------|
-| **PromQL expression** | The PromQL query that returns time series data. Each non-zero data point creates an annotation event. |
-| **Min step** | An additional lower limit for the step parameter of the query and for the `$__interval` and `$__rate_interval` variables. Leave empty for automatic step calculation. |
-| **Title** | A template for the annotation title. Use `{{label_name}}` syntax to interpolate label values. For example, `{{alertname}}` inserts the value of the `alertname` label. |
-| **Tags** | Comma-separated list of label names whose values become annotation tags. Tags help categorize and filter annotations. For example, `severity,instance`. |
-| **Text** | A template for the annotation description text. Uses the same `{{label_name}}` interpolation syntax as the Title field. For example, `{{instance}}`. |
+| Field                         | Description                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **PromQL expression**         | The PromQL query that returns time series data. Each non-zero data point creates an annotation event.                                                                                                        |
+| **Min step**                  | An additional lower limit for the step parameter of the query and for the `$__interval` and `$__rate_interval` variables. Leave empty for automatic step calculation.                                        |
+| **Title**                     | A template for the annotation title. Use `{{label_name}}` syntax to interpolate label values. For example, `{{alertname}}` inserts the value of the `alertname` label.                                       |
+| **Tags**                      | Comma-separated list of label names whose values become annotation tags. Tags help categorize and filter annotations. For example, `severity,instance`.                                                      |
+| **Text**                      | A template for the annotation description text. Uses the same `{{label_name}}` interpolation syntax as the Title field. For example, `{{instance}}`.                                                         |
 | **Series value as timestamp** | When enabled, the series value is used as the annotation timestamp instead of the time field. The unit of timestamp is milliseconds. If the series value is in seconds, multiply the range vector by `1000`. |
 
 ## Understand event groups

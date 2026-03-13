@@ -32,14 +32,14 @@ Grafana supports several types of variables, but Query variables are specificall
 
 Select a Prometheus data source query type and enter the required inputs:
 
-| Query Type      | Input(\* required)        | Description                                                                                                                                                   | Used API endpoints                             |
-| --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`   | `metric regex`            | Returns a list of all label names, optionally filtered by the specified metric regex.                                                                          | /api/v1/labels                                 |
-| `Label values`  | `label`\*, `metric`, `label filters` | Returns a list of label values for the `label` in all metrics, optionally filtered by metric and label filters.                                       | /api/v1/label/`label`/values or /api/v1/series |
-| `Metrics`       | `metric regex`            | Returns a list of metrics matching the specified metric regex.                                                                                                 | /api/v1/label/\_\_name\_\_/values              |
-| `Query result`  | `query`                   | Returns a list of Prometheus query results for the `query`. Can include Prometheus functions such as `sum(go_goroutines)`.                                     | /api/v1/query                                  |
-| `Series query`  | series selector           | Enter a metric with labels, only a metric, or only labels (for example, `go_goroutines{instance="localhost:9090"}`). Returns a list of matching time series.   | /api/v1/series                                 |
-| `Classic query` | classic query string      | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
+| Query Type      | Input(\* required)                   | Description                                                                                                                                                   | Used API endpoints                             |
+| --------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `Label names`   | `metric regex`                       | Returns a list of all label names, optionally filtered by the specified metric regex.                                                                         | /api/v1/labels                                 |
+| `Label values`  | `label`\*, `metric`, `label filters` | Returns a list of label values for the `label` in all metrics, optionally filtered by metric and label filters.                                               | /api/v1/label/`label`/values or /api/v1/series |
+| `Metrics`       | `metric regex`                       | Returns a list of metrics matching the specified metric regex.                                                                                                | /api/v1/label/\_\_name\_\_/values              |
+| `Query result`  | `query`                              | Returns a list of Prometheus query results for the `query`. Can include Prometheus functions such as `sum(go_goroutines)`.                                    | /api/v1/query                                  |
+| `Series query`  | series selector                      | Enter a metric with labels, only a metric, or only labels (for example, `go_goroutines{instance="localhost:9090"}`). Returns a list of matching time series.  | /api/v1/series                                 |
+| `Classic query` | classic query string                 | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
 
 For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
@@ -69,12 +69,12 @@ Use the variable in a query: `rate($metric[$__rate_interval])`
 
 With the query variable type, you can set the following query options:
 
-| Option        | Description                                                                                             |
-| ------------- | ------------------------------------------------------------------------------------------------------- |
-| **Data source** | Select your Prometheus data source from the drop-down list.                                           |
-| **Regex**     | Optional, if you want to extract part of a series name or metric node segment.                          |
-| **Sort**      | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
-| **Refresh**   | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
+| Option          | Description                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| **Data source** | Select your Prometheus data source from the drop-down list.                                             |
+| **Regex**       | Optional, if you want to extract part of a series name or metric node segment.                          |
+| **Sort**        | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
+| **Refresh**     | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
 
 ### Selection options
 

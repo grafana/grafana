@@ -37,12 +37,12 @@ Before you create alerts with Prometheus, ensure you have:
 
 The Prometheus data source supports two alerting modes depending on the backend you connect to.
 
-| Capability | Prometheus | Grafana Mimir / Cortex |
-|------------|------------|------------------------|
-| View existing alert rules | Yes | Yes |
-| Create and manage alert rules from Grafana | No | Yes |
-| View existing alerts | Yes | Yes |
-| Use as recording rules target | Yes | Yes |
+| Capability                                 | Prometheus | Grafana Mimir / Cortex |
+| ------------------------------------------ | ---------- | ---------------------- |
+| View existing alert rules                  | Yes        | Yes                    |
+| Create and manage alert rules from Grafana | No         | Yes                    |
+| View existing alerts                       | Yes        | Yes                    |
+| Use as recording rules target              | Yes        | Yes                    |
 
 When connected to a standard Prometheus server, Grafana can display alert rules and alerts that are defined in your Prometheus configuration, but you can't create or modify them through the Grafana UI. To manage alert rules directly from Grafana, use [Grafana Mimir](https://grafana.com/docs/mimir/latest/) or a compatible ruler API.
 
@@ -70,10 +70,10 @@ For detailed instructions, refer to [Create a Grafana-managed alert rule](https:
 
 The Prometheus data source configuration includes two alerting-related settings. To change these, navigate to your Prometheus data source settings page.
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Manage alerts via Alerting UI** | Enables data source-managed rules for this data source. For Prometheus, this allows viewing existing rules and alerts. For Mimir, it enables full rule management. | On |
-| **Allow as recording rules target** | Allows this data source to be selected as a target for Grafana-managed recording rules. | On |
+| Setting                             | Description                                                                                                                                                        | Default |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| **Manage alerts via Alerting UI**   | Enables data source-managed rules for this data source. For Prometheus, this allows viewing existing rules and alerts. For Mimir, it enables full rule management. | On      |
+| **Allow as recording rules target** | Allows this data source to be selected as a target for Grafana-managed recording rules.                                                                            | On      |
 
 For more configuration details, refer to [Configure the Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/).
 

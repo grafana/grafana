@@ -199,11 +199,11 @@ Track the per-second rate of HTTP requests, aggregated across all instances:
 sum by (status) (rate(http_requests_total[$__rate_interval]))
 ```
 
-| Setting | Value |
-|---------|-------|
+| Setting    | Value                |
+| ---------- | -------------------- |
 | **Legend** | Custom: `{{status}}` |
-| **Format** | Time series |
-| **Type** | Range |
+| **Format** | Time series          |
+| **Type**   | Range                |
 
 This query uses `$__rate_interval` to automatically size the rate window based on your scrape interval. The `sum by (status)` aggregation groups results by HTTP status code, producing one line per status on the graph. In Builder mode, select the `http_requests_total` metric, add a `Rate` range function, then a `Sum` aggregation with `status` as the label.
 
@@ -215,11 +215,11 @@ Compute the 99th-percentile request duration from a histogram metric:
 histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval])))
 ```
 
-| Setting | Value |
-|---------|-------|
+| Setting    | Value                 |
+| ---------- | --------------------- |
 | **Legend** | Custom: `p99 latency` |
-| **Format** | Time series |
-| **Type** | Range |
+| **Format** | Time series           |
+| **Type**   | Range                 |
 
 The `le` (less than or equal) label is required in the `sum by` clause because `histogram_quantile` needs bucket boundaries to calculate percentiles. To compare multiple percentiles, duplicate the query and change `0.99` to `0.95` or `0.50`.
 
@@ -229,10 +229,10 @@ To display the raw histogram buckets as a heatmap instead, skip the `histogram_q
 sum by (le) (rate(http_request_duration_seconds_bucket[$__rate_interval]))
 ```
 
-| Setting | Value |
-|---------|-------|
+| Setting    | Value   |
+| ---------- | ------- |
 | **Format** | Heatmap |
-| **Type** | Range |
+| **Type**   | Range   |
 
 ### Compare current values across instances
 
@@ -242,11 +242,11 @@ Show the current memory usage of every instance in a table:
 (1 - (node_memory_AvailableBytes / node_memory_MemTotal)) * 100
 ```
 
-| Setting | Value |
-|---------|-------|
+| Setting    | Value                  |
+| ---------- | ---------------------- |
 | **Legend** | Custom: `{{instance}}` |
-| **Format** | Table |
-| **Type** | Instant |
+| **Format** | Table                  |
+| **Type**   | Instant                |
 
 Setting the **Type** to **Instant** returns a single value per series (the most recent data point), which is well-suited for table visualizations. In Builder mode, you can build this using two `Metrics` selectors joined with a `Binary operation`.
 
@@ -258,11 +258,11 @@ Calculate the ratio of failed requests to total requests:
 sum(rate(http_requests_total{status=~"5.."}[$__rate_interval])) / sum(rate(http_requests_total[$__rate_interval]))
 ```
 
-| Setting | Value |
-|---------|-------|
+| Setting    | Value                 |
+| ---------- | --------------------- |
 | **Legend** | Custom: `error ratio` |
-| **Format** | Time series |
-| **Type** | Range |
+| **Format** | Time series           |
+| **Type**   | Range                 |
 
 The regex label matcher `status=~"5.."` selects all 5xx status codes. This pattern is useful for SLO dashboards where you need to track error budgets. Pair with a [Threshold](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#thresholds) to visually highlight when the error ratio exceeds your target.
 
