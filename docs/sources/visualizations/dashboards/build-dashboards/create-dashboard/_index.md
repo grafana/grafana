@@ -151,10 +151,23 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
 {{< /admonition >}}
 
-You can dock, undock, and resize the sidebar.
-When the sidebar is closed, you can resize the toolbar so the icon names are visible.
+When the dashboard is in edit mode, you can dock and undock.
+The following table describes how the sidebar behaves when docked or undocked:
+
+| Undocked | Docked |
+|--------- |---------|
+| The sidebar opens when you click a dashboard element, and closes if no element is selected | Sidebar stays open regardless of where you click |
+| Panels can be hidden by the sidebar | Panels resize to the space left available by the sidebar |
+| Dashboard options are only displayed in the sidebar when you click the **Dashboard options** icon | Dashboard options are displayed in the sidebar when you click the dashboard canvas |
+
+When you dock the sidebar, even if you close it, it remains docked the next time you open it.
+This choice persists you change it.
 
 {{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
+
+You can also resize the sidebar and toolbar.
+You can only resize the toolbar when the sidebar is closed, however, you can do so in view or edit mode.
+Your resizing changes persist until you change them.
 
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
