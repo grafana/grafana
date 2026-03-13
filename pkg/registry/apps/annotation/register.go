@@ -99,7 +99,7 @@ func RegisterAppInstaller(
 	tagHandler := newTagsHandler(tagProvider)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(store)
+	searchHandler := newSearchHandler(installer.k8sAdapter)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
