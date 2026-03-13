@@ -3,6 +3,7 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
@@ -25,7 +26,7 @@ import { getEditorType, getTransformId } from './utils';
  * When the currently selected query is renamed, selection should follow the new refId.
  */
 export function getNextSelectedQueryRefIds(
-  currentSelectedRefIds: string[],
+  currentSelectedRefIds: readonly string[],
   originalRefId: string,
   updatedRefId: string
 ) {
@@ -83,10 +84,22 @@ export function QueryEditorContextWrapper({
     setSelectedAlertId(null);
   }, []);
 
+  // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
+  // finalizePendingTransformation — those paths bypass clearSideEffects entirely, so
+  // resetUIToggles would otherwise never be called and the datasource help panel would
+  // remain visible after the picker resolves.
+  const onFinalizeCardSelection = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      onCardSelectionChange(queryRefId, transformationId);
+      resetUIToggles();
+    },
+    [onCardSelectionChange, resetUIToggles]
+  );
+
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
     usePendingExpression({
       addQuery: dataPane.addQuery,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const findTransformationIndex = useCallback(
@@ -111,7 +124,7 @@ export function QueryEditorContextWrapper({
   const { pendingTransformation, setPendingTransformation, finalizePendingTransformation, clearPendingTransformation } =
     usePendingTransformation({
       addTransformation: addTransformationAction,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const clearSideEffects = useCallback(() => {
@@ -130,7 +143,19 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
-  const primaryQueryRefId = selectedQueryRefIds[selectedQueryRefIds.length - 1] ?? null;
+  const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
+
+  const { selectedQuery, selectedTransformation, selectedAlert, primaryQueryRefId } = useSelectedCard(
+    selectedQueryRefIds,
+    selectedTransformationIds,
+    selectedAlertId,
+    queryRunnerState?.queries ?? [],
+    transformations,
+    alertingState.alertRules,
+    Boolean(pendingExpression) || Boolean(pendingTransformation)
+  );
+
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
 
   const queryError = useMemo(() => {
     return queryRunnerState?.data?.errors?.find(({ refId }) => refId === primaryQueryRefId);
@@ -152,20 +177,6 @@ export function QueryEditorContextWrapper({
     };
   }, [panel, transformations]);
 
-  const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
-
-  const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
-    selectedQueryRefIds,
-    selectedTransformationIds,
-    selectedAlertId,
-    queryRunnerState?.queries ?? [],
-    transformations,
-    alertingState.alertRules,
-    Boolean(pendingExpression) || Boolean(pendingTransformation)
-  );
-
-  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
-
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -173,7 +184,7 @@ export function QueryEditorContextWrapper({
       selectedAlert,
       selectedQueryRefIds,
       selectedTransformationIds,
-      setSelectedQuery: (query: DataQuery | null) => {
+      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         onCardSelectionChange(query ? query.refId : null, null);
         clearSideEffects();
       },
@@ -279,7 +290,10 @@ export function QueryEditorContextWrapper({
         setSelectedQueryRefIds((current) => getNextSelectedQueryRefIds(current, originalRefId, updatedQuery.refId));
       },
       addQuery: dataPane.addQuery,
-      deleteQuery: dataPane.deleteQuery,
+      deleteQuery: (refId: string) => {
+        dataPane.deleteQuery(refId);
+        setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
+      },
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
@@ -293,6 +307,7 @@ export function QueryEditorContextWrapper({
         if (index !== -1) {
           dataPane.deleteTransformation(index);
         }
+        setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
       },
       toggleTransformationDisabled: (transformId: string) => {
         const index = findTransformationIndex(transformId);

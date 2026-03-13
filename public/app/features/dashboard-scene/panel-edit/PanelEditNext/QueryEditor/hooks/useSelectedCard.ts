@@ -75,5 +75,5 @@ export function useSelectedCard(
     return null;
   }, [alerts, selectedAlertId]);
 
-  return { selectedQuery, selectedTransformation, selectedAlert };
+  return { selectedQuery, selectedTransformation, selectedAlert, primaryQueryRefId };
 }
