@@ -236,8 +236,12 @@ var (
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
 
-// authorizeJob dispatches pre-flight authorization checks based on the job action.
+// authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if err := validateJobAction(spec, cfg); err != nil {
+		return err
+	}
+
 	switch spec.Action {
 	case provisioning.JobActionPush, provisioning.JobActionMigrate:
 		return c.authorizeResourceJob(ctx, repo, cfg, spec)
@@ -251,6 +255,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		}
 	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
 		// Read-only operations don't require pre-flight resource authorization.
+		// Pull is authorized inline in Connect; PullRequest is rejected by validateJobAction above.
 	}
 	return nil
 }
@@ -319,6 +324,16 @@ func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning
 		Resource:  provisioning.JobResourceInfo.GetName(),
 		Namespace: cfg.Namespace,
 	}, "")
+}
+
+// validateJobAction checks that the job action is allowed to be created via the API.
+// Some job types are only triggered internally (e.g., by webhooks) and should not be
+// user-creatable.
+func validateJobAction(spec provisioning.JobSpec, _ *provisioning.Repository) error {
+	if spec.Action == provisioning.JobActionPullRequest {
+		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
+	}
+	return nil
 }
 
 // authorizeResourceJob checks that the requesting user has the required permissions

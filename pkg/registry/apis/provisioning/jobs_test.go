@@ -47,6 +47,35 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 	}
 }
 
+func TestPullRequestJobRejected(t *testing.T) {
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("PullRequest action returns bad request", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+		}
+
+		err := validateJobAction(spec, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "pull request jobs cannot be created via the API")
+	})
+
+	t.Run("Pull action is not rejected", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		}
+
+		err := validateJobAction(spec, cfg)
+		require.NoError(t, err)
+	})
+}
+
 func TestAuthorizeResourceJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
