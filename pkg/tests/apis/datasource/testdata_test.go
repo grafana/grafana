@@ -21,8 +21,10 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -45,6 +47,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
 			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
+			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -162,6 +165,65 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					"url": "http://fake.url",
 					"user": "example"
 				}`, string(jj))
+	})
+
+	t.Run("health", func(t *testing.T) {
+		t.Run("health endpoint returns 404 for non-existent datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/health",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode, "expected 404 for non-existent datasource, got %d: %s", raw.Response.StatusCode, string(raw.Body))
+		})
+		t.Run("user with datasources:query on datasource can call health", func(t *testing.T) {
+			userWithQuery := helper.CreateUser("health-query-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{datasources.ActionQuery},
+					Resource:          datasources.ScopeRoot,
+					ResourceID:        "test",
+					ResourceAttribute: "uid",
+				},
+			})
+			var healthResult datasourceV0alpha1.HealthCheckResult
+			raw := apis.DoRequest(helper, apis.RequestParams{
+				User:   userWithQuery,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, &healthResult)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "user with datasources:query should be allowed: %s", string(raw.Body))
+			require.Equal(t, "OK", healthResult.Status)
+		})
+		t.Run("user without datasources:query on datasource gets 403", func(t *testing.T) {
+			userWithoutQuery := helper.CreateUser("health-no-query-user", apis.Org1, org.RoleNone, nil)
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   userWithoutQuery,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusForbidden, raw.Response.StatusCode, "user without datasources:query should get 403: %s", string(raw.Body))
+		})
+		t.Run("unauthenticated request returns 403", func(t *testing.T) {
+			var healthResult datasourceV0alpha1.HealthCheckResult
+			raw := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.None,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, &healthResult)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusForbidden, raw.Response.StatusCode)
+		})
+		t.Run("cross-org access denied", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.OrgB.Admin,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, nil)
+			require.NotNil(t, raw.Status)
+			require.Equal(t, int32(http.StatusForbidden), raw.Status.Code)
+		})
 	})
 
 	t.Run("query", func(t *testing.T) {

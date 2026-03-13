@@ -144,6 +144,84 @@ func TestResourceValidationError(t *testing.T) {
 	})
 }
 
+func TestResourceUnmanagedConflictError(t *testing.T) {
+	t.Run("Error method returns formatted message with resource and manager details", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-dashboard", requestingManager)
+
+		require.Contains(t, conflictErr.Error(), "test-dashboard")
+		require.Contains(t, conflictErr.Error(), "already exists and is not managed")
+		require.Contains(t, conflictErr.Error(), "repo")
+		require.Contains(t, conflictErr.Error(), "repo-1")
+		require.Contains(t, conflictErr.Error(), "cannot take over without an explicit migration")
+	})
+
+	t.Run("Error method returns default message when Err is nil", func(t *testing.T) {
+		conflictErr := &ResourceUnmanagedConflictError{Err: nil}
+		require.Equal(t, "resource unmanaged conflict", conflictErr.Error())
+	})
+
+	t.Run("Unwrap returns underlying error", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(conflictErr, &extracted))
+		unwrapped := extracted.Unwrap()
+		require.NotNil(t, unwrapped)
+		require.True(t, apierrors.IsBadRequest(unwrapped))
+	})
+
+	t.Run("errors.As extracts ResourceUnmanagedConflictError", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(conflictErr, &extracted))
+		require.NotNil(t, extracted)
+		require.NotNil(t, extracted.Err)
+		require.True(t, apierrors.IsBadRequest(extracted.Err))
+	})
+
+	t.Run("errors.As returns false for non-ResourceUnmanagedConflictError", func(t *testing.T) {
+		regularErr := errors.New("regular error")
+
+		var extracted *ResourceUnmanagedConflictError
+		require.False(t, errors.As(regularErr, &extracted))
+		require.Nil(t, extracted)
+	})
+
+	t.Run("apierrors.IsBadRequest works on the conflict error", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+		require.True(t, apierrors.IsBadRequest(conflictErr))
+	})
+
+	t.Run("wrapped error is still detectable via errors.As", func(t *testing.T) {
+		requestingManager := utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "repo-1",
+		}
+		conflictErr := NewResourceUnmanagedConflictError("test-resource", requestingManager)
+		wrapped := errors.Join(errors.New("context"), conflictErr)
+
+		var extracted *ResourceUnmanagedConflictError
+		require.True(t, errors.As(wrapped, &extracted))
+	})
+}
+
 func TestResourceOwnershipConflictError(t *testing.T) {
 	t.Run("Error method returns formatted message with manager details", func(t *testing.T) {
 		currentManager := utils.ManagerProperties{

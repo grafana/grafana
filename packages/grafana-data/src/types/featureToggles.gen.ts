@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -143,11 +138,6 @@ export interface FeatureToggles {
   * @default false
   */
   faroDatasourceSelector?: boolean;
-  /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
   /**
   * Enable Faro session replay for Grafana
   * @default false
@@ -319,10 +309,10 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
-  * Does not register datasource apis that use the numeric id
+  * Register legacy datasource apis that use the numeric id
   * @default false
   */
-  datasourceDisableIdApi?: boolean;
+  datasourceLegacyIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -404,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -423,6 +418,11 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables CSV export using scenes dashboard architecture
+  * @default false
+  */
+  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -594,6 +594,11 @@ export interface FeatureToggles {
   */
   dashboardAdHocAndGroupByWrapper?: boolean;
   /**
+  * Renders ad hoc filters and group by in a single unified control
+  * @default false
+  */
+  dashboardUnifiedDrilldownControls?: boolean;
+  /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
   */
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardTemplatesAssistantButton?: boolean;
+  /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
   /**
   * Enables the new alert list view design
   * @default false
@@ -1163,11 +1173,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
-  /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
   */
@@ -1403,6 +1408,16 @@ export interface FeatureToggles {
   */
   vizLegendSeriesLimit?: boolean;
   /**
+  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
+  * @default false
+  */
+  nestedFramesFieldOverrides?: boolean;
+  /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
@@ -1538,6 +1553,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamBindings?: boolean;
   /**
+  * Enables team APIs in the app platform
+  * @default false
+  */
+  kubernetesTeamsApi?: boolean;
+  /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
@@ -1547,6 +1567,16 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersApi?: boolean;
+  /**
+  * Enables service account APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountsApi?: boolean;
+  /**
+  * Enables service account token APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountTokensApi?: boolean;
   /**
   * Enables external group mapping APIs in the app platform
   * @default false
@@ -1623,8 +1653,38 @@ export interface FeatureToggles {
   */
   dsAbstractionApp?: boolean;
   /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
+  /**
   * Enables new analytics framework
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
+  * Enables the new Flame Graph UI containing the Call Tree view
+  * @default false
+  */
+  flameGraphWithCallTree?: boolean;
+  /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
 }

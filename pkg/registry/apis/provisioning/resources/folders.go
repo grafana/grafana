@@ -49,12 +49,11 @@ type FolderManager struct {
 	folderMetadataEnabled bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:                  repo,
-		tree:                  lookup,
-		client:                client,
-		folderMetadataEnabled: folderMetadataEnabled,
+		repo:   repo,
+		tree:   lookup,
+		client: client,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -68,6 +67,12 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
+	}
+}
+
+func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.folderMetadataEnabled = folderMetadataEnabled
 	}
 }
 
@@ -282,7 +287,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-// ReplicateTree replicates the folder tree to the repository.
+// EnsureFolderTreeExists replicates the folder tree to the repository.
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
@@ -305,9 +310,17 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 			return fn(folder, false, nil)
 		}
 
-		msg := fmt.Sprintf("Add folder %s", p)
-		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
-			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		if fm.folderMetadataEnabled {
+			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
+			manifest := NewFolderManifest(folder.ID, folder.Title)
+			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
+				return fn(folder, true, err)
+			}
+		} else {
+			msg := fmt.Sprintf("Add folder %s", p)
+			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+			}
 		}
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)

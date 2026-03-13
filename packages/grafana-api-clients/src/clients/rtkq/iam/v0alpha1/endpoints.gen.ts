@@ -178,6 +178,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
+            accesscontrol: queryArg.accesscontrol,
           },
         }),
         providesTags: ['Search'],
@@ -951,6 +952,8 @@ export type GetSearchTeamsApiArg = {
   offset?: number;
   /** page number to start from */
   page?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
 };
 export type GetSearchUsersApiResponse = unknown;
 export type GetSearchUsersApiArg = {
@@ -2062,6 +2065,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
   metadata?: ListMeta;
 };
 export type TeamBindingspecSubject = {
+  /** kind of the identity */
+  kind: string;
   /** uid of the identity */
   name: string;
 };
