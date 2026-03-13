@@ -120,7 +120,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		ac2 := &org.Org{ID: 22, Name: "ac2", Version: 1, Created: time.Now(), Updated: time.Now()}
 		orgId, err := orgStore.Insert(context.Background(), ac2)
 		require.NoError(t, err)
-		fmt.Printf("remove: %d\n", orgId)
+		t.Logf("remove: %d\n", orgId)
 
 		err = orgStore.Delete(context.Background(), &org.DeleteOrgCommand{ID: ac2.ID})
 		require.NoError(t, err)
