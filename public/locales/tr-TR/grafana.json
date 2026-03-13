@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3648,6 +3646,7 @@
     "category-alert-state-filter": "Uyarı durumu filtresi",
     "category-filter": "Filtre",
     "category-options": "Seçenekler",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Yalnızca bu panoya bağlı uyarıları göster",
     "description-alert-instance-label": "Etiket sorgularıyla uyarı örneklerini filtreleyin, örneğin: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Bu metni içeren uyarıları filtreleyin",
@@ -3658,6 +3657,9 @@
     "description-max-items": "Görüntülenecek maksimum uyarı sayısı",
     "description-show-inactive-alerts": "0 (sıfır) örneğe sahip uyarı kurallarını dâhil edin. Bu kuralların örneği olmadığından Uyarı örneği etiketi filtresi ayarlanmışsa gizli kalırlar.",
     "description-sort-order": "Uyarıların ve uyarı örneklerinin sıralama düzeni",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Liste görünümü ile istatistik görünümü arasında geçiş yapın",
     "group-by": {
       "aria-label-group-by-label-keys": "etiket anahtarlarına göre grupla",
@@ -3683,6 +3685,9 @@
     "name-recovering": "Geri yükleniyor",
     "name-show-inactive-alerts": "0 örnekli uyarıları göster",
     "name-sort-order": "Sıralama ölçütü",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Görüntüleme modu",
     "sort-order-options": {
       "label-alphabetical-asc": "Alfabetik (artan)",
@@ -3690,6 +3695,12 @@
       "label-importance": "Önemli",
       "label-time-asc": "Zaman (artan)",
       "label-time-desc": "Zaman (azalan)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "<1>{{duration}}</1> süreyle",
@@ -4081,6 +4092,20 @@
     },
     "name-show-unfilled-area": "Doldurulmamış alanı göster",
     "name-value-display": "Değer görüntüleme",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Çubuk gösterge",
       "lcd": "Çubuk gösterge - LCD"
@@ -6604,10 +6629,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Şu geçersiz karakterleri içeremez: \"~\", \"^\", \":\", \"?\", \"*\", \"[\", \"\\\" veya \"]\".",
@@ -6766,6 +6789,12 @@
     },
     "description-label": {
       "description": "Açıklama"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7453,10 +7482,6 @@
       "title-hidden_one": "",
       "title-hidden_other": ""
     },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
-    },
     "version-history": {
       "comparison": {
         "button-restore": "{{version}} sürümüne geri yükle"
@@ -7635,25 +7660,6 @@
     },
     "empty-state": {
       "message": "Veri kaynağı bulunamadı"
-    }
-  },
-  "datagrid": {
-    "add-column": {
-      "placeholder-column-name": "Sütun adı"
-    },
-    "datagrid-context-menu": {
-      "render-context-menu-items": {
-        "label-clear-column": "Sütunu temizle",
-        "label-clear-row": "Satırı temizle",
-        "label-remove-all-data": "Tüm verileri kaldır",
-        "label-search": "Ara..."
-      },
-      "render-header-menu-items": {
-        "label-clear-column": "Sütunu temizle",
-        "label-delete-column": "Sütunu sil",
-        "label-rename-column": "Sütunu yeniden adlandır",
-        "label-set-field-type": "Alan türünü ayarla"
-      }
     }
   },
   "datasources": {
@@ -10244,7 +10250,15 @@
       "remove-button": "{{children}} ögesini kaldır"
     },
     "viz-legend": {
-      "right-axis-indicator": "(sağ y ekseni)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(sağ y ekseni)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "{{ actionTitle }} işlemini yapmak istediğinizden emin misiniz?",
@@ -12706,6 +12720,7 @@
     "preview-banner": {
       "behind-branch-text": "Bu kaynak, {{repoType}} içindeki dalın gerisinde.",
       "branch-text": "dal:",
+      "delete-from-branch": "",
       "not-saved": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar yapılandırılmış varsayılan dala kaydedilen mevcut sürümü görmeye devam edecektir",
       "open-in-repo-button": "Şurada aç: {{repoType}}",
       "open-pull-request-in-repo": "Şurada çekme isteği aç: {{repoType}}",
@@ -12713,6 +12728,7 @@
       "view-pull-request-in-repo": "Çekme isteğini şurada görüntüleyin: {{repoType}}"
     },
     "title-created-branch-in-repo": "{{repoType}} içindeki bir dalda yeni bir kaynak oluşturuldu.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz"
   },
   "provisioning": {
@@ -12804,8 +12820,8 @@
     },
     "connect-repository-button": {
       "configure": "Yapılandır",
-      "free-tier-limit-tooltip": "Ücretsiz hesaplar yalnızca bir bağlantıyla sınırlıdır",
-      "instance-fully-managed-tooltip": "Bu örnek tamamen yönetildiği için yapılandırma devre dışı bırakılmıştır"
+      "instance-fully-managed-tooltip": "Bu örnek tamamen yönetildiği için yapılandırma devre dışı bırakılmıştır",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12971,9 +12987,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
       "partial-managed": "{{resourceCount}} kaynağın {{managedCount}} tanesi Git senkronizasyonu ile yönetiliyor.",
       "placeholder-search": "Ara",
@@ -12981,13 +12994,6 @@
       "all-resources-managed_other": "{{count}} kaynağın tümü yönetiliyor",
       "unmanaged-resources_one": "{{count}} kaynak Git senkronizasyonu ile yönetilmiyor.",
       "unmanaged-resources_other": "{{count}} kaynak Git senkronizasyonu ile yönetilmiyor."
-    },
-    "free-tier-limit": {
-      "message": "Ücretsiz hesaplar en fazla 1 bağlantı ve klasör başına 20 kaynakla sınırlıdır",
-      "message-connection": "",
-      "message-resource": "Ücretsiz hesaplar klasör başına 20 kaynakla sınırlıdır. Daha fazla kaynak eklemek için",
-      "note": "Not:",
-      "upgrade-link": "hesabınızı yükseltin"
     },
     "get-default-values": {
       "title": {
@@ -13142,6 +13148,26 @@
           "repository-request-failed": "Depo isteği başarısız oldu"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -14476,6 +14502,18 @@
       "label-same-as-value": "Değerle aynı",
       "label-standard": "Standart"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "İstatistik",
       "stat-color-background": "İstatistik - renkli arka plan",
@@ -14934,6 +14972,11 @@
         "label-threshold": "Eşik"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Çizgi",
@@ -14952,16 +14995,22 @@
       "zoom-to-data": "Verilere yakınlaştır"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {

@@ -109,11 +109,16 @@ jobs:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            let workflow = 'release-build.yml';
+
+            if (REF == 'main') {
+              workflow = 'release-build-pro.yml';
+            }
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
-                workflow_id: 'release-build.yml',
+                workflow_id: workflow,
                 ref:  REF,
                 inputs: {
                   "version": VERSION,

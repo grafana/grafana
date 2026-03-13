@@ -63,6 +63,7 @@ export const ComboboxList = <T extends string | number>({
     count: options.length,
     getScrollElement: () => scrollRef.current,
     estimateSize,
+    getItemKey: (index: number) => options[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   });
 
