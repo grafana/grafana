@@ -242,6 +242,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			if err = raw.OnChunk(chunk); err != nil {
 				return err
 			}
+			continue // do not decode the frame
 		}
 
 		frame, err := data.UnmarshalArrowFrame(chunk.Frame)

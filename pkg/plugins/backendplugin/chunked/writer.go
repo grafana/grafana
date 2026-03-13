@@ -2,6 +2,7 @@ package chunked
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -38,9 +39,9 @@ func NewChunkedHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
 // ReceivedChunk implements [backendplugin.RawChunkReceiver].
 // Each chunk is one line flushed to the response
 func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
-	_, _ = r.w.Write([]byte(`{"refId":"`))
-	_, _ = r.w.Write([]byte(chunk.RefId))
-	_, _ = r.w.Write([]byte(`"`))
+	b, _ := json.Marshal(chunk.RefId)
+	_, _ = r.w.Write([]byte(`{"refId":`))
+	_, _ = r.w.Write(b) // escaped RefID
 
 	if chunk.FrameId != "" {
 		r.writeField("frameId", chunk.FrameId)
@@ -60,7 +61,7 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 		}
 
 		_, _ = r.w.Write([]byte(`,"frame":`))
-		_, _ = r.w.Write(chunk.Frame)
+		_, _ = r.w.Write(chunk.Frame) // raw JSON bytes
 	}
 
 	if chunk.Error != "" {
@@ -82,9 +83,9 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 }
 
 func (r *rawChunkWriter) writeField(f string, v string) {
-	_, _ = r.w.Write([]byte(`,"` + f + `":"`))
-	_, _ = r.w.Write([]byte(v))
-	_, _ = r.w.Write([]byte(`"`))
+	b, _ := json.Marshal(v)
+	_, _ = r.w.Write([]byte(`,"` + f + `":`))
+	_, _ = r.w.Write(b)
 }
 
 // WriteError implements [backend.ChunkedDataWriter].

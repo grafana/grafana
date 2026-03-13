@@ -48,6 +48,7 @@ func ProcessRawResponse(ctx context.Context, format backend.DataFrameFormat, rsp
 				RefId:   refId,
 				FrameId: fmt.Sprintf("%d", idx),
 				Frame:   frame,
+				Format:  pluginv2.DataFrameFormat(format),
 			}); err != nil {
 				return err
 			}
@@ -57,6 +58,7 @@ func ProcessRawResponse(ctx context.Context, format backend.DataFrameFormat, rsp
 				RefId:       refId,
 				Error:       res.Error,
 				ErrorSource: res.ErrorSource,
+				Format:      pluginv2.DataFrameFormat(format),
 			}); err != nil {
 				return err
 			}
