@@ -610,16 +610,16 @@ describe('alertingMultiplePolicies Feature Flag', () => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
   });
 
-  // TODO: Re-enable this test once the am-root-route-container rendering issue is fixed.
-  // Temporarily skipped due to failure in grafana-enterprise#11248
-  // https://github.com/grafana/grafana-enterprise/actions/runs/23009165147/job/66815001544
-  it.skip('Should render MultiplePoliciesView when alertingMultiplePolicies feature flag is enabled', async () => {
+  it('Should render MultiplePoliciesView when alertingMultiplePolicies feature flag is enabled', async () => {
     config.featureToggles.alertingMultiplePolicies = true;
 
     renderNotificationPolicies();
-    await screen.findByTestId('search-query-input');
 
-    expect(screen.getAllByTestId('am-root-route-container').length).toBeGreaterThan(0);
+    // findAllByTestId (async) is required here: `search-query-input` appears once the list query
+    // resolves, but each PoliciesTree makes a separate per-tree query. In slow CI environments the
+    // individual tree responses haven't arrived yet by the time the list resolves, so the
+    // synchronous getAllByTestId was racy. Use findAllByTestId to wait for all trees to render.
+    expect((await screen.findAllByTestId('am-root-route-container')).length).toBeGreaterThan(0);
   });
 
   it('Should not render PoliciesList when alertingMultiplePolicies feature flag is disabled', async () => {
