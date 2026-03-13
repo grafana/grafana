@@ -128,7 +128,7 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		})
 
 	raw := &query.QueryDataRequest{}
-	err := web.Bind(httpreq, raw)
+	err = web.Bind(httpreq, raw)
 	if err != nil {
 		connectLogger.Error("Hit unexpected error when reading query", "err", err)
 		err = errorsK8s.NewBadRequest("error reading query")
