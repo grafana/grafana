@@ -12,7 +12,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -476,7 +475,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
+		return nil, toUserConflictError(sql.GetDialect(), err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
@@ -485,7 +484,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 // toUserConflictError converts a UNIQUE constraint violation on user.email or
 // user.login into a 409 Conflict API error. All other errors are returned as-is.
 // It uses the DB dialect to detect the violation across SQLite, MySQL and PostgreSQL.
-func toUserConflictError(dialect migrator.Dialect, err error, uid string) error {
+func toUserConflictError(dialect legacysql.ConstraintDialect, err error, uid string) error {
 	if err == nil {
 		return nil
 	}
@@ -761,7 +760,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
+		return nil, toUserConflictError(sql.GetDialect(), err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil

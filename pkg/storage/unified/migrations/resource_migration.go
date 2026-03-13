@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -10,11 +11,11 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
@@ -57,8 +58,8 @@ type RunOptions struct {
 }
 
 // Run executes the migration logic for all organizations.
-func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, opts RunOptions) error {
-	orgs, err := r.getAllOrgs(sess)
+func (r *MigrationRunner) Run(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator, opts RunOptions) error {
+	orgs, err := r.getAllOrgs(ctx, queryer)
 	if err != nil {
 		r.log.Error("failed to get organizations", "error", err)
 		return fmt.Errorf("failed to get organizations: %w", err)
@@ -72,28 +73,21 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", r.resources)
 
 	if opts.DriverName == migrator.SQLite {
-		// reuse transaction in SQLite to avoid "database is locked" errors
-		tx, err := sess.Tx()
-		if err != nil {
-			r.log.Error("Failed to get transaction from session", "error", err)
-			return fmt.Errorf("failed to get transaction: %w", err)
+		if tx, ok := queryer.(*sql.Tx); ok {
+			// Reuse the migration transaction in SQLite to avoid "database is locked" errors.
+			cacheKB := 50000
+			if r.cfg.MigrationCacheSizeKB > 0 {
+				cacheKB = r.cfg.MigrationCacheSizeKB
+			}
+			if _, err := tx.ExecContext(ctx, fmt.Sprintf("PRAGMA cache_size = -%d", cacheKB)); err != nil {
+				r.log.Warn("Failed to set SQLite cache_size for migration", "error", err)
+			}
+			ctx = resource.ContextWithTransaction(ctx, tx)
+			r.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
 		}
-		// Increase page cache to prevent cache spill during bulk inserts.
-		// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
-		// SHARED lock held by the legacy database rows cursor on another connection.
-		// Configurable via [unified_storage] migration_cache_size_kb (default: ~1GB).
-		cacheKB := 50000
-		if r.cfg.MigrationCacheSizeKB > 0 {
-			cacheKB = r.cfg.MigrationCacheSizeKB
-		}
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf("PRAGMA cache_size = -%d", cacheKB)); err != nil {
-			r.log.Warn("Failed to set SQLite cache_size for migration", "error", err)
-		}
-		ctx = resource.ContextWithTransaction(ctx, tx.Tx)
-		r.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
 	}
 
-	r.tableRenamer.Init(sess, mg)
+	r.tableRenamer.Init(queryer, mg)
 	if err := r.tableRenamer.RecoverRenamedTables(r.definition.RenameTables); err != nil {
 		return fmt.Errorf("failed to recover partial rename: %w", err)
 	}
@@ -103,7 +97,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	// This is common for deployments that stop creating the legacy table for new instances
 	if r.definition.SkipWhenMissing {
 		for _, table := range lockTables {
-			found, err := sess.IsTableExist(table)
+			found, err := sqlutil.TableExists(ctx, mg.SqlDB(), mg.Dialect, table)
 			if err != nil {
 				return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
 			}
@@ -114,7 +108,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}
 
-	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
+	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, queryer, mg, lockTables)
 	if err != nil {
 		return fmt.Errorf("failed to lock tables for migration: %w", err)
 	}
@@ -124,13 +118,13 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}()
 
-	if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
+	if err := r.migrateAllOrgs(ctx, queryer, mg, orgs, opts); err != nil {
 		if opts.DriverName != migrator.SQLite {
 			return err
 		}
 		r.log.Warn("SQLite migration failed, retrying with parquet buffer", "error", err)
 		ctx = resource.ContextWithParquetBuffer(ctx)
-		if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
+		if err := r.migrateAllOrgs(ctx, queryer, mg, orgs, opts); err != nil {
 			return err
 		}
 	}
@@ -146,14 +140,14 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	return nil
 }
 
-func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, orgs []orgInfo, opts RunOptions) error {
+func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator, orgs []orgInfo, opts RunOptions) error {
 	for _, org := range orgs {
 		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
 		if err != nil {
 			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
 			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
 		}
-		if err = r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts); err != nil {
+		if err = r.MigrateOrg(ctx, queryer, mg, info, opts); err != nil {
 			return err
 		}
 	}
@@ -161,7 +155,7 @@ func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session
 }
 
 // MigrateOrg handles migration for a single organization.
-func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) error {
+func (r *MigrationRunner) MigrateOrg(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator, info types.NamespaceInfo, opts RunOptions) error {
 	r.log.Info("Migrating organization", "org_id", info.OrgID, "namespace", info.Value)
 
 	// Create a service identity context for this namespace to authenticate with unified storage
@@ -204,12 +198,16 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 
 	// On MySQL with rename, use a separate session so validator SELECTs don't hold
 	// shared MDL on sess's transaction (would deadlock with RENAME's exclusive MDL).
-	validationSess := sess
+	validationQueryer := queryer
 	if opts.DriverName == migrator.MySQL && len(r.definition.RenameTables) > 0 && !r.cfg.DisableLegacyTableRename {
-		validationSess = engine.NewSession()
-		defer validationSess.Close()
+		conn, err := mg.SqlDB().Conn(ctx)
+		if err != nil {
+			return fmt.Errorf("open validator connection: %w", err)
+		}
+		defer func() { _ = conn.Close() }()
+		validationQueryer = conn
 	}
-	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
+	if err := r.validateMigration(ctx, validationQueryer, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
@@ -225,7 +223,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 }
 
 // validateMigration runs all validators in sequence.
-func (r *MigrationRunner) validateMigration(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, validators []Validator) error {
+func (r *MigrationRunner) validateMigration(ctx context.Context, queryer migrator.Queryer, response *resourcepb.BulkResponse, validators []Validator) error {
 	if len(validators) == 0 {
 		r.log.Debug("No validators provided, skipping validation")
 		return nil
@@ -233,7 +231,7 @@ func (r *MigrationRunner) validateMigration(ctx context.Context, sess *xorm.Sess
 
 	for _, validator := range validators {
 		r.log.Debug("Running validator", "name", validator.Name(), "total", len(validators))
-		if err := validator.Validate(ctx, sess, response, r.log); err != nil {
+		if err := validator.Validate(ctx, queryer, response, r.log); err != nil {
 			return fmt.Errorf("validator %s failed: %w", validator.Name(), err)
 		}
 	}
@@ -243,10 +241,22 @@ func (r *MigrationRunner) validateMigration(ctx context.Context, sess *xorm.Sess
 }
 
 // getAllOrgs retrieves all organizations from the database.
-func (r *MigrationRunner) getAllOrgs(sess *xorm.Session) ([]orgInfo, error) {
-	var orgs []orgInfo
-	err := sess.Table("org").Cols("id", "name").Find(&orgs)
+func (r *MigrationRunner) getAllOrgs(ctx context.Context, queryer migrator.Queryer) ([]orgInfo, error) {
+	rows, err := queryer.QueryContext(ctx, "SELECT id, name FROM org")
 	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	orgs := make([]orgInfo, 0)
+	for rows.Next() {
+		org := orgInfo{}
+		if err := rows.Scan(&org.ID, &org.Name); err != nil {
+			return nil, err
+		}
+		orgs = append(orgs, org)
+	}
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return orgs, nil
@@ -300,10 +310,8 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 
 // Exec implements migrator.CodeMigration interface. Executes the migration across all organizations.
 // It delegates to the internal MigrationRunner for the actual migration logic.
-func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	ctx := context.Background()
-
-	return m.runner.Run(ctx, sess, mg, RunOptions{
+func (m *ResourceMigration) Exec(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator) error {
+	return m.runner.Run(ctx, queryer, mg, RunOptions{
 		DriverName: mg.Dialect.DriverName(),
 	})
 }
@@ -319,6 +327,6 @@ func ParseOrgIDFromNamespace(namespace string) (int64, error) {
 
 // orgInfo represents basic organization information
 type orgInfo struct {
-	ID   int64  `xorm:"id"`
-	Name string `xorm:"name"`
+	ID   int64
+	Name string
 }

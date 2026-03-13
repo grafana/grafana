@@ -471,7 +471,7 @@ var wireBasicSet = wire.NewSet(
 	secretvalidator.ProvideSecureValueValidator,
 	secretmutator.ProvideKeeperMutator,
 	secretmutator.ProvideSecureValueMutator,
-	secretmigrator.NewWithEngine,
+	secretmigrator.NewWithDB,
 	secretdatabase.ProvideDatabase,
 	secretclock.ProvideClock,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),

@@ -134,18 +134,12 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 
 func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql.LegacyDatabaseHelper, query string, args ...any) (*sql.Rows, error) {
 	var tx *sql.Tx
-	// After this function runs, the `tx` variable will only be set if
-	// this function was called in the context of a transaction set up by a
-	// caller upstream. In that case, we reuse the transaction.
-	_ = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok {
 		coreTx, err := sess.Tx()
-		if err != nil {
-			return nil
+		if err == nil {
+			tx = coreTx.Tx
 		}
-
-		tx = coreTx.Tx
-		return nil
-	})
+	}
 
 	if tx != nil {
 		return tx.QueryContext(ctx, query, args...)

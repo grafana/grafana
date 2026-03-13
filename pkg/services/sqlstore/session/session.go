@@ -46,6 +46,10 @@ func (gs *SessionDB) DriverName() string {
 	return gs.sqlxdb.DriverName()
 }
 
+func (gs *SessionDB) SqlDB() *sql.DB {
+	return gs.sqlxdb.DB
+}
+
 func (gs *SessionDB) Beginx() (*SessionTx, error) {
 	tx, err := gs.sqlxdb.Beginx()
 	return &SessionTx{sqlxtx: tx}, err
@@ -94,6 +98,10 @@ func (gtx *SessionTx) Get(ctx context.Context, dest any, query string, args ...a
 
 func (gtx *SessionTx) driverName() string {
 	return gtx.sqlxtx.DriverName()
+}
+
+func (gtx *SessionTx) SqlTx() *sql.Tx {
+	return gtx.sqlxtx.Tx
 }
 
 func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, args ...any) (int64, error) {

@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
@@ -265,7 +264,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 
 	t.Cleanup(backend.Stop)
 
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "ns"})
 
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		return &builders.DashboardDocumentBuilder{
@@ -346,7 +345,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "ns"})
 
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,

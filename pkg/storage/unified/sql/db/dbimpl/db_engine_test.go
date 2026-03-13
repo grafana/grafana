@@ -28,7 +28,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		engine, err := newResourceDBProvider(nil, cfg, nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
-		require.Equal(t, dbTypeMySQL, engine.engine.Dialect().DriverName())
+		require.Equal(t, dbTypeMySQL, engine.handle.DriverName())
 	})
 
 	t.Run("Postgres engine", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		engine, err := newResourceDBProvider(nil, cfg, nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
-		require.Equal(t, dbTypePostgres, engine.engine.Dialect().DriverName())
+		require.Equal(t, dbTypePostgres, engine.handle.DriverName())
 	})
 
 	t.Run("SQLite engine", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		engine, err := newResourceDBProvider(nil, cfg, nil)
 		require.NoError(t, err)
 		require.NotNil(t, engine)
-		require.Equal(t, dbTypeSQLite, engine.engine.Dialect().DriverName())
+		require.Equal(t, dbTypeSQLite, engine.handle.DriverName())
 	})
 
 	t.Run("No database type", func(t *testing.T) {
@@ -122,6 +122,6 @@ password = password
 	require.NoError(t, err)
 	require.NotNil(t, engine)
 	// Verify that GF_DATABASE_URL value is used.
-	require.Equal(t, dbTypeMySQL, engine.engine.Dialect().DriverName())
-	require.Contains(t, engine.engine.DataSourceName(), "overthere:3306")
+	require.Equal(t, dbTypeMySQL, engine.handle.DriverName())
+	require.Contains(t, engine.dataSourceName, "overthere:3306")
 }

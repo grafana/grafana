@@ -7,11 +7,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
 type keyvalueDB struct {
-	db     kvstore.KVStore
+	db     KVStore
 	logger logging.Logger
 }
 

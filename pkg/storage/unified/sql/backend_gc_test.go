@@ -6,15 +6,15 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	test "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/tests/storage/testdb"
+	test "github.com/grafana/grafana/pkg/tests/storage/unified/testing"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
 func TestIntegrationGarbageCollectionBatch(t *testing.T) {
@@ -26,7 +26,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 	}
 	t.Run("can garbage collect a deleted resource", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
@@ -79,7 +78,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 	t.Run("will only garbage collect eligible resources before cutoff", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
@@ -139,7 +137,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 	t.Run("will not delete rows for other eligible resources", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
@@ -199,7 +196,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 	t.Run("will limit candidate batch size", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
@@ -257,7 +253,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 	t.Run("will not delete rows when resource is deleted then recreated with same name", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
@@ -309,7 +304,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	}
 	t.Run("can delete eligble resources", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
@@ -334,7 +328,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 
 	t.Run("will respect dashboard retention settings", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
-		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
@@ -383,15 +376,16 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 }
 
 func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.StorageBackend, sqldb.DB) {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	cfg := setting.NewCfg()
+	testdb.ConfigureDatabase(t, cfg)
+	eDB, err := dbimpl.ProvideResourceDB(nil, cfg, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
 	backend, err := NewBackend(BackendOptions{
 		DBProvider:           eDB,
 		IsHA:                 false,
-		DisablePruner:        db.IsTestDbSQLite(),
+		DisablePruner:        testdb.IsSQLite(),
 		LastImportTimeMaxAge: 24 * time.Hour,
 		GarbageCollection:    gcConfig,
 	})

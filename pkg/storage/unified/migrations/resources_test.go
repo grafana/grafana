@@ -1,13 +1,27 @@
 package migrations
 
 import (
+	"database/sql"
 	"testing"
 
-	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
+	_ "github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+type testMigratorHandle struct {
+	db *sql.DB
+}
+
+func (h testMigratorHandle) DriverName() string {
+	return storagemigrator.SQLite
+}
+
+func (h testMigratorHandle) SqlDB() *sql.DB {
+	return h.db
+}
 
 // TestIsMigrationEnabled tests the isMigrationEnabled function directly
 func TestIsMigrationEnabled(t *testing.T) {
@@ -124,15 +138,19 @@ func TestRegisterMigrations(t *testing.T) {
 	}
 
 	// Helper to run registerMigrations and capture the registered migration IDs
-	runAndGetMigrationIDs := func(cfg *setting.Cfg, registry *MigrationRegistry) ([]string, error) {
+	runAndGetMigrationIDs := func(t *testing.T, cfg *setting.Cfg, registry *MigrationRegistry) ([]string, error) {
+		t.Helper()
+		db, err := sql.Open(storagemigrator.SQLite, ":memory:")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, db.Close())
+		})
+
+		mg := storagemigrator.NewMigrator(testMigratorHandle{db: db})
 		var ids []string
 		var capturedErr error
-		_ = sqlstoremigrator.CheckExpectedMigrations(sqlstoremigrator.SQLite,
-			[]sqlstoremigrator.ExpectedMigration{},
-			func(mg *sqlstoremigrator.Migrator) {
-				capturedErr = registerMigrations(cfg, mg, nil, nil, nil, nil, registry)
-				ids = mg.GetMigrationIDs(false)
-			})
+		capturedErr = registerMigrations(cfg, mg, nil, nil, nil, nil, registry)
+		ids = mg.GetMigrationIDs(false)
 		return ids, capturedErr
 	}
 
@@ -144,7 +162,7 @@ func TestRegisterMigrations(t *testing.T) {
 			fakeDashboardResource: false,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg, registry)
+		ids, err := runAndGetMigrationIDs(t, cfg, registry)
 		require.NoError(t, err)
 		require.Contains(t, ids, "playlists migration")
 		require.NotContains(t, ids, "folders and dashboards migration")
@@ -158,7 +176,7 @@ func TestRegisterMigrations(t *testing.T) {
 			fakeDashboardResource: true,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg, registry)
+		ids, err := runAndGetMigrationIDs(t, cfg, registry)
 		require.NoError(t, err)
 		require.Contains(t, ids, "folders and dashboards migration")
 		require.NotContains(t, ids, "playlists migration")
@@ -172,7 +190,7 @@ func TestRegisterMigrations(t *testing.T) {
 			fakeDashboardResource: false,
 		})
 
-		_, err := runAndGetMigrationIDs(cfg, registry)
+		_, err := runAndGetMigrationIDs(t, cfg, registry)
 		require.Error(t, err, "expected error for mismatched enablement")
 	})
 
@@ -184,7 +202,7 @@ func TestRegisterMigrations(t *testing.T) {
 			fakeDashboardResource: false,
 		})
 
-		ids, err := runAndGetMigrationIDs(cfg, registry)
+		ids, err := runAndGetMigrationIDs(t, cfg, registry)
 		require.NoError(t, err)
 		require.Empty(t, ids)
 	})

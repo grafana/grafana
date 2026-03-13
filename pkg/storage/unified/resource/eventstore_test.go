@@ -10,16 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
 func setupTestEventStore(t *testing.T) *eventStore {
 	return newEventStore(setupBadgerKV(t))
-}
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
 }
 
 func setupTestEventStoreSqlKv(t *testing.T) *eventStore {

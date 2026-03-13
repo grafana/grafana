@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/mocks"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var errTest = errors.New("you shall not pass")
@@ -29,7 +28,7 @@ func TestNewWithTxFunc(t *testing.T) {
 	t.Parallel()
 
 	execTest := func(t *testing.T, d db.DB, txErr error) error {
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 		return db.NewWithTxFunc(d.BeginTx).WithTx(ctx, nil,
 			func(context.Context, db.Tx) error {
 				return txErr

@@ -3,6 +3,7 @@ package unified
 import (
 	"context"
 	"net"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -20,11 +21,9 @@ import (
 )
 
 func TestUnifiedStorageClient(t *testing.T) {
-	resourceServerAddress := ":11000"
-	resourceServer := createTestGrpcServer(t, resourceServerAddress)
+	resourceServer, resourceServerAddress := createTestGrpcServer(t)
 	defer resourceServer.s.Stop()
-	indexServerAddress := ":11001"
-	indexServer := createTestGrpcServer(t, indexServerAddress)
+	indexServer, indexServerAddress := createTestGrpcServer(t)
 	defer indexServer.s.Stop()
 
 	t.Run("when storage type is unified-grpc", func(t *testing.T) {
@@ -140,8 +139,9 @@ func testCallAllMethods(client resource.ResourceClient) {
 	_, _ = client.ListManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListManagedObjectsRequest{})
 }
 
-func createTestGrpcServer(t *testing.T, address string) *testServer {
-	listener, err := net.Listen("tcp", address)
+func createTestGrpcServer(t *testing.T) (*testServer, string) {
+	address := "unix://" + filepath.Join(t.TempDir(), "grpc.sock")
+	listener, err := net.Listen("unix", strings.TrimPrefix(address, "unix://"))
 	require.NoError(t, err, "failed to listen")
 
 	testServer := newTestServer()
@@ -155,7 +155,7 @@ func createTestGrpcServer(t *testing.T, address string) *testServer {
 
 	testServer.s = s
 
-	return testServer
+	return testServer, address
 }
 
 type testServer struct {

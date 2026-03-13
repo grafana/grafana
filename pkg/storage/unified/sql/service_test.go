@@ -6,19 +6,14 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -54,37 +49,43 @@ var _ resource.ResourceServer = (*mockResourceServer)(nil)
 func requireAuthPassed(t *testing.T, err error, msgAndArgs ...interface{}) {
 	t.Helper()
 	require.Error(t, err, "mock handler returns Unimplemented")
-	assert.Equal(t, codes.Unimplemented, status.Code(err), msgAndArgs...)
+	require.Equal(t, codes.Unimplemented, status.Code(err), msgAndArgs...)
 }
 
-// newDenyAllProvider creates a grpcserver.Provider with a global "deny all"
+type testGRPCProvider struct {
+	server *grpc.Server
+}
+
+func (p testGRPCProvider) GetServer() *grpc.Server {
+	return p.server
+}
+
+// newDenyAllProvider creates a grpcServerProvider with a global "deny all"
 // authenticator. Services must be registered on the returned server before
 // calling startAndConnect.
-func newDenyAllProvider(t *testing.T) grpcserver.Provider {
+func newDenyAllProvider(t *testing.T) grpcServerProvider {
 	t.Helper()
-	denyAll := interceptors.AuthenticatorFunc(func(context.Context) (context.Context, error) {
+	denyAll := func(context.Context) (context.Context, error) {
 		return nil, status.Error(codes.Unauthenticated, "denied by global auth")
-	})
-	provider, err := grpcserver.ProvideService(
-		setting.NewCfg(),
-		featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer),
-		denyAll,
-		noop.NewTracerProvider().Tracer(""),
-		prometheus.NewRegistry(),
-	)
-	require.NoError(t, err)
-	return provider
+	}
+	return testGRPCProvider{server: grpc.NewServer(
+		grpc.ChainUnaryInterceptor(grpcauth.UnaryServerInterceptor(denyAll)),
+		grpc.ChainStreamInterceptor(grpcauth.StreamServerInterceptor(denyAll)),
+	)}
 }
 
 // startAndConnect starts the gRPC server and returns a client connection.
 func startAndConnect(t *testing.T, srv *grpc.Server) *grpc.ClientConn {
 	t.Helper()
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
+	lis := bufconn.Listen(1024 * 1024)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.GracefulStop)
 
-	conn, err := grpc.NewClient(lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("passthrough:///bufconn",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return lis.DialContext(ctx)
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
 	return conn
@@ -95,7 +96,7 @@ func startAndConnect(t *testing.T, srv *grpc.Server) *grpc.ClientConn {
 // with per-service auth that overrides the global auth interceptor.
 func TestRegisterSearchServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
-	testAuth := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+	testAuth := AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		authCalled.Add(1)
 		return ctx, nil
 	})
@@ -148,7 +149,7 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 // ResourceIndex, ManagedObjectIndex, Diagnostics) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
-	testAuth := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+	testAuth := AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		authCalled.Add(1)
 		return ctx, nil
 	})

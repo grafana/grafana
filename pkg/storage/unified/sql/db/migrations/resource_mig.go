@@ -1,12 +1,12 @@
 package migrations
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 func initResourceTables(mg *migrator.Migrator) string {
@@ -254,18 +254,18 @@ func (m *ResourceHistoryKeyPathBackfillMigration) SQL(_ migrator.Dialect) string
 	return "resource_history key_path backfill code migration"
 }
 
-func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	rows, err := getResourceHistoryRows(sess, mg, resourceHistoryRow{})
+func (m *ResourceHistoryKeyPathBackfillMigration) Exec(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator) error {
+	rows, err := getResourceHistoryRows(ctx, queryer, mg, resourceHistoryRow{})
 	if err != nil {
 		return err
 	}
 
 	for len(rows) > 0 {
-		if err := updateResourceHistoryKeyPath(sess, rows); err != nil {
+		if err := updateResourceHistoryKeyPath(ctx, queryer, rows); err != nil {
 			return err
 		}
 
-		rows, err = getResourceHistoryRows(sess, mg, rows[len(rows)-1])
+		rows, err = getResourceHistoryRows(ctx, queryer, mg, rows[len(rows)-1])
 		if err != nil {
 			return err
 		}
@@ -274,7 +274,7 @@ func (m *ResourceHistoryKeyPathBackfillMigration) Exec(sess *xorm.Session, mg *m
 	return nil
 }
 
-func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow) error {
+func updateResourceHistoryKeyPath(ctx context.Context, queryer migrator.Queryer, rows []resourceHistoryRow) error {
 	if len(rows) == 0 {
 		return nil
 	}
@@ -295,8 +295,8 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	guids := ""
 	setCases := "CASE"
 	for _, row := range updates {
-		guids += fmt.Sprintf("'%s',", row.GUID)
-		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", row.GUID, row.KeyPath)
+		guids += fmt.Sprintf("'%s',", escapeSQLString(row.GUID))
+		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", escapeSQLString(row.GUID), escapeSQLString(row.KeyPath))
 	}
 
 	guids = strings.TrimRight(guids, ",")
@@ -317,7 +317,7 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	AND key_path = '';
 	`, setCases, guids)
 
-	if _, err := sess.Exec(sql); err != nil {
+	if _, err := queryer.ExecContext(ctx, sql); err != nil {
 		return err
 	}
 
@@ -342,19 +342,18 @@ func snowflakeFromRv(rv int64) int64 {
 }
 
 type resourceHistoryRow struct {
-	GUID            string `xorm:"guid"`
-	Group           string `xorm:"group"`
-	Resource        string `xorm:"resource"`
-	Namespace       string `xorm:"namespace"`
-	Name            string `xorm:"name"`
-	ResourceVersion int64  `xorm:"resource_version"`
-	Action          int64  `xorm:"action"`
-	Folder          string `xorm:"folder"`
-	KeyPath         string `xorm:"key_path"`
+	GUID            string
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	ResourceVersion int64
+	Action          int64
+	Folder          string
+	KeyPath         string
 }
 
-func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
-	var rows []resourceHistoryRow
+func getResourceHistoryRows(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator, continueRow resourceHistoryRow) ([]resourceHistoryRow, error) {
 	cols := fmt.Sprintf(
 		"%s, %s, %s, %s, %s, %s, %s, %s, %s",
 		mg.Dialect.Quote("guid"),
@@ -373,10 +372,38 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 		AND key_path = ''
 		ORDER BY resource_version ASC, guid ASC
 		LIMIT 1000;
-	`, cols, continueRow.ResourceVersion, continueRow.ResourceVersion, continueRow.GUID)
-	if err := sess.SQL(sql).Find(&rows); err != nil {
+	`, cols, continueRow.ResourceVersion, continueRow.ResourceVersion, escapeSQLString(continueRow.GUID))
+	rows, err := queryer.QueryContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make([]resourceHistoryRow, 0)
+	for rows.Next() {
+		row := resourceHistoryRow{}
+		if err := rows.Scan(
+			&row.GUID,
+			&row.Group,
+			&row.Resource,
+			&row.Namespace,
+			&row.Name,
+			&row.ResourceVersion,
+			&row.Action,
+			&row.Folder,
+			&row.KeyPath,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return rows, nil
+	return result, nil
+}
+
+func escapeSQLString(value string) string {
+	return strings.ReplaceAll(value, "'", "''")
 }

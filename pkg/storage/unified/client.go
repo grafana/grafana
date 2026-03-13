@@ -23,11 +23,11 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
@@ -37,10 +37,14 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
+type sqlSessionProvider interface {
+	GetSqlxSession() *session.SessionDB
+}
+
 type Options struct {
 	Cfg          *setting.Cfg
 	Features     featuremgmt.FeatureToggles
-	DB           infraDB.DB
+	DB           sqlSessionProvider
 	Tracer       tracing.Tracer
 	Reg          prometheus.Registerer
 	Authzc       types.AccessClient
@@ -86,7 +90,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
+	db sqlSessionProvider,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,

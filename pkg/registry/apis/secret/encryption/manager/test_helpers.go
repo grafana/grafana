@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/sqlstoremigrator"
 )
 
 func setupTestService(tb testing.TB) *EncryptionManager {

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var tableLockerLog = log.New("migrations.table_locker")
@@ -17,12 +17,12 @@ var tableLockerLog = log.New("migrations.table_locker")
 // MigrationTableLocker abstracts locking of legacy database tables during migration.
 type MigrationTableLocker interface {
 	// LockMigrationTables locks legacy tables during migration to prevent concurrent updates.
-	LockMigrationTables(ctx context.Context, sess *xorm.Session, tables []string) (func(context.Context) error, error)
+	LockMigrationTables(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator, tables []string) (func(context.Context) error, error)
 }
 
 // newTableLocker returns the appropriate locker for the database type.
-func newTableLocker(sqlStore db.DB, sql legacysql.LegacyDatabaseProvider) MigrationTableLocker {
-	switch string(sqlStore.GetDBType()) {
+func newTableLocker(sqlStore sqlutil.SessionProvider, sql legacysql.LegacyDatabaseProvider) MigrationTableLocker {
+	switch sqlStore.GetSqlxSession().DriverName() {
 	case "sqlite3":
 		return &sqliteTableLocker{}
 	case "postgres":
@@ -35,7 +35,7 @@ func newTableLocker(sqlStore db.DB, sql legacysql.LegacyDatabaseProvider) Migrat
 // sqliteTableLocker implements a no-op table locker
 type sqliteTableLocker struct{}
 
-func (l *sqliteTableLocker) LockMigrationTables(_ context.Context, _ *xorm.Session, _ []string) (func(context.Context) error, error) {
+func (l *sqliteTableLocker) LockMigrationTables(_ context.Context, _ migrator.Queryer, _ *migrator.Migrator, _ []string) (func(context.Context) error, error) {
 	return func(context.Context) error { return nil }, nil
 }
 
@@ -44,7 +44,7 @@ type postgresTableLocker struct {
 	sql legacysql.LegacyDatabaseProvider
 }
 
-func (l *postgresTableLocker) LockMigrationTables(ctx context.Context, sess *xorm.Session, tables []string) (func(context.Context) error, error) {
+func (l *postgresTableLocker) LockMigrationTables(ctx context.Context, queryer migrator.Queryer, _ *migrator.Migrator, tables []string) (func(context.Context) error, error) {
 	if len(tables) == 0 {
 		return func(context.Context) error { return nil }, nil
 	}
@@ -64,7 +64,7 @@ func (l *postgresTableLocker) LockMigrationTables(ctx context.Context, sess *xor
 		}
 		seen[table] = struct{}{}
 		fullName := sqlHelper.Table(table)
-		exists, err := sess.IsTableExist(fullName)
+		exists, err := sqlHelper.TableExists(ctx, table)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check if table %q exists: %w", fullName, err)
 		}
@@ -72,12 +72,16 @@ func (l *postgresTableLocker) LockMigrationTables(ctx context.Context, sess *xor
 			tableLockerLog.Info("Skipping lock for non-existent table", "table", fullName)
 			continue
 		}
-		lockSQL := "LOCK TABLE " + sqlHelper.DB.Quote(fullName) + " IN SHARE MODE"
-		if _, err := sess.Exec(lockSQL); err != nil {
+		quotedName, err := sqlHelper.QuoteIdentifier(fullName)
+		if err != nil {
+			return nil, err
+		}
+		lockSQL := "LOCK TABLE " + quotedName + " IN SHARE MODE"
+		if _, err := queryer.ExecContext(ctx, lockSQL); err != nil {
 			return nil, fmt.Errorf("failed to lock table %q: %w", fullName, err)
 		}
 	}
-	// Lock is released when sess's transaction commits/rollbacks
+	// Lock is released when the migration transaction commits/rolls back.
 	return func(context.Context) error { return nil }, nil
 }
 
@@ -87,7 +91,7 @@ type mysqlTableLocker struct {
 	sql legacysql.LegacyDatabaseProvider
 }
 
-func (l *mysqlTableLocker) LockMigrationTables(ctx context.Context, _ *xorm.Session, tables []string) (func(context.Context) error, error) {
+func (l *mysqlTableLocker) LockMigrationTables(ctx context.Context, _ migrator.Queryer, _ *migrator.Migrator, tables []string) (func(context.Context) error, error) {
 	if len(tables) == 0 {
 		return func(context.Context) error { return nil }, nil
 	}
@@ -108,7 +112,7 @@ func (l *mysqlTableLocker) LockMigrationTables(ctx context.Context, _ *xorm.Sess
 		}
 		seen[table] = struct{}{}
 		fullName := sqlHelper.Table(table)
-		exists, err := sqlHelper.DB.GetEngine().IsTableExist(fullName)
+		exists, err := sqlHelper.TableExists(ctx, table)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check if table %q exists: %w", fullName, err)
 		}
@@ -116,7 +120,11 @@ func (l *mysqlTableLocker) LockMigrationTables(ctx context.Context, _ *xorm.Sess
 			tableLockerLog.Info("Skipping lock for non-existent table", "table", fullName)
 			continue
 		}
-		quotedTables = append(quotedTables, sqlHelper.DB.Quote(fullName))
+		quotedName, err := sqlHelper.QuoteIdentifier(fullName)
+		if err != nil {
+			return nil, err
+		}
+		quotedTables = append(quotedTables, quotedName)
 	}
 	if len(quotedTables) == 0 {
 		return func(context.Context) error { return nil }, nil
@@ -133,7 +141,7 @@ func (l *mysqlTableLocker) LockMigrationTables(ctx context.Context, _ *xorm.Sess
 	}
 
 	// Use a dedicated connection to not implicitly commit migration transaction.
-	conn, err := sqlHelper.DB.GetEngine().DB().Conn(ctx)
+	conn, err := sqlHelper.Session().SqlDB().Conn(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get dedicated connection for table lock: %w", err)
 	}

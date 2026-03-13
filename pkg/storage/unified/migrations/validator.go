@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -82,7 +83,7 @@ func (v *CountValidator) Name() string {
 	return v.name
 }
 
-func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error {
+func (v *CountValidator) Validate(ctx context.Context, queryer migrator.Queryer, response *resourcepb.BulkResponse, log log.Logger) error {
 	// Filter response to only include the configured resource
 	response = filterResponse(response, []schema.GroupResource{v.resource})
 	if len(response.Rejected) > 0 {
@@ -119,18 +120,16 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 		return fmt.Errorf("invalid namespace %s: %w", summary.Namespace, err)
 	}
 
-	legacyCount, err := sess.Table(v.table).Where(v.whereClause, orgID).Count()
-	if err != nil {
+	var legacyCount int64
+	legacyCountQuery := rebindQuery(v.driverName, fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", v.table, v.whereClause))
+	if err := queryer.QueryRowContext(ctx, legacyCountQuery, orgID).Scan(&legacyCount); err != nil {
 		return fmt.Errorf("failed to count %s: %w", v.table, err)
 	}
 
 	var unifiedCount int64
 	if v.driverName == migrator.SQLite {
-		unifiedCount, err = sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
-		if err != nil {
+		unifiedCountQuery := rebindQuery(v.driverName, `SELECT COUNT(*) FROM resource WHERE namespace = ? AND "group" = ? AND resource = ?`)
+		if err := queryer.QueryRowContext(ctx, unifiedCountQuery, summary.Namespace, summary.Group, summary.Resource).Scan(&unifiedCount); err != nil {
 			return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}
@@ -196,23 +195,23 @@ func newFolderTreeValidator(
 }
 
 type legacyFolder struct {
-	ID        int64  `xorm:"id"`
-	UID       string `xorm:"uid"`
-	FolderUID string `xorm:"folder_uid"`
-	Title     string `xorm:"title"`
+	ID        int64
+	UID       string
+	FolderUID string
+	Title     string
 }
 
 type unifiedFolder struct {
-	GUID   string `xorm:"guid"`
-	Name   string `xorm:"name"`
-	Folder string `xorm:"folder"`
+	GUID   string
+	Name   string
+	Folder string
 }
 
 func (v *FolderTreeValidator) Name() string {
 	return v.name
 }
 
-func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error {
+func (v *FolderTreeValidator) Validate(ctx context.Context, queryer migrator.Queryer, response *resourcepb.BulkResponse, log log.Logger) error {
 	// Filter response to only include the configured resource (folders)
 	response = filterResponse(response, []schema.GroupResource{v.resource})
 
@@ -235,7 +234,7 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	}
 
 	// Build legacy folder parent map
-	legacyParentMap, err := v.buildLegacyFolderParentMap(sess, orgID, log)
+	legacyParentMap, err := v.buildLegacyFolderParentMap(ctx, queryer, orgID, log)
 	if err != nil {
 		return fmt.Errorf("failed to build legacy folder parent map: %w", err)
 	}
@@ -243,7 +242,7 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	// Build unified storage folder parent map
 	var unifiedParentMap map[string]string
 	if v.driverName == migrator.SQLite {
-		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(sess, summary.Namespace, log)
+		unifiedParentMap, err = v.buildUnifiedFolderParentMapSQLite(ctx, queryer, summary.Namespace, log)
 	} else {
 		unifiedParentMap, err = v.buildUnifiedFolderParentMap(ctx, summary.Namespace, log)
 	}
@@ -298,15 +297,24 @@ func (v *FolderTreeValidator) Validate(ctx context.Context, sess *xorm.Session, 
 	return nil
 }
 
-func (v *FolderTreeValidator) buildLegacyFolderParentMap(sess *xorm.Session, orgID int64, log log.Logger) (map[string]string, error) {
-	// Query all folders for this org
-	var folders []legacyFolder
-	err := sess.Table("dashboard").
-		Cols("id", "uid", "folder_uid", "title").
-		Where("org_id = ? AND is_folder = ?", orgID, true).
-		Find(&folders)
+func (v *FolderTreeValidator) buildLegacyFolderParentMap(ctx context.Context, queryer migrator.Queryer, orgID int64, log log.Logger) (map[string]string, error) {
+	query := rebindQuery(v.driverName, "SELECT id, uid, folder_uid, title FROM dashboard WHERE org_id = ? AND is_folder = ?")
+	rows, err := queryer.QueryContext(ctx, query, orgID, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query legacy folders: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	folders := make([]legacyFolder, 0)
+	for rows.Next() {
+		folder := legacyFolder{}
+		if err := rows.Scan(&folder.ID, &folder.UID, &folder.FolderUID, &folder.Title); err != nil {
+			return nil, fmt.Errorf("failed to scan legacy folder: %w", err)
+		}
+		folders = append(folders, folder)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate legacy folders: %w", err)
 	}
 
 	parentMap := make(map[string]string)
@@ -377,14 +385,24 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 	return parentMap, nil
 }
 
-func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
-	var folders []unifiedFolder
-	err := sess.Table("resource").
-		Cols("guid", "name", "folder").
-		Where("namespace = ? AND resource = ?", namespace, "folder").
-		Find(&folders)
+func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(ctx context.Context, queryer migrator.Queryer, namespace string, log log.Logger) (map[string]string, error) {
+	query := rebindQuery(v.driverName, `SELECT guid, name, folder FROM resource WHERE namespace = ? AND resource = ?`)
+	rows, err := queryer.QueryContext(ctx, query, namespace, "folder")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query unified folders: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	folders := make([]unifiedFolder, 0)
+	for rows.Next() {
+		folder := unifiedFolder{}
+		if err := rows.Scan(&folder.GUID, &folder.Name, &folder.Folder); err != nil {
+			return nil, fmt.Errorf("failed to scan unified folder: %w", err)
+		}
+		folders = append(folders, folder)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate unified folders: %w", err)
 	}
 
 	parentMap := make(map[string]string)
@@ -418,4 +436,8 @@ func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
 		return newFolderTreeValidator(client, resource, driverName)
 	}
+}
+
+func rebindQuery(driverName string, query string) string {
+	return sqlx.Rebind(sqlx.BindType(driverName), query)
 }

@@ -11,11 +11,15 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+type KVStore interface {
+	Get(ctx context.Context, orgID int64, namespace string, key string) (string, bool, error)
+	Set(ctx context.Context, orgID int64, namespace string, key string, value string) error
+}
 
 // fakeMigrator is a no-op implementation of UnifiedStorageMigrationService
 type fakeMigrator struct{}
@@ -86,7 +90,7 @@ func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
 
 func ProvideService(
 	features featuremgmt.FeatureToggles,
-	kv kvstore.KVStore,
+	kv KVStore,
 	cfg *setting.Cfg,
 	migrator unifiedmigrations.UnifiedStorageMigrationService,
 	statusReader unifiedmigrations.MigrationStatusReader,

@@ -138,7 +138,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 				}
 
 				var after *dashboard.Dashboard
-				if err := sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+				if err := sql.InTransaction(ctx, func(ctx context.Context) error {
 					var err error
 					after, _, err = a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
 					return err

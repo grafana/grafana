@@ -52,7 +52,7 @@ func NewModule(opts Options,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +72,7 @@ func newModuleServer(opts Options,
 	indexMetrics *resource.BleveIndexMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
@@ -102,6 +103,7 @@ func newModuleServer(opts Options,
 		indexMetrics:     indexMetrics,
 		promGatherer:     promGatherer,
 		registerer:       reg,
+		tracer:           tracer,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
@@ -142,6 +144,7 @@ type ModuleServer struct {
 
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
+	tracer       tracing.Tracer
 
 	MemberlistKVConfig         kv.Config
 	httpServerRouter           *mux.Router
@@ -231,7 +234,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
-		svc, err := resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
+		svc, err := resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +274,11 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		accessClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracer, s.registerer)
+		if err != nil {
+			return nil, err
+		}
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, accessClient, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -302,7 +309,11 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
+		accessClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracer, s.registerer)
+		if err != nil {
+			return nil, err
+		}
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, accessClient, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}

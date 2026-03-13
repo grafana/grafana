@@ -37,7 +37,7 @@ import (
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/sqlstoremigrator"
 )
 
 type SetupConfig struct {

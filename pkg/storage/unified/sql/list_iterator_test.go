@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -19,21 +18,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testdb"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 func TestIntegrationListIter(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-
-	grafanaDB := db.InitTestDB(t)
-
-	resourceDBProvider, err := dbimpl.ProvideResourceDB(grafanaDB, setting.NewCfg(), tracing.NewNoopTracerService())
+	cfg := setting.NewCfg()
+	testdb.ConfigureDatabase(t, cfg)
+	resourceDBProvider, err := dbimpl.ProvideResourceDB(nil, cfg, tracing.NewNoopTracerService())
 	require.NoError(t, err)
 
 	resourceDB, err := resourceDBProvider.Init(ctx)

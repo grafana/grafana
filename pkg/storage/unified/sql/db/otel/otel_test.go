@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	dbmocks "github.com/grafana/grafana/pkg/storage/unified/sql/db/mocks"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var errTest = errors.New("because of reasons")
@@ -77,7 +76,7 @@ func TestOTelTransactions(t *testing.T) {
 		rootSpanName     = "root of the operation"
 		internalSpanName = "sub-operation"
 	)
-	ctx := context.Context(testutil.NewDefaultTestContext(t))
+	ctx := context.Background()
 	d := newTestInstrumentedDB(ctx, t)
 	mTx := dbmocks.NewTx(t)
 	txOpts := &sql.TxOptions{
@@ -160,7 +159,7 @@ func TestOTelDB_PingContext(t *testing.T) {
 
 	t.Run("happy path - default DB version", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 		db := newTestInstrumentedDBWithVersionSQL(ctx, t, dbVersionDefaultSQL)
 
 		db.mock.EXPECT().PingContext(mock.Anything).Return(nil)
@@ -178,7 +177,7 @@ func TestOTelDB_PingContext(t *testing.T) {
 
 	t.Run("happy path - SQLite DB version", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 		db := newTestInstrumentedDBWithVersionSQL(ctx, t, dbVersionSQLiteSQL)
 
 		db.mock.EXPECT().PingContext(mock.Anything).Return(nil)
@@ -196,7 +195,7 @@ func TestOTelDB_PingContext(t *testing.T) {
 
 	t.Run("happy path - unknown DB version", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 		db := newTestInstrumentedDBWithVersionSQL(ctx, t, "")
 
 		db.mock.EXPECT().PingContext(mock.Anything).Return(nil)
@@ -214,7 +213,7 @@ func TestOTelDB_PingContext(t *testing.T) {
 
 	t.Run("fail making ping", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 		db := newTestInstrumentedDBWithVersionSQL(ctx, t, "")
 
 		db.mock.EXPECT().PingContext(mock.Anything).Return(errTest)

@@ -2,50 +2,97 @@ package migrations
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	testsqlutil "github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	storageq "github.com/grafana/grafana/pkg/storage/sqlutil"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type testEnv struct {
-	engine *xorm.Engine
-	store  db.DB
+	store *testStore
+}
+
+type testStore struct {
+	session *session.SessionDB
+}
+
+func (s *testStore) GetSqlxSession() *session.SessionDB {
+	return s.session
 }
 
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
-	dbstore := db.InitTestDB(t)
-	t.Cleanup(db.CleanupTestDB)
-	ensureOrg(t, dbstore.GetEngine())
-	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
+	dbstore := newTestStore(t)
+	ensureOrg(t, dbstore)
+	return testEnv{store: dbstore}
 }
 
-func uniqueTable(t *testing.T, engine *xorm.Engine) string {
+func newTestStore(t *testing.T) *testStore {
 	t.Helper()
-	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
-	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
+	dbType := testsqlutil.GetTestDBType()
+	var (
+		dbCfg       *testsqlutil.TestDB
+		err         error
+		driverName  string
+		connStr     string
+		cleanupFunc func()
+	)
+
+	if dbType == storagemigrator.SQLite {
+		driverName = storagemigrator.SQLite
+		path := filepath.Join(t.TempDir(), "grafana-storage-tests.db")
+		connStr = "file:" + path + "?cache=private&mode=rwc&_journal_mode=WAL&_synchronous=OFF"
+		cleanupFunc = func() {}
+	} else {
+		dbCfg, err = testsqlutil.GetTestDB(dbType)
+		require.NoError(t, err)
+		driverName = dbCfg.DriverName
+		connStr = dbCfg.ConnStr
+		cleanupFunc = dbCfg.Cleanup
+	}
+
+	db, err := sql.Open(driverName, connStr)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		_, _ = engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", engine.Quote(name)))
-		_, _ = engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", engine.Quote(name+legacySuffix)))
+		require.NoError(t, db.Close())
+		cleanupFunc()
+	})
+
+	return &testStore{
+		session: session.GetSession(sqlx.NewDb(db, driverName)),
+	}
+}
+
+func uniqueTable(t *testing.T, store *testStore) string {
+	t.Helper()
+	dialect := storagemigrator.NewDialect(store.GetSqlxSession().DriverName())
+	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
+	_, err := store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", dialect.Quote(name)))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", dialect.Quote(name)))
+		_, _ = store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", dialect.Quote(name+legacySuffix)))
 	})
 	return name
 }
@@ -73,46 +120,71 @@ func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTable
 	return NewMigrationRunner(m, locker, renamer, setting.NewCfg(), def, nil), m
 }
 
-func ensureOrg(t *testing.T, engine *xorm.Engine) {
+func ensureOrg(t *testing.T, store *testStore) {
 	t.Helper()
+	_, err := store.GetSqlxSession().Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS org (
+			id BIGINT PRIMARY KEY,
+			name VARCHAR(255),
+			created TIMESTAMP NULL,
+			updated TIMESTAMP NULL,
+			version BIGINT NOT NULL
+		)
+	`)
+	require.NoError(t, err)
+
 	var count int64
-	has, _ := engine.NewSession().SQL("SELECT COUNT(*) FROM org WHERE id = 1").Get(&count)
-	if !has || count == 0 {
-		_, err := engine.Exec("INSERT INTO org (id, name, created, updated, version) VALUES (1, 'test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)")
+	err = store.GetSqlxSession().Get(context.Background(), &count, "SELECT COUNT(*) FROM org WHERE id = ?", 1)
+	require.NoError(t, err)
+	if count == 0 {
+		_, err := store.GetSqlxSession().Exec(context.Background(), "INSERT INTO org (id, name, created, updated, version) VALUES (1, 'test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)")
 		require.NoError(t, err)
 	}
 }
 
-func runMigration(t *testing.T, engine *xorm.Engine, runner *MigrationRunner, driverName string) {
+func runMigration(t *testing.T, store *testStore, runner *MigrationRunner, driverName string) {
 	t.Helper()
-	mg := migrator.NewMigrator(engine, setting.NewCfg())
-	sess := engine.NewSession()
-	defer sess.Close()
-	require.NoError(t, sess.Begin())
-	require.NoError(t, runner.Run(context.Background(), sess, mg, RunOptions{DriverName: driverName}))
-	_ = sess.Commit()
+	mg := storagemigrator.NewMigrator(store.GetSqlxSession())
+	tx, err := store.GetSqlxSession().SqlDB().BeginTx(context.Background(), nil)
+	require.NoError(t, err)
+	require.NoError(t, runner.Run(context.Background(), tx, mg, RunOptions{DriverName: driverName}))
+	require.NoError(t, tx.Commit())
 }
 
-func assertRenamed(t *testing.T, engine *xorm.Engine, tables ...string) {
+func assertRenamed(t *testing.T, store *testStore, tables ...string) {
 	t.Helper()
+	dialect := storagemigrator.NewDialect(store.GetSqlxSession().DriverName())
 	for _, table := range tables {
-		exists, err := engine.IsTableExist(table)
+		exists, err := storageq.TableExists(context.Background(), store.GetSqlxSession().SqlDB(), dialect, table)
 		require.NoError(t, err)
 		require.False(t, exists, "%s should be gone", table)
-		exists, err = engine.IsTableExist(table + legacySuffix)
+		exists, err = storageq.TableExists(context.Background(), store.GetSqlxSession().SqlDB(), dialect, table+legacySuffix)
 		require.NoError(t, err)
 		require.True(t, exists, "%s_legacy should exist", table)
 	}
 }
 
-func assertNotRenamed(t *testing.T, engine *xorm.Engine, table string) {
+func assertNotRenamed(t *testing.T, store *testStore, table string) {
 	t.Helper()
-	exists, err := engine.IsTableExist(table)
+	dialect := storagemigrator.NewDialect(store.GetSqlxSession().DriverName())
+	exists, err := storageq.TableExists(context.Background(), store.GetSqlxSession().SqlDB(), dialect, table)
 	require.NoError(t, err)
 	require.True(t, exists)
-	exists, err = engine.IsTableExist(table + legacySuffix)
+	exists, err = storageq.TableExists(context.Background(), store.GetSqlxSession().SqlDB(), dialect, table+legacySuffix)
 	require.NoError(t, err)
 	require.False(t, exists)
+}
+
+func isTestDBSQLite() bool {
+	return !isTestDBMySQL() && !isTestDBPostgres()
+}
+
+func isTestDBMySQL() bool {
+	return testsqlutil.GetTestDBType() == storagemigrator.MySQL
+}
+
+func isTestDBPostgres() bool {
+	return testsqlutil.GetTestDBType() == storagemigrator.Postgres
 }
 
 func noopLocker() *tableLockerMock {
@@ -121,27 +193,27 @@ func noopLocker() *tableLockerMock {
 
 func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
 	env := newTestEnv(t)
-	if !db.IsTestDbPostgres() {
+	if !isTestDBPostgres() {
 		t.Skip("Postgres-only")
 	}
 
-	table := uniqueTable(t, env.engine)
+	table := uniqueTable(t, env.store)
 	sqlProvider := legacysql.NewDatabaseProvider(env.store)
 	runner, _ := newRunner(t, &postgresTableLocker{sql: sqlProvider}, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{table}, nil))
-	runMigration(t, env.engine, runner, migrator.Postgres)
+	runMigration(t, env.store, runner, storagemigrator.Postgres)
 }
 
 func TestIntegrationRun_MySQL_UsesTableLocker(t *testing.T) {
 	env := newTestEnv(t)
-	if !db.IsTestDbMySQL() {
+	if !isTestDBMySQL() {
 		t.Skip("MySQL-only")
 	}
 
-	table := uniqueTable(t, env.engine)
+	table := uniqueTable(t, env.store)
 	unlockCalled := false
 	locker := &tableLockerMock{unlockFunc: func(context.Context) error { unlockCalled = true; return nil }}
 	runner, _ := newRunner(t, locker, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{table}, nil))
-	runMigration(t, env.engine, runner, migrator.MySQL)
+	runMigration(t, env.store, runner, storagemigrator.MySQL)
 
 	require.True(t, unlockCalled)
 	require.Equal(t, []string{table}, locker.tables)
@@ -162,7 +234,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 	cases := []renameCase{
 		{
 			name: "Postgres",
-			skip: func() bool { return !db.IsTestDbPostgres() },
+			skip: func() bool { return !isTestDBPostgres() },
 			locker: func() MigrationTableLocker {
 				return &postgresTableLocker{sql: legacysql.NewDatabaseProvider(env.store)}
 			},
@@ -171,21 +243,21 @@ func TestIntegrationRun_Rename(t *testing.T) {
 		},
 		{
 			name:      "SQLite",
-			skip:      func() bool { return !db.IsTestDbSQLite() },
+			skip:      func() bool { return !isTestDBSQLite() },
 			locker:    func() MigrationTableLocker { return noopLocker() },
 			renamer:   func() MigrationTableRenamer { return &transactionalTableRenamer{log: logger} },
 			numTables: 1, wantRenamed: true,
 		},
 		{
 			name:      "SQLite no rename configured",
-			skip:      func() bool { return !db.IsTestDbSQLite() },
+			skip:      func() bool { return !isTestDBSQLite() },
 			locker:    func() MigrationTableLocker { return noopLocker() },
 			renamer:   func() MigrationTableRenamer { return &transactionalTableRenamer{log: logger} },
 			numTables: 1, wantRenamed: false,
 		},
 		{
 			name: "MySQL multiple tables",
-			skip: func() bool { return !db.IsTestDbMySQL() },
+			skip: func() bool { return !isTestDBMySQL() },
 			locker: func() MigrationTableLocker {
 				return &mysqlTableLocker{sql: legacysql.NewDatabaseProvider(env.store)}
 			},
@@ -194,7 +266,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 		},
 		{
 			name: "MySQL no rename configured",
-			skip: func() bool { return !db.IsTestDbMySQL() },
+			skip: func() bool { return !isTestDBMySQL() },
 			locker: func() MigrationTableLocker {
 				return &mysqlTableLocker{sql: legacysql.NewDatabaseProvider(env.store)}
 			},
@@ -211,7 +283,7 @@ func TestIntegrationRun_Rename(t *testing.T) {
 
 			tables := make([]string, tc.numTables)
 			for i := range tables {
-				tables[i] = uniqueTable(t, env.engine)
+				tables[i] = uniqueTable(t, env.store)
 			}
 
 			var renameTables []string
@@ -220,12 +292,12 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			}
 
 			runner, _ := newRunner(t, tc.locker(), tc.renamer(), testDef(dummyGR(), tables, renameTables))
-			runMigration(t, env.engine, runner, env.engine.DriverName())
+			runMigration(t, env.store, runner, env.store.GetSqlxSession().DriverName())
 
 			if tc.wantRenamed {
-				assertRenamed(t, env.engine, tables...)
+				assertRenamed(t, env.store, tables...)
 			} else {
-				assertNotRenamed(t, env.engine, tables[0])
+				assertNotRenamed(t, env.store, tables[0])
 			}
 		})
 	}
@@ -233,21 +305,17 @@ func TestIntegrationRun_Rename(t *testing.T) {
 
 func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 	env := newTestEnv(t)
-	if !db.IsTestDbMySQL() {
+	if !isTestDBMySQL() {
 		t.Skip("MySQL-only")
 	}
 
 	t.Run("single table detected", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
+		table := uniqueTable(t, env.store)
 		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
-		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+		mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+		renamer.Init(env.store.GetSqlxSession().SqlDB(), mg)
 
-		sess := env.engine.NewSession()
-		defer sess.Close()
-		require.NoError(t, sess.Begin())
-		renamer.Init(sess, mg)
-
-		unlock, results := lockAndQueueRename(t, env.engine, []string{table})
+		unlock, results := lockAndQueueRename(t, env.store, []string{table})
 
 		require.NoError(t, renamer.waitForRenamesQueued(context.Background(), []renamePair{{table, table + legacySuffix}}))
 
@@ -261,16 +329,12 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 	})
 
 	t.Run("multiple tables detected", func(t *testing.T) {
-		t1, t2 := uniqueTable(t, env.engine), uniqueTable(t, env.engine)
+		t1, t2 := uniqueTable(t, env.store), uniqueTable(t, env.store)
 		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
-		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+		mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+		renamer.Init(env.store.GetSqlxSession().SqlDB(), mg)
 
-		sess := env.engine.NewSession()
-		defer sess.Close()
-		require.NoError(t, sess.Begin())
-		renamer.Init(sess, mg)
-
-		unlock, results := lockAndQueueRename(t, env.engine, []string{t1, t2})
+		unlock, results := lockAndQueueRename(t, env.store, []string{t1, t2})
 		require.Len(t, results, 2, "expected one result channel per table")
 
 		pairs := []renamePair{{t1, t1 + legacySuffix}, {t2, t2 + legacySuffix}}
@@ -291,16 +355,12 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 	})
 
 	t.Run("mismatched table times out", func(t *testing.T) {
-		t1, t2 := uniqueTable(t, env.engine), uniqueTable(t, env.engine)
+		t1, t2 := uniqueTable(t, env.store), uniqueTable(t, env.store)
 		renamer := &mysqlTableRenamer{log: logger, waitDeadline: 500 * time.Millisecond}
-		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+		mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+		renamer.Init(env.store.GetSqlxSession().SqlDB(), mg)
 
-		sess := env.engine.NewSession()
-		defer sess.Close()
-		require.NoError(t, sess.Begin())
-		renamer.Init(sess, mg)
-
-		unlock, results := lockAndQueueRename(t, env.engine, []string{t1, t2})
+		unlock, results := lockAndQueueRename(t, env.store, []string{t1, t2})
 
 		// Wait for the real renames to be queued first so the RENAME goroutines
 		// are actually blocked before we test the mismatch.
@@ -323,14 +383,10 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 	})
 
 	t.Run("context cancellation", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
+		table := uniqueTable(t, env.store)
 		renamer := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
-		mg := migrator.NewMigrator(env.engine, setting.NewCfg())
-
-		sess := env.engine.NewSession()
-		defer sess.Close()
-		require.NoError(t, sess.Begin())
-		renamer.Init(sess, mg)
+		mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+		renamer.Init(env.store.GetSqlxSession().SqlDB(), mg)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -345,13 +401,14 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 // goroutine per table that issues a RENAME (which blocks until the lock is
 // released). It returns an unlock function and a channel per table that
 // delivers the rename result.
-func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unlock func(), results []<-chan error) {
+func lockAndQueueRename(t *testing.T, store *testStore, tables []string) (unlock func(), results []<-chan error) {
 	t.Helper()
-	if !db.IsTestDbMySQL() {
+	if !isTestDBMySQL() {
 		t.Skip("MySQL-only")
 	}
 
-	lockConn, err := engine.DB().Conn(context.Background())
+	dialect := storagemigrator.NewDialect(store.GetSqlxSession().DriverName())
+	lockConn, err := store.GetSqlxSession().SqlDB().Conn(context.Background())
 	require.NoError(t, err)
 
 	// Build "t1 READ, t2 READ, ..." lock statement.
@@ -360,7 +417,7 @@ func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unl
 		if i > 0 {
 			lockStmt += ", "
 		}
-		lockStmt += engine.Quote(tbl) + " READ"
+		lockStmt += dialect.Quote(tbl) + " READ"
 	}
 	_, err = lockConn.ExecContext(context.Background(), "LOCK TABLES "+lockStmt)
 	require.NoError(t, err)
@@ -382,14 +439,14 @@ func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unl
 		ch := make(chan error, 1)
 		results[i] = ch
 		go func(tbl string, ch chan<- error) {
-			conn, cerr := engine.DB().Conn(context.Background())
+			conn, cerr := store.GetSqlxSession().SqlDB().Conn(context.Background())
 			if cerr != nil {
 				ch <- cerr
 				return
 			}
 			defer func() { _ = conn.Close() }()
 			_, rerr := conn.ExecContext(context.Background(),
-				fmt.Sprintf("RENAME TABLE %s TO %s", engine.Quote(tbl), engine.Quote(tbl+legacySuffix)))
+				fmt.Sprintf("RENAME TABLE %s TO %s", dialect.Quote(tbl), dialect.Quote(tbl+legacySuffix)))
 			ch <- rerr
 		}(tbl, ch)
 	}
@@ -398,29 +455,30 @@ func lockAndQueueRename(t *testing.T, engine *xorm.Engine, tables []string) (unl
 
 func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
 	env := newTestEnv(t)
-	if !db.IsTestDbMySQL() {
+	if !isTestDBMySQL() {
 		t.Skip("MySQL-only")
 	}
 
-	t1, t2 := uniqueTable(t, env.engine), uniqueTable(t, env.engine)
+	t1, t2 := uniqueTable(t, env.store), uniqueTable(t, env.store)
 	def := testDef(dummyGR(), []string{t1, t2}, []string{t1, t2})
 
 	// Simulate partial crash: only t1 renamed
-	_, err := env.engine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", env.engine.Quote(t1), env.engine.Quote(t1+legacySuffix)))
+	dialect := storagemigrator.NewDialect(env.store.GetSqlxSession().DriverName())
+	_, err := env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("ALTER TABLE %s RENAME TO %s", dialect.Quote(t1), dialect.Quote(t1+legacySuffix)))
 	require.NoError(t, err)
 
 	sqlProvider := legacysql.NewDatabaseProvider(env.store)
 	runner, m := newRunner(t, &mysqlTableLocker{sql: sqlProvider}, &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}, def)
-	runMigration(t, env.engine, runner, migrator.MySQL)
+	runMigration(t, env.store, runner, storagemigrator.MySQL)
 
 	// Recovery restores tables, then full migration re-runs including rename
 	m.AssertCalled(t, "Migrate", mock.Anything, mock.Anything)
-	assertRenamed(t, env.engine, t1, t2)
+	assertRenamed(t, env.store, t1, t2)
 }
 
 func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	env := newTestEnv(t)
-	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+	mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
 
 	type renamerSetup struct {
 		name string
@@ -428,13 +486,13 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	}
 
 	var setup renamerSetup
-	if db.IsTestDbMySQL() {
+	if isTestDBMySQL() {
 		setup = renamerSetup{
 			name: "mysql",
 			make: func(t *testing.T) MigrationTableRenamer {
 				t.Helper()
 				r := &mysqlTableRenamer{log: logger, waitDeadline: time.Minute}
-				r.Init(nil, mg)
+				r.Init(env.store.GetSqlxSession().SqlDB(), mg)
 				return r // MySQL DDL auto-commits, no session needed
 			},
 		}
@@ -444,24 +502,22 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 			make: func(t *testing.T) MigrationTableRenamer {
 				t.Helper()
 				r := &transactionalTableRenamer{log: logger}
-				sess := env.engine.NewSession()
-				t.Cleanup(func() { _ = sess.Rollback(); sess.Close() })
-				require.NoError(t, sess.Begin())
-				r.Init(sess, mg)
+				r.Init(env.store.GetSqlxSession().SqlDB(), mg)
 				return r
 			},
 		}
 	}
 
 	t.Run(setup.name+"/normal state", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
+		table := uniqueTable(t, env.store)
 		renamer := setup.make(t)
 		require.NoError(t, renamer.RecoverRenamedTables([]string{table}))
 	})
 
 	t.Run(setup.name+"/recovery — legacy exists, original missing", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
-		_, err := env.engine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME TO %s", env.engine.Quote(table), env.engine.Quote(table+legacySuffix)))
+		table := uniqueTable(t, env.store)
+		dialect := storagemigrator.NewDialect(env.store.GetSqlxSession().DriverName())
+		_, err := env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("ALTER TABLE %s RENAME TO %s", dialect.Quote(table), dialect.Quote(table+legacySuffix)))
 		require.NoError(t, err)
 
 		renamer := setup.make(t)
@@ -469,17 +525,18 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 
 		// Recovery renames via mg.DBEngine (not sess), so the table is immediately
 		// visible to other connections — which is required for migrators to read it.
-		exists, err := env.engine.IsTableExist(table)
+		exists, err := storageq.TableExists(context.Background(), env.store.GetSqlxSession().SqlDB(), dialect, table)
 		require.NoError(t, err)
 		require.True(t, exists, "original table should be restored and visible via engine")
 	})
 
 	t.Run(setup.name+"/error — both exist", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
-		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(table+legacySuffix)))
+		table := uniqueTable(t, env.store)
+		dialect := storagemigrator.NewDialect(env.store.GetSqlxSession().DriverName())
+		_, err := env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", dialect.Quote(table+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			_, _ = env.engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", env.engine.Quote(table+legacySuffix)))
+			_, _ = env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", dialect.Quote(table+legacySuffix)))
 		})
 
 		renamer := setup.make(t)
@@ -504,7 +561,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 // migration attempt fails.
 func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	if !db.IsTestDbSQLite() {
+	if !isTestDBSQLite() {
 		t.Skip("SQLite-only")
 	}
 
@@ -581,13 +638,14 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 	runnerCfg := setting.NewCfg()
 	runner := NewMigrationRunner(wrapped, noopLocker(), &transactionalTableRenamer{log: logger}, runnerCfg, def, nil)
 
-	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
-	sess := env.engine.NewSession()
-	defer sess.Close()
-	require.NoError(t, sess.Begin())
-
-	err = runner.Run(context.Background(), sess, mg, RunOptions{DriverName: migrator.SQLite})
+	mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+	tx, err := env.store.GetSqlxSession().SqlDB().BeginTx(context.Background(), nil)
 	require.NoError(t, err)
+	defer func() { _ = tx.Rollback() }()
+
+	err = runner.Run(context.Background(), tx, mg, RunOptions{DriverName: storagemigrator.SQLite})
+	require.NoError(t, err)
+	require.NoError(t, tx.Commit())
 
 	// The migrator func should have been called twice: once for the failed first attempt,
 	// once for the successful retry.
@@ -617,15 +675,16 @@ func (m *retryAwareMigrator) RebuildIndexes(ctx context.Context, opts RebuildInd
 func TestIntegrationBuildRenamePairs(t *testing.T) {
 	env := newTestEnv(t)
 
-	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
+	mg := storagemigrator.NewMigrator(env.store.GetSqlxSession())
+	dialect := storagemigrator.NewDialect(env.store.GetSqlxSession().DriverName())
 
 	t.Run("skips already renamed", func(t *testing.T) {
 		name := fmt.Sprintf("test_crash_%s", uuid.New().String()[:8])
-		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(name+legacySuffix)))
+		_, err := env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", dialect.Quote(name+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			_, _ = env.engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", env.engine.Quote(name)))
-			_, _ = env.engine.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", env.engine.Quote(name+legacySuffix)))
+			_, _ = env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", dialect.Quote(name)))
+			_, _ = env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", dialect.Quote(name+legacySuffix)))
 		})
 		pairs, err := buildRenamePairs(logger, mg, []string{name})
 		require.NoError(t, err)
@@ -633,7 +692,7 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	})
 
 	t.Run("returns pair for table needing rename", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
+		table := uniqueTable(t, env.store)
 		pairs, err := buildRenamePairs(logger, mg, []string{table})
 		require.NoError(t, err)
 		require.Len(t, pairs, 1)
@@ -641,8 +700,8 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	})
 
 	t.Run("errors when both exist", func(t *testing.T) {
-		table := uniqueTable(t, env.engine)
-		_, _ = env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(table+legacySuffix)))
+		table := uniqueTable(t, env.store)
+		_, _ = env.store.GetSqlxSession().Exec(context.Background(), fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", dialect.Quote(table+legacySuffix)))
 		_, err := buildRenamePairs(logger, mg, []string{table})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unexpected state")

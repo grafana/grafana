@@ -3,8 +3,12 @@ package dashboard
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
+
+type sqlSessionProvider interface {
+	GetSqlxSession() *session.SessionDB
+}
 
 type DataSourceRef struct {
 	UID  string `json:"uid,omitempty"`
@@ -138,23 +142,24 @@ func (d *DsLookup) ByType(dsType string) []DataSourceRef {
 	return ds
 }
 
-func LoadDatasourceLookup(ctx context.Context, orgID int64, sql db.DB) (DatasourceLookup, error) {
-	rows := make([]*DatasourceQueryResult, 0)
+func LoadDatasourceLookup(ctx context.Context, orgID int64, sql sqlSessionProvider) (DatasourceLookup, error) {
+	rows, err := sql.GetSqlxSession().Query(ctx, "SELECT uid, name, type, is_default FROM data_source WHERE org_id = ?", orgID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
 
-	if err := sql.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Table("data_source").
-			Where("org_id = ?", orgID).
-			Cols("uid", "name", "type", "is_default")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
+	results := make([]*DatasourceQueryResult, 0)
+	for rows.Next() {
+		row := &DatasourceQueryResult{}
+		if err := rows.Scan(&row.UID, &row.Name, &row.Type, &row.IsDefault); err != nil {
+			return nil, err
 		}
-
-		return nil
-	}); err != nil {
+		results = append(results, row)
+	}
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return CreateDatasourceLookup(rows), nil
+	return CreateDatasourceLookup(results), nil
 }

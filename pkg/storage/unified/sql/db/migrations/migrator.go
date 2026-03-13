@@ -3,14 +3,12 @@ package migrations
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
-func MigrateResourceStore(ctx context.Context, engine *xorm.Engine, cfg *setting.Cfg) error {
-	mg := migrator.NewScopedMigrator(engine, cfg, "resource")
+func MigrateResourceStore(ctx context.Context, handle storagemigrator.Handle, cfg *setting.Cfg) error {
+	mg := storagemigrator.NewScopedMigrator(handle, "resource")
 	mg.AddCreateMigration()
 
 	initResourceTables(mg)

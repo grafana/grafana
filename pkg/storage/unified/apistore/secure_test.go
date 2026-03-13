@@ -13,7 +13,6 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 )
 
 func TestSecureLifecycle(t *testing.T) {
@@ -34,7 +33,7 @@ func TestSecureLifecycle(t *testing.T) {
 	}
 
 	t.Run("create secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
 			Return("NameForA", nil).Once()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
@@ -68,7 +67,7 @@ func TestSecureLifecycle(t *testing.T) {
 
 		info := &objectForStorage{}
 		expectError := fmt.Errorf("expected error")
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
 			Return("", expectError).Maybe()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
@@ -81,7 +80,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("change name manually", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		previous := resourceWithSecureValues(common.InlineSecureValues{
@@ -110,7 +109,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("update without secrets", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		previousObject := resourceWithSecureValues(common.InlineSecureValues{
@@ -132,7 +131,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		previous := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 			"b": common.InlineSecureValue{Name: "NameForB"},
@@ -176,7 +175,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
 		})
@@ -193,7 +192,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values while creating others", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
 			Return("NameForA", nil).Once()
 
@@ -215,7 +214,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("delete resource", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
@@ -239,7 +238,7 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
 		expectError := fmt.Errorf("expected error")
-		secureStore = secret.NewMockInlineSecureValueSupport(t)
+		secureStore = newMockInlineSecureValueSupport(t)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(expectError).Once()
 		err = handleSecureValuesDelete(context.Background(), secureStore, obj)
@@ -248,7 +247,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("invalid states", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := newMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, resourceWithSecureValues(common.InlineSecureValues{

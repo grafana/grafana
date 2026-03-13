@@ -12,11 +12,11 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testdb"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
 var node, _ = snowflake.NewNode(1)
@@ -43,8 +43,9 @@ func setupBadgerKV(t *testing.T) KV {
 }
 
 func setupSqlKV(t *testing.T) kv.KV {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	cfg := setting.NewCfg()
+	testdb.ConfigureDatabase(t, cfg)
+	eDB, err := dbimpl.ProvideResourceDB(nil, cfg, nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())
 	require.NoError(t, err)

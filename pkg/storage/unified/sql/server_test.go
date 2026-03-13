@@ -3,8 +3,8 @@ package sql
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +19,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.SQLite)
+				dbSection.Key("type").SetValue(storagemigrator.SQLite)
 				dbSection.Key("high_availability").SetValue("true")
 				return cfg
 			}(),
@@ -30,7 +30,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.MySQL)
+				dbSection.Key("type").SetValue(storagemigrator.MySQL)
 				dbSection.Key("high_availability").SetValue("true")
 				return cfg
 			}(),
@@ -41,7 +41,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.MySQL)
+				dbSection.Key("type").SetValue(storagemigrator.MySQL)
 				dbSection.Key("high_availability").SetValue("false")
 				return cfg
 			}(),
@@ -52,7 +52,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.MySQL)
+				dbSection.Key("type").SetValue(storagemigrator.MySQL)
 				return cfg
 			}(),
 			isHA: true,
@@ -62,7 +62,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.Postgres)
+				dbSection.Key("type").SetValue(storagemigrator.Postgres)
 				dbSection.Key("high_availability").SetValue("true")
 				return cfg
 			}(),
@@ -73,7 +73,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.Postgres)
+				dbSection.Key("type").SetValue(storagemigrator.Postgres)
 				dbSection.Key("high_availability").SetValue("false")
 				return cfg
 			}(),
@@ -84,7 +84,7 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.Postgres)
+				dbSection.Key("type").SetValue(storagemigrator.Postgres)
 				return cfg
 			}(),
 			isHA: true,
@@ -123,9 +123,9 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			cfg: func() *setting.Cfg {
 				cfg := setting.NewCfg()
 				dbSection := cfg.SectionWithEnvOverrides("database")
-				dbSection.Key("type").SetValue(migrator.SQLite)
+				dbSection.Key("type").SetValue(storagemigrator.SQLite)
 				resourceAPISection := cfg.SectionWithEnvOverrides("resource_api")
-				resourceAPISection.Key("db_type").SetValue(migrator.Postgres)
+				resourceAPISection.Key("db_type").SetValue(storagemigrator.Postgres)
 				return cfg
 			}(),
 			isHA: true,

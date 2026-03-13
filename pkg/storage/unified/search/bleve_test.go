@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -70,7 +69,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 	}
 
 	rv := int64(10)
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "ns"})
 	var dashboardsIndex resource.ResourceIndex
 	var foldersIndex resource.ResourceIndex
 

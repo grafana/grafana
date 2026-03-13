@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -208,7 +208,7 @@ func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServ
 func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
 	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
 	resourceDBType := resourceAPICfg.Key("db_type").String()
-	if resourceDBType != "" && resourceDBType != migrator.SQLite {
+	if resourceDBType != "" && resourceDBType != storagemigrator.SQLite {
 		return true
 	}
 
@@ -217,7 +217,7 @@ func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bo
 
 	// SQLite is not possible to run in HA, so we force it to false.
 	databaseType := dbCfg.Key("type").String()
-	if databaseType == migrator.SQLite {
+	if databaseType == storagemigrator.SQLite {
 		isHA = false
 	}
 

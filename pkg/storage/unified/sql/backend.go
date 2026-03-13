@@ -16,6 +16,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -70,13 +70,17 @@ type Backend interface {
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
+type sqlSessionProvider interface {
+	GetSqlxSession() *session.SessionDB
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
 // For all other storage types a SQL backend will be created.
 func NewStorageBackend(
 	cfg *setting.Cfg,
-	db infraDB.DB,
+	db sqlSessionProvider,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	tracer trace.Tracer,
@@ -92,7 +96,7 @@ func NewStorageBackend(
 	default: // fall back to SQL backend
 	}
 	// create default unified backend
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	eDB, err := provideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +175,10 @@ func NewStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func provideResourceDB(grafanaDB sqlSessionProvider, cfg *setting.Cfg, tracer trace.Tracer) (db.DBProvider, error) {
+	return dbimpl.ProvideResourceDB(grafanaDB, cfg, tracer)
 }
 
 func NewFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {

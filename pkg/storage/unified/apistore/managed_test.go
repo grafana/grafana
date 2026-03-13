@@ -17,8 +17,16 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 )
+
+type audienceAuthInfo struct {
+	*identity.StaticRequester
+	audience []string
+}
+
+func (a *audienceAuthInfo) GetAudience() []string {
+	return a.audience
+}
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
@@ -119,14 +127,17 @@ func TestManagedAuthorizer(t *testing.T) {
 		},
 		{
 			name: "audience includes provisioning group",
-			auth: &serviceauthn.Identity{
-				Type: authtypes.TypeAccessPolicy,
-				UID:  "access-policy:random-uid",
-				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
-					Claims: jwt.Claims{
-						Audience: []string{provisioning.GROUP},
+			auth: &audienceAuthInfo{
+				StaticRequester: &identity.StaticRequester{
+					Type:    authtypes.TypeAccessPolicy,
+					UserUID: "random-uid",
+					AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
+						Claims: jwt.Claims{
+							Audience: []string{provisioning.GROUP},
+						},
 					},
 				},
+				audience: []string{provisioning.GROUP},
 			},
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{

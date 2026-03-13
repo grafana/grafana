@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	storagemigrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 const (
@@ -18,229 +16,208 @@ const (
 	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
+type sqlSessionProvider interface {
+	GetSqlxSession() *session.SessionDB
+}
+
 type SecretDB struct {
-	engine *xorm.Engine
+	db *session.SessionDB
 }
 
-func New() registry.DatabaseMigrator {
-	return &SecretDB{}
-}
-
-func NewWithEngine(db db.DB) contracts.SecretDBMigrator {
-	return &SecretDB{engine: db.GetEngine()}
+func NewWithDB(db sqlSessionProvider) contracts.SecretDBMigrator {
+	return &SecretDB{db: db.GetSqlxSession()}
 }
 
 func (db *SecretDB) RunMigrations(ctx context.Context, lockDatabase bool) error {
-	mg := migrator.NewScopedMigrator(db.engine, nil, "secret")
-
-	db.AddMigration(mg)
-
+	mg := storagemigrator.NewScopedMigrator(db.db, "secret")
+	AddMigrations(mg)
 	return mg.RunMigrations(ctx, lockDatabase, 0)
 }
 
-func (*SecretDB) AddMigration(mg *migrator.Migrator) {
+func AddMigrations(mg *storagemigrator.Migrator) {
 	mg.AddCreateMigration()
+	mg.AddMigration("Initialize secrets tables", &storagemigrator.RawSQLMigration{})
 
-	mg.AddMigration("Initialize secrets tables", &migrator.RawSQLMigration{})
+	tables := make([]storagemigrator.Table, 0, 4)
 
-	tables := make([]migrator.Table, 0, 4)
-
-	secureValueTable := migrator.Table{
+	secureValueTable := storagemigrator.Table{
 		Name: TableNameSecureValue,
-		Columns: []*migrator.Column{
-			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
-			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
-
-			// Kubernetes Status
-			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
-			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
-
-			// Spec
-			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
-			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true},       // Keeper name, if not set, use default keeper.
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
+		Columns: []*storagemigrator.Column{
+			{Name: "guid", Type: storagemigrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
+			{Name: "name", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "namespace", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "annotations", Type: storagemigrator.DB_Text, Nullable: true},
+			{Name: "labels", Type: storagemigrator.DB_Text, Nullable: true},
+			{Name: "created", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "created_by", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "updated", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "updated_by", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "external_id", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "active", Type: storagemigrator.DB_Bool, Nullable: false},
+			{Name: "version", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "description", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "keeper", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: true},
+			{Name: "decrypters", Type: storagemigrator.DB_Text, Nullable: true},
+			{Name: "ref", Type: storagemigrator.DB_NVarchar, Length: 1024, Nullable: true},
 		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name", "version", "active"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
+		Indices: []*storagemigrator.Index{
+			{Cols: []string{"namespace", "name", "version", "active"}, Type: storagemigrator.UniqueIndex},
+			{Cols: []string{"namespace", "name", "version"}, Type: storagemigrator.UniqueIndex},
 		},
 	}
 	tables = append(tables, secureValueTable)
 
-	keeperTable := migrator.Table{
+	keeperTable := storagemigrator.Table{
 		Name: TableNameKeeper,
-		Columns: []*migrator.Column{
-			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
-			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
-
-			// Spec
-			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
-			{Name: "type", Type: migrator.DB_Text, Nullable: false},
-			// Each keeper has a different payload so we store the whole thing as a blob.
-			{Name: "payload", Type: migrator.DB_Text, Nullable: true},
+		Columns: []*storagemigrator.Column{
+			{Name: "guid", Type: storagemigrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
+			{Name: "name", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "namespace", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "annotations", Type: storagemigrator.DB_Text, Nullable: true},
+			{Name: "labels", Type: storagemigrator.DB_Text, Nullable: true},
+			{Name: "created", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "created_by", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "updated", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "updated_by", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "description", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "type", Type: storagemigrator.DB_Text, Nullable: false},
+			{Name: "payload", Type: storagemigrator.DB_Text, Nullable: true},
 		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+		Indices: []*storagemigrator.Index{
+			{Cols: []string{"namespace", "name"}, Type: storagemigrator.UniqueIndex},
 		},
 	}
 	tables = append(tables, keeperTable)
 
-	dataKeyTable := migrator.Table{
+	dataKeyTable := storagemigrator.Table{
 		Name: TableNameDataKey,
-		Columns: []*migrator.Column{
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},    // Arbitrarily chosen.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false}, // Arbitrarily chosen.
-			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
-			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false}, // Arbitrarily chosen.
-			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
-			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		Columns: []*storagemigrator.Column{
+			{Name: "uid", Type: storagemigrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+			{Name: "namespace", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "label", Type: storagemigrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
+			{Name: "active", Type: storagemigrator.DB_Bool, Nullable: false},
+			{Name: "provider", Type: storagemigrator.DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "encrypted_data", Type: storagemigrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: storagemigrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: storagemigrator.DB_DateTime, Nullable: false},
 		},
-		Indices: []*migrator.Index{},
 	}
 	tables = append(tables, dataKeyTable)
 
-	encryptedValueTable := migrator.Table{
+	encryptedValueTable := storagemigrator.Table{
 		Name: TableNameEncryptedValue,
-		Columns: []*migrator.Column{
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
-			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
+		Columns: []*storagemigrator.Column{
+			{Name: "namespace", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "name", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "version", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "encrypted_data", Type: storagemigrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "updated", Type: storagemigrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
+		Indices: []*storagemigrator.Index{
+			{Cols: []string{"namespace", "name", "version"}, Type: storagemigrator.UniqueIndex},
 		},
 	}
 	tables = append(tables, encryptedValueTable)
 
-	// Initialize all tables
 	for t := range tables {
-		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
-		mg.AddMigration("create table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("drop table "+tables[t].Name, storagemigrator.NewDropTableMigration(tables[t].Name))
+		mg.AddMigration("create table "+tables[t].Name, storagemigrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), storagemigrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
-	mg.AddMigration("create index for list on "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+	mg.AddMigration("create index for list on "+TableNameSecureValue, storagemigrator.NewAddIndexMigration(secureValueTable, &storagemigrator.Index{
 		Cols: []string{"namespace", "active", "updated"},
-		Type: migrator.IndexType,
+		Type: storagemigrator.IndexType,
 	}))
-
-	mg.AddMigration("create index for list and read current on "+TableNameDataKey, migrator.NewAddIndexMigration(dataKeyTable, &migrator.Index{
+	mg.AddMigration("create index for list and read current on "+TableNameDataKey, storagemigrator.NewAddIndexMigration(dataKeyTable, &storagemigrator.Index{
 		Cols: []string{"namespace", "label", "active"},
-		Type: migrator.IndexType,
+		Type: storagemigrator.IndexType,
 	}))
 
-	// Owner Reference columns
-	mg.AddMigration("add owner_reference_api_group column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add owner_reference_api_group column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "owner_reference_api_group",
-		Type:     migrator.DB_NVarchar,
-		Length:   253, // Limit enforced by K8s.
+		Type:     storagemigrator.DB_NVarchar,
+		Length:   253,
 		Nullable: true,
 	}))
-
-	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "owner_reference_api_version",
-		Type:     migrator.DB_NVarchar,
-		Length:   253, // Limit enforced by K8s.
+		Type:     storagemigrator.DB_NVarchar,
+		Length:   253,
 		Nullable: true,
 	}))
-
-	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "owner_reference_kind",
-		Type:     migrator.DB_NVarchar,
-		Length:   253, // Limit enforced by K8s.
+		Type:     storagemigrator.DB_NVarchar,
+		Length:   253,
 		Nullable: true,
 	}))
-
-	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "owner_reference_name",
-		Type:     migrator.DB_NVarchar,
-		Length:   253, // Limit enforced by K8s.
+		Type:     storagemigrator.DB_NVarchar,
+		Length:   253,
 		Nullable: true,
 	}))
-
-	mg.AddMigration("add lease_token column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add lease_token column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "lease_token",
-		Type:     migrator.DB_NVarchar,
+		Type:     storagemigrator.DB_NVarchar,
 		Length:   36,
 		Nullable: true,
 	}))
-	mg.AddMigration("add lease_token index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+	mg.AddMigration("add lease_token index to "+TableNameSecureValue, storagemigrator.NewAddIndexMigration(secureValueTable, &storagemigrator.Index{
 		Cols: []string{"lease_token"},
 	}))
-	mg.AddMigration("add lease_created column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+	mg.AddMigration("add lease_created column to "+TableNameSecureValue, storagemigrator.NewAddColumnMigration(secureValueTable, &storagemigrator.Column{
 		Name:     "lease_created",
-		Type:     migrator.DB_BigInt,
+		Type:     storagemigrator.DB_BigInt,
 		Nullable: false,
 		Default:  "0",
 	}))
-	mg.AddMigration("add lease_created index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+	mg.AddMigration("add lease_created index to "+TableNameSecureValue, storagemigrator.NewAddIndexMigration(secureValueTable, &storagemigrator.Index{
 		Cols: []string{"lease_created"},
 	}))
-
-	mg.AddMigration("add data_key_id column to "+TableNameEncryptedValue, migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
+	mg.AddMigration("add data_key_id column to "+TableNameEncryptedValue, storagemigrator.NewAddColumnMigration(encryptedValueTable, &storagemigrator.Column{
 		Name:     "data_key_id",
-		Type:     migrator.DB_NVarchar,
+		Type:     storagemigrator.DB_NVarchar,
 		Length:   100,
 		Nullable: false,
 		Default:  "''",
 	}))
-	mg.AddMigration("add data_key_id index to "+TableNameEncryptedValue, migrator.NewAddIndexMigration(encryptedValueTable, &migrator.Index{
+	mg.AddMigration("add data_key_id index to "+TableNameEncryptedValue, storagemigrator.NewAddIndexMigration(encryptedValueTable, &storagemigrator.Index{
 		Cols: []string{"data_key_id"},
 	}))
-	mg.AddMigration("add active column to "+TableNameKeeper, migrator.NewAddColumnMigration(keeperTable, &migrator.Column{
+	mg.AddMigration("add active column to "+TableNameKeeper, storagemigrator.NewAddColumnMigration(keeperTable, &storagemigrator.Column{
 		Name:     "active",
-		Type:     migrator.DB_Bool,
+		Type:     storagemigrator.DB_Bool,
 		Nullable: false,
 		Default:  "false",
 	}))
-	mg.AddMigration("add active column index to "+TableNameKeeper, migrator.NewAddIndexMigration(keeperTable, &migrator.Index{
+	mg.AddMigration("add active column index to "+TableNameKeeper, storagemigrator.NewAddIndexMigration(keeperTable, &storagemigrator.Index{
 		Cols: []string{"namespace", "name", "active"},
 	}))
-	mg.AddMigration("set secret_secure_value.keeper to 'system' where keeper is null in "+TableNameSecureValue, migrator.NewRawSQLMigration(
+	mg.AddMigration("set secret_secure_value.keeper to 'system' where keeper is null in "+TableNameSecureValue, storagemigrator.NewRawSQLMigration(
 		fmt.Sprintf("UPDATE %s SET keeper = '%s' WHERE keeper IS NULL", TableNameSecureValue, contracts.SystemKeeperName),
 	))
 
-	encryptedValueTableUniqueKey := migrator.Index{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex}
-	updatedEncryptedValueTable := migrator.Table{
+	encryptedValueTableUniqueKey := storagemigrator.Index{Cols: []string{"namespace", "name", "version"}, Type: storagemigrator.UniqueIndex}
+	updatedEncryptedValueTable := storagemigrator.Table{
 		Name: TableNameEncryptedValue,
-		Columns: []*migrator.Column{
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true}, // Limit enforced by K8s.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true},
-			{Name: "version", Type: migrator.DB_BigInt, Nullable: false, IsPrimaryKey: true},
-			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "data_key_id", Type: migrator.DB_NVarchar, Length: 100, Nullable: false, Default: "''"},
+		Columns: []*storagemigrator.Column{
+			{Name: "namespace", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true},
+			{Name: "name", Type: storagemigrator.DB_NVarchar, Length: 253, Nullable: false, IsPrimaryKey: true},
+			{Name: "version", Type: storagemigrator.DB_BigInt, Nullable: false, IsPrimaryKey: true},
+			{Name: "encrypted_data", Type: storagemigrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "updated", Type: storagemigrator.DB_BigInt, Nullable: false},
+			{Name: "data_key_id", Type: storagemigrator.DB_NVarchar, Length: 100, Nullable: false, Default: "''"},
 		},
 		PrimaryKeys: []string{"namespace", "name", "version"},
-		Indices: []*migrator.Index{
+		Indices: []*storagemigrator.Index{
 			{Cols: []string{"data_key_id"}},
 		},
 	}
-	migrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
+	storagemigrator.ConvertUniqueKeyToPrimaryKey(mg, encryptedValueTableUniqueKey, updatedEncryptedValueTable)
 }

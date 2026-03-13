@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -63,7 +62,7 @@ func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
 
 			err := svc.Run(context.Background())
 			require.NoError(t, err)
-			require.Equal(t, float64(1), testutil.ToFloat64(metrics.MUnifiedStorageMigrationStatus))
+			require.Equal(t, float64(1), testutil.ToFloat64(migrationStatusMetric))
 			migrator.AssertNotCalled(t, "Migrate")
 		})
 	}

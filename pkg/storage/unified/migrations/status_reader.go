@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type migrationStatusReader struct {
-	sqlStore db.DB
+	sqlStore sqlutil.SessionProvider
 	cfg      *setting.Cfg
 	registry *MigrationRegistry
 }
@@ -20,7 +20,7 @@ var _ contract.MigrationStatusReader = (*migrationStatusReader)(nil)
 
 // ProvideMigrationStatusReader creates a MigrationStatusReader
 func ProvideMigrationStatusReader(
-	sqlStore db.DB,
+	sqlStore sqlutil.SessionProvider,
 	cfg *setting.Cfg,
 	registry *MigrationRegistry,
 ) contract.MigrationStatusReader {

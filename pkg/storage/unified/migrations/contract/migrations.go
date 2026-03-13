@@ -3,7 +3,6 @@ package contract
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -11,7 +10,7 @@ import (
 // This interface is defined in a separate package to avoid import cycles between
 // the migrations implementation and packages that need to depend on it (like dualwrite).
 type UnifiedStorageMigrationService interface {
-	registry.BackgroundService
+	Run(ctx context.Context) error
 }
 
 // StorageMode represents the storage mode for a resource.

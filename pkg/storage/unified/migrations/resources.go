@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func registerMigrations(cfg *setting.Cfg,
-	mg *sqlstoremigrator.Migrator,
-	migrator UnifiedMigrator,
+	mg *migrator.Migrator,
+	unifiedMigrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
 	tableRenamer MigrationTableRenamer,
 	client resourcepb.ResourceIndexClient,
@@ -29,13 +29,13 @@ func registerMigrations(cfg *setting.Cfg,
 			logger.Info("Migration is disabled in config, skipping", "migration", def.ID)
 			continue
 		}
-		registerMigration(mg, migrator, tableLocker, tableRenamer, cfg, client, def)
+		registerMigration(mg, unifiedMigrator, tableLocker, tableRenamer, cfg, client, def)
 	}
 	return nil
 }
 
-func registerMigration(mg *sqlstoremigrator.Migrator,
-	migrator UnifiedMigrator,
+func registerMigration(mg *migrator.Migrator,
+	unifiedMigrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
 	tableRenamer MigrationTableRenamer,
 	cfg *setting.Cfg,
@@ -44,7 +44,7 @@ func registerMigration(mg *sqlstoremigrator.Migrator,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
+	migration := NewResourceMigration(unifiedMigrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }
 
@@ -72,14 +72,10 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 
 const migrationLogTableName = "unifiedstorage_migration_log"
 
-func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
+func migrationExists(ctx context.Context, sqlStore sqlutil.SessionProvider, migrationID string) (bool, error) {
 	var count int64
-	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		count, err = sess.Table(migrationLogTableName).Where("migration_id = ?", migrationID).Count()
-		return err
-	})
-	if err != nil {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE migration_id = ?", migrationLogTableName)
+	if err := sqlStore.GetSqlxSession().Get(ctx, &count, query, migrationID); err != nil {
 		return false, fmt.Errorf("failed to check migration existence: %w", err)
 	}
 	return count > 0, nil

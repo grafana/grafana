@@ -12,7 +12,6 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 )
 
 func TestSecureValues(t *testing.T) {
@@ -40,7 +39,7 @@ func TestSecureValues(t *testing.T) {
 				Create: common.NewSecretValue("XXX"),
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 		pberr := canReferenceSecureValues(context.Background(), obj, nil, nil)
 		require.Equal(t, http.StatusServiceUnavailable, int(pberr.Code), "missing store")
 
@@ -89,7 +88,7 @@ func TestSecureValues(t *testing.T) {
 				Name: "111", // duplicate reference, but only checked once
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 		secureMock.On("CanReference", mock.Anything, owner, "111").
 			Return(nil).Once()
 
@@ -109,7 +108,7 @@ func TestSecureValues(t *testing.T) {
 		}
 
 		old, _ := utils.MetaAccessor(&unstructured.Unstructured{})
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 		secureMock.On("CanReference", mock.Anything, owner, "111", "222").
 			Return(nil).Once()
 
@@ -138,7 +137,7 @@ func TestSecureValues(t *testing.T) {
 						Name: "Not222",
 					},
 				}}})
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 		secureMock.On("CanReference", mock.Anything, owner, "111", "222").
 			Return(nil).Once()
 
@@ -153,7 +152,7 @@ func TestSecureValues(t *testing.T) {
 				Name: "111",
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 
 		pberr := canReferenceSecureValues(context.Background(), obj, obj, secureMock)
 		require.Nil(t, pberr)
@@ -166,7 +165,7 @@ func TestSecureValues(t *testing.T) {
 				Name: "111",
 			},
 		}
-		secureMock := secret.NewMockInlineSecureValueSupport(t)
+		secureMock := newMockInlineSecureValueSupport(t)
 		secureMock.On("CanReference", mock.Anything, owner, "111").
 			Return(fmt.Errorf("nope")).Once() // <<< error in CanReference
 
@@ -178,7 +177,7 @@ func TestSecureValues(t *testing.T) {
 		old, _ := utils.MetaAccessor(&unstructured.Unstructured{
 			Object: map[string]any{"secure": t}})
 
-		secureMock = secret.NewMockInlineSecureValueSupport(t)
+		secureMock = newMockInlineSecureValueSupport(t)
 		secureMock.On("CanReference", mock.Anything, owner, "111").
 			Return(nil).Once()
 		pberr = canReferenceSecureValues(context.Background(), obj, old, secureMock)

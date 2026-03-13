@@ -1,13 +1,13 @@
 package dbimpl
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // defined in the standard library in database/sql/ctxutil.go
@@ -23,7 +23,7 @@ func TestReproIncident2144IndependentOfGrafanaDB(t *testing.T) {
 
 	t.Run("driver without isolation level should fail", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 
 		db, err := sql.Open(driverWithoutIsolationLevelName, "")
 		require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestReproIncident2144IndependentOfGrafanaDB(t *testing.T) {
 
 	t.Run("driver with isolation level should work", func(t *testing.T) {
 		t.Parallel()
-		ctx := testutil.NewDefaultTestContext(t)
+		ctx := context.Background()
 
 		db, err := sql.Open(driverWithIsolationLevelName, "")
 		require.NoError(t, err)
@@ -59,11 +59,11 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 
 			t.Run("base behaviour is preserved", func(t *testing.T) {
 				t.Parallel()
-				ctx := testutil.NewDefaultTestContext(t)
+				ctx := context.Background()
 				cfgMap := cfgMap{}
 				setupDBForGrafana(t, ctx, cfgMap)
 				grafanaDB := newTestInfraDB(t, cfgMap)
-				db := grafanaDB.GetEngine().DB().DB
+				db := grafanaDB.SqlDB()
 				_, err := db.BeginTx(ctx, txOpts)
 				require.NoError(t, err)
 			})
@@ -71,7 +71,7 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 			t.Run("Resource API does not fail and correctly uses Grafana DB as fallback",
 				func(t *testing.T) {
 					t.Parallel()
-					ctx := testutil.NewDefaultTestContext(t)
+					ctx := context.Background()
 					cfgMap := cfgMap{}
 					cfg := newCfgFromIniMap(t, cfgMap)
 					setupDBForGrafana(t, ctx, cfgMap)
@@ -85,7 +85,7 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 	t.Run("core Grafana db instrumentation removes driver ability to use isolation levels",
 		func(t *testing.T) {
 			t.Parallel()
-			ctx := testutil.NewDefaultTestContext(t)
+			ctx := context.Background()
 			cfgMap := cfgMap{
 				"database": cfgSectionMap{
 					grafanaDBInstrumentQueriesKey: "true",
@@ -96,8 +96,8 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 
 			t.Run("base failure caused by instrumentation", func(t *testing.T) {
 				t.Parallel()
-				ctx := testutil.NewDefaultTestContext(t)
-				db := grafanaDB.GetEngine().DB().DB
+				ctx := context.Background()
+				db := grafanaDB.SqlDB()
 				_, err := db.BeginTx(ctx, txOpts)
 				require.Error(t, err)
 				require.Equal(t, noIsolationLevelSupportErrStr, err.Error())

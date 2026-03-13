@@ -1,12 +1,14 @@
 package migrations
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 // rvFloor is the first microsecond timestamp that produces a 19-digit snowflake ID,
@@ -24,11 +26,11 @@ func (m *SmallRVFixMigration) SQL(_ migrator.Dialect) string {
 	return "fix small resource versions code migration"
 }
 
-func (m *SmallRVFixMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *SmallRVFixMigration) Exec(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator) error {
 	quoteFn := mg.Dialect.Quote
 
 	// Step 1: Find all affected group+resource combinations
-	affectedGRs, err := getAffectedGroupResources(sess, quoteFn)
+	affectedGRs, err := getAffectedGroupResources(ctx, queryer, quoteFn)
 	if err != nil {
 		return fmt.Errorf("finding affected group resources: %w", err)
 	}
@@ -37,7 +39,7 @@ func (m *SmallRVFixMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 	}
 
 	for _, gr := range affectedGRs {
-		if err := fixGroupResource(sess, quoteFn, mg, gr); err != nil {
+		if err := fixGroupResource(ctx, queryer, quoteFn, mg, gr); err != nil {
 			return fmt.Errorf("fixing group=%s resource=%s: %w", gr.group, gr.resource, err)
 		}
 	}
@@ -56,7 +58,7 @@ type rvUpdateEntry struct {
 	keyPath string
 }
 
-func getAffectedGroupResources(sess *xorm.Session, quoteFn func(string) string) ([]groupResource, error) {
+func getAffectedGroupResources(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string) ([]groupResource, error) {
 	query := fmt.Sprintf(`
 		SELECT DISTINCT %s, %s FROM (
 			SELECT %s, %s FROM resource_history WHERE resource_version < %d
@@ -68,7 +70,7 @@ func getAffectedGroupResources(sess *xorm.Session, quoteFn func(string) string) 
 		quoteFn("group"), quoteFn("resource"), rvFloor,
 	)
 
-	rows, err := sess.SQL(query).Query()
+	rows, err := sqlutil.QueryMaps(ctx, queryer, query)
 	if err != nil {
 		return nil, err
 	}
@@ -83,9 +85,9 @@ func getAffectedGroupResources(sess *xorm.Session, quoteFn func(string) string) 
 	return results, nil
 }
 
-func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migrator.Migrator, gr groupResource) error {
+func fixGroupResource(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, mg *migrator.Migrator, gr groupResource) error {
 	// Collect bad records from resource_history
-	badRecords, err := collectBadRecords(sess, quoteFn, gr)
+	badRecords, err := collectBadRecords(ctx, queryer, quoteFn, gr)
 	if err != nil {
 		return fmt.Errorf("collecting bad records: %w", err)
 	}
@@ -94,7 +96,7 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 	}
 
 	// Find the ceiling (first valid RV >= rvFloor)
-	ceiling, err := findRVCeiling(sess, quoteFn, mg, gr)
+	ceiling, err := findRVCeiling(ctx, queryer, quoteFn, mg, gr)
 	if err != nil {
 		return fmt.Errorf("finding ceiling: %w", err)
 	}
@@ -102,7 +104,7 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 	// Handle insufficient slots by moving the ceiling record up
 	availableSlots := ceiling - rvFloor
 	if int64(len(badRecords)) > availableSlots {
-		err = makeSlotsAvailable(sess, quoteFn, mg, gr, ceiling, int64(len(badRecords)))
+		err = makeSlotsAvailable(ctx, queryer, quoteFn, mg, gr, ceiling, int64(len(badRecords)))
 		if err != nil {
 			return fmt.Errorf("making slots available: %w", err)
 		}
@@ -130,20 +132,20 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 		}
 		batch := updates[start:end]
 
-		if err := updatePrevRVRefs(sess, quoteFn, gr, batch); err != nil {
+		if err := updatePrevRVRefs(ctx, queryer, quoteFn, gr, batch); err != nil {
 			return fmt.Errorf("updating previous_resource_version refs: %w", err)
 		}
-		if err := updateHistoryRVs(sess, batch); err != nil {
+		if err := updateHistoryRVs(ctx, queryer, batch); err != nil {
 			return fmt.Errorf("updating resource_history RVs: %w", err)
 		}
-		if err := updateResourceRVs(sess, batch); err != nil {
+		if err := updateResourceRVs(ctx, queryer, batch); err != nil {
 			return fmt.Errorf("updating resource RVs: %w", err)
 		}
 	}
 	return nil
 }
 
-func collectBadRecords(sess *xorm.Session, quoteFn func(string) string, gr groupResource) ([]resourceHistoryRow, error) {
+func collectBadRecords(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, gr groupResource) ([]resourceHistoryRow, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM resource_history
@@ -154,14 +156,16 @@ func collectBadRecords(sess *xorm.Session, quoteFn func(string) string, gr group
 		quoteFn("group"), gr.group, quoteFn("resource"), gr.resource, rvFloor,
 	)
 
-	var rows []resourceHistoryRow
-	if err := sess.SQL(query).Find(&rows); err != nil {
+	rows, err := queryer.QueryContext(ctx, query)
+	if err != nil {
 		return nil, err
 	}
-	return rows, nil
+	defer func() { _ = rows.Close() }()
+
+	return scanResourceHistoryRows(rows)
 }
 
-func findRVCeiling(sess *xorm.Session, quoteFn func(string) string, mg *migrator.Migrator, gr groupResource) (int64, error) {
+func findRVCeiling(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, mg *migrator.Migrator, gr groupResource) (int64, error) {
 	query := fmt.Sprintf(`
 		SELECT MIN(resource_version) AS rv FROM (
 			SELECT resource_version FROM resource_history
@@ -174,13 +178,13 @@ func findRVCeiling(sess *xorm.Session, quoteFn func(string) string, mg *migrator
 		quoteFn("group"), gr.group, quoteFn("resource"), gr.resource, rvFloor,
 	)
 
-	results, err := sess.SQL(query).Query()
+	results, err := sqlutil.QueryMaps(ctx, queryer, query)
 	if err != nil {
 		return 0, err
 	}
 	if len(results) == 0 || results[0]["rv"] == nil || string(results[0]["rv"]) == "" {
 		// No valid records exist — use the database's current epoch
-		return getCurrentDBEpoch(sess, mg)
+		return getCurrentDBEpoch(ctx, queryer, mg)
 	}
 
 	var ceiling int64
@@ -190,7 +194,7 @@ func findRVCeiling(sess *xorm.Session, quoteFn func(string) string, mg *migrator
 	return ceiling, nil
 }
 
-func getCurrentDBEpoch(sess *xorm.Session, mg *migrator.Migrator) (int64, error) {
+func getCurrentDBEpoch(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator) (int64, error) {
 	var epochQuery string
 	switch mg.Dialect.DriverName() {
 	case migrator.MySQL:
@@ -203,7 +207,7 @@ func getCurrentDBEpoch(sess *xorm.Session, mg *migrator.Migrator) (int64, error)
 		return 0, fmt.Errorf("unsupported database dialect: %s", mg.Dialect.DriverName())
 	}
 
-	results, err := sess.SQL(epochQuery).Query()
+	results, err := sqlutil.QueryMaps(ctx, queryer, epochQuery)
 	if err != nil {
 		return 0, fmt.Errorf("querying current epoch: %w", err)
 	}
@@ -218,14 +222,14 @@ func getCurrentDBEpoch(sess *xorm.Session, mg *migrator.Migrator) (int64, error)
 	return epoch, nil
 }
 
-func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migrator.Migrator, gr groupResource, ceiling int64, needed int64) error {
+func makeSlotsAvailable(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, _ *migrator.Migrator, gr groupResource, ceiling int64, needed int64) error {
 	targetMinCeiling := rvFloor + needed
 	if ceiling >= targetMinCeiling {
 		return nil
 	}
 
 	// Move every valid RV that blocks the [rvFloor, targetMinCeiling) range.
-	blockingRVs, err := findBlockingRVs(sess, quoteFn, gr, ceiling, targetMinCeiling)
+	blockingRVs, err := findBlockingRVs(ctx, queryer, quoteFn, gr, ceiling, targetMinCeiling)
 	if err != nil {
 		return fmt.Errorf("finding blocking RVs: %w", err)
 	}
@@ -233,7 +237,7 @@ func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migr
 		return nil
 	}
 
-	freeRVs, err := findFreeRVsByScan(sess, quoteFn, gr, ceiling, targetMinCeiling, len(blockingRVs))
+	freeRVs, err := findFreeRVsByScan(ctx, queryer, quoteFn, gr, ceiling, targetMinCeiling, len(blockingRVs))
 	if err != nil {
 		return fmt.Errorf("finding free RVs by scan: %w", err)
 	}
@@ -245,7 +249,7 @@ func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migr
 	// Preserve order by mapping lower old RVs to lower free RVs.
 	for i, oldRV := range blockingRVs {
 		newRV := freeRVs[i]
-		if err := moveCeilingRecord(sess, quoteFn, gr, oldRV, newRV); err != nil {
+		if err := moveCeilingRecord(ctx, queryer, quoteFn, gr, oldRV, newRV); err != nil {
 			return fmt.Errorf("moving RV %d to %d: %w", oldRV, newRV, err)
 		}
 	}
@@ -253,7 +257,7 @@ func makeSlotsAvailable(sess *xorm.Session, quoteFn func(string) string, _ *migr
 	return nil
 }
 
-func findBlockingRVs(sess *xorm.Session, quoteFn func(string) string, gr groupResource, fromRV, toRV int64) ([]int64, error) {
+func findBlockingRVs(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, gr groupResource, fromRV, toRV int64) ([]int64, error) {
 	query := fmt.Sprintf(`
 		SELECT resource_version AS rv FROM (
 			SELECT resource_version FROM resource_history
@@ -267,7 +271,7 @@ func findBlockingRVs(sess *xorm.Session, quoteFn func(string) string, gr groupRe
 		quoteFn("group"), gr.group, quoteFn("resource"), gr.resource, fromRV, toRV,
 	)
 
-	rows, err := sess.SQL(query).Query()
+	rows, err := sqlutil.QueryMaps(ctx, queryer, query)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +287,7 @@ func findBlockingRVs(sess *xorm.Session, quoteFn func(string) string, gr groupRe
 	return rvs, nil
 }
 
-func findFreeRVsByScan(sess *xorm.Session, quoteFn func(string) string, gr groupResource, startRV, minDestinationRV int64, count int) ([]int64, error) {
+func findFreeRVsByScan(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, gr groupResource, startRV, minDestinationRV int64, count int) ([]int64, error) {
 	if count <= 0 {
 		return nil, nil
 	}
@@ -292,7 +296,7 @@ func findFreeRVsByScan(sess *xorm.Session, quoteFn func(string) string, gr group
 	cursor := startRV
 
 	for len(free) < count {
-		occupiedBatch, err := fetchHistoryRVsBatch(sess, quoteFn, gr, cursor, rvScanBatchSize)
+		occupiedBatch, err := fetchHistoryRVsBatch(ctx, queryer, quoteFn, gr, cursor, rvScanBatchSize)
 		if err != nil {
 			return nil, err
 		}
@@ -325,7 +329,7 @@ func findFreeRVsByScan(sess *xorm.Session, quoteFn func(string) string, gr group
 	return free, nil
 }
 
-func fetchHistoryRVsBatch(sess *xorm.Session, quoteFn func(string) string, gr groupResource, fromRV int64, limit int) ([]int64, error) {
+func fetchHistoryRVsBatch(ctx context.Context, queryer migrator.Queryer, quoteFn func(string) string, gr groupResource, fromRV int64, limit int) ([]int64, error) {
 	query := fmt.Sprintf(`
 		SELECT resource_version AS rv
 		FROM resource_history
@@ -335,7 +339,7 @@ func fetchHistoryRVsBatch(sess *xorm.Session, quoteFn func(string) string, gr gr
 		quoteFn("group"), gr.group, quoteFn("resource"), gr.resource, fromRV, limit,
 	)
 
-	rows, err := sess.SQL(query).Query()
+	rows, err := sqlutil.QueryMaps(ctx, queryer, query)
 	if err != nil {
 		return nil, err
 	}
@@ -351,20 +355,26 @@ func fetchHistoryRVsBatch(sess *xorm.Session, quoteFn func(string) string, gr gr
 	return rvs, nil
 }
 
-func moveCeilingRecord(sess *xorm.Session, q func(string) string, gr groupResource, oldRV, newRV int64) error {
+func moveCeilingRecord(ctx context.Context, queryer migrator.Queryer, q func(string) string, gr groupResource, oldRV, newRV int64) error {
 	// Find resource_history records at the ceiling
 	histQuery := fmt.Sprintf(`
-		SELECT %s, %s, %s, %s, %s, %s, %s
+		SELECT %s, %s, %s, %s, %s, %s, %s, %s
 		FROM resource_history
 		WHERE %s = '%s' AND %s = '%s' AND resource_version = %d`,
-		q("guid"), q("namespace"), q("name"), q("action"), q("resource_version"),
-		q("folder"), q("resource"),
+		q("guid"), q("namespace"), q("name"), q("resource_version"), q("action"),
+		q("folder"), q("group"), q("resource"),
 		q("group"), gr.group, q("resource"), gr.resource, oldRV,
 	)
 
-	var histRows []resourceHistoryRow
-	if err := sess.SQL(histQuery).Find(&histRows); err != nil {
+	rows, err := queryer.QueryContext(ctx, histQuery)
+	if err != nil {
 		return fmt.Errorf("finding ceiling history records: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	histRows, err := scanResourceHistoryRows(rows)
+	if err != nil {
+		return fmt.Errorf("scanning ceiling history records: %w", err)
 	}
 
 	for _, row := range histRows {
@@ -377,9 +387,9 @@ func moveCeilingRecord(sess *xorm.Session, q func(string) string, gr groupResour
 			UPDATE resource_history
 			SET resource_version = %d, key_path = '%s'
 			WHERE guid = '%s'`,
-			newRV, newKeyPath, row.GUID,
+			newRV, escapeSQLString(newKeyPath), escapeSQLString(row.GUID),
 		)
-		if _, err := sess.Exec(updateSQL); err != nil {
+		if _, err := queryer.ExecContext(ctx, updateSQL); err != nil {
 			return fmt.Errorf("updating ceiling history record: %w", err)
 		}
 	}
@@ -390,9 +400,9 @@ func moveCeilingRecord(sess *xorm.Session, q func(string) string, gr groupResour
 		SET resource_version = %d
 		WHERE %s = '%s' AND %s = '%s' AND resource_version = %d`,
 		newRV,
-		q("group"), gr.group, q("resource"), gr.resource, oldRV,
+		q("group"), escapeSQLString(gr.group), q("resource"), escapeSQLString(gr.resource), oldRV,
 	)
-	if _, err := sess.Exec(resUpdateSQL); err != nil {
+	if _, err := queryer.ExecContext(ctx, resUpdateSQL); err != nil {
 		return fmt.Errorf("updating ceiling resource record: %w", err)
 	}
 
@@ -402,9 +412,9 @@ func moveCeilingRecord(sess *xorm.Session, q func(string) string, gr groupResour
 		SET previous_resource_version = %d
 		WHERE %s = '%s' AND %s = '%s' AND previous_resource_version = %d`,
 		newRV,
-		q("group"), gr.group, q("resource"), gr.resource, oldRV,
+		q("group"), escapeSQLString(gr.group), q("resource"), escapeSQLString(gr.resource), oldRV,
 	)
-	if _, err := sess.Exec(prevHistSQL); err != nil {
+	if _, err := queryer.ExecContext(ctx, prevHistSQL); err != nil {
 		return fmt.Errorf("updating previous_resource_version refs in history: %w", err)
 	}
 
@@ -413,16 +423,16 @@ func moveCeilingRecord(sess *xorm.Session, q func(string) string, gr groupResour
 		SET previous_resource_version = %d
 		WHERE %s = '%s' AND %s = '%s' AND previous_resource_version = %d`,
 		newRV,
-		q("group"), gr.group, q("resource"), gr.resource, oldRV,
+		q("group"), escapeSQLString(gr.group), q("resource"), escapeSQLString(gr.resource), oldRV,
 	)
-	if _, err := sess.Exec(prevResSQL); err != nil {
+	if _, err := queryer.ExecContext(ctx, prevResSQL); err != nil {
 		return fmt.Errorf("updating previous_resource_version refs in resource: %w", err)
 	}
 
 	return nil
 }
 
-func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResource, batch []rvUpdateEntry) error {
+func updatePrevRVRefs(ctx context.Context, queryer migrator.Queryer, q func(string) string, gr groupResource, batch []rvUpdateEntry) error {
 	if len(batch) == 0 {
 		return nil
 	}
@@ -441,10 +451,10 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 		SELECT guid, previous_resource_version
 		FROM resource_history
 		WHERE %s = '%s' AND %s = '%s' AND previous_resource_version IN (%s)`,
-		q("group"), gr.group, q("resource"), gr.resource, inClause,
+		q("group"), escapeSQLString(gr.group), q("resource"), escapeSQLString(gr.resource), inClause,
 	)
 
-	histResults, err := sess.SQL(histSelectSQL).Query()
+	histResults, err := sqlutil.QueryMaps(ctx, queryer, histSelectSQL)
 	if err != nil {
 		return fmt.Errorf("querying history prev RV refs: %w", err)
 	}
@@ -459,8 +469,8 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				return fmt.Errorf("parsing history previous_resource_version for guid %q: %w", guid, err)
 			}
 			if newRV, ok := rvMap[prevRV]; ok {
-				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
-				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
+				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", escapeSQLString(guid), newRV)
+				guidList = append(guidList, fmt.Sprintf("'%s'", escapeSQLString(guid)))
 			}
 		}
 		caseClause += " END"
@@ -472,7 +482,7 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				WHERE guid IN (%s)`,
 				caseClause, strings.Join(guidList, ", "),
 			)
-			if _, err := sess.Exec(updateSQL); err != nil {
+			if _, err := queryer.ExecContext(ctx, updateSQL); err != nil {
 				return fmt.Errorf("updating history prev RV refs: %w", err)
 			}
 		}
@@ -483,10 +493,10 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 		SELECT guid, previous_resource_version
 		FROM resource
 		WHERE %s = '%s' AND %s = '%s' AND previous_resource_version IN (%s)`,
-		q("group"), gr.group, q("resource"), gr.resource, inClause,
+		q("group"), escapeSQLString(gr.group), q("resource"), escapeSQLString(gr.resource), inClause,
 	)
 
-	resResults, err := sess.SQL(resSelectSQL).Query()
+	resResults, err := sqlutil.QueryMaps(ctx, queryer, resSelectSQL)
 	if err != nil {
 		return fmt.Errorf("querying resource prev RV refs: %w", err)
 	}
@@ -501,8 +511,8 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				return fmt.Errorf("parsing resource previous_resource_version for guid %q: %w", guid, err)
 			}
 			if newRV, ok := rvMap[prevRV]; ok {
-				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", guid, newRV)
-				guidList = append(guidList, fmt.Sprintf("'%s'", guid))
+				caseClause += fmt.Sprintf(" WHEN '%s' THEN %d", escapeSQLString(guid), newRV)
+				guidList = append(guidList, fmt.Sprintf("'%s'", escapeSQLString(guid)))
 			}
 		}
 		caseClause += " END"
@@ -514,7 +524,7 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 				WHERE guid IN (%s)`,
 				caseClause, strings.Join(guidList, ", "),
 			)
-			if _, err := sess.Exec(updateSQL); err != nil {
+			if _, err := queryer.ExecContext(ctx, updateSQL); err != nil {
 				return fmt.Errorf("updating resource prev RV refs: %w", err)
 			}
 		}
@@ -523,7 +533,7 @@ func updatePrevRVRefs(sess *xorm.Session, q func(string) string, gr groupResourc
 	return nil
 }
 
-func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
+func updateHistoryRVs(ctx context.Context, queryer migrator.Queryer, batch []rvUpdateEntry) error {
 	if len(batch) == 0 {
 		return nil
 	}
@@ -533,9 +543,9 @@ func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
-		quotedGUID := fmt.Sprintf("'%s'", u.guid)
+		quotedGUID := fmt.Sprintf("'%s'", escapeSQLString(u.guid))
 		rvCase += fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV)
-		keyPathCase += fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, u.keyPath)
+		keyPathCase += fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, escapeSQLString(u.keyPath))
 		guidList = append(guidList, quotedGUID)
 	}
 
@@ -549,13 +559,13 @@ func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 		rvCase, keyPathCase, strings.Join(guidList, ", "),
 	)
 
-	if _, err := sess.Exec(sql); err != nil {
+	if _, err := queryer.ExecContext(ctx, sql); err != nil {
 		return fmt.Errorf("updating resource_history records: %w", err)
 	}
 	return nil
 }
 
-func updateResourceRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
+func updateResourceRVs(ctx context.Context, queryer migrator.Queryer, batch []rvUpdateEntry) error {
 	if len(batch) == 0 {
 		return nil
 	}
@@ -564,7 +574,7 @@ func updateResourceRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
-		quotedGUID := fmt.Sprintf("'%s'", u.guid)
+		quotedGUID := fmt.Sprintf("'%s'", escapeSQLString(u.guid))
 		rvCase += fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV)
 		guidList = append(guidList, quotedGUID)
 	}
@@ -577,8 +587,32 @@ func updateResourceRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 		rvCase, strings.Join(guidList, ", "),
 	)
 
-	if _, err := sess.Exec(sql); err != nil {
+	if _, err := queryer.ExecContext(ctx, sql); err != nil {
 		return fmt.Errorf("updating resource records: %w", err)
 	}
 	return nil
+}
+
+func scanResourceHistoryRows(rows *sql.Rows) ([]resourceHistoryRow, error) {
+	result := make([]resourceHistoryRow, 0)
+	for rows.Next() {
+		row := resourceHistoryRow{}
+		if err := rows.Scan(
+			&row.GUID,
+			&row.Namespace,
+			&row.Name,
+			&row.ResourceVersion,
+			&row.Action,
+			&row.Folder,
+			&row.Group,
+			&row.Resource,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

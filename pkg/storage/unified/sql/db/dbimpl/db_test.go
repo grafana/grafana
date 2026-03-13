@@ -1,18 +1,17 @@
 package dbimpl
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestDB_BeginTx(t *testing.T) {
 	t.Parallel()
 	registerTestSQLDrivers()
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := context.Background()
 
 	sqlDB, err := sql.Open(driverWithIsolationLevelName, "")
 	require.NoError(t, err)

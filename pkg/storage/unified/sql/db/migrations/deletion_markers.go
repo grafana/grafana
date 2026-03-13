@@ -1,15 +1,15 @@
 package migrations
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"xorm.io/builder"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 type deletionMarkerMigrator struct {
@@ -20,23 +20,41 @@ func (m *deletionMarkerMigrator) SQL(dialect migrator.Dialect) string {
 	return `Find rows in resource_history with value LIKE {"kind":"DeletedMarker"%`
 }
 
-func (m *deletionMarkerMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *deletionMarkerMigrator) Exec(ctx context.Context, queryer migrator.Queryer, mg *migrator.Migrator) error {
 	logger := log.New("deletion-marker-migrator")
 	type model struct {
-		GUID       string `xorm:"guid"`
-		Value      string `xorm:"value"`
-		Group      string `xorm:"group"`
-		Resource   string `xorm:"resource"`
-		PreviousRV string `xorm:"previous_resource_version"`
+		GUID       string
+		Value      string
+		Group      string
+		Resource   string
+		PreviousRV string
 	}
-	var models []model
 
 	logger.Info("finding any deletion markers")
-	err := sess.Table("resource_history").
-		Cols("guid", "value", "group", "resource", "previous_resource_version").
-		Where("action = 3").And("value LIKE ?", `{"kind":"DeletedMarker"%`).
-		Find(&models)
+	query := fmt.Sprintf(
+		`SELECT %s, %s, %s, %s, %s FROM resource_history WHERE action = 3 AND value LIKE '%s'`,
+		mg.Dialect.Quote("guid"),
+		mg.Dialect.Quote("value"),
+		mg.Dialect.Quote("group"),
+		mg.Dialect.Quote("resource"),
+		mg.Dialect.Quote("previous_resource_version"),
+		`{"kind":"DeletedMarker"%`,
+	)
+	rows, err := queryer.QueryContext(ctx, query)
 	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	models := make([]model, 0)
+	for rows.Next() {
+		row := model{}
+		if err := rows.Scan(&row.GUID, &row.Value, &row.Group, &row.Resource, &row.PreviousRV); err != nil {
+			return err
+		}
+		models = append(models, row)
+	}
+	if err := rows.Err(); err != nil {
 		return err
 	}
 
@@ -44,16 +62,20 @@ func (m *deletionMarkerMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator)
 		logger.Info("updating markers with a real resource", "count", len(models))
 		for _, row := range models {
 			tmp := &model{}
-			_ = sess.Table("resource_history").Conds().And(builder.Eq(map[string]any{
-				"group":            row.Group,
-				"resource":         row.Resource,
-				"resource_version": row.PreviousRV,
-			}))
-			ok, err := sess.Get(tmp)
-			if err != nil {
+			prevQuery := fmt.Sprintf(
+				`SELECT %s FROM resource_history WHERE %s = '%s' AND %s = '%s' AND resource_version = %s LIMIT 1`,
+				mg.Dialect.Quote("value"),
+				mg.Dialect.Quote("group"),
+				escapeSQLString(row.Group),
+				mg.Dialect.Quote("resource"),
+				escapeSQLString(row.Resource),
+				row.PreviousRV,
+			)
+			err := queryer.QueryRowContext(ctx, prevQuery).Scan(&tmp.Value)
+			if err != nil && err != sql.ErrNoRows {
 				return err
 			}
-			if ok && len(tmp.Value) > 1 {
+			if err == nil && len(tmp.Value) > 1 {
 				previous := &unstructured.Unstructured{}
 				err = previous.UnmarshalJSON([]byte(tmp.Value))
 				if err != nil {
@@ -83,24 +105,30 @@ func (m *deletionMarkerMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator)
 					return err
 				}
 
-				count, err := sess.Table("resource_history").Update(&model{
-					Value: string(buff),
-				}, &model{
-					GUID: row.GUID,
-				})
+				updateQuery := fmt.Sprintf(
+					`UPDATE resource_history SET %s = '%s' WHERE %s = '%s'`,
+					mg.Dialect.Quote("value"),
+					escapeSQLString(string(buff)),
+					mg.Dialect.Quote("guid"),
+					escapeSQLString(row.GUID),
+				)
+				result, err := queryer.ExecContext(ctx, updateQuery)
 				if err != nil {
 					return err
 				}
+				count, err := result.RowsAffected()
 				if count == 1 {
 					logger.Info("Updated", "GUID", row.GUID)
 				} else {
 					return fmt.Errorf("error updating")
 				}
 			} else {
-				_, err := sess.Table("resource_history").Delete(&model{
-					GUID: row.GUID,
-				})
-				if err != nil {
+				deleteQuery := fmt.Sprintf(
+					`DELETE FROM resource_history WHERE %s = '%s'`,
+					mg.Dialect.Quote("guid"),
+					escapeSQLString(row.GUID),
+				)
+				if _, err := queryer.ExecContext(ctx, deleteQuery); err != nil {
 					return err
 				}
 				logger.Info("Removed", "GUID", row.GUID)

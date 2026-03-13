@@ -7,14 +7,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // Validator interface validates migration results.
 type Validator interface {
 	Name() string
-	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
+	Validate(ctx context.Context, queryer migrator.Queryer, response *resourcepb.BulkResponse, log log.Logger) error
 }
 
 // ValidatorFactory creates a validator when given the runtime dependencies.

@@ -1,27 +1,32 @@
 package dbimpl
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/jmoiron/sqlx"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	_ "github.com/grafana/grafana/pkg/util/sqlite"
 )
 
-func getEngine(config *sqlstore.DatabaseConfig) (*xorm.Engine, error) {
+func getSession(config *DatabaseConfig) (*session.SessionDB, error) {
 	switch config.Type {
 	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite:
-		engine, err := xorm.NewEngine(config.Type, config.ConnectionString)
+		db, err := sql.Open(config.Type, config.ConnectionString)
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
 
-		engine.SetMaxOpenConns(config.MaxOpenConn)
-		engine.SetMaxIdleConns(config.MaxIdleConn)
-		engine.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
+		db.SetMaxOpenConns(config.MaxOpenConn)
+		db.SetMaxIdleConns(config.MaxIdleConn)
+		db.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
 
-		return engine, nil
+		return session.GetSession(sqlx.NewDb(db, config.Type)), nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", config.Type)
 	}

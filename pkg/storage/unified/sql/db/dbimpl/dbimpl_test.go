@@ -3,21 +3,18 @@ package dbimpl
 import (
 	"context"
 	"database/sql"
-	"net/http"
 	"sync"
 	"testing"
 
+	"github.com/gchaincl/sqlhooks"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
-	traceNoop "go.opentelemetry.io/otel/trace/noop"
 	ini "gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/bus"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 type (
@@ -96,21 +93,57 @@ func setupDBForGrafana(t *testing.T, ctx context.Context, m cfgMap) {
 		);
 	`)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
 }
 
-func newTestInfraDB(t *testing.T, m cfgMap) infraDB.DB {
-	t.Helper()
-	// nil migrations means no migrations
-	sqlstoreDB, err := sqlstore.ProvideService(
-		newCfgFromIniMap(t, m), // *setting.Cfg
-		featureTogglesNop{},    // featuremgmt.FeatureToggles
-		nil,                    // registry.DatabaseMigrator
-		nopBus{},               // github.com/grafana/grafana/pkg/bus.Bus
-		newNopTestGrafanaTracer(),
-	)
-	require.NoError(t, err)
+type testSessionProvider struct {
+	session *session.SessionDB
+}
 
-	return sqlstoreDB
+func (p *testSessionProvider) GetSqlxSession() *session.SessionDB {
+	return p.session
+}
+
+func (p *testSessionProvider) SqlDB() *sql.DB {
+	return p.session.SqlDB()
+}
+
+type noOpSQLHooks struct{}
+
+func (noOpSQLHooks) Before(ctx context.Context, _ string, _ ...any) (context.Context, error) {
+	return ctx, nil
+}
+
+func (noOpSQLHooks) After(ctx context.Context, _ string, _ ...any) (context.Context, error) {
+	return ctx, nil
+}
+
+func (noOpSQLHooks) OnError(_ context.Context, err error, _ string, _ ...any) error {
+	return err
+}
+
+func newTestInfraDB(t *testing.T, m cfgMap) *testSessionProvider {
+	t.Helper()
+	cfg := newCfgFromIniMap(t, m)
+	dbSection := cfg.SectionWithEnvOverrides("database")
+	driverName := dbSection.Key("type").String()
+	connStr := "file:" + dbSection.Key("path").String()
+	if dbSection.Key(grafanaDBInstrumentQueriesKey).MustBool(false) {
+		driverName = "sqlite3-hooks-" + uuid.NewString()
+		sql.Register(driverName, sqlhooks.Wrap(&sqlite.Driver{}, noOpSQLHooks{}))
+	}
+
+	db, err := sql.Open(driverName, connStr)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	return &testSessionProvider{
+		session: session.GetSession(sqlx.NewDb(db, driverName)),
+	}
 }
 
 // globalUnprotectedMutableState controls access to global mutable state found
@@ -143,29 +176,3 @@ func newTestINIFile(t *testing.T, m cfgMap) *ini.File {
 	}
 	return f
 }
-
-type (
-	testGrafanaTracer struct {
-		trace.Tracer
-	}
-	featureTogglesNop struct{}
-	nopBus            struct{}
-)
-
-func (testGrafanaTracer) Inject(context.Context, http.Header, trace.Span) {}
-func newNopTestGrafanaTracer() tracing.Tracer {
-	return testGrafanaTracer{traceNoop.NewTracerProvider().Tracer("test")}
-}
-
-func (featureTogglesNop) IsEnabled(context.Context, string) bool {
-	return false
-}
-func (featureTogglesNop) IsEnabledGlobally(string) bool {
-	return false
-}
-func (featureTogglesNop) GetEnabled(context.Context) map[string]bool {
-	return map[string]bool{}
-}
-
-func (nopBus) Publish(context.Context, bus.Msg) error { return nil }
-func (nopBus) AddEventListener(bus.HandlerFunc)       {}

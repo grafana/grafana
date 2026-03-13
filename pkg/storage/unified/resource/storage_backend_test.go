@@ -16,9 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testdb"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
 var appsNamespace = NamespacedResource{
@@ -348,7 +348,7 @@ func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testin
 	t.Skip("skipping flaky test for now")
 
 	t.Run("pollingNotifier", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
+		if testdb.IsSQLite() {
 			t.Skip("sqlite uses channel notifier")
 		}
 		sqlKV := setupSqlKV(t)

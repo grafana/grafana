@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -19,7 +18,7 @@ import (
 func TestService(t *testing.T) {
 	t.Run("dynamic", func(t *testing.T) {
 		ctx := context.Background()
-		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
+		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), newFakeKVStore(), NewFakeConfig(), NewFakeMigrator(), NewFakeMigrationStatusReader(), prometheus.NewRegistry())
 		require.NoError(t, err)
 
 		// Use a managed resource so KV-based Status path is exercised.
@@ -137,7 +136,7 @@ func TestService(t *testing.T) {
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
 					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), // enabled=true to get dynamic service
-					kvstore.NewFakeKVStore(),
+					newFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -178,7 +177,7 @@ func TestService(t *testing.T) {
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
 					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-					kvstore.NewFakeKVStore(),
+					newFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -216,7 +215,7 @@ func TestService(t *testing.T) {
 				statusReader := NewFakeMigrationStatusReader(gr.String(), tt.mode)
 				svc, err := ProvideService(
 					featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-					kvstore.NewFakeKVStore(),
+					newFakeKVStore(),
 					NewFakeConfig(),
 					NewFakeMigrator(),
 					statusReader,
@@ -241,7 +240,7 @@ func TestService(t *testing.T) {
 
 		svc, err := ProvideService(
 			featuremgmt.WithFeatures(featuremgmt.FlagProvisioning),
-			kvstore.NewFakeKVStore(),
+			newFakeKVStore(),
 			NewFakeConfig(),
 			NewFakeMigrator(),
 			reader,
@@ -344,7 +343,7 @@ func TestService(t *testing.T) {
 					"dashboards.dashboard.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode),
 					"folders.folder.grafana.app", storageModeFromConfigMode(tc.cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode),
 				)
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader, prometheus.NewRegistry())
+				svc, err := ProvideService(tc.flags, newFakeKVStore(), &tc.cfg, NewFakeMigrator(), statusReader, prometheus.NewRegistry())
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")

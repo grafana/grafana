@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,11 +31,15 @@ type UnifiedStorageGrpcService interface {
 	services.NamedService
 }
 
+type GRPCServerProvider interface {
+	GetServer() *grpc.Server
+}
+
 var (
 	_ UnifiedStorageGrpcService = (*distributorServer)(nil)
 )
 
-func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
+func ProvideSearchDistributorServer(tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool, provider GRPCServerProvider) (UnifiedStorageGrpcService, error) {
 	s := &distributorServer{
 		log:        log.New("index-server-distributor"),
 		ring:       ring,
@@ -46,7 +50,7 @@ func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring 
 	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
-	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
+	registerReflectionServer(srv)
 	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
 		ringWatcher := services.NewFailureWatcher()
 		ringWatcher.WatchService(s.ring)
@@ -94,6 +98,20 @@ type distributorServer struct {
 	ring       *ring.Ring
 	log        log.Logger
 	tracing    trace.Tracer
+}
+
+type reflectionServer struct {
+	grpc_reflection_v1alpha.ServerReflectionServer
+}
+
+func (s *reflectionServer) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
+}
+
+func registerReflectionServer(server *grpc.Server) {
+	grpc_reflection_v1alpha.RegisterServerReflectionServer(server, &reflectionServer{
+		ServerReflectionServer: reflection.NewServer(reflection.ServerOptions{Services: server}),
+	})
 }
 
 var (

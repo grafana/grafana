@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
+	unitest "github.com/grafana/grafana/pkg/tests/storage/unified/testing"
 )
 
 func TestBleveSearchBackend(t *testing.T) {

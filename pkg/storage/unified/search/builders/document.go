@@ -9,16 +9,20 @@ import (
 	sdkResource "github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type sqlSessionProvider interface {
+	GetSqlxSession() *session.SessionDB
+}
+
 // All returns all document builders from this package.
 // These builders have dependencies on Grafana apps (dashboard and user).
-func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
+func All(sql sqlSessionProvider, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
 	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}

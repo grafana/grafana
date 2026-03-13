@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/storage/sqlutil"
+	migrator "github.com/grafana/grafana/pkg/storage/sqlutil/migrator"
 )
 
 const legacySuffix = "_legacy"
@@ -16,7 +16,7 @@ const legacySuffix = "_legacy"
 type MigrationTableRenamer interface {
 	// Init configures the renamer with the session and migrator for this migration run.
 	// Must be called before RenameTables or RecoverRenamedTables.
-	Init(sess *xorm.Session, mg *migrator.Migrator)
+	Init(queryer migrator.Queryer, mg *migrator.Migrator)
 
 	// RenameTables renames the given tables with a _legacy suffix.
 	// doUnlock should release the migration table lock.
@@ -45,23 +45,23 @@ func newTableRenamer(dbType string, log log.Logger, waitDeadline time.Duration) 
 // DDL is transactional on these databases.
 type transactionalTableRenamer struct {
 	log  log.Logger
-	sess *xorm.Session
+	tx   migrator.Queryer
 	mg   *migrator.Migrator
 }
 
-func (r *transactionalTableRenamer) Init(sess *xorm.Session, mg *migrator.Migrator) {
-	r.sess = sess
+func (r *transactionalTableRenamer) Init(queryer migrator.Queryer, mg *migrator.Migrator) {
+	r.tx = queryer
 	r.mg = mg
 }
 
 func (r *transactionalTableRenamer) RecoverRenamedTables(tables []string) error {
 	for _, table := range tables {
 		legacyName := table + legacySuffix
-		legacyExists, err := r.mg.DBEngine.IsTableExist(legacyName)
+		legacyExists, err := sqlutil.TableExists(context.Background(), r.mg.SqlDB(), r.mg.Dialect, legacyName)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", legacyName, err)
 		}
-		originalExists, err := r.mg.DBEngine.IsTableExist(table)
+		originalExists, err := sqlutil.TableExists(context.Background(), r.mg.SqlDB(), r.mg.Dialect, table)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", table, err)
 		}
@@ -73,11 +73,9 @@ func (r *transactionalTableRenamer) RecoverRenamedTables(tables []string) error 
 		case originalExists:
 			continue // normal state, nothing to recover
 		default: // legacyExists && !originalExists, needs recovery
-			// Use mg.DBEngine (not sess) so the table is visible to other connections.
-			// Migrators read legacy tables through separate sessions/gRPC.
 			restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
 			r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
-			if _, err := r.mg.DBEngine.Exec(restoreSQL); err != nil {
+			if _, err := r.mg.SqlDB().ExecContext(context.Background(), restoreSQL); err != nil {
 				return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
 			}
 		}
@@ -98,7 +96,7 @@ func (r *transactionalTableRenamer) RenameTables(_ context.Context, tables []str
 	for _, p := range toRename {
 		renameSQL := r.mg.Dialect.RenameTable(p.oldName, p.newName)
 		r.log.Info("renaming legacy table", "table", p.oldName, "newName", p.newName, "sql", renameSQL)
-		if _, err := r.sess.Exec(renameSQL); err != nil {
+		if _, err := r.tx.ExecContext(context.Background(), renameSQL); err != nil {
 			return fmt.Errorf("failed to rename table %q to %q: %w", p.oldName, p.newName, err)
 		}
 	}
@@ -110,24 +108,24 @@ func (r *transactionalTableRenamer) RenameTables(_ context.Context, tables []str
 // ensures renames execute before any pending DML.
 type mysqlTableRenamer struct {
 	log          log.Logger
-	sess         *xorm.Session
+	queryer      migrator.Queryer
 	mg           *migrator.Migrator
 	waitDeadline time.Duration // 0 means 1 minute
 }
 
-func (r *mysqlTableRenamer) Init(sess *xorm.Session, mg *migrator.Migrator) {
-	r.sess = sess
+func (r *mysqlTableRenamer) Init(queryer migrator.Queryer, mg *migrator.Migrator) {
+	r.queryer = queryer
 	r.mg = mg
 }
 
 func (r *mysqlTableRenamer) RecoverRenamedTables(tables []string) error {
 	for _, table := range tables {
 		legacyName := table + legacySuffix
-		legacyExists, err := r.mg.DBEngine.IsTableExist(legacyName)
+		legacyExists, err := sqlutil.TableExists(context.Background(), r.mg.SqlDB(), r.mg.Dialect, legacyName)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", legacyName, err)
 		}
-		originalExists, err := r.mg.DBEngine.IsTableExist(table)
+		originalExists, err := sqlutil.TableExists(context.Background(), r.mg.SqlDB(), r.mg.Dialect, table)
 		if err != nil {
 			return fmt.Errorf("failed to check if table %q exists: %w", table, err)
 		}
@@ -141,7 +139,7 @@ func (r *mysqlTableRenamer) RecoverRenamedTables(tables []string) error {
 		default: // legacyExists && !originalExists — needs recovery
 			restoreSQL := r.mg.Dialect.RenameTable(legacyName, table)
 			r.log.Info("Restoring renamed table", "from", legacyName, "to", table)
-			if _, err := r.mg.DBEngine.Exec(restoreSQL); err != nil {
+			if _, err := r.mg.SqlDB().ExecContext(context.Background(), restoreSQL); err != nil {
 				return fmt.Errorf("failed to restore table %q to %q: %w", legacyName, table, err)
 			}
 		}
@@ -170,7 +168,7 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 	results := make(chan renameResult, len(tablesToRename))
 	for _, pair := range tablesToRename {
 		go func(p renamePair) {
-			conn, err := r.mg.DBEngine.DB().Conn(renameCtx)
+			conn, err := r.mg.SqlDB().Conn(renameCtx)
 			if err != nil {
 				results <- renameResult{pair: p, err: fmt.Errorf("failed to get connection for RENAME %q: %w", p.oldName, err)}
 				return
@@ -234,10 +232,11 @@ func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []re
 		for _, p := range pairs {
 			exactMatch := fmt.Sprintf("RENAME TABLE %s TO %s", r.mg.Dialect.Quote(p.oldName), r.mg.Dialect.Quote(p.newName))
 			var count int
-			_, err := r.sess.SQL(
-				"SELECT COUNT(*) FROM information_schema.processlist "+
-					"WHERE state = 'Waiting for table metadata lock' AND info = ?",
-				exactMatch).Get(&count)
+			err := r.queryer.QueryRowContext(
+				ctx,
+				"SELECT COUNT(*) FROM information_schema.processlist WHERE state = 'Waiting for table metadata lock' AND info = ?",
+				exactMatch,
+			).Scan(&count)
 			if err != nil {
 				return err
 			}
@@ -268,7 +267,7 @@ func (r *mysqlTableRenamer) rollbackRenames(results []renameResult) {
 		rollbackSQL := fmt.Sprintf("RENAME TABLE %s TO %s", r.mg.Dialect.Quote(res.pair.newName), r.mg.Dialect.Quote(res.pair.oldName))
 		r.log.Warn("Rolling back successful rename due to other rename failure",
 			"table", res.pair.oldName, "sql", rollbackSQL)
-		if _, err := r.mg.DBEngine.Exec(rollbackSQL); err != nil {
+		if _, err := r.mg.SqlDB().ExecContext(context.Background(), rollbackSQL); err != nil {
 			r.log.Error("Failed to rollback rename",
 				"table", res.pair.oldName, "newName", res.pair.newName, "error", err)
 		}
@@ -288,12 +287,12 @@ func buildRenamePairs(log log.Logger, mg *migrator.Migrator, tables []string) ([
 	for _, table := range tables {
 		newName := table + legacySuffix
 
-		sourceExists, err := mg.DBEngine.IsTableExist(table)
+		sourceExists, err := sqlutil.TableExists(context.Background(), mg.SqlDB(), mg.Dialect, table)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check if table %q exists: %w", table, err)
 		}
 
-		targetExists, err := mg.DBEngine.IsTableExist(newName)
+		targetExists, err := sqlutil.TableExists(context.Background(), mg.SqlDB(), mg.Dialect, newName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check if table %q exists: %w", newName, err)
 		}

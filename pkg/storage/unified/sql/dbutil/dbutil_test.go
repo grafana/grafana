@@ -11,7 +11,7 @@ import (
 
 	sqltemplateMocks "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/storage/testutil"
 )
 
 var (
