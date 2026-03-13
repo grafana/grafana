@@ -1,5 +1,4 @@
 import { of } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   dataFrameToJSON,
@@ -7,23 +6,50 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  LoadingState,
   MetricFindValue,
   createDataFrame,
   TimeRange,
+  CustomVariableModel,
 } from '@grafana/data';
+import { BackendSrv, FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 import { SQLQuery } from '@grafana/sql';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
-import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 
 import { MssqlDatasource } from './datasource';
 import { MssqlOptions } from './types';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-}));
+const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
+  data,
+  status: 200,
+  url: 'http://localhost:3000/api/ds/query',
+  config: { url: 'http://localhost:3000/api/ds/query' },
+  type: 'basic',
+  statusText: 'Ok',
+  redirected: false,
+  headers: new Headers(),
+  ok: true,
+});
+
+const customVariableModel: CustomVariableModel = {
+  id: '',
+  global: false,
+  index: -1,
+  state: LoadingState.NotStarted,
+  error: null,
+  description: null,
+  name: '',
+  label: undefined,
+  hide: 0,
+  skipUrlSync: false,
+  type: 'custom',
+  multi: false,
+  includeAll: false,
+  allValue: null,
+  options: [],
+  current: {},
+  query: '',
+  rootStateKey: null,
+};
 
 // mock uuidv4 to give back the same value every time
 jest.mock('uuid', () => ({
@@ -37,13 +63,21 @@ const instanceSettings = {
   access: 'direct',
 } as DataSourceInstanceSettings<MssqlOptions>;
 
+let origBackendSrv: BackendSrv;
+beforeAll(() => {
+  origBackendSrv = getBackendSrv();
+});
+afterAll(() => {
+  setBackendSrv(origBackendSrv);
+});
+
 describe('MSSQLDatasource', () => {
   const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  const fetchMock = jest.spyOn(getBackendSrv(), 'fetch');
 
   const ctx = {
     ds: new MssqlDatasource(instanceSettings),
-    variable: { ...initialCustomVariableModelState },
+    variable: { ...customVariableModel },
   };
 
   beforeEach(() => {
@@ -407,7 +441,12 @@ describe('MSSQLDatasource', () => {
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
-      const templateSrv = new TemplateSrv();
+      const templateSrv: TemplateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: (text?: string) => text?.includes('$summarize') || text?.includes('$host') || false,
+        updateTimeRange: () => {},
+      };
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time,
       avg(value) as value,
@@ -424,18 +463,18 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
       const ds = new MssqlDatasource(instanceSettings);
-
       Reflect.set(ds, 'templateSrv', templateSrv);
       expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
-      const templateSrv: TemplateSrv = new TemplateSrv();
+      const templateSrv: TemplateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => text || '',
+        containsTemplate: () => false,
+        updateTimeRange: () => {},
+      };
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time,
       avg(value) as value,
@@ -451,10 +490,6 @@ describe('MSSQLDatasource', () => {
         rawSql,
         refId: 'A',
       };
-      templateSrv.init([
-        { type: 'query', name: 'summarize', current: { value: '1m' } },
-        { type: 'query', name: 'host', current: { value: 'a' } },
-      ]);
       const ds = new MssqlDatasource(instanceSettings);
       Reflect.set(ds, 'templateSrv', templateSrv);
 
