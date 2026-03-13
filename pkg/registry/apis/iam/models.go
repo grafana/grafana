@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -31,10 +32,6 @@ var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
-
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
@@ -57,7 +54,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore                  *team.LegacyStore
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
-	coreRolesStorage                 CoreRoleStorageBackend
 	roleApiInstaller                 RoleApiInstaller
 	globalRoleApiInstaller           GlobalRoleApiInstaller
 	teamLBACApiInstaller             TeamLBACApiInstaller
@@ -113,4 +109,13 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
+
+	cfgProvider configprovider.ConfigProvider
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }
