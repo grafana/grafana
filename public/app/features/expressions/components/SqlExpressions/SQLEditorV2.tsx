@@ -118,21 +118,32 @@ function makeCompletionSource(
 // ---------------------------------------------------------------------------
 
 class GhostWidget extends WidgetType {
-  constructor(readonly text: string) {
+  constructor(readonly text: string | null) {
     super();
   }
   toDOM(): HTMLElement {
-    const span = document.createElement('span');
-    span.className = 'cm-ghost-text';
-    span.textContent = this.text;
-    return span;
+    const wrapper = document.createElement('span');
+    wrapper.className = 'cm-ghost-text';
+
+    if (this.text) {
+      const text = document.createElement('span');
+      text.textContent = this.text;
+      wrapper.appendChild(text);
+    }
+
+    const badge = document.createElement('span');
+    badge.className = 'cm-ghost-tab-badge';
+    badge.textContent = 'Tab';
+    wrapper.appendChild(badge);
+
+    return wrapper;
   }
   eq(other: GhostWidget) {
     return this.text === other.text;
   }
 }
 
-function getGhostText(state: EditorState): { text: string; pos: number } | null {
+function getGhostInfo(state: EditorState): { remaining: string | null; pos: number } | null {
   if (completionStatus(state) !== 'active') {
     return null;
   }
@@ -156,10 +167,7 @@ function getGhostText(state: EditorState): { text: string; pos: number } | null 
   }
 
   const remaining = completion.label.slice(overlap);
-  if (remaining.length === 0) {
-    return null;
-  }
-  return { text: remaining, pos: cursor };
+  return { remaining: remaining.length > 0 ? remaining : null, pos: cursor };
 }
 
 // Use a ViewPlugin that provides decorations — reads completion state each update
@@ -168,14 +176,15 @@ const ghostPlugin = ViewPlugin.fromClass(
     decorations: DecorationSet = Decoration.none;
 
     update(update: ViewUpdate) {
-      const ghost = getGhostText(update.state);
-      if (ghost) {
-        this.decorations = Decoration.set([
-          Decoration.widget({ widget: new GhostWidget(ghost.text), side: 1 }).range(ghost.pos),
-        ]);
-      } else {
+      const info = getGhostInfo(update.state);
+      if (!info) {
         this.decorations = Decoration.none;
+        return;
       }
+      const widget = new GhostWidget(info.remaining);
+      this.decorations = Decoration.set([
+        Decoration.widget({ widget, side: 1 }).range(info.pos),
+      ]);
     }
   },
   { decorations: (v) => v.decorations }
@@ -198,10 +207,23 @@ function inlineGhostExtension(): import('@codemirror/state').Extension {
         color: '#7c8496',
         pointerEvents: 'none',
         animation: 'ghostFadeIn 0.15s ease-out forwards',
+        display: 'inline',
+      },
+      '.cm-ghost-tab-badge': {
+        fontSize: '9px',
+        fontFamily: 'system-ui, sans-serif',
+        color: 'rgba(124,132,150,0.85)',
+        background: 'rgba(124,132,150,0.18)',
+        padding: '1px 5px',
+        borderRadius: '3px',
+        border: '1px solid rgba(124,132,150,0.22)',
+        lineHeight: '1.4',
+        letterSpacing: '0.3px',
+        marginLeft: '6px',
       },
       '@keyframes ghostFadeIn': {
         from: { opacity: '0', transform: 'translateX(-2px)' },
-        to: { opacity: '0.45', transform: 'translateX(0)' },
+        to: { opacity: '0.7', transform: 'translateX(0)' },
       },
     }),
   ];
@@ -345,22 +367,6 @@ export function SQLEditorV2({ query, onChange, onBlur, language, toolboxProps, w
         },
         '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
           background: `color-mix(in srgb, ${theme.colors.primary.main} 15%, transparent)`,
-        },
-        // "tab" hint on the selected item
-        '.cm-tooltip-autocomplete > ul > li[aria-selected]::after': {
-          content: '"Tab"',
-          position: 'absolute',
-          right: '6px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          fontSize: '9px',
-          fontFamily: theme.typography.fontFamily,
-          color: theme.colors.text.disabled,
-          background: theme.colors.action.hover,
-          padding: '1px 5px',
-          borderRadius: '4px',
-          letterSpacing: '0.3px',
-          lineHeight: '1.4',
         },
         '.cm-completionIcon': {
           display: 'none',
