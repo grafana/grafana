@@ -1,6 +1,8 @@
 package setting
 
 import (
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -8,9 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
-// DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
-// If a resource has entries at or below this count, it will be migrated.
-const DefaultAutoMigrationThreshold = 10
+// knownUnifiedStorageKeys maps uppercased env-var-style key suffixes to their
+// actual camelCase ini key names used in [unified_storage.*] sections.
+var knownUnifiedStorageKeys = map[string]string{
+	"DUALWRITERMODE":  "dualWriterMode",
+	"ENABLEMIGRATION": "enableMigration",
+}
 
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
@@ -21,26 +26,79 @@ const (
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true, // enabled by default
-	FolderResource:    false,
-	DashboardResource: false,
-	ShortURLResource:  false,
+	PlaylistResource:  true,  // Only Mode5!
+	FolderResource:    true,  // enabled by default
+	DashboardResource: true,  // enabled by default
+	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
 }
 
-// AutoMigratedUnifiedResources maps resources that support auto-migration
-// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-var AutoMigratedUnifiedResources = map[string]bool{
-	FolderResource:    true,
-	DashboardResource: true,
+// applyUnifiedStorageEnvOverrides scans environment variables matching
+// GF_UNIFIED_STORAGE_<resource>_<key> and creates the corresponding ini
+// sections and keys. This allows users to configure unified_storage resource
+// sections purely via environment variables without pre-defining them in an
+// ini file.
+//
+// Storage configs in the ini file look like:
+//
+//	[unified_storage.<group>.<resource>]
+//	<field> = <value>
+//
+// For example:
+//
+//	[unified_storage.playlists.playlist.grafana.app]
+//	dualWriterMode = 2
+//
+// Kubernetes resource names (e.g., "dashboards.dashboard.grafana.app") never
+// contain underscores — only dots and lowercase alphanumerics — so every
+// underscore in the resource portion of the env var name maps unambiguously
+// back to a dot. The key names are matched from a known list
+// ([knownUnifiedStorageKeys]) to preserve their original camelCase.
+func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
+	envPrefix := EnvSectionPrefix("unified_storage")
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, envPrefix) {
+			continue
+		}
+		eqIdx := strings.IndexByte(env, '=')
+		if eqIdx < 0 {
+			continue
+		}
+		envKey := env[:eqIdx]
+		envValue := env[eqIdx+1:]
+		if envValue == "" {
+			continue
+		}
+
+		remainder := envKey[len(envPrefix):]
+
+		// Try to match a known key suffix. The key is always the last component
+		// after the final underscore that matches a known key name.
+		for envKeySuffix, iniKeyName := range knownUnifiedStorageKeys {
+			suffix := "_" + envKeySuffix
+			if !strings.HasSuffix(remainder, suffix) {
+				continue
+			}
+			resourceEnv := remainder[:len(remainder)-len(suffix)]
+			if resourceEnv == "" {
+				continue
+			}
+			// Reconstruct the resource name: lowercase with underscores → dots.
+			resourceName := strings.ToLower(strings.ReplaceAll(resourceEnv, "_", "."))
+			sectionName := "unified_storage." + resourceName
+			cfg.Raw.Section(sectionName).Key(iniKeyName).SetValue(envValue)
+			cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides,
+				fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			break
+		}
+	}
 }
 
-// read storage configs from ini file. They look like:
-// [unified_storage.<group>.<resource>]
-// <field> = <value>
-// e.g.
-// [unified_storage.playlists.playlist.grafana.app]
-// dualWriterMode = 2
 func (cfg *Cfg) setUnifiedStorageConfig() {
+	// Pre-create sections from GF_UNIFIED_STORAGE_* env vars so that
+	// resource sections can be configured purely via environment variables.
+	cfg.applyUnifiedStorageEnvOverrides()
+
 	storageConfig := make(map[string]UnifiedStorageConfig)
 	sections := cfg.Raw.Sections()
 	for _, section := range sections {
@@ -60,17 +118,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
-		// parse autoMigrationThreshold from resource section
-		autoMigrationThreshold := 0
-		autoMigrate := AutoMigratedUnifiedResources[resourceName]
-		if autoMigrate {
-			autoMigrationThreshold = section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
-		}
-
 		storageConfig[resourceName] = UnifiedStorageConfig{
-			DualWriterMode:         rest.DualWriterMode(dualWriterMode),
-			EnableMigration:        enableMigration,
-			AutoMigrationThreshold: autoMigrationThreshold,
+			DualWriterMode:  rest.DualWriterMode(dualWriterMode),
+			EnableMigration: enableMigration,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -78,8 +128,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(50000)
+	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
+	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
+	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
@@ -88,7 +140,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
-	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
+	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
+	if cfg.SearchInjectFailuresPercent < 0 {
+		cfg.SearchInjectFailuresPercent = 0
+	} else if cfg.SearchInjectFailuresPercent > 100 {
+		cfg.SearchInjectFailuresPercent = 100
+	}
+	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
@@ -112,6 +170,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
+	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -127,13 +186,22 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// tenant watcher
 	cfg.TenantApiServerAddress = section.Key("tenant_api_server_address").String()
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
+	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
+
+	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
+	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
+	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
+
+	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
+	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)

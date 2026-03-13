@@ -89,5 +89,10 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		}
 	}
 
+	// createdBy accepts a user uid
+	if v := queryParams.Get("createdBy"); v != "" {
+		opts.CreatedBy = v
+	}
+
 	return opts
 }

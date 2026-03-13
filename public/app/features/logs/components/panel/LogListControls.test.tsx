@@ -56,6 +56,7 @@ jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
     useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
       isAvailable: true,
     }),
   };
@@ -71,6 +72,7 @@ const contextProps = {
   fontSize,
   logs: [],
   showControls: true,
+  showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,

@@ -34,7 +34,6 @@ var _ Service = (*RenderingService)(nil)
 
 type RenderingService struct {
 	log                 log.Logger
-	plugin              Plugin
 	renderAction        renderFunc
 	renderCSVAction     renderCSVFunc
 	domain              string
@@ -42,7 +41,6 @@ type RenderingService struct {
 	version             string
 	versionMutex        sync.RWMutex
 	capabilities        []Capability
-	pluginAvailable     bool
 	rendererCallbackURL string
 	netClient           *http.Client
 
@@ -126,8 +124,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		}
 	}
 
-	_, exists := rm.Renderer(context.Background())
-
 	netTransport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
@@ -176,7 +172,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
-		pluginAvailable:       exists,
 		rendererCallbackURL:   rendererCallbackURL,
 		netClient:             netClient,
 	}
@@ -219,20 +214,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 	}
 
-	if rp, exists := rs.RendererPluginManager.Renderer(ctx); exists {
-		rs.log = rs.log.New("renderer", "plugin")
-		rs.plugin = rp
-		if err := rs.plugin.Start(ctx); err != nil {
-			return err
-		}
-		rs.version = rp.Version()
-		rs.renderAction = rs.renderViaPlugin
-		rs.renderCSVAction = rs.renderCSVViaPlugin
-		<-ctx.Done()
-
-		return nil
-	}
-
 	rs.log.Debug("No image renderer found/installed. " +
 		"For image rendering support please use the Grafana Image Renderer remote rendering service. " +
 		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
@@ -246,7 +227,7 @@ func (rs *RenderingService) remoteAvailable() bool {
 }
 
 func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
-	return rs.remoteAvailable() || rs.pluginAvailable
+	return rs.remoteAvailable()
 }
 
 func (rs *RenderingService) Version() string {
@@ -286,13 +267,11 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 }
 
 // Render calls the grafana image renderer and returns Grafana resource as PNG or PDF
-func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts, session Session) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
-	}
+
 	result, err := rs.render(ctx, renderType, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()
@@ -364,13 +343,11 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	return res, nil
 }
 
-func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error) {
+func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error) {
 	startTime := time.Now()
 
 	renderKeyProvider := rs.perRequestRenderKeyProvider
-	if session != nil {
-		renderKeyProvider = session
-	}
+
 	result, err := rs.renderCSV(ctx, opts, renderKeyProvider)
 
 	elapsedTime := time.Since(startTime).Milliseconds()

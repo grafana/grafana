@@ -42,15 +42,9 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 				}
 				assert.Equal(t, exists, true, migratedResource)
 
-				expectedThreshold := 0
-				if AutoMigratedUnifiedResources[migratedResource] {
-					expectedThreshold = DefaultAutoMigrationThreshold
-				}
-
 				assert.Equal(t, UnifiedStorageConfig{
-					DualWriterMode:         5,
-					EnableMigration:        isEnabled,
-					AutoMigrationThreshold: expectedThreshold,
+					DualWriterMode:  5,
+					EnableMigration: isEnabled,
 				}, resourceCfg, migratedResource)
 			}
 		}
@@ -82,6 +76,82 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
+	})
+
+	t.Run("search_inject_failures_percent", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to 0", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 0, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "50")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 50, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("clamps negative to 0", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "-10")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 0, cfg.SearchInjectFailuresPercent)
+		})
+
+		t.Run("clamps over 100 to 100", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_inject_failures_percent", "200")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 100, cfg.SearchInjectFailuresPercent)
+		})
+	})
+
+	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
+		// Set env vars for a resource that has NO ini section defined.
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")
+		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_ENABLEMIGRATION", "false")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		value, exists := cfg.UnifiedStorage[DashboardResource]
+		assert.True(t, exists, "dashboards.dashboard.grafana.app should exist from env var")
+		// Note: enforceMigrationToUnifiedConfigs may override dualWriterMode to 5
+		// for migrated resources. We test the enableMigration was correctly parsed as false.
+		assert.Equal(t, false, value.EnableMigration)
+	})
+
+	t.Run("env vars work for unknown resource names", func(t *testing.T) {
+		// A resource not in MigratedUnifiedResources, configured purely via env vars.
+		t.Setenv("GF_UNIFIED_STORAGE_WIDGETS_WIDGET_CUSTOM_IO_DUALWRITERMODE", "2")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		value, exists := cfg.UnifiedStorage["widgets.widget.custom.io"]
+		assert.True(t, exists, "widgets.widget.custom.io should exist from env var")
+		assert.Equal(t, rest.DualWriterMode(2), value.DualWriterMode)
 	})
 
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {

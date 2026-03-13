@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { AssistantHook, useAssistant } from '@grafana/assistant';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
@@ -31,6 +32,7 @@ describe('DashboardCard', () => {
     jest.clearAllMocks();
     // Default: assistant not available
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: mockOpenAssistant,
     } as unknown as AssistantHook);
@@ -42,7 +44,9 @@ describe('DashboardCard', () => {
       <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
+    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+    expect(cardHeading).toBeInTheDocument();
+    expect(cardHeading).toHaveTextContent('My Dashboard');
   });
 
   it('should render image when imageUrl is provided', () => {
@@ -87,7 +91,9 @@ describe('DashboardCard', () => {
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
+    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+    expect(cardHeading).toBeInTheDocument();
+    expect(cardHeading).toHaveTextContent('Test Dashboard');
     expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
@@ -325,7 +331,9 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
+      const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+      expect(cardHeading).toBeInTheDocument();
+      expect(cardHeading).toHaveTextContent('Community Dashboard');
     });
   });
 
@@ -523,6 +531,7 @@ describe('DashboardCard', () => {
     beforeEach(() => {
       // Enable assistant for these tests
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: true,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);
@@ -558,6 +567,7 @@ describe('DashboardCard', () => {
 
     it('should not show Assistant button when assistant is unavailable', () => {
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);

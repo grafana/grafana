@@ -1,4 +1,4 @@
-import { BackendSrv, getBackendSrv } from '@grafana/runtime';
+import { BackendSrv, getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -16,6 +16,8 @@ import {
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
   reportInteraction: jest.fn(),
+  logInfo: jest.fn(),
+  logWarning: jest.fn(),
 }));
 
 jest.mock('../interactions', () => ({
@@ -26,6 +28,8 @@ jest.mock('../interactions', () => ({
   },
 }));
 const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackendSrv>;
+const mockLogInfo = logInfo as jest.MockedFunction<typeof logInfo>;
+const mockLogWarning = logWarning as jest.MockedFunction<typeof logWarning>;
 
 // Helper to create mock BackendSrv
 const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =>
@@ -108,6 +112,78 @@ describe('dashboardLibraryApi', () => {
           items: [safeDashboard],
         });
       });
+
+      it('should log a warning when a dashboard is filtered out due to unsafe panel types', async () => {
+        const unsafeDashboard = createMockGnetDashboardWithDownloads({
+          id: 42,
+          name: 'Unsafe Dashboard',
+          panelTypeSlugs: ['ae3e-plotly-panel'],
+        });
+        mockGet.mockResolvedValue({ page: 1, pages: 1, items: [unsafeDashboard] });
+
+        await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(mockLogWarning).toHaveBeenCalledWith(
+          'Community dashboard filtered out due to low downloads or unsafe panel types',
+          expect.objectContaining({
+            dashboardId: '42',
+            dashboardName: 'Unsafe Dashboard',
+            panelTypes: 'ae3e-plotly-panel',
+          })
+        );
+      });
+
+      it('should log a warning when a dashboard is filtered out due to low downloads', async () => {
+        const lowDownloadsDashboard = createMockGnetDashboard({
+          id: 7,
+          name: 'Unpopular Dashboard',
+          downloads: 500,
+        });
+        mockGet.mockResolvedValue({ page: 1, pages: 1, items: [lowDownloadsDashboard] });
+
+        await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(mockLogWarning).toHaveBeenCalledWith(
+          'Community dashboard filtered out due to low downloads or unsafe panel types',
+          expect.objectContaining({
+            dashboardId: '7',
+            dashboardName: 'Unpopular Dashboard',
+            downloads: '500',
+          })
+        );
+      });
+
+      it('should log a warning when all dashboards are filtered out', async () => {
+        const unsafeDashboard = createMockGnetDashboardWithDownloads({
+          id: 1,
+          panelTypeSlugs: ['volkovlabs-form-panel'],
+        });
+        mockGet.mockResolvedValue({ page: 1, pages: 1, items: [unsafeDashboard] });
+
+        await fetchCommunityDashboards({ ...defaultFetchParams, dataSourceSlugIn: 'prometheus' });
+
+        expect(mockLogWarning).toHaveBeenCalledWith('No community dashboards found after safe filtering', {
+          dataSourceType: 'prometheus',
+          unsafeDashboardsCount: '1',
+          lowDownloadsCount: '0',
+        });
+      });
+
+      it('should not log the "no dashboards found" warning when some dashboards pass filtering', async () => {
+        const safeDashboard = createMockGnetDashboardWithDownloads({ id: 1 });
+        const unsafeDashboard = createMockGnetDashboardWithDownloads({
+          id: 2,
+          panelTypeSlugs: ['aceiot-svg-panel'],
+        });
+        mockGet.mockResolvedValue({ page: 1, pages: 1, items: [safeDashboard, unsafeDashboard] });
+
+        await fetchCommunityDashboards(defaultFetchParams);
+
+        expect(mockLogWarning).not.toHaveBeenCalledWith(
+          'No community dashboards found after safe filtering',
+          expect.anything()
+        );
+      });
     });
 
     it('should fetch community dashboards with correct query parameters', async () => {
@@ -166,6 +242,32 @@ describe('dashboardLibraryApi', () => {
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('filter=kubernetes'), undefined, undefined, {
         showErrorAlert: false,
       });
+    });
+
+    it('should log info with fetch details on successful response', async () => {
+      const mockDashboards = [
+        createMockGnetDashboardWithDownloads({ id: 1 }),
+        createMockGnetDashboardWithDownloads({ id: 2 }),
+      ];
+      mockGet.mockResolvedValue({ page: 2, pages: 5, items: mockDashboards });
+
+      await fetchCommunityDashboards({ ...defaultFetchParams, page: 2, dataSourceSlugIn: 'prometheus' });
+
+      expect(mockLogInfo).toHaveBeenCalledWith('Fetched community dashboards', {
+        searchParams: expect.stringContaining('page=2'),
+        dataSourceType: 'prometheus',
+        total: 2,
+        page: 2,
+        pages: 5,
+      });
+    });
+
+    it('should not log info when response has unexpected format', async () => {
+      mockGet.mockResolvedValue({ page: 1, pages: 1 });
+
+      await fetchCommunityDashboards(defaultFetchParams);
+
+      expect(mockLogInfo).not.toHaveBeenCalled();
     });
 
     it('should handle unexpected response format and return empty array', async () => {

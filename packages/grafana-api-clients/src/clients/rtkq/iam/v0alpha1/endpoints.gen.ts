@@ -178,6 +178,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
+            accesscontrol: queryArg.accesscontrol,
           },
         }),
         providesTags: ['Search'],
@@ -190,6 +191,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
+            accesscontrol: queryArg.accesscontrol,
             sort: queryArg.sort,
           },
         }),
@@ -950,6 +952,8 @@ export type GetSearchTeamsApiArg = {
   offset?: number;
   /** page number to start from */
   page?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
 };
 export type GetSearchUsersApiResponse = unknown;
 export type GetSearchUsersApiArg = {
@@ -960,6 +964,8 @@ export type GetSearchUsersApiArg = {
   page?: number;
   /** number of results to skip */
   offset?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
   /** sortable field */
   sort?: string;
 };
@@ -1572,9 +1578,9 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroupsResponse;
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
-  /** name of the GetGroupsResponse */
+  /** name of the GetTeamGroupsResponse */
   name: string;
   /** number of results to return */
   limit?: number;
@@ -2059,6 +2065,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
   metadata?: ListMeta;
 };
 export type TeamBindingspecSubject = {
+  /** kind of the identity */
+  kind: string;
   /** uid of the identity */
   name: string;
 };
@@ -2113,14 +2121,14 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type GetGroupsExternalGroupMapping = {
+export type GetTeamGroupsExternalGroupMapping = {
   externalGroup: string;
   name: string;
 };
-export type GetGroupsResponse = {
+export type GetTeamGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: GetGroupsExternalGroupMapping[];
+  items: GetTeamGroupsExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };

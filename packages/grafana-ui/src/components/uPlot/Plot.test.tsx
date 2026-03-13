@@ -97,7 +97,7 @@ describe('UPlotChart', () => {
 
       expect(uPlot).toBeCalledTimes(1);
 
-      data.fields[1].values.set(0, 1);
+      data.fields[1].values[0] = 1;
 
       rerender(
         <UPlotChart

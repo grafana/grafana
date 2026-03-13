@@ -49,6 +49,9 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 }
 
 // staticEvaluator implements StaticFlagEvaluator for static providers
+// TODO: Refactor to either use global provider:
+// staticEvaluator stores a local provider instance for flag metadata but uses the global OpenFeature client for evaluation.
+// This works because both the stored provider and the global provider are created from the same config.
 type staticEvaluator struct {
 	provider *inMemoryBulkProvider
 	client   openfeature.IClient
