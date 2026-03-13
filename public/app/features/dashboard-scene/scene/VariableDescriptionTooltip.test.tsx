@@ -4,6 +4,14 @@ import { Tooltip } from '@grafana/ui';
 
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
+function renderTooltipContent(content: React.ComponentProps<typeof Tooltip>['content']): React.ReactNode {
+  if (typeof content === 'function') {
+    return content({});
+  }
+
+  return content;
+}
+
 jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
 
@@ -11,7 +19,7 @@ jest.mock('@grafana/ui', () => {
     ...actual,
     Tooltip: ({ content, children, interactive, placement }: React.ComponentProps<typeof Tooltip>) => (
       <div data-testid="mock-tooltip" data-interactive={interactive ? 'true' : 'false'} data-placement={placement}>
-        <div data-testid="mock-tooltip-content">{content}</div>
+        <div data-testid="mock-tooltip-content">{renderTooltipContent(content)}</div>
         {children}
       </div>
     ),
