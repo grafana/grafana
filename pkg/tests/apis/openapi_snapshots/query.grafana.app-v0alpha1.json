@@ -109,6 +109,18 @@
         ],
         "description": "Query any datasources (with expressions)",
         "operationId": "queryDatasources",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {

@@ -333,9 +333,9 @@ func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
 		r.onObjectFn(&statusCode, obj)
 	}
 
-	r.w.WriteHeader(statusCode)
-
 	// Write the value as JSON
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(statusCode)
 	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
 		http.Error(r.w, err.Error(), http.StatusInternalServerError)
 	}

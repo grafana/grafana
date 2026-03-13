@@ -25,7 +25,18 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Query"},
 							OperationId: "queryDatasources",
-							Parameters:  []*spec3.Parameter{},
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
