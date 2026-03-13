@@ -45,6 +45,7 @@ type GarbageCollectionConfig struct {
 	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -545,8 +546,12 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
-		// wait a second between batches to avoid overwhelming the datastore
-		<-time.After(time.Second)
+		if b.garbageCollection.BatchWait > 0 {
+			<-time.After(b.garbageCollection.BatchWait)
+		} else {
+			// default to 1 second if batch wait is not set
+			<-time.After(time.Second)
+		}
 	}
 
 	if totalDeleted > 0 {
