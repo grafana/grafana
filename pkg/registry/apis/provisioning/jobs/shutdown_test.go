@@ -76,7 +76,7 @@ func TestJobCleanupController_Run_CompletesInitialCleanupBeforeExiting(t *testin
 
 	runDone := make(chan struct{})
 	go func() {
-		cc.Run(ctx) //nolint:errcheck
+		_ = cc.Run(ctx)
 		close(runDone)
 	}()
 
