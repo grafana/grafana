@@ -12,10 +12,9 @@ import {
   SceneVariableSet,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
+import { Box, Button, Combobox, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
@@ -26,6 +25,11 @@ import { getEditableVariableDefinition, validateVariableName } from '../../setti
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
+
+const REFRESH_OPTIONS = [
+  { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
+  { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
+];
 
 // TODO fix conditional hook usage here...
 function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
@@ -314,18 +318,22 @@ function useVariableTypeCategory(variable: SceneVariable) {
     if (variable instanceof QueryVariable) {
       category.addItem(
         new OptionsPaneItemDescriptor({
-          // TODO: use title and description here and not in <QueryVariableRefreshSelect />
           id: refreshId,
+          title: t('variables.query-variable-refresh-select.label-refresh', 'Refresh'),
+          description: t(
+            'variables.query-variable-refresh-select.description-update-values-variable',
+            'When to update the values of this variable'
+          ),
           render: (descriptor) => {
             const { refresh } = variable.useState();
             return (
               <div id={descriptor.props.id}>
-                <QueryVariableRefreshSelect
-                  refresh={refresh}
-                  onChange={(refresh: VariableRefresh) => {
-                    variable.setState({ refresh });
+                <Combobox
+                  options={REFRESH_OPTIONS}
+                  value={refresh}
+                  onChange={(o) => {
+                    variable.setState({ refresh: o.value });
                   }}
-                  testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
                 />
               </div>
             );
