@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
-
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
