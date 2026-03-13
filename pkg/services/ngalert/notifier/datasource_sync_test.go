@@ -359,38 +359,25 @@ func TestBuildMimirConfigURL(t *testing.T) {
 	tests := []struct {
 		name   string
 		dsURL  string
-		impl   string
 		expect string
 	}{
 		{
-			name:   "mimir adds /alertmanager prefix",
+			name:   "base URL gets /api/v1/alerts appended",
 			dsURL:  "http://mimir:9009",
-			impl:   "mimir",
-			expect: "http://mimir:9009/alertmanager/api/v1/alerts",
+			expect: "http://mimir:9009/api/v1/alerts",
 		},
 		{
-			name:   "cortex adds /alertmanager prefix",
-			dsURL:  "http://cortex:9009",
-			impl:   "cortex",
-			expect: "http://cortex:9009/alertmanager/api/v1/alerts",
-		},
-		{
-			name:   "already has /alertmanager — not doubled",
-			dsURL:  "http://mimir:9009/alertmanager",
-			impl:   "mimir",
-			expect: "http://mimir:9009/alertmanager/api/v1/alerts",
+			name:   "URL with existing path gets /api/v1/alerts appended",
+			dsURL:  "http://mimir:9009/some/path",
+			expect: "http://mimir:9009/some/path/api/v1/alerts",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			jd := simplejson.New()
-			jd.Set("implementation", tc.impl)
 			ds := &datasources.DataSource{
-				UID:      "test-uid",
-				Type:     datasources.DS_ALERTMANAGER,
-				URL:      tc.dsURL,
-				JsonData: jd,
+				UID: "test-uid",
+				URL: tc.dsURL,
 			}
 			got, err := moa.buildMimirConfigURL(ds)
 			require.NoError(t, err)

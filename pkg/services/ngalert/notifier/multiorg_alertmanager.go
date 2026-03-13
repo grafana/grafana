@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path"
+	"net/url"
 	"sync"
 	"time"
 
@@ -22,7 +22,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -732,18 +731,6 @@ func (moa *MultiOrgAlertmanager) syncDatasourceConfigForOrg(ctx context.Context,
 		return fmt.Errorf("failed to get datasource: %w", err)
 	}
 
-	if ds.Type != datasources.DS_ALERTMANAGER {
-		return fmt.Errorf("datasource %q is not an alertmanager datasource (type: %s)", datasourceUID, ds.Type)
-	}
-
-	if ds.JsonData != nil {
-		impl := ds.JsonData.Get("implementation").MustString("")
-		if impl != "mimir" && impl != "cortex" {
-			moa.logger.Warn("Skipping datasource sync: unsupported implementation",
-				"org_id", orgID, "datasource_uid", datasourceUID, "implementation", impl)
-			return fmt.Errorf("unsupported datasource implementation %q (must be mimir or cortex)", impl)
-		}
-	}
 
 	cfg, err := moa.fetchMimirConfig(syncCtx, ds)
 	if err != nil {
@@ -818,26 +805,12 @@ func (moa *MultiOrgAlertmanager) fetchMimirConfig(ctx context.Context, ds *datas
 	return &cfg, nil
 }
 
-// buildMimirConfigURL constructs the Mimir/Cortex alertmanager configuration API URL.
-// For Mimir/Cortex, the config endpoint is /api/v1/alerts under the /alertmanager prefix.
+// buildMimirConfigURL constructs the Mimir alertmanager configuration API URL.
+// The config endpoint is /api/v1/alerts directly on the datasource URL.
 func (moa *MultiOrgAlertmanager) buildMimirConfigURL(ds *datasources.DataSource) (string, error) {
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
+	parsed, err := url.Parse(ds.URL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse datasource URL: %w", err)
-	}
-
-	if ds.JsonData != nil {
-		impl := ds.JsonData.Get("implementation").MustString("")
-		switch impl {
-		case "mimir", "cortex":
-			if parsed.Path == "" {
-				parsed.Path = "/"
-			}
-			lastSegment := path.Base(parsed.Path)
-			if lastSegment != "alertmanager" {
-				parsed = parsed.JoinPath("/alertmanager")
-			}
-		}
 	}
 
 	return parsed.JoinPath("/api/v1/alerts").String(), nil
