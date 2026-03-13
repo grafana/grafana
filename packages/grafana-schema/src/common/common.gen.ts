@@ -506,14 +506,7 @@ export interface VizAnnotations {
   /**
    * Controls indicator lines and shaded regions behavior
    */
-  canvasControls?: {
-    lines: {
-      width?: number;
-    };
-    regions: {
-      opacity?: number;
-    };
-  };
+  canvasControls?: AnnotationDisplayOptions;
   /**
    * Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
    */
@@ -522,6 +515,15 @@ export interface VizAnnotations {
    * Breaks out each annotation frame into multiple lanes on the x-axis
    */
   multiLane?: boolean;
+}
+
+export interface AnnotationDisplayOptions {
+  lines: {
+    width?: number;
+  };
+  regions: {
+    opacity?: number;
+  };
 }
 
 /**
