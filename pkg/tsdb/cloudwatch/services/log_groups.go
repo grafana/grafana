@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
@@ -60,7 +62,77 @@ func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGr
 		input.NextToken = response.NextToken
 	}
 
+	sortLogGroups(result, req)
+
 	return result, nil
+}
+
+func sortLogGroups(logGroups []resources.ResourceResponse[resources.LogGroup], req resources.LogGroupsRequest) {
+	searchTerm := ""
+	if req.LogGroupNamePattern != nil {
+		searchTerm = strings.ToLower(*req.LogGroupNamePattern)
+	} else if req.LogGroupNamePrefix != nil {
+		searchTerm = strings.ToLower(*req.LogGroupNamePrefix)
+	}
+
+	slices.SortFunc(logGroups, func(a, b resources.ResourceResponse[resources.LogGroup]) int {
+		if diff := compareMatchPriority(a.Value.Name, b.Value.Name, searchTerm); diff != 0 {
+			return diff
+		}
+
+		if diff := strings.Compare(strings.ToLower(a.Value.Name), strings.ToLower(b.Value.Name)); diff != 0 {
+			return diff
+		}
+
+		if diff := strings.Compare(a.Value.Name, b.Value.Name); diff != 0 {
+			return diff
+		}
+
+		if diff := strings.Compare(pointerValue(a.AccountId), pointerValue(b.AccountId)); diff != 0 {
+			return diff
+		}
+
+		return strings.Compare(a.Value.Arn, b.Value.Arn)
+	})
+}
+
+func compareMatchPriority(leftName, rightName, searchTerm string) int {
+	if searchTerm == "" {
+		return 0
+	}
+
+	leftPriority := matchPriority(strings.ToLower(leftName), searchTerm)
+	rightPriority := matchPriority(strings.ToLower(rightName), searchTerm)
+
+	switch {
+	case leftPriority < rightPriority:
+		return -1
+	case leftPriority > rightPriority:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func matchPriority(name, searchTerm string) int {
+	switch {
+	case name == searchTerm:
+		return 0
+	case strings.HasPrefix(name, searchTerm):
+		return 1
+	case strings.Contains(name, searchTerm):
+		return 2
+	default:
+		return 3
+	}
+}
+
+func pointerValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
 }
 
 func (s *LogGroupsService) GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {

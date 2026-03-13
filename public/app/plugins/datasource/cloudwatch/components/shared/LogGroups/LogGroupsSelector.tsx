@@ -87,6 +87,7 @@ export const LogGroupsSelector = ({
     setIsLoading(true);
     try {
       const possibleLogGroups = await fetchLogGroups({
+        listAllLogGroups: true,
         logGroupPattern: searchTerm,
         accountId: accountId,
       });
@@ -149,12 +150,11 @@ export const LogGroupsSelector = ({
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && selectableLogGroups.length >= 25 && (
+          {!isLoading && selectableLogGroups.length >= 50 && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
-                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
-                search.
+                All matching log groups are shown and ordered alphabetically.
                 <p>
                   A{' '}
                   <TextLink
@@ -163,7 +163,7 @@ export const LogGroupsSelector = ({
                   >
                     maximum{' '}
                   </TextLink>{' '}
-                  of 50 Cloudwatch log groups can be queried at one time.
+                  of 50 CloudWatch log groups can be queried at one time.
                 </p>
               </div>
               <Space layout="block" v={1} />
