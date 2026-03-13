@@ -16,6 +16,8 @@ import (
 type subCountREST struct {
 	getter   rest.Getter
 	searcher resourcepb.ResourceIndexClient
+
+	newFunc func() runtime.Object
 }
 
 var (
@@ -24,7 +26,7 @@ var (
 )
 
 func (r *subCountREST) New() runtime.Object {
-	return &folders.DescendantCounts{}
+	return r.newFunc()
 }
 
 func (r *subCountREST) Destroy() {
@@ -39,7 +41,7 @@ func (r *subCountREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subCountREST) ProducesObject(verb string) interface{} {
-	return &folders.DescendantCounts{}
+	return r.newFunc()
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {

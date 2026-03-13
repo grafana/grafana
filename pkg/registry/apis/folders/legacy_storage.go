@@ -30,13 +30,15 @@ var (
 )
 
 type legacyStorage struct {
+	resourceInfo utils.ResourceInfo
+
 	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -46,11 +48,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
