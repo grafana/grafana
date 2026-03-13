@@ -1,5 +1,6 @@
 import { DataFrame, FieldWithIndex, getFieldDisplayName } from '@grafana/data';
 import { FieldNameMeta, FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetailsBody';
 
 type FieldName = string;
 
@@ -99,6 +100,9 @@ export const buildColumnsWithMeta = (
     if (pendingLabelState[fieldName]) {
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;
+    } else if (fieldName === LOG_LINE_BODY_FIELD_NAME && logsFrameFields?.bodyField?.name) {
+      pendingLabelState[logsFrameFields.bodyField?.name].active = true;
+      pendingLabelState[logsFrameFields.bodyField?.name].index = idx;
     } else {
       console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
     }
