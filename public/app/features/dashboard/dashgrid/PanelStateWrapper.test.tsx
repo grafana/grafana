@@ -159,7 +159,7 @@ describe('PanelStateWrapper', () => {
           subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
           subject.next({
             state: LoadingState.Done,
-            series: [{ name: 'DataB-1', fields: [] } as DataFrame],
+            series: [{ name: 'DataB-1', fields: [], length: 0 } as DataFrame],
             errors: scenario.errors,
             timeRange: getDefaultTimeRange(),
           });
