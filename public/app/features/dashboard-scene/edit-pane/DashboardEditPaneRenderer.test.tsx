@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
@@ -92,7 +92,7 @@ describe('DashboardEditPaneRenderer', () => {
 
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    await waitFor(() => expect(scene.state.editPane.state.isDocked).toBe(true));
   });
 
   // describe('outline interactions tracking', () => {
