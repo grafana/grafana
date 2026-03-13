@@ -21,41 +21,40 @@ export function VariableDisplaySelect({
   minWidth = 52,
 }: PropsWithChildren<Props>) {
   const OPTIONS = useMemo(
-    () =>
-      [
-        {
-          value: VariableHide.dontHide,
-          label: t('dashboard-scene.variable-display-select.options.above-dashboard.label', 'Above dashboard'),
-        },
-        {
-          value: VariableHide.hideLabel,
-          label: t('dashboard-scene.variable-display-select.options.hidden-label.label', 'Above dashboard, label hidden'),
-          description: t(
-            'dashboard-scene.variable-display-select.options.hidden-label.description',
-            'Above the dashboard, but without showing the name of variable'
-          ),
-        },
-        ...(!hideControlsMenuOption
-          ? [
-              {
-                value: VariableHide.inControlsMenu,
-                label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
-                description: t(
-                  'dashboard-scene.variable-display-select.options.controls-menu.description',
-                  'Visible when the controls menu is open'
-                ),
-              },
-            ]
-          : []),
-        {
-          value: VariableHide.hideVariable,
-          label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
-          description: t(
-            'dashboard-scene.variable-display-select.options.hidden.description',
-            'Only visible in edit mode'
-          ),
-        },
-      ],
+    () => [
+      {
+        value: VariableHide.dontHide,
+        label: t('dashboard-scene.variable-display-select.options.above-dashboard.label', 'Above dashboard'),
+      },
+      {
+        value: VariableHide.hideLabel,
+        label: t('dashboard-scene.variable-display-select.options.hidden-label.label', 'Above dashboard, label hidden'),
+        description: t(
+          'dashboard-scene.variable-display-select.options.hidden-label.description',
+          'Above the dashboard, but without showing the name of variable'
+        ),
+      },
+      ...(!hideControlsMenuOption
+        ? [
+            {
+              value: VariableHide.inControlsMenu,
+              label: t('dashboard-scene.variable-display-select.options.controls-menu.label', 'Controls menu'),
+              description: t(
+                'dashboard-scene.variable-display-select.options.controls-menu.description',
+                'Visible when the controls menu is open'
+              ),
+            },
+          ]
+        : []),
+      {
+        value: VariableHide.hideVariable,
+        label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
+        description: t(
+          'dashboard-scene.variable-display-select.options.hidden.description',
+          'Only visible in edit mode'
+        ),
+      },
+    ],
     [hideControlsMenuOption]
   );
   const value = useMemo(() => OPTIONS.find((o) => o.value === display)?.value ?? OPTIONS[0].value, [display, OPTIONS]);
