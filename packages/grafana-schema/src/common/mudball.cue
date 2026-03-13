@@ -176,7 +176,6 @@ AnnotationDisplayOptions: {
     }
 } @cuetsy(kind="interface")
 
-
 // TODO docs
 OptionsWithAnnotations: {
 	annotations?: VizAnnotations

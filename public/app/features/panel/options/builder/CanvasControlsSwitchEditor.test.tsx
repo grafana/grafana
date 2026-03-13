@@ -16,22 +16,22 @@ describe('CanvasControlsSwitchEditor', () => {
     render(<CanvasControlsSwitchEditor value={{}} {...defaultProps} onChange={() => {}} />);
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
-  describe('when canvasControls is undefined (user has not set a value)', () => {
+  describe('canvasControls is undefined', () => {
     it('should display switch as checked when multiLane is disabled', () => {
       render(<CanvasControlsSwitchEditor value={{ multiLane: false }} {...defaultProps} />);
-      expect(screen.getByRole('switch')).toBeChecked();
-    });
-    it('should display switch as checked when multiLane is undefined (defaults to disabled)', () => {
-      render(<CanvasControlsSwitchEditor value={{}} {...defaultProps} />);
       expect(screen.getByRole('switch')).toBeChecked();
     });
     it('should display switch as unchecked when multiLane is enabled', () => {
       render(<CanvasControlsSwitchEditor value={{ multiLane: true }} {...defaultProps} />);
       expect(screen.getByRole('switch')).not.toBeChecked();
     });
+    it('should display switch as checked when multiLane is undefined', () => {
+      render(<CanvasControlsSwitchEditor value={{}} {...defaultProps} />);
+      expect(screen.getByRole('switch')).toBeChecked();
+    });
   });
-  describe('when canvasControls is set (user has set a value)', () => {
-    it('should display switch as checked when canvasControls is enabled, regardless of multiLane', () => {
+  describe('canvasControls is defined', () => {
+    it('should be checked when canvasControls is enabled', () => {
       render(
         <CanvasControlsSwitchEditor
           value={{ canvasControls: CANVAS_CONTROLS_ENABLED, multiLane: true }}
@@ -40,7 +40,7 @@ describe('CanvasControlsSwitchEditor', () => {
       );
       expect(screen.getByRole('switch')).toBeChecked();
     });
-    it('should display switch as unchecked when canvasControls is disabled, regardless of multiLane', () => {
+    it('should be unchecked when canvasControls is disabled', () => {
       render(
         <CanvasControlsSwitchEditor
           value={{ canvasControls: CANVAS_CONTROLS_DISABLED, multiLane: false }}
@@ -51,7 +51,7 @@ describe('CanvasControlsSwitchEditor', () => {
     });
   });
   describe('onChange', () => {
-    it('should call onChange with CANVAS_CONTROLS_ENABLED when toggling from off to on', async () => {
+    it('should call onChange when toggling on', async () => {
       const onChange = jest.fn();
       render(
         <CanvasControlsSwitchEditor
@@ -65,14 +65,11 @@ describe('CanvasControlsSwitchEditor', () => {
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ canvasControls: CANVAS_CONTROLS_ENABLED }));
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
-          canvasControls: expect.objectContaining({
-            lines: expect.objectContaining({ width: 2 }),
-            regions: expect.objectContaining({ opacity: 0.1 }),
-          }),
+          canvasControls: CANVAS_CONTROLS_ENABLED,
         })
       );
     });
-    it('should call onChange with CANVAS_CONTROLS_DISABLED when toggling from on to off', async () => {
+    it('should call onChange when toggling off', async () => {
       const onChange = jest.fn();
       render(
         <CanvasControlsSwitchEditor
@@ -86,14 +83,11 @@ describe('CanvasControlsSwitchEditor', () => {
       expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ canvasControls: CANVAS_CONTROLS_DISABLED }));
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
-          canvasControls: expect.objectContaining({
-            lines: expect.objectContaining({ width: 0 }),
-            regions: expect.objectContaining({ opacity: 0 }),
-          }),
+          canvasControls: CANVAS_CONTROLS_DISABLED,
         })
       );
     });
-    it('should preserve other annotation properties when toggling', async () => {
+    it('should not change other annotation options', async () => {
       const onChange = jest.fn();
       const value = { multiLane: true, canvasControls: CANVAS_CONTROLS_DISABLED };
       render(<CanvasControlsSwitchEditor value={value} {...defaultProps} onChange={onChange} />);
@@ -102,6 +96,17 @@ describe('CanvasControlsSwitchEditor', () => {
         expect.objectContaining({
           multiLane: true,
           canvasControls: CANVAS_CONTROLS_ENABLED,
+        })
+      );
+    });
+    it('should call onChange with value undefined', async () => {
+      const onChange = jest.fn();
+      render(<CanvasControlsSwitchEditor value={undefined} {...defaultProps} onChange={onChange} />);
+      await userEvent.click(screen.getByRole('switch'));
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canvasControls: CANVAS_CONTROLS_DISABLED,
         })
       );
     });

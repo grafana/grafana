@@ -38,7 +38,7 @@ const isEnabled = (options: VizAnnotations | undefined): boolean => {
     return !options?.multiLane;
   }
 
-  if (!value.regions.opacity || !value.lines.width) {
+  if (!value?.regions?.opacity || !value?.lines?.width) {
     return false;
   }
 
