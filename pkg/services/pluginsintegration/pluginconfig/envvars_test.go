@@ -560,7 +560,7 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 			for _, envVarName := range awsHostEnvVarNames {
 				if _, ok := tc.hostEnvVars[envVarName]; !ok {
 					t.Setenv(envVarName, "")
-					os.Unsetenv(envVarName)
+					require.NoError(t, os.Unsetenv(envVarName))
 				}
 			}
 
