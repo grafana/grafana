@@ -1,6 +1,5 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { pick, uniq } from 'lodash';
-import memoize from 'micro-memoize';
 import { useMemo, useState } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
@@ -53,7 +52,21 @@ const {
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-const memoK8sRouteToRoute = memoize(k8sRouteToRoute);
+// WeakMap-based caches for stable Route object references. Using WeakMap rather than a
+// fixed-size LRU (micro-memoize's default) avoids cache eviction when multiple external
+// Alertmanagers are configured — each AM calls the function with a different route object,
+// and evictions cause new references on every render, triggering infinite re-renders in
+// useAsync. WeakMap has no size limit and automatically GCs entries when keys are released.
+const k8sRouteToRouteCache = new WeakMap<RoutingTree, Route>();
+function memoK8sRouteToRoute(route: RoutingTree): Route {
+  const cached = k8sRouteToRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result = k8sRouteToRoute(route);
+  k8sRouteToRouteCache.set(route, result);
+  return result;
+}
 
 export const useNotificationPolicyRoute = (
   { alertmanager }: BaseAlertmanagerArgs,
@@ -114,14 +127,21 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
   );
 };
 
-const parseAmConfigRoute = memoize((route: Route): Route => {
-  return {
+const amConfigRouteCache = new WeakMap<Route, Route>();
+export function parseAmConfigRoute(route: Route): Route {
+  const cached = amConfigRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result: Route = {
     ...route,
     [ROUTES_META_SYMBOL]: {
       provenance: route.provenance,
     },
   };
-});
+  amConfigRouteCache.set(route, result);
+  return result;
+}
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
