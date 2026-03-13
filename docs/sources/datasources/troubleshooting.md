@@ -35,7 +35,7 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
 ---
 
-# Troubleshoot general data sources
+# Troubleshoot general data source issues
 
 This page provides solutions to common issues that apply across data sources in Grafana. For data-source-specific troubleshooting, refer to the troubleshooting page within each data source's documentation.
 

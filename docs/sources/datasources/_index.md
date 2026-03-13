@@ -142,7 +142,7 @@ Only users with the organization admin role can add data sources.
 1. Click the data source you want to add.
 1. Configure the data source following instructions specific to that data source.
 
-You can mark one data source as the **Default** by toggling the option on its configuration page. The default data source is pre-selected when you create new panels or navigate to Explore.
+You can mark one data source as the **Default** by toggling the option on its configuration page. The default data source is pre-selected when you create new panels, navigate to Explore, or create alert rules.
 
 ## Query editors
 
@@ -226,32 +226,6 @@ Grafana ships with the following core data sources, organized by their primary u
 ### Testing and debugging
 
 - [Testdata](testdata/)
-
-### Supported features
-
-The following table summarizes the features each built-in core data source supports. Plugin data sources may support different features; refer to the plugin's documentation in the [plugin catalog](/grafana/plugins/?type=datasource) for details.
-
-| Data source | Metrics | Logs | Traces | Profiles | Alerting | Annotations |
-|---|---|---|---|---|---|---|
-| [Alertmanager](alertmanager/) | No | No | No | No | No | No |
-| [AWS CloudWatch](aws-cloudwatch/) | Yes | Yes | No | No | Yes | Yes |
-| [Azure Monitor](azure-monitor/) | Yes | Yes | Yes | No | Yes | Yes |
-| [Elasticsearch](elasticsearch/) | Yes | Yes | No | No | Yes | Yes |
-| [Google Cloud Monitoring](google-cloud-monitoring/) | Yes | No | No | No | Yes | Yes |
-| [Graphite](graphite/) | Yes | No | No | No | Yes | Yes |
-| [InfluxDB](influxdb/) | Yes | Yes | No | No | Yes | Yes |
-| [Jaeger](jaeger/) | No | No | Yes | No | No | No |
-| [Loki](loki/) | Yes | Yes | No | No | Yes | Yes |
-| [Microsoft SQL Server (MSSQL)](mssql/) | Yes | No | No | No | Yes | Yes |
-| [MySQL](mysql/) | Yes | No | No | No | Yes | Yes |
-| [OpenTSDB](opentsdb/) | Yes | No | No | No | Yes | Yes |
-| [Parca](parca/) | No | No | No | Yes | No | No |
-| [PostgreSQL](postgres/) | Yes | Yes | No | No | Yes | Yes |
-| [Prometheus](prometheus/) | Yes | No | No | No | Yes | Yes |
-| [Pyroscope](pyroscope/) | No | No | No | Yes | No | No |
-| [Tempo](tempo/) | No | No | Yes | No | Yes | No |
-| [Testdata](testdata/) | Yes | Yes | No | No | Yes | Yes |
-| [Zipkin](zipkin/) | No | No | Yes | No | No | No |
 
 ## Add additional data source plugins
 
