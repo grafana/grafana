@@ -28,12 +28,6 @@ import type {
   GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-// PanelKind and VariableKind are not used with `satisfies` here because
-// the input schemas intentionally differ from v2beta1 (e.g., PanelKind.spec.id
-// is auto-assigned, not caller-provided). Response types in types.ts use the
-// v2beta1 types directly. The canonical layout item schemas above DO use
-// `satisfies` since they match v2beta1 exactly.
-
 export const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
   group: z.string().describe('Datasource type (e.g., "prometheus", "loki", "mysql")'),
@@ -882,7 +876,13 @@ export const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
 });
 
-export const listPanelsPayloadSchema = emptyPayloadSchema;
+export const listPanelsPayloadSchema = z.object({
+  evaluateVariables: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, include evaluatedQueries with template variables resolved to current values'),
+});
 
 export const movePanelPayloadSchema = z.object({
   element: elementReferenceSchema.describe('Element to move, identified by name'),

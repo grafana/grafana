@@ -74,12 +74,7 @@ export function validatePayload(
 
   const result = schema.safeParse(payload);
   if (result.success) {
-    // Zod may return frozen or shared default objects. Deep-clone so downstream
-    // Grafana code (e.g. fixThresholds, getPanelOptionsWithDefaults) can safely
-    // mutate fieldConfig and options in-place without hitting read-only errors.
-    // TODO: remove once getPanelOptionsWithDefaults and fixThresholds in @grafana/data
-    // are refactored to be immutable (return new objects instead of mutating in-place).
-    return { success: true, data: structuredClone(result.data) };
+    return { success: true, data: result.data };
   }
 
   const errorMessages = result.error.issues.map((issue) => {

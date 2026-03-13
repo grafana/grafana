@@ -1,7 +1,7 @@
 /**
  * Dashboard Mutation API - Core Types
  *
- * Response types use v2beta1 schema types directly to stay in sync.
+ * Response types use v2beta1 schema types.
  * Command-specific payload types are defined in their respective command files
  * and inferred from Zod schemas.
  */
@@ -34,6 +34,7 @@ export interface MutationChange {
 
 export interface MutationClient {
   execute(mutation: MutationRequest): Promise<MutationResult>;
+  getAvailableCommands(): string[];
 }
 
 export type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;

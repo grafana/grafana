@@ -157,11 +157,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
         if (dataSpec.queries && queryRunner) {
           const queries = dataSpec.queries.map((pq: PanelQueryKind) => panelQueryKindToSceneQuery(pq));
           queryRunner.setState({ queries });
-          try {
-            queryRunner.runQueries();
-          } catch {
-            // runQueries may fail if the panel is not yet activated (e.g. no time range in scope)
-          }
+          queryRunner.runQueries();
         }
 
         if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
