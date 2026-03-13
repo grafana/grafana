@@ -1858,8 +1858,6 @@
       "state-nodata": {
         "description": ""
       },
-      "timeline-all-delivered": "",
-      "timeline-all-delivered-plural": "",
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
@@ -3648,6 +3646,7 @@
     "category-alert-state-filter": "Warnzustandsfilter",
     "category-filter": "Filter",
     "category-options": "Optionen",
+    "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Nur mit diesem Dashboard verknüpfte Warnungen anzeigen",
     "description-alert-instance-label": "Filtern Sie Warnungsinstanzen mithilfe von Label-Abfragen wie: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
     "description-alert-name": "Filtern Sie nach Warnungen, die diesen Text enthalten",
@@ -3658,6 +3657,9 @@
     "description-max-items": "Maximale Anzahl der anzuzeigenden Warnungen",
     "description-show-inactive-alerts": "Warnregeln mit 0 (null) Instanzen einbeziehen. Da diese Regeln keine Instanzen haben, bleiben sie ausgeblendet, wenn der Label-Filter für Warnungsinstanzen konfiguriert ist.",
     "description-sort-order": "Sortierreihenfolge von Warnungen und Warnungsinstanzen",
+    "description-stat-color-mode": "",
+    "description-stat-thresholds": "",
+    "description-stat-value-mappings": "",
     "description-view-mode": "Zwischen Listenansicht und Statistikansicht wechseln",
     "group-by": {
       "aria-label-group-by-label-keys": "Nach Label-Keys gruppieren",
@@ -3683,6 +3685,9 @@
     "name-recovering": "Wird wiederhergestellt",
     "name-show-inactive-alerts": "Warnungen mit 0 Instanzen anzeigen",
     "name-sort-order": "Sortierreihenfolge",
+    "name-stat-color-mode": "",
+    "name-stat-thresholds": "",
+    "name-stat-value-mappings": "",
     "name-view-mode": "Ansichtsmodus",
     "sort-order-options": {
       "label-alphabetical-asc": "Alphabetisch (aufsteigend)",
@@ -3690,6 +3695,12 @@
       "label-importance": "Relevanz",
       "label-time-asc": "Zeit (aufsteigend)",
       "label-time-desc": "Zeit (absteigend)"
+    },
+    "stat-color-mode": {
+      "label-background-gradient": "",
+      "label-background-solid": "",
+      "label-none": "",
+      "label-value": ""
     },
     "ungrouped-mode-view": {
       "active-for": "<1>{{duration}}</1> lang",
@@ -4081,6 +4092,20 @@
     },
     "name-show-unfilled-area": "Ungefüllten Bereich anzeigen",
     "name-value-display": "Wertanzeige",
+    "presets": {
+      "basic": "",
+      "basic_desc": "",
+      "basic-vertical": "",
+      "basic-vertical_desc": "",
+      "gradient": "",
+      "gradient_desc": "",
+      "gradient-BlYlRd": "",
+      "gradient-BlYlRd_desc": "",
+      "gradient-vertical": "",
+      "gradient-vertical_desc": "",
+      "retro-lcd": "",
+      "retro-lcd_desc": ""
+    },
     "suggestions": {
       "basic": "Balkenanzeige",
       "lcd": "Balkenanzeige – LCD"
@@ -6604,10 +6629,8 @@
       }
     },
     "annotations-section": {
-      "content-drag-to-reorder": "",
       "name-builtin": "",
-      "name-disabled": "",
-      "select": ""
+      "name-disabled": ""
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Darf keine ungültigen Zeichen enthalten: ~, ^, :, ?, *, [, \\\\ oder ].",
@@ -6766,6 +6789,12 @@
     },
     "description-label": {
       "description": "Beschreibung"
+    },
+    "draggable-item": {
+      "drag-to-reorder": ""
+    },
+    "draggable-items-list": {
+      "select": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7452,10 +7481,6 @@
       "title-controls-menu_other": "",
       "title-hidden_one": "",
       "title-hidden_other": ""
-    },
-    "variables-section": {
-      "content-drag-to-reorder": "",
-      "select": ""
     },
     "version-history": {
       "comparison": {
@@ -10225,7 +10250,15 @@
       "remove-button": "{{children}} entfernen"
     },
     "viz-legend": {
-      "right-axis-indicator": "(rechte y-Achse)"
+      "clear-filters": "",
+      "faceted-by-labels": "",
+      "faceted-by-name": "",
+      "faceted-deselect-all": "",
+      "faceted-select-all": "",
+      "pin-filter": "",
+      "right-axis-indicator": "(rechte y-Achse)",
+      "series-visibility": "",
+      "unpin-sidebar": ""
     },
     "viz-tooltip": {
       "actions-confirmation-input-placeholder": "Möchten Sie wirklich {{ actionTitle }}?",
@@ -12687,6 +12720,7 @@
     "preview-banner": {
       "behind-branch-text": "Diese Ressource ist hinter dem Branch in {{repoType}}.",
       "branch-text": "Branch:",
+      "delete-from-branch": "",
       "not-saved": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen weiterhin die aktuelle Version, die im konfigurierten Standard-Branch gespeichert ist, bis dieser Branch zusammengeführt wird",
       "open-in-repo-button": "Öffnen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-Request öffnen in {{repoType}}",
@@ -12694,6 +12728,7 @@
       "view-pull-request-in-repo": "Pull-Request anzeigen in {{repoType}}"
     },
     "title-created-branch-in-repo": "Eine neue Ressource wurde in einem Branch in {{repoType}} erstellt.",
+    "title-deleted-resource-in-branch": "",
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar"
   },
   "provisioning": {
@@ -12785,8 +12820,8 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurieren",
-      "free-tier-limit-tooltip": "Kostenlose Accounts sind auf eine Verbindung beschränkt",
-      "instance-fully-managed-tooltip": "Die Konfiguration ist deaktiviert, da diese Instanz vollständig verwaltet wird"
+      "instance-fully-managed-tooltip": "Die Konfiguration ist deaktiviert, da diese Instanz vollständig verwaltet wird",
+      "max-repos-reached-tooltip": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12952,9 +12987,6 @@
       "loading": ""
     },
     "folder-repository-list": {
-      "free-tier-limit": {
-        "message-connection": ""
-      },
       "no-results-matching-your-query": "Keine passenden Ergebnisse zu Ihrer Abfrage",
       "partial-managed": "{{managedCount}}/{{resourceCount}} Ressourcen werden von Git sync verwaltet.",
       "placeholder-search": "Suche",
@@ -12962,13 +12994,6 @@
       "all-resources-managed_other": "Alle {{count}} Ressourcen werden verwaltet",
       "unmanaged-resources_one": "{{count}} Ressource wird nicht von Git sync verwaltet.",
       "unmanaged-resources_other": "{{count}} Ressourcen werden nicht von Git sync verwaltet."
-    },
-    "free-tier-limit": {
-      "message": "Kostenlose Accounts sind auf 1 Verbindung und 20 Ressourcen pro Ordner begrenzt",
-      "message-connection": "",
-      "message-resource": "Kostenlose Accounts sind auf 20 Ressourcen pro Ordner begrenzt. Um weitere Ressourcen hinzuzufügen,",
-      "note": "Hinweis:",
-      "upgrade-link": "führen Sie ein Upgrade Ihres Accounts durch"
     },
     "get-default-values": {
       "title": {
@@ -13123,6 +13148,26 @@
           "repository-request-failed": "Repository-Anfrage fehlgeschlagen"
         }
       }
+    },
+    "quota-limit": {
+      "note": "",
+      "upgrade-link": "",
+      "message-both-repositories_one": "",
+      "message-both-repositories_other": "",
+      "message-both-resources_one": "",
+      "message-both-resources_other": "",
+      "message-repositories-info_one": "",
+      "message-repositories-info_other": "",
+      "message-repository_one": "",
+      "message-repository_other": "",
+      "note-message-both-repositories_one": "",
+      "note-message-both-repositories_other": "",
+      "note-message-both-resources_one": "",
+      "note-message-both-resources_other": "",
+      "note-message-repository_one": "",
+      "note-message-repository_other": "",
+      "note-message-resource_one": "",
+      "note-message-resource_other": ""
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -14457,6 +14502,18 @@
       "label-same-as-value": "Identisch mit Wert",
       "label-standard": "Standard"
     },
+    "presets": {
+      "horizontal-threshold-value": "",
+      "horizontal-threshold-value-sparkline": "",
+      "list": "",
+      "list_desc": "",
+      "threshold-background": "",
+      "threshold-background-sparkline": "",
+      "threshold-value": "",
+      "threshold-value-sparkline": "",
+      "wide-list": "",
+      "wide-list-desc": ""
+    },
     "suggestions": {
       "stat": "Stat.",
       "stat-color-background": "Stat. – Farbhintergrund",
@@ -14915,6 +14972,11 @@
         "label-threshold": "Schwellenwert"
       }
     },
+    "legend": {
+      "category": "",
+      "description-faceted-filter": "",
+      "name-faceted-filter": ""
+    },
     "line-style-editor": {
       "line-fill-options": {
         "label-dash": "Strich",
@@ -14933,16 +14995,22 @@
       "zoom-to-data": "Auf Daten zoomen"
     },
     "presets": {
-      "area": "",
-      "default": "",
-      "smooth": "",
-      "stacked-area": "",
-      "stacked-area-gradient": "",
-      "stacked-smooth": "",
-      "stacked-step": "",
-      "step": "",
-      "step-filled": "",
-      "step-hue": ""
+      "multi-many-points": "",
+      "multi-many-points-stacked": "",
+      "multi-many-points-stacked-pct": "",
+      "multi-points": "",
+      "multi-stacked-bars": "",
+      "multi-stacked-points": "",
+      "single-bars": "",
+      "single-bars-scheme": "",
+      "single-dashed-threshold": "",
+      "single-few-points": "",
+      "single-many-points-fill": "",
+      "single-many-points-hue": "",
+      "single-many-points-scheme": "",
+      "single-many-points-threshold-scheme": "",
+      "single-smooth-scheme": "",
+      "single-step-fill": ""
     },
     "span-nulls-editor": {
       "gaps-options": {
