@@ -160,3 +160,15 @@ func (s *State) CacheVolume(ctx context.Context, arg Argument) (*dagger.CacheVol
 	s.Data.Store(arg.Name, dir)
 	return dir, nil
 }
+
+// UnwrapState returns the underlying *State when the handler is wrapped (for example by StateLogger).
+func UnwrapState(handler StateHandler) (*State, bool) {
+	switch v := handler.(type) {
+	case *State:
+		return v, true
+	case *StateLogger:
+		return UnwrapState(v.Handler)
+	default:
+		return nil, false
+	}
+}

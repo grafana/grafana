@@ -1,7 +1,6 @@
 package conversion
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -161,8 +160,7 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 			outputFileName := fmt.Sprintf("v2alpha1.%s.v2beta1.json", baseName)
 			outputPath := filepath.Join(outputDir, outputFileName)
 
-			// Write or compare output file
-			writeOrCompareOutputFile(t, v2beta1, outputPath, outputFileName)
+			writeOrCompareOutputFile(t, v2beta1, outputPath)
 		})
 	}
 }
@@ -195,84 +193,16 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 		expectedOutputFile := baseName + ".v1beta1.json"
 
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
-			// Read the v2alpha1 input file
 			inputFile := filepath.Join(inputDir, file.Name())
 			var v2alpha1 dashv2alpha1.Dashboard
 			readInputFile(t, inputFile, &v2alpha1)
 
-			// Convert v2alpha1 → v1beta1
 			var convertedV1beta1 dashv1.Dashboard
 			err = scheme.Convert(&v2alpha1, &convertedV1beta1, nil)
 			require.NoError(t, err, "Failed to convert v2alpha1 to v1beta1")
 
 			expectedOutputPath := filepath.Join(outputDir, expectedOutputFile)
-
-			// If OUTPUT_OVERRIDE is set, write the file instead of comparing
-			if shouldOverrideOutput() {
-				writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath, expectedOutputFile)
-				return
-			}
-
-			// Read the expected v1beta1 output file
-			// ignore gosec G304 as this function is only used in the test process
-			//nolint:gosec
-			expectedOutputData, err := os.ReadFile(expectedOutputPath)
-			if err != nil {
-				t.Skipf("Skipping test: expected output file %s not found", expectedOutputFile)
-				return
-			}
-
-			// Parse expected v1beta1 dashboard
-			var expectedV1beta1 dashv1.Dashboard
-			err = json.Unmarshal(expectedOutputData, &expectedV1beta1)
-			require.NoError(t, err, "Failed to unmarshal expected v1beta1 dashboard")
-
-			// Compare the spec structures
-			// Since v1beta1 is unstructured, we compare the JSON structure
-			convertedSpecJSON, err := json.Marshal(convertedV1beta1.Spec.Object)
-			require.NoError(t, err, "Failed to marshal converted spec")
-
-			expectedSpecJSON, err := json.Marshal(expectedV1beta1.Spec.Object)
-			require.NoError(t, err, "Failed to marshal expected spec")
-
-			// Compare JSON structures (normalize by unmarshaling and remarshaling)
-			var convertedSpec map[string]interface{}
-			var expectedSpec map[string]interface{}
-
-			err = json.Unmarshal(convertedSpecJSON, &convertedSpec)
-			require.NoError(t, err, "Failed to unmarshal converted spec")
-
-			err = json.Unmarshal(expectedSpecJSON, &expectedSpec)
-			require.NoError(t, err, "Failed to unmarshal expected spec")
-
-			// Compare dashboard structures directly at the spec level (no "dashboard" wrapper)
-			// Compare key fields
-			assert.Equal(t, expectedSpec["title"], convertedSpec["title"], "Title mismatch")
-			assert.Equal(t, expectedSpec["description"], convertedSpec["description"], "Description mismatch")
-			assert.Equal(t, expectedSpec["tags"], convertedSpec["tags"], "Tags mismatch")
-
-			// Compare panels count
-			expectedPanels, _ := expectedSpec["panels"].([]interface{})
-			convertedPanels, _ := convertedSpec["panels"].([]interface{})
-			assert.Equal(t, len(expectedPanels), len(convertedPanels), "Panel count mismatch")
-
-			// Compare variables count
-			expectedTemplating, _ := expectedSpec["templating"].(map[string]interface{})
-			convertedTemplating, _ := convertedSpec["templating"].(map[string]interface{})
-			if expectedTemplating != nil && convertedTemplating != nil {
-				expectedVars, _ := expectedTemplating["list"].([]interface{})
-				convertedVars, _ := convertedTemplating["list"].([]interface{})
-				assert.Equal(t, len(expectedVars), len(convertedVars), "Variable count mismatch")
-			}
-
-			// Compare annotations count
-			expectedAnnotations, _ := expectedSpec["annotations"].(map[string]interface{})
-			convertedAnnotations, _ := convertedSpec["annotations"].(map[string]interface{})
-			if expectedAnnotations != nil && convertedAnnotations != nil {
-				expectedAnnList, _ := expectedAnnotations["list"].([]interface{})
-				convertedAnnList, _ := convertedAnnotations["list"].([]interface{})
-				assert.Equal(t, len(expectedAnnList), len(convertedAnnList), "Annotation count mismatch")
-			}
+			writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath)
 		})
 	}
 }
@@ -565,6 +495,179 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 	} else {
 		t.Fatalf("Unexpected revision type: %T", dashboard["revision"])
 	}
+}
+
+// TestV2alpha1ToV1beta1MatcherConfig tests conversion of matcher scope/config (transformation filter and field override)
+func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	scopeSeries := dashv2alpha1.DashboardMatcherScopeSeries
+	scopeNested := dashv2alpha1.DashboardMatcherScopeNested
+	filterMatcher := &dashv2alpha1.DashboardMatcherConfig{
+		Id:      "byName",
+		Scope:   &scopeSeries,
+		Options: map[string]interface{}{"include": ".*"},
+	}
+
+	v2alpha1 := dashv2alpha1.Dashboard{
+		Spec: dashv2alpha1.DashboardSpec{
+			Title: "Test Dashboard",
+			Elements: map[string]dashv2alpha1.DashboardElement{
+				"panel-with-matchers": {
+					PanelKind: &dashv2alpha1.DashboardPanelKind{
+						Kind: "Panel",
+						Spec: dashv2alpha1.DashboardPanelSpec{
+							Id:    1,
+							Title: "Panel with matchers",
+							Data: dashv2alpha1.DashboardQueryGroupKind{
+								Kind: "QueryGroup",
+								Spec: dashv2alpha1.DashboardQueryGroupSpec{
+									Queries: []dashv2alpha1.DashboardPanelQueryKind{},
+									Transformations: []dashv2alpha1.DashboardTransformationKind{
+										{
+											Kind: "filterByValue",
+											Spec: dashv2alpha1.DashboardDataTransformerConfig{
+												Id:      "filterByValue",
+												Filter:  nil,
+												Options: map[string]interface{}{},
+											},
+										},
+										{
+											Kind: "groupBy",
+											Spec: dashv2alpha1.DashboardDataTransformerConfig{
+												Id:      "groupBy",
+												Filter:  filterMatcher,
+												Options: map[string]interface{}{"include": ".*"},
+											},
+										},
+									},
+									QueryOptions: *dashv2alpha1.NewDashboardQueryOptionsSpec(),
+								},
+							},
+							VizConfig: dashv2alpha1.DashboardVizConfigKind{
+								Kind: "timeseries",
+								Spec: dashv2alpha1.DashboardVizConfigSpec{
+									PluginVersion: "1.0",
+									Options:       map[string]interface{}{},
+									FieldConfig: dashv2alpha1.DashboardFieldConfigSource{
+										Defaults: *dashv2alpha1.NewDashboardFieldConfig(),
+										Overrides: []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides{
+											{
+												Matcher: dashv2alpha1.DashboardMatcherConfig{
+													Id:      "byName",
+													Scope:   &scopeNested,
+													Options: map[string]interface{}{"name": "Field1"},
+												},
+												Properties: []dashv2alpha1.DashboardDynamicConfigValue{},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+					Kind: "GridLayout",
+					Spec: dashv2alpha1.DashboardGridLayoutSpec{
+						Items: []dashv2alpha1.DashboardGridLayoutItemKind{
+							{
+								Kind: "GridLayoutItem",
+								Spec: dashv2alpha1.DashboardGridLayoutItemSpec{
+									X: 0, Y: 0, Width: 12, Height: 8,
+									Element: dashv2alpha1.DashboardElementReference{
+										Kind: "ElementReference",
+										Name: "panel-with-matchers",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var v1beta1 dashv1.Dashboard
+	err = scheme.Convert(&v2alpha1, &v1beta1, nil)
+	require.NoError(t, err)
+
+	dashboard := v1beta1.Spec.Object
+
+	// Find the panel (may be under panels[0] or in a row's panels depending on layout conversion)
+	panels, ok := dashboard["panels"].([]interface{})
+	require.True(t, ok, "panels should exist")
+	require.NotEmpty(t, panels, "at least one panel expected")
+
+	// Grid layout produces flat panels; get the panel with transformations
+	var panel map[string]interface{}
+	for _, p := range panels {
+		pm, ok := p.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if _, hasTrans := pm["transformations"]; hasTrans {
+			panel = pm
+			break
+		}
+	}
+	require.NotNil(t, panel, "panel with transformations should exist")
+
+	// transformations may be []interface{} or []map[string]interface{} depending on conversion path
+	transformationsRaw := panel["transformations"]
+	require.NotNil(t, transformationsRaw, "transformations should exist")
+	var trans1 map[string]interface{}
+	switch tr := transformationsRaw.(type) {
+	case []interface{}:
+		require.Len(t, tr, 2)
+		var ok bool
+		trans1, ok = tr[1].(map[string]interface{})
+		require.True(t, ok, "second transformation should be a map")
+	case []map[string]interface{}:
+		require.Len(t, tr, 2)
+		trans1 = tr[1]
+	default:
+		t.Fatalf("transformations has unexpected type %T", transformationsRaw)
+	}
+
+	// Second transformation should have filter with scope "series"
+	filter, ok := trans1["filter"].(map[string]interface{})
+	require.True(t, ok, "second transformation should have filter")
+	assert.Equal(t, "byName", filter["id"])
+	assert.Equal(t, "series", filter["scope"])
+	assert.Equal(t, map[string]interface{}{"include": ".*"}, filter["options"])
+
+	// Field config overrides: matcher should have scope "nested"
+	fieldConfig, ok := panel["fieldConfig"].(map[string]interface{})
+	require.True(t, ok, "fieldConfig should exist")
+	overridesRaw := fieldConfig["overrides"]
+	require.NotNil(t, overridesRaw, "overrides should exist")
+	var override0 map[string]interface{}
+	switch ov := overridesRaw.(type) {
+	case []interface{}:
+		require.Len(t, ov, 1)
+		var ok bool
+		override0, ok = ov[0].(map[string]interface{})
+		require.True(t, ok)
+	case []map[string]interface{}:
+		require.Len(t, ov, 1)
+		override0 = ov[0]
+	default:
+		t.Fatalf("overrides has unexpected type %T", overridesRaw)
+	}
+	matcher, ok := override0["matcher"].(map[string]interface{})
+	require.True(t, ok, "override should have matcher")
+	assert.Equal(t, "byName", matcher["id"])
+	assert.Equal(t, "nested", matcher["scope"])
+	assert.Equal(t, map[string]interface{}{"name": "Field1"}, matcher["options"])
 }
 
 // TestV2beta1ToV1beta1WriteOutputFiles writes output files from v2beta1 input files

@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strings"
 
-	alertmanager_config "github.com/prometheus/alertmanager/config"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -63,7 +61,7 @@ type NotificationPolicyService interface {
 }
 
 type routeService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -120,7 +118,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return exportResponse(c, e)
 	}
 
-	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 	}
@@ -631,7 +629,7 @@ func escapeRouteExport(r *definitions.RouteExport) {
 		// convert regex to string, escape then covert back to regex
 		stringRepr := addEscapeCharactersToString(v.String())
 		mutated := regexp.MustCompile(stringRepr)
-		r.MatchRE[k] = alertmanager_config.Regexp{Regexp: mutated}
+		r.MatchRE[k] = definitions.Regexp{Regexp: mutated}
 	}
 	if r.MuteTimeIntervals != nil {
 		muteTimeIntervals := make([]string, len(*r.MuteTimeIntervals))

@@ -662,6 +662,7 @@ export interface VizLegendOptions {
   calcs: Array<string>;
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
+  limit?: number;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;
@@ -1001,6 +1002,9 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
   reducers: [],
 };
 
+/**
+ * Note that public/app/plugins/panel/table/panelcfg.cue contains a deprecated copy of these options
+ */
 export interface TableOptions {
   /**
    * Controls the height of the rows

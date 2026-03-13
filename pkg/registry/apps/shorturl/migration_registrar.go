@@ -14,7 +14,7 @@ func ShortURLMigration(migrator migrator.ShortURLMigrator) migrations.MigrationD
 		ID:          "shorturls",
 		MigrationID: "shorturls migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: shortURLGR, LockTable: "short_url"},
+			{GroupResource: shortURLGR, LockTables: []string{"short_url"}},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			shortURLGR: migrator.MigrateShortURLs,
@@ -22,5 +22,6 @@ func ShortURLMigration(migrator migrator.ShortURLMigrator) migrations.MigrationD
 		Validators: []migrations.ValidatorFactory{
 			migrations.CountValidation(shortURLGR, "short_url", "org_id = ?"),
 		},
+		RenameTables: []string{"short_url"},
 	}
 }

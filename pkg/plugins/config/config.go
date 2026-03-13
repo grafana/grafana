@@ -5,7 +5,9 @@ package config
 type PluginManagementCfg struct {
 	DevMode bool
 
-	PluginsPath string
+	// PluginsPaths: list of paths where Grafana will look for plugins.
+	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
+	PluginsPaths []string
 
 	PluginSettings       PluginSettings
 	PluginsAllowUnsigned []string
@@ -35,12 +37,12 @@ type Features struct {
 type PluginSettings map[string]map[string]string
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
-func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
+func NewPluginManagementCfg(devMode bool, pluginsPaths []string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
-		PluginsPath:           pluginsPath,
+		PluginsPaths:          pluginsPaths,
 		DevMode:               devMode,
 		PluginSettings:        pluginSettings,
 		PluginsAllowUnsigned:  pluginsAllowUnsigned,

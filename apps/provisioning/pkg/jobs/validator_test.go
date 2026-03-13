@@ -579,6 +579,33 @@ func TestValidateJob(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "valid fix-folder-metadata job without options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionFixFolderMetadata,
+					Repository: "test-repo",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid fix-folder-metadata job with options",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-job",
+				},
+				Spec: provisioning.JobSpec{
+					Action:            provisioning.JobActionFixFolderMetadata,
+					Repository:        "test-repo",
+					FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

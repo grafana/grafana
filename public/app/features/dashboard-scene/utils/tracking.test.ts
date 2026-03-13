@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
@@ -47,7 +47,7 @@ describe('dashboard tracking', () => {
   describe('save v2 dashboard tracking', () => {
     it('should call report interaction with correct parameters when saving a new dashboard', async () => {
       const scene = buildTestScene();
-      trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url' });
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
         isDynamicDashboard: true,
         uid: 'dashboard-test',
@@ -74,7 +74,7 @@ describe('dashboard tracking', () => {
 
     it('should include transformation and expression counts when provided', async () => {
       const scene = buildTestScene();
-      trackDashboardSceneCreatedOrSaved(true, scene, {
+      await trackDashboardSceneCreatedOrSaved(true, scene, {
         name: 'new dashboard',
         url: 'new-url',
         transformation_counts: { organize: 2, reduce: 1 },

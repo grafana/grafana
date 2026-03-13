@@ -20,6 +20,11 @@ func NewMetastatusOperatorState() *MetastatusOperatorState {
 	return &MetastatusOperatorState{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetastatusOperatorState.
+func (MetastatusOperatorState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetastatusOperatorState"
+}
+
 // +k8s:openapi-gen=true
 type MetaStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
@@ -34,6 +39,11 @@ func NewMetaStatus() *MetaStatus {
 	return &MetaStatus{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for MetaStatus.
+func (MetaStatus) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatus"
+}
+
 // +k8s:openapi-gen=true
 type MetaStatusOperatorStateState string
 
@@ -43,9 +53,7 @@ const (
 	MetaStatusOperatorStateStateFailed     MetaStatusOperatorStateState = "failed"
 )
 
-func (MetastatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetastatusOperatorState"
-}
-func (MetaStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatus"
+// OpenAPIModelName returns the OpenAPI model name for MetaStatusOperatorStateState.
+func (MetaStatusOperatorStateState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaStatusOperatorStateState"
 }

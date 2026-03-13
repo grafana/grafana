@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"testing"
 
-	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	ofrep "github.com/open-feature/go-sdk-contrib/providers/ofrep"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +14,7 @@ import (
 
 	authlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -104,10 +104,27 @@ func TestCreateProvider(t *testing.T) {
 				}
 			}
 
-			tokenExchangeMiddleware := TestingTokenExchangeMiddleware(tokenExchangeClient)
-			httpClient, err := createHTTPClient(tokenExchangeMiddleware)
+			authConfig := features.TokenExchangeConfig{
+				TokenExchanger: tokenExchangeClient,
+				Namespace:      "*", // Use wildcard namespace for tests
+				Audiences:      []string{features.FeaturesProviderAudience},
+			}
+
+			httpClient, err := features.CreateAuthenticatedHTTPClient(
+				authConfig,
+				features.HTTPClientOptions{InsecureSkipVerify: true},
+			)
 			require.NoError(t, err, "failed to create features-service http client")
-			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClient)
+
+			// Create provider based on type
+			var provider openfeature.FeatureProvider
+			switch tc.cfg.ProviderType {
+			case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
+				provider, err = features.NewOFREPProvider(tc.cfg.URL.String(), httpClient)
+			default:
+				// Static provider with standard flags
+				provider, err = CreateStaticProviderWithStandardFlags(nil)
+			}
 			require.NoError(t, err)
 
 			err = openfeature.SetProviderAndWait(provider)
@@ -115,10 +132,10 @@ func TestCreateProvider(t *testing.T) {
 
 			switch tc.expectedProvider {
 			case setting.FeaturesServiceProviderType:
-				_, ok := provider.(*gofeatureflag.Provider)
-				assert.True(t, ok, "expected provider to be of type goff.Provider")
+				_, ok := provider.(*ofrep.Provider)
+				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
 
-				testGoFFProvider(t, tc.failSigning)
+				testOFREPProvider(t, tc.failSigning)
 			case setting.OFREPProviderType:
 				_, ok := provider.(*ofrep.Provider)
 				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
@@ -130,7 +147,7 @@ func TestCreateProvider(t *testing.T) {
 	}
 }
 
-func testGoFFProvider(t *testing.T, failSigning bool) {
+func testOFREPProvider(t *testing.T, failSigning bool) {
 	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
 	// is scoped to is what is used to sign the token with
 	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)

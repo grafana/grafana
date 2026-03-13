@@ -23,6 +23,10 @@ type RepositorySpecApplyConfiguration struct {
 	Sync *SyncOptionsApplyConfiguration `json:"sync,omitempty"`
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type *provisioningv0alpha1.RepositoryType `json:"type,omitempty"`
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
@@ -88,6 +92,14 @@ func (b *RepositorySpecApplyConfiguration) WithSync(value *SyncOptionsApplyConfi
 // If called multiple times, the Type field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.RepositoryType) *RepositorySpecApplyConfiguration {
 	b.Type = &value
+	return b
+}
+
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Webhook = value
 	return b
 }
 

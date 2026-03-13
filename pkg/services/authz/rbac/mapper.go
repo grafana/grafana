@@ -27,6 +27,8 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
+	// Resource returns the K8s resource name for this mapping.
+	Resource() string
 }
 
 type translation struct {
@@ -86,13 +88,23 @@ func (t translation) SkipScope(verb string) bool {
 	return false
 }
 
+func (t translation) Resource() string {
+	return t.resource
+}
+
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource string) (Mapping, bool)
+	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
+	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
+	// Returns ("", false) if no translation is found.
+	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
+	// GetGroups returns all registered group names
+	GetGroups() []string
 }
 
 type mapper map[string]map[string]translation
@@ -207,22 +219,27 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
-			"users":           newResourceTranslation("users", "uid", false, map[string]bool{utils.VerbCreate: true}),
+			"users": translation{
+				resource:  "users",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "users:create",
+					utils.VerbGet:              "org.users:read",
+					utils.VerbUpdate:           "org.users:write",
+					utils.VerbPatch:            "org.users:write",
+					utils.VerbDelete:           "org.users:remove",
+					utils.VerbDeleteCollection: "users:delete",
+					utils.VerbList:             "org.users:read",
+					utils.VerbWatch:            "org.users:read",
+					utils.VerbGetPermissions:   "users.permissions:read",
+					utils.VerbSetPermissions:   "users.permissions:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+			},
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
-			"coreroles": translation{
-				resource:  "roles",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbGet:   "roles:read",
-					utils.VerbList:  "roles:read",
-					utils.VerbWatch: "roles:read",
-				},
-				folderSupport: false,
-				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
-				skipScopeOnVerb: nil,
-			},
 			"globalroles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -281,6 +298,17 @@ func NewMapperRegistry() MapperRegistry {
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
 		"query.grafana.app": {
+			"query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
+		},
+		"datasource.grafana.app": { // duplicate the query group here
 			"query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -354,6 +382,23 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 	return &t, true
 }
 
+func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	groupKey, ok := m.findGroupKey(group)
+	if !ok {
+		return "", false
+	}
+	resources := m[groupKey]
+	if _, ok := resources[resource]; ok {
+		return resource, true
+	}
+	for apiResource, t := range resources {
+		if t.Resource() == resource {
+			return apiResource, true
+		}
+	}
+	return "", false
+}
+
 func (m mapper) GetAll(group string) []Mapping {
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
@@ -368,4 +413,12 @@ func (m mapper) GetAll(group string) []Mapping {
 	}
 
 	return translations
+}
+
+func (m mapper) GetGroups() []string {
+	groups := make([]string, 0, len(m))
+	for group := range m {
+		groups = append(groups, group)
+	}
+	return groups
 }

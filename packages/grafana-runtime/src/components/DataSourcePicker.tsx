@@ -113,7 +113,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     if (ds) {
       return {
-        label: ds.name.slice(0, 37),
+        label: ds.name,
         value: ds.uid,
         imgUrl: ds.meta.info.logos.small,
         hideText: hideTextValue,

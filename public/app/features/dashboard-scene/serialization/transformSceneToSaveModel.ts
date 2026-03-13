@@ -43,6 +43,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import {
@@ -160,7 +161,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart ?? '',
     tags: state.tags,
-    links: state.links,
+    links: state.links.filter(isLinkEditable),
     graphTooltip,
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
@@ -174,6 +175,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     dashboard.timezone = timeRange.timeZone;
   }
 
+  delete dashboard.id; // Make sure we never save an internal ID
   return sortedDeepCloneWithoutNulls(dashboard, true);
 }
 

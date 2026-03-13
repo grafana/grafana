@@ -22,13 +22,13 @@ import (
 )
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections
-// as in modes 3+, the connections are found via searching dashboards for the reference of the library panel
+// as in modes 4+, the connections are found via searching dashboards for the reference of the library panel
 //
 // it also ensures we create the connection in modes 0-2 if a dashboard v1 is created with a reference
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -37,7 +37,6 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
@@ -93,7 +92,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -103,7 +102,6 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 					"kubernetesLibraryPanels",
 					"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
@@ -297,7 +295,7 @@ func deleteLibraryElement(t *testing.T, ctx TestContext, user apis.User, uid str
 }
 
 func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -306,7 +304,6 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
@@ -526,7 +523,6 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 			EnableFeatureToggles: []string{
 				"kubernetesLibraryPanels",
 			},
-			UnifiedStorageEnableSearch: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: dualWriterMode,

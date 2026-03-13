@@ -1,22 +1,4 @@
 import { PanelPluginMeta, PluginState, unEscapeStringFromRegex } from '@grafana/data';
-import { config } from '@grafana/runtime';
-
-export function getAllPanelPluginMeta(): PanelPluginMeta[] {
-  const allPanels = config.panels;
-
-  return Object.keys(allPanels)
-    .filter((key) => allPanels[key]['hideFromList'] === false)
-    .map((key) => allPanels[key])
-    .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
-}
-
-export function getWidgetPluginMeta(): PanelPluginMeta[] {
-  return getAllPanelPluginMeta().filter((panel) => !!panel.skipDataQuery);
-}
-
-export function getVizPluginMeta(): PanelPluginMeta[] {
-  return getAllPanelPluginMeta().filter((panel) => !panel.skipDataQuery);
-}
 
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],

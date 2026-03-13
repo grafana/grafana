@@ -30,7 +30,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
   const filePath = `../clients/rtkq/${app}/${version}/endpoints.gen.ts`;
   return {
     [filePath]: {
-      schemaFile: path.join(basePath, `data/openapi/${app}.grafana.app-${version}.json`),
+      schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
       filterEndpoints,
       tag: true,
@@ -115,6 +115,7 @@ const config: ConfigFile = {
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
+    ...createAPIConfig('quotas', 'v0alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
