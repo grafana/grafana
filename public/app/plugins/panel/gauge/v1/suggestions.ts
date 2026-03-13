@@ -10,7 +10,6 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
   defaultsDeep(suggestion, {
     fieldConfig: {
       defaults: {
-        unit: 'short',
         thresholds: {
           steps: [
             { value: -Infinity, color: 'green' },
@@ -27,6 +26,9 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
       previewModifier: (s) => {
         if (s.options?.reduceOptions?.values) {
           s.options.reduceOptions.limit = 2;
+        }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
         }
       },
     },

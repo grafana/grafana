@@ -21,16 +21,13 @@ const withDefaults = (
       barWidthFactor: 0.3,
       showThresholdMarkers: false,
     },
-    fieldConfig: {
-      defaults: {
-        unit: 'short',
-      },
-      overrides: [],
-    },
     cardOptions: {
       previewModifier: (s) => {
         if (s.options?.reduceOptions) {
           s.options.reduceOptions.limit = 4;
+        }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
         }
       },
     },
