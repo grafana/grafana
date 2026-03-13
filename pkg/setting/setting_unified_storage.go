@@ -211,9 +211,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 func (cfg *Cfg) applyMigrationEnforcements() {
 	if !cfg.ShouldRunMigrations() {
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
-		// Search is handled by a remote server, disable it locally
-		apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-		if apiserverCfg.Key("search_server_address").MustString("") != "" {
+		if cfg.shouldProxySearchRemotely() {
 			cfg.EnableSearch = false
 		}
 		return
@@ -249,6 +247,16 @@ func (cfg *Cfg) applyMigrationEnforcements() {
 
 func isTargetEligibleForMigrations(targets []string) bool {
 	return slices.Contains(targets, "all") || slices.Contains(targets, "core")
+}
+
+// shouldProxySearchRemotely reports whether local search should be disabled in
+// favor of a remote search server. This is true when a search_server_address is
+// configured and the current target is not a dedicated search-server (which
+// needs local indexing to serve search RPCs).
+func (cfg *Cfg) shouldProxySearchRemotely() bool {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	return apiserverCfg.Key("search_server_address").MustString("") != "" &&
+		!slices.Contains(cfg.Target, "search-server")
 }
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.

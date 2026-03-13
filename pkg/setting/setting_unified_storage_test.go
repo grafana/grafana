@@ -239,9 +239,33 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 		assert.False(t, resourceCfg.EnableMigration)
 	})
 
-	t.Run("disables local search when migrations disabled and search_server_address set", func(t *testing.T) {
+	t.Run("disables local search when migrations disabled and shouldProxySearchRemotely", func(t *testing.T) {
 		cfg := newCfg(t)
 		disableMigrations(cfg)
+		cfg.EnableSearch = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:10000")
+
+		cfg.applyMigrationEnforcements()
+
+		assert.False(t, cfg.EnableSearch)
+	})
+
+	t.Run("keeps local search on search-server target even with search_server_address set", func(t *testing.T) {
+		cfg := newCfg(t)
+		disableMigrations(cfg)
+		cfg.Target = []string{"search-server"}
+		cfg.EnableSearch = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:10000")
+
+		cfg.applyMigrationEnforcements()
+
+		assert.True(t, cfg.EnableSearch)
+	})
+
+	t.Run("disables local search on storage-server target with search_server_address set", func(t *testing.T) {
+		cfg := newCfg(t)
+		disableMigrations(cfg)
+		cfg.Target = []string{"storage-server"}
 		cfg.EnableSearch = true
 		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:10000")
 
