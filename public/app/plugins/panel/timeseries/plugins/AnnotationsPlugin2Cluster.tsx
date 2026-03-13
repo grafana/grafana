@@ -130,8 +130,8 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.clip();
 
       // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !options?.multiLane || options.clustering;
-      const shouldRenderLine = !options?.multiLane || options.clustering;
+      const shouldRenderRegion = !options?.multiLane || options?.clustering;
+      const shouldRenderLine = !options?.multiLane || options?.clustering;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
