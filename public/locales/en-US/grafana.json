@@ -5906,6 +5906,12 @@
         "title": "Panel time settings"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "Ask Assistant about this panel...",
+        "placeholder-multi": "Ask Assistant about these panels..."
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",

@@ -55,7 +55,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {editableElement && (
+      {editableElement && isEditing && (
         <Sidebar.OpenPane>
           <ElementEditPane
             key={selectedObject?.state.key}
