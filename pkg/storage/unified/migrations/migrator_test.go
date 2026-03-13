@@ -74,6 +74,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		})
 		t.Logf("Using shared database path: %s", dbPath)
+
+		// Reset the global testSQLStore singleton after this test suite finishes.
+		// testinfra sets testSQLStore to an engine pointing at the temp DB file above;
+		// when t.TempDir() cleanup deletes that file, the engine becomes stale.
+		// Without this, subsequent tests calling db.InitTestDB will try to truncate
+		// tables on the stale engine and fail with "attempt to write a readonly database".
+		t.Cleanup(db.CleanupTestDB)
 	}
 
 	// Store UIDs created by each test case
