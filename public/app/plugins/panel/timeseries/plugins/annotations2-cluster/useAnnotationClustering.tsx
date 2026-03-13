@@ -35,21 +35,20 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
           let { clusterIdx, clusters } = buildAnnotationClusters(frame, timeVals, plotWidth, timeRange);
 
           // Shallow copy fields and values and append the clusterIdx field
+          const clusteredFields = frame.fields.map((field) => ({
+            ...field,
+            // Copy values
+            values: [...field.values],
+          }));
+          clusteredFields.push({
+            type: FieldType.number,
+            name: 'clusterIdx',
+            values: clusterIdx,
+            config: {},
+          });
           const timeEndFrame: DataFrame = {
             ...frame,
-            fields: frame.fields
-              .map((field) => ({
-                ...field,
-                // Copy values
-                values: [...field.values],
-              }))
-              // add new number field containing the cluster locations
-              .concat({
-                type: FieldType.number,
-                name: 'clusterIdx',
-                values: clusterIdx,
-                config: {},
-              }),
+            fields: clusteredFields,
           };
 
           const hasTimeEndField = timeEndFrame.fields.findIndex((field) => field.name === 'timeEnd') !== -1;
@@ -65,7 +64,8 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
           }
 
           // append cluster annotation regions to frame
-          clusters.forEach((idxs, ci) => {
+          for (let ci = 0; ci < clusters.length; ci++) {
+            const idxs = clusters[ci];
             const valMapping: Record<string, () => number | boolean | string> = {
               // Push the first clustered annotation as the annotation region start time
               time: () => timeVals[idxs[0]],
@@ -78,13 +78,10 @@ export const useAnnotationClustering = ({ annotations, clusteringMode, plotWidth
               // Push cluster index
               clusterIdx: () => ci,
             };
-
-            // push the cluster values to the existing fields
             for (const field of timeEndFrame.fields) {
               field.values.push(valMapping?.[field.name]?.() ?? null);
             }
-          });
-
+          }
           // Set data frame length
           timeEndFrame.length = timeEndFrame.fields[0].values.length;
           clusteredAnnotations.push(timeEndFrame);

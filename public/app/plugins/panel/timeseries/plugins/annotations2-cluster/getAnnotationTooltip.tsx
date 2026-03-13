@@ -28,7 +28,7 @@ export function getAnnotationTooltip(
   const canDelete = canUpdateAnno && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
 
   let time: string = timeFormatter(annoVals.time[annoIdx], timeZone);
-  let text: string = annoVals.text?.[annoIdx] ?? '';
+  const text: string = annoVals.text?.[annoIdx] ?? '';
 
   if (isRegion) {
     time += ' - ' + timeFormatter(timeEnd, timeZone);
