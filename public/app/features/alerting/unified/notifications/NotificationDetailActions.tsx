@@ -1,9 +1,9 @@
+import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
