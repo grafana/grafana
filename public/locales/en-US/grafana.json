@@ -6939,6 +6939,7 @@
     },
     "option-row": {
       "aria-label-remove-option": "Remove option",
+      "remove-option": "Remove {{optionName}}",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
     },
@@ -15931,6 +15932,9 @@
       "drag-and-drop": "Drag and drop to reorder",
       "label-header": "Display text",
       "label-placeholder": "Defaults to value",
+      "paste-duplicates-warning_one": "Skipped {{count}} duplicate value(s)",
+      "paste-duplicates-warning_other": "Skipped {{count}} duplicate value(s)",
+      "paste-parse-error": "Failed to parse pasted data: {{error}}",
       "remove-option-button-label": "Remove option",
       "value-header": "Value",
       "value-placeholder": "Value"

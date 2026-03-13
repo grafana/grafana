@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvidedDragHandleProps, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useRef, useState } from 'react';
+import { firstValueFrom } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { CustomVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
@@ -32,6 +33,47 @@ function toSpreadsheetOptions(options: VariableValueOption[]): SpreadsheetOption
     ...o,
     properties: { ...o.properties, value: o.value, text: o.label },
   }));
+}
+
+function parseTsv(text: string, properties: string[]): VariableValueOption[] {
+  const lines = text.split('\n').filter((line) => line.trim());
+  if (!lines.length) {
+    return [];
+  }
+
+  const firstLineCols = lines[0].split('\t').map((c) => c.trim());
+  const hasHeader = firstLineCols.every((col) => properties.includes(col));
+
+  const headers = hasHeader ? firstLineCols : properties;
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  return dataLines.map((line) => {
+    const cols = line.split('\t').map((c) => c.trim());
+    const props: VariableValueOptionProperties = {};
+    headers.forEach((key, i) => {
+      props[key] = cols[i] ?? '';
+    });
+
+    return {
+      label: String(props.text ?? props.value ?? ''),
+      value: String(props.value ?? ''),
+      properties: props,
+    };
+  });
+}
+
+async function parseClipboardText(text: string, properties: string[]): Promise<VariableValueOption[]> {
+  if (text.includes('\t')) {
+    return parseTsv(text, properties);
+  }
+
+  const valuesFormat = text.startsWith('[') ? 'json' : text.includes(',') ? 'csv' : undefined;
+  if (!valuesFormat) {
+    return [];
+  }
+
+  const draft = new CustomVariable({ query: text, valuesFormat });
+  return firstValueFrom(draft.getValueOptions({}));
 }
 
 function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
@@ -167,6 +209,65 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     [focusCell, internalOptions.length, handleAdd]
   );
 
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent<HTMLInputElement>) => {
+      const text = e.clipboardData.getData('text/plain').trim();
+
+      let parsed: VariableValueOption[];
+      try {
+        parsed = await parseClipboardText(text, properties);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        alert(`${t('variables.static-options.paste-parse-error', 'Failed to parse pasted data')}: ${message}`);
+        return;
+      }
+
+      if (!parsed.length) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const existingValues = new Set([
+        ...options.map((o) => String(o.value)),
+        ...internalOptions.map((o) => String(o.value)),
+      ]);
+
+      const emptyProps = properties.reduce<VariableValueOptionProperties>((acc, p) => ({ ...acc, [p]: '' }), {});
+
+      const newOptions: SpreadsheetOption[] = parsed
+        .filter((o) => !existingValues.has(String(o.value)))
+        .map((o) => {
+          const stringifiedProps: VariableValueOptionProperties = {};
+          for (const [key, val] of Object.entries(o.properties ?? {})) {
+            stringifiedProps[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
+          }
+          return {
+            id: uuidv4(),
+            ...o,
+            properties: { ...emptyProps, ...stringifiedProps, value: o.value, text: o.label },
+          };
+        });
+
+      const skippedCount = parsed.length - newOptions.length;
+      if (skippedCount > 0) {
+        alert(
+          t('variables.static-options.paste-duplicates-warning', 'Skipped {{count}} duplicate value(s)', {
+            count: skippedCount,
+          })
+        );
+      }
+
+      if (!newOptions.length) {
+        return;
+      }
+
+      emitChange([...internalOptions, ...newOptions]);
+      setDraftOption(createEmptyOption());
+    },
+    [options, internalOptions, properties, emitChange, createEmptyOption]
+  );
+
   const shouldFocusDraft = focusDraftRef.current;
   focusDraftRef.current = false;
 
@@ -184,6 +285,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     handleValueChange,
     handleDraftChange,
     handleCellKeyDown,
+    handlePaste,
   };
 }
 
@@ -201,6 +303,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
     handleValueChange,
     handleDraftChange,
     handleCellKeyDown,
+    handlePaste,
     shouldFocusDraft,
     gridRef,
   } = useVariableOptionsSpreadsheet(props);
@@ -267,6 +370,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                     onAdd={handleAdd}
                     onValueChange={(key, val) => handleDraftChange(key, val)}
                     onCellKeyDown={handleCellKeyDown}
+                    onFirstInputPaste={handlePaste}
                     autoFocusFirst={shouldFocusDraft}
                   />
                 </tbody>
@@ -291,6 +395,7 @@ interface SpreadsheetRowCellsProps {
   onAdd?: () => void;
   onValueChange: (key: string, value: string) => void;
   onCellKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
+  onFirstInputPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
   autoFocusFirst?: boolean;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
@@ -303,10 +408,16 @@ function SpreadsheetRowCells({
   onAdd,
   onValueChange,
   onCellKeyDown,
+  onFirstInputPaste,
   autoFocusFirst,
   dragHandleProps,
 }: SpreadsheetRowCellsProps) {
   const styles = useStyles2(getStyles);
+
+  const addTooltip = t('variables.static-options.add-option-button-label', 'Add new option');
+  const removeTooltip = t('dashboard-scene.option-row.remove-option', 'Remove {{optionName}}', {
+    optionName: option.label || option.value,
+  });
 
   return (
     <>
@@ -325,8 +436,8 @@ function SpreadsheetRowCells({
           <IconButton
             name="plus"
             variant="primary"
-            aria-label={t('variables.static-options.add-option-button-label', 'Add new option')}
-            tooltip={t('variables.static-options.add-option-button-label', 'Add new option')}
+            aria-label={addTooltip}
+            tooltip={addTooltip}
             tooltipPlacement="top"
             onClick={onAdd}
           />
@@ -343,6 +454,7 @@ function SpreadsheetRowCells({
             data-col={i}
             onChange={(e) => onValueChange?.(p, e.currentTarget.value)}
             onKeyDown={onCellKeyDown ? (e) => onCellKeyDown(e, rowIndex, i) : undefined}
+            onPaste={onFirstInputPaste && i === 0 ? onFirstInputPaste : undefined}
             ref={autoFocusFirst && i === 0 ? (el) => el?.focus() : undefined}
           />
         </td>
@@ -352,8 +464,8 @@ function SpreadsheetRowCells({
           <IconButton
             name="trash-alt"
             variant="destructive"
-            aria-label={t('dashboard-scene.option-row.aria-label-remove-option', 'Remove option')}
-            tooltip={t('dashboard-scene.option-row.tooltip-remove-option', 'Remove option')}
+            aria-label={removeTooltip}
+            tooltip={removeTooltip}
             tooltipPlacement="top"
             onClick={onRemove}
           />
