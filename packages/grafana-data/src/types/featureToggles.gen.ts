@@ -1697,4 +1697,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables data links for CloudWatch Logs data: this is a safety toggle in case we need to put it back
+  * @default false
+  */
+  cloudWatchLogsInsightsDataLinks?: boolean;
 }
