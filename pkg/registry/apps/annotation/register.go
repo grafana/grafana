@@ -325,7 +325,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
 	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
 	for _, anno := range result.Items {
-		allowed, err := s.canAccessAnnotation(ctx, namespace, &anno, utils.VerbList)
+		allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, &anno, utils.VerbList)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +348,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, err
 	}
 
-	allowed, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbGet)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +374,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 
 	namespace := request.NamespaceValue(ctx)
 
-	allowed, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbCreate)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +431,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
-	allowed, err := s.canAccessAnnotation(ctx, namespace, existing, utils.VerbUpdate)
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -441,7 +441,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 			existing.Name, fmt.Errorf("insufficient permissions"),
 		)
 	}
-	allowed, err = s.canAccessAnnotation(ctx, namespace, resource, utils.VerbUpdate)
+	allowed, err = canAccessAnnotation(ctx, s.accessClient, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -468,13 +468,13 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, err
 	}
 
-	allowedDelete, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, err := s.canAccessAnnotation(ctx, namespace, annotation, utils.VerbGet)
+		allowedRead, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
 		if err != nil {
 			return nil, false, err
 		}
@@ -538,8 +538,4 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 	}
 
 	return resp.Allowed, nil
-}
-
-func (s *k8sRESTAdapter) canAccessAnnotation(ctx context.Context, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
-	return canAccessAnnotation(ctx, s.accessClient, namespace, anno, verb)
 }

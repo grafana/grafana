@@ -73,14 +73,12 @@ func TestCanAccessAnnotation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
 			var captured authtypes.CheckRequest
-			adapter := &k8sRESTAdapter{
-				accessClient: &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
-					captured = req
-					return true
-				}},
-			}
+			accessClient := &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
+				captured = req
+				return true
+			}}
 
-			allowed, err := adapter.canAccessAnnotation(ctx, ns, tc.anno, utils.VerbGet)
+			allowed, err := canAccessAnnotation(ctx, accessClient, ns, tc.anno, utils.VerbGet)
 			require.NoError(t, err)
 			require.True(t, allowed)
 
