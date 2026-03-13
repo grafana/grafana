@@ -1494,220 +1494,319 @@ func updateTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Conte
 	return rv
 }
 
-func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
+func TestKvStorageBackend_ListHistory(t *testing.T) {
+	nsr := NamespacedResource{Namespace: "default", Group: "apps", Resource: "resources"}
+	otherNSR := NamespacedResource{Namespace: "default", Group: "apps", Resource: "other-resources"}
 
-	// Create initial resource
-	testObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
-	require.NoError(t, err)
-
-	metaAccessor, err := utils.MetaAccessor(testObj)
-	require.NoError(t, err)
-
-	writeEvent := WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "test-resource",
-		},
-		Value:      objectToJSONBytes(t, testObj),
-		Object:     metaAccessor,
-		PreviousRV: 0,
-	}
-
-	rv1, err := backend.WriteEvent(ctx, writeEvent)
-	require.NoError(t, err)
-
-	// Update the resource
-	testObj.Object["spec"].(map[string]any)["value"] = "updated-data"
-	writeEvent.Type = resourcepb.WatchEvent_MODIFIED
-	writeEvent.Value = objectToJSONBytes(t, testObj)
-	writeEvent.PreviousRV = rv1
-
-	rv2, err := backend.WriteEvent(ctx, writeEvent)
-	require.NoError(t, err)
-
-	// Update again
-	testObj.Object["spec"].(map[string]any)["value"] = "final-data"
-	writeEvent.Value = objectToJSONBytes(t, testObj)
-	writeEvent.PreviousRV = rv2
-
-	rv3, err := backend.WriteEvent(ctx, writeEvent)
-	require.NoError(t, err)
-
-	// List the history
-	listReq := &resourcepb.ListRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: "default",
-				Group:     "apps",
-				Resource:  "resources",
-				Name:      "test-resource",
-			},
-		},
-		Source: resourcepb.ListRequest_HISTORY,
-		Limit:  10,
-	}
-
-	var historyItems []struct {
-		resourceVersion int64
-		value           []byte
-	}
-
-	rv, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
-				return err
-			}
-			historyItems = append(historyItems, struct {
-				resourceVersion int64
-				value           []byte
-			}{
-				resourceVersion: iter.ResourceVersion(),
-				value:           iter.Value(),
-			})
-		}
-		return iter.Error()
-	})
-
-	require.NoError(t, err)
-	require.Greater(t, rv, int64(0))
-	require.Len(t, historyItems, 3) // Should have all 3 versions
-
-	// Verify the history is sorted (newest first by default)
-	require.Equal(t, rv3, historyItems[0].resourceVersion)
-	require.Equal(t, rv2, historyItems[1].resourceVersion)
-	require.Equal(t, rv1, historyItems[2].resourceVersion)
-
-	// Verify the content matches expectations for all versions
-	finalObj, err := createTestObjectWithName("test-resource", appsNamespace, "final-data")
-	require.NoError(t, err)
-	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[0].value)
-
-	updatedObj, err := createTestObjectWithName("test-resource", appsNamespace, "updated-data")
-	require.NoError(t, err)
-	require.Equal(t, objectToJSONBytes(t, updatedObj), historyItems[1].value)
-
-	initialObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
-	require.NoError(t, err)
-	require.Equal(t, objectToJSONBytes(t, initialObj), historyItems[2].value)
-}
-
-func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	ctx := context.Background()
-
-	// Create a resource
-	testObj, err := createTestObjectWithName("test-resource", appsNamespace, "test-data")
-	require.NoError(t, err)
-
-	metaAccessor, err := utils.MetaAccessor(testObj)
-	require.NoError(t, err)
-
-	writeEvent := WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "test-resource",
-		},
-		Value:      objectToJSONBytes(t, testObj),
-		Object:     metaAccessor,
-		PreviousRV: 0,
-	}
-
-	rv1, err := backend.WriteEvent(ctx, writeEvent)
-	require.NoError(t, err)
-
-	// Delete the resource
-	writeEvent.Type = resourcepb.WatchEvent_DELETED
-	writeEvent.PreviousRV = rv1
-	writeEvent.Object = metaAccessor
-	writeEvent.ObjectOld = metaAccessor
-
-	rv2, err := backend.WriteEvent(ctx, writeEvent)
-	require.NoError(t, err)
-
-	// Do the same for a provisioned object
-	provisionedObj, err := createTestObjectWithName("provisioned-obj", appsNamespace, "test-data")
-	require.NoError(t, err)
-	metaAccessorProvisioned, err := utils.MetaAccessor(provisionedObj)
-	require.NoError(t, err)
-	metaAccessorProvisioned.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
-
-	writeEventProvisioned := WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "provisioned-obj",
-		},
-		Value:      objectToJSONBytes(t, provisionedObj),
-		Object:     metaAccessorProvisioned,
-		PreviousRV: 0,
-	}
-
-	rv3, err := backend.WriteEvent(ctx, writeEventProvisioned)
-	require.NoError(t, err)
-
-	writeEventProvisioned.Type = resourcepb.WatchEvent_DELETED
-	writeEventProvisioned.PreviousRV = rv3
-	writeEventProvisioned.Object = metaAccessorProvisioned
-	writeEventProvisioned.ObjectOld = metaAccessorProvisioned
-	_, err = backend.WriteEvent(ctx, writeEventProvisioned)
-	require.NoError(t, err)
-
-	// List the trash (deleted items)
-	listReq := &resourcepb.ListRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: "default",
-				Group:     "apps",
-				Resource:  "resources",
-				Name:      "test-resource",
-			},
-		},
-		Source: resourcepb.ListRequest_TRASH,
-		Limit:  10,
-	}
-
-	var trashItems []struct {
+	type historyEntry struct {
 		name            string
 		resourceVersion int64
 		value           []byte
 	}
 
-	rv, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
-				return err
-			}
-			trashItems = append(trashItems, struct {
-				name            string
-				resourceVersion int64
-				value           []byte
-			}{
-				name:            iter.Name(),
-				resourceVersion: iter.ResourceVersion(),
-				value:           iter.Value(),
-			})
+	writeEvent := func(ctx context.Context, t *testing.T, backend *kvStorageBackend, eventType resourcepb.WatchEvent_Type, name string, ns NamespacedResource, keyResource, data string, previousRV int64) int64 {
+		t.Helper()
+		obj, err := createTestObjectWithName(name, ns, data)
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		event := WriteEvent{
+			Type: eventType,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  keyResource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			PreviousRV: previousRV,
 		}
-		return iter.Error()
+		if eventType == resourcepb.WatchEvent_DELETED {
+			event.ObjectOld = metaAccessor
+		}
+
+		rv, err := backend.WriteEvent(ctx, event)
+		require.NoError(t, err)
+		return rv
+	}
+
+	listHistory := func(ctx context.Context, t *testing.T, backend *kvStorageBackend, req *resourcepb.ListRequest) []historyEntry {
+		t.Helper()
+		var items []historyEntry
+		_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				items = append(items, historyEntry{
+					name:            iter.Name(),
+					resourceVersion: iter.ResourceVersion(),
+					value:           iter.Value(),
+				})
+			}
+			return iter.Error()
+		})
+		require.NoError(t, err)
+		return items
+	}
+
+	t.Run("history source", func(t *testing.T) {
+		t.Run("named resource", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "test-resource", nsr, "resources", "initial-data", 0)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "updated-data", rv1)
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "final-data", rv2)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+						Name:      "test-resource",
+					},
+				},
+				Source: resourcepb.ListRequest_HISTORY,
+				Limit:  10,
+			})
+
+			require.Len(t, items, 3) // Should have all 3 versions
+
+			// Verify the history is sorted (newest first by default)
+			require.Equal(t, rv3, items[0].resourceVersion)
+			require.Equal(t, rv2, items[1].resourceVersion)
+			require.Equal(t, rv1, items[2].resourceVersion)
+
+			// Verify the content matches expectations for all versions
+			finalObj, err := createTestObjectWithName("test-resource", nsr, "final-data")
+			require.NoError(t, err)
+			require.Equal(t, objectToJSONBytes(t, finalObj), items[0].value)
+
+			updatedObj, err := createTestObjectWithName("test-resource", nsr, "updated-data")
+			require.NoError(t, err)
+			require.Equal(t, objectToJSONBytes(t, updatedObj), items[1].value)
+
+			initialObj, err := createTestObjectWithName("test-resource", nsr, "initial-data")
+			require.NoError(t, err)
+			require.Equal(t, objectToJSONBytes(t, initialObj), items[2].value)
+		})
+
+		t.Run("across entire nsr", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			// resource-c: create (rv1), update (rv2) — alive, should appear with 2 history entries
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-c", nsr, "resources", "test-data", 0)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-c", nsr, "resources", "test-data", rv1)
+
+			// resource-a: create (rv3)
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
+
+			// resource-b: create (rv3), update (rv4), delete (rv5) — deleted
+			rv4 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
+			rv5 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-b", nsr, "resources", "test-data", rv4)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv5)
+
+			// resource-other-type: create — different resource type, should NOT appear
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source: resourcepb.ListRequest_HISTORY,
+				Limit:  10,
+			})
+
+			// resource-a's create (rv3) and resource-c's create (rv1)
+			// and update (rv2) should appear.
+			// resource-b is deleted so its live history is empty.
+			// The events should be ordered by RV, not name.
+			require.Len(t, items, 3)
+			require.Equal(t, "resource-a", items[0].name)
+			require.Equal(t, rv3, items[0].resourceVersion) // descending: rv3 first
+			require.Equal(t, "resource-c", items[1].name)
+			require.Equal(t, rv2, items[1].resourceVersion)
+			require.Equal(t, "resource-c", items[2].name)
+			require.Equal(t, rv1, items[2].resourceVersion)
+		})
+
+		t.Run("ascending order", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "test-resource", nsr, "resources", "initial-data", 0)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "updated-data", rv1)
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "final-data", rv2)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+						Name:      "test-resource",
+					},
+				},
+				Source:         resourcepb.ListRequest_HISTORY,
+				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
+				Limit:          10,
+			})
+
+			require.Len(t, items, 3)
+
+			// Ascending: oldest first
+			require.Equal(t, rv1, items[0].resourceVersion)
+			require.Equal(t, rv2, items[1].resourceVersion)
+			require.Equal(t, rv3, items[2].resourceVersion)
+		})
 	})
 
-	require.NoError(t, err)
-	require.Greater(t, rv, int64(0))
-	require.Len(t, trashItems, 1) // Should have the non-provisioned deleted item
+	t.Run("trash source", func(t *testing.T) {
+		t.Run("named resource", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
 
-	// Verify the trash item
-	require.Equal(t, "test-resource", trashItems[0].name)
-	require.Equal(t, rv2, trashItems[0].resourceVersion)
-	require.Equal(t, objectToJSONBytes(t, testObj), trashItems[0].value)
+			// Create and delete a resource
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "test-resource", nsr, "resources", "test-data", 0)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "test-resource", nsr, "resources", "test-data", rv1)
+
+			// Also create and delete a provisioned object — it should be excluded from trash.
+			provisionedObj, err := createTestObjectWithName("provisioned-obj", nsr, "test-data")
+			require.NoError(t, err)
+			metaAccessorProvisioned, err := utils.MetaAccessor(provisionedObj)
+			require.NoError(t, err)
+			metaAccessorProvisioned.SetAnnotation(utils.AnnoKeyManagerKind, "repo")
+
+			rv3, err := backend.WriteEvent(ctx, WriteEvent{
+				Type: resourcepb.WatchEvent_ADDED,
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "resources",
+					Name:      "provisioned-obj",
+				},
+				Value:      objectToJSONBytes(t, provisionedObj),
+				Object:     metaAccessorProvisioned,
+				PreviousRV: 0,
+			})
+			require.NoError(t, err)
+
+			_, err = backend.WriteEvent(ctx, WriteEvent{
+				Type: resourcepb.WatchEvent_DELETED,
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "resources",
+					Name:      "provisioned-obj",
+				},
+				Value:      objectToJSONBytes(t, provisionedObj),
+				Object:     metaAccessorProvisioned,
+				ObjectOld:  metaAccessorProvisioned,
+				PreviousRV: rv3,
+			})
+			require.NoError(t, err)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+						Name:      "test-resource",
+					},
+				},
+				Source: resourcepb.ListRequest_TRASH,
+				Limit:  10,
+			})
+
+			require.Len(t, items, 1) // Should have the non-provisioned deleted item
+			require.Equal(t, "test-resource", items[0].name)
+			require.Equal(t, rv2, items[0].resourceVersion)
+
+			testObj, err := createTestObjectWithName("test-resource", nsr, "test-data")
+			require.NoError(t, err)
+			require.Equal(t, objectToJSONBytes(t, testObj), items[0].value)
+		})
+
+		t.Run("across entire nsr", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted2", nsr, "resources", "test-data", 0)
+			deleteRV1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted2", nsr, "resources", "test-data", rv1)
+
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted1", nsr, "resources", "test-data", 0)
+			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted1", nsr, "resources", "test-data", rv2)
+
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-live", nsr, "resources", "test-data", 0)
+
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-other-type", otherNSR, "other-resources", "test-data", rv3)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source: resourcepb.ListRequest_TRASH,
+				Limit:  10,
+			})
+
+			require.Len(t, items, 2) // deleted1 and deleted2
+
+			// deleted1 first (most recent event)
+			require.Equal(t, "resource-deleted1", items[0].name)
+			require.Equal(t, deleteRV2, items[0].resourceVersion)
+
+			require.Equal(t, "resource-deleted2", items[1].name)
+			require.Equal(t, deleteRV1, items[1].resourceVersion)
+		})
+
+		t.Run("ascending order", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
+			deleteRV1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-a", nsr, "resources", "test-data", rv1)
+
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
+			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv2)
+
+			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source:         resourcepb.ListRequest_TRASH,
+				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
+				Limit:          10,
+			})
+
+			require.Len(t, items, 2)
+
+			// Ascending: oldest deletion first
+			require.Equal(t, "resource-a", items[0].name)
+			require.Equal(t, deleteRV1, items[0].resourceVersion)
+
+			require.Equal(t, "resource-b", items[1].name)
+			require.Equal(t, deleteRV2, items[1].resourceVersion)
+		})
+	})
 }
 
 func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
