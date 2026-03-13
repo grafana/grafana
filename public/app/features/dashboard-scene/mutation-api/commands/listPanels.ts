@@ -4,9 +4,14 @@
  * Returns all elements on the dashboard (panels, library panels, etc.)
  * as an array of { element, layoutItem } entries. The element name is
  * embedded in layoutItem.spec.element.name (v2beta1 ElementReference).
+ *
+ * When evaluateVariables is true, an evaluatedQueries array is included
+ * with template variables resolved to their current values.
  */
 
 import { z } from 'zod';
+
+import { sceneGraph, type SceneObject } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -19,6 +24,23 @@ export const listPanelsPayloadSchema = payloads.listPanels;
 
 export type ListPanelsPayload = z.infer<typeof listPanelsPayloadSchema>;
 
+function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
+  if (typeof value === 'string') {
+    return sceneGraph.interpolate(sceneObj, value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => deepInterpolate(sceneObj, item));
+  }
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      result[k] = deepInterpolate(sceneObj, v);
+    }
+    return result;
+  }
+  return value;
+}
+
 export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
   name: 'LIST_PANELS',
   description: payloads.listPanels.description ?? '',
@@ -27,7 +49,7 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
   permission: readOnly,
   readOnly: true,
 
-  handler: async (_payload, context) => {
+  handler: async (payload, context) => {
     const { scene } = context;
 
     try {
@@ -52,9 +74,31 @@ export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
         elements.push({ element, layoutItem });
       }
 
+      const data: Record<string, unknown> = { elements };
+
+      if (payload.evaluateVariables) {
+        const evaluated: unknown[] = [];
+        for (const [elementName, element] of Object.entries(fullElements)) {
+          const plain = JSON.parse(JSON.stringify(element));
+          const queries = plain?.spec?.data?.spec?.queries;
+          if (!Array.isArray(queries) || queries.length === 0) {
+            continue;
+          }
+          for (const query of queries) {
+            const resolved = deepInterpolate(scene, query);
+            if (JSON.stringify(resolved) !== JSON.stringify(query)) {
+              evaluated.push({ element: elementName, original: query, evaluated: resolved });
+            }
+          }
+        }
+        if (evaluated.length > 0) {
+          data.evaluatedQueries = evaluated;
+        }
+      }
+
       return {
         success: true,
-        data: { elements },
+        data,
         changes: [],
       };
     } catch (error) {
