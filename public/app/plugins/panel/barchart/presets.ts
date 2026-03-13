@@ -1,6 +1,7 @@
 import {
   FieldColorModeId,
   FieldConfigSource,
+  FieldType,
   VisualizationPresetsSupplier,
   VisualizationSuggestion,
 } from '@grafana/data';
@@ -29,10 +30,8 @@ function makePreset(
   return { ...preset, cardOptions: { previewModifier } };
 }
 
-const SHARED_CUSTOM: Partial<FieldConfig> = {
-  lineWidth: 1,
+const BASE_CUSTOM: Partial<FieldConfig> = {
   fillOpacity: 100,
-  gradientMode: GraphGradientMode.Hue,
   axisPlacement: AxisPlacement.Auto,
   axisLabel: '',
   axisColorMode: AxisColorMode.Text,
@@ -43,160 +42,98 @@ const SHARED_CUSTOM: Partial<FieldConfig> = {
   thresholdsStyle: { mode: GraphThresholdsStyleMode.Off },
 };
 
-const FC_VIRIDIS_HUE: FieldConfigSource<Partial<FieldConfig>> = {
+const CLASSIC_CUSTOM: Partial<FieldConfig> = {
+  ...BASE_CUSTOM,
+  lineWidth: 0,
+  gradientMode: GraphGradientMode.None,
+};
+
+const HUE_CUSTOM: Partial<FieldConfig> = {
+  ...BASE_CUSTOM,
+  lineWidth: 1,
+  gradientMode: GraphGradientMode.Hue,
+};
+
+const CLASSIC_OPTIONS: Partial<Options> = {
+  xTickLabelSpacing: 100,
+  groupWidth: 0.8,
+  barWidth: 0.95,
+  barRadius: 0.05,
+  xField: 'time',
+};
+
+const CLASSIC_STACKED_OPTIONS: Partial<Options> = {
+  ...CLASSIC_OPTIONS,
+  stacking: StackingMode.Normal,
+};
+
+const HUE_OPTIONS: Partial<Options> = {
+  xTickLabelSpacing: 100,
+  groupWidth: 0.8,
+  barWidth: 0.9,
+  barRadius: 0,
+  xField: 'time',
+};
+
+const FC_PALETTE_CLASSIC: FieldConfigSource<Partial<FieldConfig>> = {
   defaults: {
-    custom: SHARED_CUSTOM,
-    color: { mode: FieldColorModeId.ContinuousViridis },
+    custom: CLASSIC_CUSTOM,
+    color: { mode: FieldColorModeId.PaletteClassic },
   },
   overrides: [],
 };
 
 const FC_FIXED_PURPLE_HUE: FieldConfigSource<Partial<FieldConfig>> = {
   defaults: {
-    custom: SHARED_CUSTOM,
+    custom: HUE_CUSTOM,
     color: { mode: FieldColorModeId.Fixed, fixedColor: '#ad46ff' },
   },
   overrides: [],
 };
 
-const FC_FIXED_SLATE_HUE: FieldConfigSource<Partial<FieldConfig>> = {
+const FC_VIRIDIS_HUE: FieldConfigSource<Partial<FieldConfig>> = {
   defaults: {
-    custom: SHARED_CUSTOM,
-    color: { mode: FieldColorModeId.Fixed, fixedColor: '#90a1b9' },
+    custom: HUE_CUSTOM,
+    color: { mode: FieldColorModeId.ContinuousViridis },
   },
   overrides: [],
 };
-
-const FC_FIXED_NAVY_HUE: FieldConfigSource<Partial<FieldConfig>> = {
-  defaults: {
-    custom: SHARED_CUSTOM,
-    color: { mode: FieldColorModeId.Fixed, fixedColor: '#314158' },
-  },
-  overrides: [],
-};
-
-// --- Multi series ---
-
-const MULTI_CUSTOM: Partial<FieldConfig> = {
-  lineWidth: 0,
-  fillOpacity: 100,
-  gradientMode: GraphGradientMode.None,
-  axisPlacement: AxisPlacement.Auto,
-  axisLabel: '',
-  axisColorMode: AxisColorMode.Text,
-  axisBorderShow: false,
-  scaleDistribution: { type: ScaleDistribution.Linear },
-  axisCenteredZero: false,
-  hideFrom: { tooltip: false, viz: false, legend: false },
-  thresholdsStyle: { mode: GraphThresholdsStyleMode.Off },
-};
-
-const MULTI_OPTIONS: Partial<Options> = {
-  xTickLabelSpacing: 100,
-  groupWidth: 0.8,
-  barWidth: 0.95,
-  barRadius: 0.05,
-  xField: 'time',
-  stacking: StackingMode.None,
-};
-
-const MULTI_STACKED_OPTIONS: Partial<Options> = {
-  ...MULTI_OPTIONS,
-  stacking: StackingMode.Normal,
-};
-
-const FC_PALETTE_CLASSIC: FieldConfigSource<Partial<FieldConfig>> = {
-  defaults: {
-    custom: MULTI_CUSTOM,
-    color: { mode: FieldColorModeId.PaletteClassic },
-  },
-  overrides: [],
-};
-
-const FC_PALETTE_CLASSIC_OPACITY: FieldConfigSource<Partial<FieldConfig>> = {
-  defaults: {
-    custom: { ...MULTI_CUSTOM, gradientMode: GraphGradientMode.Opacity },
-    color: { mode: FieldColorModeId.PaletteClassic },
-  },
-  overrides: [],
-};
-
-// --- Single series presets ---
-
-const viridisHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.viridis-hue', 'Viridis hue'),
-    // description: t('barchart.presets.viridis-hue-description', 'Solid bars with viridis color scheme and hue gradient'),
-    fieldConfig: FC_VIRIDIS_HUE,
-  });
-
-const fixedPurpleHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.fixed-purple-hue', 'Fixed purple hue'),
-    // description: t('barchart.presets.fixed-purple-hue-description', 'Solid bars with a fixed purple color and hue gradient'),
-    fieldConfig: FC_FIXED_PURPLE_HUE,
-  });
-
-const fixedSlateHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.fixed-slate-hue', 'Fixed slate hue'),
-    // description: t('barchart.presets.fixed-slate-hue-description', 'Solid bars with a fixed slate color and hue gradient'),
-    fieldConfig: FC_FIXED_SLATE_HUE,
-  });
-
-const fixedNavyHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.fixed-navy-hue', 'Fixed navy hue'),
-    // description: t('barchart.presets.fixed-navy-hue-description', 'Solid bars with a fixed navy color and hue gradient'),
-    fieldConfig: FC_FIXED_NAVY_HUE,
-  });
-
-// --- Multi series presets ---
 
 const paletteClassicPreset = () =>
   makePreset({
     name: t('barchart.presets.palette-classic', 'Palette classic'),
-    // description: t('barchart.presets.palette-classic-description', 'Grouped bars with classic palette colors and no gradient'),
-    options: MULTI_OPTIONS,
+    options: CLASSIC_OPTIONS,
     fieldConfig: FC_PALETTE_CLASSIC,
-  });
-
-const paletteClassicOpacityPreset = () =>
-  makePreset({
-    name: t('barchart.presets.palette-classic-opacity', 'Palette classic opacity'),
-    // description: t('barchart.presets.palette-classic-opacity-description', 'Grouped bars with classic palette colors and opacity gradient'),
-    options: MULTI_OPTIONS,
-    fieldConfig: FC_PALETTE_CLASSIC_OPACITY,
   });
 
 const paletteClassicStackedPreset = () =>
   makePreset({
     name: t('barchart.presets.palette-classic-stacked', 'Palette classic stacked'),
-    // description: t('barchart.presets.palette-classic-stacked-description', 'Stacked bars with classic palette colors and no gradient'),
-    options: MULTI_STACKED_OPTIONS,
+    options: CLASSIC_STACKED_OPTIONS,
     fieldConfig: FC_PALETTE_CLASSIC,
   });
 
-const paletteClassicStackedOpacityPreset = () =>
+const fixedPurpleHuePreset = () =>
   makePreset({
-    name: t('barchart.presets.palette-classic-stacked-opacity', 'Palette classic stacked opacity'),
-    // description: t('barchart.presets.palette-classic-stacked-opacity-description', 'Stacked bars with classic palette colors and opacity gradient'),
-    options: MULTI_STACKED_OPTIONS,
-    fieldConfig: FC_PALETTE_CLASSIC_OPACITY,
+    name: t('barchart.presets.fixed-purple-hue', 'Fixed purple hue'),
+    options: HUE_OPTIONS,
+    fieldConfig: FC_FIXED_PURPLE_HUE,
+  });
+
+const viridisHuePreset = () =>
+  makePreset({
+    name: t('barchart.presets.viridis-hue', 'Viridis hue'),
+    options: HUE_OPTIONS,
+    fieldConfig: FC_VIRIDIS_HUE,
   });
 
 export const barchartPresetsSupplier: VisualizationPresetsSupplier<Options, FieldConfig> = ({ dataSummary }) => {
-  const frameCount = dataSummary?.frameCount ?? 0;
-  const hasSingleSeries = frameCount === 1;
+  const hasMultipleNumberFields = (dataSummary?.fieldCountByType(FieldType.number) ?? 0) > 1;
+  const presets = [paletteClassicPreset(), fixedPurpleHuePreset(), viridisHuePreset()];
 
-  if (hasSingleSeries) {
-    return [viridisHuePreset(), fixedPurpleHuePreset(), fixedSlateHuePreset(), fixedNavyHuePreset()];
+  if (hasMultipleNumberFields) {
+    presets.push(paletteClassicStackedPreset());
   }
 
-  return [
-    paletteClassicPreset(),
-    paletteClassicOpacityPreset(),
-    paletteClassicStackedPreset(),
-    paletteClassicStackedOpacityPreset(),
-  ];
+  return presets;
 };
