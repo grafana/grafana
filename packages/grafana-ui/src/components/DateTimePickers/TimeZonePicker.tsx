@@ -137,12 +137,14 @@ const useSelectedTimeZone = (
       return tz.startsWith(toLower(group.label));
     });
 
-    return group?.options.find((option) => {
+    const selected = group?.options.find((option) => {
       if (isEmpty(tz)) {
         return option.value === InternalTimeZones.default;
       }
       return toLower(option.value) === tz;
     });
+
+    return selected ?? { label: timeZone + ' (custom)', value: timeZone, searchIndex: '' }; // issue #120032;
   }, [groups, timeZone]);
 };
 
