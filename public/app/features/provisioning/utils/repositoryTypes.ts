@@ -33,7 +33,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.github-description', 'Connect to GitHub repositories'),
     tooltip: t(
       'provisioning.repository-types.github-tooltip',
-      'Enhanced integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+      'Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
     ),
     icon: 'github' as const,
   },
@@ -43,7 +43,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
     tooltip: t(
       'provisioning.repository-types.gitlab-tooltip',
-      'Integration with deep links to source files. Enhanced features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
+      'Enhanced GitLab integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
     ),
     icon: 'gitlab' as const,
     logo: gitlabSvg,
@@ -54,7 +54,7 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.bitbucket-description', 'Connect to Bitbucket repositories'),
     tooltip: t(
       'provisioning.repository-types.bitbucket-tooltip',
-      'Integration with deep links to source files. Enhanced features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
+      'Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.'
     ),
     icon: 'bitbucket' as const,
     logo: bitbucketSvg,
