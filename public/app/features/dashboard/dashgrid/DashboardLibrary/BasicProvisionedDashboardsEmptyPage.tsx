@@ -11,7 +11,7 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
-import { NewBasicProvisionedDashboardsInteractions } from './analytics/main';
+import { NewBasicProvisionedDashboardInteractions } from './analytics/main';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { BasicProvisionedDashboardInteractions } from './interactions';
@@ -39,7 +39,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
 
     if (dashboards.length > 0) {
       isAnalyticsFrameworkEnabled
-        ? NewBasicProvisionedDashboardsInteractions.loaded({
+        ? NewBasicProvisionedDashboardInteractions.loaded({
             numberOfItems: dashboards.length,
             contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
             datasourceTypes: [ds.type],
@@ -65,7 +65,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
     isAnalyticsFrameworkEnabled
-      ? NewBasicProvisionedDashboardsInteractions.itemClicked({
+      ? NewBasicProvisionedDashboardInteractions.itemClicked({
           contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
           datasourceTypes: [dashboard.pluginId],
           libraryItemId: dashboard.uid,
