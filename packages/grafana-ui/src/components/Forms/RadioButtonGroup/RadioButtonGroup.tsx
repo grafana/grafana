@@ -86,6 +86,7 @@ export function RadioButtonGroup<T>({
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
         const icon = opt.icon ? toIconName(opt.icon) : undefined;
         const hasNonIconPart = Boolean(opt.imgUrl || opt.label || opt.component);
+        const labelTitle = typeof opt.label === 'string' ? opt.label : undefined;
 
         return (
           <RadioButton
@@ -99,12 +100,14 @@ export function RadioButtonGroup<T>({
             id={`option-${opt.value}-${internalId}`}
             name={groupName.current}
             description={opt.description}
+            title={labelTitle}
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
             {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
-            {opt.label} {opt.component ? <opt.component /> : null}
+            {opt.label != null && <span className={styles.labelText}>{opt.label}</span>}
+            {opt.component ? <opt.component /> : null}
           </RadioButton>
         );
       })}
@@ -121,6 +124,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
+      maxWidth: '100%',
+      minWidth: 0,
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
       padding: RADIO_GROUP_PADDING,
@@ -131,14 +136,23 @@ const getStyles = (theme: GrafanaTheme2) => {
     fullWidth: css({
       display: 'flex',
       flexGrow: 1,
+      minWidth: 0,
+      width: '100%',
     }),
     icon: css({
       marginRight: '6px',
+      flexShrink: 0,
     }),
     img: css({
       width: theme.spacing(2),
       height: theme.spacing(2),
       marginRight: theme.spacing(1),
+      flexShrink: 0,
+    }),
+    labelText: css({
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     invalid: css({
       border: `1px solid ${theme.colors.error.border}`,
