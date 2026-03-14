@@ -98,10 +98,11 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       paddingLeft: theme.spacing(2),
       minWidth: 0,
       minHeight: 0,
-      overflow: 'hidden',
+      containerType: 'size',
     }),
     sidebarContent: css({
       height: '100%',
+      overflow: 'hidden',
     }),
     viz: css({
       gridArea: 'viz',
@@ -143,6 +144,12 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     resizeHandlePill: css({
       height: '100%',
       width: 2,
+      // Pill (::after) is 200px by default. Shrink to half when sidebar is tight.
+      '@container (max-height: 250px)': {
+        '&::after': {
+          height: 100,
+        },
+      },
     }),
   };
 }
