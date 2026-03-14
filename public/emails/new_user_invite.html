@@ -58,10 +58,8 @@
     </style>
     <![endif]-->` }}
   {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
-  <link href="https://fonts.googleapis.com/css?family=Inter" rel="stylesheet" type="text/css">
   <style type="text/css">
-    @import url(https://fonts.googleapis.com/css?family=Inter);
-
+    /* Use system fonts in emails to avoid remote font fetches in privacy-focused clients. */
   </style>
   {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
   <style type="text/css">
@@ -112,7 +110,7 @@
                           <tbody>
                             <tr>
                               <td style="width:200px;">
-                                <img alt src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200" height="auto">
+                                <div style="font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 26px; font-weight: 700; line-height: 1.2; color: #111217; letter-spacing: 0.3px;">Grafana</div>
                               </td>
                             </tr>
                           </tbody>
@@ -140,14 +138,14 @@
                   <tbody>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
+                        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h2>You're invited to join {{ .OrgName }}</h2>
                         </div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">You've been invited to join the <strong>{{ .OrgName }}</strong> organization by <strong>{{ .InvitedBy }}</strong>. To accept your invitation and join the team, please click the link below:</div>
+                        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">You've been invited to join the <strong>{{ .OrgName }}</strong> organization by <strong>{{ .InvitedBy }}</strong>. To accept your invitation and join the team, please click the link below:</div>
                       </td>
                     </tr>
                     <tr>
@@ -156,7 +154,7 @@
                           <tbody>
                             <tr>
                               <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#3D71D9;" valign="middle">
-                                <a href="{{ .LinkUrl }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Inter, Helvetica, Arial; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 10px 25px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Accept Invitation </a>
+                                <a href="{{ .LinkUrl }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 10px 25px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank"> Accept Invitation </a>
                               </td>
                             </tr>
                           </tbody>
@@ -165,12 +163,12 @@
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">You can also copy and paste this link into your browser directly:</div>
+                        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">You can also copy and paste this link into your browser directly:</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><a rel="noopener" href="{{ .LinkUrl }}" style="color: #6E9FFF;">{{ .LinkUrl }}</a></div>
+                        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><a rel="noopener" href="{{ .LinkUrl }}" style="color: #6E9FFF;">{{ .LinkUrl }}</a></div>
                       </td>
                     </tr>
                   </tbody>
@@ -194,7 +192,7 @@
                   <tbody>
                     <tr>
                       <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>
