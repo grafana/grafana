@@ -1,6 +1,7 @@
 {
   "dev-dashboards-output/all-panels.v42.json": "5bbb3f1841b0f9da0a327ea674d4354e26afad4eaf7a740492986a31add3569e",
   "dev-dashboards-output/annotations/annotation-filtering.v42.json": "b51c0a052328424179d185624eddd7dc8fa1877c33d3de0ba88a8ce4b37d36cd",
+  "dev-dashboards-output/annotations/clustering.v42.json": "0915c155396a5fd6b434a1f159c512416452201414eaafc034ba00439d8fda94",
   "dev-dashboards-output/annotations/multi-lane-annotations.v42.json": "d418210942a177587ebbbceeda4fa0bbcb5e651492652fbd3d862b45cd67153c",
   "dev-dashboards-output/datasource-elasticsearch/elasticsearch_complex.v42.json": "8ee1096fbd931f1ca53e698af981a93b5b9b36d5451576caef0d4a1d23623784",
   "dev-dashboards-output/datasource-elasticsearch/elasticsearch_migration.v42.json": "77cc02d54cca1b3c25576e5317e2c0740f45b2aca3ad8ad20e88de438f01172d",

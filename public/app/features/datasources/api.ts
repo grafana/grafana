@@ -318,5 +318,5 @@ export const deleteDataSource = (uid: string) => {
     let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
   }
-  getBackendSrv().delete(deleteUrl);
+  return getBackendSrv().delete(deleteUrl);
 };
