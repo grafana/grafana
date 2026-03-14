@@ -21,6 +21,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
+  const [displayPlaylistNav, setDisplayPlaylistNav] = useState(true);
 
   const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: t('playlist.start-modal.modes.label.normal', 'Normal'), value: false },
@@ -47,6 +48,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     }
     if (!displayLinks) {
       params['_dash.hideLinks'] = true;
+    }
+    if (!displayPlaylistNav) {
+      params['_dash.hidePlaylistNav'] = true;
     }
 
     locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.metadata?.name}`, params));
@@ -132,6 +136,14 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
                     value={displayLinks}
                     onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
                   />
+                  {config.featureToggles.dashboardNewLayouts && (
+                    <Checkbox
+                      label={t('playlist.start-modal.label-playlist-nav', 'Playlist navigation buttons')}
+                      name="displayPlaylistNav"
+                      value={displayPlaylistNav}
+                      onChange={(e) => setDisplayPlaylistNav(e.currentTarget.checked)}
+                    />
+                  )}
                 </Stack>
               </Box>
             </Field>
