@@ -221,7 +221,8 @@ func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
-	if s.info.ClientAuthentication == social.WorkloadIdentity {
+	switch s.info.ClientAuthentication {
+	case social.WorkloadIdentity:
 		return &azureADTokenSource{
 			log:                       s.log,
 			ctx:                       ctx,
@@ -230,9 +231,19 @@ func (s *SocialAzureAD) TokenSource(ctx context.Context, t *oauth2.Token) oauth2
 			clientId:                  s.info.ClientId,
 			workloadIdentityTokenFile: s.info.WorkloadIdentityTokenFile,
 		}
+	case social.ManagedIdentity:
+		return &azureADManagedIdentityTokenSource{
+			log:                         s.log,
+			ctx:                         ctx,
+			conf:                        s.Config,
+			token:                       t,
+			clientId:                    s.info.ClientId,
+			managedIdentityClientID:     s.info.ManagedIdentityClientID,
+			federatedCredentialAudience: s.info.FederatedCredentialAudience,
+		}
+	default:
+		return s.Config.TokenSource(ctx, t)
 	}
-
-	return s.Config.TokenSource(ctx, t)
 }
 
 type azureADTokenSource struct {
@@ -242,6 +253,16 @@ type azureADTokenSource struct {
 	token                     *oauth2.Token
 	clientId                  string
 	workloadIdentityTokenFile string
+}
+
+type azureADManagedIdentityTokenSource struct {
+	log                         log.Logger
+	ctx                         context.Context
+	conf                        *oauth2.Config
+	token                       *oauth2.Token
+	clientId                    string
+	managedIdentityClientID     string
+	federatedCredentialAudience string
 }
 
 func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
@@ -269,6 +290,92 @@ func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
 	v.Set("client_assertion", strings.TrimSpace(string(federatedToken)))
 
 	return s.fetchToken(v)
+}
+
+func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
+	s.log.Debug("Fetching Token with AzureAD Token Source and Managed Identity")
+	if s.token.Valid() {
+		return s.token, nil
+	}
+
+	if s.token.RefreshToken == "" {
+		s.log.Warn("AzureADManagedIdentityToken fetchToken failed: no refresh token available")
+		return nil, fmt.Errorf("no refresh token available to refresh the access token")
+	}
+
+	// Get a fresh client assertion from the managed identity
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(s.managedIdentityClientID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error constructing managed identity credential for token refresh: %w", err)
+	}
+
+	tk, err := mic.GetToken(s.ctx, policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", s.federatedCredentialAudience)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting managed identity token for refresh: %w", err)
+	}
+
+	v := url.Values{}
+	v.Set("client_id", s.clientId)
+	v.Set("grant_type", "refresh_token")
+	v.Set("refresh_token", s.token.RefreshToken)
+	v.Set("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+	v.Set("client_assertion", tk.Token)
+
+	return s.fetchToken(v)
+}
+
+func (s *azureADManagedIdentityTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
+	req, err := http.NewRequestWithContext(s.ctx, "POST", s.conf.Endpoint.TokenURL, strings.NewReader(params.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	httpClient, ok := s.ctx.Value(oauth2.HTTPClient).(*http.Client)
+	if !ok {
+		httpClient = http.DefaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			s.log.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		s.log.Debug("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
+	}
+
+	var rawResponse interface{}
+	if err := json.Unmarshal(body, &rawResponse); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
+	}
+
+	var token *oauth2.Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal token response body: %w", err)
+	}
+
+	if token.ExpiresIn > 0 {
+		token.Expiry = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+	}
+
+	s.log.Debug("AzureADManagedIdentityToken fetchToken completed", "expiry", token.Expiry)
+	return token.WithExtra(rawResponse), nil
 }
 
 func (s *azureADTokenSource) fetchToken(params url.Values) (*oauth2.Token, error) {
