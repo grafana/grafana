@@ -263,8 +263,11 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 
 	// We only support one trace at a time
 	// this is how it was implemented in the frontend before
-	frames := utils.TransformTraceResponse(response.Data[0], refID)
-	return frames, err
+	// Handle empty result set to avoid index out of range panic (e.g. trace not found or empty search)
+	if len(response.Data) == 0 {
+		return utils.TransformTraceResponse(types.TraceResponse{}, refID), nil
+	}
+	return utils.TransformTraceResponse(response.Data[0], refID), nil
 }
 
 func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (types.DependenciesResponse, error) {

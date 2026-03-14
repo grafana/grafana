@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 
@@ -89,7 +89,7 @@ describe('MonitorConfig', () => {
     render(<MonitorConfig {...defaultProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Authentication')).toBeInTheDocument();
+      expect(screen.getByText('Authentication type')).toBeInTheDocument();
       expect(screen.queryByText(/Current User/i)).not.toBeInTheDocument();
     });
   });

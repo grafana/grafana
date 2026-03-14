@@ -25,6 +25,7 @@ jest.mock('@openfeature/react-sdk', () => ({
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
     openAssistant: jest.fn(),
   }),
