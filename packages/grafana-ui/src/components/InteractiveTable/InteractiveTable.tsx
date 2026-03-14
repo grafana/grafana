@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
   HeaderGroup,
@@ -17,6 +16,7 @@ import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
 import { Tooltip } from '../Tooltip/Tooltip';
