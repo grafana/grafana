@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
@@ -14,7 +15,7 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 import { DashboardCard } from './DashboardCard';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
-import { DashboardLibraryInteractions } from './interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 // Constants for datasource-provided dashboards pagination
@@ -23,6 +24,7 @@ const PAGE_SIZE = 9;
 export const DashboardLibrarySection = () => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  const isSuggestedDashboardsAssistantButtonEnabled = useBooleanFlagValue('suggestedDashboardsAssistantButton', false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const hasTrackedLoaded = useRef(false);
@@ -76,8 +78,8 @@ export const DashboardLibrarySection = () => {
   // Determine what to show
   const showEmptyState = !loading && (!templateDashboards || templateDashboards.length === 0);
 
-  const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
+  const onUseProvisionedDashboard = async (dashboard: PluginDashboard, customizeWithAssistant?: boolean) => {
+    SuggestedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
@@ -85,6 +87,7 @@ export const DashboardLibrarySection = () => {
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
       discoveryMethod: DISCOVERY_METHODS.BROWSE,
+      action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
     });
 
     const params = new URLSearchParams({
@@ -99,6 +102,10 @@ export const DashboardLibrarySection = () => {
       eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
+
+    if (customizeWithAssistant) {
+      params.set('assistantSource', 'assistant_button');
+    }
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
     locationService.push(templateUrl);
@@ -150,7 +157,8 @@ export const DashboardLibrarySection = () => {
                     title={dashboard.title}
                     imageUrl={imageUrl}
                     dashboard={dashboard}
-                    onClick={() => onUseProvisionedDashboard(dashboard)}
+                    onClick={(customizeWithAssistant) => onUseProvisionedDashboard(dashboard, customizeWithAssistant)}
+                    showAssistantButton={isSuggestedDashboardsAssistantButtonEnabled}
                     kind="suggested_dashboard"
                   />
                 );

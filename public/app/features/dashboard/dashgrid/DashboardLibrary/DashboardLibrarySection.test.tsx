@@ -5,7 +5,7 @@ import { locationService } from '@grafana/runtime';
 
 import { DashboardLibrarySection } from './DashboardLibrarySection';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import { DashboardLibraryInteractions } from './interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
 import { createMockPluginDashboard } from './utils/test-utils';
 
 jest.mock('./api/dashboardLibraryApi', () => ({
@@ -34,17 +34,32 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('./interactions', () => ({
-  ...jest.requireActual('./interactions'),
-  DashboardLibraryInteractions: {
-    loaded: jest.fn(),
-    itemClicked: jest.fn(),
-  },
-}));
+jest.mock('./interactions', () => {
+  const actual = jest.requireActual('./interactions');
+  return {
+    ...actual,
+    DashboardLibraryInteractions: {
+      ...actual.DashboardLibraryInteractions,
+      loaded: jest.fn(),
+      itemClicked: jest.fn(),
+    },
+    SuggestedDashboardInteractions: {
+      ...actual.SuggestedDashboardInteractions,
+      loaded: jest.fn(),
+      itemClicked: jest.fn(),
+    },
+  };
+});
 
 jest.mock('./DashboardCard', () => {
-  const DashboardCardComponent = ({ title, onClick }: { title: string; onClick: () => void }) => (
-    <div data-testid={`dashboard-card-${title}`} onClick={onClick}>
+  const DashboardCardComponent = ({
+    title,
+    onClick,
+  }: {
+    title: string;
+    onClick: (customizeWithAssistant?: boolean) => void;
+  }) => (
+    <div data-testid={`dashboard-card-${title}`} onClick={() => onClick()}>
       {title}
     </div>
   );
@@ -65,8 +80,8 @@ const mockLocationServicePush = locationService.push as jest.MockedFunction<type
 const mockDashboardLibraryInteractionsLoaded = DashboardLibraryInteractions.loaded as jest.MockedFunction<
   typeof DashboardLibraryInteractions.loaded
 >;
-const mockDashboardLibraryInteractionsItemClicked = DashboardLibraryInteractions.itemClicked as jest.MockedFunction<
-  typeof DashboardLibraryInteractions.itemClicked
+const mockSuggestedDashboardInteractionsItemClicked = SuggestedDashboardInteractions.itemClicked as jest.MockedFunction<
+  typeof SuggestedDashboardInteractions.itemClicked
 >;
 
 describe('DashboardLibrarySection', () => {
@@ -259,7 +274,7 @@ describe('DashboardLibrarySection', () => {
     dashboardCard.click();
 
     await waitFor(() => {
-      expect(mockDashboardLibraryInteractionsItemClicked).toHaveBeenCalledWith({
+      expect(mockSuggestedDashboardInteractionsItemClicked).toHaveBeenCalledWith({
         contentKind: 'datasource_dashboard',
         datasourceTypes: ['test-plugin'],
         libraryItemId: 'test-uid-123',
@@ -267,6 +282,7 @@ describe('DashboardLibrarySection', () => {
         sourceEntryPoint: 'datasource_page',
         eventLocation: 'suggested_dashboards_modal_provisioned_tab',
         discoveryMethod: 'browse',
+        action: 'use_dashboard',
       });
     });
   });

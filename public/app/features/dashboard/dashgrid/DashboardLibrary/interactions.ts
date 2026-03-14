@@ -1,7 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
 import { ContentKind, DiscoveryMethod, EventLocation, FEATURE_VARIANTS, SourceEntryPoint } from './constants';
-import { isTemplateDashboardAssistantEnabled } from './utils/assistantHelpers';
+import { isTemplateDashboardAssistantEnabled, isSuggestedDashboardAssistantEnabled } from './utils/assistantHelpers';
 
 const SCHEMA_VERSION = 1;
 
@@ -117,16 +117,24 @@ export const TemplateDashboardInteractions = {
 
 export const SuggestedDashboardInteractions = {
   ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
+  loaded: async (properties: LoadedInteractionProperties) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
     reportDashboardLibraryInteraction('loaded', {
       ...properties,
       featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+      isSuggestedDashboardAssistantButtonEnabled,
     });
   },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
+  itemClicked: async (
+    properties: ItemClickedInteractionProperties & {
+      action?: 'use_dashboard' | 'assistant';
+    }
+  ) => {
+    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
     reportDashboardLibraryInteraction('item_clicked', {
       ...properties,
       featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+      isSuggestedDashboardAssistantButtonEnabled,
     });
   },
 };

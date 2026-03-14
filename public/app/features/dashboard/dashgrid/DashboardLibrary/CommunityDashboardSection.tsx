@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
@@ -43,6 +44,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+  const isSuggestedDashboardsAssistantButtonEnabled = useBooleanFlagValue('suggestedDashboardsAssistantButton', false);
 
   // New state for compatibility badge feature
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
@@ -135,7 +137,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const showError = !loading && error;
 
   const [{ error: isPreviewDashboardError }, onPreviewCommunityDashboard] = useAsyncFn(
-    async (dashboard: GnetDashboard) => {
+    async (dashboard: GnetDashboard, customizeWithAssistant?: boolean) => {
       if (!response) {
         return;
       }
@@ -149,6 +151,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
         eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
         discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+        action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
       });
 
       await onUseCommunityDashboard({
@@ -157,6 +160,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         datasourceType: response.datasourceType,
         eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
         onShowMapping,
+        assistantSource: customizeWithAssistant ? 'assistant_button' : undefined,
       });
     },
     [response, datasourceUid, debouncedSearchQuery, onShowMapping]
@@ -372,10 +376,11 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                     title={dashboard.name}
                     imageUrl={imageUrl}
                     dashboard={dashboard}
-                    onClick={() => onPreviewCommunityDashboard(dashboard)}
+                    onClick={(customizeWithAssistant) => onPreviewCommunityDashboard(dashboard, customizeWithAssistant)}
                     isLogo={isLogo}
                     details={details}
                     kind="suggested_dashboard"
+                    showAssistantButton={isSuggestedDashboardsAssistantButtonEnabled}
                     showCompatibilityBadge={showBadge}
                     compatibilityState={compatibilityMap.get(dashboard.id)}
                     onCompatibilityCheck={
