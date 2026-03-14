@@ -1,4 +1,3 @@
-import { throttle } from 'lodash';
 import { useLayoutEffect, useRef } from 'react';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
@@ -12,6 +11,7 @@ import {
   LegacyGraphHoverEvent,
 } from '@grafana/data';
 
+import { throttle } from '../../../utils/timing';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface EventBusPluginProps {

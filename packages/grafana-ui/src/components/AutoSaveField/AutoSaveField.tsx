@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { debounce } from '../../utils/timing';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 

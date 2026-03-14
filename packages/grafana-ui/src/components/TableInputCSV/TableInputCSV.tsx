@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
@@ -9,6 +8,7 @@ import { t, Trans } from '@grafana/i18n';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable2 } from '../../types/theme';
+import { debounce } from '../../utils/timing';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 

@@ -1,4 +1,4 @@
-import { throttle } from 'lodash';
+import { throttle } from './timing';
 
 type Args = Parameters<typeof console.log>;
 

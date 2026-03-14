@@ -1,11 +1,11 @@
 /* Spreading unbound arrays can be very slow or even crash the browser if used for arguments */
 /* eslint no-restricted-syntax: ["error", "SpreadElement"] */
 
-import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
+import { debounce } from '../../utils/timing';
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
