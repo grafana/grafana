@@ -2,6 +2,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -9,6 +10,7 @@ import {
   CatalogPlugin,
   InstancePlugin,
   LocalPlugin,
+  PluginUpdateStrategy,
   ProvisionedPlugin,
   RemotePlugin,
   RemotePluginStatus,
@@ -134,7 +136,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
-    isManaged: isManagedPlugin(id),
+    isManaged: isManagedPlugin(id, plugin),
     isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
@@ -146,6 +148,10 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
+    managed: {
+      enabled: isManagedPlugin(id, plugin),
+      strategy: plugin.managed.strategy,
+    },
   };
 }
 
@@ -196,6 +202,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    managed: {
+      enabled: isManagedPlugin(id),
+    },
   };
 }
 
@@ -237,7 +246,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
-    isManaged: isManagedPlugin(id),
+    isManaged: isManagedPlugin(id, remote),
     isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
@@ -260,6 +269,10 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
+    managed: {
+      enabled: isManagedPlugin(id, remote),
+      strategy: remote?.managed.strategy,
+    },
   };
 }
 
@@ -367,10 +380,21 @@ function isNotHiddenByConfig(id: string) {
   return !pluginCatalogHiddenPlugins.includes(id);
 }
 
-export function isManagedPlugin(id: string) {
+export function isManagedPlugin(id: string, remote?: RemotePlugin) {
+  if (!config.pluginAdminExternalManageEnabled) {
+    return false;
+  }
+
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
-  return pluginCatalogManagedPlugins?.includes(id);
+  let remoteManaged = false;
+  if (remote) {
+    remoteManaged = remote.managed.enabled && getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
+  }
+
+  // pluginCatalogManagedPlugins considers the instance config as source of truth
+  // while remoteManaged considers the grafana-com as source of truth
+  return pluginCatalogManagedPlugins?.includes(id) || remoteManaged;
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
@@ -413,7 +437,8 @@ function isPluginModifiable(plugin: CatalogPlugin) {
     plugin.isCore || //core plugins cannot be modified
     plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
     plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
-    plugin.isManaged // Managed plugins cannot be modified
+    plugin.isManaged || // Managed plugins cannot be modified (this will be removed when managed plugins v2 is fully enabled)
+    (plugin.managed.enabled && plugin.managed.strategy === PluginUpdateStrategy.Assigned) // Managed assigned plugins cannot be modified
   ) {
     return false;
   }
@@ -441,7 +466,7 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
 
 export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   if (
-    !isPluginModifiable(plugin) ||
+    (!isPluginModifiable(plugin) && plugin.managed.strategy !== PluginUpdateStrategy.MajorAligned) || //the second part will be removed when managed plugins v2 is fully enabled
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     !plugin.isPublished ||
     plugin.isDisabled ||

@@ -45,6 +45,7 @@ describe('PluginSubtitle', () => {
       keywords: ['test', 'plugin'],
     },
     popularity: 0,
+    managed: { enabled: false, strategy: undefined },
   };
 
   beforeEach(() => {});

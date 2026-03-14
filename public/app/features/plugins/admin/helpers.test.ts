@@ -1,5 +1,6 @@
 import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   mapToCatalogPlugin,
@@ -15,7 +16,7 @@ import {
   isDisabledAngularPlugin,
 } from './helpers';
 import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './mocks/mockHelpers';
-import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin } from './types';
+import { RemotePlugin, LocalPlugin, RemotePluginStatus, Version, CatalogPlugin, PluginUpdateStrategy } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -234,6 +235,10 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: false,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 
@@ -279,6 +284,85 @@ describe('Plugins/Helpers', () => {
       expect(mapRemoteToCatalog(corePlugin).isCore).toBe(true);
       expect(mapRemoteToCatalog(notCorePlugin).isCore).toBe(false);
     });
+
+    describe('.isManaged', () => {
+      test('should return true if plugin is in pluginCatalogManagedPlugins', () => {
+        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
+        config.pluginCatalogManagedPlugins = [remotePlugin.slug];
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({ isManaged: true });
+
+        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+      });
+
+      test('should return false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({ isManaged: false });
+      });
+
+      test('should return true if plugin is set as managed major-aligned from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ isManaged: true, managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+
+      test('should return false if plugin is set as managed major-aligned from grafana-com and grafana is not in cloud', () => {
+        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+        config.featureToggles.managedPluginsV2 = true;
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+          })
+        ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned } });
+
+        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+      });
+
+      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ isManaged: true, managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+
+      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
+        config.featureToggles.managedPluginsV2 = true;
+
+        expect(
+          mapRemoteToCatalog({
+            ...remotePlugin,
+            managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
+          })
+        ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.Assigned } });
+
+        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+      });
+    });
   });
 
   describe('mapLocalToCatalog()', () => {
@@ -316,6 +400,10 @@ describe('Plugins/Helpers', () => {
         installedVersion: '4.2.2',
         isFullyInstalled: true,
         angularDetected: false,
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 
@@ -372,6 +460,10 @@ describe('Plugins/Helpers', () => {
         isFullyInstalled: true,
         angularDetected: false,
         url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+        managed: {
+          enabled: false,
+          strategy: undefined,
+        },
       });
     });
 
@@ -782,6 +874,43 @@ describe('Plugins/Helpers', () => {
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ angularDetected: undefined });
+    });
+
+    describe('.isManaged', () => {
+      test('should return true if plugin is in pluginCatalogManagedPlugins', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
+        config.pluginCatalogManagedPlugins = [localPlugin.id];
+
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isManaged: true });
+
+        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+      });
+
+      test('should return false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isManaged: false });
+      });
+
+      test('should return true if plugin is set as managed from grafana-com and grafana is in cloud', () => {
+        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+        config.pluginAdminExternalManageEnabled = true;
+        setTestFlags({ managedPluginsV2: true });
+
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          isManaged: true,
+        });
+
+        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+        setTestFlags({});
+      });
+
+      test('should return true if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+        expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
+          isManaged: false,
+        });
+      });
     });
   });
 

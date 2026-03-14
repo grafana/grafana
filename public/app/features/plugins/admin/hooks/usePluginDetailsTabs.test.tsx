@@ -51,6 +51,7 @@ const mockPlugin: CatalogPlugin = {
   publishedAt: '2023-01-01',
   angularDetected: false,
   accessControl: {},
+  managed: { enabled: false, strategy: undefined },
 };
 
 const mockPluginConfig = {

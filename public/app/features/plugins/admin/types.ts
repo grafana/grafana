@@ -66,6 +66,10 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
+  managed: {
+    enabled: boolean;
+    strategy?: PluginUpdateStrategy;
+  };
 }
 export interface Screenshots {
   path: string;
@@ -190,7 +194,16 @@ export type RemotePlugin = {
   sponsorshipUrl?: string;
   repositoryUrl?: string;
   raiseAnIssueUrl?: string;
+  managed: {
+    enabled: boolean;
+    strategy?: PluginUpdateStrategy;
+  };
 };
+
+export enum PluginUpdateStrategy {
+  MajorAligned = 'major-aligned',
+  Assigned = 'assigned',
+}
 
 // The available status codes on GCOM are available here:
 // https://github.com/grafana/grafana-com/blob/main/packages/grafana-com-plugins-api/src/plugins/plugin.model.js#L74

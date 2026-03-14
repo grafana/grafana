@@ -34,6 +34,10 @@ const plugin: CatalogPlugin = {
   isPublished: true,
   isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 describe('GetStartedWithDataSource', () => {

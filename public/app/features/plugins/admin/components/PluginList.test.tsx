@@ -40,6 +40,10 @@ const mockPlugin: CatalogPlugin = {
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
 };
 
 const mockPlugin2: CatalogPlugin = {
