@@ -19,6 +19,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 )
 
 type GRPCInlineClient struct {
@@ -57,6 +58,9 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 		// This reduces the number of requests made to the DNS servers.
 		opts = append(opts, grpc.WithDisableServiceConfig())
 	}
+
+	// Set the original service identity requester in the metadata, if present.
+	opts = append(opts, grpc.WithChainUnaryInterceptor(interceptors.CallerUnaryClientInterceptor()))
 
 	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {
