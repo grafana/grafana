@@ -1820,11 +1820,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/utils/createPanelDataProvider.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
