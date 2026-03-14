@@ -11,7 +11,7 @@ export const hasFilters = (query: SearchState) => {
   if (!query) {
     return false;
   }
-  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
+  return Boolean(query.query || query.tag?.length > 0 || query.starred || query.teamFolders || query.sort);
 };
 
 /** Cleans up old local storage values that remembered many open folders */

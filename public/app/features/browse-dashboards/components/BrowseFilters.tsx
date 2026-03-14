@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -5,9 +6,15 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 export function BrowseFilters() {
   const [searchState, stateManager] = useSearchStateManager();
 
+  const showTeamFoldersFilter =
+    !!config.featureToggles.unifiedStorageSearchUI &&
+    !!config.featureToggles.teamFolders &&
+    !!config.featureToggles.foldersAppPlatformAPI;
+
   return (
     <ActionRow
       showStarredFilter
+      showTeamFoldersFilter={showTeamFoldersFilter}
       showLayout
       state={searchState}
       getTagOptions={stateManager.getTagOptions}
@@ -15,6 +22,7 @@ export function BrowseFilters() {
       sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
       onLayoutChange={stateManager.onLayoutChange}
       onStarredFilterChange={stateManager.onStarredFilterChange}
+      onTeamFoldersFilterChange={stateManager.onTeamFoldersFilterChange}
       onSortChange={stateManager.onSortChange}
       onTagFilterChange={stateManager.onTagFilterChange}
       onDatasourceChange={stateManager.onDatasourceChange}

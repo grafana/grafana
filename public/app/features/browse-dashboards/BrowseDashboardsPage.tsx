@@ -63,6 +63,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     stateManager.onSetStarred(search.has('starred'));
   }, [search, stateManager]);
 
+  // Trigger search when "teamFolders" query param changes
+  useEffect(() => {
+    stateManager.onSetTeamFolders(search.has('teamFolders'));
+  }, [search, stateManager]);
+
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
     // when starting a new search

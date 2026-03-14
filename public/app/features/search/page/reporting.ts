@@ -6,6 +6,7 @@ import { EventTrackingNamespace, SearchLayout } from '../types';
 interface QueryProps {
   layout: SearchLayout;
   starred: boolean;
+  teamFolders: boolean;
   sortValue?: string;
   query: string;
   tagCount: number;
@@ -45,6 +46,7 @@ const getQuerySearchContext = (query: QueryProps) => {
   return {
     layout: query.layout,
     starredFilter: query.starred ?? false,
+    teamFoldersFilter: query.teamFolders ?? false,
     sort: query.sortValue ?? '',
     tagCount: query.tagCount ?? 0,
     queryLength: query.query?.length ?? 0,

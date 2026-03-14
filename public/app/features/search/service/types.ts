@@ -41,6 +41,7 @@ export interface SearchQuery {
   // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
+  ownerReferences?: string[];
   permission?: PermissionLevel;
   deleted?: boolean;
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
@@ -103,6 +104,7 @@ export interface QueryResponse {
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
   starred: (query: SearchQuery) => Promise<QueryResponse>;
+  teamFolders: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;

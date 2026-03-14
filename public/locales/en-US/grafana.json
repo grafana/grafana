@@ -13994,6 +13994,7 @@
       "remove-datasource-filter": "Datasource: {{datasource}}",
       "sort-placeholder": "Sort",
       "starred": "Starred",
+      "team-folders": "My team folders",
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
     },

@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 
 import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
+import { getFolderUidsForTeam } from '../../../../fixtures/folder-owner-references';
 import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
@@ -76,6 +77,7 @@ const getDefaultSearchHandler = () =>
     const folderFilter = new URL(request.url).searchParams.get('folder') || null;
     const typeFilters = new URL(request.url).searchParams.getAll('type');
     const nameFilter = new URL(request.url).searchParams.getAll('name');
+    const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
 
@@ -110,6 +112,19 @@ const getDefaultSearchHandler = () =>
         filters.push(
           ({ item }) => (item.kind === 'folder' || item.kind === 'dashboard') && item.parentUID === folderFilter
         );
+      }
+
+      if (ownerReferenceFilter.length > 0) {
+        // ownerReference params are in the format "iam.grafana.app/Team/<teamUid>"
+        const teamUidRegex = /iam\.grafana\.app\/Team\/([^/]+)$/;
+        const teamUids = ownerReferenceFilter
+          .map((ref) => {
+            const match = ref.match(teamUidRegex);
+            return match ? match[1] : '';
+          })
+          .filter(Boolean);
+        const ownedFolderUids = teamUids.flatMap((teamUid) => getFolderUidsForTeam(teamUid));
+        filters.push(({ item }) => ownedFolderUids.includes(item.uid));
       }
 
       return filters.every((filterPredicate) => filterPredicate(filterItem));
