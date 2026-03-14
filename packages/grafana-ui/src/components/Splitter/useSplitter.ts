@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { clamp } from 'lodash';
 import { useCallback, useId, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { clamp } from '../../utils/clamp';
 import { ComponentSize } from '../../types/size';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 

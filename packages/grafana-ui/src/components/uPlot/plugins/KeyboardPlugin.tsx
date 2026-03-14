@@ -1,7 +1,7 @@
-import { clamp } from 'lodash';
 import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
+import { clamp } from '../../../utils/clamp';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface KeyboardPluginProps {
