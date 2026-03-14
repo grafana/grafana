@@ -26,17 +26,12 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 				SecureSettings:        gr.SecureSettings,
 			})
 		}
-		recv := &alertingNotify.APIReceiver{
+		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
 			ReceiverConfig: models.ReceiverConfig{
 				Integrations: integrations,
 			},
-		}
-		err := patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-		if err != nil {
-			return nil, 0, err
-		}
-		receivers = append(receivers, recv)
+		})
 	}
 	a := &alertingNotify.PostableAlert{}
 	if c.Alert != nil {
@@ -61,6 +56,6 @@ func (am *alertmanager) TestIntegration(ctx context.Context, receiverName string
 	return am.Base.TestIntegration(ctx, receiverName, cfg, alert)
 }
 
-func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
+func (am *alertmanager) GetReceivers(_ context.Context) ([]models.ReceiverStatus, error) {
 	return am.Base.GetReceiversStatus(), nil
 }

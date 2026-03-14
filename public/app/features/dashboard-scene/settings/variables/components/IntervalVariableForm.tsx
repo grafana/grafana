@@ -56,7 +56,7 @@ export function IntervalVariableForm({
         placeholder="1m,10m,1h,6h,1d,7d"
         onBlur={onIntervalsChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
-        width={32}
+        grow={inline}
         required
       />
 

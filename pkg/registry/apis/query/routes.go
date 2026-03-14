@@ -9,24 +9,24 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	queryV1 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	sqlSchemas := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResponseSQLSchemas"].Schema
+	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "sqlschemas",
+				Path: "query/sqlschemas",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Query SQL Schemas"},
-							OperationId: "querySqlSchemas",
-							Description: "Get a SQL Schema for a set of queries",
+							Tags:        []string{"Query"},
+							OperationId: "querySQLSchemas",
+							Description: "Send the same request you would send to /query, and get a schema that will represent the response",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -70,7 +70,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		return routes
 	}
 
-	searchResults := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList"].Schema
+	searchResults := defs[queryV1.OpenAPIPrefix+"DataSourceConnectionList"].Schema
 	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
 		Path: "connections",
 		Spec: &spec3.PathProps{

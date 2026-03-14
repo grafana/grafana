@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { useTestIntegrationMutation } from '../api/receiversApi';
-import { TestIntegrationRequest, useTestIntegrationK8sMutation } from '../api/testIntegrationApi';
+import { CreateReceiverTestOverrideArg, useCreateReceiverTestMutation } from '../api/testReceiversApi';
 import { GrafanaChannelValues } from '../types/receiver-form';
 import { canTestEntity } from '../utils/k8s/utils';
 import { formChannelValuesToGrafanaChannelConfig } from '../utils/receiver-form';
@@ -25,7 +25,7 @@ interface TestChannelParams {
 
 export function useTestContactPoint({ contactPoint, defaultChannelValues }: UseTestContactPointOptions) {
   const [testOldApi, oldApiState] = useTestIntegrationMutation();
-  const [testNewApi, newApiState] = useTestIntegrationK8sMutation();
+  const [testNewApi, newApiState] = useCreateReceiverTestMutation();
 
   const useK8sApi = Boolean(config.featureToggles.alertingImportAlertmanagerAPI);
 
@@ -52,17 +52,19 @@ export function useTestContactPoint({ contactPoint, defaultChannelValues }: UseT
         existingIntegration
       );
 
-      const request: TestIntegrationRequest = {
-        receiverUid,
-        integration: {
-          uid: existingIntegration?.uid,
-          type: integrationConfig.type,
-          version: integrationConfig.version,
-          settings: integrationConfig.settings,
-          secureFields: integrationConfig.secureFields,
-          disableResolveMessage: integrationConfig.disableResolveMessage,
+      const request: CreateReceiverTestOverrideArg = {
+        name: receiverUid,
+        body: {
+          integration: {
+            uid: existingIntegration?.uid,
+            type: integrationConfig.type,
+            version: integrationConfig.version,
+            settings: integrationConfig.settings,
+            secureFields: integrationConfig.secureFields,
+            disableResolveMessage: integrationConfig.disableResolveMessage,
+          },
+          alert: testAlert,
         },
-        alert: testAlert,
       };
 
       const result = await testNewApi(request).unwrap();

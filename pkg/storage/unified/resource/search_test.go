@@ -7,6 +7,7 @@ import (
 	"iter"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -123,7 +124,7 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 	return 0, nil
 }
 
-func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(yield func(*ModifiedResource, error) bool) {
 		yield(nil, errors.New("not implemented"))
 	}
@@ -311,6 +312,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	search := &slowSearchBackendWithCache{
 		mockSearchBackend: mockSearchBackend{},
 	}
+
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"group": "resource",
@@ -336,8 +338,12 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Make sure we get context deadline error
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Wait until indexing is finished.
-	search.wg.Wait()
+	// Wait until indexing is finished. We need to wait 2 seconds here,
+	// because BuildIndex simulates a 1 second build time, and we want
+	// to be sure it has started before we check the calls.
+	require.Eventually(t, func() bool {
+		return search.slowBuildCalls.Load() > 0
+	}, 2*time.Second, 100*time.Millisecond, "BuildIndex never started")
 
 	require.NotEmpty(t, search.buildIndexCalls)
 
@@ -354,7 +360,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 
 type slowSearchBackendWithCache struct {
 	mockSearchBackend
-	wg sync.WaitGroup
+	slowBuildCalls atomic.Int64
 }
 
 func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
@@ -364,8 +370,7 @@ func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIn
 }
 
 func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	m.wg.Add(1)
-	defer m.wg.Done()
+	defer m.slowBuildCalls.Add(1)
 
 	time.Sleep(1 * time.Second)
 
@@ -930,6 +935,24 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestMaybeInjectFailure(t *testing.T) {
+	t.Run("disabled when percent is 0", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 0}
+		for i := 0; i < 1000; i++ {
+			require.NoError(t, s.maybeInjectFailure())
+		}
+	})
+
+	t.Run("always fails when percent is 100", func(t *testing.T) {
+		s := &searchServer{injectFailuresPercent: 100}
+		for i := 0; i < 100; i++ {
+			err := s.maybeInjectFailure()
+			require.Error(t, err)
+			require.Equal(t, "injected search failure", err.Error())
+		}
+	})
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {

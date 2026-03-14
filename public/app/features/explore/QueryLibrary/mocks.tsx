@@ -24,6 +24,7 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         onFavorite: jest.fn(),
         onUnfavorite: jest.fn(),
         userFavorites: {},
+        setUserFavorites: jest.fn(),
         isEditingQuery: false,
         activeTab: QueryLibraryTab.ALL,
         activeDatasources: [],
@@ -34,6 +35,8 @@ export function QueryLibraryContextProviderMock(props: PropsWithChildren<Props>)
         highlightedQuery: undefined,
         newQuery: undefined,
         setCloseGuard: jest.fn(),
+        templateVariableOverrides: {},
+        setTemplateVariableOverrides: jest.fn(),
       }}
     >
       {props.children}

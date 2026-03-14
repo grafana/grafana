@@ -8,6 +8,12 @@ export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/use
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export { getContactPointDescription } from './grafana/contactPoints/utils';
 
+// Notification Policies / Routing Trees
+export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
+export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
+export { isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
+
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
@@ -21,3 +27,4 @@ export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } fro
 // API endpoints
 export { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 export { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+export { generatedAPI as historianAPIv0alpha1 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';

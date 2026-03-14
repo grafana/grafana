@@ -22,7 +22,7 @@ export function CorrelationsPageLegacy() {
   );
 }
 
-function CorrelationsPageAppPlatform() {
+export function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
   const limit = 100;
   const { currentData, isLoading, error, doesContinue } = useCorrelationsK8s(limit, page);

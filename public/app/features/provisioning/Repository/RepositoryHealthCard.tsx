@@ -11,8 +11,6 @@ import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { formatTimestamp } from '../utils/time';
 
-import { CheckRepository } from './CheckRepository';
-
 export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const status = repo.status;
@@ -86,9 +84,6 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
           )}
         </Grid>
       </Card.Description>
-      <Card.Actions className={styles.actions}>
-        <CheckRepository repository={repo} />
-      </Card.Actions>
     </Card>
   );
 }
@@ -103,9 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
-    }),
-    actions: css({
-      marginTop: 'auto',
     }),
   };
 };

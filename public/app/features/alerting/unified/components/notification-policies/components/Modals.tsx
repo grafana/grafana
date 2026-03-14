@@ -1,6 +1,7 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
 import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -10,6 +11,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
+import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
 
 export interface DeleteModalProps {
   isOpen: boolean;
@@ -68,66 +70,90 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName
 });
 DeleteModal.displayName = 'DeleteModal';
 
+function getConfirmText(isResetting: boolean, isActualDefaultPolicy: boolean): string {
+  if (isResetting) {
+    return isActualDefaultPolicy
+      ? t('alerting.policies.reset-modal.resetting', 'Resetting...')
+      : t('alerting.policies.reset-modal.deleting', 'Deleting...');
+  }
+  return isActualDefaultPolicy
+    ? t('alerting.policies.reset-modal.reset', 'Reset')
+    : t('alerting.policies.reset-modal.delete', 'Delete');
+}
+
 export interface ResetModalProps {
   isOpen: boolean;
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
   routeName: string;
+  /** When true (default), shows "Reset" language. When false, shows "Delete" language for non-default policy trees. */
+  isActualDefaultPolicy?: boolean;
 }
 
-export const ResetModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: ResetModalProps) => {
-  const [isResetting, setIsResetting] = useState(false);
-  const [error, setError] = useState<unknown | undefined>();
+export const ResetModal = React.memo(
+  ({ onConfirm, onDismiss, isOpen, routeName, isActualDefaultPolicy = true }: ResetModalProps) => {
+    const [isResetting, setIsResetting] = useState(false);
+    const [error, setError] = useState<unknown | undefined>();
 
-  const onResetDismiss = () => {
-    onDismiss();
-    setError(undefined);
-  };
+    const onResetDismiss = () => {
+      onDismiss();
+      setError(undefined);
+    };
 
-  const onResetConfirm = async () => {
-    setIsResetting(true);
-    onConfirm()
-      .then(() => {
-        onResetDismiss();
-      })
-      .catch(setError)
-      .finally(() => {
-        setIsResetting(false);
-      });
-  };
-  if (error) {
-    return <ErrorModal isOpen={isOpen} onDismiss={onResetDismiss} error={error} />;
+    const onResetConfirm = async () => {
+      setIsResetting(true);
+      onConfirm()
+        .then(() => {
+          onResetDismiss();
+        })
+        .catch(setError)
+        .finally(() => {
+          setIsResetting(false);
+        });
+    };
+    if (error) {
+      return <ErrorModal isOpen={isOpen} onDismiss={onResetDismiss} error={error} />;
+    }
+
+    const displayName = routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName;
+
+    return (
+      <ConfirmModal
+        body={
+          <>
+            <Text element="p">
+              {isActualDefaultPolicy ? (
+                <Trans i18nKey="alerting.policies.reset-modal.permanently-reset" values={{ routeName: displayName }}>
+                  This action will permanently reset the <code>{'{{routeName}}'}</code> notification policy to an empty
+                  state.
+                </Trans>
+              ) : (
+                <Trans i18nKey="alerting.policies.reset-modal.permanently-delete" values={{ routeName: displayName }}>
+                  This action will permanently delete the <code>{'{{routeName}}'}</code> notification policy.
+                </Trans>
+              )}
+            </Text>
+            <Space v={2} />
+          </>
+        }
+        confirmationText={
+          isActualDefaultPolicy
+            ? t('alerting.policies.reset-modal.reset', 'Reset')
+            : t('alerting.policies.reset-modal.delete', 'Delete')
+        }
+        confirmText={getConfirmText(isResetting, isActualDefaultPolicy)}
+        onDismiss={onResetDismiss}
+        onConfirm={onResetConfirm}
+        title={
+          isActualDefaultPolicy
+            ? t('alerting.policies.reset-modal.title-reset-notification-policy', 'Reset notification policy')
+            : t('alerting.policies.reset-modal.title-delete-notification-policy', 'Delete notification policy')
+        }
+        isOpen={isOpen}
+      />
+    );
   }
-
-  return (
-    <ConfirmModal
-      body={
-        <>
-          <Text element="p">
-            <Trans
-              i18nKey="alerting.policies.reset-modal.permanently-reset"
-              values={{ routeName: routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName }}
-            >
-              This action will permanently reset the <code>{'{{routeName}}'}</code> notification policy to an empty
-              state.
-            </Trans>
-          </Text>
-          <Space v={2} />
-        </>
-      }
-      confirmationText={t('alerting.policies.reset-modal.reset', 'Reset')}
-      confirmText={
-        isResetting
-          ? t('alerting.policies.reset-modal.resetting', 'Resetting...')
-          : t('alerting.policies.reset-modal.reset', 'Reset')
-      }
-      onDismiss={onResetDismiss}
-      onConfirm={onResetConfirm}
-      title={t('alerting.policies.reset-modal.title-reset-notification-policy', 'Reset notification policy')}
-      isOpen={isOpen}
-    />
-  );
-});
+);
 ResetModal.displayName = 'ResetModal';
 
 const emptyRouteWithID = {
@@ -140,12 +166,16 @@ export interface CreateModalProps {
   isOpen: boolean;
   onConfirm: (route: Partial<FormAmRoute>) => Promise<unknown>;
   onDismiss: () => void;
+  existingPolicyNames?: string[];
 }
 
-export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateModalProps) => {
+export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismiss, isOpen }: CreateModalProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
   const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
+  const nameError = useMemo(() => {
+    return isFetchError(error) && error.status === 409 ? stringifyErrorLike(error) : undefined;
+  }, [error]);
 
   const onCreateDismiss = () => {
     onDismiss();
@@ -156,19 +186,19 @@ export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateM
   const onCreateConfirm = async (newRoute: Partial<FormAmRoute>) => {
     if (newRoute) {
       setIsCreating(true);
+      setError(undefined);
       onConfirm(newRoute)
         .then(() => {
           onCreateDismiss();
         })
-        .catch(setError)
+        .catch((err) => {
+          setError(err);
+        })
         .finally(() => {
           setIsCreating(false);
         });
     }
   };
-  if (error) {
-    return <ErrorModal isOpen={isOpen} onDismiss={onCreateDismiss} error={error} />;
-  }
 
   if (isCreating) {
     return <CreatingModal isOpen={isOpen} onDismiss={onCreateDismiss} />;
@@ -182,7 +212,10 @@ export const CreateModal = React.memo(({ onConfirm, onDismiss, isOpen }: CreateM
       closeOnEscape={true}
       title={t('alerting.policies.create-modal.title-new-notification-policy', 'New notification policy')}
     >
+      {!nameError && error ? <NotificationPoliciesErrorAlert error={error} /> : null}
       <AmRootRouteForm
+        existingPolicyNames={existingPolicyNames}
+        nameError={nameError}
         route={route}
         showNameField={true}
         onSubmit={onCreateConfirm}

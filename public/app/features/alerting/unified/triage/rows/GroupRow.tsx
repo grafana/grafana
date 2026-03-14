@@ -8,6 +8,7 @@ import { useStyles2 } from '@grafana/ui';
 import { EmptyLabelValue, GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
+import { RowActions } from './InstanceCountBadges';
 import { formatLabelValue } from './utils';
 
 interface GroupRowProps {
@@ -34,6 +35,7 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
           colorBy="key"
         />
       }
+      actions={<RowActions counts={row.instanceCounts} />}
       isOpenByDefault={!isEmptyValue}
       leftColumnClassName={styles.groupRow}
       rightColumnClassName={styles.groupRow}
