@@ -33,5 +33,8 @@ jb = "$(call compile_tool,jb,github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb)"
 # Tool: "lefthook"
 lefthook = "$(call compile_tool,lefthook,github.com/evilmartians/lefthook)"
 
+# Tool: "openfeature"
+openfeature = "$(call compile_tool,openfeature,github.com/open-feature/cli/cmd/openfeature)"
+
 # Tool: "swagger"
 swagger = "$(call compile_tool,swagger,github.com/go-swagger/go-swagger/cmd/swagger)"
