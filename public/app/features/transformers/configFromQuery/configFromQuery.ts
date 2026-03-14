@@ -22,6 +22,7 @@ export interface ConfigFromQueryTransformOptions {
   configRefId?: string;
   mappings: FieldToConfigMapping[];
   applyTo?: MatcherConfig;
+  isDisplayNameMapping?: boolean;
 }
 
 export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions, data: DataFrame[]) {
@@ -72,6 +73,27 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     for (const field of frame.fields) {
       if (matcher(field, frame, data)) {
         const dataConfig = getFieldConfigFromFrame(reducedConfigFrame, 0, mappingResult);
+
+        if (options.isDisplayNameMapping) {
+          const nameFrame = data.find((d) => d.refId === options.configRefId);
+          const mappingValueName = options.mappings.find(
+            (mapping) => mapping.handlerKey === 'mappings.value'
+          )?.fieldName;
+          const mappingTextName = options.mappings.find((mapping) => mapping.handlerKey === 'mappings.text')?.fieldName;
+          if (nameFrame && mappingValueName !== undefined && mappingTextName !== undefined) {
+            const mapValueField = nameFrame.fields.find((frameNameField) => frameNameField.name === mappingValueName);
+            const mapTextField = nameFrame.fields.find((field) => field.name === mappingTextName);
+            const keyIndex = mapValueField?.values.indexOf(field.name) ?? -1;
+            if (keyIndex !== -1 && mapTextField !== undefined) {
+              const newDisplayName = mapTextField.values[keyIndex];
+              // only add the property if a new name
+              if (newDisplayName !== undefined) {
+                dataConfig.displayName = newDisplayName;
+              }
+            }
+          }
+        }
+
         outputFrame.fields.push({
           ...field,
           config: {
