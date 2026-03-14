@@ -2,6 +2,7 @@ package imguploader
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/imguploader/gcs"
 	"github.com/grafana/grafana/pkg/setting"
@@ -81,6 +82,84 @@ func TestImageUploaderFactory(t *testing.T) {
 				require.Equal(t, "access_key", original.accessKey)
 				require.Equal(t, "secret_key", original.secretKey)
 			})
+		})
+
+		t.Run("S3ImageUploader with presigned URLs disabled (default)", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+			require.NoError(t, err)
+
+			cfg.ImageUploadProvider = "s3"
+
+			s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("bucket", "test-bucket")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("region", "us-east-1")
+			require.NoError(t, err)
+
+			uploader, err := NewImageUploader(cfg)
+			require.NoError(t, err)
+
+			original, ok := uploader.(*S3Uploader)
+			require.True(t, ok)
+			require.False(t, original.enablePresignedURLs)
+			require.Equal(t, "public-read", original.acl)
+			require.Equal(t, 7*24*time.Hour, original.presignedURLExpiration)
+		})
+
+		t.Run("S3ImageUploader with presigned URLs enabled and custom expiration", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+			require.NoError(t, err)
+
+			cfg.ImageUploadProvider = "s3"
+
+			s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("bucket", "test-bucket")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("region", "us-east-1")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("enable_presigned_urls", "true")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("presigned_url_expiration", "48h")
+			require.NoError(t, err)
+
+			uploader, err := NewImageUploader(cfg)
+			require.NoError(t, err)
+
+			original, ok := uploader.(*S3Uploader)
+			require.True(t, ok)
+			require.True(t, original.enablePresignedURLs)
+			require.Equal(t, "private", original.acl)
+			require.Equal(t, 48*time.Hour, original.presignedURLExpiration)
+		})
+
+		t.Run("S3ImageUploader with invalid presigned URL expiration", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+			require.NoError(t, err)
+
+			cfg.ImageUploadProvider = "s3"
+
+			s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("bucket", "test-bucket")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("region", "us-east-1")
+			require.NoError(t, err)
+			_, err = s3sec.NewKey("presigned_url_expiration", "notaduration")
+			require.NoError(t, err)
+
+			_, err = NewImageUploader(cfg)
+			require.Error(t, err)
 		})
 
 		t.Run("Webdav uploader", func(t *testing.T) {
