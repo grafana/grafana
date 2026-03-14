@@ -994,16 +994,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/Login/PasswordlessConfirmationForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
-  "public/app/core/components/Login/PasswordlessLoginForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/core/components/OptionsUI/NumberInput.tsx": {
     "no-restricted-syntax": {
       "count": 1

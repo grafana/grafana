@@ -850,11 +850,6 @@ export interface FeatureToggles {
   */
   playlistsReconciler?: boolean;
   /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */

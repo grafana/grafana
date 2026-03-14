@@ -10827,24 +10827,14 @@
     },
     "forgot-password": "Glömt ditt lösenord?",
     "form": {
-      "confirmation-code": "Bekräftelsekod krävs",
-      "confirmation-code-label": "Bekräftelsekod",
-      "confirmation-code-placeholder": "bekräftelsekod",
-      "email-label": "E-post",
-      "email-placeholder": "e-post",
-      "email-required": "E-post är obligatoriskt",
-      "name-label": "Namn",
       "password-label": "Lösenord",
       "password-placeholder": "lösenord",
       "password-required": "Lösenord är obligatoriskt",
-      "passwordless-username-label": "Användarnamn",
       "submit-label": "Logga in",
       "submit-loading-label": "Loggar in ...",
       "username-label": "E-post eller användarnamn",
       "username-placeholder": "e-post eller användarnamn",
-      "username-required": "E-post eller användarnamn krävs",
-      "verify-email-label": "Skicka ett verifieringsmeddelande",
-      "verify-email-loading-label": "E-post skickas …"
+      "username-required": "E-post eller användarnamn krävs"
     },
     "layout": {
       "update-password": "Uppdatera ditt lösenord"

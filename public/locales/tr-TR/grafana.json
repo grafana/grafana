@@ -10827,24 +10827,14 @@
     },
     "forgot-password": "Parolanızı mı unuttunuz?",
     "form": {
-      "confirmation-code": "Onay kodu gereklidir",
-      "confirmation-code-label": "Onay kodu",
-      "confirmation-code-placeholder": "onay kodu",
-      "email-label": "E-posta",
-      "email-placeholder": "e-posta",
-      "email-required": "E-posta gereklidir",
-      "name-label": "Ad",
       "password-label": "Parola",
       "password-placeholder": "parola",
       "password-required": "Parola gereklidir",
-      "passwordless-username-label": "Kullanıcı adı",
       "submit-label": "Giriş yap",
       "submit-loading-label": "Giriş yapılıyor...",
       "username-label": "E-posta veya kullanıcı adı",
       "username-placeholder": "e-posta veya kullanıcı adı",
-      "username-required": "E-posta veya kullanıcı adı gereklidir",
-      "verify-email-label": "Doğrulama e-postası gönder",
-      "verify-email-loading-label": "E-posta gönderiliyor..."
+      "username-required": "E-posta veya kullanıcı adı gereklidir"
     },
     "layout": {
       "update-password": "Parolanızı güncelleyin"
