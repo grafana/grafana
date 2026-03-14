@@ -34,8 +34,8 @@ func (j *JaegerClient) GrpcServices(ctx context.Context) ([]string, error) {
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -47,7 +47,11 @@ func (j *JaegerClient) GrpcServices(ctx context.Context) ([]string, error) {
 		return services, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	body, err := readResponseBody(res, j.logger)
+	if err != nil {
+		return services, backend.DownstreamError(err)
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return services, backend.DownstreamError(err)
 	}
 
@@ -82,8 +86,8 @@ func (j *JaegerClient) GrpcOperations(ctx context.Context, s string) ([]string, 
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -95,7 +99,11 @@ func (j *JaegerClient) GrpcOperations(ctx context.Context, s string) ([]string, 
 		return operations, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	body, err := readResponseBody(res, j.logger)
+	if err != nil {
+		return operations, backend.DownstreamError(err)
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return operations, backend.DownstreamError(err)
 	}
 
@@ -168,8 +176,8 @@ func (j *JaegerClient) GrpcSearch(ctx context.Context, query *JaegerQuery, start
 	}
 
 	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -181,8 +189,12 @@ func (j *JaegerClient) GrpcSearch(ctx context.Context, query *JaegerQuery, start
 		return nil, err
 	}
 
+	body, err := readResponseBody(resp, j.logger)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to read response: %w", err)
+	}
 	var response types.GrpcTracesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, backend.DownstreamErrorf("failed to decode Jaeger response: %w", err)
 	}
 
@@ -240,8 +252,8 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -253,7 +265,11 @@ func (j *JaegerClient) GrpcTrace(ctx context.Context, traceID string, start, end
 		return nil, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	body, err := readResponseBody(res, logger)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to read response: %w", err)
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, err
 	}
 
