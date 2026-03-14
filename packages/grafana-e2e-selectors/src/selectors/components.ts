@@ -508,6 +508,17 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'data-testid Bar gauge value',
         },
       },
+      Histogram: {
+        container: {
+          [MIN_GRAFANA_VERSION]: 'data-testid histogram container',
+        },
+        chart: {
+          [MIN_GRAFANA_VERSION]: 'data-testid histogram chart',
+        },
+        legend: {
+          [MIN_GRAFANA_VERSION]: 'data-testid histogram legend',
+        },
+      },
       PieChart: {
         svgSlice: {
           '10.3.0': 'data testid Pie Chart Slice',

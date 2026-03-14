@@ -12,6 +12,7 @@ import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,
@@ -320,7 +321,11 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
     const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
 
-    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return (
+      <div data-testid={selectors.components.Panels.Visualization.Histogram.legend}>
+        <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />
+      </div>
+    );
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
@@ -351,13 +356,17 @@ export class Histogram extends React.Component<HistogramProps, State> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
-        {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
-            {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}
-          </UPlotChart>
-        )}
-      </VizLayout>
+      <div data-testid={selectors.components.Panels.Visualization.Histogram.container}>
+        <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
+          {(vizWidth: number, vizHeight: number) => (
+            <div data-testid={selectors.components.Panels.Visualization.Histogram.chart}>
+              <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
+                {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}
+              </UPlotChart>
+            </div>
+          )}
+        </VizLayout>
+      </div>
     );
   }
 }
