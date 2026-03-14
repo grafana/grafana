@@ -14768,12 +14768,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "Auto-create a team folder",
       "create": "Create",
+      "description-create-team-folder": "This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
-      "failed-to-create": "Failed to create team",
+      "failed-to-create": "Failed to create team: ",
+      "folder-create-failed": "Failed to create folder: ",
+      "folder-create-failed-help": "You can create the folder and assign it to a team manually from dashboards browser.",
+      "folder-creation-link": "Open folder",
+      "folder-creation-loading": "Creating folder...",
+      "folder-creation-success": "Folder created successfully.",
+      "label-create-team-folder": "Team folder",
       "label-email": "Email",
       "label-name": "Name",
-      "label-role": "Role"
+      "label-role": "Role",
+      "role-creation-success": "Roles created successfully.",
+      "roles-create-failed": "Failed to create roles: ",
+      "roles-create-permission-issue": "You don't have permissions to set roles",
+      "roles-creation-loading": "Creating roles...",
+      "team-creation-link": "Open team details",
+      "team-creation-loading": "Creating team...",
+      "team-creation-success": "Team created successfully."
     },
     "empty-state": {
       "button-title": "New team",
