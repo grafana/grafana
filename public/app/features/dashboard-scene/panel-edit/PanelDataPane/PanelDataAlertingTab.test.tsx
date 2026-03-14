@@ -2,7 +2,8 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { PromOptions } from '@grafana/prometheus';
+import { DataSourcePlugin } from '@grafana/data';
+import { PrometheusDatasource, PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -39,6 +40,12 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
 
 jest.mock('app/features/alerting/unified/api/prometheus');
 jest.mock('app/features/alerting/unified/api/ruler');
+
+jest.mock('app/features/plugins/importer/pluginImporter', () => ({
+  pluginImporter: {
+    importDataSource: () => Promise.resolve(new DataSourcePlugin(PrometheusDatasource as never)),
+  },
+}));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
