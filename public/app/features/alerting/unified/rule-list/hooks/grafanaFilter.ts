@@ -1,6 +1,6 @@
 import { attempt, isError } from 'lodash';
 
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
@@ -102,8 +102,8 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   return {
     backendFilter,
     frontendFilter: {
-      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
-      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
+      groupMatches: (group: GrafanaPromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
+      ruleMatches: (rule: GrafanaPromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
     },
     hasInvalidDataSourceNames,
   };

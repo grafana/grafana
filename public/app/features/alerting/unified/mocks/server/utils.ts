@@ -1,7 +1,7 @@
 import { DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams } from 'msw';
 
 import { base64UrlEncode } from '@grafana/alerting';
-import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromResponse, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 /** Helper method to help generate a kubernetes-style response with a list of items */
 export const getK8sResponse = <T>(kind: string, items: T[]) => {
@@ -16,9 +16,9 @@ export const getK8sResponse = <T>(kind: string, items: T[]) => {
 /** Expected base URL for our k8s APIs */
 export const ALERTING_API_SERVER_BASE_URL = '/apis/notifications.alerting.grafana.app/v0alpha1';
 
-export function paginatedHandlerFor(
-  groups: PromRuleGroupDTO[]
-): HttpResponseResolver<PathParams, DefaultBodyType, PromRulesResponse> {
+export function paginatedHandlerFor<TGroup extends PromRuleGroupDTO | GrafanaPromRuleGroupDTO>(
+  groups: TGroup[]
+): HttpResponseResolver<PathParams, DefaultBodyType, PromResponse<{ groups: TGroup[]; groupNextToken?: string }>> {
   const orderedGroupsWithCursor = groups.map((group) => ({
     ...group,
     id: base64UrlEncode(`${group.file}-${group.name}`),
@@ -38,7 +38,7 @@ export function paginatedHandlerFor(
     const nextToken =
       groupLimit && orderedGroupsWithCursor.length > groupLimit ? orderedGroupsWithCursor.at(endIndex)?.id : undefined;
 
-    return HttpResponse.json<PromRulesResponse>({
+    return HttpResponse.json<PromResponse<{ groups: TGroup[]; groupNextToken?: string }>>({
       status: 'success',
       data: { groups: groupsResult, groupNextToken: nextToken },
     });
