@@ -125,6 +125,56 @@ describe('PromQueryEditorSelector', () => {
     expectNoRunQueriesButton();
   });
 
+  it('keeps Kick start your query button visible after typing for a new query', async () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: '',
+        }}
+        onChange={onChange}
+      />
+    );
+
+    expectKickStartButton();
+
+    rerender(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'up',
+        }}
+        onChange={onChange}
+      />
+    );
+
+    expectKickStartButton();
+  });
+
+  it('hides Kick start your query button when editor loads with an existing query', async () => {
+    renderWithProps({ expr: 'up' });
+
+    expectNoKickStartButton();
+  });
+
+  it('shows Kick start your query button when editor loads with missing expr', async () => {
+    render(
+      <PromQueryEditorSelector
+        {...defaultProps}
+        query={
+          {
+            refId: 'A',
+          } as PromQuery
+        }
+      />
+    );
+
+    expectKickStartButton();
+  });
+
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
     await switchToMode(QueryEditorMode.Builder);
@@ -230,6 +280,14 @@ async function expectRunQueriesButton() {
 
 function expectNoRunQueriesButton() {
   expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
+}
+
+function expectKickStartButton() {
+  expect(screen.getByRole('button', { name: /kick start your query/i })).toBeInTheDocument();
+}
+
+function expectNoKickStartButton() {
+  expect(screen.queryByRole('button', { name: /kick start your query/i })).not.toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {
