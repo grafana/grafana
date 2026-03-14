@@ -18,8 +18,12 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@24
 ```
+
+If you're using `nvm`, or `fnm`, we recommend setting up your ZSH profile to automatically switch Node.js version when you change directory (or spawn a new shell):
+
+- https://github.com/nvm-sh/nvm#calling-nvm-use-automatically-in-a-directory-with-a-nvmrc-file
+- https://github.com/Schniz/fnm#shell-setup (specifically, the `--use-on-cd` flag)
 
 ### Windows
 
