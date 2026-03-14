@@ -309,6 +309,12 @@ describe('PostgreSQLDatasource', () => {
       expect(results.length).toBe(0);
     });
 
+    it('should return an empty array when fetchDatasets is called', async () => {
+      const ds = setupTestContext(response).ds;
+      const results = await ds.fetchDatasets();
+      expect(results.length).toBe(0);
+    });
+
     it('should return an empty array when fetchTables is called', async () => {
       const ds = setupTestContext(response).ds;
       const results = await ds.fetchTables();
@@ -340,6 +346,29 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When runSql returns a populated dataframe', () => {
+    it('should return a list of schemas when fetchDatasets is called', async () => {
+      const fetchDatasetsResponse = {
+        results: {
+          datasets: {
+            refId: 'datasets',
+            frames: [
+              dataFrameToJSON(
+                createDataFrame({
+                  fields: [{ name: 'name', type: FieldType.string, values: ['public', 'sales', 'inventory'] }],
+                })
+              ),
+            ],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(fetchDatasetsResponse);
+
+      const results = await ds.fetchDatasets();
+      expect(results.length).toBe(3);
+      expect(results).toEqual(['public', 'sales', 'inventory']);
+    });
+
     it('should return a list of tables when fetchTables is called', async () => {
       const fetchTableResponse = {
         results: {

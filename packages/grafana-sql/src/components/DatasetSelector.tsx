@@ -24,17 +24,18 @@ export const DatasetSelector = ({
   preconfiguredDataset,
 }: DatasetSelectorProps) => {
   /*
-    The behavior of this component - for MSSQL and MySQL datasources - is based on whether the user chose to create a datasource
-    with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
-    should only allow that single preconfigured database option to be selected. If the user chose to NOT assign/configure a default database,
-    then the user should be able to use this component to choose between multiple databases available to the datasource.
+    The behavior of this component is based on whether the user chose to create a datasource
+    with or without a default database (preconfiguredDataset). For MSSQL and MySQL, if the user configured
+    a default database, this selector should only allow that single preconfigured database option to be selected.
+    For Postgres, the dataset selector lists schemas within the connected database, so it should always
+    fetch available schemas regardless of whether a database is preconfigured.
   */
-  // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
-  // OR if 2) the datasource is Postgres. In either case the only option available to the user is the preconfigured database.
-  const hasPreconfigCondition = !!preconfiguredDataset || dialect === 'postgres';
+  // Postgres always fetches schemas (datasets are schemas within the connected database).
+  // Other dialects lock to the preconfigured database if one is set.
+  const hasPreconfigCondition = dialect !== 'postgres' && !!preconfiguredDataset;
 
   const state = useAsync(async () => {
-    // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
+    // If a default database is already configured (non-Postgres), no need to fetch other databases.
     if (hasPreconfigCondition) {
       // Set the current database to the preconfigured database.
       onChange(toOption(preconfiguredDataset));
@@ -46,7 +47,7 @@ export const DatasetSelector = ({
       onChange(toOption(dataset));
     }
 
-    // Otherwise, fetch all databases available to the datasource.
+    // Fetch all databases/schemas available to the datasource.
     const datasets = await db.datasets();
     return datasets.map(toOption);
   }, []);
