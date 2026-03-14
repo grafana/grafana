@@ -2,19 +2,20 @@
   "extends": "./scripts/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],
     "allowJs": true,
     "strict": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
+    "noUncheckedSideEffectImports": false,
     "incremental": true,
     "isolatedModules": true,
     "moduleResolution": "bundler",
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+      "@grafana/schema/dist/esm/*": ["./packages/grafana-schema/src/*"],
+      "*": ["./public/*"]
     }
   },
   "ts-node": {

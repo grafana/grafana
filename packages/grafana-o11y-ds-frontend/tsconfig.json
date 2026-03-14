@@ -9,6 +9,7 @@
     "isolatedModules": true,
     "allowJs": true,
     "rootDirs": ["."],
+    "rootDir": "../..",
     "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
