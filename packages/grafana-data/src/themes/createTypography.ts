@@ -57,7 +57,7 @@ export const ThemeTypographyInputSchema = z.object({
 export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;
 
 const defaultFontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
-const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
+const defaultFontFamilyMonospace = "'CommitMono', monospace";
 
 export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
