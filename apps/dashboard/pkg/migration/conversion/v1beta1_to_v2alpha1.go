@@ -988,6 +988,14 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 			return dashv2alpha1.DashboardVariableSortNumericalAsc
 		case 4:
 			return dashv2alpha1.DashboardVariableSortNumericalDesc
+		case 5:
+			return dashv2alpha1.DashboardVariableSortAlphabeticalCaseInsensitiveAsc
+		case 6:
+			return dashv2alpha1.DashboardVariableSortAlphabeticalCaseInsensitiveDesc
+		case 7:
+			return dashv2alpha1.DashboardVariableSortNaturalAsc
+		case 8:
+			return dashv2alpha1.DashboardVariableSortNaturalDesc
 		default:
 			return dashv2alpha1.DashboardVariableSortDisabled
 		}
