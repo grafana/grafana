@@ -3,6 +3,7 @@ package contextmodel
 import (
 	"errors"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	assetsmanifest "github.com/grafana/grafana/pkg/webassets/manifest"
 )
 
 type ReqContext struct {
@@ -42,15 +44,39 @@ type ReqContext struct {
 	UseSessionStorageRedirect bool
 }
 
+type errorPageAssets struct {
+	Light string
+	Dark  string
+}
+
+func getErrorPageAssets(cfg *setting.Cfg) errorPageAssets {
+	manifestCandidates := []string{"assets-manifest.json", "assets-manifest-react19.json"}
+
+	for _, manifestName := range manifestCandidates {
+		assets, err := assetsmanifest.ReadFromFile(filepath.Join(cfg.StaticRootPath, "build", manifestName))
+		if err == nil {
+			return errorPageAssets{
+				Light: assets.Light,
+				Dark:  assets.Dark,
+			}
+		}
+	}
+
+	return errorPageAssets{}
+}
+
 // Handle handles and logs error by given status.
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
+	assets := getErrorPageAssets(cfg)
+
 	data := struct {
 		Title     string
 		AppTitle  string
 		AppSubUrl string
 		ThemeType string
 		ErrorMsg  error
-	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
+		Assets    errorPageAssets
+	}{title, "Grafana", cfg.AppSubURL, cfg.DefaultTheme, nil, assets}
 
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)

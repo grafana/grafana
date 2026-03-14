@@ -2,11 +2,7 @@ package webassets
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 
@@ -15,26 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
+	assetsmanifest "github.com/grafana/grafana/pkg/webassets/manifest"
 	"github.com/open-feature/go-sdk/openfeature"
 )
-
-type ManifestInfo struct {
-	FilePath  string `json:"src,omitempty"`
-	Integrity string `json:"integrity,omitempty"`
-
-	// The known entrypoints
-	App     *EntryPointInfo `json:"app,omitempty"`
-	Dark    *EntryPointInfo `json:"dark,omitempty"`
-	Light   *EntryPointInfo `json:"light,omitempty"`
-	Swagger *EntryPointInfo `json:"swagger,omitempty"`
-}
-
-type EntryPointInfo struct {
-	Assets struct {
-		JS  []string `json:"js,omitempty"`
-		CSS []string `json:"css,omitempty"`
-	} `json:"assets,omitempty"`
-}
 
 var (
 	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
@@ -93,16 +72,13 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return entryPointAssetsCache, err
 }
 
-func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
-	//nolint:gosec
-	f, err := os.Open(manifestpath)
+func ReadWebAssetsFromFile(manifestPath string) (*dtos.EntryPointAssets, error) {
+	assets, err := assetsmanifest.ReadFromFile(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load assets-manifest.json %w", err)
+		return nil, err
 	}
-	defer func() {
-		_ = f.Close()
-	}()
-	return readWebAssets(f)
+
+	return toDTOAssets(assets), nil
 }
 
 func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
@@ -117,76 +93,49 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	dto, err := assetsmanifest.Read(response.Body)
 	if err == nil {
-		dto.SetContentDeliveryURL(baseURL)
+		converted := toDTOAssets(dto)
+		converted.SetContentDeliveryURL(baseURL)
+		return converted, nil
 	}
-	return dto, err
+
+	return nil, err
 }
 
-func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
-	manifest := map[string]ManifestInfo{}
-	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
-		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
-	}
-
-	integrity := make(map[string]string, 100)
-	for _, v := range manifest {
-		if v.Integrity != "" && v.FilePath != "" {
-			integrity[v.FilePath] = v.Integrity
-		}
-	}
-
-	entryPoints, ok := manifest["entrypoints"]
-	if !ok {
-		return nil, fmt.Errorf("could not find entrypoints in asssets-manifest")
-	}
-
-	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
-	}
-	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
-	}
-	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry, try running `yarn build`")
-	}
-	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
-	}
-
+func toDTOAssets(assets *assetsmanifest.EntryPointAssets) *dtos.EntryPointAssets {
 	rsp := &dtos.EntryPointAssets{
-		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
-		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
-		Dark:            entryPoints.Dark.Assets.CSS[0],
-		Light:           entryPoints.Light.Assets.CSS[0],
-		Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
-		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
+		JSFiles:         make([]dtos.EntryPointAsset, 0, len(assets.JSFiles)),
+		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(assets.CSSFiles)),
+		Dark:            assets.Dark,
+		Light:           assets.Light,
+		Swagger:         make([]dtos.EntryPointAsset, 0, len(assets.Swagger)),
+		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(assets.SwaggerCSSFiles)),
 	}
 
-	for _, entry := range entryPoints.App.Assets.JS {
+	for _, entry := range assets.JSFiles {
 		rsp.JSFiles = append(rsp.JSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
+			FilePath:  entry.FilePath,
+			Integrity: entry.Integrity,
 		})
 	}
-	for _, entry := range entryPoints.App.Assets.CSS {
+	for _, entry := range assets.CSSFiles {
 		rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
+			FilePath:  entry.FilePath,
+			Integrity: entry.Integrity,
 		})
 	}
-	for _, entry := range entryPoints.Swagger.Assets.JS {
+	for _, entry := range assets.Swagger {
 		rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
+			FilePath:  entry.FilePath,
+			Integrity: entry.Integrity,
 		})
 	}
-	for _, entry := range entryPoints.Swagger.Assets.CSS {
+	for _, entry := range assets.SwaggerCSSFiles {
 		rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
-			Integrity: integrity[entry],
+			FilePath:  entry.FilePath,
+			Integrity: entry.Integrity,
 		})
 	}
-	return rsp, nil
+	return rsp
 }
