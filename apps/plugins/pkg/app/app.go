@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -22,6 +23,7 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -78,15 +80,21 @@ type PluginAppConfig struct {
 	EnableChildReconciler bool
 }
 
-func NewPluginsAppInstaller(
-	logger logging.Logger,
-	authorizer authorizer.Authorizer,
-	metaProviderManager *meta.ProviderManager,
-	enableChildReconciler bool,
-) (*PluginAppInstaller, error) {
+type PluginAppInstallerConfig struct {
+	Logger               logging.Logger
+	Authorizer           authorizer.Authorizer
+	MetaProviderManager  *meta.ProviderManager
+	PrometheusRegisterer prometheus.Registerer
+
+	EnableChildReconciler bool
+}
+
+func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstaller, error) {
+	metrics.MustRegister(config.PrometheusRegisterer)
+
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager:   metaProviderManager,
-		EnableChildReconciler: enableChildReconciler,
+		MetaProviderManager:   config.MetaProviderManager,
+		EnableChildReconciler: config.EnableChildReconciler,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -101,9 +109,9 @@ func NewPluginsAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
+		authorizer:   config.Authorizer,
+		metaManager:  config.MetaProviderManager,
+		logger:       config.Logger,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
