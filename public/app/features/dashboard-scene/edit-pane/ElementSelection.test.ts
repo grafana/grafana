@@ -3,11 +3,11 @@ import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { DashboardEditableElement } from './DashboardEditableElement';
 import { ElementSelection } from './ElementSelection';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 
 let panel1: VizPanel, panel2: VizPanel, scene: DashboardScene;
 

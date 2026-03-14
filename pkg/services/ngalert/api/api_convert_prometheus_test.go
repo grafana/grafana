@@ -10,12 +10,13 @@ import (
 	"testing"
 	"time"
 
-	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+
+	"github.com/grafana/alerting/definition"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -655,95 +656,128 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
 	})
 
-	t.Run("sets notification settings for rules if specified", func(t *testing.T) {
-		srv, _, ruleStore := createConvertPrometheusSrv(t)
-		rc := createRequestCtx()
-
-		receiver := "test-receiver"
-		groupBy := []string{"cluster", "pod"}
-		settings := apimodels.AlertRuleNotificationSettings{
-			Receiver: receiver,
-			GroupBy:  groupBy,
+	t.Run("notification settings", func(t *testing.T) {
+		mustMarshal := func(v interface{}) string {
+			b, err := json.Marshal(v)
+			require.NoError(t, err)
+			return string(b)
 		}
-		settingsJSON, err := json.Marshal(settings)
-		require.NoError(t, err)
-		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+		testCases := []struct {
+			name                         string
+			headerValue                  string
+			expectedStatus               int
+			expectedBody                 string
+			expectedNotificationSettings *models.NotificationSettings
+		}{
+			{
+				name: "sets ContactPointRouting for rules if specified",
+				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"cluster", "pod"},
+				}),
+				expectedStatus: http.StatusAccepted,
+				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromContact(models.ContactPointRouting{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"cluster", "pod"},
+				})),
+			},
+			{
+				name:           "returns error when notification settings header contains malformed JSON",
+				headerValue:    "{invalid json",
+				expectedStatus: http.StatusBadRequest,
+				expectedBody:   "Invalid value for header X-Grafana-Alerting-Notification-Settings",
+			},
+			{
+				name: "returns error when ContactPointRouting are invalid",
+				headerValue: func() string {
+					settings := apimodels.AlertRuleNotificationSettings{
+						Receiver: "", // empty receiver is invalid
+					}
+					settingsJSON, _ := json.Marshal(settings)
+					return string(settingsJSON)
+				}(),
+				expectedStatus: http.StatusBadRequest,
+				expectedBody:   "Invalid value for header X-Grafana-Alerting-Notification-Settings",
+			},
+			{
+				name: "sets PolicyRouting for rules if specified",
+				headerValue: func() string {
+					settings := apimodels.AlertRuleNotificationSettings{
+						Policy: util.Pointer("policy-a"),
+					}
+					settingsJSON, _ := json.Marshal(settings)
+					return string(settingsJSON)
+				}(),
+				expectedStatus:               http.StatusAccepted,
+				expectedNotificationSettings: util.Pointer(models.NotificationSettingsFromPolicy("policy-a")),
+			},
+			{
+				name: "returns policy missing error when policy is empty",
+				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
+					Policy: util.Pointer(""),
+				}),
+				expectedStatus: http.StatusBadRequest,
+				expectedBody:   "policy must be specified",
+			},
+			{
+				name: "returns error when receiver and policy are not specified",
+				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
+					Policy:   nil,
+					Receiver: "",
+				}),
+				expectedStatus: http.StatusBadRequest,
+				expectedBody:   "notification policy or receiver must be specified",
+			},
+			{
+				name: "returns error when both receiver and policy are specified",
+				headerValue: mustMarshal(apimodels.AlertRuleNotificationSettings{
+					Policy:   util.Pointer("policy-a"),
+					Receiver: "test-receiver",
+				}),
+				expectedStatus: http.StatusBadRequest,
+				expectedBody:   "only one of policy routing or contact point routing can be specified",
+			},
+		}
 
-		simpleGroup := apimodels.PrometheusRuleGroup{
-			Name:     "Test Group",
-			Interval: prommodel.Duration(1 * time.Minute),
-			Rules: []apimodels.PrometheusRule{
-				{
-					Alert: "TestAlert",
-					Expr:  "up == 0",
-					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
-					Labels: map[string]string{
-						"severity": "critical",
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				srv, _, ruleStore := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(notificationSettingsHeader, tc.headerValue)
+
+				simpleGroup := apimodels.PrometheusRuleGroup{
+					Name:     "Test Group",
+					Interval: prommodel.Duration(1 * time.Minute),
+					Rules: []apimodels.PrometheusRule{
+						{
+							Alert: "TestAlert",
+							Expr:  "up == 0",
+							For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+							Labels: map[string]string{
+								"severity": "critical",
+							},
+						},
 					},
-				},
-			},
+				}
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equalf(t, tc.expectedStatus, response.Status(), "unexpected response: %s", response.Body())
+
+				if tc.expectedBody != "" {
+					require.Contains(t, string(response.Body()), tc.expectedBody)
+				}
+
+				if tc.expectedNotificationSettings != nil {
+					createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+						OrgID: 1,
+					})
+					require.NoError(t, err)
+					require.Len(t, createdRules, 1)
+					require.NotNil(t, createdRules[0].NotificationSettings)
+					require.Equal(t, tc.expectedNotificationSettings, createdRules[0].NotificationSettings)
+				}
+			})
 		}
-
-		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
-		require.Equal(t, http.StatusAccepted, response.Status())
-
-		createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-			OrgID: 1,
-		})
-		require.NoError(t, err)
-		require.Len(t, createdRules, 1)
-		require.Len(t, createdRules[0].NotificationSettings, 1)
-		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
-		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
-	})
-
-	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
-		srv, _, _ := createConvertPrometheusSrv(t)
-		rc := createRequestCtx()
-
-		rc.Req.Header.Set(notificationSettingsHeader, "{invalid json")
-
-		simpleGroup := apimodels.PrometheusRuleGroup{
-			Name:     "Test Group",
-			Interval: prommodel.Duration(1 * time.Minute),
-			Rules: []apimodels.PrometheusRule{
-				{
-					Alert: "TestAlert",
-					Expr:  "up == 0",
-				},
-			},
-		}
-
-		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
-	})
-
-	t.Run("returns error when notification settings contain invalid values", func(t *testing.T) {
-		srv, _, _ := createConvertPrometheusSrv(t)
-		rc := createRequestCtx()
-
-		settings := apimodels.AlertRuleNotificationSettings{
-			Receiver: "", // empty receiver is invalid
-		}
-		settingsJSON, err := json.Marshal(settings)
-		require.NoError(t, err)
-		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
-
-		simpleGroup := apimodels.PrometheusRuleGroup{
-			Name:     "Test Group",
-			Interval: prommodel.Duration(1 * time.Minute),
-			Rules: []apimodels.PrometheusRule{
-				{
-					Alert: "TestAlert",
-					Expr:  "up == 0",
-				},
-			},
-		}
-
-		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
 	})
 }
 
@@ -1930,9 +1964,9 @@ type mockAlertmanager struct {
 	mock.Mock
 }
 
-func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error {
-	args := m.Called(ctx, org, extraConfig)
-	return args.Error(0)
+func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration, replace bool, dryRun bool) (definition.RenameResources, error) {
+	args := m.Called(ctx, org, extraConfig, replace, dryRun)
+	return args.Get(0).(definition.RenameResources), args.Error(1)
 }
 
 func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool, withMergedExtraConfig bool) (apimodels.GettableUserConfig, error) {
@@ -1958,7 +1992,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 				len(extraConfig.MergeMatchers) == 2 &&
 				len(extraConfig.TemplateFiles) == 1 &&
 				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
-		})).Return(nil).Once()
+		}), false, false).Return(definition.RenameResources{}, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -1992,7 +2026,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM := &mockAlertmanager{}
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		})).Return(nil)
+		}), false, false).Return(definition.RenameResources{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2012,6 +2046,104 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should call SaveAndApplyExtraConfiguration with replace=true if header is specified", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configForceReplaceHeader, "true")
+		mockAM := &mockAlertmanager{}
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == defaultConfigIdentifier
+		}), true, false).Return(definition.RenameResources{}, nil)
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should call SaveAndApplyExtraConfiguration with dryRun=true if header is specified", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(dryRunHeader, "true")
+		mockAM := &mockAlertmanager{}
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == defaultConfigIdentifier
+		}), false, true).Return(definition.RenameResources{}, nil)
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusOK, response.Status(), "dry run should return 200 OK")
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return rename information when resources are renamed", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		mockAM := &mockAlertmanager{}
+
+		expectedRenames := definition.RenameResources{
+			Receivers: map[string]string{
+				"default": "default-test-config",
+			},
+			TimeIntervals: map[string]string{
+				"weekdays": "weekdays-test-config",
+			},
+		}
+
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == identifier
+		}), false, false).Return(expectedRenames, nil)
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route": {"receiver": "default"}, "receivers": [{"name": "default"}]}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Parse response body
+		var resp apimodels.ConvertAlertmanagerResponse
+		err := json.Unmarshal(response.Body(), &resp)
+		require.NoError(t, err)
+		require.Equal(t, "success", resp.Status)
+		require.NotNil(t, resp.RenameResources)
+		require.Equal(t, "default-test-config", resp.RenameResources.Receivers["default"])
+		require.Equal(t, "weekdays-test-config", resp.RenameResources.TimeIntervals["weekdays"])
+
 		mockAM.AssertExpectations(t)
 	})
 
@@ -2234,18 +2366,18 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 		name             string
 		headerValue      string
 		expectedError    bool
-		expectedMatchers amconfig.Matchers
+		expectedMatchers apimodels.Matchers
 	}{
 		{
-			name:          "empty header should return error",
+			name:          "empty header should not return error",
 			headerValue:   "",
-			expectedError: true,
+			expectedError: false,
 		},
 		{
 			name:          "single matcher should parse correctly",
 			headerValue:   "env=prod",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 			},
 		},
@@ -2253,7 +2385,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 			name:          "multiple matchers should be parsed correctly",
 			headerValue:   "env=prod,team=alerting",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
 			},
@@ -2262,7 +2394,7 @@ func TestParseMergeMatchersHeader(t *testing.T) {
 			name:          "matchers with spaces should be parsed correctly",
 			headerValue:   " env = prod , team = alerting ",
 			expectedError: false,
-			expectedMatchers: amconfig.Matchers{
+			expectedMatchers: apimodels.Matchers{
 				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
 				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
 			},
@@ -2335,6 +2467,11 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			headerValue:   "   ",
 			expectedValue: defaultConfigIdentifier,
 		},
+		{
+			name:          "invalid identifier should return error",
+			headerValue:   "invalid identifier",
+			expectedError: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2342,8 +2479,13 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			rc := createRequestCtx()
 			rc.Req.Header.Set(configIdentifierHeader, tc.headerValue)
 
-			identifier := parseConfigIdentifierHeader(rc)
-			require.Equal(t, tc.expectedValue, identifier)
+			identifier, err := parseConfigIdentifierHeader(rc)
+			if tc.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedValue, identifier)
+			}
 		})
 	}
 }
@@ -2355,7 +2497,7 @@ func TestFormatMergeMatchers(t *testing.T) {
 	})
 
 	t.Run("single matcher should format correctly", func(t *testing.T) {
-		matchers := amconfig.Matchers{
+		matchers := apimodels.Matchers{
 			&labels.Matcher{
 				Type:  labels.MatchEqual,
 				Name:  "env",
@@ -2367,7 +2509,7 @@ func TestFormatMergeMatchers(t *testing.T) {
 	})
 
 	t.Run("multiple matchers should format correctly", func(t *testing.T) {
-		matchers := amconfig.Matchers{
+		matchers := apimodels.Matchers{
 			&labels.Matcher{
 				Type:  labels.MatchEqual,
 				Name:  "env",

@@ -12,6 +12,11 @@ func NewAlertRuleIntervalTrigger() *AlertRuleIntervalTrigger {
 	return &AlertRuleIntervalTrigger{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleIntervalTrigger.
+func (AlertRuleIntervalTrigger) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleIntervalTrigger"
+}
+
 // +k8s:openapi-gen=true
 type AlertRulePromDuration string
 
@@ -26,6 +31,11 @@ type AlertRuleTimeIntervalRef string
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 // +k8s:openapi-gen=true
 type AlertRuleExpressionMap map[string]AlertRuleExpression
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleExpressionMap.
+func (AlertRuleExpressionMap) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpressionMap"
+}
 
 // +k8s:openapi-gen=true
 type AlertRuleExpression struct {
@@ -47,6 +57,11 @@ func NewAlertRuleExpression() *AlertRuleExpression {
 	return &AlertRuleExpression{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleExpression.
+func (AlertRuleExpression) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpression"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleRelativeTimeRange struct {
 	From AlertRulePromDurationWMillis `json:"from"`
@@ -56,6 +71,11 @@ type AlertRuleRelativeTimeRange struct {
 // NewAlertRuleRelativeTimeRange creates a new AlertRuleRelativeTimeRange object.
 func NewAlertRuleRelativeTimeRange() *AlertRuleRelativeTimeRange {
 	return &AlertRuleRelativeTimeRange{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleRelativeTimeRange.
+func (AlertRuleRelativeTimeRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleRelativeTimeRange"
 }
 
 // +k8s:openapi-gen=true
@@ -90,6 +110,11 @@ func NewAlertRuleSpec() *AlertRuleSpec {
 	}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleSpec.
+func (AlertRuleSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleV0alpha1SpecNotificationSettings struct {
 	Receiver            string                     `json:"receiver"`
@@ -106,6 +131,11 @@ func NewAlertRuleV0alpha1SpecNotificationSettings() *AlertRuleV0alpha1SpecNotifi
 	return &AlertRuleV0alpha1SpecNotificationSettings{}
 }
 
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleV0alpha1SpecNotificationSettings.
+func (AlertRuleV0alpha1SpecNotificationSettings) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleV0alpha1SpecPanelRef struct {
 	DashboardUID string `json:"dashboardUID"`
@@ -115,4 +145,9 @@ type AlertRuleV0alpha1SpecPanelRef struct {
 // NewAlertRuleV0alpha1SpecPanelRef creates a new AlertRuleV0alpha1SpecPanelRef object.
 func NewAlertRuleV0alpha1SpecPanelRef() *AlertRuleV0alpha1SpecPanelRef {
 	return &AlertRuleV0alpha1SpecPanelRef{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleV0alpha1SpecPanelRef.
+func (AlertRuleV0alpha1SpecPanelRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecPanelRef"
 }

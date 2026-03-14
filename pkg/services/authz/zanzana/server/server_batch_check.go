@@ -9,11 +9,13 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	serverconfig "github.com/openfga/openfga/pkg/server/config"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -40,6 +42,10 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(time.Since(t).Seconds())
 	}(time.Now())
+
+	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
+		return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
 
 	res, err := s.batchCheck(ctx, r)
 	if err != nil {
@@ -131,7 +137,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 // This is the broadest permission - if granted, access to all resources of that type is allowed.
 func (s *Server) runGroupResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -192,7 +198,7 @@ func (s *Server) runGroupResourcePhase(
 // This applies to generic resources that support folder-based permissions (like dashboards).
 func (s *Server) runFolderPermissionPhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -265,7 +271,7 @@ func (s *Server) runFolderPermissionPhase(
 // This handles cases where access is granted via folder subresource relations.
 func (s *Server) runFolderSubresourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -337,7 +343,7 @@ func (s *Server) runFolderSubresourcePhase(
 // This is the most granular check - access granted directly on the resource itself.
 func (s *Server) runDirectResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
@@ -464,16 +470,49 @@ func (s *Server) addTypedResourceDirectChecks(
 	return checks
 }
 
-// doBatchCheck executes a batch check against OpenFGA
+// doBatchCheck executes a batch check against OpenFGA, splitting into
+// sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
 func (s *Server) doBatchCheck(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
 ) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	if len(checks) == 0 {
 		return nil, nil
 	}
 
+	maxChecks := s.getMaxChecksPerBatchCheck()
+
+	// If within limit, send a single batch
+	if len(checks) <= maxChecks {
+		return s.executeBatchCheck(ctx, store, checks)
+	}
+
+	// Split into sub-batches
+	allResults := make(map[string]*openfgav1.BatchCheckSingleResult, len(checks))
+	for i := 0; i < len(checks); i += maxChecks {
+		end := i + maxChecks
+		if end > len(checks) {
+			end = len(checks)
+		}
+		results, err := s.executeBatchCheck(ctx, store, checks[i:end])
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range results {
+			allResults[k] = v
+		}
+	}
+
+	return allResults, nil
+}
+
+// executeBatchCheck sends a single OpenFGA BatchCheck request.
+func (s *Server) executeBatchCheck(
+	ctx context.Context,
+	store *zanzana.StoreInfo,
+	checks []*openfgav1.BatchCheckItem,
+) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	openfgaReq := &openfgav1.BatchCheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
@@ -486,4 +525,13 @@ func (s *Server) doBatchCheck(
 	}
 
 	return openfgaRes.GetResult(), nil
+}
+
+// getMaxChecksPerBatchCheck returns the configured maximum checks per batch,
+// falling back to the default if not explicitly set.
+func (s *Server) getMaxChecksPerBatchCheck() int {
+	if s.cfg.OpenFgaServerSettings.MaxChecksPerBatchCheck > 0 {
+		return int(s.cfg.OpenFgaServerSettings.MaxChecksPerBatchCheck)
+	}
+	return serverconfig.DefaultMaxChecksPerBatchCheck
 }

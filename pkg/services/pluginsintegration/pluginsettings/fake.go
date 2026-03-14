@@ -13,7 +13,7 @@ type FakePluginSettings struct {
 
 // GetPluginSettings returns all Plugin Settings for the provided Org
 func (ps *FakePluginSettings) GetPluginSettings(_ context.Context, _ *GetArgs) ([]*InfoDTO, error) {
-	res := []*InfoDTO{}
+	res := make([]*InfoDTO, 0, len(ps.Plugins))
 	for _, dto := range ps.Plugins {
 		res = append(res, &InfoDTO{
 			PluginID:      dto.PluginID,

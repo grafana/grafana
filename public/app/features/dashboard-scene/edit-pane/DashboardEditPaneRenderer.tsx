@@ -1,26 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -39,7 +37,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const isNewElement = selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
   // used when adding new panel from the sidebar
-  const [selectedLayoutElement, setSelectedLayoutElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
+  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
     dashboard
   );
 
@@ -51,35 +49,9 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     return undefined;
   }, [selection]);
 
-  const onSetLayoutElement = useCallback(
-    (obj: SceneObject<SceneObjectState> | undefined) => {
-      if (obj) {
-        // find the closest row or tab to add the new panel to
-        // if the selected element is not inside a row or tab, add to dashboard root
-        setSelectedLayoutElement(
-          sceneGraph.findObject(
-            obj,
-            (currentSceneObject: SceneObject<SceneObjectState>) =>
-              currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
-          ) || dashboard
-        );
-      } else {
-        setSelectedLayoutElement(dashboard);
-      }
-    },
-    [dashboard]
-  );
-
-  const onAddNewPanel = useCallback(() => {
-    if (selectedLayoutElement) {
-      const panel = getDefaultVizPanel();
-      if (selectedLayoutElement instanceof DashboardScene) {
-        dashboard.addPanel(panel);
-      } else if (selectedLayoutElement instanceof RowItem || selectedLayoutElement instanceof TabItem) {
-        selectedLayoutElement.getLayout().addPanel(panel);
-      }
-    }
-  }, [dashboard, selectedLayoutElement]);
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
 
   return (
     <>
@@ -95,16 +67,25 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew
-            onAddPanel={onAddNewPanel}
+          <AddNewEditPane
+            onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
+            onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
             dashboard={dashboard}
-            selectedElement={selectedLayoutElement}
           />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (
         <Sidebar.OpenPane>
           <DashboardOutline editPane={editPane} isEditing={isEditing} />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'filters' && (
+        <Sidebar.OpenPane>
+          <DashboardFiltersOverviewPane
+            adhocFilters={adHocVar}
+            groupByVariable={groupByVar}
+            onClose={() => editPane.closePane()}
+          />
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
@@ -114,7 +95,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               icon="plus"
               variant="primary"
               onClick={() => {
-                onSetLayoutElement(selectedObject);
+                setLastSelectedElement(selectedObject ?? dashboard);
                 editPane.openPane('add');
               }}
               title={t('dashboard.sidebar.add.title', 'Add')}
@@ -168,6 +149,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
           active={openPane === 'outline'}
         ></Sidebar.Button>
+        {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+          <Sidebar.Button
+            icon="filter"
+            onClick={() => editPane.openPane('filters')}
+            title={t('dashboards.filters-overview.filters', 'Filters')}
+            tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
+            active={openPane === 'filters'}
+          />
+        )}
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
         {renderEnterpriseItems()}
         {Boolean(meta.isSnapshot) && (

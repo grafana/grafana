@@ -18,6 +18,10 @@ type Unstructured struct {
 	Object map[string]any
 }
 
+func (Unstructured) OpenAPIModelName() string {
+	return OpenAPIPrefix + "Unstructured"
+}
+
 // Produce an API definition that represents map[string]any
 func (u Unstructured) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{

@@ -334,6 +334,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
+				usr.uid as user_uid,
 				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
@@ -378,6 +379,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		if query.UserID != 0 {
 			sql.WriteString(` AND a.user_id = ?`)
 			params = append(params, query.UserID)
+		}
+
+		if query.UserUID != "" {
+			sql.WriteString(` AND a.user_id = (SELECT id FROM ` + r.db.GetDialect().Quote("user") + ` WHERE uid = ? AND org_id = ?)`)
+			params = append(params, query.UserUID, query.OrgID)
 		}
 
 		if query.From > 0 && query.To > 0 {
@@ -433,7 +439,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		// order of ORDER BY arguments match the order of a sql index for performance
 		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
 		if query.Limit > 0 {
-			orderBy += r.db.GetDialect().Limit(query.Limit)
+			orderBy += r.db.GetDialect().LimitOffset(query.Limit, query.Offset)
 		}
 		sql.WriteString(orderBy + " ) dt on dt.id = annotation.id")
 
@@ -571,7 +577,7 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		}
 
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]interface{}, 0) //nolint:prealloc
 		tagKey := `tag.` + r.db.GetDialect().Quote("key")
 		tagValue := `tag.` + r.db.GetDialect().Quote("value")
 

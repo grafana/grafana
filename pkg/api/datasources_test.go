@@ -448,6 +448,9 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
+				// id-based datasource apis are disabled by default, to be able to use them,
+				// we need to enable this feaure-flag
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceLegacyIdApi)
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}
 				hs.Live = newTestLive(t)
@@ -495,6 +498,7 @@ func TestDeleteDataSourceByName_IncludesUIDForPermissions(t *testing.T) {
 			pluginStore:        &pluginstore.FakePluginStore{},
 			DataSourcesService: mockDsService,
 			Live:               newTestLive(t),
+			AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		}
 
 		// Create scenario context

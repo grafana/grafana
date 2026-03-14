@@ -17,8 +17,8 @@ import (
 func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
 	redirectURL := hs.Cfg.AppSubURL + "/"
 	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			redirectURL = redirectTo
+		if sanitized, err := hs.ValidateRedirectTo(redirectTo); err == nil {
+			redirectURL = sanitized
 		} else {
 			hs.log.FromContext(c.Req.Context()).Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 		}

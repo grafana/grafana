@@ -85,9 +85,9 @@ describe('MenuItem', () => {
     expect(await screen.findByTestId(selectors.components.Menu.SubMenu.container)).toBeInTheDocument();
   });
 
-  it('renders with role="link" when URL is passed', async () => {
+  it('renders with role="menuitem" when URL is passed (default for menu semantics)', () => {
     render(<MenuItem label="URL Item" url="/some-url" />);
-    expect(screen.getByRole('link', { name: 'URL Item' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
   it('renders with expected role when URL and role are passed', async () => {
@@ -99,5 +99,15 @@ describe('MenuItem', () => {
     render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
     expect(screen.getByText('main label')).toBeInTheDocument();
     expect(screen.getByText('extra content')).toBeInTheDocument();
+  });
+
+  it('activates link MenuItem with Space key', async () => {
+    const onClick = jest.fn((e: React.MouseEvent) => e.preventDefault());
+    render(<MenuItem label="Link Item" url="/some-url" onClick={onClick} />);
+
+    const item = screen.getByRole('menuitem', { name: 'Link Item' });
+    await user.type(item, ' ');
+
+    expect(onClick).toHaveBeenCalled();
   });
 });

@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers"
 	alertingLine "github.com/grafana/alerting/receivers/line/v1"
 	alertingPushover "github.com/grafana/alerting/receivers/pushover/v1"
@@ -927,7 +928,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		resp = getRequest(t, receiversURL, http.StatusOK) // nolint
 		b = getBody(t, resp.Body)
 
-		var receivers []apimodels.Receiver
+		var receivers []alertingModels.ReceiverStatus
 		err = json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
@@ -976,7 +977,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	resp := getRequest(t, receiversURL, http.StatusOK) // nolint
 	b := getBody(t, resp.Body)
 
-	var receivers []apimodels.Receiver
+	var receivers []alertingModels.ReceiverStatus
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
@@ -2771,6 +2772,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "grafana_folder": "default"
 			},
 		"annotations": {
+		  "__alert_rule_namespace_uid__":"default",
 		  "__orgId__":"1",
               "__values__": "{\"A\":1}",
               "__value_string__": "[ var='A' labels={} type='math' value=1 ]"

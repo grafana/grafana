@@ -90,7 +90,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		// Admin has access to all three (namespace, team, and user)
 		rsp, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		names := []string{}
+		names := make([]string, 0, len(rsp.Items))
 		for _, item := range rsp.Items {
 			names = append(names, item.GetName())
 		}
@@ -125,7 +125,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		// The viewer should only have namespace (eg org level) permissions
 		rsp, err = clientViewer.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		names = []string{}
+		names = make([]string, 0, len(rsp.Items))
 		for _, item := range rsp.Items {
 			names = append(names, item.GetName())
 		}

@@ -18,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	claims "github.com/grafana/authlib/types"
@@ -1563,7 +1564,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	defer span.End()
 
 	filteredDashboards := make([]*dashboards.DashboardRef, 0)
-	folderUIDs := make([]string, 0)
+	folderUIDs := make([]string, 0, len(userDashboards))
 	for _, dashboard := range userDashboards {
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
 	}
@@ -1756,7 +1757,7 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
-	hitList := make([]*model.Hit, 0)
+	hitList := make([]*model.Hit, 0, len(res))
 
 	for _, item := range res {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
@@ -2327,7 +2328,32 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
-	return dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+
+	dash, err := dr.unstructuredToLegacyDashboardWithUsers(item, orgID, users)
+	if err != nil {
+		return nil, err
+	}
+
+	// The requested version
+	gv, _ := schema.ParseGroupVersion(item.GetAPIVersion())
+	if gv.Version != "" {
+		dash.APIVersion = gv.Version
+	}
+
+	// Use the old payload if we could not convert to the the requested version
+	conversion, ok, _ := unstructured.NestedMap(item.Object, "status", "conversion")
+	if ok && conversion != nil {
+		failed, _, _ := unstructured.NestedBool(conversion, "failed")
+		if failed {
+			dash.APIVersion, _, _ = unstructured.NestedString(conversion, "storedVersion")
+			body, ok, _ := unstructured.NestedMap(conversion, "source")
+			if ok {
+				dash.Data = simplejson.NewFromAny(body)
+			}
+		}
+	}
+
+	return dash, nil
 }
 
 func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *unstructured.Unstructured, orgID int64, users map[string]*user.User) (*dashboards.Dashboard, error) {

@@ -18,9 +18,14 @@ import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
     openAssistant: jest.fn(),
   }),
@@ -95,6 +100,26 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  test('Renders a log line with no level when showLevel is false', () => {
+    render(
+      <LogListContextProvider {...contextProps} showLevel={false}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).not.toBeInTheDocument();
+  });
+
+  test('Renders a log line with level by default', () => {
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByText('log message 1')).toBeInTheDocument();
+    expect(screen.queryByText(log.displayLevel)).toBeInTheDocument();
   });
 
   test('Renders a log line with millisecond timestamps', () => {
@@ -610,7 +635,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
     });
 
-    test('Details are rendered if details mode is inline', () => {
+    test('Details are rendered if details mode is inline', async () => {
       render(
         <LogDetailsContext.Provider
           value={{
@@ -623,7 +648,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
           <LogLine {...defaultProps} />
         </LogDetailsContext.Provider>
       );
-      expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText('Search field names and values')).toBeInTheDocument();
     });
   });
 });

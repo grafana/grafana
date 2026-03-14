@@ -177,7 +177,7 @@ describe('Mute timings', () => {
     const capture = captureRequests();
     renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
 
-    await screen.findByText(/add time interval/i);
+    await screen.findByText(/new time interval/i);
 
     await fillOutForm({
       name: 'maintenance period',

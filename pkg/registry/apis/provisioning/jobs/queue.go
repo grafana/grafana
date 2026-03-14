@@ -21,7 +21,7 @@ type RepoGetter interface {
 type JobProgressRecorder interface {
 	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
-	ResetResults()
+	ResetResults(keepWarnings bool)
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
 	SetTotal(ctx context.Context, total int)
@@ -29,6 +29,8 @@ type JobProgressRecorder interface {
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)
 	Complete(ctx context.Context, err error) provisioning.JobStatus
+	// ResultReasons returns the accumulated result reasons recorded during the job
+	ResultReasons() []string
 	// HasDirPathFailedCreation checks if a path has any folder creations that failed
 	HasDirPathFailedCreation(path string) bool
 	// HasDirPathFailedDeletion checks if a folderPath has any folder deletions that failed

@@ -243,6 +243,10 @@ func (o *Playlist) DeepCopyInto(dst *Playlist) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (Playlist) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Playlist{}
 
@@ -294,6 +298,10 @@ func (o *PlaylistList) DeepCopy() *PlaylistList {
 
 func (o *PlaylistList) DeepCopyInto(dst *PlaylistList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (PlaylistList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList"
 }
 
 // Interface compliance compile-time check

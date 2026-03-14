@@ -21,6 +21,12 @@ type ListOptions struct {
 	To           int64
 	Limit        int64
 	Continue     string
+	// CreatedBy filters by the uid of the user who created the annotation
+	CreatedBy      string
+	Tags           []string
+	TagsMatchAny   bool
+	Scopes         []string
+	ScopesMatchAny bool
 }
 
 type AnnotationList struct {

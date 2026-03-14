@@ -95,15 +95,15 @@ You must use both an access key ID and a secret access key to authenticate.
 | **Query timeout result** | Grafana polls CloudWatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana configuration file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                              |
 
-**X-Ray trace link:**
+**Application Signals trace link:**
 
-| Setting         | Description                                           |
-| --------------- | ----------------------------------------------------- |
-| **Data source** | Select the X-Ray data source from the drop-down menu. |
+| Setting         | Description                                                         |
+| --------------- | ------------------------------------------------------------------- |
+| **Data source** | Select the Application Signals data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in X-Ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-X-Ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
+Grafana automatically creates a link to a trace in Application Signals data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an Application Signals data source configured. For details, see the [Application Signals data source docs](/docs/plugins/grafana-x-ray-datasource/). To view the Application Signals link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
 
-To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.aws.amazon.com/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+To log the `@xrayTraceId`, refer to the [AWS Application Signals documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
 **Private data source connect** - _Only for Grafana Cloud users._
 

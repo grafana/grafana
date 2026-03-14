@@ -461,6 +461,11 @@ const (
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
 
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
+
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
 	ActionAlertingReceiversRead             = "alert.notifications.receivers:read"
@@ -474,9 +479,19 @@ const (
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
-	// Alerting routes policies actions
+	// Alerting routes policies actions (legacy, unscoped - kept for backward compatibility)
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
+	// Alerting managed routes actions (new, scoped per-resource)
+	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
+	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
+	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
+	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
+
+	// Alerting routes permissions actions
+	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
+	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
