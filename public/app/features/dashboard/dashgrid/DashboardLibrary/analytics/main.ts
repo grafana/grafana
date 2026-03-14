@@ -1,5 +1,7 @@
 import { createInteractionEvent } from '@grafana/runtime/internal';
 
+import { FEATURE_VARIANTS } from '../constants';
+
 import {
   CompatibilityCheckCompletedProperties,
   CompatibilityCheckTriggeredProperties,
@@ -36,12 +38,28 @@ export const NewTemplateDashboardInteractions = {
 
 export const NewSuggestedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
-  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('suggested_item_clicked'),
-  loaded: newDashboardLibraryInteraction<LoadedProperties>('suggested_loaded'),
+  itemClicked: (props: ItemClickedProperties) =>
+    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
+      ...props,
+      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+    }),
+  loaded: (props: LoadedProperties) =>
+    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
+      ...props,
+      featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
+    }),
 };
 
 export const NewBasicProvisionedDashboardInteractions = {
   ...NewDashboardLibraryInteractions,
-  itemClicked: newDashboardLibraryInteraction<ItemClickedProperties>('basic_provisioned_item_clicked'),
-  loaded: newDashboardLibraryInteraction<LoadedProperties>('basic_provisioned_loaded'),
+  itemClicked: (props: ItemClickedProperties) =>
+    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
+      ...props,
+      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
+    }),
+  loaded: (props: LoadedProperties) =>
+    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
+      ...props,
+      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
+    }),
 };
