@@ -29,6 +29,10 @@ const (
 	// contained instructions.
 	// HTTP status code 422.
 	StatusUnprocessableEntity CoreStatus = "Unprocessable Entity"
+	// StatusMethodNotAllowed means that the HTTP method used is not
+	// supported for the requested resource.
+	// HTTP status code 405.
+	StatusMethodNotAllowed CoreStatus = CoreStatus(metav1.StatusReasonMethodNotAllowed)
 	// StatusUnsupportedMediaType means that the server does not support
 	// the request payload's media type.
 	// HTTP status code 415.
@@ -111,6 +115,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusGatewayTimeout
 	case StatusUnprocessableEntity:
 		return http.StatusUnprocessableEntity
+	case StatusMethodNotAllowed:
+		return http.StatusMethodNotAllowed
 	case StatusUnsupportedMediaType:
 		return http.StatusUnsupportedMediaType
 	case StatusConflict:
@@ -142,6 +148,8 @@ func (s CoreStatus) LogLevel() LogLevel {
 	case StatusNotFound:
 		return LevelInfo
 	case StatusTimeout:
+		return LevelInfo
+	case StatusMethodNotAllowed:
 		return LevelInfo
 	case StatusUnsupportedMediaType:
 		return LevelInfo
