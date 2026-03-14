@@ -14,7 +14,10 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  // Quote the table name so that refIds containing spaces or other special
+  // characters (e.g. "gdp per capita") produce valid SQL.
+  const quotedTable = quoteIdentifierIfNecessary(query.table);
+  const queryString = `SELECT * FROM ${quotedTable} LIMIT 1`;
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
