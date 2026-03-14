@@ -14,6 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -41,7 +42,7 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 		return &builder.APIRoutes{}
 	}
 	var responseSchema spec.Schema
-	if def, ok := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult"]; ok && def.Schema.Ref.Ref.String() != "" {
+	if def, ok := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult"]; ok && def.Schema.Ref.String() != "" {
 		responseSchema = spec.Schema{SchemaProps: spec.SchemaProps{Ref: def.Schema.Ref}}
 	} else {
 		responseSchema = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
@@ -122,12 +123,12 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	if namespace == "" {
-		errhttp.Write(ctx, errors.New("namespace is required"), w)
+		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.namespaceRequired").Errorf("namespace is required"), w)
 		return
 	}
 	userUID := r.URL.Query().Get("userUID")
 	if userUID == "" {
-		errhttp.Write(ctx, errors.New("userUID query parameter is required"), w)
+		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.userUIDRequired").Errorf("userUID query parameter is required"), w)
 		return
 	}
 	permissions, err := h.backend.ListDirectPermissionsForUser(ctx, namespace, userUID)

@@ -2,7 +2,9 @@ package identity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	k8srest "k8s.io/client-go/rest"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -618,4 +622,76 @@ func getNamesFromList(list *unstructured.UnstructuredList) []string {
 		names[i] = item.GetName()
 	}
 	return names
+}
+
+func TestIntegrationResourcePermissionSearch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    false,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"resourcepermissions.iam.grafana.app": {
+				DualWriterMode: rest.Mode0,
+			},
+		},
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+		},
+	})
+
+	parentFolder := createRootFolderWithoutDefaultPermissions(t, helper)
+	parentUID := parentFolder.GetName()
+	clients := newk8sTestHelperClients(helper)
+	ctx := context.Background()
+	ns := helper.Namespacer(helper.Org1.OrgID)
+	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+	require.NotEmpty(t, viewerUID, "viewer must have UID for search test")
+
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &iamv0.SchemeGroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	t.Run("GET resourcepermissions/search without userUID returns error", func(t *testing.T) {
+		res := restClient.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Do(ctx)
+		err := res.Error()
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("GET resourcepermissions/search returns direct permission after creating ResourcePermission for user", func(t *testing.T) {
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-test-folder", parentUID)
+		folderUID := folder.GetName()
+		perm := newPermission("User", viewerUID, "view")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() {
+			_ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{})
+		}()
+
+		raw, err := restClient.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param("userUID", viewerUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var result iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(raw, &result))
+		scopePrefix := "folders:uid:" + folderUID
+		var found bool
+		for _, p := range result.Permissions {
+			if p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix) {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "search result should contain permission for folder %q, got %+v", folderUID, result.Permissions)
+	})
 }
