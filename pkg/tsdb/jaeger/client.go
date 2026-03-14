@@ -51,6 +51,16 @@ func (j *JaegerClient) doGet(ctx context.Context, rawURL string) (*http.Response
 	return res, nil
 }
 
+// readResponseBody reads the response body and decompresses it based on Content-Encoding.
+func readResponseBody(res *http.Response, _ log.Logger) ([]byte, error) {
+	encoding := res.Header.Get("Content-Encoding")
+	body, err := utils.Decode(encoding, res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	return body, nil
+}
+
 func (j *JaegerClient) Services(ctx context.Context) ([]string, error) {
 	var response types.ServicesResponse
 	services := []string{}
@@ -66,12 +76,20 @@ func (j *JaegerClient) Services(ctx context.Context) ([]string, error) {
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	if res.StatusCode/100 != 2 {
+		return services, fmt.Errorf("request failed: %s", res.Status)
+	}
+
+	body, err := readResponseBody(res, j.logger)
+	if err != nil {
+		return services, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return services, err
 	}
 
@@ -94,12 +112,20 @@ func (j *JaegerClient) Operations(ctx context.Context, s string) ([]string, erro
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	if res.StatusCode/100 != 2 {
+		return operations, fmt.Errorf("request failed: %s", res.Status)
+	}
+
+	body, err := readResponseBody(res, j.logger)
+	if err != nil {
+		return operations, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return operations, err
 	}
 
@@ -174,8 +200,8 @@ func (j *JaegerClient) Search(ctx context.Context, query *JaegerQuery, start, en
 	}
 
 	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			j.logger.Error("Failed to close response body", "error", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			j.logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -187,8 +213,12 @@ func (j *JaegerClient) Search(ctx context.Context, query *JaegerQuery, start, en
 		return nil, err
 	}
 
+	body, err := readResponseBody(resp, j.logger)
+	if err != nil {
+		return nil, backend.DownstreamErrorf("failed to read response: %w", err)
+	}
 	var result types.TracesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, backend.DownstreamErrorf("failed to decode Jaeger response: %w", err)
 	}
 
@@ -244,8 +274,8 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -257,7 +287,11 @@ func (j *JaegerClient) Trace(ctx context.Context, traceID string, start, end int
 		return nil, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+	body, err := readResponseBody(res, logger)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, err
 	}
 
@@ -306,8 +340,8 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (type
 	}
 
 	defer func() {
-		if err = res.Body.Close(); err != nil {
-			logger.Error("Failed to close response body", "error", err)
+		if closeErr := res.Body.Close(); closeErr != nil {
+			logger.Error("Failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -319,7 +353,11 @@ func (j *JaegerClient) Dependencies(ctx context.Context, start, end int64) (type
 		return dependencies, err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&dependencies); err != nil {
+	body, err := readResponseBody(res, logger)
+	if err != nil {
+		return dependencies, err
+	}
+	if err := json.Unmarshal(body, &dependencies); err != nil {
 		return dependencies, err
 	}
 
