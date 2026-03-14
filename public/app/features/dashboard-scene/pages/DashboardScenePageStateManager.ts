@@ -168,6 +168,8 @@ abstract class DashboardScenePageStateManagerBase<T>
 
     if (isRedirectResponse(rsp)) {
       const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
+      // Clear loading state before redirecting to prevent hanging in loading state
+      this.setState({ isLoading: false });
       locationService.replace(newUrl);
       return null;
     }
