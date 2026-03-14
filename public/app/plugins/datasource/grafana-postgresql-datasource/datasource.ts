@@ -3,19 +3,21 @@ import { v4 as uuidv4 } from 'uuid';
 import { DataSourceInstanceSettings, ScopedVars, VariableWithMultiSupport } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/plugin-ui';
 import { TemplateSrv } from '@grafana/runtime';
+import { isSceneObject } from '@grafana/scenes';
 import {
   COMMON_FNS,
   DB,
+  formatSQL,
   FuncParameter,
   MACRO_FUNCTIONS,
+  SqlDatasource,
   SQLQuery,
   SQLSelectableValue,
-  SqlDatasource,
   SQLVariableSupport,
-  formatSQL,
 } from '@grafana/sql';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
+import { migrateInterpolation } from './migration';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
@@ -23,6 +25,8 @@ import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
+  private _currentRawSql?: string;
+  private _currentSceneObj?: import('@grafana/scenes').SceneObject;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
@@ -34,27 +38,31 @@ export class PostgresDatasource extends SqlDatasource {
     return new PostgresQueryModel(target, templateSrv, scopedVars);
   }
 
-  interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
-    if (typeof value === 'string') {
-      // For single string values, just escape quotes (don't add outer quotes)
-      // The quotes are provided by the query template: WHERE x = '$var'
-      // We only escape internal single quotes: O'Brien -> O''Brien
-      return String(value).replace(/'/g, "''");
-    }
+  // Strips redundant quotes from interpolated values on repeated panels
+  // where the raw SQL already wraps the variable reference in quotes.
+  protected migrateInterpolatedVariable(result: string | number, variable: VariableWithMultiSupport): string | number {
+    return migrateInterpolation(result, variable.name, this._currentRawSql, this._currentSceneObj);
+  }
 
-    if (typeof value === 'number') {
-      return value;
-    }
+  applyTemplateVariables(target: SQLQuery, scopedVars: ScopedVars) {
+    const sceneScopedVar = scopedVars?.__sceneObject;
+    const sceneValue = sceneScopedVar?.value.valueOf();
 
-    if (Array.isArray(value)) {
-      // For arrays, quote each value individually and join with comma
-      // Used in: WHERE x IN ($var) -> WHERE x IN ('val1','val2','val3')
-      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
-      return quotedValues.join(',');
-    }
+    this._currentRawSql = target.rawSql;
+    this._currentSceneObj = sceneValue && isSceneObject(sceneValue) ? sceneValue : undefined;
 
-    return value;
-  };
+    const rawSql = this.templateSrv.replace(target.rawSql, scopedVars, this.interpolateVariable);
+
+    this._currentRawSql = undefined;
+    this._currentSceneObj = undefined;
+
+    return {
+      refId: target.refId,
+      datasource: this.getRef(),
+      rawSql,
+      format: target.format,
+    };
+  }
 
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
