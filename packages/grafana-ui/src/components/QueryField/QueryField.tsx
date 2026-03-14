@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
-import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
 import { Value } from 'slate';
@@ -21,6 +20,7 @@ import { withTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { CompletionItemGroup, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../../types/completion';
 import { Themeable2 } from '../../types/theme';
+import { debounce } from '../../utils/timing';
 import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
