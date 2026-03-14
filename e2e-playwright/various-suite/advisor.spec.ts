@@ -24,7 +24,7 @@ async function isEmptyReport(page: Page) {
 }
 
 async function loadAndWait(page: Page) {
-  await page.goto(ADVISOR_PAGE);
+  await page.goto(ADVISOR_PAGE, { waitUntil: 'networkidle' });
   await expect(
     page.getByText(
       'Helps you keep your Grafana instances running smoothly and securely by running checks and suggest actions to fix identified issues'
