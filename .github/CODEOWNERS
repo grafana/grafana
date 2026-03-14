@@ -414,6 +414,7 @@
 /pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 /pkg/services/plugindashboards/ @grafana/plugins-platform-backend
+/pkg/tests/api/plugins/ @grafana/plugins-platform-backend
 
 # Backend code docs
 /contribute/backend/ @grafana/grafana-backend-group

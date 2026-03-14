@@ -82,14 +82,15 @@ func TestIntegrationPlugins(t *testing.T) {
 		})
 
 		t.Run("Request is not forbidden if from an admin", func(t *testing.T) {
-			statusCode, body := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
+			statusCode, _ := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/install"))
 
-			assert.Equal(t, 404, statusCode)
-			assert.Equal(t, "Plugin not found", body["message"])
+			// the request may return 404 (plugin not found) or 500 (failed to reach plugin repo);
+			// either way, it should not be 403 since the user is an admin
+			assert.NotEqual(t, 403, statusCode)
 
-			statusCode, body = makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
-			assert.Equal(t, 404, statusCode)
-			assert.Equal(t, "Plugin not installed", body["message"])
+			uninstallStatus, uninstallBody := makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
+			assert.Equal(t, 404, uninstallStatus)
+			assert.Equal(t, "Plugin not installed", uninstallBody["message"])
 		})
 	})
 
