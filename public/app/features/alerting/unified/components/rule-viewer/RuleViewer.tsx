@@ -45,12 +45,7 @@ import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getRulesSourceUid,
-  isGrafanaRulesSource,
-  ruleIdentifierToRuleSourceIdentifier,
-} from '../../utils/datasource';
+import { getRulesSourceUid, isGrafanaRulesSource, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink, groups } from '../../utils/navigation';
@@ -64,8 +59,6 @@ import {
   rulerRuleType,
 } from '../../utils/rules';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { InhibitionRulesAlert } from '../InhibitionRulesAlert';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
@@ -147,10 +140,6 @@ const RuleViewer = () => {
           {/* alerts and notifications and stuff */}
           {isPaused && <InfoPausedRule />}
           {isFederatedRule && <FederatedRuleWarning />}
-          {/* indicator for rules in a provisioned group */}
-          {isProvisioned && (
-            <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
-          )}
           {/* error state */}
           {showError && (
             <Alert
@@ -170,10 +159,6 @@ const RuleViewer = () => {
       }
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
-      {/* Show inhibition rules alert only for Grafana-managed rules */}
-      {isGrafanaRulesSource(namespace.rulesSource) && (
-        <InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />
-      )}
       <div className={styles.layout}>
         <Stack direction="column" gap={2}>
           {/* tabs and tab content */}
@@ -196,7 +181,11 @@ const RuleViewer = () => {
           </TabContent>
         </Stack>
         <aside className={styles.sidebar}>
-          <Details rule={rule} />
+          <Details
+            rule={rule}
+            isProvisioned={isProvisioned}
+            showInhibitionRules={isGrafanaRulesSource(namespace.rulesSource)}
+          />
         </aside>
       </div>
       {duplicateRuleIdentifier && (
