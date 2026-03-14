@@ -76,7 +76,7 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. Under **Add** in edit pane, click or drag a panel onto the dashboard.
+1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.4.png" max-width="750px" alt="New dashboard" >}}
 
@@ -125,11 +125,13 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. (Optional) Continue building the dashboard by clicking one or more of the following options:
-   - **+ Add panel**: Set panel options in the edit pane or click **Configure** to complete panel setup.
-   - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
-   - **Group panels**: Choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
-   - **Dashboard options** icon: Open the edit pane to access [panel layout options](#panel-layouts).
+1. (Optional) Continue building the dashboard by doing one or more of the following:
+
+   - Select the panel you just created and click **Configure** in the edit pane to continue panel setup.
+   - Click the **Add new element** icon and select **Panel**. You can also hover your mouse on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.
+   - Click the **Add new element** icon and select [Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables), [Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries), or [Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-dashboard-links).
+   - Click **Group panels** on the dashboard and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
+   - Click the **Dashboard options** icon to open the edit pane and access [panel layout options](#panel-layouts).
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -562,34 +564,7 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
-
-## Add variables
-
-To add variables without leaving the dashboard, follow these steps:
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click **+ Add variable** at the top of the dashboard.
-1. Choose a variable type from the list.
-1. Set the options for the variable.
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**
-
-### Add variables using the content outline
-
-You can also add variables without leaving the dashboard using the content outline.
-
-To access the variables creation flow this way, follow these steps:
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click the **Content outline** icon.
-1. Click **Variables** in the outline.
-1. Click **+ Add variable**.
-1. Complete the rest of the steps to [add a variable without leaving the dashboard](#add-variables).
+1. Click **Exit edit**.
 
 ## Copy or duplicate dashboard elements
 
