@@ -12,27 +12,29 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	connectionName := "connection-repositories-test"
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
 		"kind":       "Connection",
 		"metadata": map[string]any{
-			"name":      "connection-repositories-test",
+			"name":      connectionName,
 			"namespace": "default",
 		},
 		"spec": map[string]any{
 			"title": "Test Connection",
-			"type":  "github",
+			"type":  provisioning.GitHubRepositoryType,
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -53,7 +55,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(connectionName).
 			SubResource("repositories").
 			Do(ctx).
 			StatusCode(&statusCode)
@@ -88,7 +90,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.EditorREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(connectionName).
 			SubResource("repositories").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -102,7 +104,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.ViewerREST.Get().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(connectionName).
 			SubResource("repositories").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -118,7 +120,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("connections").
-			Name("connection-repositories-test").
+			Name(connectionName).
 			SubResource("repositories").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
@@ -132,7 +134,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 

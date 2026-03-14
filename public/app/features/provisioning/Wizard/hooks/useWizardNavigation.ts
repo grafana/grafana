@@ -9,7 +9,6 @@ import { Step } from '../Stepper';
 import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
-  initialStep: WizardStep;
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
@@ -29,10 +28,10 @@ export interface UseWizardNavigationReturn {
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
+  goToStep: (stepId: WizardStep) => void;
 }
 
 export function useWizardNavigation({
-  initialStep,
   steps,
   canSkipSync,
   setStepStatusInfo,
@@ -43,8 +42,10 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
+  // local file provisioning has no auth type step
+  const [activeStep, setActiveStep] = useState<WizardStep>(repoType === 'local' ? 'connection' : 'authType');
+  // local file provisioning will always have the first step (authType) step completed since we skipped it
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>(() => (repoType === 'local' ? ['authType'] : []));
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
@@ -84,7 +85,13 @@ export function useWizardNavigation({
         workflowsEnabled: getWorkflows(formData.repository),
         ...(repoType === 'github' && { githubAuthType }),
       });
-      navigate(PROVISIONING_URL);
+      // Navigate to repository status page instead of listing page
+      const repoName = formData.repositoryName;
+      if (repoName) {
+        navigate(`${PROVISIONING_URL}/${repoName}`);
+      } else {
+        navigate(PROVISIONING_URL);
+      }
     } else {
       let nextStepIndex = currentStepIndex + 1;
 
@@ -125,6 +132,24 @@ export function useWizardNavigation({
     setStepStatusInfo,
   ]);
 
+  const goToStep = useCallback(
+    (stepId: WizardStep) => {
+      const targetIndex = steps.findIndex((s) => s.id === stepId);
+      if (targetIndex >= 0) {
+        setActiveStep(stepId);
+        // Only keep steps completed before the target
+        setCompletedSteps((prev) =>
+          prev.filter((s) => {
+            const sIndex = steps.findIndex((st) => st.id === s);
+            return sIndex < targetIndex;
+          })
+        );
+        setStepStatusInfo({ status: 'idle' });
+      }
+    },
+    [steps, setStepStatusInfo]
+  );
+
   return {
     activeStep,
     completedSteps,
@@ -134,5 +159,6 @@ export function useWizardNavigation({
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   };
 }

@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "Ralenti máximo automático",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "O número máximo de ligações no conjunto de ligações inativas. Se o numero de <i>Ligações abertas máximas</i> for superior a 0, mas inferior ao número de <i>Ligações inativas máximas</i>, então o número de <i>Ligações inativas máximas</i> será reduzido para corresponder ao limite de <i>Ligações abertas máximas</i>. Se definido para 0, nenhuma ligação de ralenti será retida.",
         "content-max-lifetime": "A quantidade máxima de tempo em segundos que uma ligação pode ser reutilizada. Se definido para 0, as ligações serão reutilizadas para sempre.",
         "content-max-open": "",
         "max-idle": "Ralenti máx.",
@@ -71,8 +71,8 @@
       },
       "query-meta": {
         "variables": {
-          "textField": "",
-          "valueField": ""
+          "textField": "Campo de texto",
+          "valueField": "Campo de valor"
         }
       },
       "query-toolbox": {
@@ -82,7 +82,7 @@
         "tooltip-format-query": "Formatar consulta"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Esta consulta processará <strong>{{bytes}}</strong> quando for executada.",
         "validating-query": "A validar consulta..."
       },
       "raw-editor": {

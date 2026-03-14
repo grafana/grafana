@@ -1,7 +1,7 @@
 import { createTheme, toDataFrame } from '@grafana/data';
 
 import { prepareCandlestickFields } from './fields';
-import { Options, VizDisplayMode } from './types';
+import { type Options, VizDisplayMode } from './panelcfg.gen';
 
 const theme = createTheme();
 

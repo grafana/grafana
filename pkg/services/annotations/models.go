@@ -10,6 +10,7 @@ type ItemQuery struct {
 	From     int64  `json:"from"`
 	To       int64  `json:"to"`
 	UserID   int64  `json:"userId"`
+	UserUID  string `json:"userUID"`
 	AlertID  int64  `json:"alertId"`
 	AlertUID string `json:"alertUID"`
 	// Deprecated: Use DashboardUID and OrgID instead
@@ -22,8 +23,9 @@ type ItemQuery struct {
 	MatchAny     bool     `json:"matchAny"`
 	SignedInUser identity.Requester
 
-	Limit int64 `json:"limit"`
-	Page  int64
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"` // used for annotation row pagination (e.g. new API continue token); 0 = first page
+	Page   int64 // org-wide list only: paginates dashboards in Authorize (SearchDashboards), not annotation rows
 }
 
 // TagsQuery is the query for a tags search.
@@ -119,6 +121,7 @@ type ItemDTO struct {
 	DashboardUID *string          `json:"dashboardUID,omitempty" xorm:"dashboard_uid"`
 	PanelID      int64            `json:"panelId,omitempty" xorm:"panel_id"`
 	UserID       int64            `json:"userId,omitempty" xorm:"user_id"`
+	UserUID      string           `json:"userUID,omitempty" xorm:"user_uid"`
 	NewState     string           `json:"newState,omitempty"`
 	PrevState    string           `json:"prevState,omitempty"`
 	Created      int64            `json:"created,omitempty"`

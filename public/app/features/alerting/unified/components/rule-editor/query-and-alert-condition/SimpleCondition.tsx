@@ -167,9 +167,17 @@ function updateReduceExpression(
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
+        if (draft && draft.conditions?.[0]) {
           draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+          const reducerType = getReducerType(reducer) ?? ReducerID.last;
+          // API-loaded rules may have conditions without a reducer object (e.g. provisioned rules
+          // or rules created by older versions). Backfill it to keep conditions[0].reducer.type
+          // in sync with draft.reducer rather than silently skipping the update.
+          if (!draft.conditions[0].reducer) {
+            draft.conditions[0].reducer = { params: [], type: reducerType };
+          } else {
+            draft.conditions[0].reducer.type = reducerType;
+          }
         }
       })
     : undefined;
@@ -184,7 +192,7 @@ function updateThresholdFunction(
   const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.type = evaluator;
     }
   });
@@ -200,7 +208,7 @@ function updateThresholdValue(
   const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.params[index] = value;
     }
   });

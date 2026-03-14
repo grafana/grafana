@@ -12,6 +12,27 @@ func SelectableFields() map[string][]string {
 	return SelectableFieldsForManifests(AppManifests())
 }
 
+func AppManifestsWithKinds(manifiests []app.Manifest) []app.Manifest {
+	// Include manifests with kinds in any version.
+	filtered := make([]app.Manifest, 0, len(manifiests))
+	for _, m := range manifiests {
+		if m.ManifestData == nil {
+			continue
+		}
+		hasKinds := false
+		for _, v := range m.ManifestData.Versions {
+			if len(v.Kinds) > 0 {
+				hasKinds = true
+				break
+			}
+		}
+		if hasKinds {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered
+}
+
 // SelectableFieldsForManifests returns map of <group/kind> to list of selectable fields (across all versions).
 // Also <group/plural> is included as a key, pointing to the same fields.
 // Keys are lower-case.

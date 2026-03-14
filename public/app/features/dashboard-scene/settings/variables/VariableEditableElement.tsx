@@ -4,7 +4,13 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  SceneVariable,
+  SceneVariableSet,
+  useSceneObjectState,
+} from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -28,6 +34,11 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
   const descriptionId = useId();
   const variableDisplayId = useId();
 
+  // Keep the variable activated while editing it in the side pane. The dashboard controls
+  // component may unmount (e.g. when changing display to "hidden"), which would deactivate
+  // the variable and destroy all state subscriptions used by the editors below.
+  useSceneObjectState(variable, { shouldActivateOrKeepAlive: true });
+
   if (variable instanceof LocalValueVariable) {
     return useLocalVariableOptions(variable);
   }
@@ -39,7 +50,7 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
           title: '',
           id: variableNameId,
           skipField: true,
-          render: () => <VariableNameInput variable={variable} isNewElement={isNewElement} />,
+          render: () => <VariableNameInput variable={variable} autoFocus={isNewElement} />,
         })
       )
       .addItem(
@@ -134,9 +145,9 @@ interface VariableInputProps {
   id?: string;
 }
 
-function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable; isNewElement: boolean }) {
+function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useEditPaneInputAutoFocus({ autoFocus });
   const [nameError, setNameError] = useState<string>();
   const id = useId();
 

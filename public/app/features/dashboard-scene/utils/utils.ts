@@ -1,4 +1,4 @@
-import { DataSourceRef, getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -26,8 +26,11 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -237,26 +240,6 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   return undefined;
 }
 
-/**
- * Gets the datasource from a query runner.
- * When no panel-level datasource is set, it means all queries use the same datasource,
- * so we extract the datasource from the first query.
- */
-export function getDatasourceFromQueryRunner(queryRunner: SceneQueryRunner): DataSourceRef | null | undefined {
-  // Panel-level datasource is set for mixed datasource panels
-  if (queryRunner.state.datasource) {
-    return queryRunner.state.datasource;
-  }
-
-  // No panel-level datasource means all queries share the same datasource
-  const firstQuery = queryRunner.state.queries?.[0];
-  if (firstQuery?.datasource) {
-    return firstQuery.datasource;
-  }
-
-  return undefined;
-}
-
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -288,10 +271,7 @@ export function getDefaultPluginId(): string {
 export function getDefaultVizPanel(): VizPanel {
   const defaultPluginId = getDefaultPluginId();
 
-  const newPanelTitle =
-    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      ? ''
-      : t('dashboard.new-panel-title', 'New panel');
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
   const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 
@@ -446,6 +426,23 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+export const getLayoutForObject = (
+  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene
+): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
+  const gridManagerForObject = sceneGraph.findObject(
+    object,
+    (currentSceneObject) =>
+      currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
+  );
+  if (
+    gridManagerForObject instanceof AutoGridLayoutManager ||
+    gridManagerForObject instanceof DefaultGridLayoutManager
+  ) {
+    return gridManagerForObject;
+  }
+  return null;
+};
 
 // @returns true if the panel is a valid library panel reference
 // a valid library panel reference is a panel with this

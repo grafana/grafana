@@ -19,6 +19,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
 } from '../../utils/amroutes';
+import { validateRbacEntityName } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 
 import { PromDurationInput } from './PromDurationInput';
@@ -31,11 +32,15 @@ export interface AmRootRouteFormProps {
   onSubmit: (route: Partial<FormAmRoute>) => void;
   route: RouteWithID;
   showNameField?: boolean;
+  existingPolicyNames?: string[];
+  nameError?: string;
 }
 
 export const AmRootRouteForm = ({
   actionButtons,
   alertManagerSourceName,
+  existingPolicyNames,
+  nameError,
   onSubmit,
   route,
   showNameField,
@@ -72,17 +77,20 @@ export const AmRootRouteForm = ({
               'alerting.am-root-route-form.description-unique-routing',
               'A unique name for the routing tree'
             )}
-            invalid={!!errors.name}
-            error={errors.name?.message}
+            invalid={!!(nameError ?? errors.name?.message)}
+            error={nameError ?? errors.name?.message}
           >
             <Input
               {...register('name', {
-                required: true,
-                validate: (value) => {
-                  if (!value || value.trim().length === 0) {
-                    return t('alerting.am-root-route-form.validate-name', 'Name is required');
-                  }
-                  return true;
+                validate: {
+                  format: (value) => validateRbacEntityName(value)?.message ?? true,
+                  duplicate: (value) =>
+                    existingPolicyNames?.includes((value ?? '').trim())
+                      ? t(
+                          'alerting.am-root-route-form.validate-name-duplicate',
+                          'A notification policy with this name already exists'
+                        )
+                      : true,
                 },
               })}
               className={styles.input}

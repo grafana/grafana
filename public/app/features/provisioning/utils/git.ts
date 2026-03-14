@@ -17,6 +17,10 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
+export function buildCleanBaseUrl(url: string) {
+  return stripSlashes(url.trim()).replace(/\.git\/?$/i, '');
+}
+
 /**
  * Formats a repository URL for display by extracting the path portion.
  * e.g., "https://github.com/owner/repo/tree/main/path" -> "owner/repo/tree/main/path"
@@ -47,8 +51,9 @@ const buildRepoUrl = ({ baseUrl, branch, providerSegments, path }: BuildRepoUrlP
     return undefined;
   }
 
-  // Normalize base URL: trim whitespace + remove trailing slashes.
-  const cleanBase = stripSlashes(baseUrl.trim());
+  // Normalize base URL: trim whitespace + remove trailing slashes + remove .git suffix if present
+  const cleanBase = buildCleanBaseUrl(baseUrl);
+
   const cleanBranch = branch?.trim() || undefined;
 
   // Start composing URL parts:
@@ -97,12 +102,9 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
         path: spec.bitbucket?.path,
       });
     case 'git':
-      return buildRepoUrl({
-        baseUrl: spec.git?.url,
-        branch: spec.git?.branch,
-        providerSegments: ['tree'],
-        path: spec.git?.path,
-      });
+      // Generic git repositories don't have a standard URL pattern
+      // Just return the base URL without branch/path segments
+      return spec.git?.url ? buildCleanBaseUrl(spec.git.url) : undefined;
     default:
       return undefined;
   }
@@ -136,7 +138,7 @@ export function getRepoFileUrl({
   }
 
   const effectiveBranch = branch || 'main';
-  const fullPath = pathPrefix ? `${pathPrefix}${filePath}` : filePath;
+  const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
 
   switch (repoType) {
     case 'github':

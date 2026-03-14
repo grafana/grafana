@@ -172,7 +172,7 @@ function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
       flexDirection: 'column',
       padding: theme.spacing(0.5),
       [`${selectedItemCssSelector}`]: {
-        backgroundColor: theme.colors.background.secondary,
+        backgroundColor: theme.colors.action.focus,
       },
     }),
     emptyState: css({
