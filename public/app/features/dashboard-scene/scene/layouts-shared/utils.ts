@@ -3,8 +3,10 @@ import { useEffect, useRef } from 'react';
 import { SceneObject } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { isLayoutParent } from '../types/LayoutParent';
+import { isLayoutParent, LayoutParent } from '../types/LayoutParent';
 
 export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManager | null {
   let parent = sceneObject.parent;
@@ -87,6 +89,17 @@ export enum GridLayoutType {
   GridLayout = 'GridLayout',
 }
 
+export function getDefaultLayout(items: LayoutParent[]) {
+  const lastItem = items[items.length - 1];
+  if (lastItem) {
+    const leafLayout = getDeepestLeafLayout(lastItem.getLayout());
+    if (leafLayout instanceof DefaultGridLayoutManager) {
+      return DefaultGridLayoutManager.createEmpty();
+    }
+  }
+  return AutoGridLayoutManager.createEmpty();
+}
+
 export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
   switch (id) {
     case GridLayoutType.AutoGridLayout:
@@ -96,4 +109,18 @@ export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
+}
+
+function getDeepestLeafLayout(layout: DashboardLayoutManager) {
+  const children = layout.getOutlineChildren();
+  if (children.length > 0) {
+    const lastChild = children[children.length - 1];
+    if (isLayoutParent(lastChild)) {
+      const childLayout = lastChild.getLayout();
+      if (childLayout !== layout) {
+        return getDeepestLeafLayout(childLayout);
+      }
+    }
+  }
+  return layout;
 }
