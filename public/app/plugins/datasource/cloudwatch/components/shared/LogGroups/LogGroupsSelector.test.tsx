@@ -111,7 +111,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something' });
+    expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something', listAllLogGroups: true });
   });
 
   it('calls fetchLogGroups with an account when selected', async () => {
@@ -140,7 +140,7 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     secondCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
-    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '' });
+    expect(fetchLogGroups).toBeCalledWith({ accountId: 'account-id123', logGroupPattern: '', listAllLogGroups: true });
   });
 
   it('shows a log group as checked after the user checks it', async () => {
@@ -187,9 +187,7 @@ describe('LogGroupsSelector', () => {
     ]);
   });
 
-  const labelText =
-    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
-  it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
+  it('should not display info label in case less than 50 logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
@@ -197,16 +195,16 @@ describe('LogGroupsSelector', () => {
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
-    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    expect(screen.queryByText(/log groups found/)).not.toBeInTheDocument();
     defer.resolve();
-    await waitFor(() => expect(screen.queryByText(labelText)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/log groups found/)).not.toBeInTheDocument());
   });
 
-  it('should display max result info label in case 50 or more logs groups are being displayed', async () => {
+  it('should display info label with count when 50 or more logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return Array(50).map((i) => ({
+      return Array.from({ length: 50 }, (_, i) => ({
         value: {
           arn: `logGroup${i}`,
           name: `logGroup${i}`,
@@ -215,9 +213,9 @@ describe('LogGroupsSelector', () => {
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
-    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    expect(screen.queryByText(/log groups found/)).not.toBeInTheDocument();
     defer.resolve();
-    await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/50 log groups found/)).toBeInTheDocument());
   });
 
   it('should display log groups counter label', async () => {

@@ -89,15 +89,16 @@ export const LogGroupsSelector = ({
       const possibleLogGroups = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
+        listAllLogGroups: true,
       });
-      setSelectableLogGroups(
-        possibleLogGroups.map((lg) => ({
-          arn: lg.value.arn,
-          name: lg.value.name,
-          accountId: lg.accountId,
-          accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
-        }))
-      );
+      const mapped = possibleLogGroups.map((lg) => ({
+        arn: lg.value.arn,
+        name: lg.value.name,
+        accountId: lg.accountId,
+        accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
+      }));
+      mapped.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+      setSelectableLogGroups(mapped);
     } catch (err) {
       setSelectableLogGroups([]);
     }
@@ -149,12 +150,12 @@ export const LogGroupsSelector = ({
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && selectableLogGroups.length >= 25 && (
+          {!isLoading && selectableLogGroups.length >= 50 && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
-                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
-                search.
+                {selectableLogGroups.length} log groups found. If you do not see an expected log group, try narrowing
+                down your search.
                 <p>
                   A{' '}
                   <TextLink
