@@ -290,6 +290,33 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueAddGCRetryCount: {
+				{
+					Name: "add to gc attempt count",
+					Data: &addGCAttemptCountSecureValues{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						SecureValueIDs: []string{"1", "2"},
+					},
+				},
+			},
+			sqlSecureValueListByIDs: {
+				{
+					Name: "list secure values by ids",
+					Data: &listSecureValuesByIDs{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						SecureValueIDs: []string{"1", "2"},
+					},
+				},
+			},
+			sqlSecureValuesDeleteByIds: {
+				{
+					Name: "delete secure values by ids",
+					Data: &deleteSecureValuesByIds{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						SecureValueIDs: []string{"1", "2"},
+					},
+				},
+			},
 		},
 	})
 }
