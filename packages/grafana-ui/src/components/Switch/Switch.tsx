@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { forwardRef, HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { uniqueId } from '../../utils/uniqueId';
 import { Icon } from '../Icon/Icon';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {

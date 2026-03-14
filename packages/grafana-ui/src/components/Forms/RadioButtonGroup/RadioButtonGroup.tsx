@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { uniqueId } from '../../../utils/uniqueId';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';

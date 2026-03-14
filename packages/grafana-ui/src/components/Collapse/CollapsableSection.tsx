@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { ReactNode, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -7,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
+import { uniqueId } from '../../utils/uniqueId';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 

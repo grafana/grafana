@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { isString, uniqueId } from 'lodash';
+import { isString } from 'lodash';
 import { ReactNode, useCallback, useState } from 'react';
 import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
@@ -7,6 +7,7 @@ import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
