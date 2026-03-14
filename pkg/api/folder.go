@@ -217,6 +217,10 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
+	// Flush the entire scope resolver cache because moving a folder changes the
+	// parent chain for the folder itself and all its descendant dashboards/folders.
+	hs.AccessControl.InvalidateAllResolverCache()
+
 	folderDTO, err := hs.newToFolderDto(c, theFolder)
 	if err != nil {
 		return response.Err(err)
@@ -280,6 +284,10 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}
+
+	// Flush the entire scope resolver cache because deleting a folder invalidates
+	// cached scope resolutions for the folder and all its descendant resources.
+	hs.AccessControl.InvalidateAllResolverCache()
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Folder deleted",

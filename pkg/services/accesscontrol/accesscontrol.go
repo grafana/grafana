@@ -31,6 +31,8 @@ type AccessControl interface {
 	WithoutResolvers() AccessControl
 	// InvalidateResolverCache removes a scope resolution from the cache
 	InvalidateResolverCache(orgID int64, scope string)
+	// InvalidateAllResolverCache flushes all scope resolutions from the cache
+	InvalidateAllResolverCache()
 }
 
 type Service interface {
