@@ -8,7 +8,6 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
-import { getTransformId } from '../../utils';
 
 function getDropIndices(result: DropResult): { startIndex: number; endIndex: number } | null {
   if (!result.destination || result.source.index === result.destination.index) {
@@ -54,10 +53,7 @@ export function useSidebarDragAndDrop() {
       const draggedTransformation = transformations[startIndex];
       trackReorder('transformation');
       reorderTransformations(reorder(transformations, startIndex, endIndex).map((t) => t.transformConfig));
-      setSelectedTransformation({
-        ...draggedTransformation,
-        transformId: getTransformId(draggedTransformation.transformConfig.id, endIndex),
-      });
+      setSelectedTransformation(draggedTransformation);
     },
     [transformations, reorderTransformations, setSelectedTransformation]
   );

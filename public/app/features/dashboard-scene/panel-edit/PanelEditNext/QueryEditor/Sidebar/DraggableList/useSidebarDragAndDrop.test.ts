@@ -105,15 +105,12 @@ describe('useSidebarDragAndDrop', () => {
       ]);
     });
 
-    it('should select the dragged transformation with updated index-based id after reorder', () => {
+    it('should select the dragged transformation preserving its stable id after reorder', () => {
       const { result } = renderHook(() => useSidebarDragAndDrop());
 
       result.current.onTransformationDragEnd(makeDropResult(0, 2));
 
-      expect(mockSetSelectedTransformation).toHaveBeenCalledWith({
-        ...transformations[0],
-        transformId: `${transformations[0].transformConfig.id}-2`,
-      });
+      expect(mockSetSelectedTransformation).toHaveBeenCalledWith(transformations[0]);
     });
 
     it('should not reorder when dropped outside droppable area', () => {
