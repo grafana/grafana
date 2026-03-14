@@ -88,6 +88,27 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
+// applyFolderMetadata reads folder metadata for the given folder path and applies
+// the stable UID and title to given folder.
+// Returns true if a non-empty title was found in the metadata.
+func (fm *FolderManager) applyFolderMetadata(ctx context.Context, f *Folder) (hasFolderMetadataTitle bool, err error) {
+	meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, "")
+	if err == nil {
+		if meta.Name != "" {
+			f.ID = meta.Name
+		}
+		if meta.Spec.Title != "" {
+			f.Title = meta.Spec.Title
+			hasFolderMetadataTitle = true
+		}
+		return hasFolderMetadataTitle, nil
+	}
+	if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
+		return false, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
+	return false, nil
+}
+
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
 	cfg := fm.repo.Config()
@@ -103,33 +124,33 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	// Use stable UID from _folder.json if available
-	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-		// We use folder metadata here only to check if the folder exists
-		// for new folders, we'll be using the safepath.Walk below, so we don't need to set the title here for now.
-	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	hasFolderMetadataTitle, err := fm.applyFolderMetadata(ctx, &f)
+	if err != nil {
+		return "", err
 	}
 	if fm.tree.In(f.ID) {
+		// Reconcile title: even though the folder exists in the tree,
+		// _folder.json may have a newer title that needs updating in Grafana.
+		if hasFolderMetadataTitle {
+			if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
+				return "", fmt.Errorf("reconcile folder title: %w", err)
+			}
+		}
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
-			if meta.Name != "" {
-				f.ID = meta.Name
-			}
-			if meta.Spec.Title != "" {
-				f.Title = meta.Spec.Title
-			}
-		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		hasFolderMetadataTitle, err := fm.applyFolderMetadata(ctx, &f)
+		if err != nil {
+			return err
 		}
 		if fm.tree.In(f.ID) {
+			if hasFolderMetadataTitle {
+				if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
+					return fmt.Errorf("reconcile folder title for %s: %w", f.Path, err)
+				}
+			}
 			parent = f.ID
 			return nil
 		}
