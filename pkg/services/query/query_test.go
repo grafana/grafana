@@ -42,6 +42,8 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	prometheustestutil "github.com/prometheus/client_golang/prometheus/testutil"
+
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -995,4 +997,54 @@ func (c *testClient) QueryData(ctx context.Context, req data.QueryDataRequest) (
 		return c.queryDataStubbedResponse, nil
 	}
 	return nil, errors.New("no response stubbed")
+}
+
+func TestIntegrationDatasourceQueryMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("increments success counter on successful query", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		query1, err := simplejson.NewJson([]byte(`{
+			"datasource": {"type": "mysql", "uid": "ds1"},
+			"refId": "A"
+		}`))
+		require.NoError(t, err)
+
+		reqDTO := dtos.MetricRequest{
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: []*simplejson.Json{query1},
+		}
+
+		before := prometheustestutil.ToFloat64(datasourceQueryTotal.WithLabelValues("1", "ds1", "mysql", "success"))
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
+		after := prometheustestutil.ToFloat64(datasourceQueryTotal.WithLabelValues("1", "ds1", "mysql", "success"))
+
+		assert.Equal(t, before+1, after)
+	})
+
+	t.Run("increments error counter on transport error", func(t *testing.T) {
+		tc := setup(t, false, nil)
+		query1, err := simplejson.NewJson([]byte(`{
+			"datasource": {"type": "mysql", "uid": "ds1"},
+			"refId": "A",
+			"queryType": "FAIL"
+		}`))
+		require.NoError(t, err)
+
+		reqDTO := dtos.MetricRequest{
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: []*simplejson.Json{query1},
+		}
+
+		before := prometheustestutil.ToFloat64(datasourceQueryTotal.WithLabelValues("1", "ds1", "mysql", "error"))
+		// single-datasource transport errors bubble up directly (not wrapped in Responses)
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		require.Error(t, err)
+		after := prometheustestutil.ToFloat64(datasourceQueryTotal.WithLabelValues("1", "ds1", "mysql", "error"))
+
+		assert.Equal(t, before+1, after)
+	})
 }
