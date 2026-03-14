@@ -6,13 +6,26 @@ import (
 	"strconv"
 )
 
-const defaultLogGroupLimit = int32(50)
+const (
+	defaultLogGroupLimit = int32(50)
+	// MaxLogGroupsResults caps total results when ListAllLogGroups is true to avoid timeouts
+	MaxLogGroupsResults = int32(1000)
+)
+
+// LogGroupOrderBy defines sort order for log groups (empty = no sorting, return order from API).
+const (
+	OrderByNameAsc      = "nameAsc"
+	OrderByNameDesc     = "nameDesc"
+	OrderByAccountIDAsc = "accountIdAsc"
+	OrderByAccountIDDesc = "accountIdDesc"
+)
 
 type LogGroupsRequest struct {
 	ResourceRequest
 	Limit                                   int32
 	LogGroupNamePrefix, LogGroupNamePattern *string
 	ListAllLogGroups                        bool
+	OrderBy                                 string
 }
 
 func (r LogGroupsRequest) IsTargetingAllAccounts() bool {
@@ -35,6 +48,7 @@ func ParseLogGroupsRequest(parameters url.Values) (LogGroupsRequest, error) {
 		LogGroupNamePrefix:  logGroupNamePrefix,
 		LogGroupNamePattern: logGroupPattern,
 		ListAllLogGroups:    parameters.Get("listAllLogGroups") == "true",
+		OrderBy:             parameters.Get("orderBy"),
 	}, nil
 }
 

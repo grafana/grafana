@@ -120,6 +120,8 @@ func TestLogGroupsRoute(t *testing.T) {
 			ResourceRequest:     resources.ResourceRequest{},
 			LogGroupNamePrefix:  nil,
 			LogGroupNamePattern: nil,
+			ListAllLogGroups:     false,
+			OrderBy:             "",
 		})
 	})
 
@@ -136,6 +138,8 @@ func TestLogGroupsRoute(t *testing.T) {
 		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:              50,
 			LogGroupNamePrefix: nil,
+			ListAllLogGroups:   false,
+			OrderBy:            "",
 		})
 	})
 
@@ -186,7 +190,25 @@ func TestLogGroupsRoute(t *testing.T) {
 		})
 	})
 
-	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
+	t.Run("passes accountId and listAllLogGroups and orderBy from query parameters", func(t *testing.T) {
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/log-groups?accountId=some-account-id&listAllLogGroups=true&orderBy=nameAsc", nil)
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+		handler.ServeHTTP(rr, req)
+
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
+			Limit:            50,
+			ResourceRequest:  resources.ResourceRequest{AccountId: utils.Pointer("some-account-id")},
+			ListAllLogGroups: true,
+			OrderBy:          "nameAsc",
+		})
+	})
+
+	t.Run("passes accountId from query parameter", func(t *testing.T) {
 		mockLogsService = mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
