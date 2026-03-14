@@ -23,28 +23,36 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	ofttesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	provider = ofttesting.NewTestProvider()
+)
+
 func TestMain(m *testing.M) {
+	if err := openfeature.SetProvider(provider); err != nil {
+		panic(err)
+	}
 	testsuite.Run(m)
 }
 
 // testMode groups feature toggles needed for different test scenarios
 type testMode struct {
 	name           string
-	featureToggles []string
+	featureToggles map[string]memprovider.InMemoryFlag
 }
 
 // getTestModes returns the test configurations to run tests against
 func getTestModes() []testMode {
 	return []testMode{
 		{name: "legacy", featureToggles: nil},
-		{name: "k8s-reroute", featureToggles: []string{
-			"datasourcesRerouteLegacyCRUDAPIs",
-			"queryService",                // need query.grafana.app API group
-			"queryServiceWithConnections", // need query.grafana.app connections subresource
+		{name: "k8s-reroute", featureToggles: map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs: setting.NewInMemoryFlag(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs, true),
 		}},
 	}
 }
@@ -56,10 +64,11 @@ func TestIntegrationDataSourceGetByUID(t *testing.T) {
 
 	for _, mode := range getTestModes() {
 		t.Run(mode.name, func(t *testing.T) {
+			provider.UsingFlags(t, mode.featureToggles)
+
 			// set up Grafana and a database
 			dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-				DisableAnonymous:     true,
-				EnableFeatureToggles: mode.featureToggles,
+				DisableAnonymous: true,
 			})
 			grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 			ctx := context.Background()
