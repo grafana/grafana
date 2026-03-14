@@ -8,6 +8,7 @@ import { ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
+import { filterByQueryRef } from '../utils/queryRef';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
 
@@ -23,16 +24,17 @@ interface ExploreRawPrometheusContainerProps {
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   showRawPrometheus?: boolean;
   splitOpenFn?: SplitOpen;
+  queryRef: string;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreRawPrometheusContainerProps) {
+function mapStateToProps(state: StoreState, { exploreId, queryRef }: ExploreRawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { rawPrometheusResult, range, queryResponse } = item;
-  const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const loading = queryResponse.state;
+  const allowUntypedFrames = item.queries.length <= 1;
+  const tableResult = filterByQueryRef(item.queryResponse.rawPrometheusFrames, queryRef, allowUntypedFrames);
+  const loading = item.queryResponse.state;
 
-  return { loading, tableResult: rawPrometheusFrame, range };
+  return { loading, tableResult, range: item.range };
 }
 
 const connector = connect(mapStateToProps, {});

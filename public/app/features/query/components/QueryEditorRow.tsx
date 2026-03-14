@@ -529,7 +529,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons && !queryLibraryRef}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}

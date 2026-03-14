@@ -1,22 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { DraggableProvided } from '@hello-pangea/dnd';
-import { MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { IconButton, useStyles2, Stack } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
-  draggable: boolean;
   collapsable?: boolean;
-  dragHandleProps?: DraggableProvided['dragHandleProps'];
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
@@ -30,13 +25,10 @@ export interface ExpanderMessages {
 export const QueryOperationRowHeader = ({
   actionsElement,
   disabled,
-  draggable,
   collapsable = true,
-  dragHandleProps,
   headerElement,
   isContentVisible,
   onRowToggle,
-  reportDragMousePosition,
   title,
   id,
   expanderMessages,
@@ -51,8 +43,6 @@ export const QueryOperationRowHeader = ({
   } else if (expanderMessages !== undefined) {
     tooltipMessage = expanderMessages?.open;
   }
-
-  const dragAndDropLabel = t('query-operation.header.drag-and-drop', 'Drag and drop to reorder');
 
   return (
     <div className={styles.header}>
@@ -80,11 +70,6 @@ export const QueryOperationRowHeader = ({
 
       <Stack gap={1} alignItems="center">
         {actionsElement}
-        {draggable && (
-          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
-            <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
-          </div>
-        )}
       </Stack>
     </div>
   );

@@ -52,6 +52,7 @@ export const createDefaultInitialState = () => {
               enabled: true,
             },
           },
+          blocks: [],
         },
       },
     },

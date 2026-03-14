@@ -1,3 +1,5 @@
+/* eslint-disable react/prefer-stateless-function */
+
 import { PureComponent } from 'react';
 import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -25,6 +27,9 @@ import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
+import { refreshIntervalToSortOrder } from 'app/core/utils/explore';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { sortLogsResult } from 'app/features/logs/utils';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { ExploreItemState } from 'app/types/explore';
@@ -35,6 +40,7 @@ import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQue
 import { updateTimeRange, loadMoreLogs } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
+import { filterByQueryRef } from '../utils/queryRef';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
@@ -43,6 +49,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
   exploreId: string;
+  queryRef: string;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
@@ -67,6 +74,7 @@ interface LogsContainerState {
   dsInstances: Record<string, DataSourceInstance>;
 }
 
+// eslint-disable-next-line react/prefer-stateless-function
 class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   state: LogsContainerState = {
     dsInstances: {},
@@ -357,11 +365,10 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+function mapStateToProps(state: StoreState, { exploreId, queryRef }: { exploreId: string; queryRef: string }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const {
-    logsResult,
     scanning,
     datasourceInstance,
     isLive,
@@ -370,19 +377,30 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     supplementaryQueries,
+    refreshInterval,
   } = item;
   const loading = selectIsWaitingForData(exploreId)(state);
   const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
+  const allowUntypedFrames = item.queries.length <= 1;
+  const logsFrames = filterByQueryRef(item.queryResponse.logsFrames, queryRef, allowUntypedFrames);
+  const logsQueries = filterByQueryRef(item.logsResult?.queries ?? item.queries, queryRef, allowUntypedFrames);
+  const scopedLogsResult = buildLogsResultForQuery({
+    frames: logsFrames,
+    intervalMs: item.queryResponse.request?.intervalMs,
+    absoluteRange,
+    queries: logsQueries,
+    refreshInterval,
+  });
 
   return {
     loading,
-    logRows: logsResult?.rows,
-    logsMeta: logsResult?.meta,
-    logsSeries: logsResult?.series,
-    logsQueries: logsResult?.queries,
-    visibleRange: logsResult?.visibleRange,
+    logRows: scopedLogsResult?.rows,
+    logsMeta: scopedLogsResult?.meta,
+    logsSeries: scopedLogsResult?.series,
+    logsQueries: scopedLogsResult?.queries,
+    visibleRange: scopedLogsResult?.visibleRange,
     scanning,
     timeZone,
     datasourceInstance,
@@ -393,7 +411,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     logsVolume,
     panelState,
-    logsFrames: item.queryResponse.logsFrames,
+    logsFrames,
   };
 }
 
@@ -408,3 +426,31 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 export default connector(LogsContainer);
+
+function buildLogsResultForQuery({
+  frames,
+  intervalMs,
+  absoluteRange,
+  queries,
+  refreshInterval,
+}: {
+  frames: DataFrame[];
+  intervalMs?: number;
+  absoluteRange: AbsoluteTimeRange;
+  queries: DataQuery[];
+  refreshInterval?: string;
+}) {
+  if (!frames.length) {
+    return null;
+  }
+
+  const logsModel = dataFrameToLogsModel(frames, intervalMs, absoluteRange, queries);
+  if (!logsModel) {
+    return null;
+  }
+
+  const sortOrder = refreshIntervalToSortOrder(refreshInterval);
+  return sortLogsResult(logsModel, sortOrder);
+}
+
+/* eslint-enable react/prefer-stateless-function */
