@@ -31,6 +31,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -319,6 +320,57 @@ func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
 		// Now we should be able to delete the folder.
 		err = client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
+	})
+
+	t.Run("View permission on folder must not grant CanSave for alert rules (fixes #119080)", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folders.RESOURCEGROUP: {DualWriterMode: grafanarest.Mode5},
+			},
+			EnableFeatureToggles: []string{},
+		})
+
+		// Create a folder as Admin
+		folderUID := "view-only-access-test"
+		legacyPayload := fmt.Sprintf(`{"title": "View Only Test Folder", "uid": "%s"}`, folderUID)
+		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(legacyPayload),
+		}, &folder.Folder{})
+		require.NotNil(t, legacyCreate.Result)
+		require.Equal(t, folderUID, legacyCreate.Result.UID)
+
+		// Create user with View-only permission (FoldersRead + AlertingRuleRead, no Write/Update/Create/Delete)
+		viewOnlyPerms := []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead},
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				ResourceID:        folderUID,
+			},
+		}
+		viewerUser := helper.CreateUser("viewer-119080", apis.Org1, org.RoleNone, viewOnlyPerms)
+		viewerID, err := viewerUser.Identity.GetInternalID()
+		require.NoError(t, err)
+		t.Cleanup(helper.CleanupTestResources([]string{}, []int64{viewerID}))
+
+		// Get folder access via /apis endpoint as the View-only user
+		viewerClient := helper.GetResourceClient(apis.ResourceClientArgs{User: viewerUser, GVR: gvr})
+		access, err := viewerClient.Resource.Get(context.Background(), folderUID, metav1.GetOptions{}, "access")
+		require.NoError(t, err)
+
+		var accessInfo folders.FolderAccessInfo
+		jj, err := json.Marshal(access.Object)
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(jj, &accessInfo))
+
+		require.False(t, accessInfo.CanSave, "View-only permission must not grant CanSave; alert rule editing must be prevented (#119080)")
+		require.False(t, accessInfo.CanEdit, "View-only permission must not grant CanEdit")
 	})
 }
 

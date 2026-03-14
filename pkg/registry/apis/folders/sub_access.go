@@ -12,12 +12,15 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 type subAccessREST struct {
 	getter       rest.Getter
 	accessClient authlib.AccessClient
+	ac           accesscontrol.AccessControl // optional; when set, CanSave also requires alert rule write (fixes #119080)
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -104,9 +107,22 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	if err != nil {
 		return nil, err
 	}
-	rsp.CanSave = rsp.CanAdmin || check(utils.VerbCreate) // or the same as update?
+	canSaveFromVerb := rsp.CanAdmin || check(utils.VerbCreate)
 	if err != nil {
 		return nil, err
+	}
+	// CanSave must reflect whether the user can create/update/delete alert rules in this folder.
+	// View-only permission must not allow editing alert rules (fixes #119080).
+	rsp.CanSave = canSaveFromVerb
+	if r.ac != nil {
+		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+		eval := accesscontrol.EvalAny(
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleCreate, scope),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleUpdate, scope),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, scope),
+		)
+		canSaveAlertRules, _ := r.ac.Evaluate(ctx, user, eval)
+		rsp.CanSave = canSaveFromVerb && canSaveAlertRules
 	}
 	return rsp, nil
 }

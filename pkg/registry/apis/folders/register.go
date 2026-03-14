@@ -201,6 +201,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
 		accessClient: b.accessClient,
+		ac:           b.ac,
 	}
 
 	// Adds a path to return children of a given folder
