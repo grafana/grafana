@@ -10,7 +10,7 @@
   "basicAuthUser": "",
   "withCredentials": false,
   "isDefault": false,
-  "jsonData": null,
+  "jsonData": {},
   "secureJsonData": {},
   "readOnly": false,
   "uid": "cejobd88i85j4d",

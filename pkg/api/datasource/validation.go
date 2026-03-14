@@ -13,26 +13,6 @@ import (
 
 var logger = log.New("datasource")
 
-// requiredURL contains the set of data sources that require a URL.
-var requiredURL = map[string]bool{
-	datasources.DS_GRAPHITE:          true,
-	datasources.DS_INFLUXDB:          true,
-	datasources.DS_INFLUXDB_08:       true,
-	datasources.DS_ES:                true,
-	datasources.DS_PROMETHEUS:        true,
-	datasources.DS_AMAZON_PROMETHEUS: true,
-	datasources.DS_AZURE_PROMETHEUS:  true,
-	datasources.DS_ALERTMANAGER:      true,
-	datasources.DS_JAEGER:            true,
-	datasources.DS_LOKI:              true,
-	datasources.DS_OPENTSDB:          true,
-	datasources.DS_TEMPO:             true,
-	datasources.DS_ZIPKIN:            true,
-	datasources.DS_MYSQL:             true,
-	datasources.DS_POSTGRES:          true,
-	datasources.DS_MSSQL:             true,
-}
-
 // URLValidationError represents an error from validating a data source URL.
 type URLValidationError struct {
 	Err error
@@ -62,7 +42,7 @@ var reURL = regexp.MustCompile("^[^:]*://")
 // error is returned.
 func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 	// Check for empty URLs
-	if _, exists := requiredURL[typeName]; exists && strings.TrimSpace(urlStr) == "" {
+	if datasources.RequiresURL(typeName) && strings.TrimSpace(urlStr) == "" {
 		return nil, URLValidationError{Err: errors.New("empty URL string"), URL: ""}
 	}
 

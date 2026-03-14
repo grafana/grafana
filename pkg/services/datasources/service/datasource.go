@@ -279,17 +279,25 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 
 	for _, ds := range dss {
 		// Skip datasources they can not see
-		evaluator := accesscontrol.EvalPermission(datasources.ActionRead,
+		//
+		// Read and Write actions are valid, otherwise we're breaking the permissions
+		// model for the /api endpoints when rerouting from /api to /apis: a PUT on
+		// datasources/uid/:uid should only require datasources.ActionWrite
+		readEvaluator := accesscontrol.EvalPermission(datasources.ActionRead,
 			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
-		if ok, _ := s.ac.Evaluate(ctx, user, evaluator); !ok {
-			continue
-		}
+		writeEvaluator := accesscontrol.EvalPermission(datasources.ActionWrite,
+			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
 
-		v, err := s.asConnection(ds)
-		if err != nil {
-			return nil, err
+		readOK, _ := s.ac.Evaluate(ctx, user, readEvaluator)
+		writeOK, _ := s.ac.Evaluate(ctx, user, writeEvaluator)
+
+		if readOK || writeOK {
+			v, err := s.asConnection(ds)
+			if err != nil {
+				return nil, err
+			}
+			result.Items = append(result.Items, *v)
 		}
-		result.Items = append(result.Items, *v)
 	}
 	return result, nil
 }
