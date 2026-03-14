@@ -528,3 +528,56 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 
 	return nil
 }
+
+// ListDirectPermissionsForUser returns all direct resource permissions (dashboard/folder level) for the given user UID in the namespace (org).
+// Used by the ResourcePermissions search subresource
+func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Context, namespace, userUID string) ([]accesscontrol.Permission, error) {
+	if userUID == "" {
+		return nil, nil
+	}
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("parse namespace: %w", err)
+	}
+	if ns.OrgID <= 0 {
+		return nil, errInvalidNamespace
+	}
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		s.logger.FromContext(ctx).Error("Failed to get database helper", "error", err)
+		return nil, errDatabaseHelper
+	}
+	actionSets := make([]string, 0, 3*len(s.mappers))
+	for _, mapper := range s.mappers {
+		actionSets = append(actionSets, mapper.ActionSets()...)
+	}
+	var assignments []rbacAssignment
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, &ListResourcePermissionsQuery{
+			OrgID:      ns.OrgID,
+			ActionSets: actionSets,
+			SubjectUID: userUID,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]accesscontrol.Permission)
+	for _, a := range assignments {
+		key := a.Action + "|" + a.Scope
+		if _, ok := seen[key]; !ok {
+			seen[key] = accesscontrol.Permission{
+				Action:  a.Action,
+				Scope:   a.Scope,
+				Created: a.Created,
+				Updated: a.Updated,
+			}
+		}
+	}
+	result := make([]accesscontrol.Permission, 0, len(seen))
+	for _, p := range seen {
+		result = append(result, p)
+	}
+	return result, nil
+}

@@ -55,6 +55,8 @@ type ListResourcePermissionsQuery struct {
 	Scopes     []string
 	OrgID      int64
 	ActionSets []string
+	// SubjectUID filters by subject (user UID, team UID, or builtin role name). When set, only permissions assigned to this subject are returned.
+	SubjectUID string
 }
 
 type DeleteResourcePermissionsQuery struct {
@@ -248,6 +250,16 @@ func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, e
 		Resource: gr.Resource,
 		Name:     parts[2],
 	}, nil
+}
+
+// ParseScopeToTarget parses a scope string (e.g. folders:uid:fold1) into target resource (apiGroup, resource, name).
+// Used by the search handler to filter results by get_permissions on each target resource.
+func (s *ResourcePermSqlBackend) ParseScopeToTarget(scope string) (apiGroup, resource, name string, err error) {
+	grn, err := s.parseScope(scope)
+	if err != nil {
+		return "", "", "", err
+	}
+	return grn.Group, grn.Resource, grn.Name, nil
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components
