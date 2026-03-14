@@ -146,7 +146,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: busybox:1.37.0@sha256:e3652a00a2fabd16ce889f0aa32c38eec347b997e73bd09e69c962ec7f8732ee
+    image: busybox:1.37.0@sha256:b3255e7dfbcd10cb367af0d409747d511aeb66dfac98cf30e97e87e4207dd76f
     user: root
     entrypoint:
       - 'chown'
