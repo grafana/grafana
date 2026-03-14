@@ -1,12 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import type { AlignedData } from 'uplot';
 
 import {
   buildHistogram,
   createDataFrame,
   createTheme,
   DataFrame,
+  DataFrameType,
   FieldType,
   getDisplayProcessor,
+  getHistogramFields,
   histogramFieldsToFrame,
   toDataFrame,
 } from '@grafana/data';
@@ -247,6 +250,101 @@ describe('Histogram', () => {
 
     expect(screen.getByTestId(histogramSelectors.container)).toBeInTheDocument();
     expect(screen.getByTestId(histogramSelectors.chart)).toBeInTheDocument();
+  });
+
+  describe('bug fix regression tests', () => {
+    /**
+     * Regression test for #116548: Histogram: Ensure range exists for log scale on x axis
+     * When wantedMax is undefined, the log scale range callback would fail. The fix defaults to 1.
+     */
+    it('renders log-scale histogram (non-uniform buckets) without crashing', async () => {
+      // Frame with non-uniform bucket sizes triggers useLogScale (bucketSize !== bucketSize1)
+      const logScaleFrame = createDataFrame({
+        fields: [
+          { name: 'xMin', type: FieldType.number, values: [0.001, 0.0011, 0.00121] },
+          { name: 'xMax', type: FieldType.number, values: [0.0011, 0.00121, 0.001331] },
+          { name: 'count', type: FieldType.number, values: [10, 20, 15], config: {} },
+        ],
+      });
+      logScaleFrame.fields[0].display = getDisplayProcessor({
+        field: logScaleFrame.fields[0],
+        theme,
+      });
+      logScaleFrame.fields[1].display = logScaleFrame.fields[0].display;
+      logScaleFrame.fields[2].display = getDisplayProcessor({
+        field: logScaleFrame.fields[2],
+        theme,
+      });
+
+      render(
+        <Histogram {...defaultProps} alignedFrame={logScaleFrame} bucketSize={0.0001} rawSeries={[logScaleFrame]} />
+      );
+
+      expect(screen.getByTestId(histogramSelectors.container)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId(histogramSelectors.chart)).toBeInTheDocument();
+      });
+    });
+
+    /**
+     * Regression test for #114557: Fix runaway bucket densification with extremely sparse + large datasets
+     * getHistogramFields now caps densification at MAX_DENSIFIED_BUCKETS (1000) to prevent OOM.
+     */
+    it('renders sparse native histogram (HeatmapCells) without OOM from excessive densification', async () => {
+      const sparseFrame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'yMin', type: FieldType.number, values: [0.001, 1000] },
+          { name: 'yMax', type: FieldType.number, values: [0.00101, 1010] },
+          { name: 'count', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+      const histFields = getHistogramFields(sparseFrame);
+      expect(histFields).toBeDefined();
+      expect(histFields!.counts[0].values.length).toBeLessThanOrEqual(1001);
+
+      const frame = histogramFieldsToFrame(histFields!, theme);
+      render(<Histogram {...defaultProps} alignedFrame={frame} bucketSize={0.00001} rawSeries={[frame]} />);
+
+      expect(screen.getByTestId(histogramSelectors.container)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId(histogramSelectors.chart)).toBeInTheDocument();
+      });
+    });
+
+    /**
+     * Regression test for #110368: Histogram: Fix Tooltip placement issue
+     * The dataIdx callback must return the correct bucket index for tooltip placement.
+     * Uses bar start (xMin) to determine which bucket contains the cursor xValue.
+     */
+    it('cursor dataIdx returns correct bucket index for tooltip', () => {
+      const childrenMock = jest.fn(() => null);
+      render(
+        <Histogram {...defaultProps} legend={{ ...defaultLegendOptions, showLegend: false }}>
+          {childrenMock}
+        </Histogram>
+      );
+
+      const callArgs = childrenMock.mock.calls[0] as unknown as [UPlotConfigBuilder, DataFrame, DataFrame] | undefined;
+      const [builder] = callArgs!;
+      const config = builder.getConfig();
+      const dataIdx = config.cursor?.dataIdx;
+      expect(dataIdx).toBeDefined();
+
+      // Mock uPlot state: x data is [0, 1, 2, 3] (bucket starts), bucketSize=1
+      const mockU: { data: AlignedData } = {
+        data: [[0, 1, 2, 3]],
+      };
+
+      // xValue=0.5 is in bucket 0 [0,1); xValue < data[0][1]=1 so closestIdx=1 -> return 0
+      expect(dataIdx!(mockU, 0, 1, 0.5)).toBe(0);
+
+      // xValue=1.5 is in bucket 1 [1,2); xValue >= data[0][1]=1 so return closestIdx=1
+      expect(dataIdx!(mockU, 0, 1, 1.5)).toBe(1);
+
+      // xValue=2.9 is in bucket 2 [2,3); xValue >= data[0][2]=2 so return closestIdx=2
+      expect(dataIdx!(mockU, 0, 2, 2.9)).toBe(2);
+    });
   });
 
   it('renders ordinal histogram frame (string bucket bounds)', async () => {
