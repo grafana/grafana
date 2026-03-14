@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject, isString } from 'lodash';
+import { cloneDeepWith, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -347,6 +347,12 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
         return dateTime(value);
       }
 
+      // React elements have frozen internal properties that cause proxy
+      // invariant violations; return them as-is.
+      if (React.isValidElement(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
@@ -378,8 +384,17 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
 
   const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
-  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
+  const cloned = cloneDeepWith(value, (val) => {
+    // React elements must not be deep-cloned: they contain internal fiber
+    // references that form a deeply-nested linked list, causing stack overflow.
+    if (React.isValidElement(val)) {
+      return val;
+    }
+    // Returning undefined tells lodash to use its default cloning behaviour.
+    return undefined;
+  });
+
+  return getMutationObserverProxy(cloned, { log, pluginId, pluginVersion, source });
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {
