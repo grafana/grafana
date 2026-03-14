@@ -34,16 +34,10 @@ export type FeatureFlagName = keyof FeatureToggles;
 // to ensure tests work correctly.
 export const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
-export async function initOpenFeature() {
-  OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
-  OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
-
-  const subPath = config.appSubUrl || '';
-  const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
-
+async function setupProvider(baseUrl:string, pollInterval:number):Promise<void> {
   const ofProvider = new OFREPWebProvider({
     baseUrl: baseUrl,
-    pollInterval: -1, // disable polling
+    pollInterval: pollInterval,
     timeoutMs: 5_000,
   });
 
@@ -51,6 +45,23 @@ export async function initOpenFeature() {
     targetingKey: config.namespace,
     ...config.openFeatureContext,
   });
+}
+
+export async function initOpenFeature() {
+  OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
+  OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
+
+  const subPath = config.appSubUrl || '';
+  const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+
+  // first we setup without polling
+  await setupProvider(baseUrl, -1)
+
+  // then we check if polling should be used
+  if (getFeatureFlagClient().getBooleanValue('flags.polling.enabled', false)) {
+    // and re-initialise
+    await setupProvider(baseUrl, 5 * 1000) // 1 hour in milliseconds
+  }
 }
 
 /**
