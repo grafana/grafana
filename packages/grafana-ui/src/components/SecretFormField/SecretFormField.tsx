@@ -1,4 +1,3 @@
-import { omit } from 'lodash';
 import { InputHTMLAttributes } from 'react';
 import * as React from 'react';
 
@@ -46,6 +45,7 @@ export const SecretFormField = ({
   interactive,
   ...inputProps
 }: Props) => {
+  const { value: _value, ...inputPropsWithoutValue } = inputProps;
   return (
     <FormField
       label={label!}
@@ -60,7 +60,7 @@ export const SecretFormField = ({
               className={`gf-form-input width-${inputWidth}`}
               disabled={true}
               value="configured"
-              {...omit(inputProps, 'value')}
+              {...inputPropsWithoutValue}
             />
             <Button onClick={onReset} variant="secondary" type="button">
               <Trans i18nKey="grafana-ui.secret-form-field.reset">Reset</Trans>
