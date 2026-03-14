@@ -27,6 +27,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add message column to alert_rule_version", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_rule_version"}, &migrator.Column{
 		Name: "message", Type: migrator.DB_Text, Nullable: true,
 	}))
+	mg.AddMigration("add column datasource_sync_uid in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
+		Name: "datasource_sync_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
+	}))
 	// End of migration log, add new migrations above this line.
 }
 

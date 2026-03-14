@@ -227,6 +227,53 @@ func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) RunAndRetur
 	return _c
 }
 
+// PatchAdminConfiguration provides a mock function with given fields: orgID, patch
+func (_m *AdminConfigurationStoreMock) PatchAdminConfiguration(orgID int64, patch map[string]interface{}) error {
+	ret := _m.Called(orgID, patch)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PatchAdminConfiguration")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int64, map[string]interface{}) error); ok {
+		r0 = rf(orgID, patch)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AdminConfigurationStoreMock_PatchAdminConfiguration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchAdminConfiguration'
+type AdminConfigurationStoreMock_PatchAdminConfiguration_Call struct {
+	*mock.Call
+}
+
+// PatchAdminConfiguration is a helper method to define mock.On call
+//   - orgID int64
+//   - patch map[string]interface{}
+func (_e *AdminConfigurationStoreMock_Expecter) PatchAdminConfiguration(orgID interface{}, patch interface{}) *AdminConfigurationStoreMock_PatchAdminConfiguration_Call {
+	return &AdminConfigurationStoreMock_PatchAdminConfiguration_Call{Call: _e.mock.On("PatchAdminConfiguration", orgID, patch)}
+}
+
+func (_c *AdminConfigurationStoreMock_PatchAdminConfiguration_Call) Run(run func(orgID int64, patch map[string]interface{})) *AdminConfigurationStoreMock_PatchAdminConfiguration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int64), args[1].(map[string]interface{}))
+	})
+	return _c
+}
+
+func (_c *AdminConfigurationStoreMock_PatchAdminConfiguration_Call) Return(_a0 error) *AdminConfigurationStoreMock_PatchAdminConfiguration_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AdminConfigurationStoreMock_PatchAdminConfiguration_Call) RunAndReturn(run func(int64, map[string]interface{}) error) *AdminConfigurationStoreMock_PatchAdminConfiguration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewAdminConfigurationStoreMock creates a new instance of AdminConfigurationStoreMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewAdminConfigurationStoreMock(t interface {
