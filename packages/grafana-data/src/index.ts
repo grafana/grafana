@@ -514,6 +514,7 @@ export type {
   URLRangeValue,
   URLRange,
   ExploreUrlState,
+  ExploreUrlVariable,
   ExplorePanelsState,
   ExploreCorrelationHelperData,
   ExploreTracePanelState,

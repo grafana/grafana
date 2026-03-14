@@ -9,6 +9,12 @@ import { changeCompactModeAction, changePanelsStateAction } from 'app/features/e
 import { splitClose, splitOpen } from 'app/features/explore/state/main';
 import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
+import {
+  addSceneVariableAction,
+  removeVariableAction,
+  replaceVariableAction,
+  setVariablesAction,
+} from 'app/features/explore/state/variables';
 import { ExploreState } from 'app/types/explore';
 
 import { getUrlStateFromPaneState } from '../external.utils';
@@ -39,6 +45,10 @@ export function syncToURLPredicate(paused: MutableRefObject<boolean>, action: Ac
       changePanelsStateAction.type,
       changeDatasource.fulfilled.type,
       changeCompactModeAction.type,
+      addSceneVariableAction.type,
+      removeVariableAction.type,
+      replaceVariableAction.type,
+      setVariablesAction.type,
     ].includes(action.type) && !paused.current
   );
 }

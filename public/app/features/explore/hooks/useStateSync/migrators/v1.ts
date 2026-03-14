@@ -119,5 +119,11 @@ function applyDefaults(input: unknown): ExploreUrlState {
       typeof input.range.from === 'string' &&
       typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
     ...(hasKey('compact', input) && typeof input.compact === 'boolean' && { compact: input.compact }),
+    ...(hasKey('variables', input) &&
+      Array.isArray(input.variables) && { variables: input.variables.filter(isValidUrlVariable) }),
   };
+}
+
+function isValidUrlVariable(v: unknown): boolean {
+  return typeof v === 'object' && v !== null && hasKey('name', v) && typeof v.name === 'string' && v.name.length > 0;
 }

@@ -7,6 +7,7 @@ import { DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
+import { deserializeVariables } from 'app/features/explore/state/variablesSerialization';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkDispatch } from 'app/types/store';
@@ -33,44 +34,54 @@ export function initializeFromURL(
   dispatch(clearPanes());
 
   Promise.all(
-    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
-      return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
-        return Promise.resolve(
-          // Given the Grafana datasource will always be present, this should always be defined.
-          paneDatasource
-            ? queries.length
-              ? // if we have queries in the URL, we use them
-                withUniqueRefIds(queries)
-                  // but filter out the ones that are not compatible with the pane datasource
-                  .filter(getQueryFilter(paneDatasource))
-                  .map(
-                    isMixedDatasource(paneDatasource)
-                      ? identity<DataQuery>
-                      : (query) => ({ ...query, datasource: paneDatasource.getRef() })
-                  )
-              : getDatasourceSrv()
-                  // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                  .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                  .then((ds) => [getDefaultQuery(ds)])
-            : []
-        ).then(async (queries) => {
-          // we remove queries that have an invalid datasources
-          let validQueries = await removeQueriesWithInvalidDatasource(queries);
+    Object.entries(urlState.panes).map(
+      ([exploreId, { datasource, queries, range, panelsState, compact, variables }]) => {
+        return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
+          return Promise.resolve(
+            // Given the Grafana datasource will always be present, this should always be defined.
+            paneDatasource
+              ? queries.length
+                ? // if we have queries in the URL, we use them
+                  withUniqueRefIds(queries)
+                    // but filter out the ones that are not compatible with the pane datasource
+                    .filter(getQueryFilter(paneDatasource))
+                    .map(
+                      isMixedDatasource(paneDatasource)
+                        ? identity<DataQuery>
+                        : (query) => ({ ...query, datasource: paneDatasource.getRef() })
+                    )
+                : getDatasourceSrv()
+                    // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                    .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
+                    .then((ds) => [getDefaultQuery(ds)])
+              : []
+          ).then(async (queries) => {
+            // we remove queries that have an invalid datasources
+            let validQueries = await removeQueriesWithInvalidDatasource(queries);
 
-          if (!validQueries.length && paneDatasource) {
-            // and in case there's no query left we add a default one.
-            validQueries = [
-              getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
-            ];
-          }
+            if (!validQueries.length && paneDatasource) {
+              // and in case there's no query left we add a default one.
+              validQueries = [
+                getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
+              ];
+            }
 
-          return { exploreId, compact, range, panelsState, queries: validQueries, datasource: paneDatasource };
+            return {
+              exploreId,
+              compact,
+              range,
+              panelsState,
+              queries: validQueries,
+              datasource: paneDatasource,
+              variables,
+            };
+          });
         });
-      });
-    })
+      }
+    )
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact, variables: urlVariables }) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -80,6 +91,7 @@ export function initializeFromURL(
             panelsState,
             eventBridge: new EventBusSrv(),
             compact: !!compact,
+            variables: urlVariables && urlVariables.length > 0 ? deserializeVariables(urlVariables) : undefined,
           })
         ).unwrap();
       })

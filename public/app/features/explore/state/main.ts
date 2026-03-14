@@ -17,6 +17,7 @@ import { withUniqueRefIds } from '../utils/queries';
 import { DEFAULT_RANGE } from './constants';
 import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
 import { makeExplorePaneState } from './utils';
+import { deserializeVariables, serializeVariableSet } from './variablesSerialization';
 
 //
 // Actions and Payloads
@@ -87,6 +88,10 @@ export const splitOpen = createAsyncThunk(
       newPaneId = generateExploreId();
     }
 
+    const clonedVariables = originState?.variableSet
+      ? deserializeVariables(serializeVariableSet(originState.variableSet) ?? [])
+      : [];
+
     await dispatch(
       createNewSplitOpenPane({
         exploreId: newPaneId,
@@ -97,6 +102,7 @@ export const splitOpen = createAsyncThunk(
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
         compact: !!options?.compact,
+        variables: clonedVariables,
       })
     );
 
