@@ -5,7 +5,7 @@
  * The panel is identified by its element name (key in the elements map).
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import type { VizPanel } from '@grafana/scenes';
 
@@ -14,12 +14,12 @@ import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem'
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const movePanelPayloadSchema = payloads.movePanel;
 
-export type MovePanelPayload = z.infer<typeof movePanelPayloadSchema>;
+export type MovePanelPayload = InferOutput<typeof movePanelPayloadSchema>;
 
 /**
  * Apply grid position fields to the DashboardGridItem wrapping a panel.
@@ -56,7 +56,7 @@ function applyGridPosition(
 
 export const movePanelCommand: MutationCommand<MovePanelPayload> = {
   name: 'MOVE_PANEL',
-  description: payloads.movePanel.description ?? '',
+  description: getPayloadDescription(payloads.movePanel),
 
   payloadSchema: payloads.movePanel,
   permission: requiresNewDashboardLayouts,

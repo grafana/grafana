@@ -4,21 +4,21 @@
  * Update a row's metadata (title, collapse, hideHeader, fillScreen) by path.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const updateRowPayloadSchema = payloads.updateRow;
 
-export type UpdateRowPayload = z.infer<typeof updateRowPayloadSchema>;
+export type UpdateRowPayload = InferOutput<typeof updateRowPayloadSchema>;
 
 export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
   name: 'UPDATE_ROW',
-  description: payloads.updateRow.description ?? '',
+  description: getPayloadDescription(payloads.updateRow),
 
   payloadSchema: payloads.updateRow,
   permission: requiresNewDashboardLayouts,

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type GenericSchema, literal, number as vNumber, object, safeParse, string as vString } from 'valibot';
 
 import {
   GridLayoutItemKind,
@@ -139,22 +139,22 @@ export function validatePanelKindV2(value: unknown): asserts value is PanelKind 
   }
 }
 
-const ElementReferenceSchema = z.object({
-  kind: z.literal('ElementReference'),
-  name: z.string(),
+const ElementReferenceSchema = object({
+  kind: literal('ElementReference'),
+  name: vString(),
 });
 
-const GridLayoutItemKindSchema = z.object({
-  kind: z.literal('GridLayoutItem'),
-  spec: z.object({
-    x: z.number(),
-    y: z.number(),
-    width: z.number(),
-    height: z.number(),
+const GridLayoutItemKindSchema = object({
+  kind: literal('GridLayoutItem'),
+  spec: object({
+    x: vNumber(),
+    y: vNumber(),
+    width: vNumber(),
+    height: vNumber(),
     element: ElementReferenceSchema,
   }),
-}) satisfies z.ZodType<GridLayoutItemKind>;
+}) satisfies GenericSchema<unknown, GridLayoutItemKind>;
 
 export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
-  return GridLayoutItemKindSchema.safeParse(value).success;
+  return safeParse(GridLayoutItemKindSchema, value).success;
 }

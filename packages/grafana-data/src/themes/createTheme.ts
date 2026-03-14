@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import { type InferOutput, object, optional, string as vString } from 'valibot';
 
 import { createBreakpoints } from './breakpoints';
 import { createColors, ThemeColorsInputSchema } from './createColors';
@@ -13,18 +13,18 @@ import { createVisualizationColors, ThemeVisualizationColorsInputSchema } from '
 import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
 
-export const NewThemeOptionsSchema = z.object({
-  name: z.string(),
-  id: z.string(),
-  colors: ThemeColorsInputSchema.optional(),
-  spacing: ThemeSpacingOptionsSchema.optional(),
-  shape: ThemeShapeInputSchema.optional(),
-  typography: ThemeTypographyInputSchema.optional(),
-  visualization: ThemeVisualizationColorsInputSchema.optional(),
+export const NewThemeOptionsSchema = object({
+  name: vString(),
+  id: vString(),
+  colors: optional(ThemeColorsInputSchema),
+  spacing: optional(ThemeSpacingOptionsSchema),
+  shape: optional(ThemeShapeInputSchema),
+  typography: optional(ThemeTypographyInputSchema),
+  visualization: optional(ThemeVisualizationColorsInputSchema),
 });
 
 /** @internal */
-export type NewThemeOptions = z.infer<typeof NewThemeOptionsSchema>;
+export type NewThemeOptions = InferOutput<typeof NewThemeOptionsSchema>;
 
 /** @internal */
 export function createTheme(

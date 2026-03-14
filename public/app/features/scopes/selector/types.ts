@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { array, boolean as vBoolean, object, optional, picklist, string as vString } from 'valibot';
 
 import { Scope, ScopeNode } from '@grafana/data';
 
@@ -26,46 +26,49 @@ export interface RecentScope extends Scope {
   scopeNodeId?: string;
 }
 
-// Zod schemas for type validation
-export const ScopeSpecFilterSchema = z.object({
-  key: z.string(),
-  value: z.string(),
-  values: z.array(z.string()).optional(),
-  operator: z.enum(['equals', 'not-equals', 'regex-match', 'regex-not-match', 'one-of', 'not-one-of']),
+// Valibot schemas for type validation
+export const ScopeSpecFilterSchema = object({
+  key: vString(),
+  value: vString(),
+  values: optional(array(vString())),
+  operator: picklist(['equals', 'not-equals', 'regex-match', 'regex-not-match', 'one-of', 'not-one-of']),
 });
 
-export const ScopeSpecSchema = z.object({
-  title: z.string(),
-  defaultPath: z.array(z.string()).optional(),
-  filters: z.array(ScopeSpecFilterSchema).optional(),
+export const ScopeSpecSchema = object({
+  title: vString(),
+  defaultPath: optional(array(vString())),
+  filters: optional(array(ScopeSpecFilterSchema)),
 });
 
-export const ScopeSchema = z.object({
-  metadata: z.object({
-    name: z.string(),
+const scopeEntries = {
+  metadata: object({
+    name: vString(),
   }),
   spec: ScopeSpecSchema,
+};
+
+export const ScopeSchema = object(scopeEntries);
+
+export const ScopeNodeSpecSchema = object({
+  nodeType: picklist(['container', 'leaf']),
+  title: vString(),
+  subTitle: optional(vString()),
+  description: optional(vString()),
+  disableMultiSelect: optional(vBoolean()),
+  linkId: optional(vString()),
+  linkType: optional(picklist(['scope'])),
+  parentName: optional(vString()),
 });
 
-export const ScopeNodeSpecSchema = z.object({
-  nodeType: z.enum(['container', 'leaf']),
-  title: z.string(),
-  subTitle: z.string().optional(),
-  description: z.string().optional(),
-  disableMultiSelect: z.boolean().optional(),
-  linkId: z.string().optional(),
-  linkType: z.enum(['scope']).optional(),
-  parentName: z.string().optional(),
-});
-
-export const ScopeNodeSchema = z.object({
-  metadata: z.object({
-    name: z.string(),
+export const ScopeNodeSchema = object({
+  metadata: object({
+    name: vString(),
   }),
   spec: ScopeNodeSpecSchema,
 });
 
-export const RecentScopeSchema = ScopeSchema.extend({
-  parentNode: ScopeNodeSchema.optional(),
-  scopeNodeId: z.string().optional(),
+export const RecentScopeSchema = object({
+  ...scopeEntries,
+  parentNode: optional(ScopeNodeSchema),
+  scopeNodeId: optional(vString()),
 });

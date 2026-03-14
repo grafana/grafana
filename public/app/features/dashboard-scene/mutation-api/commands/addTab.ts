@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
@@ -14,16 +14,16 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const addTabPayloadSchema = payloads.addTab;
 
-export type AddTabPayload = z.infer<typeof addTabPayloadSchema>;
+export type AddTabPayload = InferOutput<typeof addTabPayloadSchema>;
 
 export const addTabCommand: MutationCommand<AddTabPayload> = {
   name: 'ADD_TAB',
-  description: payloads.addTab.description ?? '',
+  description: getPayloadDescription(payloads.addTab),
 
   payloadSchema: payloads.addTab,
   permission: requiresNewDashboardLayouts,

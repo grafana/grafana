@@ -90,8 +90,8 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
     "uplot": "1.6.32",
-    "xss": "^1.0.14",
-    "zod": "^4.3.0"
+    "valibot": "^1.2.0",
+    "xss": "^1.0.14"
   },
   "devDependencies": {
     "@grafana/scenes": "7.1.1",
@@ -105,6 +105,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "1.4.6",
+    "@valibot/to-json-schema": "^1.5.0",
     "esbuild": "0.25.8",
     "react": "18.3.1",
     "react-dom": "18.3.1",

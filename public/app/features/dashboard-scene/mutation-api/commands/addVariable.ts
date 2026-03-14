@@ -4,24 +4,24 @@
  * Add a template variable to the dashboard using v2beta1 VariableKind format.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { sceneGraph } from '@grafana/scenes';
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
 
 export const addVariablePayloadSchema = payloads.addVariable;
 
-export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
+export type AddVariablePayload = InferOutput<typeof addVariablePayloadSchema>;
 
 export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   name: 'ADD_VARIABLE',
-  description: payloads.addVariable.description ?? '',
+  description: getPayloadDescription(payloads.addVariable),
 
   payloadSchema: payloads.addVariable,
   permission: requiresEdit,

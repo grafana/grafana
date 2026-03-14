@@ -5,7 +5,7 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import { z } from 'zod';
+import type { GenericSchema } from 'valibot';
 
 import { config } from '@grafana/runtime';
 
@@ -31,8 +31,8 @@ export interface MutationCommand<T = unknown> {
   name: string;
   /** Human-readable description. */
   description: string;
-  /** Zod schema for runtime payload validation. Single source of truth. */
-  payloadSchema: z.ZodType<T>;
+  /** Valibot schema for runtime payload validation. Single source of truth. */
+  payloadSchema: GenericSchema<unknown, T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck;
   /** When true, the command only reads state and will not trigger a forceRender. */

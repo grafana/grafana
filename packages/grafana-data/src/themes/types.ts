@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { object, optional, string as vString } from 'valibot';
 
 import { GrafanaTheme } from '../types/theme';
 
@@ -37,29 +37,44 @@ export interface GrafanaTheme2 {
   flags: {};
 }
 
-export const ThemeRichColorInputSchema = z.object({
+export const ThemeRichColorInputSchema = object({
   /** color intent (primary, secondary, info, error, etc) */
-  name: z.string().optional(),
+  name: optional(vString()),
   /** Main color */
-  main: z.string().optional(),
+  main: optional(vString()),
   /** Used for hover */
-  shade: z.string().optional(),
+  shade: optional(vString()),
   /** Used for text */
-  text: z.string().optional(),
+  text: optional(vString()),
   /** Used for borders */
-  border: z.string().optional(),
+  border: optional(vString()),
   /** Used subtly colored backgrounds */
-  transparent: z.string().optional(),
+  transparent: optional(vString()),
   /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
-  borderTransparent: z.string().optional(),
+  borderTransparent: optional(vString()),
   /** Text color for text ontop of main */
-  contrastText: z.string().optional(),
+  contrastText: optional(vString()),
 });
 
-export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
-
 /** @alpha */
-export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
+export interface ThemeRichColor {
+  /** color intent (primary, secondary, info, error, etc) */
+  name: string;
+  /** Main color */
+  main: string;
+  /** Used for hover */
+  shade: string;
+  /** Used for text */
+  text: string;
+  /** Used for borders */
+  border: string;
+  /** Used subtly colored backgrounds */
+  transparent: string;
+  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
+  borderTransparent: string;
+  /** Text color for text ontop of main */
+  contrastText: string;
+}
 
 /** @internal */
 export type DeepPartial<T> = {

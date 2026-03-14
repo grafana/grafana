@@ -4,22 +4,22 @@
  * Reorder a tab within its parent or move it to a different parent.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
 import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const moveTabPayloadSchema = payloads.moveTab;
 
-export type MoveTabPayload = z.infer<typeof moveTabPayloadSchema>;
+export type MoveTabPayload = InferOutput<typeof moveTabPayloadSchema>;
 
 export const moveTabCommand: MutationCommand<MoveTabPayload> = {
   name: 'MOVE_TAB',
-  description: payloads.moveTab.description ?? '',
+  description: getPayloadDescription(payloads.moveTab),
 
   payloadSchema: payloads.moveTab,
   permission: requiresNewDashboardLayouts,

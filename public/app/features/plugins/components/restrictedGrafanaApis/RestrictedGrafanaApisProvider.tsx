@@ -1,14 +1,25 @@
 import { PropsWithChildren, ReactElement } from 'react';
+import { type GenericSchema, parse, safeParse } from 'valibot';
 
-import { RestrictedGrafanaApisContextProvider, RestrictedGrafanaApisContextType } from '@grafana/data';
+import { RestrictedGrafanaApisContextProvider, RestrictedGrafanaApisContextType, SchemaValidator } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { dashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 
+function wrapValibotSchema(schema: GenericSchema): SchemaValidator {
+  return {
+    parse: (data: unknown) => parse(schema, data),
+    safeParse: (data: unknown) => {
+      const result = safeParse(schema, data);
+      return result.success ? { success: true, data: result.output } : { success: false, error: result.issues };
+    },
+  };
+}
+
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
   ? {
-      alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
+      alertingAlertRuleFormSchema: wrapValibotSchema(alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema),
       dashboardMutationAPI: dashboardMutationApi,
     }
   : {};

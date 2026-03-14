@@ -5,12 +5,12 @@
  * if the dashboard is not already in edit mode.
  */
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { requiresEdit, type MutationCommand } from './types';
 
 export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
   name: 'ENTER_EDIT_MODE',
-  description: payloads.enterEditMode.description ?? '',
+  description: getPayloadDescription(payloads.enterEditMode),
 
   payloadSchema: payloads.enterEditMode,
   permission: requiresEdit,

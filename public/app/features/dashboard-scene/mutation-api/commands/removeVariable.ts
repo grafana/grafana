@@ -4,19 +4,19 @@
  * Remove a template variable from the dashboard by name.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
 
 export const removeVariablePayloadSchema = payloads.removeVariable;
 
-export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
+export type RemoveVariablePayload = InferOutput<typeof removeVariablePayloadSchema>;
 
 export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   name: 'REMOVE_VARIABLE',
-  description: payloads.removeVariable.description ?? '',
+  description: getPayloadDescription(payloads.removeVariable),
 
   payloadSchema: payloads.removeVariable,
   permission: requiresEdit,

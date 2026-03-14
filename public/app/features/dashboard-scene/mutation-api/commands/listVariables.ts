@@ -8,12 +8,12 @@ import { SceneVariableSet } from '@grafana/scenes';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
 export const listVariablesCommand: MutationCommand<Record<string, never>> = {
   name: 'LIST_VARIABLES',
-  description: payloads.listVariables.description ?? '',
+  description: getPayloadDescription(payloads.listVariables),
 
   payloadSchema: payloads.listVariables,
   permission: readOnly,

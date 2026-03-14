@@ -4,21 +4,21 @@
  * Update a tab's metadata (title) by path.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const updateTabPayloadSchema = payloads.updateTab;
 
-export type UpdateTabPayload = z.infer<typeof updateTabPayloadSchema>;
+export type UpdateTabPayload = InferOutput<typeof updateTabPayloadSchema>;
 
 export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
   name: 'UPDATE_TAB',
-  description: payloads.updateTab.description ?? '',
+  description: getPayloadDescription(payloads.updateTab),
 
   payloadSchema: payloads.updateTab,
   permission: requiresNewDashboardLayouts,

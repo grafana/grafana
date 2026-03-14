@@ -5,18 +5,18 @@
  * and a trimmed elements map (title, description, vizConfig.group only).
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { requiresNewDashboardLayoutsReadOnly, type MutationCommand } from './types';
 
 export const getLayoutPayloadSchema = payloads.getLayout;
 
-export type GetLayoutPayload = z.infer<typeof getLayoutPayloadSchema>;
+export type GetLayoutPayload = InferOutput<typeof getLayoutPayloadSchema>;
 
 interface TrimmedPanelKind {
   kind: 'Panel';
@@ -108,7 +108,7 @@ function injectPaths(layout: any, prefix = ''): void {
 
 export const getLayoutCommand: MutationCommand<GetLayoutPayload> = {
   name: 'GET_LAYOUT',
-  description: payloads.getLayout.description ?? '',
+  description: getPayloadDescription(payloads.getLayout),
 
   payloadSchema: payloads.getLayout,
   permission: requiresNewDashboardLayoutsReadOnly,

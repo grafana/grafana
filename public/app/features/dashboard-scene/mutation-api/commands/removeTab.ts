@@ -4,23 +4,23 @@
  * Remove a tab by path. Optionally move contained panels to another group.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
 import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
 import { movePanelsToLayout } from './movePanelsHelper';
-import { payloads } from './schemas';
+import { getPayloadDescription, payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
 export const removeTabPayloadSchema = payloads.removeTab;
 
-export type RemoveTabPayload = z.infer<typeof removeTabPayloadSchema>;
+export type RemoveTabPayload = InferOutput<typeof removeTabPayloadSchema>;
 
 export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
   name: 'REMOVE_TAB',
-  description: payloads.removeTab.description ?? '',
+  description: getPayloadDescription(payloads.removeTab),
 
   payloadSchema: payloads.removeTab,
   permission: requiresNewDashboardLayouts,

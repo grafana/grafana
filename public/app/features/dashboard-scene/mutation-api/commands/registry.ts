@@ -5,6 +5,8 @@
  * The DashboardMutationClient iterates over ALL_COMMANDS generically.
  */
 
+import { safeParse } from 'valibot';
+
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
@@ -64,13 +66,13 @@ export function validatePayload(
 
   const schema = cmd.payloadSchema;
 
-  const result = schema.safeParse(payload);
+  const result = safeParse(schema, payload);
   if (result.success) {
-    return { success: true, data: result.data };
+    return { success: true, data: result.output };
   }
 
-  const errorMessages = result.error.issues.map((issue) => {
-    const path = issue.path.join('.');
+  const errorMessages = result.issues.map((issue) => {
+    const path = issue.path?.map((p) => p.key).join('.') ?? '';
     return path ? `${path}: ${issue.message}` : issue.message;
   });
   return { success: false, error: `Validation failed: ${errorMessages.join(', ')}` };

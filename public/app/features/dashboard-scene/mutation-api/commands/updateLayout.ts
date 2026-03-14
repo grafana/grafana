@@ -8,7 +8,7 @@
  * If layoutType is omitted, keeps the current type and just applies options.
  */
 
-import { z } from 'zod';
+import type { InferOutput } from 'valibot';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -18,7 +18,7 @@ import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 
 import { resolveLayoutPath } from './layoutPathResolver';
-import { autoGridOptionsSchema, payloads } from './schemas';
+import { autoGridOptionsSchema, getPayloadDescription, payloads } from './schemas';
 import {
   enterEditModeIfNeeded,
   requiresNewDashboardLayouts,
@@ -28,10 +28,10 @@ import {
 
 export const updateLayoutPayloadSchema = payloads.updateLayout;
 
-export type UpdateLayoutPayload = z.infer<typeof updateLayoutPayloadSchema>;
+export type UpdateLayoutPayload = InferOutput<typeof updateLayoutPayloadSchema>;
 
 type LayoutType = 'RowsLayout' | 'TabsLayout' | 'GridLayout' | 'AutoGridLayout';
-type AutoGridOptions = z.infer<typeof autoGridOptionsSchema>;
+type AutoGridOptions = InferOutput<typeof autoGridOptionsSchema>;
 
 const VALID_LAYOUT_TYPES: ReadonlySet<string> = new Set(['RowsLayout', 'TabsLayout', 'GridLayout', 'AutoGridLayout']);
 const GROUP_TYPES = new Set<LayoutType>(['RowsLayout', 'TabsLayout']);
@@ -174,7 +174,7 @@ function createNewLayout(layoutType: LayoutType, currentLayout: DashboardLayoutM
 
 export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
   name: 'UPDATE_LAYOUT',
-  description: payloads.updateLayout.description ?? '',
+  description: getPayloadDescription(payloads.updateLayout),
 
   payloadSchema: payloads.updateLayout,
   permission: requiresNewDashboardLayouts,

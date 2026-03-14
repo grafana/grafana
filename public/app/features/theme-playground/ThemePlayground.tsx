@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
+import { safeParse } from 'valibot';
 
 import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
 import { NewThemeOptionsSchema } from '@grafana/data/internal';
@@ -71,11 +72,11 @@ const experimentalDefinitions: Record<string, unknown> = {
 
 // Add additional themes
 for (const [name, json] of Object.entries(experimentalDefinitions)) {
-  const result = NewThemeOptionsSchema.safeParse(json);
+  const result = safeParse(NewThemeOptionsSchema, json);
   if (!result.success) {
-    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+    console.error(`Invalid theme definition for theme ${name}: ${result.issues[0].message}`);
   } else {
-    themeMap[result.data.id] = result.data;
+    themeMap[result.output.id] = result.output;
   }
 }
 
@@ -110,11 +111,11 @@ export default function ThemePlayground() {
 
   const onEditorBlur = (value: string) => {
     try {
-      const themeInput = NewThemeOptionsSchema.safeParse(JSON.parse(value));
+      const themeInput = safeParse(NewThemeOptionsSchema, JSON.parse(value));
       if (!themeInput.success) {
-        dispatch(notifyApp(createErrorNotification('Failed to parse theme', themeInput.error.issues[0].message)));
+        dispatch(notifyApp(createErrorNotification('Failed to parse theme', themeInput.issues[0].message)));
       } else {
-        updateThemePreview(themeInput.data);
+        updateThemePreview(themeInput.output);
       }
     } catch (error) {
       dispatch(notifyApp(createErrorNotification('Failed to parse JSON', `${error}`)));
