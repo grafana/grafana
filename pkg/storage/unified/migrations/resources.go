@@ -72,11 +72,44 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 
 const migrationLogTableName = "unifiedstorage_migration_log"
 
+type migrationLogRow struct {
+	MigrationID string `xorm:"migration_id"`
+}
+
+func migrationLogTableExists(sqlStore db.DB) (bool, error) {
+	exists, err := sqlStore.GetEngine().IsTableExist(migrationLogTableName)
+	if err != nil {
+		return false, fmt.Errorf("failed to check migration log table existence: %w", err)
+	}
+	return exists, nil
+}
+
+func migrationLogIDs(ctx context.Context, sqlStore db.DB) (map[string]struct{}, error) {
+	rows := make([]migrationLogRow, 0)
+	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(migrationLogTableName).
+			Where("success = ? AND error = ?", true, "").
+			Cols("migration_id").
+			Find(&rows)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load migration log rows: %w", err)
+	}
+
+	ids := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		ids[row.MigrationID] = struct{}{}
+	}
+	return ids, nil
+}
+
 func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		count, err = sess.Table(migrationLogTableName).Where("migration_id = ?", migrationID).Count()
+		count, err = sess.Table(migrationLogTableName).
+			Where("migration_id = ? AND success = ? AND error = ?", migrationID, true, "").
+			Count()
 		return err
 	})
 	if err != nil {

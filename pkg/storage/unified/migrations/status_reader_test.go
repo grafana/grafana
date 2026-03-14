@@ -2,9 +2,13 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/stretchr/testify/require"
@@ -34,7 +38,7 @@ func TestMigrationStatusReader_FindDefinition(t *testing.T) {
 		},
 	})
 
-	reader := &migrationStatusReader{registry: registry}
+	reader := newTestStatusReader(t, &setting.Cfg{}, registry)
 
 	t.Run("finds definition for folder resource", func(t *testing.T) {
 		def, ok := reader.findDefinition(folderGR)
@@ -73,12 +77,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode5},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(), // empty registry = no migration log path
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
@@ -88,12 +90,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode4},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeUnified, mode)
 	})
 
@@ -103,12 +103,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -118,12 +116,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode2},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -133,12 +129,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode3},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
 
@@ -148,12 +142,10 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode0},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 
@@ -161,31 +153,26 @@ func TestMigrationStatusReader_GetStorageMode_ConfigOnly(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), unknownGR)
+		mode, err := reader.GetStorageMode(context.Background(), unknownGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 
 	t.Run("nil UnifiedStorage returns Legacy", func(t *testing.T) {
 		cfg := &setting.Cfg{}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: NewMigrationRegistry(),
-		}
+		reader := newTestStatusReader(t, cfg, NewMigrationRegistry())
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeLegacy, mode)
 	})
 }
 
 func TestMigrationStatusReader_GetStorageMode_DualWritePriority(t *testing.T) {
-	// Verify that Mode1 config takes priority even when a resource is registered
-	// in the migration registry (but no DB to check migration log).
-	// This simulates cloud holding a resource in DualWrite.
+	// Verify that Mode1 config takes priority when a resource is registered
+	// but the migration log table is not available yet.
 
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
@@ -202,16 +189,178 @@ func TestMigrationStatusReader_GetStorageMode_DualWritePriority(t *testing.T) {
 				"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
 			},
 		}
-		reader := &migrationStatusReader{
-			cfg:      cfg,
-			registry: registry,
-			// sqlStore is nil — if we reach the migration log check, it will panic.
-			// The test verifies Mode1 short-circuits before that.
-		}
+		reader := newTestStatusReader(t, cfg, registry)
 
-		mode := reader.GetStorageMode(context.Background(), playlistGR)
+		mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+		require.NoError(t, err)
 		require.Equal(t, contract.StorageModeDualWrite, mode)
 	})
+}
+
+func TestProvideMigrationStatusReader_UsesConfigWhenTableIsMissing(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+
+	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(sess *infraDB.Session) error {
+		_, err := sess.Exec("DROP TABLE IF EXISTS " + migrationLogTableName)
+		return err
+	}))
+
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode5},
+	}
+
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, newPlaylistRegistry())
+	require.NoError(t, err)
+
+	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+	require.NoError(t, err)
+	require.Equal(t, contract.StorageModeUnified, mode)
+}
+
+func TestMigrationStatusReader_GetStorageMode_MigrationLogOverridesMode1Immediately(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	registry := newPlaylistRegistry()
+
+	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
+
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+	}
+
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, registry)
+	require.NoError(t, err)
+
+	require.NoError(t, insertMigrationLogRow(sqlStore, "playlists migration", true, ""))
+
+	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+	require.NoError(t, err)
+	require.Equal(t, contract.StorageModeUnified, mode)
+}
+
+func TestMigrationStatusReader_GetStorageMode_RechecksTableAvailabilityAfterStartup(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	registry := newPlaylistRegistry()
+
+	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(sess *infraDB.Session) error {
+		_, err := sess.Exec("DROP TABLE IF EXISTS " + migrationLogTableName)
+		return err
+	}))
+
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+	}
+
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, registry)
+	require.NoError(t, err)
+
+	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
+	require.NoError(t, insertMigrationLogRow(sqlStore, "playlists migration", true, ""))
+
+	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+	require.NoError(t, err)
+	require.Equal(t, contract.StorageModeUnified, mode)
+}
+
+func TestMigrationStatusReader_GetStorageMode_IgnoresMigrationLogRowsWithError(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	registry := newPlaylistRegistry()
+
+	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
+
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+	}
+
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, registry)
+	require.NoError(t, err)
+
+	require.NoError(t, insertMigrationLogRow(sqlStore, "playlists migration", false, "boom"))
+
+	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+	require.NoError(t, err)
+	require.Equal(t, contract.StorageModeDualWrite, mode)
+}
+
+func TestProvideMigrationStatusReader_FailsWhenStartupMigrationLogLoadFails(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
+
+	reader, err := ProvideMigrationStatusReader(&failingMigrationStatusDB{
+		DB:   sqlStore,
+		fail: true,
+	}, cfg, newPlaylistRegistry())
+	require.Nil(t, reader)
+	require.ErrorContains(t, err, "failed to load migration log rows")
+}
+
+func TestMigrationStatusReader_GetStorageMode_FailsWhenRuntimeMigrationLookupFails(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	registry := newPlaylistRegistry()
+
+	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
+
+	failingDB := &failingMigrationStatusDB{DB: sqlStore}
+	reader, err := ProvideMigrationStatusReader(failingDB, cfg, registry)
+	require.NoError(t, err)
+
+	failingDB.fail = true
+	_, err = reader.GetStorageMode(context.Background(), playlistGR)
+	require.ErrorContains(t, err, "failed to resolve storage mode")
+}
+
+func newPlaylistRegistry() *MigrationRegistry {
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "playlists",
+		MigrationID: "playlists migration",
+		Resources: []ResourceInfo{
+			{GroupResource: schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}},
+		},
+	})
+	return registry
+}
+
+func newTestStatusReader(t *testing.T, cfg *setting.Cfg, registry *MigrationRegistry) *migrationStatusReader {
+	t.Helper()
+
+	sqlStore, _ := infraDB.InitTestDBWithCfg(t)
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, registry)
+	require.NoError(t, err)
+
+	typed, ok := reader.(*migrationStatusReader)
+	require.True(t, ok)
+	return typed
+}
+
+func insertMigrationLogRow(sqlStore infraDB.DB, migrationID string, success bool, migrationError string) error {
+	return sqlStore.WithDbSession(context.Background(), func(sess *infraDB.Session) error {
+		_, err := sess.Exec(
+			"INSERT INTO "+migrationLogTableName+" (migration_id, sql, success, error, timestamp) VALUES (?, ?, ?, ?, ?)",
+			migrationID,
+			"test",
+			success,
+			migrationError,
+			time.Now(),
+		)
+		return err
+	})
+}
+
+type failingMigrationStatusDB struct {
+	infraDB.DB
+	fail bool
+}
+
+func (f *failingMigrationStatusDB) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	if f.fail {
+		return errors.New("boom")
+	}
+	return f.DB.WithDbSession(ctx, callback)
 }
 
 func TestStorageMode_String(t *testing.T) {
