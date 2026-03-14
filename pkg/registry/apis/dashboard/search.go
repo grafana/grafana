@@ -261,6 +261,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:      spec.BoolProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "semantic",
+										In:          "query",
+										Description: "[experimental] use semantic (hybrid text + vector) search",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -402,6 +411,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, err, w)
 		}
 		return
+	}
+
+	// When semantic=true is set and there's a query, enable hybrid text+vector search.
+	if queryParams.Get("semantic") == "true" && searchRequest.Query != "" {
+		searchRequest.Semantic = true
+		searchRequest.VectorField = "title"
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
