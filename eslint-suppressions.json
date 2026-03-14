@@ -3867,11 +3867,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/geomap/components/ObservablePropsWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/geomap/editor/GeomapStyleRulesEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
