@@ -2,11 +2,13 @@ package teamapi
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -400,4 +402,76 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
+}
+
+func TestCheckK8sFeatureFlags(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		kubernetesRedirectFlag  bool
+		kubernetesAuthnMutation bool
+		expectedResult          bool
+	}{
+		{
+			name:                    "both flags enabled - should redirect",
+			kubernetesRedirectFlag:  true,
+			kubernetesAuthnMutation: true,
+			expectedResult:          true,
+		},
+		{
+			name:                    "only redirect flag enabled - should not redirect",
+			kubernetesRedirectFlag:  true,
+			kubernetesAuthnMutation: false,
+			expectedResult:          false,
+		},
+		{
+			name:                    "only mutation flag enabled - should not redirect",
+			kubernetesRedirectFlag:  false,
+			kubernetesAuthnMutation: true,
+			expectedResult:          false,
+		},
+		{
+			name:                    "both flags disabled - should not redirect",
+			kubernetesRedirectFlag:  false,
+			kubernetesAuthnMutation: false,
+			expectedResult:          false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			setupOpenFeatureForTest(t, tc.kubernetesRedirectFlag, tc.kubernetesAuthnMutation)
+
+			ctx := context.Background()
+			result := checkK8sFeatureFlags(ctx)
+
+			assert.Equal(t, tc.expectedResult, result, "k8s redirect enabled check mismatch")
+		})
+	}
+}
+
+func setupOpenFeatureForTest(t *testing.T, kubernetesRedirectFlag, kubernetesAuthnMutation bool) {
+	t.Helper()
+
+	flags := map[string]bool{
+		featuremgmt.FlagKubernetesTeamsHandlerRedirect: kubernetesRedirectFlag,
+		featuremgmt.FlagKubernetesAuthnMutation:        kubernetesAuthnMutation,
+	}
+
+	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
+		ProviderType: setting.StaticProviderType,
+		StaticFlags:  convertToInMemoryFlags(flags),
+		TargetingKey: "test",
+	})
+	require.NoError(t, err)
+}
+
+func convertToInMemoryFlags(flags map[string]bool) map[string]memprovider.InMemoryFlag {
+	inMemFlags := make(map[string]memprovider.InMemoryFlag)
+	for k, v := range flags {
+		flag, err := setting.ParseFlag(k, fmt.Sprintf("%t", v))
+		if err == nil {
+			inMemFlags[k] = flag
+		}
+	}
+	return inMemFlags
 }
