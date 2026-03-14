@@ -259,4 +259,131 @@ describe('BarChart utils', () => {
       expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
   });
+
+  describe('auto-spacing for time axis labels', () => {
+    function makeTimeFrame(timestamps: number[], fieldConfig?: { unit?: string }) {
+      const df = new MutableDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: timestamps, config: fieldConfig ?? {} },
+          { name: 'value', type: FieldType.number, values: timestamps.map((_, i) => (i + 1) * 10) },
+        ],
+      });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      return df;
+    }
+
+    function getXAxisFilter(opts: { timestamps?: number[]; xTickLabelSpacing?: number; orientation?: VizOrientation; timeFieldConfig?: { unit?: string }; fieldType?: FieldType }) {
+      const isString = opts.fieldType === FieldType.string;
+      const df = isString
+        ? (() => {
+            const d = new MutableDataFrame({
+              refId: 'A',
+              fields: [
+                { name: 'category', type: FieldType.string, values: (opts.timestamps ?? []).map((_, i) => `cat${i}`) },
+                { name: 'value', type: FieldType.number, values: (opts.timestamps ?? []).map((_, i) => (i + 1) * 10) },
+              ],
+            });
+            d.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+            return d;
+          })()
+        : makeTimeFrame(opts.timestamps ?? [1609459200000, 1609545600000, 1609632000000], opts.timeFieldConfig);
+
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const result = prepConfig({
+        ...config,
+        options: { ...config.options, xTickLabelSpacing: opts.xTickLabelSpacing ?? 0 },
+        series: info.series,
+        orientation: opts.orientation ?? VizOrientation.Auto,
+      }).builder.getConfig();
+
+      return result.axes![0].filter as ((self: any, splits: number[]) => (number | null)[]) | undefined;
+    }
+
+    // Mock uPlot instance for invoking the filter function directly
+    function mockUPlot(data: number[][], bboxWidth: number, bboxHeight: number) {
+      return { data, bbox: { width: bboxWidth, height: bboxHeight } };
+    }
+
+    it('should produce a filter when xTickLabelSpacing is 0 and field is time without time: unit', () => {
+      const filter = getXAxisFilter({});
+      expect(filter).toBeDefined();
+    });
+
+    it('should not produce a filter when time field has time: unit prefix', () => {
+      const filter = getXAxisFilter({ timeFieldConfig: { unit: 'time:YYYY-MM-DD' } });
+      expect(filter).toBeUndefined();
+    });
+
+    it('should not produce a filter for string fields with xTickLabelSpacing 0', () => {
+      const filter = getXAxisFilter({ fieldType: FieldType.string, timestamps: [1, 2, 3] });
+      expect(filter).toBeUndefined();
+    });
+
+    it('should produce a filter for both horizontal and vertical bar orientations', () => {
+      const hFilter = getXAxisFilter({ orientation: VizOrientation.Vertical });
+      const vFilter = getXAxisFilter({ orientation: VizOrientation.Horizontal });
+      expect(hFilter).toBeDefined();
+      expect(vFilter).toBeDefined();
+    });
+
+    it('should keep all ticks when chart is wide enough to fit them', () => {
+      // 3 daily timestamps — labels are short (e.g. "01/01"), chart is very wide
+      const timestamps = [1609459200000, 1609545600000, 1609632000000];
+      const filter = getXAxisFilter({ timestamps })!;
+      const splits = [0, 1, 2];
+      const u = mockUPlot([timestamps], 2000, 400);
+
+      const result = filter(u, splits);
+      // All ticks should be kept (no nulls) when there's plenty of space
+      expect(result.filter((v) => v !== null)).toHaveLength(3);
+    });
+
+    it('should skip ticks when chart is too narrow to fit all labels', () => {
+      // Generate many daily timestamps so labels must overlap on a narrow chart
+      const dayMs = 24 * 60 * 60 * 1000;
+      const start = 1609459200000; // 2021-01-01
+      const timestamps = Array.from({ length: 30 }, (_, i) => start + i * dayMs);
+      const filter = getXAxisFilter({ timestamps })!;
+
+      const splits = timestamps.map((_, i) => i);
+      // 100px is far too narrow for 30 day-level labels
+      const u = mockUPlot([timestamps], 100, 400);
+
+      const result = filter(u, splits);
+      const keptTicks = result.filter((v) => v !== null);
+      // Some ticks must be filtered out
+      expect(keptTicks.length).toBeGreaterThan(0);
+      expect(keptTicks.length).toBeLessThan(timestamps.length);
+    });
+
+    it('should use font-height-based spacing for vertical axis (horizontal bars)', () => {
+      // With horizontal bars, the x-axis is vertical — spacing is based on font height not label width.
+      // A narrow bbox height should still cause tick skipping with enough data points.
+      const dayMs = 24 * 60 * 60 * 1000;
+      const start = 1609459200000;
+      const timestamps = Array.from({ length: 20 }, (_, i) => start + i * dayMs);
+      const filter = getXAxisFilter({ timestamps, orientation: VizOrientation.Horizontal })!;
+
+      const splits = timestamps.map((_, i) => i);
+      // Vertical axis: bbox.height is the relevant dimension; make it small
+      const u = mockUPlot([timestamps], 400, 80);
+
+      const result = filter(u, splits);
+      const keptTicks = result.filter((v) => v !== null);
+      expect(keptTicks.length).toBeGreaterThan(0);
+      expect(keptTicks.length).toBeLessThan(timestamps.length);
+    });
+
+    it('should handle a single data point without error', () => {
+      const timestamps = [1609459200000];
+      const filter = getXAxisFilter({ timestamps })!;
+      const splits = [0];
+      const u = mockUPlot([timestamps], 400, 400);
+
+      const result = filter(u, splits);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(0);
+    });
+  });
 });
