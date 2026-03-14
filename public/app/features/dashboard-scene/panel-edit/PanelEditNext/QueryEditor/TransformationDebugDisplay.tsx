@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
@@ -36,8 +36,11 @@ export function TransformationDebugDisplay() {
     >
       <Stack direction="row" gap={1}>
         <div className={styles.debug}>
-          <div className={styles.debugTitle}>
-            <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+          <div className={styles.debugTitleRow}>
+            <div className={styles.debugTitle}>
+              <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+            </div>
+            <ClipboardButton icon="copy" size="sm" getText={() => JSON.stringify(input, null, 2)} title="Copy to clipboard" />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={input} />
@@ -47,8 +50,11 @@ export function TransformationDebugDisplay() {
           <Icon name="arrow-right" />
         </div>
         <div className={styles.debug}>
-          <div className={styles.debugTitle}>
-            <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+          <div className={styles.debugTitleRow}>
+            <div className={styles.debugTitle}>
+              <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+            </div>
+            <ClipboardButton icon="copy" size="sm" getText={() => JSON.stringify(output, null, 2)} title="Copy to clipboard" />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={output} />
@@ -71,12 +77,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(0.5)}`,
       color: theme.colors.primary.text,
     }),
+    debugTitleRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1, 0.25),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
     debugTitle: css({
-      padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.primary,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
       flexGrow: 0,
       flexShrink: 1,
     }),
