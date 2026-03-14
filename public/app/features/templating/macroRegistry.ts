@@ -1,6 +1,4 @@
-import moment from 'moment-timezone';
-
-import { DataLinkBuiltInVars, getTimeZone, ScopedVars, urlUtil } from '@grafana/data';
+import { DataLinkBuiltInVars, getTimeZone, guessTimeZone, ScopedVars, urlUtil } from '@grafana/data';
 
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from '../variables/getAllVariableValuesForUrl';
@@ -29,5 +27,5 @@ function urlTimeRangeMacro() {
 
 function timeZoneMacro() {
   const timeZone = getTimeZone({ timeZone: getTimeSrv().timeModel?.getTimezone() });
-  return timeZone === 'browser' ? moment.tz.guess() : timeZone;
+  return timeZone === 'browser' ? guessTimeZone() : timeZone;
 }

@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import RcPicker, { PickerProps } from '@rc-component/picker';
-import generateConfig from '@rc-component/picker/lib/generate/moment';
+import generateConfig from '@rc-component/picker/lib/generate/dayjs';
 import locale from '@rc-component/picker/lib/locale/en_US';
-import { Moment } from 'moment';
+import type { Dayjs } from 'dayjs';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, DateTime, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
@@ -63,7 +63,7 @@ export const TimeOfDayPicker = ({
   const allowClear = restProps.allowEmpty ?? false;
 
   return (
-    <RcPicker<Moment>
+    <RcPicker<Dayjs>
       id={id}
       generateConfig={generateConfig}
       locale={locale}
@@ -78,7 +78,7 @@ export const TimeOfDayPicker = ({
           container: cx(styles.picker, POPUP_CLASS_NAME),
         },
       }}
-      defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
+      defaultValue={restProps.allowEmpty ? undefined : (dateTime() as unknown as Dayjs)}
       disabled={disabled}
       disabledTime={() => ({
         disabledHours,
@@ -101,7 +101,7 @@ export const TimeOfDayPicker = ({
       showNow={false}
       needConfirm={false}
       suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value ? dateTimeAsMoment(value) : value}
+      value={value ? (value as unknown as Dayjs) : undefined}
     />
   );
 };

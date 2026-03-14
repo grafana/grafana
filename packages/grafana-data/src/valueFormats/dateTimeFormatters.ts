@@ -249,40 +249,40 @@ export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
   // < 1 second
   if (size < 1000) {
     return {
-      text: toUtc(size).format('SSS\\m\\s'),
+      text: toUtc(size).format('SSS[ms]'),
     };
   }
 
   // < 1 minute
   if (size < 60000) {
-    let format = 'ss\\s:SSS\\m\\s';
+    let format = 'ss[s]:SSS[ms]';
     if (decimals === 0) {
-      format = 'ss\\s';
+      format = 'ss[s]';
     }
     return { text: toUtc(size).format(format) };
   }
 
   // < 1 hour
   if (size < 3600000) {
-    let format = 'mm\\m:ss\\s:SSS\\m\\s';
+    let format = 'mm[m]:ss[s]:SSS[ms]';
     if (decimals === 0) {
-      format = 'mm\\m';
+      format = 'mm[m]';
     } else if (decimals === 1) {
-      format = 'mm\\m:ss\\s';
+      format = 'mm[m]:ss[s]';
     }
     return { text: toUtc(size).format(format) };
   }
 
-  let format = 'mm\\m:ss\\s:SSS\\m\\s';
+  let format = 'mm[m]:ss[s]:SSS[ms]';
 
   const hours = `${Math.floor(duration(size, 'milliseconds').asHours())}h`;
 
   if (decimals === 0) {
     format = '';
   } else if (decimals === 1) {
-    format = 'mm\\m';
+    format = 'mm[m]';
   } else if (decimals === 2) {
-    format = 'mm\\m:ss\\s';
+    format = 'mm[m]:ss[s]';
   }
 
   const text = format ? `${hours}:${toUtc(size).format(format)}` : hours;
