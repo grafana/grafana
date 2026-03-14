@@ -10,7 +10,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
       borderRadius: theme.shape.radius.lg,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.colors.border.medium}`,
       backgroundClip: 'padding-box',
       outline: 'none',
       width: '750px',
