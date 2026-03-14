@@ -7848,6 +7848,10 @@
       }
     },
     "list": {
+      "failed-high": "failed",
+      "failed-high-tooltip": "This data source has critical failures reported by Grafana Advisor.",
+      "failed-low": "warn",
+      "failed-low-tooltip": "This data source has non-critical issues reported by Grafana Advisor.",
       "starred": "Starred"
     },
     "new-data-source-view": {
