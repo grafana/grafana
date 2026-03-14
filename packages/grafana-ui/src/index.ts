@@ -362,26 +362,6 @@ export { Label as BrowserLabel } from './components/BrowserLabel/Label';
 export { PanelContainer } from './components/PanelContainer/PanelContainer';
 export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 
-// -----------------------------------------------------
-// Graveyard: exported, but no longer used internally
-// These will be removed in the future
-// -----------------------------------------------------
-
-export { Graph } from './graveyard/Graph/Graph';
-export { GraphWithLegend } from './graveyard/Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './graveyard/Graph/GraphContextMenu';
-export { graphTimeFormat, graphTickFormatter } from './graveyard/Graph/utils';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
-
-export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
-export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
-export { useGraphNGContext } from './graveyard/GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './graveyard/GraphNG/utils';
-export { type GraphNGLegendEvent } from './graveyard/GraphNG/types';
-
-export { ZoomPlugin } from './graveyard/uPlot/plugins/ZoomPlugin';
-export { TooltipPlugin } from './graveyard/uPlot/plugins/TooltipPlugin';
-
 export {
   ElementSelectionContext,
   useElementSelection,
