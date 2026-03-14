@@ -632,9 +632,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"resourcepermissions.iam.grafana.app": {
-				DualWriterMode: rest.Mode0,
-			},
+			"resourcepermissions.iam.grafana.app": {DualWriterMode: rest.Mode0},
 		},
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
@@ -649,13 +647,18 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
 	require.NotEmpty(t, viewerUID, "viewer must have UID for search test")
 
-	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-	cfg.GroupVersion = &iamv0.SchemeGroupVersion
-	restClient, err := k8srest.RESTClientFor(cfg)
+	cfgAdmin := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfgAdmin.GroupVersion = &iamv0.SchemeGroupVersion
+	restClientAdmin, err := k8srest.RESTClientFor(cfgAdmin)
 	require.NoError(t, err)
 
-	t.Run("GET resourcepermissions/search without userUID returns error", func(t *testing.T) {
-		res := restClient.Get().
+	cfgViewer := dynamic.ConfigFor(helper.Org1.Viewer.NewRestConfig())
+	cfgViewer.GroupVersion = &iamv0.SchemeGroupVersion
+	restClientViewer, err := k8srest.RESTClientFor(cfgViewer)
+	require.NoError(t, err)
+
+	t.Run("GET resourcepermissions/search without userUID returns 400", func(t *testing.T) {
+		res := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
 			Do(ctx)
 		err := res.Error()
@@ -665,10 +668,58 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 	})
 
+	t.Run("GET resourcepermissions/search returns only permissions for resources caller has get_permissions on", func(t *testing.T) {
+		// Create a folder and grant Editor direct "view" on it. Viewer has no get_permissions on this folder.
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-auth-filter-folder", parentUID)
+		folderUID := folder.GetName()
+		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+		perm := newPermission("User", editorUID, "view")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() { _ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{}) }()
+
+		scopePrefix := "folders:uid:" + folderUID
+
+		// Admin has get_permissions on the folder -> should see Editor's direct permission for this folder.
+		rawAdmin, err := restClientAdmin.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param("userUID", editorUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultAdmin iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawAdmin, &resultAdmin))
+		var adminSees bool
+		for _, p := range resultAdmin.Permissions {
+			if strings.HasPrefix(p.Scope, scopePrefix) || p.Scope == scopePrefix {
+				adminSees = true
+				break
+			}
+		}
+		require.True(t, adminSees, "Admin should see Editor's direct permission for folder %q (caller has get_permissions)", folderUID)
+
+		// Viewer does not have get_permissions on this folder -> should NOT see Editor's direct permission for it.
+		rawViewer, err := restClientViewer.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param("userUID", editorUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultViewer iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawViewer, &resultViewer))
+		for _, p := range resultViewer.Permissions {
+			require.False(t, p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix),
+				"Viewer should not see Editor's permission for folder %q (caller lacks get_permissions on target)", folderUID)
+		}
+	})
+
 	t.Run("GET resourcepermissions/search returns direct permission after creating ResourcePermission for user", func(t *testing.T) {
 		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-test-folder", parentUID)
 		folderUID := folder.GetName()
-		perm := newPermission("User", viewerUID, "view")
+		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+		// Editor has admin on this folder so they have get_permissions on it (search result not filtered out).
+		perm := newPermission("User", editorUID, "admin")
 		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
 		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -676,9 +727,9 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 			_ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{})
 		}()
 
-		raw, err := restClient.Get().
+		raw, err := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", viewerUID).
+			Param("userUID", editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -692,6 +743,6 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 				break
 			}
 		}
-		require.True(t, found, "search result should contain permission for folder %q, got %+v", folderUID, result.Permissions)
+		require.True(t, found, "search result should contain permission for folder %q (editor with admin), got %+v", folderUID, result.Permissions)
 	})
 }
