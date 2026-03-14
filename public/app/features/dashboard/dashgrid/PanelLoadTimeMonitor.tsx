@@ -23,7 +23,7 @@ export const PanelLoadTimeMonitor = (props: Props) => {
     // https://firefox-source-docs.mozilla.org/performance/bestpractices.html
     requestAnimationFrame(() => {
       setTimeout(() => {
-        faro.api.pushMeasurement(
+        faro.api?.pushMeasurement(
           {
             type: PanelLogEvents.MEASURE_PANEL_LOAD_TIME_EVENT,
             values: {
