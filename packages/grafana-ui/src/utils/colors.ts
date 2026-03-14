@@ -1,4 +1,3 @@
-import { map, sortBy, flattenDeep, chunk, zip } from 'lodash';
 import tinycolor from 'tinycolor2';
 
 const PALETTE_ROWS = 4;
@@ -92,16 +91,35 @@ export const colors = [
 ];
 
 function sortColorsByHue(hexColors: string[]) {
-  const hslColors = map(hexColors, hexToHsl);
+  const hslColors = hexColors.map(hexToHsl);
 
-  const sortedHSLColors = sortBy(hslColors, ['h']);
+  const sortedHSLColors = [...hslColors].sort((a, b) => a.h - b.h);
   const chunkedHSLColors = chunk(sortedHSLColors, PALETTE_ROWS);
-  const sortedChunkedHSLColors = map(chunkedHSLColors, (chunk) => {
-    return sortBy(chunk, 'l');
+  const sortedChunkedHSLColors = chunkedHSLColors.map((c) => {
+    return [...c].sort((a, b) => a.l - b.l);
   });
-  const flattenedZippedSortedChunkedHSLColors = flattenDeep(zip(...sortedChunkedHSLColors));
+  const flattenedZippedSortedChunkedHSLColors = zip(...sortedChunkedHSLColors).flat();
 
-  return map(flattenedZippedSortedChunkedHSLColors, hslToHex);
+  return flattenedZippedSortedChunkedHSLColors.map(hslToHex);
+}
+
+/** @internal */
+export function chunk<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
+/** @internal */
+export function zip<T>(...arrays: T[][]): T[][] {
+  const maxLen = Math.max(0, ...arrays.map((a) => a.length));
+  const result: T[][] = [];
+  for (let i = 0; i < maxLen; i++) {
+    result.push(arrays.map((a) => a[i]));
+  }
+  return result;
 }
 
 function hexToHsl(color: string) {
