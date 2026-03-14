@@ -9,7 +9,6 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/heatmap.svg';
 import lightImage from '../images/light/heatmap.svg';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
@@ -54,7 +53,6 @@ export const getHeatmapTransformRegistryItem: () => TransformerRegistryItem<Heat
     description: heatmapTransformer.description,
     state: PluginState.alpha,
     categories: new Set([TransformerCategory.CreateNewVisualization]),
-    help: getTransformationContent(heatmapTransformer.id).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   };
