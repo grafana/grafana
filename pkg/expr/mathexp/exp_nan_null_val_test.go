@@ -444,3 +444,113 @@ func TestNoData(t *testing.T) {
 		})
 	}
 }
+
+func TestNoDataLogicalShortCircuit(t *testing.T) {
+	makeVars := func(a, b Value) Vars {
+		return Vars{
+			"A": resultValuesNoErr(a),
+			"B": resultValuesNoErr(b),
+		}
+	}
+
+	truthyNumber := NewNumber("", nil)
+	truthyFloat := float64(1)
+	truthyNumber.SetValue(&truthyFloat)
+
+	falsyNumber := NewNumber("", nil)
+	falsyFloat := float64(0)
+	falsyNumber.SetValue(&falsyFloat)
+
+	t.Run("OR: truthy number || NoData => fires (1)", func(t *testing.T) {
+		e, err := New("$A || $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(truthyNumber, NewNoData()), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNumberSet, res.Values[0].Type())
+		num := res.Values[0].(Number)
+		require.NotNil(t, num.GetFloat64Value())
+		require.Equal(t, float64(1), *num.GetFloat64Value())
+	})
+
+	t.Run("OR: NoData || truthy number => fires (1)", func(t *testing.T) {
+		e, err := New("$A || $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(NewNoData(), truthyNumber), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNumberSet, res.Values[0].Type())
+		num := res.Values[0].(Number)
+		require.NotNil(t, num.GetFloat64Value())
+		require.Equal(t, float64(1), *num.GetFloat64Value())
+	})
+
+	t.Run("OR: falsy number || NoData => NoData", func(t *testing.T) {
+		e, err := New("$A || $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(falsyNumber, NewNoData()), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	})
+
+	t.Run("OR: NoData || falsy number => NoData", func(t *testing.T) {
+		e, err := New("$A || $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(NewNoData(), falsyNumber), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	})
+
+	t.Run("AND: falsy number && NoData => normal (0)", func(t *testing.T) {
+		e, err := New("$A && $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(falsyNumber, NewNoData()), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNumberSet, res.Values[0].Type())
+		num := res.Values[0].(Number)
+		require.NotNil(t, num.GetFloat64Value())
+		require.Equal(t, float64(0), *num.GetFloat64Value())
+	})
+
+	t.Run("AND: NoData && falsy number => normal (0)", func(t *testing.T) {
+		e, err := New("$A && $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(NewNoData(), falsyNumber), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNumberSet, res.Values[0].Type())
+		num := res.Values[0].(Number)
+		require.NotNil(t, num.GetFloat64Value())
+		require.Equal(t, float64(0), *num.GetFloat64Value())
+	})
+
+	t.Run("AND: truthy number && NoData => NoData", func(t *testing.T) {
+		e, err := New("$A && $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(truthyNumber, NewNoData()), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	})
+
+	t.Run("AND: NoData && truthy number => NoData", func(t *testing.T) {
+		e, err := New("$A && $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(NewNoData(), truthyNumber), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	})
+
+	t.Run("addition: number + NoData => NoData (no short-circuit for arithmetic)", func(t *testing.T) {
+		e, err := New("$A + $B")
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(truthyNumber, NewNoData()), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	})
+}
