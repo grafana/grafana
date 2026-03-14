@@ -34,7 +34,7 @@ export const AdHocFilterRenderer = ({
         onChange={onKeyChange}
         allFilters={allFilters}
       />
-      <div className="gf-form">
+      <div className="gf-form" data-testid="OperatorSegment-value-wrapper">
         <OperatorSegment disabled={disabled} value={operator} onChange={onOperatorChange} />
       </div>
       <AdHocFilterValue
