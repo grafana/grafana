@@ -832,6 +832,46 @@
         }
       ]
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search": {
+      "get": {
+        "tags": [
+          "ResourcePermission"
+        ],
+        "description": "Search direct resource permissions by user UID. Returns permissions for the given user (dashboard/folder level from legacy SQL). Requires legacy SQL backend; errors when backed by unistore only.",
+        "operationId": "searchResourcePermissions",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Namespace (org scope)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userUID",
+            "in": "query",
+            "description": "User UID to list direct resource permissions for",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchExternalGroupMappings": {
       "post": {
         "tags": [
