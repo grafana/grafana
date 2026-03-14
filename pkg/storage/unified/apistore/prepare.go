@@ -178,6 +178,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
+	requester, err := identity.GetRequester(ctx)
+
+	ownerReferencesChanged := !apiequality.Semantic.DeepEqual(previous.GetOwnerReferences(), obj.GetOwnerReferences())
+	if ownerReferencesChanged && !requester.GetIsGrafanaAdmin() {
+		return v, apierrors.NewForbidden(s.gr, obj.GetName(), fmt.Errorf("must be admin to change owner references"))
+	}
+
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
