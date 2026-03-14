@@ -17,6 +17,7 @@ import {
   detectExportFormat,
   extractV1Inputs,
   extractV2Inputs,
+  interpolateLibraryPanelDatasources,
   isVariableRef,
   replaceDatasourcesInDashboard,
   DatasourceMappings,
@@ -675,6 +676,69 @@ describe('applyV1Inputs', () => {
     const panel = result.panels?.[0] as PanelWithTargets;
     expect(panel.targets?.[0].datasource?.uid).toBe('ds-uid');
     expect(panel.targets?.[1].datasource?.uid).toBe('ds-uid');
+  });
+});
+
+describe('interpolateLibraryPanelDatasources', () => {
+  it('replaces ${DS_...} placeholders in panel and target datasources', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: '${DS_INFLUX}' },
+      targets: [
+        { datasource: { type: 'influxdb', uid: '${DS_INFLUX}' }, refId: 'A' },
+        { datasource: { type: 'influxdb', uid: 'hardcoded-uid' }, refId: 'B' },
+      ],
+      type: 'timeseries',
+    };
+
+    const inputs = {
+      dataSources: [
+        {
+          name: 'DS_INFLUX',
+          label: 'InfluxDB',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'influxdb',
+        },
+      ],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'new-influx-uid', type: 'influxdb', name: 'My InfluxDB' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, inputs, form);
+
+    expect(result.datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[0].datasource.uid).toBe('new-influx-uid');
+    expect(result.targets[1].datasource.uid).toBe('hardcoded-uid');
+  });
+
+  it('returns model unchanged when no placeholders exist', () => {
+    const model = {
+      datasource: { type: 'influxdb', uid: 'some-uid' },
+      targets: [{ datasource: { type: 'influxdb', uid: 'some-uid' }, refId: 'A' }],
+      type: 'timeseries',
+    };
+
+    const result = interpolateLibraryPanelDatasources(model, sampleV1Inputs, {
+      title: 'Test',
+      uid: 'test',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'f' },
+    });
+
+    expect(result.datasource.uid).toBe('some-uid');
+    expect(result.targets[0].datasource.uid).toBe('some-uid');
   });
 });
 
