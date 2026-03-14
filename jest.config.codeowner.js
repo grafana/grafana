@@ -25,7 +25,13 @@ if (!fs.existsSync(codeownersFilePath)) {
 }
 
 const codeownersData = JSON.parse(fs.readFileSync(codeownersFilePath, 'utf8'));
-const teamFiles = codeownersData[codeownerName] || [];
+const allTeamFiles = codeownersData[codeownerName] || [];
+
+const pathGlobs = JSON.parse(process.env.CODEOWNER_PATHS || '[]');
+const teamFiles =
+  pathGlobs.length > 0
+    ? allTeamFiles.filter((file) => pathGlobs.some((glob) => path.matchesGlob(file, glob)))
+    : allTeamFiles;
 
 if (teamFiles.length === 0) {
   console.error(`ERROR: No files found for team "${codeownerName}"`);
@@ -60,7 +66,12 @@ const sourceFiles = teamFiles.filter((file) => {
 
 const testFiles = teamFiles.filter((file) => {
   const ext = path.extname(file);
-  return ['.ts', '.tsx', '.js', '.jsx'].includes(ext) && (file.includes('.test.') || file.includes('.spec.'));
+  return (
+    ['.ts', '.tsx', '.js', '.jsx'].includes(ext) &&
+    (file.includes('.test.') || file.includes('.spec.')) &&
+    // exclude scenario files – these are test fixture/helper modules, not test suites
+    !file.includes('.scenario.')
+  );
 });
 
 if (testFiles.length === 0) {
