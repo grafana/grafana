@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { SQLQuery } from '@grafana/sql';
-import config from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 import InfluxDatasource from './datasource';
 import { getMockDSInstanceSettings, mockBackendService, mockTemplateSrv } from './mocks/datasource';
