@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, parentGetter rest.Getter, maxDepth int) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -55,6 +55,10 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrFolderCannotBeParentOfItself
 	}
 
+	if err := validateParentFolderManager(ctx, parentGetter, parentName, meta); err != nil {
+		return err
+	}
+
 	// note: `parents` will include itself as the last item
 	parents, err := getter(ctx, f)
 	if err != nil {
@@ -65,6 +69,40 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
 		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
+	}
+
+	return nil
+}
+
+// validateParentFolderManager prevents creating folders inside repository-managed folders
+// unless the new folder is managed by the same repository.
+func validateParentFolderManager(ctx context.Context, getter rest.Getter, parentName string, childAccessor utils.GrafanaMetaAccessor) error {
+	parentObj, err := getter.Get(ctx, parentName, &metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to get parent folder: %w", err)
+	}
+
+	parent, ok := parentObj.(*folders.Folder)
+	if !ok {
+		return fmt.Errorf("expected folder, found %T", parentObj)
+	}
+
+	parentAccessor, err := utils.MetaAccessor(parent)
+	if err != nil {
+		return fmt.Errorf("unable to read parent folder metadata: %w", err)
+	}
+
+	parentManager, ok := parentAccessor.GetManagerProperties()
+	if !ok || parentManager.Kind != utils.ManagerKindRepo {
+		return nil
+	}
+
+	childManager, ok := childAccessor.GetManagerProperties()
+	if !ok {
+		return fmt.Errorf("folder is managed by a repository, but the child folder is not managed")
+	}
+	if childManager.Kind != utils.ManagerKindRepo || childManager.Identity != parentManager.Identity {
+		return fmt.Errorf("folder is managed by a repository, but the child folder is not managed by the same manager")
 	}
 
 	return nil
@@ -119,6 +157,11 @@ func validateOnUpdate(ctx context.Context,
 	if !ok {
 		return fmt.Errorf("expected folder, found %T", parentObj)
 	}
+
+	if err := validateParentFolderManager(ctx, getter, newParent, folderObj); err != nil {
+		return err
+	}
+
 	info, err := parents(ctx, parent)
 	if err != nil {
 		return err

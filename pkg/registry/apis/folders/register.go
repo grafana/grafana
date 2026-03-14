@@ -359,7 +359,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, b.parents, b.storage, b.maxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
