@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 import { useFirstMountState } from 'react-use';
@@ -39,6 +38,7 @@ import {
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
   isProvisionedRuleGroup,
+  isUngroupedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -131,6 +131,7 @@ export function GrafanaEvaluationBehaviorStep({
     watch,
     setValue,
     getValues,
+    clearErrors,
     formState: { errors },
     control,
     register,
@@ -165,6 +166,14 @@ export function GrafanaEvaluationBehaviorStep({
   }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
+  const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
+  const [showGroupSelection, setShowGroupSelection] = useState(Boolean(group) && !isEditingUngroupedRule);
+
+  useEffect(() => {
+    if (group && !isUngroupedRuleGroup(group)) {
+      setShowGroupSelection(true);
+    }
+  }, [group]);
 
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
     setValue('group', groupName);
@@ -188,6 +197,11 @@ export function GrafanaEvaluationBehaviorStep({
     : t('alerting.rule-form.evaluation.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
+  const onUseExplicitInterval = () => {
+    setShowGroupSelection(false);
+    setValue('group', '');
+    clearErrors('group');
+  };
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const label =
@@ -206,92 +220,145 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <Stack alignItems="center">
-          <div style={{ width: 420 }}>
-            <Field
-              noMargin
-              label={label}
-              data-testid="group-picker"
-              className={styles.formInput}
-              error={errors.group?.message}
-              invalid={!!errors.group?.message}
-              htmlFor="group"
-            >
-              <Controller
-                render={({ field: { ref, ...field }, fieldState }) => (
-                  <Select
-                    disabled={!folder?.uid || loadingGroups}
-                    inputId="group"
-                    key={uniqueId()}
-                    {...field}
-                    onChange={(group) => {
-                      field.onChange(group.label ?? '');
-                    }}
-                    isLoading={loadingGroups}
-                    invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
-                    cacheOptions
-                    loadingMessage={t(
-                      'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
-                      'Loading groups...'
-                    )}
-                    defaultValue={defaultGroupValue}
-                    options={groupOptions}
-                    getOptionLabel={(option: SelectableValue<string>) => (
-                      <div>
-                        <span>{option.label}</span>
-                        {option.isProvisioned && (
-                          <>
-                            {' '}
-                            <ProvisioningBadge />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    placeholder={t(
-                      'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
-                      'Select an evaluation group...'
-                    )}
-                  />
-                )}
-                name="group"
-                control={control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: t(
-                      'alerting.grafana-evaluation-behavior-step.message.must-enter-a-group-name',
-                      'Must enter a group name'
-                    ),
-                  },
-                }}
-              />
-            </Field>
-          </div>
-          <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">
-              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
-            </Text>
-            <Button
-              onClick={onOpenEvaluationGroupCreationModal}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!folder?.uid}
-              data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
-            >
-              <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-            </Button>
-          </Box>
-          {isCreatingEvaluationGroup && (
-            <EvaluationGroupCreationModal
-              onCreate={handleEvalGroupCreation}
-              onClose={() => setIsCreatingEvaluationGroup(false)}
+        {!showGroupSelection && (
+          <Stack direction="column" gap={1.5}>
+            <Stack direction="row" alignItems="flex-end" gap={1}>
+              <Field
+                noMargin
+                label={t('alerting.rule-form.evaluation.interval-no-group', 'Evaluation interval')}
+                className={styles.inlineField}
+                error={errors.evaluateEvery?.message}
+                invalid={Boolean(errors.evaluateEvery?.message)}
+                htmlFor="evaluate-every-no-group"
+              >
+                <Input
+                  id="evaluate-every-no-group"
+                  width={8}
+                  {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
+                />
+              </Field>
+              {!isEditingUngroupedRule && (
+                <Box gap={1} display={'flex'} alignItems={'center'}>
+                  <Text color="secondary">
+                    <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+                  </Text>
+                  <Button
+                    type="button"
+                    icon="plus"
+                    variant="secondary"
+                    fill="outline"
+                    onClick={() => setShowGroupSelection(true)}
+                    disabled={!folder?.uid}
+                  >
+                    <Trans i18nKey="alerting.rule-form.evaluation.show-group-selection-legacy">
+                      Use Groups (Legacy)
+                    </Trans>
+                  </Button>
+                </Box>
+              )}
+            </Stack>
+            <EvaluationGroupQuickPick
+              currentInterval={evaluateEvery}
+              onSelect={(interval) => setValue('evaluateEvery', interval)}
             />
-          )}
-        </Stack>
+          </Stack>
+        )}
 
-        {folder?.title && group && (
+        {showGroupSelection && (
+          <Stack alignItems="center" gap={1}>
+            <div style={{ width: 420 }}>
+              <Field
+                noMargin
+                label={label}
+                data-testid="group-picker"
+                className={styles.formInput}
+                error={errors.group?.message}
+                invalid={!!errors.group?.message}
+                htmlFor="group"
+              >
+                <Controller
+                  render={({ field: { ref, ...field }, fieldState }) => (
+                    <Select
+                      disabled={!folder?.uid || loadingGroups}
+                      inputId="group"
+                      {...field}
+                      onChange={(group) => {
+                        field.onChange(group.label ?? '');
+                      }}
+                      isLoading={loadingGroups}
+                      invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
+                      cacheOptions
+                      loadingMessage={t(
+                        'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
+                        'Loading groups...'
+                      )}
+                      defaultValue={defaultGroupValue}
+                      options={groupOptions}
+                      getOptionLabel={(option: SelectableValue<string>) => (
+                        <div>
+                          <span>{option.label}</span>
+                          {option.isProvisioned && (
+                            <>
+                              {' '}
+                              <ProvisioningBadge />
+                            </>
+                          )}
+                        </div>
+                      )}
+                      placeholder={t(
+                        'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
+                        'Select an evaluation group...'
+                      )}
+                    />
+                  )}
+                  name="group"
+                  control={control}
+                  rules={{
+                    required: {
+                      value: showGroupSelection,
+                      message: t(
+                        'alerting.grafana-evaluation-behavior-step.message.must-enter-a-group-name',
+                        'Must enter a group name'
+                      ),
+                    },
+                  }}
+                />
+              </Field>
+            </div>
+            <Box gap={1} display={'flex'} alignItems={'center'}>
+              <Text color="secondary">
+                <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+              </Text>
+              <Button
+                onClick={onOpenEvaluationGroupCreationModal}
+                type="button"
+                icon="plus"
+                fill="outline"
+                variant="secondary"
+                disabled={!folder?.uid}
+                data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
+              >
+                <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
+              </Button>
+            </Box>
+            <Box gap={1} display={'flex'} alignItems={'center'}>
+              <Text color="secondary">
+                <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+              </Text>
+              <Button type="button" variant="secondary" fill="outline" onClick={onUseExplicitInterval}>
+                <Trans i18nKey="alerting.rule-form.evaluation.use-explicit-interval">No group</Trans>
+              </Button>
+            </Box>
+            {isCreatingEvaluationGroup && (
+              <EvaluationGroupCreationModal
+                onCreate={handleEvalGroupCreation}
+                onClose={() => setIsCreatingEvaluationGroup(false)}
+              />
+            )}
+          </Stack>
+        )}
+
+        {folder?.title && group && !isUngroupedRuleGroup(group) && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
