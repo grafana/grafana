@@ -625,6 +625,43 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(0);
     });
 
+    it('returns internal links when label variables are provided via vars parameter', () => {
+      const { field, range, dataFrame } = setup({
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1-${app}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+        },
+      });
+      // Without vars, ${app} is undefined and the link would be filtered out
+      const linksWithoutVars = getFieldLinksForExplore({
+        field,
+        rowIndex: ROW_WITH_TEXT_VALUE.index,
+        range,
+        dataFrame,
+      });
+      expect(linksWithoutVars).toHaveLength(0);
+
+      // With vars providing the label value, the link should be returned
+      const linksWithVars = getFieldLinksForExplore({
+        field,
+        rowIndex: ROW_WITH_TEXT_VALUE.index,
+        range,
+        dataFrame,
+        vars: {
+          app: { value: 'grafana' },
+        },
+      });
+      expect(linksWithVars).toHaveLength(1);
+      expect(linksWithVars[0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-grafana","datasource":{"uid":"uid_1"}}]}'
+        )}`
+      );
+    });
+
     it('does return internal link when there are no variables (static link)', () => {
       const transformationLink: DataLink = {
         title: '',
