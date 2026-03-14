@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { LegendPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -35,6 +36,7 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
   const theme = useTheme2();
   const styles = useStyles2(getVizStyles);
+  const vizLayoutSelectors = selectors.components.VizLayout;
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
@@ -44,11 +46,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   if (!legend) {
     return (
-      <>
-        <div style={containerStyle} className={styles.viz}>
-          {children(width, height)}
-        </div>
-      </>
+      <div style={containerStyle} className={styles.viz} data-testid={vizLayoutSelectors.container}>
+        {children(width, height)}
+      </div>
     );
   }
 
@@ -97,9 +97,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} data-testid={vizLayoutSelectors.container}>
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
-      <div style={legendStyle} ref={legendRef}>
+      <div style={legendStyle} ref={legendRef} data-testid={vizLayoutSelectors.legend}>
         <ScrollContainer>{legend}</ScrollContainer>
       </div>
     </div>
