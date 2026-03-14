@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels, StateText } from '@grafana/alerting/unstable';
-import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   LinkButton,
@@ -70,12 +71,13 @@ import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
 import { ContactPointLink } from './ContactPointLink';
+import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
 import { AlertVersionHistory } from './tabs/AlertVersionHistory';
-import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
+import { Notifications } from './tabs/Notifications';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 import { RulePageEnrichmentSectionExtension } from './tabs/extensions/RuleViewerExtension';
@@ -84,8 +86,8 @@ export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
+  Notifications = 'notifications',
   Routing = 'routing',
-  Details = 'details',
   VersionHistory = 'version-history',
   Enrichment = 'enrichment',
 }
@@ -172,22 +174,31 @@ const RuleViewer = () => {
       {isGrafanaRulesSource(namespace.rulesSource) && (
         <InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />
       )}
-      <Stack direction="column" gap={2}>
-        {/* tabs and tab content */}
-        <TabContent>
-          {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
-          {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-          {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
-            <History rule={rule.rulerRule} />
-          )}
-          {activeTab === ActiveTab.Routing && <Routing />}
-          {activeTab === ActiveTab.Details && <Details rule={rule} />}
-          {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
-            <AlertVersionHistory rule={rule.rulerRule} />
-          )}
-          {activeTab === ActiveTab.Enrichment && rule.uid && <RulePageEnrichmentSectionExtension ruleUid={rule.uid} />}
-        </TabContent>
-      </Stack>
+      <div className={styles.layout}>
+        <Stack direction="column" gap={2}>
+          {/* tabs and tab content */}
+          <TabContent>
+            {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+            {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
+            {activeTab === ActiveTab.History && rulerRuleType.grafana.rule(rule.rulerRule) && (
+              <History rule={rule.rulerRule} />
+            )}
+            {activeTab === ActiveTab.Notifications && rulerRuleType.grafana.rule(rule.rulerRule) && (
+              <Notifications rule={rule.rulerRule} />
+            )}
+            {activeTab === ActiveTab.Routing && <Routing />}
+            {activeTab === ActiveTab.VersionHistory && rulerRuleType.grafana.rule(rule.rulerRule) && (
+              <AlertVersionHistory rule={rule.rulerRule} />
+            )}
+            {activeTab === ActiveTab.Enrichment && rule.uid && (
+              <RulePageEnrichmentSectionExtension ruleUid={rule.uid} />
+            )}
+          </TabContent>
+        </Stack>
+        <aside className={styles.sidebar}>
+          <Details rule={rule} />
+        </aside>
+      </div>
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
           redirectTo={true}
@@ -486,13 +497,15 @@ function usePageNav(rule: CombinedRule) {
         hideFromTabs: !isGrafanaAlertRule,
       },
       {
-        text: t('alerting.use-page-nav.page-nav.text.details', 'Details'),
-        active: activeTab === ActiveTab.Details,
+        text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
+        active: activeTab === ActiveTab.Notifications,
         onClick: () => {
-          setActiveTab(ActiveTab.Details);
+          setActiveTab(ActiveTab.Notifications);
         },
+        // notification history is only available for Grafana managed alert rules and requires feature toggles
+        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
       },
-      // Enterprise extensions (e.g. Alert enrichment) should appear after Details
+      // Enterprise extensions (e.g. Alert enrichment) should appear after routing
       ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
       {
         text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
@@ -535,9 +548,30 @@ export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
     .value();
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   url: css({
     wordBreak: 'break-all',
+  }),
+  layout: css({
+    display: 'grid',
+    gridTemplateColumns: '1fr 320px',
+    gap: theme.spacing(3),
+    alignItems: 'start',
+
+    [theme.breakpoints.down('lg')]: {
+      gridTemplateColumns: '1fr',
+    },
+  }),
+  sidebar: css({
+    borderLeft: `1px solid ${theme.colors.border.weak}`,
+    paddingLeft: theme.spacing(3),
+
+    [theme.breakpoints.down('lg')]: {
+      borderLeft: 'none',
+      paddingLeft: 0,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      paddingTop: theme.spacing(3),
+    },
   }),
 });
 

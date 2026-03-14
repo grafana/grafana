@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -30,6 +32,8 @@ func FullSync(
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
 ) error {
 	syncStart := time.Now()
 	cfg := repo.Config()
@@ -57,8 +61,9 @@ func FullSync(
 
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
 	var changes []ResourceFileChange
+	var missingFolderMetadata []string
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef)
 		return
 	}, metrics)
 	compareSpan.End()
@@ -67,12 +72,39 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
+	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		changeActions := make(map[string]repository.FileAction, len(changes))
+		for _, c := range changes {
+			changeActions[c.Path] = c.Action
+		}
+		for _, p := range missingFolderMetadata {
+			builder := jobs.NewFolderResult(p).
+				WithWarning(resources.NewMissingFolderMetadata(p))
+			if action, ok := changeActions[p]; ok {
+				builder = builder.WithAction(action)
+			} else {
+				builder = builder.WithAction(repository.FileActionIgnored)
+			}
+			progress.Record(ctx, builder.Build())
+		}
+	}
+
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
+	// Check quota before applying changes
+	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
+		span.SetAttributes(attribute.Bool("pre_check_quota", false))
+		progress.Record(ctx, jobs.NewResourceResult().WithError(err).Build())
+		progress.SetFinalMessage(ctx, "sync skipped: repository is already over quota and incoming changes do not free enough resources")
+
+		return nil
+	}
+	span.SetAttributes(attribute.Bool("pre_check_quota", true))
+
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -107,7 +139,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 	return false
 }
 
-func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
+func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -150,6 +182,8 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 
 		if err := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); err != nil {
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
+		} else {
+			quotaTracker.Release()
 		}
 		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
@@ -157,8 +191,8 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	}
 
 	// Handle folders based on action type
+	// Quota for folder creation is enforced by the beforeCreate hook inside EnsureFolderPathExist.
 	if safepath.IsDir(change.Path) {
-		// For non-deletions, ensure folder exists
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
@@ -175,6 +209,15 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		resultBuilder.WithName(folder)
 		progress.Record(ensureFolderCtx, resultBuilder.Build())
 		ensureFolderSpan.End()
+		return
+	}
+
+	if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
+		progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+			WithAction(change.Action).
+			WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+			AsSkipped().
+			Build())
 		return
 	}
 
@@ -198,7 +241,7 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) error {
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -244,7 +287,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
 		}, metrics); err != nil {
 			return err
 		}
@@ -252,7 +295,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer)
+			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker)
 		}, metrics); err != nil {
 			return err
 		}
@@ -260,7 +303,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer)
+			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker)
 		}, metrics); err != nil {
 			return err
 		}
@@ -268,7 +311,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
 		}, metrics); err != nil {
 			return err
 		}
@@ -277,7 +320,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	return nil
 }
 
-func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
+func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -288,14 +331,14 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 		}
 
 		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer)
+			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker)
 		})
 	}
 
 	return nil
 }
 
-func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, quotaTracker quotas.QuotaTracker) error {
 	logger := logging.FromContext(ctx)
 	logger.Info("applying resources in parallel test changes 1")
 
@@ -328,7 +371,7 @@ loop:
 			defer func() { <-sem }()
 
 			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer)
+				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker)
 			})
 		}(change)
 	}
@@ -348,4 +391,49 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 	defer cancel()
 
 	fn(timeoutCtx)
+}
+
+// checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
+// Returns a QuotaExceededError if the sync should be blocked, nil otherwise.
+func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, changes []ResourceFileChange, tracer tracing.Tracer) error {
+	if !quotas.IsQuotaExceeded(repo.Config().Status.Conditions) {
+		return nil
+	}
+
+	cfg := repo.Config()
+	quotaUsage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+
+	// Calculate the net change in resource count (positive for additions, negative for deletions)
+	var netChange int64
+	allDeletions := true
+	for _, change := range changes {
+		if change.Action != repository.FileActionDeleted {
+			allDeletions = false
+		}
+
+		switch change.Action {
+		case repository.FileActionCreated:
+			netChange++
+		case repository.FileActionDeleted:
+			netChange--
+		case repository.FileActionUpdated, repository.FileActionRenamed, repository.FileActionIgnored:
+			// change does not affect quota
+		default:
+			logger.Error("unknown change action", "action", change.Action)
+		}
+	}
+
+	// If only deletions, allow the sync since it can only reduce resource usage.
+	if allDeletions {
+		return nil
+	}
+
+	if !quotas.WouldStayWithinQuota(cfg.Status.Quota, quotaUsage, netChange) {
+		return quotas.NewQuotaExceededError(fmt.Errorf(
+			"usage %d/%d, incoming changes do not free enough resources",
+			quotaUsage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository,
+		))
+	}
+
+	return nil
 }

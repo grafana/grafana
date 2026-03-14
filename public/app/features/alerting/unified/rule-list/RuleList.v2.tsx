@@ -17,6 +17,7 @@ import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
 
+import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
@@ -29,6 +30,7 @@ function RuleList() {
 
   return (
     <Stack direction="column">
+      <AlertsActivityBanner />
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       {viewMode === 'list' ? (
         <FilterView filterState={filterState} />

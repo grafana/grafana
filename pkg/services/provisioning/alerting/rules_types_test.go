@@ -197,8 +197,8 @@ func TestRules(t *testing.T) {
 		}
 		ruleMapped, err := rule.mapToModel(1)
 		require.NoError(t, err)
-		require.Len(t, ruleMapped.NotificationSettings, 1)
-		require.Equal(t, models.NotificationSettings{Receiver: "test-receiver"}, ruleMapped.NotificationSettings[0])
+		require.NotNil(t, ruleMapped.NotificationSettings)
+		require.Equal(t, models.NotificationSettingsFromContact(models.ContactPointRouting{Receiver: "test-receiver"}), *ruleMapped.NotificationSettings)
 	})
 }
 
@@ -237,7 +237,7 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				MuteTimeIntervals:   []values.StringValue{stringToStringValue("test-mute")},
 				ActiveTimeIntervals: []values.StringValue{stringToStringValue("test-active")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver:            "test-receiver",
 				GroupBy:             []string{"test-group_by"},
 				GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
@@ -245,7 +245,7 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				RepeatInterval:      util.Pointer(model.Duration(3 * time.Second)),
 				MuteTimeIntervals:   []string{"test-mute"},
 				ActiveTimeIntervals: []string{"test-active"},
-			},
+			}),
 		},
 		{
 			name: "Skips empty elements in group_by",
@@ -253,10 +253,10 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				Receiver: stringToStringValue("test-receiver"),
 				GroupBy:  []values.StringValue{stringToStringValue("test-group_by1"), stringToStringValue(""), stringToStringValue("test-group_by2")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver: "test-receiver",
 				GroupBy:  []string{"test-group_by1", "test-group_by2"},
-			},
+			}),
 		},
 		{
 			name: "Skips empty elements in mute timings",
@@ -264,10 +264,10 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 				Receiver:          stringToStringValue("test-receiver"),
 				MuteTimeIntervals: []values.StringValue{stringToStringValue("test-mute1"), stringToStringValue(""), stringToStringValue("test-mute2")},
 			},
-			expected: models.NotificationSettings{
+			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver:          "test-receiver",
 				MuteTimeIntervals: []string{"test-mute1", "test-mute2"},
-			},
+			}),
 		},
 		{
 			name: "Empty Receiver",

@@ -55,8 +55,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
+	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -232,6 +232,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 												},
 											},
 										},
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "createdBy",
+										In:          "query",
+										Description: "filter by the user who created the resource (format: user:<uid>)",
+										Required:    false,
+										Schema:      spec.StringProperty(),
 									},
 								},
 								{
@@ -562,6 +571,14 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
 			Operator: operator,
 			Values:   vals,
+		})
+	}
+
+	if v := queryParams.Get("createdBy"); v != "" {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED_BY,
+			Operator: "=",
+			Values:   []string{v},
 		})
 	}
 

@@ -199,7 +199,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
    {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values" >}}
 
    {{< admonition type="tip" >}}
-   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/aep7osljvuku8e/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
+   You can explore this **[alerting example in Grafana Play](https://play.grafana.org/alerting/grafana/dynamic-thresholds/view?tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=alert-dynamic-thresholds)**.
 
    Open the example to view alert evaluation results, generated alert instances, the alert history timeline, and alert rule details.
    {{< /admonition >}}

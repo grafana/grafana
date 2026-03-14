@@ -865,6 +865,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
+  defaultValue?: VariableOption
   datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""

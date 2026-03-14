@@ -20,14 +20,14 @@ import (
 func TestIntegrationUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Figure out why rest.Mode4 is failing
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -36,8 +36,8 @@ func TestIntegrationUsers(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
-				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {
@@ -45,6 +45,8 @@ func TestIntegrationUsers(t *testing.T) {
 			})
 
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
+			doHiddenUsersTests(t, helper)
+			doUserFieldSelectorTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -119,6 +121,9 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
+		t.Cleanup(func() {
+			_ = userClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		})
 
 		// Get the user to update
 		createdUID := created.GetName()
@@ -370,5 +375,166 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		_, err = userClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
+	})
+}
+
+func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should hide users from the hidden users list on Get and List", func(t *testing.T) {
+		ctx := context.Background()
+
+		const hiddenLogin = "hidden-integration-user"
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create the user before marking it as hidden so BeforeCreate does not block it.
+		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		spec := obj.Object["spec"].(map[string]interface{})
+		spec["login"] = hiddenLogin
+		spec["email"] = hiddenLogin + "@example.com"
+		obj.Object["spec"] = spec
+
+		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		createdUID := created.GetName()
+
+		// Register the hidden login in the live Cfg so UserFilter picks it up.
+		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		// Cleanup: remove from hidden list first so that Delete can succeed.
+		t.Cleanup(func() {
+			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
+			_ = adminClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+		})
+
+		// Get should return 404 when the requester is not the hidden user.
+		_, err = adminClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		// List should not include the hidden user.
+		list, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			itemSpec := item.Object["spec"].(map[string]interface{})
+			require.NotEqual(t, hiddenLogin, itemSpec["login"])
+		}
+
+		// Update should return 403 for a hidden user.
+		userToUpdate := created.DeepCopy()
+		updateSpec := userToUpdate.Object["spec"].(map[string]interface{})
+		updateSpec["title"] = "Updated Title"
+		userToUpdate.Object["spec"] = updateSpec
+		_, err = adminClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
+
+		// Delete should return 403 for a hidden user.
+		err = adminClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
+	})
+
+	t.Run("should not be able to create a user whose login is in the hidden users list", func(t *testing.T) {
+		ctx := context.Background()
+
+		const hiddenLogin = "hidden-create-blocked-user"
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		t.Cleanup(func() {
+			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
+		})
+
+		obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+		spec := obj.Object["spec"].(map[string]interface{})
+		spec["login"] = hiddenLogin
+		spec["email"] = hiddenLogin + "@example.com"
+		obj.Object["spec"] = spec
+
+		_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
+		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
+	})
+}
+
+func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should list users using field selectors", func(t *testing.T) {
+		ctx := context.Background()
+
+		var userNames []string
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		createUser := func(name string, email string, login string) {
+			obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+			obj.SetName(name)
+
+			spec := obj.Object["spec"].(map[string]interface{})
+			spec["email"] = email
+			spec["login"] = login
+
+			created, err := userClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			userNames = append(userNames, created.GetName())
+		}
+
+		createUser("fs-user-1", "fs-user1@example.com", "fs-user1")
+		createUser("fs-user-2", "fs-user2@example.com", "fs-user2")
+		createUser("fs-user-3", "fs-user3@example.com", "fs-user3")
+
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+			for _, name := range userNames {
+				_ = userClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+			}
+		})
+
+		// Select by spec.email — should return exactly 1 user
+		listByEmail, err := userClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.email=fs-user2@example.com",
+		})
+		require.NoError(t, err)
+		require.Len(t, listByEmail.Items, 1)
+		emailSpec := listByEmail.Items[0].Object["spec"].(map[string]interface{})
+		require.Equal(t, "fs-user2@example.com", emailSpec["email"])
+		require.Equal(t, "fs-user2", emailSpec["login"])
+
+		// Select by spec.login — should return exactly 1 user
+		listByLogin, err := userClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.login=fs-user3",
+		})
+		require.NoError(t, err)
+		require.Len(t, listByLogin.Items, 1)
+		loginSpec := listByLogin.Items[0].Object["spec"].(map[string]interface{})
+		require.Equal(t, "fs-user3@example.com", loginSpec["email"])
+		require.Equal(t, "fs-user3", loginSpec["login"])
+
+		// Select by a non-existent email — should return empty list
+		listByUnknownEmail, err := userClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.email=does-not-exist@example.com",
+		})
+		require.NoError(t, err)
+		require.Empty(t, listByUnknownEmail.Items)
 	})
 }

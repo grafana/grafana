@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { defaultSpec, Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { defaultSpec, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Form } from 'app/core/components/Form/Form';
 
 import { DashboardInputs, InputType, ImportFormDataV2 } from '../../types';

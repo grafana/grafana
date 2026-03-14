@@ -25,6 +25,7 @@ export type TraceLink = {
 
 export type TraceProcess = {
   serviceName: string;
+  serviceNamespace?: string;
   tags: TraceKeyValuePair[];
 };
 

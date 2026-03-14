@@ -7,8 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/alerting/definition"
-
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 const (
@@ -76,8 +75,8 @@ func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
 	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil)
 }
 
-func (mc *Mimir) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	response := []apimodels.Receiver{}
+func (mc *Mimir) GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error) {
+	response := []alertingmodels.ReceiverStatus{}
 
 	// nolint:bodyclose
 	// closed within `do`

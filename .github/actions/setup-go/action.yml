@@ -1,0 +1,45 @@
+name: Setup Go
+description: Sets up a Go environment with cache-friendly defaults for the Grafana repository.
+
+inputs:
+  go-version-file:
+    description: Path to go.mod or go.work file for version detection.
+    required: false
+    default: 'go.mod'
+  cache:
+    description: Whether to cache Go modules and build cache.
+    required: false
+    default: 'true'
+  cache-build:
+    description: >-
+      Whether to also cache the Go build cache (GOCACHE).
+      Set to 'false' for jobs that don't compile much (lint, codegen, checks).
+      When 'false', only GOMODCACHE is cached via actions/cache.
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    # When cache-build is enabled, use the built-in setup-go caching
+    # which stores both GOMODCACHE and GOCACHE together.
+    - uses: actions/setup-go@v6.0.0
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.mod' || '' }}
+
+    # When cache-build is disabled, cache only GOMODCACHE via actions/cache.
+    # This avoids restoring/saving the large GOCACHE (~5 GB) for jobs that
+    # do little or no compilation (lint, codegen, workspace checks).
+    - name: Cache Go modules only
+      if: inputs.cache == 'true' && inputs.cache-build != 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}
+        restore-keys: gomod-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Report Go cache sizes
+      if: inputs.cache == 'true'
+      uses: ./.github/actions/report-go-cache-sizes

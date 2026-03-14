@@ -245,4 +245,101 @@ describe('locationUtil', () => {
       expect(newURL).toBe('http://www.domain.com:1234/test?a=newValue&b=2&newKey=hello#hashtag');
     });
   });
+
+  describe('processRedirectUri', () => {
+    const mockLocation: Location = {
+      hash: '',
+      pathname: '/',
+      search: '',
+      state: {},
+    };
+
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: {} as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    });
+
+    test('merges current params with redirect URI params', () => {
+      const redirectUri = '/a/custom-home-plugin?tab=recent';
+      const currentLocation = { ...mockLocation, search: '?doc=some-query-value' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/a/custom-home-plugin?tab=recent&doc=some-query-value');
+    });
+
+    test('redirect URI params take precedence over current params', () => {
+      const redirectUri = '/d/home-dashboard?from=now-1h';
+      const currentLocation = { ...mockLocation, search: '?from=now-6h&to=now' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/d/home-dashboard?from=now-1h&to=now');
+    });
+
+    test('handles redirect URI without query params', () => {
+      const redirectUri = '/d/home-dashboard';
+      const currentLocation = { ...mockLocation, search: '?from=now-6h&to=now' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/d/home-dashboard?from=now-6h&to=now');
+    });
+
+    test('handles empty current params', () => {
+      const redirectUri = '/a/custom-home-plugin?tab=overview';
+      const currentLocation = { ...mockLocation, search: '' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/a/custom-home-plugin?tab=overview');
+    });
+
+    test('handles both empty params', () => {
+      const redirectUri = '/a/custom-home-plugin';
+      const currentLocation = { ...mockLocation, search: '' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/a/custom-home-plugin');
+    });
+
+    test('current params can have multiple values set', () => {
+      const redirectUri = '/a/custom-home-plugin';
+      const currentLocation = { ...mockLocation, search: '?tab=recent&tab=starred' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/a/custom-home-plugin?tab=recent&tab=starred');
+    });
+
+    test('redirect URI params can have multiple values set', () => {
+      const redirectUri = '/a/custom-home-plugin?tab=recent&tab=starred';
+      const currentLocation = { ...mockLocation, search: '?tab=overview' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('/a/custom-home-plugin?tab=recent&tab=starred');
+    });
+
+    test('redirect URI can be an absolute URL', () => {
+      const redirectUri = 'http://www.domain.com:1234/a/custom-home-plugin?tab=recent';
+      const currentLocation = { ...mockLocation, search: '?doc=some-query-value' };
+      const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+      expect(result).toBe('http://www.domain.com:1234/a/custom-home-plugin?tab=recent&doc=some-query-value');
+    });
+
+    describe('with appSubUrl configured', () => {
+      beforeEach(() => {
+        locationUtil.initialize({
+          config: { appSubUrl: '/grafana' } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
+        });
+      });
+
+      test('strips base from redirect URI', () => {
+        const redirectUri = '/grafana/a/custom-home-plugin?tab=overview';
+        const currentLocation = { ...mockLocation, search: '?theme=dark' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('/a/custom-home-plugin?tab=overview&theme=dark');
+      });
+
+      test('does not strip base from redirect URI when an absolute URL is provided', () => {
+        const redirectUri = 'http://www.domain.com:1234/grafana/a/custom-home-plugin?tab=overview';
+        const currentLocation = { ...mockLocation, search: '?theme=dark' };
+        const result = locationUtil.processRedirectUri(redirectUri, currentLocation);
+        expect(result).toBe('http://www.domain.com:1234/grafana/a/custom-home-plugin?tab=overview&theme=dark');
+      });
+    });
+  });
 });

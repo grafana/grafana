@@ -3,8 +3,10 @@ import { useAsync } from 'react-use';
 import { getAppPluginMeta, getAppPluginMetas, getAppPluginVersion, isAppPluginInstalled } from './apps';
 import {
   getListedPanelPluginIds,
+  getListedPanelPluginMetas,
   getPanelPluginMeta,
   getPanelPluginMetas,
+  getPanelPluginMetasMap,
   getPanelPluginVersion,
   isPanelPluginInstalled,
 } from './panels';
@@ -15,7 +17,7 @@ export function useAppPluginMetas() {
 }
 
 export function useAppPluginMeta(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => getAppPluginMeta(pluginId));
+  const { loading, error, value } = useAsync(async () => getAppPluginMeta(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -24,8 +26,18 @@ export function usePanelPluginMetas() {
   return { loading, error, value };
 }
 
+export function useListedPanelPluginMetas() {
+  const { loading, error, value } = useAsync(async () => getListedPanelPluginMetas());
+  return { loading, error, value };
+}
+
+export function usePanelPluginMetasMap() {
+  const { loading, error, value } = useAsync(async () => getPanelPluginMetasMap());
+  return { loading, error, value };
+}
+
 export function usePanelPluginMeta(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => getPanelPluginMeta(pluginId));
+  const { loading, error, value } = useAsync(async () => getPanelPluginMeta(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -36,7 +48,7 @@ export function usePanelPluginMeta(pluginId: string) {
  * The value is true if the app plugin is installed, false otherwise.
  */
 export function useAppPluginInstalled(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => isAppPluginInstalled(pluginId));
+  const { loading, error, value } = useAsync(async () => isAppPluginInstalled(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -47,7 +59,7 @@ export function useAppPluginInstalled(pluginId: string) {
  * The value is the version of the app plugin, or null if the plugin is not installed.
  */
 export function useAppPluginVersion(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => getAppPluginVersion(pluginId));
+  const { loading, error, value } = useAsync(async () => getAppPluginVersion(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -58,7 +70,7 @@ export function useAppPluginVersion(pluginId: string) {
  * The value is true if the panel plugin is installed, false otherwise.
  */
 export function usePanelPluginInstalled(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => isPanelPluginInstalled(pluginId));
+  const { loading, error, value } = useAsync(async () => isPanelPluginInstalled(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -69,7 +81,7 @@ export function usePanelPluginInstalled(pluginId: string) {
  * The value is the version of the panel plugin, or null if the plugin is not installed.
  */
 export function usePanelPluginVersion(pluginId: string) {
-  const { loading, error, value } = useAsync(async () => getPanelPluginVersion(pluginId));
+  const { loading, error, value } = useAsync(async () => getPanelPluginVersion(pluginId), [pluginId]);
   return { loading, error, value };
 }
 

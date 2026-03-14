@@ -70,7 +70,7 @@ export const TimeIntervalsTable = () => {
   }
 
   return (
-    <Stack direction="column" gap={3}>
+    <Stack direction="column" gap={1}>
       <Stack direction="row" alignItems="center">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.time-intervals.description">
@@ -86,7 +86,7 @@ export const TimeIntervalsTable = () => {
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
             >
-              <Trans i18nKey="alerting.time-interval.add-time-interval">Add time interval</Trans>
+              <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
             </LinkButton>
           </Authorize>
         )}
@@ -113,7 +113,7 @@ export const TimeIntervalsTable = () => {
                 'alerting.time-intervals-table.text-havent-created-time-intervals',
                 "You haven't created any time intervals yet"
               )}
-              buttonLabel="Add time interval"
+              buttonLabel="New time interval"
               buttonIcon="plus"
               buttonSize="lg"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}

@@ -1,4 +1,4 @@
-import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
+import { DataSourceRef } from '@grafana/schema';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');

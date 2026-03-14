@@ -13,13 +13,20 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 // Templates setup for backward-compatibility queries
@@ -560,7 +567,7 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 		}
 
 		keys = keys[len(batch):]
-		stringKeys := make([]string, len(batch))
+		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())
 		}
@@ -785,7 +792,11 @@ var (
 	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
 	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
-	sqlKVRestoreLegacyResource       = mustTemplate("sqlkv_restore_legacy_resource.sql")
+
+	// Bulk backwards compatibility templates
+	sqlKVUpdateLegacyResourceHistoryBulk = mustTemplate("sqlkv_update_legacy_resource_history_bulk.sql")
+	sqlKVDeleteLegacyResourceCollection  = mustTemplate("sqlkv_delete_legacy_resource_collection.sql")
+	sqlKVInsertLegacyResourceFromHistory = mustTemplate("sqlkv_insert_legacy_resource_from_history.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -818,15 +829,33 @@ func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
 }
 
 // TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyRestoreRequest struct {
+type sqlKVLegacyUpdateHistoryBulkRequest struct {
 	sqltemplate.SQLTemplate
-	Group     string
-	Resource  string
-	Namespace string
-	Name      string
+	KeyPath         string
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	Action          int64
+	Folder          string
+	ResourceVersion int64
+	PreviousRV      int64
+	Generation      int64
 }
 
-func (req sqlKVLegacyRestoreRequest) Validate() error {
+func (req sqlKVLegacyUpdateHistoryBulkRequest) Validate() error {
+	return nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacyCollectionRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (req sqlKVLegacyCollectionRequest) Validate() error {
 	return nil
 }
 
@@ -892,10 +921,13 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		})
 
 		if err != nil {
+			if isRowAlreadyExistsError(err) {
+				return ErrResourceAlreadyExists
+			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
 	case DataActionUpdated:
-		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			GUID:        key.GUID,
 			Group:       key.Group,
@@ -910,55 +942,157 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
+		}
 	case DataActionDeleted:
-		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+		res, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
 			Name:        key.Name,
+			PreviousRV:  previousRV,
 		})
 
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+		if err := checkLegacyCASConflict(res, key); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// applyBackwardsCompatibleOptimisticLockFailure updates the latest state of the object to the `resource` table
-// after an optimistic locking failure. When a losing write's resource_history entry is deleted, the resource table
-// may still point to the deleted GUID. This method restores the resource row to match the latest (winning) entry
-// in resource_history for the given (group, resource, namespace, name).
-// TODO: remove when backwards compatibility is no longer needed
-func (d *dataStore) applyBackwardsCompatibleOptimisticLockFailure(ctx context.Context, x db.ContextExecer, key DataKey) error {
-	if d.legacyDialect == nil {
+func checkLegacyCASConflict(res db.Result, key DataKey) error {
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+	}
+	if rows == 1 {
+		return nil
+	}
+	if rows > 1 {
+		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
+	}
+
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    key.Group,
+		Resource: key.Resource,
+	}, key.Name, fmt.Errorf("resource version does not match current value"))
+}
+
+func isRowAlreadyExistsError(err error) bool {
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
+	}
+
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) {
+		return pg.Code == "23505"
+	}
+
+	var pqerr *pq.Error
+	if errors.As(err, &pqerr) {
+		return pqerr.Code == "23505"
+	}
+
+	var mysqlerr *mysql.MySQLError
+	if errors.As(err, &mysqlerr) {
+		return mysqlerr.Number == 1062
+	}
+
+	return false
+}
+
+// deleteLegacyResourceCollection deletes all rows from the `resource` table for a given collection.
+// This is used during the delete phase of ProcessBulk to clear legacy resource rows before re-importing.
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer db.ContextExecer, namespace, group, resource string) error {
+	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
+	if !isSQLKV {
 		return nil
 	}
 
-	_, err := dbutil.Exec(ctx, x, sqlKVRestoreLegacyResource, sqlKVLegacyRestoreRequest{
+	_, err := dbutil.Exec(ctx, execer, sqlKVDeleteLegacyResourceCollection, sqlKVLegacyCollectionRequest{
 		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		Group:       key.Group,
-		Resource:    key.Resource,
-		Namespace:   key.Namespace,
-		Name:        key.Name,
+		Namespace:   namespace,
+		Group:       group,
+		Resource:    resource,
 	})
 	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to restore resource after optimistic lock failure: %w", err)
+		return fmt.Errorf("compatibility layer: failed to delete legacy resource collection: %w", err)
+	}
+	return nil
+}
+
+// updateLegacyResourceHistoryBulk fills in all legacy columns on a resource_history row identified by key_path.
+// During non Backwards Compatible bulk import, the row is inserted with only key_path and value set; this UPDATE fills in
+// group, resource, namespace, name, action, folder, resource_version, previous_resource_version, and generation.
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) updateLegacyResourceHistoryBulk(ctx context.Context, execer db.ContextExecer, dataKey DataKey, microRV int64, previousRV int64, generation int64) error {
+	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
+	if !isSQLKV {
+		return nil
 	}
 
+	keyPath := kvpkg.DataSection + "/" + dataKey.String()
+
+	var action int64
+	switch dataKey.Action {
+	case DataActionCreated:
+		action = 1
+	case DataActionUpdated:
+		action = 2
+	case DataActionDeleted:
+		action = 3
+	}
+
+	_, err := dbutil.Exec(ctx, execer, sqlKVUpdateLegacyResourceHistoryBulk, sqlKVLegacyUpdateHistoryBulkRequest{
+		SQLTemplate:     sqltemplate.New(d.legacyDialect),
+		KeyPath:         keyPath,
+		Group:           dataKey.Group,
+		Resource:        dataKey.Resource,
+		Namespace:       dataKey.Namespace,
+		Name:            dataKey.Name,
+		Action:          action,
+		Folder:          dataKey.Folder,
+		ResourceVersion: microRV,
+		PreviousRV:      previousRV,
+		Generation:      generation,
+	})
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to update legacy resource_history for bulk: %w", err)
+	}
+	return nil
+}
+
+// syncLegacyResourceFromHistory populates the `resource` table from `resource_history` for a given collection.
+// It selects the latest version of each resource (excluding deletes) and inserts them into the `resource` table.
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db.ContextExecer, namespace, group, resource string) error {
+	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
+	if !isSQLKV {
+		return nil
+	}
+
+	_, err := dbutil.Exec(ctx, execer, sqlKVInsertLegacyResourceFromHistory, sqlKVLegacyCollectionRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		Namespace:   namespace,
+		Group:       group,
+		Resource:    resource,
+	})
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to sync legacy resource from history: %w", err)
+	}
 	return nil
 }
 
 // isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
-// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
-// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
-// to dates in the future if interpreted as a microsecond timestamp.
+// Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
+// to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
 func isSnowflake(rv int64) bool {
-	ts := time.UnixMicro(rv)
-	oneHourFromNow := time.Now().Add(time.Hour)
-	isMicroSecRV := ts.Before(oneHourFromNow)
-
-	return !isMicroSecRV
+	return rv >= 1e18
 }

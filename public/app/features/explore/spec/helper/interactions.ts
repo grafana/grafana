@@ -43,10 +43,9 @@ export const openQueryLibrary = async () => {
   const button = screen.getByRole('button', { name: 'Add from saved queries' });
   await userEvent.click(button);
   await waitFor(async () => {
-    const container = screen.getByRole('dialog', {
-      name: /Drawer title/,
+    screen.getByRole('dialog', {
+      name: /Saved queries/,
     });
-    within(container).getByText('Saved queries');
   });
 };
 
@@ -57,7 +56,7 @@ export const addQueryHistoryToQueryLibrary = async () => {
 
 export const submitAddToQueryLibrary = async ({ title }: { title: string }) => {
   const container = screen.getByRole('dialog', {
-    name: /Drawer title/i,
+    name: /Saved queries/i,
   });
 
   const input = within(container).getByRole('textbox', { name: /title/i });
