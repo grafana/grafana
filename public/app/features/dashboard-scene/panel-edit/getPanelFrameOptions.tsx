@@ -5,9 +5,18 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
-import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { DataLinksInlineEditor, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
+import { GenAITextArea } from 'app/features/dashboard/components/GenAI/GenAITextArea';
+import { GenAITextInput } from 'app/features/dashboard/components/GenAI/GenAITextInput';
+import {
+  TITLE_SYSTEM_PROMPT,
+  DESCRIPTION_SYSTEM_PROMPT,
+  buildPanelContext,
+  hasMeaningfulPanelContext,
+} from 'app/features/dashboard/components/GenAI/assistantContext';
+import { LLMFallbackAddon, useIsAssistantAvailable } from 'app/features/dashboard/components/GenAI/hooks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -84,11 +93,13 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelTitleButton
-            onGenerate={(title) => editPanelTitleAction(panel, title)}
-            panel={vizPanelToPanel(panel)}
-            dashboard={transformSceneToSaveModel(dashboard)}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelTitleButton
+              onGenerate={(title) => editPanelTitleAction(panel, title)}
+              panel={vizPanelToPanel(panel)}
+              dashboard={transformSceneToSaveModel(dashboard)}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )
@@ -101,10 +112,12 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton
-            onGenerate={(description) => panel.setState({ description })}
-            panel={vizPanelToPanel(panel)}
-          />
+          <LLMFallbackAddon>
+            <GenAIPanelDescriptionButton
+              onGenerate={(description) => panel.setState({ description })}
+              panel={vizPanelToPanel(panel)}
+            />
+          </LLMFallbackAddon>
         ),
       })
     )
@@ -171,6 +184,20 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
+function useGenerationReady(panel: VizPanel, isAssistantAvailable: boolean) {
+  const panelModel = vizPanelToPanel(panel);
+  const hasMeaningfulContext = hasMeaningfulPanelContext(panelModel);
+  const [generationReady, setGenerationReady] = React.useState(() => isAssistantAvailable && hasMeaningfulContext);
+
+  React.useEffect(() => {
+    if (isAssistantAvailable && hasMeaningfulContext && !generationReady) {
+      setGenerationReady(true);
+    }
+  }, [generationReady, hasMeaningfulContext, isAssistantAvailable]);
+
+  return generationReady;
+}
+
 export function PanelFrameTitleInput({
   panel,
   isNewElement,
@@ -181,37 +208,60 @@ export function PanelFrameTitleInput({
   id?: string;
 }) {
   const { title } = panel.useState();
+  const isAssistantAvailable = useIsAssistantAvailable();
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
+  const generationReady = useGenerationReady(panel, isAssistantAvailable);
 
-  let ref = useEditPaneInputAutoFocus({
+  const ref = useEditPaneInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
   });
 
+  const isDefaultTitle = !title || title === t('dashboard.new-panel-title', 'New panel');
+
+  const showAssistant = isAssistantAvailable;
+
   return (
-    <Input
-      ref={ref}
+    <GenAITextInput
+      key={generationReady ? 'title-ready' : 'title-waiting'}
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
-      id={id}
-      value={title}
+      value={showAssistant && isDefaultTitle ? '' : title}
+      onChange={(val) => updatePanelTitleState(panel, val)}
+      onComplete={(val) => editPanelTitleAction(panel, val)}
       onFocus={() => setPrevTitle(title)}
       onBlur={() => editPanelTitleAction(panel, title, prevTitle)}
-      // The full action (that can be undone) is done by setPanelTitle,
-      // But to see changes in the input field, canvas and outline we change the real value here
-      onChange={(e) => updatePanelTitleState(panel, e.currentTarget.value)}
+      systemPrompt={showAssistant ? TITLE_SYSTEM_PROMPT : undefined}
+      getContext={() =>
+        buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))
+      }
+      autoGenerate={showAssistant && generationReady && isDefaultTitle}
+      id={id}
+      inputRef={ref}
     />
   );
 }
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description } = panel.useState();
+  const isAssistantAvailable = useIsAssistantAvailable();
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
+  const generationReady = useGenerationReady(panel, isAssistantAvailable);
+
+  const showAssistant = isAssistantAvailable;
 
   return (
-    <TextArea
-      id={id}
-      value={description}
-      onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+    <GenAITextArea
+      key={generationReady ? 'description-ready' : 'description-waiting'}
+      value={description ?? ''}
+      onChange={(val) => panel.setState({ description: val })}
+      onComplete={(val) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+          source: panel,
+          perform: () => panel.setState({ description: val }),
+          undo: () => panel.setState({ description: prevDescription }),
+        });
+      }}
       onFocus={() => setPrevDescription(panel.state.description)}
       onBlur={() => {
         dashboardEditActions.edit({
@@ -221,6 +271,12 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           undo: () => panel.setState({ description: prevDescription }),
         });
       }}
+      systemPrompt={showAssistant ? DESCRIPTION_SYSTEM_PROMPT : undefined}
+      getContext={() =>
+        buildPanelContext(vizPanelToPanel(panel), transformSceneToSaveModel(getDashboardSceneFor(panel)))
+      }
+      autoGenerate={showAssistant && generationReady && !description}
+      id={id}
     />
   );
 }

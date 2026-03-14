@@ -8898,7 +8898,13 @@
   "gen-ai": {
     "apply-suggestion": "Apply",
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
-    "send-custom-feedback": "Send"
+    "send-custom-feedback": "Send",
+    "text-area": {
+      "placeholder": "Type a description or let AI generate one..."
+    },
+    "text-input": {
+      "placeholder": "Type a title or let AI generate one..."
+    }
   },
   "geo": {
     "get-geometry-field": {
