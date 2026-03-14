@@ -4,6 +4,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { sceneGraph, SceneObjectBase, SceneObjectRef, SceneObjectState, SceneVariableSet } from '@grafana/scenes';
 import { Box, Card, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -14,7 +15,13 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import {
+  EditableVariableType,
+  FILTER_VARIABLE_TYPES,
+  getNextAvailableId,
+  getVariableScene,
+  getVariableTypeSelectOptions,
+} from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
@@ -65,7 +72,13 @@ export class VariableAddEditableElement implements EditableDashboardElement {
 
 /** @internal Exported for testing */
 export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAdd }) {
-  const options = useMemo(() => getVariableTypeSelectOptions(), []);
+  const options = useMemo(() => {
+    const allOptions = getVariableTypeSelectOptions();
+    if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+      return allOptions.filter((option) => !FILTER_VARIABLE_TYPES.includes(option.value!));
+    }
+    return allOptions;
+  }, []);
   const styles = useStyles2(getStyles);
 
   const onAddVariable = useCallback(

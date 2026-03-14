@@ -5472,6 +5472,7 @@
         "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
+        "filters": "Filters",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -5487,6 +5488,10 @@
         "tabs": "Tabs",
         "variable": "{{type}} variable",
         "variable-set": "Variables"
+      },
+      "filters": {
+        "select-type": "Choose filter type",
+        "select-type-card-tooltip": "Click to select type"
       },
       "links": {
         "add-link": "Add link",
@@ -6539,6 +6544,9 @@
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
+    },
+    "add-filters": {
+      "label": "Filters"
     },
     "add-link": {
       "inline-instance-name": "New link",

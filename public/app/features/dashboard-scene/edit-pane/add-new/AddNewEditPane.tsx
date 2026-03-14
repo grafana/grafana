@@ -4,6 +4,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneObject } from '@grafana/scenes';
 import { Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
@@ -13,6 +14,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddButton } from './AddButton';
+import { AddFilters } from './AddFilters';
 import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
 import { AddVariable } from './AddVariable';
@@ -113,6 +115,9 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
         </DragDropContext>
       </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+        {config.featureToggles.groupByVariable && config.featureToggles.dashboardUnifiedDrilldownControls && (
+          <AddFilters dashboardScene={dashboardScene} />
+        )}
         <AddVariable dashboardScene={dashboardScene} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
         <AddLink dashboardScene={dashboardScene} />
