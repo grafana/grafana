@@ -1,7 +1,7 @@
 // @ts-check
 /** @typedef {import('@typescript-eslint/utils').TSESTree.ImportDeclaration} ImportDeclaration */
-const { ESLintUtils } = require('@typescript-eslint/utils');
-const path = require('path');
+import { ESLintUtils } from '@typescript-eslint/utils';
+import path from 'path';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
@@ -95,4 +95,4 @@ const noRestrictedPeerPluginPathsRule = createRule({
   defaultOptions: [],
 });
 
-module.exports = noRestrictedPeerPluginPathsRule;
+export default noRestrictedPeerPluginPathsRule;
