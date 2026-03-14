@@ -1,5 +1,4 @@
 import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
@@ -10,6 +9,7 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render, screen } from 'test/test-utils';
 
 import {
   DataSourceApi,
