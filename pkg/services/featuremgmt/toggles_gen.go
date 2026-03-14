@@ -913,4 +913,8 @@ const (
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagAccessControlsInterface
+	// Enables the access controls interface for managing user, service account, and team roles
+	FlagAccessControlsInterface = "accessControlsInterface"
 )

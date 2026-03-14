@@ -14,6 +14,7 @@ import { StoreState, useSelector } from 'app/types/store';
 import { TeamFolders } from './TeamFolders';
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
+// TeamRolesPage ships in PR 1 — stub for now
 import TeamSettings from './TeamSettings';
 import { useGetTeam } from './hooks';
 import { getTeamLoadingNav } from './state/navModel';
@@ -28,6 +29,7 @@ enum PageTypes {
   Settings = 'settings',
   Folders = 'folders',
   GroupSync = 'groupsync',
+  Roles = 'roles',
 }
 
 function getPageType(page: string | undefined): PageTypes | undefined {
@@ -40,6 +42,8 @@ function getPageType(page: string | undefined): PageTypes | undefined {
       return PageTypes.Folders;
     case PageTypes.GroupSync:
       return PageTypes.GroupSync;
+    case PageTypes.Roles:
+      return PageTypes.Roles;
     default:
       return undefined;
   }
@@ -108,6 +112,10 @@ const TeamPages = memo(() => {
             </>
           );
         }
+        return null;
+      case PageTypes.Roles:
+        // TeamRolesPage ships in PR 1
+        return null;
     }
 
     return null;

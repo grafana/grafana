@@ -1697,4 +1697,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables the access controls interface for managing user, service account, and team roles
+  * @default false
+  */
+  accessControlsInterface?: boolean;
 }

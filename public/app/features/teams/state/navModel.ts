@@ -28,11 +28,15 @@ export function buildNavModel(team: Team): NavModelItem {
   // Means team is not loaded yet and we have just a placeholder team object
   const isLoadingTeam = team === loadingTeam;
 
+  const basePath = config.featureToggles.accessControlsInterface
+    ? `org/teams/${team.uid}`
+    : `org/teams/edit/${team.uid}`;
+
   const navModel: NavModelItem = {
     img: team.avatarUrl,
     id: 'team-' + team.uid,
     subTitle: t('teams.build-nav-model.nav-model.subTitle.manage-members-and-settings', 'Manage members and settings'),
-    url: `org/teams/edit/${team.uid}`,
+    url: basePath,
     text: team.name,
     children: [
       // With RBAC this tab will always be available (but not always editable)
@@ -42,7 +46,7 @@ export function buildNavModel(team: Team): NavModelItem {
         icon: 'sliders-v-alt',
         id: `team-settings-${team.uid}`,
         text: t('teams.build-nav-model.nav-model.text.settings', 'Settings'),
-        url: `org/teams/edit/${team.uid}/settings`,
+        url: `${basePath}/settings`,
       },
     ],
   };
@@ -56,16 +60,18 @@ export function buildNavModel(team: Team): NavModelItem {
       icon: 'users-alt',
       id: `team-members-${team.uid}`,
       text: t('teams.build-nav-model.text.members', 'Members'),
-      url: `org/teams/edit/${team.uid}/members`,
+      url: `${basePath}/members`,
     });
   }
+
+  // Roles tab — ships in UI PR 1
 
   const teamGroupSync: NavModelItem = {
     active: false,
     icon: 'sync',
     id: `team-groupsync-${team.uid}`,
     text: t('teams.build-nav-model.team-group-sync.text.external-group-sync', 'External group sync'),
-    url: `org/teams/edit/${team.uid}/groupsync`,
+    url: `${basePath}/groupsync`,
   };
 
   if (highlightTrial()) {
@@ -102,7 +108,7 @@ export function buildNavModel(team: Team): NavModelItem {
       icon: 'folder-open',
       id: `team-folders-${team.uid}`,
       text: t('teams.build-nav-model.team-folders.text.folders', 'Folders'),
-      url: `org/teams/edit/${team.uid}/folders`,
+      url: `${basePath}/folders`,
     });
   }
 

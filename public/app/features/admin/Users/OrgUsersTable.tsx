@@ -97,7 +97,21 @@ export const OrgUsersTable = ({
       {
         id: 'login',
         header: 'Login',
-        cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
+        cell: ({ row: { original } }: Cell<'login'>) => {
+          if (config.featureToggles.accessControlsInterface) {
+            return (
+              <TextLink
+                color="primary"
+                inline={false}
+                href={`/admin/users/${original.uid}/information`}
+                title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
+              >
+                {original.login}
+              </TextLink>
+            );
+          }
+          return <div>{original.login}</div>;
+        },
         sortType: 'string',
       },
       {

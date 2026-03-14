@@ -291,12 +291,25 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    {
-      path: '/org/serviceaccounts/:id',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage')
-      ),
-    },
+    config.featureToggles.accessControlsInterface
+      ? {
+          path: '/org/serviceaccounts/:uid/:page?',
+          component: SafeDynamicImport(
+            () =>
+              import(
+                /* webpackChunkName: "ServiceAccountPages" */ 'app/features/serviceaccounts/ServiceAccountPages'
+              )
+          ),
+        }
+      : {
+          path: '/org/serviceaccounts/:id',
+          component: SafeDynamicImport(
+            () =>
+              import(
+                /* webpackChunkName: "ServiceAccountPage" */ 'app/features/serviceaccounts/ServiceAccountPage'
+              )
+          ),
+        },
     {
       path: '/org/teams',
       roles: () =>
@@ -308,12 +321,39 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
-    {
-      path: '/org/teams/edit/:uid/:page?',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
-    },
+    ...(config.featureToggles.accessControlsInterface
+      ? [
+          {
+            path: '/org/teams/:uid/:page?',
+            roles: () =>
+              contextSrv.evaluatePermission([
+                AccessControlAction.ActionTeamsRead,
+                AccessControlAction.ActionTeamsCreate,
+              ]),
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')
+            ),
+          },
+          {
+            path: '/org/teams/edit/:uid/:page?',
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "TeamEditRedirect" */ 'app/features/teams/TeamEditRedirect')
+            ),
+          },
+        ]
+      : [
+          {
+            path: '/org/teams/edit/:uid/:page?',
+            roles: () =>
+              contextSrv.evaluatePermission([
+                AccessControlAction.ActionTeamsRead,
+                AccessControlAction.ActionTeamsCreate,
+              ]),
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')
+            ),
+          },
+        ]),
     // ADMIN
     {
       path: '/admin',
@@ -361,12 +401,29 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
-    {
-      path: '/admin/users/edit/:id',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
-      ),
-    },
+    ...(config.featureToggles.accessControlsInterface
+      ? [
+          {
+            path: '/admin/users/:uid/:page?',
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "UserPages" */ 'app/features/admin/UserPages')
+            ),
+          },
+          {
+            path: '/admin/users/edit/:uid',
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "UserEditRedirect" */ 'app/features/admin/UserEditRedirect')
+            ),
+          },
+        ]
+      : [
+          {
+            path: '/admin/users/edit/:id',
+            component: SafeDynamicImport(
+              () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+            ),
+          },
+        ]),
     {
       path: '/admin/orgs',
       component: SafeDynamicImport(

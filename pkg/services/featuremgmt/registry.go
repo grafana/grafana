@@ -2689,6 +2689,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:         "accessControlsInterface",
+			Description:  "Enables the access controls interface for managing user, service account, and team roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
 	}
 )
 
