@@ -184,6 +184,75 @@ func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context,
 	return folderUID
 }
 
+// TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate verifies that
+// incremental sync reconciles folder titles from _folder.json for existing folders.
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("updates folder title when _folder.json changes", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-title-update"
+
+		// Seed with folder + _folder.json with original title.
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"my-team/_folder.json": folderMetadataJSON("stable-uid-incr-1", "Original"),
+			"my-team/dash.json":    dashboardJSON("team-dash-upd", "Team Dashboard", 1),
+		})
+
+		// Full sync creates the folder with "Original" title.
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Original")
+
+		// Push commit changing _folder.json to a new title.
+		require.NoError(t, local.CreateFile("my-team/_folder.json", string(folderMetadataJSON("stable-uid-incr-1", "Updated"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "update folder title")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync should reconcile the title.
+		helper.syncAndWaitIncremental(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Updated")
+	})
+
+	t.Run("updates nested folder title", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-title-update-nested"
+
+		// Seed with nested folders + _folder.json files.
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"parent/_folder.json":       folderMetadataJSON("parent-uid-nested", "Parent Original"),
+			"parent/child/_folder.json": folderMetadataJSON("child-uid-nested", "Child Title"),
+			"parent/child/dash.json":    dashboardJSON("nested-dash-upd", "Nested Dashboard", 1),
+		})
+
+		// Full sync.
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Original")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+
+		// Push commit changing only the parent's title.
+		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("parent-uid-nested", "Parent Updated"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "update parent folder title")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync should update parent title, child unchanged.
+		helper.syncAndWaitIncremental(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Updated")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+	})
+}
+
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle verifies that
 // incremental sync uses spec.title from _folder.json when creating/updating folders.
 func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.T) {
@@ -298,5 +367,34 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		// Both folders should use their metadata titles.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Display")
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Display")
+	})
+
+	t.Run("directory rename preserves metadata title", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-title-rename"
+
+		// Seed with a folder containing _folder.json and a dashboard.
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"old-dir/_folder.json": folderMetadataJSON("stable-uid-rename", "My Team"),
+			"old-dir/dash.json":    dashboardJSON("rename-dash", "Dashboard", 1),
+		})
+
+		// Full sync creates the folder with "My Team" title.
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team")
+
+		// Rename directory via git mv (keeps _folder.json with same UID and title).
+		_, err := local.Git("mv", "old-dir", "new-dir")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename directory old-dir to new-dir")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync — title must remain "My Team" (from _folder.json), not "new-dir".
+		helper.syncAndWaitIncremental(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team")
 	})
 }
