@@ -85,6 +85,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: theme.spacing(1),
   }),
 
+  sortField: css({
+    minWidth: '220px',
+  }),
+
+  pagination: css({
+    marginTop: theme.spacing(1),
+    overflow: 'auto',
+  }),
+
   resultLimit: css({
     margin: '4px 0',
     fontStyle: 'italic',
