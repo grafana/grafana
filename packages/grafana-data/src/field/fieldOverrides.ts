@@ -2,6 +2,7 @@ import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
+import { NullValueMode } from '@grafana/data';
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
@@ -9,7 +10,6 @@ import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDat
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { GrafanaTheme2 } from '../themes/types';
-import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { fieldMatchers } from '../transformations/matchers';
 import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
 import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
@@ -40,27 +40,46 @@ interface OverrideProps {
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
-  let min: number | null = null;
-  let max: number | null = null;
-
-  const reducers = [ReducerID.min, ReducerID.max];
+  let min: number | null = Infinity;
+  let max: number | null = -Infinity;
 
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        const stats = reduceField({ field, reducers });
-        const statsMin = stats[ReducerID.min];
-        const statsMax = stats[ReducerID.max];
+        const nullAsZero = field.config.nullValueMode === NullValueMode.AsZero;
+        const vals = field.values;
 
-        if (min === null || statsMin < min) {
-          min = statsMin;
-        }
+        for (let i = 0; i < vals.length; i++) {
+          let v = vals[i];
 
-        if (max === null || statsMax > max) {
-          max = statsMax;
+          if (v === null) {
+            if (nullAsZero) {
+              if (min! > 0) {
+                min = 0;
+              }
+              if (max! < 0) {
+                max = 0;
+              }
+            }
+          } else if (!Number.isNaN(v)) {// Number.isFinite()
+            if (min! > v) {
+              min = v;
+            }
+            if (max! < v) {
+              max = v;
+            }
+          }
         }
       }
     }
+  }
+
+  if (min === Infinity) {
+    min = null;
+  }
+
+  if (max === -Infinity) {
+    max = null;
   }
 
   return { min, max, delta: (max ?? 0) - (min ?? 0) };
