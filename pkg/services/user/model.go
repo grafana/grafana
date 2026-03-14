@@ -18,6 +18,8 @@ const (
 	HelpFlagEnterpriseAuth1
 	HelpFlagSyntheticMonitoring1
 	HelpFlagIRM1
+	HelpFlagAsserts1
+	HelpFlagSLO1
 )
 
 type UpdateEmailActionType string

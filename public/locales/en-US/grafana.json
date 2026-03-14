@@ -352,6 +352,9 @@
       "close": "Close",
       "learn-more": "Learn more"
     },
+    "ad-stack": {
+      "counter": "{{current}} / {{total}}"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -1579,6 +1582,12 @@
       }
     },
     "home": {
+      "asserts-card-description": "Find and fix issues faster with automated root cause analysis for your services.",
+      "asserts-card-item-1": "Automatically map services and their dependencies.",
+      "asserts-card-item-2": "Detect anomalies and surface root causes without manual queries.",
+      "asserts-card-item-3": "Correlate metrics, logs, and traces in a unified workflow.",
+      "asserts-card-item-4": "Reduce mean time to resolution with AI-assisted investigation.",
+      "asserts-card-title": "Knowledge Graph",
       "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
       "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
       "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
@@ -1587,6 +1596,12 @@
       "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "slo-card-description": "Define, track, and alert on Service Level Objectives directly in Grafana.",
+      "slo-card-item-1": "Create SLOs from any Prometheus-compatible metric source.",
+      "slo-card-item-2": "Visualize error budgets and burn rates out of the box.",
+      "slo-card-item-3": "Get automatic alerting when error budgets are at risk.",
+      "slo-card-item-4": "Track reliability goals alongside your existing dashboards.",
+      "slo-card-title": "Grafana SLO",
       "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
       "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
@@ -3279,6 +3294,12 @@
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "single-stack": {
+      "aria-label-next-card": "Next card",
+      "aria-label-previous-card": "Previous card",
+      "tooltip-next": "Next",
+      "tooltip-previous": "Previous"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
