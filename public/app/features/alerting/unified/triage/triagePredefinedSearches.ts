@@ -37,7 +37,7 @@ export function getTriagePredefinedSearches(): SavedSearch[] {
     {
       id: PREDEFINED_IDS[0],
       name: t('alerting.triage.saved-searches.predefined.folder-firing', 'Show only firing, grouped by folder'),
-      isDefault: false,
+      isDefault: true,
       query: buildTriageQueryStringFromParts({
         filters: [{ key: 'alertstate', operator: '=', value: 'firing' }],
         groupBy: ['grafana_folder'],

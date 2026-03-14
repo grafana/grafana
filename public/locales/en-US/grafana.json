@@ -3479,20 +3479,26 @@
       }
     },
     "triage": {
-      "alert-instances": "Alert instances",
-      "all-labels": "All labels",
       "all-labels-drawer-title": "All labels",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "collapse-sidebar": "Collapse sidebar",
       "compact-firing": "firing",
-      "compact-instances": "instances",
       "compact-pending": "pending",
       "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
-      "hidden-label-count_one": "and {{ count }} more",
-      "hidden-label-count_other": "and {{ count }} more",
-      "high-activity-labels": "High Activity Labels",
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "expand-sidebar": "Expand sidebar",
+      "filter-labels": "Filter labels",
+      "filter-labels-placeholder": "Filter",
+      "group-row": {
+        "no-label": "No {{label}}"
+      },
       "instance-details-drawer": {
         "instance-details": "Instance details"
       },
+      "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
@@ -3518,8 +3524,12 @@
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
       "show-all-values_other": "Show all ({{ count }})",
-      "tooltip-more-values_one": "and {{ count }} more",
-      "tooltip-more-values_other": "and {{ count }} more"
+      "show-fewer-values": "Show fewer",
+      "showing-groups-count_one": "Showing {{count}} groups",
+      "showing-groups-count_other": "Showing {{count}} groups",
+      "state-filter-title": "State",
+      "state-firing": "Firing",
+      "state-pending": "Pending"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
