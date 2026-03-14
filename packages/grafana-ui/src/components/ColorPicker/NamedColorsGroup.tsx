@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import { upperFirst } from 'lodash';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
@@ -15,6 +14,14 @@ interface NamedColorsGroupProps {
   onColorSelect: (colorName: string) => void;
   key?: string;
 }
+
+const upperFirst = (value: string): string => {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
 
 const NamedColorsGroup = ({ hue, selectedColor, onColorSelect, ...otherProps }: NamedColorsGroupProps) => {
   const label = upperFirst(hue.name);

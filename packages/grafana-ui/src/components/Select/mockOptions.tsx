@@ -1,6 +1,6 @@
-import { kebabCase } from 'lodash';
-
 import { SelectableValue } from '@grafana/data';
+
+import { kebabCase } from '../../utils/stringCasing';
 
 export const generateOptions = (desc = false) => {
   const values = [
