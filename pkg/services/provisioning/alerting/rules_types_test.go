@@ -202,6 +202,167 @@ func TestRules(t *testing.T) {
 	})
 }
 
+func TestAnnotationsAndLabelsEnvVarSubstitution(t *testing.T) {
+	t.Run("annotations should expand environment variables", func(t *testing.T) {
+		t.Setenv("RUNBOOK_URL", "https://runbooks.example.com/alert-1")
+		t.Setenv("DASHBOARD_UID", "abc123")
+
+		rule := validRuleV1(t)
+		var annotations values.StringMapValue
+		doc := "runbook_url: $RUNBOOK_URL\ndashboard_uid: $DASHBOARD_UID\nstatic: no-expansion-needed"
+		err := yaml.Unmarshal([]byte(doc), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "https://runbooks.example.com/alert-1", mapped.Annotations["runbook_url"])
+		require.Equal(t, "abc123", mapped.Annotations["dashboard_uid"])
+		require.Equal(t, "no-expansion-needed", mapped.Annotations["static"])
+	})
+
+	t.Run("labels should expand environment variables", func(t *testing.T) {
+		t.Setenv("TEAM_NAME", "platform-infra")
+		t.Setenv("ENV_LABEL", "production")
+
+		rule := validRuleV1(t)
+		var labels values.StringMapValue
+		doc := "team: $TEAM_NAME\nenvironment: $ENV_LABEL\nseverity: warning"
+		err := yaml.Unmarshal([]byte(doc), &labels)
+		require.NoError(t, err)
+		rule.Labels = labels
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "platform-infra", mapped.Labels["team"])
+		require.Equal(t, "production", mapped.Labels["environment"])
+		require.Equal(t, "warning", mapped.Labels["severity"])
+	})
+
+	t.Run("annotations and labels should both expand env vars in the same rule", func(t *testing.T) {
+		t.Setenv("ALERT_SUMMARY", "CPU usage exceeded threshold")
+		t.Setenv("ALERT_TEAM", "sre-oncall")
+
+		rule := validRuleV1(t)
+
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("summary: $ALERT_SUMMARY"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		var labels values.StringMapValue
+		err = yaml.Unmarshal([]byte("team: $ALERT_TEAM"), &labels)
+		require.NoError(t, err)
+		rule.Labels = labels
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "CPU usage exceeded threshold", mapped.Annotations["summary"])
+		require.Equal(t, "sre-oncall", mapped.Labels["team"])
+	})
+
+	t.Run("annotations should handle escaped dollar signs", func(t *testing.T) {
+		t.Setenv("REAL_VAR", "expanded")
+
+		rule := validRuleV1(t)
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("escaped: $$LITERAL\nreal: $REAL_VAR"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "$LITERAL", mapped.Annotations["escaped"])
+		require.Equal(t, "expanded", mapped.Annotations["real"])
+	})
+
+	t.Run("annotations should expand to empty string for unset env vars", func(t *testing.T) {
+		rule := validRuleV1(t)
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("missing: $NONEXISTENT_VAR_84250\npresent: literal"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "", mapped.Annotations["missing"])
+		require.Equal(t, "literal", mapped.Annotations["present"])
+	})
+
+	t.Run("annotations should expand multiple env vars in a single value", func(t *testing.T) {
+		t.Setenv("PROTO", "https")
+		t.Setenv("HOST", "grafana.local")
+		t.Setenv("PORT", "3000")
+
+		rule := validRuleV1(t)
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("url: $PROTO://$HOST:$PORT/dashboards"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "https://grafana.local:3000/dashboards", mapped.Annotations["url"])
+	})
+
+	t.Run("empty annotations map should not error", func(t *testing.T) {
+		rule := validRuleV1(t)
+		mapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Empty(t, mapped.Annotations)
+	})
+}
+
+func TestAnnotationsInRuleGroup(t *testing.T) {
+	t.Run("annotations env vars should expand through rule group mapping", func(t *testing.T) {
+		t.Setenv("GROUP_ANNOTATION", "provisioned-via-yaml")
+
+		rg := validRuleGroupV1(t)
+		rule := validRuleV1(t)
+
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("source: $GROUP_ANNOTATION"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		rg.Rules = []AlertRuleV1{rule}
+		mapped, err := rg.MapToModel()
+		require.NoError(t, err)
+		require.Len(t, mapped.Rules, 1)
+		require.Equal(t, "provisioned-via-yaml", mapped.Rules[0].Annotations["source"])
+	})
+
+	t.Run("multiple rules in group should each expand annotation env vars", func(t *testing.T) {
+		t.Setenv("ANNOT_ONE", "first-value")
+		t.Setenv("ANNOT_TWO", "second-value")
+
+		rg := validRuleGroupV1(t)
+
+		rule1 := validRuleV1(t)
+		rule1.UID = stringToStringValue("uid_1")
+		rule1.Title = stringToStringValue("rule_1")
+		var ann1 values.StringMapValue
+		err := yaml.Unmarshal([]byte("desc: $ANNOT_ONE"), &ann1)
+		require.NoError(t, err)
+		rule1.Annotations = ann1
+
+		rule2 := validRuleV1(t)
+		rule2.UID = stringToStringValue("uid_2")
+		rule2.Title = stringToStringValue("rule_2")
+		var ann2 values.StringMapValue
+		err = yaml.Unmarshal([]byte("desc: $ANNOT_TWO"), &ann2)
+		require.NoError(t, err)
+		rule2.Annotations = ann2
+
+		rg.Rules = []AlertRuleV1{rule1, rule2}
+		mapped, err := rg.MapToModel()
+		require.NoError(t, err)
+		require.Len(t, mapped.Rules, 2)
+		require.Equal(t, "first-value", mapped.Rules[0].Annotations["desc"])
+		require.Equal(t, "second-value", mapped.Rules[1].Annotations["desc"])
+	})
+}
+
 func TestRecordingRules(t *testing.T) {
 	t.Run("a valid rule should not error", func(t *testing.T) {
 		rule := validRecordingRuleV1(t)
