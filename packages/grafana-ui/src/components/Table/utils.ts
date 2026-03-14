@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { clone, sampleSize } from 'lodash';
+import { sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
 import { HeaderGroup, Row } from 'react-table';
 import tinycolor from 'tinycolor2';
@@ -384,7 +384,7 @@ export function getFooterItems(
       return undefined;
     }
 
-    let newField = clone(data.field);
+    let newField = { ...data.field };
     newField.values = values[data.id];
     newField.state = undefined;
 
