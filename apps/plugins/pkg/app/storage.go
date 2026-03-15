@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,43 +24,46 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*PluginMetaStorage)(nil)
-	_ rest.SingularNameProvider = (*PluginMetaStorage)(nil)
-	_ rest.Getter               = (*PluginMetaStorage)(nil)
-	_ rest.Lister               = (*PluginMetaStorage)(nil)
-	_ rest.Storage              = (*PluginMetaStorage)(nil)
-	_ rest.TableConvertor       = (*PluginMetaStorage)(nil)
+	_ rest.Scoper               = (*MetaStorage)(nil)
+	_ rest.SingularNameProvider = (*MetaStorage)(nil)
+	_ rest.Getter               = (*MetaStorage)(nil)
+	_ rest.Lister               = (*MetaStorage)(nil)
+	_ rest.Storage              = (*MetaStorage)(nil)
+	_ rest.TableConvertor       = (*MetaStorage)(nil)
 )
 
-type PluginMetaStorage struct {
+type MetaStorage struct {
 	metaManager   *meta.ProviderManager
 	client        *pluginsv0alpha1.PluginClient
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error)
 	clientErr     error
 	clientOnce    sync.Once
+	logger        logging.Logger
 
 	gr             schema.GroupResource
 	tableConverter rest.TableConvertor
 }
 
-func NewPluginMetaStorage(
+func NewMetaStorage(
+	logger logging.Logger,
 	metaManager *meta.ProviderManager,
 	clientFactory func(context.Context) (*pluginsv0alpha1.PluginClient, error),
-) *PluginMetaStorage {
+) *MetaStorage {
 	gr := schema.GroupResource{
 		Group:    pluginsv0alpha1.APIGroup,
-		Resource: strings.ToLower(pluginsv0alpha1.PluginMetaKind().Plural()),
+		Resource: strings.ToLower(pluginsv0alpha1.MetaKind().Plural()),
 	}
 
-	return &PluginMetaStorage{
+	return &MetaStorage{
 		metaManager:    metaManager,
 		clientFactory:  clientFactory,
+		logger:         logger,
 		gr:             gr,
 		tableConverter: rest.NewDefaultTableConvertor(gr),
 	}
 }
 
-func (s *PluginMetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
+func (s *MetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
 	s.clientOnce.Do(func() {
 		client, err := s.clientFactory(ctx)
 		if err != nil {
@@ -72,63 +77,117 @@ func (s *PluginMetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.Plu
 	return s.client, s.clientErr
 }
 
-func (s *PluginMetaStorage) New() runtime.Object {
-	return pluginsv0alpha1.PluginMetaKind().ZeroValue()
+func (s *MetaStorage) New() runtime.Object {
+	return pluginsv0alpha1.MetaKind().ZeroValue()
 }
 
-func (s *PluginMetaStorage) Destroy() {}
+func (s *MetaStorage) Destroy() {}
 
-func (s *PluginMetaStorage) NamespaceScoped() bool {
+func (s *MetaStorage) NamespaceScoped() bool {
 	return true
 }
 
-func (s *PluginMetaStorage) GetSingularName() string {
-	return strings.ToLower(pluginsv0alpha1.PluginMetaKind().Kind())
+func (s *MetaStorage) GetSingularName() string {
+	return strings.ToLower(pluginsv0alpha1.MetaKind().Kind())
 }
 
-func (s *PluginMetaStorage) NewList() runtime.Object {
-	return pluginsv0alpha1.PluginMetaKind().ZeroListValue()
+func (s *MetaStorage) NewList() runtime.Object {
+	return pluginsv0alpha1.MetaKind().ZeroListValue()
 }
 
-func (s *PluginMetaStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *MetaStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	start := time.Now()
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
+
+	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
+	listStart := time.Now()
 	plugins, err := pluginClient.ListAll(ctx, ns.Value, resource.ListOptions{})
+	listDuration := time.Since(listStart)
 	if err != nil {
-		logging.DefaultLogger.Error("Failed to list plugins", "namespace", ns.Value, "error", err)
+		logger.Error("Failed to list plugins", "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
 	}
+	logger.Debug("Listed plugins from storage", "count", len(plugins.Items), "duration", listDuration.Milliseconds())
 
-	// Convert each Plugin to PluginMeta
-	metaItems := make([]pluginsv0alpha1.PluginMeta, 0, len(plugins.Items))
-	for _, plugin := range plugins.Items {
-		result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
-		if err != nil {
-			// Log error but continue with other plugins
-			logging.DefaultLogger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
-			continue
-		}
+	defer func() {
+		duration := time.Since(start)
+		logger.Debug("Completed metadata list", "count", len(plugins.Items), "duration", duration.Milliseconds())
+	}()
 
-		pluginMeta := createPluginMetaFromPluginMetaJSONData(result.Meta, plugin.Name, plugin.Namespace)
-		metaItems = append(metaItems, *pluginMeta)
+	// Resolve metadata for all plugins concurrently.
+	// Results are written into a fixed-size slice so ordering is preserved
+	// and no mutex is needed on the output. Nil entries are plugins whose
+	// metadata lookup failed.
+	results := make([]*pluginsv0alpha1.Meta, len(plugins.Items))
+
+	metaFetchStart := time.Now()
+	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for i, plugin := range plugins.Items {
+		g.Go(func() error {
+			result, err := s.metaManager.GetMeta(gCtx, meta.PluginRef{
+				ID:       plugin.Spec.Id,
+				Version:  plugin.Spec.Version,
+				ParentID: plugin.Spec.ParentId,
+			})
+			if err != nil {
+				logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+				return nil
+			}
+
+			m := &pluginsv0alpha1.Meta{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      plugin.Name,
+					Namespace: plugin.Namespace,
+				},
+				Spec: result.Meta,
+			}
+			m.SetGroupVersionKind(schema.GroupVersionKind{
+				Group:   pluginsv0alpha1.APIGroup,
+				Version: pluginsv0alpha1.APIVersion,
+				Kind:    pluginsv0alpha1.MetaKind().Kind(),
+			})
+			results[i] = m
+			return nil
+		})
 	}
 
-	list := &pluginsv0alpha1.PluginMetaList{
+	if err = g.Wait(); err != nil {
+		return nil, err
+	}
+	metaFetchDuration := time.Since(metaFetchStart)
+
+	metaItems := make([]pluginsv0alpha1.Meta, 0, len(results))
+	successCount := 0
+	for _, r := range results {
+		if r != nil {
+			metaItems = append(metaItems, *r)
+			successCount++
+		}
+	}
+
+	logger.Debug("Completed metadata list",
+		"successCount", successCount,
+		"failureCount", len(plugins.Items)-successCount,
+		"duration", metaFetchDuration.Milliseconds())
+
+	list := &pluginsv0alpha1.MetaList{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: pluginsv0alpha1.APIGroup + "/" + pluginsv0alpha1.APIVersion,
-			Kind:       pluginsv0alpha1.PluginMetaKind().Kind() + "List",
+			Kind:       pluginsv0alpha1.MetaKind().Kind() + "List",
 		},
 		Items: metaItems,
 	}
@@ -136,11 +195,14 @@ func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.L
 	return list, nil
 }
 
-func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	start := time.Now()
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
+
+	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
@@ -155,7 +217,11 @@ func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav
 		return nil, err
 	}
 
-	result, err := s.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+	result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
+		ID:       plugin.Spec.Id,
+		Version:  plugin.Spec.Version,
+		ParentID: plugin.Spec.ParentId,
+	})
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
 			gr := schema.GroupResource{
@@ -165,31 +231,29 @@ func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav
 			return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
 		}
 
-		logging.DefaultLogger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+		logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
-	return createPluginMetaFromPluginMetaJSONData(result.Meta, name, ns.Value), nil
-}
-
-// createPluginMetaFromPluginMetaJSONData creates a PluginMeta k8s object from PluginMetaJSONData and plugin metadata.
-func createPluginMetaFromPluginMetaJSONData(pluginJSON pluginsv0alpha1.PluginMetaJSONData, name, namespace string) *pluginsv0alpha1.PluginMeta {
-	pluginMeta := &pluginsv0alpha1.PluginMeta{
+	pluginMeta := &pluginsv0alpha1.Meta{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      plugin.Name,
+			Namespace: plugin.Namespace,
 		},
-		Spec: pluginsv0alpha1.PluginMetaSpec{
-			PluginJSON: pluginJSON,
-		},
+		Spec: result.Meta,
 	}
-
-	// Set the GroupVersionKind
 	pluginMeta.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   pluginsv0alpha1.APIGroup,
 		Version: pluginsv0alpha1.APIVersion,
-		Kind:    pluginsv0alpha1.PluginMetaKind().Kind(),
+		Kind:    pluginsv0alpha1.MetaKind().Kind(),
 	})
 
-	return pluginMeta
+	duration := time.Since(start)
+	logger.Debug("Completed metadata fetch",
+		"name", name,
+		"pluginId", plugin.Spec.Id,
+		"version", plugin.Spec.Version,
+		"duration", duration.Milliseconds())
+
+	return pluginMeta, nil
 }

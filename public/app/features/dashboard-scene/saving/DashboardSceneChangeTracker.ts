@@ -206,6 +206,10 @@ export class DashboardSceneChangeTracker {
     }
 
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+      if (!this._dashboard.state.isEditing) {
+        return;
+      }
+
       this.updateIsDirty(!!e.data.hasChanges);
     };
 

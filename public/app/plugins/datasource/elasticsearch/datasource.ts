@@ -49,6 +49,8 @@ import {
   config,
 } from '@grafana/runtime';
 
+import { ElasticsearchVariableEditor } from './ElasticsearchVariableEditor';
+import { ElasticsearchVariableSupport } from './ElasticsearchVariableSupport';
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
@@ -81,6 +83,7 @@ import {
   isElasticsearchResponseWithAggregations,
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
+  QueryType,
 } from './types';
 import { getScriptValue, isTimeSeriesQuery } from './utils';
 
@@ -127,6 +130,7 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
+  defaultQueryMode?: QueryType;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -146,9 +150,6 @@ export class ElasticDatasource
     this.intervalPattern = settingsData.interval;
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
-    this.queryBuilder = new ElasticQueryBuilder({
-      timeField: this.timeField,
-    });
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
     this.includeFrozen = settingsData.includeFrozen ?? false;
@@ -157,11 +158,16 @@ export class ElasticDatasource
     this.annotations = {
       QueryEditor: ElasticsearchAnnotationsQueryEditor,
     };
-
+    this.defaultQueryMode = settingsData.defaultQueryMode;
+    this.queryBuilder = new ElasticQueryBuilder({
+      timeField: this.timeField,
+      defaultQueryMode: this.defaultQueryMode,
+    });
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
+    this.variables = new ElasticsearchVariableSupport(this, ElasticsearchVariableEditor);
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
@@ -291,8 +297,8 @@ export class ElasticDatasource
     const dateRanges = [];
     const rangeStart: RangeMap = {};
     rangeStart[timeField] = {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
+      gte: options.range.from.valueOf(),
+      lte: options.range.to.valueOf(),
       format: 'epoch_millis',
     };
     dateRanges.push({ range: rangeStart });
@@ -300,8 +306,8 @@ export class ElasticDatasource
     if (timeEndField) {
       const rangeEnd: RangeMap = {};
       rangeEnd[timeEndField] = {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
+        gte: options.range.from.valueOf(),
+        lte: options.range.to.valueOf(),
         format: 'epoch_millis',
       };
       dateRanges.push({ range: rangeEnd });

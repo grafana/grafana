@@ -17,7 +17,7 @@ test.use({
   },
   featureToggles: {
     kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
-    kubernetesDashboardsV2: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 
@@ -44,11 +44,13 @@ test.describe(
       // Set user preferences for timezone
       await page.goto('/profile');
       await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
+      await page.keyboard.type('Tokyo');
       await page.getByRole('option', { name: 'Asia/Tokyo' }).click();
       await page.getByTestId(selectors.components.UserProfile.preferencesSaveButton).click();
       // wait for the page to reload before trying to navigate, otherwise this can cause flakes
       // see e.g. https://github.com/microsoft/playwright/issues/21451#issuecomment-1502251404
       await page.waitForURL('/profile');
+      await page.waitForLoadState('networkidle');
 
       // Open dashboard with time range from 8th to end of 10th.
       // Will be Tokyo time because of above preference

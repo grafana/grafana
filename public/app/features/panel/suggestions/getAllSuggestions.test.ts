@@ -1,4 +1,5 @@
 import {
+  AppEvents,
   DataFrame,
   FieldType,
   getDefaultTimeRange,
@@ -10,6 +11,8 @@ import {
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getListedPanelPluginMetas, PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
@@ -18,19 +21,33 @@ import {
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
-import { config } from 'app/core/config';
+import { appEvents } from 'app/core/app_events';
+import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
+import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
 import { panelsToCheckFirst } from './consts';
-import { getAllSuggestions, sortSuggestions } from './getAllSuggestions';
+import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
+
+jest.mock('app/core/app_events', () => ({
+  appEvents: {
+    subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
+    publish: jest.fn(),
+  },
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getListedPanelPluginMetas: jest.fn(),
+}));
+
+const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
 
 config.featureToggles.externalVizSuggestions = true;
 
 let idx = 0;
-for (const pluginId of panelsToCheckFirst) {
-  if (pluginId === 'geomap') {
-    continue;
-  }
-  config.panels[pluginId] = {
+
+function getPanelPluginMeta(pluginId: string) {
+  return {
     id: pluginId,
     module: `core:plugin/${pluginId}`,
     sort: idx++,
@@ -52,37 +69,18 @@ for (const pluginId of panelsToCheckFirst) {
   };
 }
 
-config.panels.text = {
-  id: 'text',
-  module: 'core:plugin/text',
-  sort: idx++,
-  name: 'Text',
-  type: PluginType.panel,
-  baseUrl: 'public/app/plugins/panel',
-  skipDataQuery: true,
-  suggestions: false,
-  info: {
-    version: '1.0.0',
-    updated: '2025-01-01',
-    links: [],
-    screenshots: [],
-    author: {
-      name: 'Grafana Labs',
-    },
-    description: 'Text panel',
-    logos: { small: 'small/logo', large: 'large/logo' },
-  },
-};
+function getPanelPlugins() {
+  const plugins = [];
+  for (const pluginId of panelsToCheckFirst) {
+    if (pluginId === 'geomap') {
+      continue;
+    }
+    plugins.push(getPanelPluginMeta(pluginId));
+  }
+  return plugins;
+}
 
-jest.mock('../state/util', () => {
-  const originalModule = jest.requireActual('../state/util');
-  return {
-    ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
-  };
-});
-
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 class ScenarioContext {
   data: DataFrame[] = [];
@@ -92,6 +90,9 @@ class ScenarioContext {
     this.data = scenarioData;
 
     beforeAll(async () => {
+      const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
+      setPanelPluginMetas(metas);
+      getListedPanelPluginMetasMock.mockResolvedValue(getPanelPlugins());
       await this.run();
     });
   }
@@ -103,7 +104,8 @@ class ScenarioContext {
       timeRange: getDefaultTimeRange(),
     };
 
-    this.suggestions = await getAllSuggestions(panelData);
+    const result = await getAllSuggestions(panelData.series);
+    this.suggestions = result.suggestions;
   }
 
   names() {
@@ -490,8 +492,36 @@ scenario('Given a preferredVisualisationType', (ctx) => {
   });
 });
 
+scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'chart',
+      },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1, 2, 3, 4, 5] },
+        { name: 'ServerA', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+        { name: 'ServerB', type: FieldType.number, values: [1, 10, 50, 2, 5] },
+      ],
+    }),
+  ]);
+
+  it('should stable-ly sort the results', async () => {
+    const dataSummary = getPanelDataSummary(ctx.data);
+    const timeseriesPlugin = await pluginImporter.importPanel(getPanelPluginMeta('timeseries'));
+    const timeseriesSuggestions = timeseriesPlugin.getSuggestions(dataSummary);
+    if (!timeseriesSuggestions) {
+      throw new Error('No suggestions from timeseries plugin');
+    }
+    for (let i = 0; i < timeseriesSuggestions.length; i++) {
+      const suggestion = timeseriesSuggestions[i];
+      expect(ctx.suggestions[i].name).toEqual(suggestion.name);
+    }
+  });
+});
+
 describe('sortSuggestions', () => {
-  it('should sort suggestions correctly by score', () => {
+  it('should sort suggestions correctly by score', async () => {
     const suggestions = [
       { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
       { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
@@ -508,14 +538,14 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
     expect(suggestions[2].pluginId).toBe('table');
   });
 
-  it('should sort suggestions based on core module', () => {
+  it('should sort suggestions based on core module', async () => {
     const suggestions = [
       {
         pluginId: 'fake-external-panel',
@@ -543,7 +573,7 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
@@ -551,6 +581,77 @@ describe('sortSuggestions', () => {
     expect(suggestions[2].hash).toBe('d');
     expect(suggestions[3].pluginId).toBe('fake-external-panel');
     expect(suggestions[3].hash).toBe('b');
+  });
+});
+
+describe('Visualization suggestions error handling', () => {
+  it('returns result with hasErrors flag', async () => {
+    const result = await getAllSuggestions([
+      toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Max', type: FieldType.number, values: [1, 10] },
+        ],
+      }),
+    ]);
+
+    expect(result).toHaveProperty('suggestions');
+    expect(result).toHaveProperty('hasErrors');
+    expect(result.hasErrors).toBe(false);
+  });
+});
+
+// this needs to happen before any
+describe('loadPlugins', () => {
+  beforeEach(() => {
+    clearPanelPluginCache();
+  });
+
+  afterEach(() => {
+    if (jest.isMockFunction(pluginImporter.importPanel)) {
+      jest.mocked(pluginImporter.importPanel).mockRestore();
+    }
+  });
+
+  it('should swallow errors when failing to load core plugins', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    const _importPanel = pluginImporter.importPanel;
+    jest.spyOn(pluginImporter, 'importPanel').mockImplementation(async (meta) => {
+      if (meta.id === 'timeseries') {
+        throw new Error('Failed to load core panel plugin');
+      }
+      return await _importPanel(meta);
+    });
+
+    const panelIds = ['timeseries', 'table'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins).toEqual([expect.objectContaining({ meta: expect.objectContaining({ id: 'table' }) })]);
+    expect(hasErrors).toBe(true);
+    expect(appEvents.publish).not.toHaveBeenCalled();
+  });
+
+  it('should swallow errors when failing to load external plugins', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    const panelIds = ['non-existent-panel'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins).toEqual([]);
+    expect(hasErrors).toBe(false);
+    expect(appEvents.publish).toHaveBeenCalledWith({
+      type: AppEvents.alertError.name,
+      payload: [expect.stringContaining('Failed to load panel plugin: non-existent-panel.')],
+    });
+  });
+
+  it('should load panel plugins with suggestions', async () => {
+    const panelIds = ['timeseries', 'table'];
+    const { plugins, hasErrors } = await loadPlugins(panelIds);
+
+    expect(plugins.map((p) => p.meta.id)).toEqual(expect.arrayContaining(['timeseries', 'table']));
+    expect(hasErrors).toBe(false);
   });
 });
 

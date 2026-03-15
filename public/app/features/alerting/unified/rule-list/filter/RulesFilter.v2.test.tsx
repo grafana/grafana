@@ -1,8 +1,8 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { ComponentTypeWithExtensionMeta, PluginExtensionComponentMeta, PluginExtensionTypes } from '@grafana/data';
-import { config, locationService, setPluginComponentsHook } from '@grafana/runtime';
+import { locationService, setPluginComponentsHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,6 +14,51 @@ import { RulesFilter as RulesFilterType } from '../../search/rulesSearchParser';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
+
+// Mock config for UserStorage (namespace and user must be set before UserStorage module loads)
+// This allows the real UserStorage class to work with MSW handlers
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(), // Silence analytics calls from useSavedSearches
+  getDataSourceSrv: () => ({
+    getList: jest.fn().mockReturnValue([
+      { name: 'Prometheus', uid: 'prometheus-uid' },
+      { name: 'Loki', uid: 'loki-uid' },
+    ]),
+  }),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    namespace: 'default',
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      navTree: [],
+      user: {
+        uid: 'test-user-123',
+        id: 123,
+        isSignedIn: true,
+      },
+    },
+  },
+}));
+
+// Set up contextSrv.user.id for useSavedSearches session storage key.
+// The hook uses this ID to create a per-user session storage key.
+// Note: hasPermission must be mocked here because RulesFilter.v1.tsx calls it at module load time,
+// before grantUserPermissions can set up the spy. grantUserPermissions still works for runtime checks.
+jest.mock('app/core/services/context_srv', () => {
+  const actual = jest.requireActual('app/core/services/context_srv');
+  return {
+    ...actual,
+    contextSrv: {
+      ...actual.contextSrv,
+      user: {
+        ...actual.contextSrv.user,
+        id: 123,
+      },
+      hasPermission: jest.fn().mockReturnValue(true),
+    },
+  };
+});
 
 // Grant permission before importing the component since permission check happens at module level
 grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
@@ -46,6 +91,7 @@ jest.mock('../../hooks/useFilteredRules', () => ({
 
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
+// Set up MSW server with UserStorage handlers
 setupMswServer();
 
 jest.spyOn(analytics, 'trackFilterButtonClick');
@@ -53,16 +99,6 @@ jest.spyOn(analytics, 'trackFilterButtonApplyClick');
 jest.spyOn(analytics, 'trackFilterButtonClearClick');
 jest.spyOn(analytics, 'trackAlertRuleFilterEvent');
 jest.spyOn(analytics, 'trackRulesSearchInputCleared');
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: jest.fn().mockReturnValue([
-      { name: 'Prometheus', uid: 'prometheus-uid' },
-      { name: 'Loki', uid: 'loki-uid' },
-    ]),
-  }),
-}));
 
 jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
   const original = jest.requireActual('../../components/rules/MultipleDataSourcePicker');
@@ -113,6 +149,8 @@ const ui = {
 beforeEach(() => {
   locationService.replace({ search: '' });
   jest.clearAllMocks();
+  sessionStorage.clear();
+  localStorage.clear();
 
   mockFilterState = {
     ruleName: '',
@@ -150,45 +188,46 @@ beforeEach(() => {
 });
 
 describe('RulesFilter Feature Flag', () => {
-  const originalFeatureToggle = config.featureToggles.alertingFilterV2;
+  describe('with alertingFilterV2 enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingFilterV2'] });
 
-  afterEach(() => {
-    config.featureToggles.alertingFilterV2 = originalFeatureToggle;
+    it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
+      render(<RulesFilter />);
+
+      // Wait for suspense to resolve and check that the V2 filter button is present
+      await screen.findByRole('button', { name: 'Filter' });
+      expect(ui.filterButton.get()).toBeInTheDocument();
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
   });
 
-  it('Should render RulesFilterV2 when alertingFilterV2 feature flag is enabled', async () => {
-    config.featureToggles.alertingFilterV2 = true;
+  describe('with alertingFilterV2 disabled', () => {
+    testWithFeatureToggles({ disable: ['alertingFilterV2'] });
 
-    render(<RulesFilter />);
+    it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
+      render(<RulesFilter />);
 
-    // Wait for suspense to resolve and check that the V2 filter button is present
-    await screen.findByRole('button', { name: 'Filter' });
-    expect(ui.filterButton.get()).toBeInTheDocument();
-    expect(ui.searchInput.get()).toBeInTheDocument();
-  });
+      // Wait for suspense to resolve and check V1 structure
+      await screen.findByText('Search');
 
-  it('Should render RulesFilterV1 when alertingFilterV2 feature flag is disabled', async () => {
-    config.featureToggles.alertingFilterV2 = false;
+      // V1 has search input but no V2-style filter button
+      expect(ui.searchInput.get()).toBeInTheDocument();
+      expect(ui.filterButton.query()).not.toBeInTheDocument();
 
-    render(<RulesFilter />);
-
-    // Wait for suspense to resolve and check V1 structure
-    await screen.findByText('Search');
-
-    // V1 has search input but no V2-style filter button
-    expect(ui.searchInput.get()).toBeInTheDocument();
-    expect(ui.filterButton.query()).not.toBeInTheDocument();
-
-    // V1 has a help icon next to the search input
-    expect(screen.getByText('Search')).toBeInTheDocument();
+      // V1 has a help icon next to the search input
+      expect(screen.getByText('Search')).toBeInTheDocument();
+    });
   });
 });
 
 describe('RulesFilterV2', () => {
-  it('Should render component without crashing', () => {
+  it('Should render component without crashing', async () => {
     render(<RulesFilterV2 />);
 
-    expect(ui.searchInput.get()).toBeInTheDocument();
+    // Wait for async hook operations (useSavedSearches) to complete
+    await waitFor(() => {
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
     expect(ui.filterButton.get()).toBeInTheDocument();
   });
 
@@ -429,4 +468,6 @@ describe('RulesFilterV2', () => {
       expect(analytics.trackFilterButtonClick).toHaveBeenCalledTimes(1);
     });
   });
+
+  // Auto-apply of default search is tested in RuleList.v2.test.tsx (behavior is in RuleListPage)
 });

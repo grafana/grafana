@@ -9,6 +9,7 @@ import { useScopesServices } from '../ScopesContextProvider';
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 
 // Helper components for rendering different selectable content types
 interface RadioButtonDotProps {
@@ -181,26 +182,18 @@ export interface ScopesTreeItemProps {
   selected: boolean;
   selectedScopes: SelectedScope[];
   highlighted: boolean;
-
-  filterNode: (scopeNodeId: string, query: string) => void;
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
-  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
 export function ScopesTreeItem({
   anyChildExpanded,
   loadingNodeName,
   treeNode,
-  filterNode,
   scopeNodes,
   selected,
   selectedScopes,
-  selectScope,
-  deselectScope,
   highlighted,
-  toggleExpandedNode,
 }: ScopesTreeItemProps) {
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
   const styles = useStyles2(getStyles);
   const services = useScopesServices();
   const { closeAndApply } = services?.scopesSelectorService || {};
@@ -301,12 +294,8 @@ export function ScopesTreeItem({
           <ScopesTree
             tree={treeNode}
             loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
             scopeNodes={scopeNodes}
             selectedScopes={selectedScopes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
-            toggleExpandedNode={toggleExpandedNode}
           />
         )}
       </div>

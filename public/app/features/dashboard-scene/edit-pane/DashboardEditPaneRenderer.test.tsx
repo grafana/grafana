@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -17,6 +18,10 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
+  useMediaQueryMinWidth: () => true,
+}));
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
@@ -34,6 +39,7 @@ export function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
     isEditing: true,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
@@ -45,7 +51,13 @@ export function buildTestScene() {
 }
 
 describe('DashboardEditPaneRenderer', () => {
-  config.featureToggles.dashboardNewLayouts = true;
+  beforeEach(() => {
+    config.featureToggles.dashboardNewLayouts = true;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('Should render sidebar', async () => {
     const scene = buildTestScene();

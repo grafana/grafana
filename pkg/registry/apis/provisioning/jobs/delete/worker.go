@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -36,12 +38,26 @@ func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionDelete
 }
 
-func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (w *Worker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if job.Spec.Delete == nil {
 		return errors.New("missing delete settings")
 	}
 
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", job.Spec.Delete)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.delete.process")
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("delete.ref", job.Spec.Delete.Ref),
+		attribute.Int("delete.paths_count", len(job.Spec.Delete.Paths)),
+		attribute.Int("delete.resources_count", len(job.Spec.Delete.Resources)),
+	)
+
 	opts := *job.Spec.Delete
 	paths := opts.Paths
 	start := time.Now()
@@ -102,7 +118,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	}
 
 	if opts.Ref == "" {
-		progress.ResetResults()
+		progress.ResetResults(true)
 		progress.SetMessage(ctx, "pull resources")
 
 		syncJob := provisioning.Job{
@@ -131,16 +147,17 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 func (w *Worker) deleteFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.DeleteJobOptions, paths ...string) error {
 	for _, path := range paths {
-		result := jobs.JobResourceResult{
-			Path:   path,
-			Action: repository.FileActionDeleted,
-		}
+		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionDeleted)
 
 		progress.SetMessage(ctx, "Deleting "+path)
 		if err := rw.Delete(ctx, path, opts.Ref, "Delete "+path); err != nil {
-			result.Error = fmt.Errorf("deleting file %s: %w", path, err)
+			if errors.Is(err, repository.ErrFileNotFound) {
+				resultBuilder.WithWarning(fmt.Errorf("deleting file %s: %w", path, err))
+			} else {
+				resultBuilder.WithError(fmt.Errorf("deleting file %s: %w", path, err))
+			}
 		}
-		progress.Record(ctx, result)
+		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
@@ -163,23 +180,18 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 
 	resolvedPaths := make([]string, 0, len(resources))
 	for _, resource := range resources {
-		result := jobs.JobResourceResult{
-			Name:   resource.Name,
-			Group:  resource.Group,
-			Action: repository.FileActionDeleted, // Will be used for deletion later
-		}
-
 		gvk := schema.GroupVersionKind{
 			Group: resource.Group,
 			Kind:  resource.Kind,
 			// Version is left empty so ForKind will use the preferred version
 		}
+		resultBuilder := jobs.NewGVKResult(resource.Name, gvk).WithAction(repository.FileActionDeleted)
 
 		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name))
 		resourcePath, err := repositoryResources.FindResourcePath(ctx, resource.Name, gvk)
 		if err != nil {
-			result.Error = fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err)
-			progress.Record(ctx, result)
+			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err))
+			progress.Record(ctx, resultBuilder.Build())
 			// Continue with next resource instead of failing fast
 			if err := progress.TooManyErrors(); err != nil {
 				return resolvedPaths, err
@@ -187,7 +199,6 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 			continue
 		}
 
-		result.Path = resourcePath
 		resolvedPaths = append(resolvedPaths, resourcePath)
 	}
 

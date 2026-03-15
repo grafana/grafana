@@ -165,10 +165,10 @@ describe('CloneRuleEditor', function () {
       );
 
       await waitFor(() => {
-        expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
+        expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
       });
+      expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');
       expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
-      expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
       expect(ui.inputs.group.get()).toHaveTextContent('group1');
       expect(
         byRole('listitem', {

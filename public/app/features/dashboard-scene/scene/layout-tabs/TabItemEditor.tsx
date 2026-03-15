@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Input, Field, TextLink } from '@grafana/ui';
+import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -11,7 +11,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getQueryRunnerFor, useDashboard } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
@@ -99,7 +99,6 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
 
 function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
   const { layout } = tab.useState();
-  const dashboard = useDashboard(tab);
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -114,7 +113,7 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
     <>
       <RepeatRowSelect2
         id={id}
-        sceneContext={dashboard}
+        sceneContext={tab}
         repeat={tab.state.repeatByVariable}
         onChange={(repeat) => tab.onChangeRepeat(repeat)}
       />
@@ -135,7 +134,7 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
           <TextLink
             external
             href={
-              'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-tabs'
+              'https://grafana.com/docs/grafana/next/visualizations/dashboards/build-dashboards/create-dashboard/#repeating-rows-and-tabs-and-the-dashboard-special-data-source'
             }
           >
             <Trans i18nKey="dashboard.tabs-layout.tab.repeat.learn-more">Learn more</Trans>

@@ -2,7 +2,7 @@ package legacy
 
 import (
 	"context"
-	"database/sql"
+	stdsql "database/sql"
 	"fmt"
 	"time"
 
@@ -17,6 +17,9 @@ import (
 type ListTeamBindingsQuery struct {
 	UID        string
 	OrgID      int64
+	TeamUID    string
+	UserUID    string
+	External   *bool
 	Pagination common.Pagination
 }
 
@@ -59,6 +62,13 @@ type listTeamBindingsQuery struct {
 
 func (r listTeamBindingsQuery) Validate() error {
 	return nil // TODO
+}
+
+func (r listTeamBindingsQuery) ExternalValue() bool {
+	if r.Query.External != nil {
+		return *r.Query.External
+	}
+	return false
 }
 
 func newListTeamBindings(sql *legacysql.LegacyDatabaseHelper, q *ListTeamBindingsQuery) listTeamBindingsQuery {
@@ -109,9 +119,13 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
+		var nullableExternal stdsql.NullBool
+		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &nullableExternal)
 		if err != nil {
 			return res, err
+		}
+		if nullableExternal.Valid {
+			m.External = nullableExternal.Bool
 		}
 
 		res.Bindings = append(res.Bindings, m)
@@ -120,6 +134,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 		if len(res.Bindings) >= int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
+			break
 		}
 	}
 
@@ -189,6 +204,9 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 
 		teamMemberID, err := st.ExecWithReturningId(ctx, teamMemberQuery, req.GetArgs()...)
 		if err != nil {
+			if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+				return team.ErrTeamMemberAlreadyAdded
+			}
 			return fmt.Errorf("failed to create team member: %w", err)
 		}
 
@@ -423,8 +441,12 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 	return nil
 }
 
-func scanMember(rows *sql.Rows) (TeamMember, error) {
+func scanMember(rows *stdsql.Rows) (TeamMember, error) {
 	m := TeamMember{}
-	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
+	var nullableExternal stdsql.NullBool
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	if nullableExternal.Valid {
+		m.External = nullableExternal.Bool
+	}
 	return m, err
 }

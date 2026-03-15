@@ -1,13 +1,47 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 
-import { createTheme } from './createTheme';
-import * as extraThemes from './themeDefinitions';
+import { createTheme, NewThemeOptionsSchema } from './createTheme';
+import aubergine from './themeDefinitions/aubergine.json';
+import debug from './themeDefinitions/debug.json';
+import desertbloom from './themeDefinitions/desertbloom.json';
+import deuteranopia_protanopia_dark from './themeDefinitions/deuteranopia_protanopia_dark.json';
+import deuteranopia_protanopia_light from './themeDefinitions/deuteranopia_protanopia_light.json';
+import gildedgrove from './themeDefinitions/gildedgrove.json';
+import gloom from './themeDefinitions/gloom.json';
+import mars from './themeDefinitions/mars.json';
+import matrix from './themeDefinitions/matrix.json';
+import sapphiredusk from './themeDefinitions/sapphiredusk.json';
+import synthwave from './themeDefinitions/synthwave.json';
+import tritanopia_dark from './themeDefinitions/tritanopia_dark.json';
+import tritanopia_light from './themeDefinitions/tritanopia_light.json';
+import tron from './themeDefinitions/tron.json';
+import victorian from './themeDefinitions/victorian.json';
+import zen from './themeDefinitions/zen.json';
 import { GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;
   build: () => GrafanaTheme2;
 }
+
+const extraThemes: { [key: string]: unknown } = {
+  aubergine,
+  debug,
+  desertbloom,
+  deuteranopia_protanopia_dark,
+  deuteranopia_protanopia_light,
+  gildedgrove,
+  gloom,
+  mars,
+  matrix,
+  sapphiredusk,
+  synthwave,
+  tritanopia_dark,
+  tritanopia_light,
+  tron,
+  victorian,
+  zen,
+};
 
 /**
  * @internal
@@ -42,9 +76,6 @@ export function getBuiltInThemes(allowedExtras: string[]) {
   return sortedThemes;
 }
 
-/**
- * There is also a backend list at pkg/services/preference/themes.go
- */
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
@@ -53,13 +84,19 @@ const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   ];
 });
 
-for (const [id, theme] of Object.entries(extraThemes)) {
-  themeRegistry.register({
-    id,
-    name: theme.name ?? '',
-    build: () => createTheme(theme),
-    isExtra: true,
-  });
+for (const [name, json] of Object.entries(extraThemes)) {
+  const result = NewThemeOptionsSchema.safeParse(json);
+  if (!result.success) {
+    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+  } else {
+    const theme = result.data;
+    themeRegistry.register({
+      id: theme.id,
+      name: theme.name,
+      build: () => createTheme(theme),
+      isExtra: true,
+    });
+  }
 }
 
 function getSystemPreferenceTheme() {

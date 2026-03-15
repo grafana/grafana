@@ -43,24 +43,36 @@ If the data source doesn't support loading the full range logs volume, the logs 
 
 The following sections provide detailed explanations on how to visualize and interact with individual logs in Explore.
 
-### Logs navigation
+### Infinite scroll
 
-Logs navigation, located at the right side of the log lines, can be used to easily request additional logs by clicking **Older logs** at the bottom of the navigation. This is especially useful when you reach the line limit and you want to see more logs. Each request run from the navigation displays in the navigation as separate page. Every page shows `from` and `to` timestamps of the incoming log lines. You can see previous results by clicking on each page. Explore caches the last five requests run from the logs navigation so you're not re-running the same queries when clicking on the pages, saving time and resources.
+<!-- vale Grafana.GoogleWill = NO -->
 
-![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
+When you reach the bottom of the list of logs, you will see the message `Scroll to load more`. If you continue scrolling and the displayed logs are within the selected time interval, Grafana will load more logs. When the sort order is "newest first" you receive older logs, and when the sort order is "oldest first" you get newer logs.
+
+<!-- vale Grafana.GoogleWill = YES -->
 
 ### Visualization options
 
 You have the option to customize the display of logs and choose which columns to show. Following is a list of available options.
 
-| Option                    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Time**                  | Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.                                                                                                                                                                                                                                                                                                                                      |
-| **Unique labels**         | Shows or hides the unique labels column that includes only non-common labels. All common labels are displayed above.                                                                                                                                                                                                                                                                                                                                      |
-| **Wrap lines**            | Set this to `true` if you want the display to use line wrapping. If set to `false`, it will result in horizontal scrolling.                                                                                                                                                                                                                                                                                                                               |
-| **Prettify JSON**         | Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.                                                                                                                                                                                                                                                                                                                                        |
-| **Deduplication**         | Log data can be very repetitive. Explore hides duplicate log lines using a few different deduplication algorithms. **Exact** matches are done on the whole line except for date fields. **Numbers** matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. **Signature** is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. |
-| **Display results order** | You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).                                                                                                                                                                                                                                                                                                                             |
+<!-- vale Grafana.Spelling = NO -->
+
+| Option                                | Description                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expand / Collapse                     | Expand or collapse the controls toolbar.                                                                                                                                                                                                                                                                                                                                            |
+| Scroll to bottom                      | Jump to the bottom of the logs table.                                                                                                                                                                                                                                                                                                                                               |
+| Oldest Logs First / Newest logs first | Sort direction (ascending or descending).                                                                                                                                                                                                                                                                                                                                           |
+| Search logs / Close search            | Click to open/close the client side string search of the displayed logs result.                                                                                                                                                                                                                                                                                                     |
+| Deduplication                         | **None** does not perform any deduplication, **Exact** matches are done on the whole line except for date fields. **Numbers** matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. **Signature** is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. |
+| Filter levels                         | Filter logs in display by log level: All levels, Info, Debut, Warning, Error.                                                                                                                                                                                                                                                                                                       |
+| Set Timestamp format                  | Hide timestamps (disabled), Show milliseconds timestamps, Show nanoseconds timestamps.                                                                                                                                                                                                                                                                                              |
+| Set line wrap                         | Disable line wrapping, Enable line wrapping, Enable line wrapping and prettify JSON.                                                                                                                                                                                                                                                                                                |
+| Enable highlighting                   | Plain text, Highlight text.                                                                                                                                                                                                                                                                                                                                                         |
+| Font size                             | Small font (default), Large font.                                                                                                                                                                                                                                                                                                                                                   |
+| Unescaped newlines                    | Only displayed if the logs contain unescaped new lines. Click to unescape and display as new lines.                                                                                                                                                                                                                                                                                 |
+| Download logs                         | Plain text (txt), JavaScript Object Notation (JSON), Comma-separated values (CSV)                                                                                                                                                                                                                                                                                                   |
+
+<!-- vale Grafana.Spelling = YES -->
 
 ### Download log lines
 
@@ -143,15 +155,30 @@ Click the **eye icon** to select a subset of fields to visualize in the logs lis
 
 Each field has a **stats icon**, which displays ad-hoc statistics in relation to all displayed logs.
 
+For data sources that support log types, such as Loki, instead of a single view containing all fields, fields will be displayed grouped by their type: Indexed Labels, Parsed fields, and Structured Metadata.
+
 #### Links
 
 Grafana provides data links or correlations, allowing you to convert any part of a log message into an internal or external link. These links enable you to navigate to related data or external resources, offering a seamless and convenient way to explore additional information.
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
+#### Log details modes
+
+There are two modes available to view log details:
+
+- **Inline** The default, displays log details below the log line.
+- **Sidebar** Displays log details in a sidebar view.
+
+No matter which display mode you are currently viewing, you can change it by clicking the mode control icon.
+
 ### Log context
 
 Log context is a feature that displays additional lines of context surrounding a log entry that matches a specific search query. This helps in understanding the context of the log entry and is similar to the `-C` parameter in the `grep` command.
+
+If you're using Loki for your logs, to modify your log context queries, you can use the Loki log context query editor at the top of the table. You can activate this editor by clicking the menu for the log line, and selecting **Show context**. Within the **Log Context** view, you have the option to modify your search by removing one or more label filters from the log stream. If your original query used a parser, you can refine your search by leveraging extracted label filters.
+
+Change the **Context time window** option to look for logs within a specific time interval around your log line.
 
 Toggle **Wrap lines** if you encounter long lines of text that make it difficult to read and analyze the context around log entries. By enabling this toggle, Grafana automatically wraps long lines of text to fit within the visible width of the viewer, making the log entries easier to read and understand.
 

@@ -6,23 +6,22 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/app"
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
 
 	"github.com/grafana/authlib/authn"
-	utilnet "k8s.io/apimachinery/pkg/util/net"
 )
 
 func RunIAMFolderReconciler(deps server.OperatorDependencies) error {
@@ -95,7 +94,7 @@ func buildIAMConfigFromSettings(cfg *setting.Cfg, registerer prometheus.Register
 	if zanzanaURL == "" {
 		return nil, fmt.Errorf("zanzana_url is required in [operator] section")
 	}
-	iamCfg.AppConfig.ZanzanaClientCfg.URL = zanzanaURL
+	iamCfg.AppConfig.ZanzanaClientCfg.Addr = zanzanaURL
 
 	iamCfg.AppConfig.InformerConfig.MaxConcurrentWorkers = operatorSec.Key("max_concurrent_workers").MustUint64(20)
 
@@ -150,12 +149,11 @@ func buildKubeConfigFromFolderAppURL(
 	return &rest.Config{
 		APIPath: "/apis",
 		Host:    folderAppURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return &authRoundTripper{
-				tokenExchangeClient: tokenExchangeClient,
-				transport:           rt,
-			}
-		}),
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			folder.GROUP,
+			clientauth.WildcardNamespace,
+		),
 		TLSClientConfig: tlsConfig,
 	}, nil
 }
@@ -187,24 +185,4 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 	}
 
 	return tlsConfig, nil
-}
-
-type authRoundTripper struct {
-	tokenExchangeClient *authn.TokenExchangeClient
-	transport           http.RoundTripper
-}
-
-func (t *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	tokenResponse, err := t.tokenExchangeClient.Exchange(req.Context(), authn.TokenExchangeRequest{
-		Audiences: []string{folder.GROUP},
-		Namespace: "*",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to exchange token: %w", err)
-	}
-
-	// clone the request as RTs are not expected to mutate the passed request
-	req = utilnet.CloneRequest(req)
-	req.Header.Set("X-Access-Token", "Bearer "+tokenResponse.Token)
-	return t.transport.RoundTrip(req)
 }

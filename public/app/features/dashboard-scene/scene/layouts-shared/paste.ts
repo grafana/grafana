@@ -1,12 +1,12 @@
+import { store } from '@grafana/data';
 import {
   AutoGridLayoutItemKind,
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
   RowsLayoutRowKind,
   TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_STYLES_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 
 import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
@@ -24,6 +24,7 @@ export function clearClipboard() {
   store.delete(LS_PANEL_COPY_KEY);
   store.delete(LS_ROW_COPY_KEY);
   store.delete(LS_TAB_COPY_KEY);
+  store.delete(LS_STYLES_COPY_KEY);
 }
 
 export interface RowStore {
@@ -47,7 +48,7 @@ export function getRowFromClipboard(scene: DashboardScene): RowItem {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const jsonObj: RowStore = JSON.parse(jsonData) as RowStore;
   clearClipboard();
-  const panelIdGenerator = getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene));
+  const panelIdGenerator = dashboardSceneGraph.getPanelIdGenerator(scene);
 
   let row;
   // We don't control the local storage content, so if it's out of sync with the code all bets are off.
@@ -65,7 +66,7 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const jsonObj: TabStore = JSON.parse(jsonData) as TabStore;
   clearClipboard();
-  const panelIdGenerator = getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene));
+  const panelIdGenerator = dashboardSceneGraph.getPanelIdGenerator(scene);
   let tab;
   try {
     tab = deserializeTab(jsonObj.tab, jsonObj.elements, false, panelIdGenerator);
@@ -82,9 +83,9 @@ export function getPanelFromClipboard(scene: DashboardScene): DashboardGridItem 
   const { elements, gridItem }: PanelStore = JSON.parse(jsonData) as PanelStore;
 
   if (gridItem.kind === 'GridLayoutItem') {
-    return deserializeGridItem(gridItem, elements, getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene)));
+    return deserializeGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
   }
-  return deserializeAutoGridItem(gridItem, elements, getPanelIdGenerator(dashboardSceneGraph.getNextPanelId(scene)));
+  return deserializeAutoGridItem(gridItem, elements, dashboardSceneGraph.getPanelIdGenerator(scene));
 }
 
 export function getAutoGridItemFromClipboard(scene: DashboardScene): AutoGridItem {
@@ -108,9 +109,4 @@ export function getDashboardGridItemFromClipboard(scene: DashboardScene, gridCel
     key: panel.state.key,
     variableName: panel.state.variableName,
   });
-}
-
-function getPanelIdGenerator(start: number) {
-  let id = start;
-  return () => id++;
 }

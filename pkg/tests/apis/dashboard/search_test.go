@@ -4,11 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"math"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
@@ -16,17 +23,407 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestIntegrationSearchDevDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	// Create devenv dashboards from legacy API
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	adminClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+	adminClient.Get()
+
+	fileCount := 0
+	devenv := "../../../../devenv/dev-dashboards/panel-timeseries"
+	err = filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
+		require.NoError(t, err)
+		if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+			return nil
+		}
+
+		// use the filename as UID
+		uid := strings.TrimSuffix(d.Name(), ".json")
+		if len(uid) > 40 {
+			uid = uid[:40] // avoid uid too long, max 40 characters
+		}
+
+		// nolint:gosec
+		data, err := os.ReadFile(p)
+		require.NoError(t, err)
+
+		cmd := dashboards.SaveDashboardCommand{
+			Dashboard: &simplejson.Json{},
+			Overwrite: true,
+		}
+		err = cmd.Dashboard.FromDB(data)
+		require.NoError(t, err)
+		cmd.Dashboard.Set("id", nil)
+		cmd.Dashboard.Set("uid", uid)
+		data, err = json.Marshal(cmd)
+		require.NoError(t, err)
+
+		var statusCode int
+		result := adminClient.Post().AbsPath("api", "dashboards", "db").
+			Body(data).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error(), "file: [%d] %s [status:%d]", fileCount, d.Name(), statusCode)
+		require.Equal(t, int(http.StatusOK), statusCode)
+		fileCount++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 17, fileCount, "file count from %s", devenv)
+
+	// Helper to call search
+	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
+		require.NotNil(t, user)
+		ns := user.Identity.GetNamespace()
+		cfg := dynamic.ConfigFor(user.NewRestConfig())
+		cfg.GroupVersion = &dashboardV0.GroupVersion
+		restClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		var statusCode int
+		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			//Param("explain", "true") // helpful to understand which field made things match
+			Param("limit", "1000").
+			Param("type", "dashboard") // Only search dashboards
+
+		for k, v := range params {
+			req = req.Param(k, v)
+		}
+		res := req.Do(ctx).StatusCode(&statusCode)
+		require.NoError(t, res.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+		var sr dashboardV0.SearchResults
+		raw, err := res.Raw()
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(raw, &sr))
+
+		// Normalize scores and query cost for snapshot comparison
+		sr.QueryCost = 0 // this depends on the hardware
+		sr.MaxScore = roundTo(sr.MaxScore, 3)
+		for i := range sr.Hits {
+			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+			if sr.Hits[i].Explain != nil {
+				roundExplainValues(sr.Hits[i].Explain.Object, 3)
+			}
+		}
+		return sr
+	}
+
+	// debug helper
+	testCase := ""
+
+	// Compare a results to snapshots
+	testCases := []struct {
+		name   string
+		user   apis.User
+		params map[string]string
+	}{
+		{
+			name: "all",
+			user: helper.Org1.Admin,
+		},
+		{
+			name: "query-single-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "stacking",
+			},
+		},
+		{
+			name: "query-multiple-words",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "graph softMin", // must match ALL terms
+			},
+		},
+		{
+			name: "with-text-panel",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"field":     "panel_types", // return panel types
+				"panelType": "text",
+			},
+		},
+		{
+			name: "title-ngram-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "zer", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			name: "title-ngram-middle-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "decim", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			name: "panel-title-orange",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query":            "orange",
+				"panelTitleSearch": "true",
+				"explain":          "true",
+			},
+		},
+	}
+	for i, tc := range testCases {
+		if testCase != "" && testCase != tc.name {
+			continue
+		}
+		t.Run(tc.name, func(t *testing.T) {
+			res := callSearch(tc.user, tc.params)
+			jj, err := json.MarshalIndent(res, "", "  ")
+			require.NoError(t, err)
+
+			fname := fmt.Sprintf("testdata/searchV0/t%02d-%s.json", i, tc.name)
+			// nolint:gosec
+			snapshot, err := os.ReadFile(fname)
+			if err != nil {
+				assert.Failf(t, "Failed to read snapshot", "file: %s", fname)
+				err = os.WriteFile(fname, jj, 0o644)
+				require.NoErrorf(t, err, "Failed to write snapshot file %s", fname)
+				return
+			}
+
+			if !assert.JSONEq(t, string(snapshot), string(jj)) {
+				err = os.WriteFile(fname, jj, 0o644)
+				require.NoErrorf(t, err, "Failed to write snapshot file %s", fname)
+			}
+		})
+	}
+}
+
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create a dashboard with multiple owner references
+	dashboardUID := "owner-ref-test-dash"
+	ownerRefs := []metav1.OwnerReference{
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "Team",
+			Name:       "test-team",
+			UID:        "test-team-uid",
+		},
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "User",
+			Name:       "test-user",
+			UID:        "test-user-uid",
+		},
+	}
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title":         "Dashboard with owner references",
+				"schemaVersion": 42,
+			},
+		},
+	}
+	obj.SetName(dashboardUID)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Dashboard")
+	obj.SetOwnerReferences(ownerRefs)
+
+	_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Search for the dashboard by one of the owner references and verify all refs are returned
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("ownerReference", "iam.grafana.app/Team/test-team") // Search by one owner reference
+
+	res := req.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr dashboardV0.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+
+	// Find our dashboard in the results
+	var foundHit *dashboardV0.DashboardHit
+	for i := range sr.Hits {
+		if sr.Hits[i].Name == dashboardUID {
+			foundHit = &sr.Hits[i]
+			break
+		}
+	}
+
+	require.NotNil(t, foundHit, "Dashboard should be found in search results when filtering by owner reference")
+	require.Len(t, foundHit.OwnerReferences, 2, "Dashboard should have two owner references")
+	// Owner references are stored in format {Group}/{Kind}/{Name}
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/Team/test-team")
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
+}
+
+func TestIntegrationSearchCreatedBy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create a dashboard as admin user
+	dashboardUID := "created-by-test-dash"
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title":         "Dashboard created by admin",
+				"schemaVersion": 42,
+			},
+		},
+	}
+	obj.SetName(dashboardUID)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Dashboard")
+
+	_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// The createdBy annotation is set automatically by the apistore (prepare.go)
+	// to the identity UID of the user who created the resource.
+	createdByUID := helper.Org1.Admin.Identity.GetUID()
+
+	// Search for dashboards filtered by createdBy
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("createdBy", createdByUID)
+
+	res := req.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr dashboardV0.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+
+	// Find our dashboard in the results
+	var foundHit *dashboardV0.DashboardHit
+	for i := range sr.Hits {
+		if sr.Hits[i].Name == dashboardUID {
+			foundHit = &sr.Hits[i]
+			break
+		}
+	}
+	require.NotNil(t, foundHit, "Dashboard should be found when filtering by createdBy")
+	assert.Equal(t, "Dashboard created by admin", foundHit.Title)
+
+	// Verify that searching with a non-matching createdBy returns no match for this dashboard
+	req2 := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("createdBy", "user:nonexistent-uid")
+
+	res2 := req2.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res2.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr2 dashboardV0.SearchResults
+	raw2, err := res2.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw2, &sr2))
+
+	// The dashboard should not appear with a different createdBy filter
+	for _, hit := range sr2.Hits {
+		assert.NotEqual(t, dashboardUID, hit.Name, "Dashboard should not be found when filtering by a different createdBy")
+	}
+}
+
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Only run for Unified Storage modes that support search (Mode3+)
-	modes := []rest.DualWriterMode{rest.Mode3, rest.Mode4, rest.Mode5}
+	// Only run for Unified Storage modes that support search (Mode4+)
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		runSearchPermissionTest(t, mode)
 	}
@@ -37,14 +434,14 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
+			DisableDataMigrations: true,
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageEnableSearch: true,
 		})
 		defer helper.Shutdown()
 
@@ -283,4 +680,33 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+func roundExplainValues(obj map[string]any, decimals uint32) {
+	for k, val := range obj {
+		switch k {
+		case "value":
+			v, ok := val.(float64)
+			if ok {
+				obj[k] = roundTo(v, decimals)
+			}
+		case "children":
+			children, ok := val.([]any)
+			if ok {
+				for _, child := range children {
+					if v, ok := child.(map[string]any); ok {
+						roundExplainValues(v, decimals)
+					}
+				}
+			}
+		}
+	}
+}
+
+// roundTo rounds a float64 to a specified number of decimal places.
+func roundTo(n float64, decimals uint32) float64 {
+	// Calculate the power of 10 for the desired number of decimals
+	scale := math.Pow(10, float64(decimals))
+	// Multiply, round to the nearest integer, and then divide back
+	return math.Round(n*scale) / scale
 }

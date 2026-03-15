@@ -5,7 +5,7 @@ import { InlineFieldRow, InlineField } from '@grafana/ui';
 interface Props {
   label: string;
   tooltip?: string;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
 }
 const SearchField = ({ label, tooltip, children }: Props) => {
   return (

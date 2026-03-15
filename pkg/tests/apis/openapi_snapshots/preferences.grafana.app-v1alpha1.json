@@ -20,11 +20,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -148,16 +143,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList"
@@ -215,11 +200,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
@@ -233,11 +213,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
@@ -257,11 +232,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
@@ -273,11 +243,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
@@ -342,7 +307,30 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "metadata",
+                    "spec"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "default": {}
+                    },
+                    "spec": {
+                      "description": "Spec is the spec of the Preferences",
+                      "default": {}
+                    }
+                  }
+                }
               }
             }
           }
@@ -361,11 +349,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
@@ -427,11 +410,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
@@ -449,11 +427,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
@@ -465,11 +438,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
@@ -551,11 +519,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -567,11 +530,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -669,11 +627,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
@@ -685,11 +638,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.Preferences"
                 }
@@ -785,20 +733,6 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences": {
-        "type": "object",
-        "properties": {
-          "analytics": {
-            "type": "object"
-          },
-          "functional": {
-            "type": "object"
-          },
-          "performance": {
-            "type": "object"
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList": {
         "type": "object",
         "required": [
@@ -869,14 +803,6 @@
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec": {
         "type": "object",
         "properties": {
-          "cookiePreferences": {
-            "description": "Cookie preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences"
-              }
-            ]
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -1334,8 +1260,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

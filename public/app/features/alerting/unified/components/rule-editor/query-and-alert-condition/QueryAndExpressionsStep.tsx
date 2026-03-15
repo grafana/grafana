@@ -36,7 +36,11 @@ import {
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getDefaultOrFirstCompatibleDataSource,
+  getRulesDataSources,
+} from '../../../utils/datasource';
 import { PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -417,7 +421,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   ]);
 
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
-
+  // Only show the data source managed option if there are data sources with manageAlerts enabled
+  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
   if (!type) {
     return null;
   }
@@ -436,8 +444,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           },
         }
       : undefined;
-
-  const canSelectDataSourceManaged = onlyOneDSInQueries(queries);
 
   return (
     <>
@@ -506,7 +512,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
               />
             </Field>
-            {mode === 'edit' && (
+            {mode === 'edit' && hasAlertEnabledDataSources && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector

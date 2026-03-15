@@ -23,7 +23,7 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
+import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
 import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
@@ -83,6 +83,7 @@ export interface Props {
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showFieldSelector?: boolean;
+  showLevel?: boolean;
   /**
    * Experimental. When OTel logs are displayed, add an extra displayed field with relevant key-value pairs from labels and metadata
    * @alpha
@@ -95,6 +96,7 @@ export interface Props {
   timestampResolution?: LogLineTimestampResolution;
   timeZone: string;
   syntaxHighlighting?: boolean;
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 
@@ -110,9 +112,11 @@ type LogListComponentProps = Omit<
   | 'enableLogDetails'
   | 'logOptionsStorageKey'
   | 'permalinkedLogId'
+  | 'showLevel'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
+  | 'unwrappedColumns'
   | 'wrapLogMessage'
 >;
 
@@ -160,6 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
+  showLevel = true,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -168,6 +173,7 @@ export const LogList = ({
   timeRange,
   timestampResolution,
   timeZone,
+  unwrappedColumns = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.unwrappedColumns`, true) : true,
   wrapLogMessage,
 }: Props) => {
   return (
@@ -205,11 +211,13 @@ export const LogList = ({
       setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showLogAttributes={showLogAttributes}
+      showLevel={showLevel}
       showTime={showTime}
       showUniqueLabels={showUniqueLabels}
       sortOrder={sortOrder}
       syntaxHighlighting={syntaxHighlighting}
       timestampResolution={timestampResolution}
+      unwrappedColumns={unwrappedColumns}
       wrapLogMessage={wrapLogMessage}
     >
       <LogDetailsContextProvider
@@ -219,6 +227,7 @@ export const LogList = ({
         logs={logs}
         logOptionsStorageKey={logOptionsStorageKey}
         showControls={showControls}
+        showFieldSelector={showFieldSelector}
       >
         <LogListSearchContextProvider>
           <LogListComponent
@@ -272,13 +281,16 @@ const LogListComponent = ({
     onClickFilterOutString,
     permalinkedLogId,
     prettifyJSON,
+    showLevel,
     showTime,
     showUniqueLabels,
     sortOrder,
     timestampResolution,
+    unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
   const { detailsMode, showDetails, toggleDetails } = useLogDetailsContext();
+  const { setSearch, showSearch } = useLogListSearchContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(getListHeight(containerElement, app));
   const theme = useTheme2();
@@ -294,12 +306,22 @@ const LogListComponent = ({
         : virtualization.calculateFieldDimensions(
             processedLogs,
             displayedFields,
-            timestampResolution,
-            showUniqueLabels
+            showTime ? timestampResolution : undefined,
+            showUniqueLabels,
+            showLevel
           ),
-    [displayedFields, processedLogs, showUniqueLabels, timestampResolution, virtualization, wrapLogMessage]
+    [
+      displayedFields,
+      processedLogs,
+      showLevel,
+      showTime,
+      showUniqueLabels,
+      timestampResolution,
+      virtualization,
+      wrapLogMessage,
+    ]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -440,6 +462,14 @@ const LogListComponent = ({
     [debouncedScrollToItem, filteredLogs]
   );
 
+  const onClickSearchString = useCallback(
+    (search: string) => {
+      showSearch();
+      setSearch(search);
+    },
+    [setSearch, showSearch]
+  );
+
   const logLevels = useMemo(() => getLevelsFromLogs(processedLogs), [processedLogs]);
 
   if (!containerElement || listHeight == null) {
@@ -458,6 +488,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           showControls={showControls}
+          showFieldSelector={showFieldSelector}
         />
       )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -469,6 +500,7 @@ const LogListComponent = ({
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
+            onClickSearchString={onClickSearchString}
             onDisable={onDisablePopoverMenu}
           />
         )}
@@ -518,11 +550,9 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
-                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
-                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}
@@ -550,15 +580,14 @@ const LogListComponent = ({
 function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
-  displayedFields: string[],
-  { showTime }: { showTime: boolean }
+  displayedFields: string[] = [],
+  { unwrappedColumns }: { unwrappedColumns: boolean }
 ) {
-  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        gridTemplateColumns: getGridTemplateColumns(dimensions, displayedFields, unwrappedColumns),
         '& .field': {
           overflow: 'hidden',
         },

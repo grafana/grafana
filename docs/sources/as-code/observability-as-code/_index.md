@@ -25,15 +25,11 @@ cards:
       height: 24
       href: ./foundation-sdk/
       description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `grafanactl` to push your programmatically generated resources.
-    - title: JSON schema v2
+    - title: Git Sync
       height: 24
-      href: ./schema-v2/
-      description: Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings. Observability as Code works with all versions of the JSON model, and it's fully compatible with version 2.
-    - title: Git Sync (private preview)
-      height: 24
-      href: ./provision-resources/intro-git-sync/
+      href: ./git-sync/intro-git-sync/
       description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana.
-    - title: File provisioning (private preview)
+    - title: On-prem file provisioning
       height: 24
       href: ./provision-resources/
       description: File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
@@ -68,7 +64,7 @@ Historically, managing Grafana as code involved various community and Grafana La
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
 - `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
-- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/).
+- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/index.md).
 
 ## Explore
 

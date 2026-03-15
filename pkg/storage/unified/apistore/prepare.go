@@ -3,8 +3,10 @@ package apistore
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -19,6 +21,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -83,6 +86,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
+	if err := s.checkGVK(newObject); err != nil {
+		return v, err
+	}
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
@@ -130,7 +136,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(info.GetUID())
+	createdBy := info.GetUID()
+	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+		createdBy = metaUID
+	}
+	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
@@ -138,8 +148,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	err = s.codec.Encode(newObject, &v.raw)
-	if err == nil {
+	if err = s.encode(newObject, &v.raw); err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
@@ -151,6 +160,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return v, errors.New("missing auth info")
+	}
+	if err := s.checkGVK(updateObject); err != nil {
+		return v, err
 	}
 
 	obj, err := utils.MetaAccessor(updateObject)
@@ -220,7 +232,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
-		obj.SetUpdatedBy(info.GetUID())
+		updatedBy := info.GetUID()
+		if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+			updatedBy = metaUID
+		}
+		obj.SetUpdatedBy(updatedBy)
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 		// Only validate when the generation has changed
@@ -233,8 +249,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	err = s.codec.Encode(updateObject, &v.raw)
-	if err == nil {
+	if err = s.encode(updateObject, &v.raw); err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
@@ -268,7 +283,51 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 		}
 
 		// Now encode the smaller version
-		return s.codec.Encode(orig, buf)
+		return s.encode(orig, buf)
 	}
 	return nil
+}
+
+func (s *Storage) checkGVK(obj runtime.Object) error {
+	if s.opts.Scheme == nil {
+		return nil // we can not do anything
+	}
+
+	// Ensure group+version+kind are configured
+	info := obj.GetObjectKind()
+	gvk := info.GroupVersionKind()
+	if gvk.Group == "" || gvk.Kind == "" || gvk.Version == "" {
+		gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
+		if err != nil {
+			return fmt.Errorf("unknown object kind %w", err)
+		}
+		for _, v := range gvks {
+			if v.Group != s.gr.Group {
+				continue // skip values not in this group
+			}
+			gvk.Group = v.Group
+			gvk.Kind = v.Kind
+			if gvk.Version == "" {
+				gvk.Version = v.Version
+			}
+			info.SetGroupVersionKind(gvk)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
+	// The standard encoder is fine when only one type maps to a group
+	if s.opts.Scheme == nil {
+		return s.codec.Encode(obj, w)
+	}
+	if err := s.checkGVK(obj); err != nil {
+		return err
+	}
+
+	// This will always write the saved GVK, unlike:
+	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
+	// that picks an arbitrary GVK that may not match the same group!
+	return json.NewEncoder(w).Encode(obj)
 }

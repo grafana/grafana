@@ -27,7 +27,6 @@ var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of its
 const (
 	GeneralFolderUID      = "general"
 	RootFolderUID         = ""
-	MaxNestedFolderDepth  = 4
 	SharedWithMeFolderUID = "sharedwithme"
 )
 
@@ -224,12 +223,13 @@ type GetFoldersQuery struct {
 }
 
 type SearchFoldersQuery struct {
-	OrgID        int64
-	UIDs         []string
-	IDs          []int64
-	Title        string
-	Limit        int64
-	SignedInUser identity.Requester `json:"-"`
+	OrgID           int64
+	UIDs            []string
+	IDs             []int64
+	Title           string
+	TitleExactMatch bool
+	Limit           int64
+	SignedInUser    identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to

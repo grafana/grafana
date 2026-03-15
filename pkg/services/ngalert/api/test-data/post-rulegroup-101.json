@@ -240,6 +240,71 @@
           "from": "condition"
         }
       }
+    },
+    {
+      "grafana_alert": {
+        "title": "recording rule with target",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000002",
+            "model": {
+              "expr": "rate(http_requests_total[5m])",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$reduced > 5",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "record": {
+          "metric": "http_requests_rate",
+          "from": "condition",
+          "target_datasource_uid": "000000003"
+        }
+      }
     }
   ]
 }

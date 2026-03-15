@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Popover as GrafanaPopover, PopoverController, Stack, useStyles2 } from '@grafana/ui';
 
 export interface PopupCardProps {
-  children: ReactElement;
+  children: ReactElement<Record<string, unknown>>;
   header?: ReactNode;
   content: ReactElement;
   footer?: ReactNode;

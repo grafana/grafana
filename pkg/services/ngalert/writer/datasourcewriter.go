@@ -217,6 +217,8 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	}
 
 	for k, values := range dsHeaders {
+		// Clear out any custom writer headers before adding the data souce ones.
+		headers.Del(k)
 		for _, v := range values {
 			headers.Add(k, v)
 		}

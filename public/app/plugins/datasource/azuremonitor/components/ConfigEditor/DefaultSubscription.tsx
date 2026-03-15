@@ -39,7 +39,7 @@ export const DefaultSubscription = (props: Props) => {
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        updateSubscriptions(result, loadSubscriptionsClicked);
+        updateSubscriptions(result, Boolean(loadSubscriptionsClicked));
       }
     });
     return () => {

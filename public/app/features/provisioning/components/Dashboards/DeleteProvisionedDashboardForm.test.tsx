@@ -131,10 +131,7 @@ function setup(options: SetupOptions = {}) {
     },
     loadedFromRef: 'main',
     readOnly: false,
-    workflowOptions: [
-      { label: 'Branch', value: 'branch' },
-      { label: 'Write', value: 'write' },
-    ],
+    canPushToConfiguredBranch: true,
     isNew: false,
     ...provisionedData,
   };

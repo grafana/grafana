@@ -21,6 +21,7 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 		NoDataState:                 "state1",
 		ExecErrState:                "state2",
 		For:                         time.Minute,
+		KeepFiringFor:               2 * time.Minute,
 		Annotations:                 `{ "test": "annotation" }`,
 		Labels:                      `{ "test": "label" }`,
 		IsPaused:                    true,
@@ -117,6 +118,12 @@ func TestAlertRuleVersion_EqualSpec(t *testing.T) {
 			name:   "different For durations",
 			a:      baseVersion,
 			b:      func() alertRuleVersion { v := baseVersion; v.For = 2 * time.Minute; return v }(),
+			expect: false,
+		},
+		{
+			name:   "different KeepFiringFor durations",
+			a:      baseVersion,
+			b:      func() alertRuleVersion { v := baseVersion; v.KeepFiringFor = 5 * time.Minute; return v }(),
 			expect: false,
 		},
 		{

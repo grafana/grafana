@@ -2,8 +2,13 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { getAPINamespace } from '@grafana/api-clients';
 import { getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+
+export function isDashboardDatasource(query: DataQuery): boolean {
+  return query.datasource?.uid === SHARED_DASHBOARD_QUERY;
+}
 
 export interface SQLSchemaField {
   name: string;
@@ -61,19 +66,29 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     setError(null);
 
     try {
-      if (currentQueries.length === 0) {
+      const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
+
+      if (nonDashboardQueries.length === 0) {
         setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
         setLoading(false);
         return;
       }
 
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      const resolvedQueries = nonDashboardQueries.map((query) => {
+        if (!query.datasource && defaultDs) {
+          return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
+        }
+        return query;
+      });
+
       const namespace = getAPINamespace();
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas/name`,
+        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
-          queries: currentQueries,
+          queries: resolvedQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }

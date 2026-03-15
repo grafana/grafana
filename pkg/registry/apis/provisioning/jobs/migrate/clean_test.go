@@ -124,10 +124,10 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionDeleted &&
-				result.Name == "test-folder" &&
-				result.Error != nil &&
-				result.Error.Error() == "deleting resource folder.grafana.app/Folder test-folder: delete failed"
+			return result.Action() == repository.FileActionDeleted &&
+				result.Name() == "test-folder" &&
+				result.Error() != nil &&
+				result.Error().Error() == "deleting resource folder.grafana.app/Folder test-folder: delete failed"
 		})).Return()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)
@@ -194,21 +194,21 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 		// Expect only unprovisioned resources to be deleted (2 deletions)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionDeleted &&
-				result.Name == "unprovisioned-folder" &&
-				result.Error == nil
+			return result.Action() == repository.FileActionDeleted &&
+				result.Name() == "unprovisioned-folder" &&
+				result.Error() == nil
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionDeleted &&
-				result.Name == "unprovisioned-dashboard" &&
-				result.Error == nil
+			return result.Action() == repository.FileActionDeleted &&
+				result.Name() == "unprovisioned-dashboard" &&
+				result.Error() == nil
 		})).Return()
 
 		// Expect provisioned resource to be ignored (1 ignore)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionIgnored &&
-				result.Name == "provisioned-dashboard" &&
-				result.Error == nil
+			return result.Action() == repository.FileActionIgnored &&
+				result.Name() == "provisioned-dashboard" &&
+				result.Error() == nil
 		})).Return()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)
@@ -267,14 +267,14 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 
 		// Expect both resources to be ignored (no deletions)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionIgnored &&
-				result.Name == "repo-managed-dashboard" &&
-				result.Error == nil
+			return result.Action() == repository.FileActionIgnored &&
+				result.Name() == "repo-managed-dashboard" &&
+				result.Error() == nil
 		})).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-			return result.Action == repository.FileActionIgnored &&
-				result.Name == "file-provisioned-folder" &&
-				result.Error == nil
+			return result.Action() == repository.FileActionIgnored &&
+				result.Name() == "file-provisioned-folder" &&
+				result.Error() == nil
 		})).Return()
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)

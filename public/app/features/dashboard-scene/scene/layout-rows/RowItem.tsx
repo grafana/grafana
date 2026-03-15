@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
 import {
@@ -11,16 +12,18 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -90,10 +93,12 @@ export class RowItem
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const isHidden = !this.state.conditionalRendering?.state.result;
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
+      isHidden,
     };
   }
 
@@ -110,7 +115,18 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout });
+    const currentLayout = this.state.layout;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
+      source: this,
+      perform: () => {
+        this.setState({ layout });
+      },
+      undo: () => {
+        this.setState({ layout: currentLayout });
+      },
+    });
   }
 
   public useEditPaneOptions = useEditOptions.bind(this);
@@ -153,8 +169,10 @@ export class RowItem
     this.getParentLayout().duplicateRow(this);
   }
 
-  public duplicate(): RowItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  // panelIdGenerator is a shared sequential counter created by the parent layout
+  // we forward id to ensure sibling tabs never produce duplicate panel IDs
+  public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 
   public serialize(): RowsLayoutRowKind {
@@ -179,8 +197,23 @@ export class RowItem
     if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
       const layout = gridItem.parent;
       if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
+        // Toggle isDraggable off to force react-grid-layout to exit drag mode
+        // This clears react-grid-layout's internal drag state
+        // This is a workaround until we upgrade to react-grid-layout 2.x.x
+        const wasDraggable = layout.state.isDraggable;
+        if (wasDraggable) {
+          layout.setState({ isDraggable: false });
+        }
+
         const newChildren = layout.state.children.filter((child) => child !== gridItem);
         layout.setState({ children: newChildren });
+
+        // Restore isDraggable after a microtask to ensure react-grid-layout processes the change
+        if (wasDraggable) {
+          queueMicrotask(() => {
+            layout.setState({ isDraggable: true });
+          });
+        }
       } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
         const newChildren = layout.state.children.filter((child) => child !== gridItem);
         layout.setState({ children: newChildren });
@@ -194,6 +227,7 @@ export class RowItem
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    trackDropItemCrossLayout(gridItem);
     const layout = this.getLayout();
 
     if (isDashboardLayoutGrid(layout)) {

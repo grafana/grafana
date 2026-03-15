@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { ArcOption, NodeGraphOptions } from '../types';
+import { ArcOption, Options as NodeGraphOptions } from '../panelcfg.gen';
 
 type Settings = { filter: (field: Field) => boolean };
 type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;

@@ -15,12 +15,8 @@ type Props = {
   maxHeight: string;
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
-  filterNode: (scopeNodeId: string, query: string) => void;
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
   highlightedId: string | undefined;
   id: string;
-  toggleExpandedNode: (scopeNodeId: string) => void;
 };
 
 export function ScopesTreeItemList({
@@ -31,12 +27,8 @@ export function ScopesTreeItemList({
   selectedScopes,
   scopeNodes,
   loadingNodeName,
-  filterNode,
-  selectScope,
-  deselectScope,
   highlightedId,
   id,
-  toggleExpandedNode,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -47,15 +39,20 @@ export function ScopesTreeItemList({
   const children = (
     <div role="tree" id={id} className={anyChildExpanded ? styles.expandedContainer : undefined}>
       {items.map((childNode) => {
+        const node = scopeNodes[childNode.scopeNodeId];
+        // Skip rendering if node data isn't available
+        if (!node) {
+          return null;
+        }
         const selected =
-          isNodeSelectable(scopeNodes[childNode.scopeNodeId]) &&
+          isNodeSelectable(node) &&
           selectedScopes.some((s) => {
             if (s.scopeNodeId) {
               // If we have scopeNodeId we only match based on that so even if the actual scope is the same we don't
               // mark different scopeNode as selected.
               return s.scopeNodeId === childNode.scopeNodeId;
             } else {
-              return s.scopeId === scopeNodes[childNode.scopeNodeId]?.spec.linkId;
+              return s.scopeId === node.spec.linkId;
             }
           });
         return (
@@ -67,11 +64,7 @@ export function ScopesTreeItemList({
             scopeNodes={scopeNodes}
             loadingNodeName={loadingNodeName}
             anyChildExpanded={anyChildExpanded}
-            filterNode={filterNode}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
             highlighted={childNode.scopeNodeId === highlightedId}
-            toggleExpandedNode={toggleExpandedNode}
           />
         );
       })}

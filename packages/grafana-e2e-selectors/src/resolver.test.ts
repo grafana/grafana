@@ -51,7 +51,7 @@ describe('Resolver', () => {
     expect(pages.Alerting.AddAlertRule.url).toBe('/alerting/new');
   });
 
-  it('should throw error if an invalid semver range is used in versioned selector', () => {
+  it('should throw an error if an invalid semver range is used in versioned selector', () => {
     expect(() =>
       resolveSelectors({
         Alerting: {

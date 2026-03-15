@@ -1,8 +1,15 @@
-import { render, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { CustomVariableForm } from './CustomVariableForm';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  actual.config.featureToggles = { multiPropsVariables: true };
+  return actual;
+});
 
 describe('CustomVariableForm', () => {
   const onQueryChange = jest.fn();
@@ -129,5 +136,72 @@ describe('CustomVariableForm', () => {
     expect(onAllValueChange).toHaveBeenCalled();
     expect(onMultiChange).not.toHaveBeenCalled();
     expect(onIncludeAllChange).not.toHaveBeenCalled();
+  });
+
+  describe('JSON values format', () => {
+    test('should render the form fields correctly', async () => {
+      const { getByTestId, queryByTestId } = render(
+        <CustomVariableForm
+          query="query"
+          valuesFormat="json"
+          multi={true}
+          allowCustomValue={true}
+          includeAll={true}
+          allValue="custom value"
+          onQueryChange={onQueryChange}
+          onMultiChange={onMultiChange}
+          onIncludeAllChange={onIncludeAllChange}
+          onAllValueChange={onAllValueChange}
+          onAllowCustomValueChange={onAllowCustomValueChange}
+        />
+      );
+
+      await userEvent.click(screen.getByText('JSON'));
+
+      const multiCheckbox = getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
+      );
+      const allowCustomValueCheckbox = queryByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+      );
+      const includeAllCheckbox = getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
+      );
+      const allValueInput = queryByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
+      );
+
+      expect(multiCheckbox).toBeInTheDocument();
+      expect(multiCheckbox).toBeChecked();
+      expect(includeAllCheckbox).toBeInTheDocument();
+      expect(includeAllCheckbox).toBeChecked();
+
+      expect(allowCustomValueCheckbox).not.toBeInTheDocument();
+      expect(allValueInput).not.toBeInTheDocument();
+    });
+
+    test('should display validation error', async () => {
+      const validationError = new Error('Ooops! Validation error.');
+
+      const { findByText } = render(
+        <CustomVariableForm
+          query="query"
+          valuesFormat="json"
+          queryValidationError={validationError}
+          multi={false}
+          includeAll={false}
+          onQueryChange={onQueryChange}
+          onMultiChange={onMultiChange}
+          onIncludeAllChange={onIncludeAllChange}
+          onAllValueChange={onAllValueChange}
+          onAllowCustomValueChange={onAllowCustomValueChange}
+        />
+      );
+
+      await userEvent.click(screen.getByText('JSON'));
+
+      const errorEl = await findByText(validationError.message);
+      expect(errorEl).toBeInTheDocument();
+    });
   });
 });

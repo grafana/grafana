@@ -3,6 +3,7 @@ export const addTagTypes = [
   'API Discovery',
   'Display',
   'ExternalGroupMapping',
+  'Search',
   'ServiceAccount',
   'SSOSetting',
   'TeamBinding',
@@ -152,6 +153,50 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['ExternalGroupMapping'],
       }),
+      searchExternalGroupMappings: build.mutation<
+        SearchExternalGroupMappingsApiResponse,
+        SearchExternalGroupMappingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchExternalGroupMappings`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+            sort: queryArg.sort,
+          },
+        }),
+        invalidatesTags: ['Search'],
+      }),
+      getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
+        query: (queryArg) => ({
+          url: `/searchTeams`,
+          params: {
+            query: queryArg.query,
+            limit: queryArg.limit,
+            offset: queryArg.offset,
+            page: queryArg.page,
+            accesscontrol: queryArg.accesscontrol,
+          },
+        }),
+        providesTags: ['Search'],
+      }),
+      getSearchUsers: build.query<GetSearchUsersApiResponse, GetSearchUsersApiArg>({
+        query: (queryArg) => ({
+          url: `/searchUsers`,
+          params: {
+            query: queryArg.query,
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+            accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
+          },
+        }),
+        providesTags: ['Search'],
+      }),
       listServiceAccount: build.query<ListServiceAccountApiResponse, ListServiceAccountApiArg>({
         query: (queryArg) => ({
           url: `/serviceaccounts`,
@@ -300,7 +345,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/ssosettings/${queryArg.name}`,
           method: 'PUT',
-          body: queryArg.ssoSetting,
+          body: queryArg.githubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting,
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
@@ -562,11 +607,25 @@ const injectedRtkApi = api
         invalidatesTags: ['Team'],
       }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/groups` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/groups`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['Team'],
       }),
       getTeamMembers: build.query<GetTeamMembersApiResponse, GetTeamMembersApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/members` }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/members`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['Team'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
@@ -679,7 +738,14 @@ const injectedRtkApi = api
         invalidatesTags: ['User'],
       }),
       getUserTeams: build.query<GetUserTeamsApiResponse, GetUserTeamsApiArg>({
-        query: (queryArg) => ({ url: `/users/${queryArg.name}/teams` }),
+        query: (queryArg) => ({
+          url: `/users/${queryArg.name}/teams`,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
         providesTags: ['User'],
       }),
     }),
@@ -862,6 +928,47 @@ export type UpdateExternalGroupMappingApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type SearchExternalGroupMappingsApiResponse = unknown;
+export type SearchExternalGroupMappingsApiArg = {
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  /** sortable field */
+  sort?: string;
+  body: {
+    externalGroups?: string[];
+  };
+};
+export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
+export type GetSearchTeamsApiArg = {
+  /** team name query string */
+  query?: string;
+  /** limit the number of results */
+  limit?: number;
+  /** start the query at the given offset */
+  offset?: number;
+  /** page number to start from */
+  page?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
+};
+export type GetSearchUsersApiResponse = unknown;
+export type GetSearchUsersApiArg = {
+  query?: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  /** when true, includes access control metadata in the response */
+  accesscontrol?: boolean;
+  /** sortable field */
+  sort?: string;
+};
 export type ListServiceAccountApiResponse = /** status 200 OK */ ServiceAccountList;
 export type ListServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -1031,12 +1138,14 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ServiceAccountTokenList;
+export type GetServiceAccountTokensApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList;
 export type GetServiceAccountTokensApiArg = {
   /** name of the ServiceAccountTokenList */
   name: string;
 };
-export type ListSsoSettingApiResponse = /** status 200 OK */ SsoSettingList;
+export type ListSsoSettingApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList;
 export type ListSsoSettingApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
   allowWatchBookmarks?: boolean;
@@ -1081,14 +1190,16 @@ export type ListSsoSettingApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type GetSsoSettingApiResponse = /** status 200 OK */ SsoSetting;
+export type GetSsoSettingApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
 export type GetSsoSettingApiArg = {
   /** name of the SSOSetting */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceSsoSettingApiResponse = /** status 200 OK */ SsoSetting | /** status 201 Created */ SsoSetting;
+export type ReplaceSsoSettingApiResponse = /** status 200 OK */
+  | GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting
+  | /** status 201 Created */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
 export type ReplaceSsoSettingApiArg = {
   /** name of the SSOSetting */
   name: string;
@@ -1100,7 +1211,7 @@ export type ReplaceSsoSettingApiArg = {
   fieldManager?: string;
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
-  ssoSetting: SsoSetting;
+  githubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
 };
 export type DeleteSsoSettingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteSsoSettingApiArg = {
@@ -1119,7 +1230,9 @@ export type DeleteSsoSettingApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateSsoSettingApiResponse = /** status 200 OK */ SsoSetting | /** status 201 Created */ SsoSetting;
+export type UpdateSsoSettingApiResponse = /** status 200 OK */
+  | GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting
+  | /** status 201 Created */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting;
 export type UpdateSsoSettingApiArg = {
   /** name of the SSOSetting */
   name: string;
@@ -1465,15 +1578,28 @@ export type UpdateTeamApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetTeamGroupsApiResponse = /** status 200 OK */ GetGroups;
+export type GetTeamGroupsApiResponse = /** status 200 OK */ GetTeamGroupsResponse;
 export type GetTeamGroupsApiArg = {
-  /** name of the GetGroups */
+  /** name of the GetTeamGroupsResponse */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
-export type GetTeamMembersApiResponse = /** status 200 OK */ TeamMemberList;
+export type GetTeamMembersApiResponse =
+  /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList;
 export type GetTeamMembersApiArg = {
   /** name of the TeamMemberList */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
 export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
@@ -1640,10 +1766,16 @@ export type UpdateUserApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetUserTeamsApiResponse = /** status 200 OK */ UserTeamList;
+export type GetUserTeamsApiResponse = /** status 200 OK */ GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList;
 export type GetUserTeamsApiArg = {
   /** name of the UserTeamList */
   name: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -1890,17 +2022,17 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type ServiceAccountToken = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken = {
   created: Time;
   expires?: Time;
   lastUsed?: Time;
   name?: string;
   revoked?: boolean;
 };
-export type ServiceAccountTokenList = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountTokenList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: ServiceAccountToken[];
+  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1ServiceAccountToken[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -1908,31 +2040,33 @@ export type ServiceAccountTokenList = {
 export type Unstructured = {
   [key: string]: any;
 };
-export type SsoSettingSpec = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingSpec = {
   settings: Unstructured;
   /** Possible enum values:
      - `"db"`
      - `"system"` system is from config file, env or argument */
   source: 'db' | 'system';
 };
-export type SsoSetting = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata */
   metadata?: ObjectMeta;
-  spec?: SsoSettingSpec;
+  spec?: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingSpec;
 };
-export type SsoSettingList = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSettingList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: SsoSetting[];
+  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1SsoSetting[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
 };
 export type TeamBindingspecSubject = {
+  /** kind of the identity */
+  kind: string;
   /** uid of the identity */
   name: string;
 };
@@ -1987,25 +2121,31 @@ export type TeamList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping = {
+export type GetTeamGroupsExternalGroupMapping = {
   externalGroup: string;
   name: string;
 };
-export type GetGroups = {
+export type GetTeamGroupsResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: VersionsV0Alpha1Kinds7RoutesGroupsGetResponseExternalGroupMapping[];
+  items: GetTeamGroupsExternalGroupMapping[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
-export type TeamMember = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef = {
+  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
+  name: string;
+  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
+  type: string;
+};
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
-  identity: IdentityRef;
+  identity: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
   /** Permission member has in team.
@@ -2015,10 +2155,10 @@ export type TeamMember = {
      - `"member"` */
   permission?: 'admin' | 'member';
 };
-export type TeamMemberList = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: TeamMember[];
+  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -2033,6 +2173,9 @@ export type UserSpec = {
   role: string;
   title: string;
 };
+export type UserStatus = {
+  lastSeenAt: number;
+};
 export type User = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2041,6 +2184,7 @@ export type User = {
   metadata: ObjectMeta;
   /** Spec is the spec of the User */
   spec: UserSpec;
+  status: UserStatus;
 };
 export type UserList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2050,22 +2194,22 @@ export type UserList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TeamRef = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef = {
   /** Name is the unique identifier for a team. */
   name?: string;
 };
-export type UserTeam = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam = {
   /** Possible enum values:
      - `"admin"`
      - `"member"` */
   permission?: 'admin' | 'member';
-  teamRef?: TeamRef;
+  teamRef?: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamRef;
   title?: string;
 };
-export type UserTeamList = {
+export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeamList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  items: UserTeam[];
+  items: GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1UserTeam[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
@@ -2084,6 +2228,11 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
+  useSearchExternalGroupMappingsMutation,
+  useGetSearchTeamsQuery,
+  useLazyGetSearchTeamsQuery,
+  useGetSearchUsersQuery,
+  useLazyGetSearchUsersQuery,
   useListServiceAccountQuery,
   useLazyListServiceAccountQuery,
   useCreateServiceAccountMutation,

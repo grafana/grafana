@@ -9,11 +9,13 @@ import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/typ
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
+import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useAlertGroupsNav } from './navigation/useAlertActivityNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { fetchAlertGroupsAction } from './state/actions';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
@@ -82,6 +84,8 @@ const AlertGroups = () => {
         </Alert>
       )}
 
+      {selectedAlertmanager && <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />}
+
       {results &&
         filteredAlertGroups.map((group, index) => {
           return (
@@ -113,8 +117,10 @@ const AlertGroups = () => {
 };
 
 function AlertGroupsPage() {
+  const { navId, pageNav } = useAlertGroupsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="groups" accessType="instance">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="instance">
       <AlertGroups />
     </AlertmanagerPageWrapper>
   );

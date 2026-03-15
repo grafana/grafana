@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 // FIXME: This is used to make sure we save dashboards in the apiVersion they were original saved in
@@ -23,7 +24,7 @@ import (
 // The response status indicates the original stored version, so we can then request it in an un-converted form
 type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
 	for _, kind := range resources.SupportedProvisioningResources {
 		// skip from folders as we do them first... so only dashboards
@@ -84,7 +85,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			}
 		}
 
-		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress); err != nil {
+		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
 			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
@@ -99,32 +100,29 @@ func exportResource(ctx context.Context,
 	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
+	generateNewUIDs bool,
 ) error {
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
-		result := jobs.JobResourceResult{
-			Name:   item.GetName(),
-			Group:  gvk.Group,
-			Kind:   gvk.Kind,
-			Action: repository.FileActionCreated,
-		}
+		name := item.GetName()
+		resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(repository.FileActionCreated)
 
 		// Check if resource is already managed by a repository
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
-			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
-			progress.Record(ctx, result)
+			metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
+			resultBuilder.WithAction(repository.FileActionIgnored).WithError(metaError)
+			progress.Record(ctx, resultBuilder.Build())
 			return nil
 		}
 
 		manager, _ := meta.GetManagerProperties()
 		// Skip if already managed by any manager (repository, file provisioning, etc.)
 		if manager.Identity != "" {
-			result.Action = repository.FileActionIgnored
-			progress.Record(ctx, result)
+			resultBuilder.WithAction(repository.FileActionIgnored)
+			progress.Record(ctx, resultBuilder.Build())
 			return nil
 		}
 
@@ -132,21 +130,28 @@ func exportResource(ctx context.Context,
 			item, err = shim(ctx, item)
 		}
 
+		if err == nil && generateNewUIDs {
+			item = item.DeepCopy()
+			item.SetName(grafanautil.GenerateShortUID())
+		}
+
 		if err == nil {
-			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
+			var path string
+			path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path: options.Path,
 				Ref:  options.Branch,
 			})
+			resultBuilder.WithPath(path)
 		}
 
 		if errors.Is(err, resources.ErrAlreadyInRepository) {
-			result.Action = repository.FileActionIgnored
+			resultBuilder.WithAction(repository.FileActionIgnored)
 		} else if err != nil {
-			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("writing resource file for %s: %w", result.Name, err)
+			resultBuilder.WithAction(repository.FileActionIgnored).
+				WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
 		}
 
-		progress.Record(ctx, result)
+		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}

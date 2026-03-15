@@ -3,6 +3,7 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { CustomVariableModel } from '@grafana/data';
 import { monacoTypes } from '@grafana/ui';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
 import { logsTestDataDiffModifierQuery } from '../../../mocks/cloudwatch-logs-test-data/diffModifierQuery';
 import { logsTestDataDiffQuery } from '../../../mocks/cloudwatch-logs-test-data/diffQuery';
@@ -12,7 +13,7 @@ import { logsTestDataNewCommandQuery } from '../../../mocks/cloudwatch-logs-test
 import { logsTestDataSortQuery } from '../../../mocks/cloudwatch-logs-test-data/sortQuery';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
-import { LogGroup, LogGroupField } from '../../../types';
+import { LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition, { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../definition';
 import { DIFF_MODIFIERS, LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS, language } from '../language';
 

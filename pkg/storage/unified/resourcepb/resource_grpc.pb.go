@@ -621,10 +621,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 type DiagnosticsClient interface {
-	// Check if the service is healthy
+	// Deprecated: Use grpc.health.v1.Health/Check instead.
 	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
@@ -650,10 +651,11 @@ func (c *diagnosticsClient) IsHealthy(ctx context.Context, in *HealthCheckReques
 // All implementations should embed UnimplementedDiagnosticsServer
 // for forward compatibility
 //
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 type DiagnosticsServer interface {
-	// Check if the service is healthy
+	// Deprecated: Use grpc.health.v1.Health/Check instead.
 	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 }
 
@@ -704,6 +706,97 @@ var Diagnostics_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsHealthy",
 			Handler:    _Diagnostics_IsHealthy_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	Quotas_GetQuotaUsage_FullMethodName = "/resource.Quotas/GetQuotaUsage"
+)
+
+// QuotasClient is the client API for Quotas service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type QuotasClient interface {
+	// Get current quota usage and limits
+	GetQuotaUsage(ctx context.Context, in *QuotaUsageRequest, opts ...grpc.CallOption) (*QuotaUsageResponse, error)
+}
+
+type quotasClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewQuotasClient(cc grpc.ClientConnInterface) QuotasClient {
+	return &quotasClient{cc}
+}
+
+func (c *quotasClient) GetQuotaUsage(ctx context.Context, in *QuotaUsageRequest, opts ...grpc.CallOption) (*QuotaUsageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QuotaUsageResponse)
+	err := c.cc.Invoke(ctx, Quotas_GetQuotaUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// QuotasServer is the server API for Quotas service.
+// All implementations should embed UnimplementedQuotasServer
+// for forward compatibility
+type QuotasServer interface {
+	// Get current quota usage and limits
+	GetQuotaUsage(context.Context, *QuotaUsageRequest) (*QuotaUsageResponse, error)
+}
+
+// UnimplementedQuotasServer should be embedded to have forward compatible implementations.
+type UnimplementedQuotasServer struct {
+}
+
+func (UnimplementedQuotasServer) GetQuotaUsage(context.Context, *QuotaUsageRequest) (*QuotaUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQuotaUsage not implemented")
+}
+
+// UnsafeQuotasServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to QuotasServer will
+// result in compilation errors.
+type UnsafeQuotasServer interface {
+	mustEmbedUnimplementedQuotasServer()
+}
+
+func RegisterQuotasServer(s grpc.ServiceRegistrar, srv QuotasServer) {
+	s.RegisterService(&Quotas_ServiceDesc, srv)
+}
+
+func _Quotas_GetQuotaUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuotaUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QuotasServer).GetQuotaUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Quotas_GetQuotaUsage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuotasServer).GetQuotaUsage(ctx, req.(*QuotaUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Quotas_ServiceDesc is the grpc.ServiceDesc for Quotas service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Quotas_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.Quotas",
+	HandlerType: (*QuotasServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetQuotaUsage",
+			Handler:    _Quotas_GetQuotaUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -85,10 +85,10 @@ area/scenes
 area/search
 area/security
 area/streaming
+area/suggestions
 area/templating/repeating
 area/tooltip
 area/transformations
-datagrid
 datasource/Alertmanager
 datasource/Azure
 datasource/azure-cosmosdb

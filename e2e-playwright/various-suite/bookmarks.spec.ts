@@ -34,7 +34,7 @@ test.describe(
       await expect(adminItem).toContainText('Administration');
 
       // Click the "Add to Bookmarks" button in the Administration section
-      const addToBookmarksButton = adminItem.getByLabel('Add to Bookmarks');
+      const addToBookmarksButton = adminItem.getByLabel('Add Administration to Bookmarks');
       await addToBookmarksButton.click({ force: true });
 
       // Check if the Administration menu item is visible in the Bookmarks section
@@ -83,7 +83,7 @@ test.describe(
       await expect(administrationLink).toBeVisible();
 
       // Click the "Remove from Bookmarks" button
-      const removeFromBookmarksButton = bookmarksItem.getByLabel('Remove from Bookmarks');
+      const removeFromBookmarksButton = bookmarksItem.getByLabel('Remove Administration from Bookmarks');
       await removeFromBookmarksButton.click({ force: true });
 
       // Check that Administration is no longer in bookmarks

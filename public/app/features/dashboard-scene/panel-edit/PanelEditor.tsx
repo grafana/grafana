@@ -1,19 +1,21 @@
+import deepEqual from 'fast-deep-equal';
 import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
+  SceneComponentProps,
   SceneDataTransformer,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
-  sceneGraph,
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
@@ -21,12 +23,10 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
-import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
-import { hasData } from 'app/features/panel/suggestions/utils';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -40,6 +40,9 @@ import {
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -47,20 +50,27 @@ export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
   isDirty?: boolean;
   optionsPane?: PanelOptionsPane;
-  dataPane?: PanelDataPane;
+  dataPane?: PanelDataPane | PanelDataPaneNext;
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
-  pluginLoadErrror?: string;
+  pluginLoadError?: string;
   /**
    * Waiting for library panel or panel plugin to load
    */
   isInitializing?: boolean;
+  /**
+   * Enable the v2 query editor experience
+   */
+  useQueryExperienceNext?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
-  static Component = PanelEditorRenderer;
+  static Component = ({ model }: SceneComponentProps<PanelEditor>) => {
+    const { useQueryExperienceNext } = model.useState();
+    return useQueryExperienceNext ? <PanelEditorRendererNext model={model} /> : <PanelEditorRenderer model={model} />;
+  };
 
   private _layoutItemState?: SceneObjectState;
   private _layoutItem: DashboardLayoutItem;
@@ -84,13 +94,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
 
-    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      if (config.featureToggles.newVizSuggestions) {
-        this._autoSelectVisualization(panel);
-      } else {
-        panel.changePluginType('timeseries');
-      }
+    // Clear any panel selection when entering panel edit mode.
+    // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
+    dashboard.state.editPane.clearSelection();
+
+    // this will be deleted when suggestions is fully rolled out.
+    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !config.featureToggles.newVizSuggestions) {
+      panel.changePluginType('timeseries');
     }
 
     this._subs.add(
@@ -111,28 +123,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         deactivateParents();
       }
     };
-  }
-
-  private async _autoSelectVisualization(panel: VizPanel) {
-    const dataObject = sceneGraph.getData(panel);
-
-    this._subs.add(
-      dataObject.subscribeToState(async () => {
-        const { data } = dataObject.state;
-        if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-          const suggestions = await getAllSuggestions(data);
-
-          if (suggestions.length > 0) {
-            const defaultFirstSuggestion = suggestions[0];
-            await panel.changePluginType(
-              defaultFirstSuggestion.pluginId,
-              defaultFirstSuggestion.options,
-              defaultFirstSuggestion.fieldConfig
-            );
-          }
-        }
-      })
-    );
   }
 
   private commitChanges() {
@@ -179,7 +169,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (retry < 100) {
         setTimeout(() => this.waitForPlugin(retry + 1), retry * 10);
       } else {
-        this.setState({ pluginLoadErrror: 'Failed to load panel plugin' });
+        this.setState({ pluginLoadError: 'Failed to load panel plugin' });
       }
       return;
     }
@@ -205,8 +195,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _setupChangeDetection() {
     const panel = this.state.panelRef.resolve();
     const performSaveModelDiff = () => {
-      const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(panel));
-      this.setState({ isDirty: hasChanges });
+      this.setState({ isDirty: !deepEqual(this._originalSaveModel, vizPanelToPanel(panel)) });
     };
 
     const performSaveModelDiffDebounced = this.debounceSaveModelDiff
@@ -233,7 +222,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
-
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
@@ -246,19 +234,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         })
       );
 
-      const isUnconfigured = Boolean(
-        config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      );
-
       // Setup options pane
+      const optionsPane = new PanelOptionsPane({
+        panelRef: this.state.panelRef,
+        searchQuery: '',
+        listMode: OptionFilter.All,
+        isVizPickerOpen: panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID,
+        isNewPanel: this.state.isNewPanel,
+      });
+
       this.setState({
-        optionsPane: new PanelOptionsPane({
-          panelRef: this.state.panelRef,
-          searchQuery: '',
-          listMode: OptionFilter.All,
-          isVizPickerOpen: isUnconfigured,
-          isNewPanel: this.state.isNewPanel,
-        }),
+        optionsPane,
         isInitializing: false,
       });
     } else {
@@ -287,7 +273,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        const dataPane = PanelDataPane.createFor(this.getPanel());
+        const dataPane = PanelDataPane.createFor(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
         // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
@@ -336,9 +322,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
+
+    // clear pending suggestions
+    vizSuggestionsTracker.record(panel.state.key!, undefined);
 
     if (this.state.isNewPanel) {
-      getDashboardSceneFor(this).removePanel(panel);
+      dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
       this._layoutItem!.setState(this._layoutItemState!);
@@ -409,10 +399,28 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         .build(),
     });
   };
+
+  /**
+   * Toggle between v1 and v2 query editor.
+   */
+  public onToggleQueryEditorVersion = () => {
+    const newUseQueryExperienceNext = !this.state.useQueryExperienceNext;
+    trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
+    const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
+
+    this.setState({
+      useQueryExperienceNext: newUseQueryExperienceNext,
+      dataPane,
+    });
+
+    // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
+    this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
+  };
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
+    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

@@ -46,16 +46,16 @@ export function getMockOpsLabels(
 }
 
 /**
- * Handler for GET /api/plugins/grafana-labels-app/resources/v1/labels/keys
+ * Handler for GET /api/plugins/grafana-labels-app/resources/v2alpha1/labels/keys
  * Returns all available label keys
  */
 export const getLabelsKeysHandler = (labelKeys: LabelItem[] = defaultLabelKeys) =>
-  http.get(`${BASE_URL}/v1/labels/keys`, () => {
+  http.get(`${BASE_URL}/v2alpha1/labels/keys`, () => {
     return HttpResponse.json(labelKeys);
   });
 
 /**
- * Handler for GET /api/plugins/grafana-labels-app/resources/v1/labels/name/:key
+ * Handler for GET /api/plugins/grafana-labels-app/resources/v2alpha1/labels/name/:key
  * Returns values for a specific label key.
  * @param labelValues - Custom label values map (defaults to defaultLabelValues)
  * @param onKeyRequested - Optional callback to spy on which keys are requested (useful for testing)
@@ -64,7 +64,7 @@ export const getLabelValuesHandler = (
   labelValues: Record<string, LabelItem[]> = defaultLabelValues,
   onKeyRequested?: (key: string) => void
 ) =>
-  http.get<{ key: string }>(`${BASE_URL}/v1/labels/name/:key`, ({ params }) => {
+  http.get<{ key: string }>(`${BASE_URL}/v2alpha1/labels/name/:key`, ({ params }) => {
     const key = params.key;
     onKeyRequested?.(key);
     const values = labelValues[key] || [];

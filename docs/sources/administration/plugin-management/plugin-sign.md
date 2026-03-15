@@ -25,7 +25,7 @@ Plugin signature verification, also known as _signing_, is a security measure to
 
 Learn more at [plugin policies](https://grafana.com/legal/plugins/).
 
-## How does verifiction work?
+## How does verification work?
 
 At startup, Grafana verifies the signatures of every plugin in the plugin directory.
 

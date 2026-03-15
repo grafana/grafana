@@ -268,7 +268,7 @@ export class GraphiteDatasource
   ): GraphiteQuery[] {
     const referenceTargets: Record<string, string> = {};
     const finalTargets: GraphiteQuery[] = [];
-    let target: GraphiteQuery, targetValue, i;
+    let target: GraphiteQuery, targetValue, i, targetFullValue;
 
     for (i = 0; i < options.targets.length; i++) {
       target = options.targets[i];
@@ -306,8 +306,13 @@ export class GraphiteDatasource
         referenceTargets[target.refId].replace(seriesReferenceRegex, nestedSeriesRegexReplacer),
         options.scopedVars
       );
+      targetFullValue = this.templateSrv.replace(
+        referenceTargets[target.refId].replace(seriesReferenceRegex, nestedSeriesRegexReplacer),
+        options.scopedVars
+      );
 
       targetClone.target = targetValue;
+      targetClone.targetFull = targetFullValue;
       if (this.isMetricTank) {
         targetClone.isMetricTank = true;
       }
@@ -763,11 +768,19 @@ export class GraphiteDatasource
           expandable: false,
         }));
     } else if (queryType === GraphiteQueryType.MetricName) {
-      result = data.data.map((series) => ({
-        text: series.name,
-        value: series.name,
-        expandable: false,
-      }));
+      if (config.featureToggles.graphiteBackendMode) {
+        result = data.data.map((series: DataFrame) => {
+          const valueField = series.fields.find((f) => f.name === 'value');
+          const name = valueField?.config.displayNameFromDS || '';
+          return { text: name, value: name, expandable: false };
+        });
+      } else {
+        result = data.data.map((series) => ({
+          text: series.name,
+          value: series.name,
+          expandable: false,
+        }));
+      }
     } else {
       result = [];
     }

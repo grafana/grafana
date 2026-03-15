@@ -11,11 +11,13 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
+    // When pluginAdminExternalManageEnabled is true, only check isFullyInstalled to avoid loading a plugin that was requested for
+    // install but isn't locally available yet (external installs are async).
     const isPluginInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
 
     if (isPluginInstalled && !plugin.isDisabled) {
       return loadPlugin(plugin.id);
     }
     return null;
-  }, [plugin?.id, plugin?.isInstalled, plugin?.isDisabled]);
+  }, [plugin?.id, plugin?.isInstalled, plugin?.isDisabled, plugin?.isFullyInstalled]);
 };

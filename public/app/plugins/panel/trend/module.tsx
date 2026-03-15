@@ -1,8 +1,10 @@
 import { Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { GraphDrawStyle } from '@grafana/schema';
-import { commonOptionsBuilder, LegendDisplayMode } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
+import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
@@ -28,7 +30,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
   })
   .setSuggestionsSupplier((ds) => {
     if (
@@ -49,14 +51,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     return [
       {
         score: VisualizationSuggestionScore.Good,
-        options: {
-          legend: {
-            calcs: [],
-            displayMode: LegendDisplayMode.Hidden,
-            placement: 'right',
-            showLegend: false,
-          },
-        },
         fieldConfig: {
           defaults: {
             custom: {},
@@ -65,6 +59,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
         },
         cardOptions: {
           previewModifier: (s) => {
+            s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
             if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
               s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
             }

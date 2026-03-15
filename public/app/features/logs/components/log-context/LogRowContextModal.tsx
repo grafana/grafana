@@ -16,12 +16,12 @@ import {
   dateTime,
   TimeRange,
   LoadingState,
+  store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
-import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
@@ -499,9 +499,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       className={styles.modal}
       onDismiss={onClose}
     >
-      {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-        <div className={styles.datasourceUi}>{getLogRowContextUi(row, updateResults)}</div>
-      )}
+      {getLogRowContextUi && <div className={styles.datasourceUi}>{getLogRowContextUi(row, updateResults)}</div>}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div>
           <LogContextButtons

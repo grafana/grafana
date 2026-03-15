@@ -21,7 +21,10 @@ var (
 	_ rest.SingularNameProvider = (*SnapshotLegacyStore)(nil)
 	_ rest.Getter               = (*SnapshotLegacyStore)(nil)
 	_ rest.Lister               = (*SnapshotLegacyStore)(nil)
+	_ rest.Creater              = (*SnapshotLegacyStore)(nil)
+	_ rest.Updater              = (*SnapshotLegacyStore)(nil)
 	_ rest.GracefulDeleter      = (*SnapshotLegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*SnapshotLegacyStore)(nil)
 	_ rest.Storage              = (*SnapshotLegacyStore)(nil)
 )
 
@@ -29,7 +32,6 @@ type SnapshotLegacyStore struct {
 	ResourceInfo utils.ResourceInfo
 	Service      dashboardsnapshots.Service
 	Namespacer   request.NamespaceMapper
-	Options      dashV0.SnapshotSharingOptions
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -117,15 +119,6 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 }
 
 func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.checkEnabled(info.Value)
-	if err != nil {
-		return nil, err
-	}
 	query := dashboardsnapshots.GetDashboardSnapshotQuery{
 		Key: name,
 	}
@@ -141,9 +134,50 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 	return nil, s.ResourceInfo.NewNotFound(name)
 }
 
-func (s *SnapshotLegacyStore) checkEnabled(ns string) error {
-	if !s.Options.SnapshotsEnabled {
-		return fmt.Errorf("snapshots not enabled")
+// Create implements rest.Creater
+func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	snap, ok := obj.(*dashV0.Snapshot)
+	if !ok {
+		return nil, fmt.Errorf("expected Snapshot object, got %T", obj)
 	}
-	return nil
+
+	// Run validation if provided
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	// Get user identity from context
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get requester: %w", err)
+	}
+
+	userID, err := requester.GetInternalID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user ID: %w", err)
+	}
+
+	// Convert K8s resource to service command
+	cmd := convertK8sResourceToCreateCommand(snap, requester.GetOrgID(), userID)
+
+	// Create the snapshot via service
+	result, err := s.Service.CreateDashboardSnapshot(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert result back to K8s resource
+	return convertSnapshotToK8sResource(result, s.Namespacer), nil
+}
+
+// Update implements rest.Updater - snapshots are immutable, so this returns an error
+func (s *SnapshotLegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("snapshots are immutable and cannot be updated")
+}
+
+// DeleteCollection implements rest.CollectionDeleter
+func (s *SnapshotLegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("delete collection is not supported for snapshots")
 }

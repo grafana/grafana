@@ -21,8 +21,12 @@ type Folder struct {
 
 	// Spec is the spec of the Folder
 	Spec FolderSpec `json:"spec" yaml:"spec"`
+}
 
-	Status FolderStatus `json:"status" yaml:"status"`
+func NewFolder() *Folder {
+	return &Folder{
+		Spec: *NewFolderSpec(),
+	}
 }
 
 func (o *Folder) GetSpec() any {
@@ -39,15 +43,11 @@ func (o *Folder) SetSpec(spec any) error {
 }
 
 func (o *Folder) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
+	return map[string]any{}
 }
 
 func (o *Folder) GetSubresource(name string) (any, bool) {
 	switch name {
-	case "status":
-		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,13 +55,6 @@ func (o *Folder) GetSubresource(name string) (any, bool) {
 
 func (o *Folder) SetSubresource(name string, value any) error {
 	switch name {
-	case "status":
-		cast, ok := value.(FolderStatus)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type FolderStatus", value)
-		}
-		o.Status = cast
-		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -233,7 +226,10 @@ func (o *Folder) DeepCopyInto(dst *Folder) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
-	o.Status.DeepCopyInto(&dst.Status)
+}
+
+func (Folder) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
 }
 
 // Interface compliance compile-time check
@@ -289,6 +285,10 @@ func (o *FolderList) DeepCopyInto(dst *FolderList) {
 	resource.CopyObjectInto(dst, o)
 }
 
+func (FolderList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &FolderList{}
 
@@ -303,17 +303,5 @@ func (s *FolderSpec) DeepCopy() *FolderSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *FolderSpec) DeepCopyInto(dst *FolderSpec) {
-	resource.CopyObjectInto(dst, s)
-}
-
-// DeepCopy creates a full deep copy of FolderStatus
-func (s *FolderStatus) DeepCopy() *FolderStatus {
-	cpy := &FolderStatus{}
-	s.DeepCopyInto(cpy)
-	return cpy
-}
-
-// DeepCopyInto deep copies FolderStatus into another FolderStatus object
-func (s *FolderStatus) DeepCopyInto(dst *FolderStatus) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -11,6 +11,7 @@ import {
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
+import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
 import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
@@ -118,6 +119,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showLevel,
       showUniqueLabels,
       timestampResolution,
       onLogLineHover,
@@ -127,19 +129,27 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
 
     const handleLogLineResize = useCallback(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !height) {
+        return;
+      }
+      /*
+       * We want to skip measurements when the element is not visible or part of a reused node
+       * by react window, as it provides inaccurate measurements.
+       */
+      if (!intersection?.isIntersecting) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
-      const actualHeight = getLogLineDOMHeight(virtualization, logLineRef.current, calculatedHeight, log.collapsed);
+      const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
         onOverflow(index, log.uid, actualHeight);
       }
-    }, [height, index, log.collapsed, log.uid, onOverflow, virtualization]);
+    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();
@@ -166,15 +176,15 @@ const LogLineComponent = memo(
       };
     }, [handleLogLineResize]);
 
+    // Sync collapsed from log when log identity or wrapLogMessage changes.
+    // Critical for react-window: when a row is recycled for a different log, we must reset state from the new log.
     useEffect(() => {
       if (!wrapLogMessage) {
         setCollapsed(undefined);
-      } else if (collapsed === undefined && log.collapsed !== undefined) {
-        setCollapsed(log.collapsed);
-      } else if (collapsed !== undefined && log.collapsed === undefined) {
-        setCollapsed(log.collapsed);
+      } else {
+        setCollapsed(log.collapsed ?? undefined);
       }
-    }, [collapsed, log.collapsed, wrapLogMessage]);
+    }, [log.uid, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -198,12 +208,11 @@ const LogLineComponent = memo(
     const detailsShown = detailsDisplayed(log);
 
     return (
-      <>
+      <div ref={onOverflow ? logLineRef : undefined} data-log-index={index}>
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''} ${enableLogDetails ? styles.clickable : ''}`}
-          ref={onOverflow ? logLineRef : undefined}
+          className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
           onClick={handleClick}
@@ -260,6 +269,7 @@ const LogLineComponent = memo(
               collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
+              showLevel={showLevel}
               showTime={showTime}
               showUniqueLabels={showUniqueLabels}
               styles={styles}
@@ -303,7 +313,7 @@ const LogLineComponent = memo(
             timeZone={timeZone}
           />
         )}
-      </>
+      </div>
     );
   }
 );
@@ -315,6 +325,7 @@ interface LogProps {
   collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
+  showLevel: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   styles: LogLineStyles;
@@ -323,7 +334,16 @@ interface LogProps {
 }
 
 const Log = memo(
-  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+  ({
+    displayedFields,
+    log,
+    showLevel,
+    showTime,
+    showUniqueLabels,
+    styles,
+    timestampResolution,
+    wrapLogMessage,
+  }: LogProps) => {
     const handleLabelsToggle = useCallback(
       (expanded: boolean) => {
         log.uniqueLabelsExpanded = expanded;
@@ -334,14 +354,14 @@ const Log = memo(
       <>
         {showTime && (
           <span className={`${styles.timestamp} level-${log.logLevel} field`}>
-            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}
+            {timestampResolution === 'ms' ? log.timestamp : log.timestampNs}{' '}
           </span>
         )}
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
-        {(log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
+        {showLevel && (log.displayLevel || !wrapLogMessage) && (
+          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -375,7 +395,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting } = useLogListContext();
+  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -388,32 +408,42 @@ const DisplayedFields = ({
     return searchWords;
   }, [log.searchWords, log.uid, matchingUids, search]);
 
-  return displayedFields.map((field) => {
-    if (field === LOG_LINE_BODY_FIELD_NAME) {
-      return <LogLineBody log={log} key={field} styles={styles} />;
-    }
-    if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+  return displayedFields
+    .map((field) => {
+      if (field === LOG_LINE_BODY_FIELD_NAME) {
+        return <LogLineBody log={log} key={field} styles={styles} />;
+      }
+      if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        return (
+          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+            <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
+          </span>
+        );
+      }
+
+      const fieldValue = log.getDisplayedFieldValue(field);
+
+      // With wrapped logs, or without unwrapped columns, we skip empty values so they don't appear as an empty space
+      if ((wrapLogMessage || !unwrappedColumns) && !fieldValue) {
+        return null;
+      }
+
       return (
-        <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
-          <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />
+        <span className="field" title={getNormalizedFieldName(field)} key={field}>
+          {searchWords ? (
+            <Highlighter
+              textToHighlight={fieldValue}
+              searchWords={searchWords}
+              findChunks={findHighlightChunksInText}
+              highlightClassName={styles.matchHighLight}
+            />
+          ) : (
+            fieldValue
+          )}{' '}
         </span>
       );
-    }
-    return (
-      <span className="field" title={getNormalizedFieldName(field)} key={field}>
-        {searchWords ? (
-          <Highlighter
-            textToHighlight={log.getDisplayedFieldValue(field)}
-            searchWords={searchWords}
-            findChunks={findHighlightChunksInText}
-            highlightClassName={styles.matchHighLight}
-          />
-        ) : (
-          log.getDisplayedFieldValue(field)
-        )}
-      </span>
-    );
-  });
+    })
+    .filter((field) => field !== null);
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
@@ -433,8 +463,8 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
 
   if (log.hasAnsi) {
     return (
-      <span className="field no-highlighting">
-        <LogMessageAnsi value={log.body} highlight={highlight} />
+      <span className="field no-highlighting log-line-body">
+        <LogMessageAnsi value={log.body} highlight={highlight} />{' '}
       </span>
     );
   }
@@ -448,27 +478,56 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
         highlightClassName={styles.matchHighLight}
       />
     ) : (
-      <span className="field no-highlighting">{log.body}</span>
+      <span className="field no-highlighting log-line-body">{log.body} </span>
     );
   }
 
   return (
-    <span className="field log-syntax-highlight">
-      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />
+    <span className="field log-syntax-highlight log-line-body">
+      <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );
 };
 
-export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
+export function getGridTemplateColumns(
+  dimensions: LogFieldDimension[],
+  displayedFields: string[],
+  unwrappedColumns: boolean
+) {
   const columns = dimensions
-    .map((dimension) => (dimension.width > 0 ? `${dimension.width}px` : 'max-content'))
+    .map((dimension) =>
+      dimension.width > 0 && (unwrappedColumns || dimension.internal) ? `${dimension.width}px` : 'max-content'
+    )
     .join(' ');
   const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
   return `${columns}${logLineWidth}`;
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
-export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtualization) => {
+export const getStyles = (
+  theme: GrafanaTheme2,
+  virtualization: LogLineVirtualization | undefined = undefined,
+  displayedFields: string[] = []
+) => {
+  const base = tinycolor(theme.colors.background.primary);
+
+  let maxContrast = theme.isDark
+    ? tinycolor(theme.colors.text.maxContrast).darken(10).toRgbString()
+    : tinycolor(theme.colors.text.maxContrast).lighten(10).toRgbString();
+  let colorDefault = theme.isDark
+    ? theme.colors.text.primary
+    : tinycolor(theme.colors.text.maxContrast).lighten(30).toRgbString();
+  const contrast1 = tinycolor.readability(base, maxContrast);
+  const contrast2 = tinycolor.readability(base, colorDefault);
+
+  if (!displayedFields.length || (displayedFields.length === 1 && displayedFields.includes(LOG_LINE_BODY_FIELD_NAME))) {
+    colorDefault = theme.colors.text.primary;
+    maxContrast = theme.colors.text.primary;
+  } else if (contrast1 < contrast2) {
+    colorDefault = maxContrast;
+    maxContrast = theme.colors.text.primary;
+  }
+
   const colors = {
     critical: '#B877D9',
     error: theme.colors.error.text,
@@ -477,8 +536,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     trace: '#6ed0e0',
     info: '#6CCF8E',
     metadata: theme.colors.text.secondary,
-    default: theme.colors.text.primary,
+    default: colorDefault,
     parsedField: theme.colors.text.secondary,
+    logLineBody: maxContrast,
   };
 
   const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
@@ -490,8 +550,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gap: theme.spacing(0.5),
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.fontSize,
-      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
@@ -509,7 +567,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: colors.default,
+          color: colors.logLineBody,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
@@ -540,6 +598,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
           color: theme.components.textHighlight.text,
           backgroundColor: theme.components.textHighlight.background,
         },
+        '&.log-line-body': {
+          color: colors.logLineBody,
+        },
       },
       '& .no-highlighting': {
         color: theme.colors.text.primary,
@@ -552,6 +613,10 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     fontSizeSmall: css({
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
+    fontSizeDefault: css({
+      fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
       background: tinycolor(theme.colors.background.canvas)

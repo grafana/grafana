@@ -3,14 +3,14 @@ import { Context, createContext, PropsWithChildren, useCallback, useContext, use
 import { TimeRange } from '@grafana/data';
 
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
-import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
+import { ElasticDatasourceLike } from '../../types';
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer, initQuery } from './state';
+import { aliasPatternReducer, queryReducer, queryTypeReducer, editorTypeReducer, initQuery } from './state';
 
-const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
+const DatasourceContext = createContext<ElasticDatasourceLike | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchDataQuery | undefined>(undefined);
 const RangeContext = createContext<TimeRange | undefined>(undefined);
 
@@ -18,7 +18,7 @@ interface Props {
   query: ElasticsearchDataQuery;
   onChange: (query: ElasticsearchDataQuery) => void;
   onRunQuery: () => void;
-  datasource: ElasticDatasource;
+  datasource: ElasticDatasourceLike;
   range: TimeRange;
 }
 
@@ -40,9 +40,13 @@ export const ElasticsearchProvider = ({
     [onChange, onRunQuery]
   );
 
-  const reducer = combineReducers<Pick<ElasticsearchDataQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs'>>({
+  const reducer = combineReducers<
+    Pick<ElasticsearchDataQuery, 'query' | 'queryType' | 'alias' | 'editorType' | 'metrics' | 'bucketAggs'>
+  >({
     query: queryReducer,
+    queryType: queryTypeReducer,
     alias: aliasPatternReducer,
+    editorType: editorTypeReducer,
     metrics: metricsReducer,
     bucketAggs: createBucketAggsReducer(datasource.timeField),
   });
@@ -62,10 +66,10 @@ export const ElasticsearchProvider = ({
   // useStatelessReducer will then call `onChange` with the newly generated query
   useEffect(() => {
     if (shouldRunInit && isUninitialized) {
-      dispatch(initQuery());
+      dispatch(initQuery(datasource.defaultQueryMode));
       setShouldRunInit(false);
     }
-  }, [shouldRunInit, dispatch, isUninitialized]);
+  }, [shouldRunInit, dispatch, isUninitialized, datasource.defaultQueryMode]);
 
   if (isUninitialized) {
     return null;

@@ -11,14 +11,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { BasicProvisionedDashboardInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {
@@ -39,6 +33,17 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
     }
 
     const dashboards = await fetchProvisionedDashboards(ds.type);
+
+    if (dashboards.length > 0) {
+      BasicProvisionedDashboardInteractions.loaded({
+        numberOfItems: dashboards.length,
+        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+        datasourceTypes: [ds.type],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      });
+    }
+
     return dashboards;
   }, [datasourceUid]);
 
@@ -48,7 +53,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
   const styles = useStyles2(getStyles);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
+    BasicProvisionedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
@@ -67,6 +72,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
       creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;

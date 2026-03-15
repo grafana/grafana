@@ -9,7 +9,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/promlib"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 )
 

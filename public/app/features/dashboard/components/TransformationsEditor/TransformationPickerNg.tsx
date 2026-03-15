@@ -115,8 +115,9 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           data={data}
           onClick={(id) => {
             reportInteraction('grafana_panel_transformations_clicked', {
-              type: id,
               context: 'transformations_drawer',
+              type: id,
+              action: 'add',
             });
             onTransformationAdd({ value: id });
           }}
@@ -165,11 +166,12 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
     <Grid columns={3} gap={1}>
       {transformations.map((transform) => (
         <TransformationCard
-          key={transform.id}
-          transform={transform}
-          showIllustrations={showIllustrations}
-          onClick={onClick}
           data={data}
+          fullWidth
+          key={transform.id}
+          onClick={onClick}
+          showIllustrations={showIllustrations}
+          transform={transform}
         />
       ))}
     </Grid>

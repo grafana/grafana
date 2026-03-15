@@ -87,7 +87,6 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   hasIncrementalQuery: boolean;
   httpMethod: string;
-  id: number;
   interval: string;
   languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
@@ -123,7 +122,6 @@ export class PrometheusDatasource
     this.exemplarsAvailable = true;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.ruleMappings = {};
@@ -567,6 +565,12 @@ export class PrometheusDatasource
       .map((k) => ({ value: k, text: k }));
   }
 
+  // By implementing getGroupByKeys we add group by variable support independently from adhoc filters.
+  // It delegates to getTagKeys
+  async getGroupByKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    return this.getTagKeys(options);
+  }
+
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options.timeRange) {
@@ -747,7 +751,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc, filter) => {
+    const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -917,3 +921,17 @@ export const extractResourceMatcher = (
   // Create a matcher using metric names and label filters
   return `{${[...metricMatch, ...labelsMatch].join(',')}}`;
 };
+
+export function remapOneOf(filter: AdHocVariableFilter) {
+  let { operator, value, values } = filter;
+  if (operator === '=|' || operator === '!=|') {
+    operator = operator === '=|' ? '=~' : '!~';
+    value = values?.map(prometheusRegularEscape).join('|') ?? '';
+  }
+
+  return {
+    ...filter,
+    operator,
+    value,
+  };
+}

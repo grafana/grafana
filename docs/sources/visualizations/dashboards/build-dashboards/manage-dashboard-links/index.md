@@ -85,7 +85,8 @@ Once you've added a dashboard link, it appears in the upper right corner of your
 Add links to other dashboards at the top of your current dashboard.
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 
    The default link type is **Dashboards**.
@@ -99,6 +100,7 @@ Add links to other dashboards at the top of your current dashboard.
    - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables](ref:dashboard-url-variables).
    - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
+   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
 
 1. Click **Save dashboard** in the top-right corner.
 1. Click **Back to dashboard** and then **Exit edit**.
@@ -108,7 +110,8 @@ Add links to other dashboards at the top of your current dashboard.
 Add a link to a URL at the top of your current dashboard. You can link to any available URL, including dashboards, panels, or external sites. You can even control the time range to ensure the user is zoomed in on the right data in Grafana.
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
 1. In the **Type** drop-down, select **Link**.
 1. In the **URL** field, enter the URL to which you want to link.
@@ -121,6 +124,7 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
    - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link.
    - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
+   - **Show in controls menu** – Select this option to display the link in the dashboard controls menu instead of at the top of the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
 
 1. Click **Save dashboard** in the top-right corner.
 1. Click **Back to dashboard** and then **Exit edit**.
@@ -130,7 +134,8 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
 To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
-1. Click **Settings**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
    - **Edit** - Click the name of the link and update the link settings.

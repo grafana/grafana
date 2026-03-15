@@ -5,7 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/grafana/alerting/templates"
+	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/notify"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -31,11 +32,18 @@ func (t *NotificationTemplate) Validate() error {
 		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
 	}
 	t.Template = content
-	def := templates.TemplateDefinition{
-		Name:     t.Name,
-		Template: t.Template,
-		Kind:     templates.GrafanaKind,
+	if t.Kind == "" {
+		t.Kind = definition.GrafanaTemplateKind
 	}
+	postable := definition.PostableApiTemplate{
+		Name:    t.Name,
+		Content: t.Template,
+		Kind:    t.Kind,
+	}
+	if err := postable.Validate(); err != nil {
+		return err
+	}
+	def := notify.PostableAPITemplateToTemplateDefinition(postable)
 	return def.Validate()
 }
 

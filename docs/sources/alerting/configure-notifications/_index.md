@@ -44,6 +44,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
+  configure-inhibition-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
 ---
 
 # Configure notifications
@@ -65,6 +70,7 @@ The topics in this section include step-by-step instructions for:
 - [Configuring notification policies](ref:configure-notification-policies) to determine how alerts are routed to contact points.
 - [Templating notifications](ref:configure-templates) to customize notification messages.
 - [Configuring silences](ref:configure-silences) or [mute timings](ref:configure-mute-timings) to stop notifications.
+- [Configuring inhibition rules](ref:configure-inhibition-rules) to suppress notifications for dependent alerts when a root-cause alert is already firing.
 
 ## Alertmanager architecture
 
@@ -81,7 +87,7 @@ By default, Grafana uses its built-in Alertmanager, and Grafana Cloud instances 
 
 {{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
 
-When having multiple Alertmanagers, note that each Alertmanager manages its own independent notification resources, such as contact points, templates, policies, silences, mute timings, and active notifications.
+When having multiple Alertmanagers, note that each Alertmanager manages its own independent notification resources, such as contact points, templates, policies, silences, mute timings, active time intervals, and active notifications.
 
 These notification resources cannot be shared across different Alertmanagers.
 

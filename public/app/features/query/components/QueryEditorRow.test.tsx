@@ -34,6 +34,13 @@ jest.mock('@grafana/i18n', () => ({
   t: (key: string, defaultValue: string) => defaultValue,
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false }),
+  useProvidePageContext: jest.fn(),
+  OpenAssistantButton: () => null,
+  createAssistantContextItem: jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -461,8 +468,7 @@ describe('QueryEditorRow', () => {
       render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
 
       await waitFor(() => {
-        expect(screen.queryByText('Save query')).not.toBeInTheDocument();
-        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
+        expect(screen.queryByText('Saved queries')).not.toBeInTheDocument();
       });
     });
 

@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
-	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
@@ -157,9 +157,7 @@ func TestCheckHealth(t *testing.T) {
 	})
 }
 
-func TestIntegrationCallResource(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestCallResource(t *testing.T) {
 	registry := pluginfakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{

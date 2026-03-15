@@ -8,7 +8,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 
-import { Playlist, PlaylistSpec } from '../../api/clients/playlist/v0alpha1';
+import { Playlist, PlaylistSpec } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
@@ -30,13 +30,15 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
+    // Strip UI-only properties (dashboards) from items before submission
+    const apiItems = items.map(({ dashboards, ...item }) => item);
     onSubmit({
       ...playlist,
       spec: {
         ...specUpdates,
         interval: specUpdates?.interval ?? '5m',
         title: specUpdates?.title ?? '',
-        items,
+        items: apiItems,
       },
     });
   };

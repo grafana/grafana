@@ -14,11 +14,17 @@ outputs:
   frontend:
     description: Whether the frontend or self has changed in any way
     value: ${{ steps.changed-files.outputs.frontend_any_changed || 'true' }}
+  frontend-dependencies:
+    description: Whether the frontend dependencies or self have changed in any way
+    value: ${{ steps.changed-files.outputs.frontend_dependencies_any_changed || 'true' }}
+  frontend-packages:
+    description: Whether any frontend packages have changed
+    value: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}
   e2e:
     description: Whether the e2e tests or self have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_any_changed == 'true' ||
       steps.changed-files.outputs.backend_any_changed == 'true' ||
-      steps.changed-files.outputs.frontend_any_changed == 'true' || 'true' }}
+      steps.changed-files.outputs.frontend_any_changed == 'true' }}
   e2e-cloud-plugins:
     description: Whether the cloud plugins code or tests have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_changed || 'true' }}
@@ -50,11 +56,14 @@ runs:
             - '${{ inputs.self }}'
           dockerfile:
             - 'Dockerfile'
+            - 'Makefile'
           backend:
             - '!*.md'
             - '!docs/**'
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
             - '**/go.sum'
@@ -71,6 +80,7 @@ runs:
             - '.github/actions/change-detection/**'
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
+            - 'scripts/ci/backend-tests/**'
             - 'kindsv2/**'
             - '${{ inputs.self }}'
           frontend:
@@ -95,9 +105,20 @@ runs:
             - 'nx.json'
             - 'tsconfig.json'
             - '.yarn/**'
+            - 'apps/dashboard/pkg/migration/**'
+            - '${{ inputs.self }}'
+          frontend_dependencies:
+            - 'yarn.lock'
+            - 'package.json'
+          frontend_packages:
+            - '.github/actions/checkout/**'
+            - '.github/actions/change-detection/**'
+            - 'packages/**'
+            - './scripts/validate-npm-packages.sh'
             - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
+            - 'e2e-playwright/**'
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
             - 'emails/**'
@@ -151,6 +172,8 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.backend_all_changed_files }}"
         echo "Frontend: ${{ steps.changed-files.outputs.frontend_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.frontend_all_changed_files }}"
+        echo "Frontend packages: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.frontend_packages_all_changed_files }}"
         echo "E2E: ${{ steps.changed-files.outputs.e2e_any_changed || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.e2e_all_changed_files }}"
         echo " --> ${{ steps.changed-files.outputs.backend_all_changed_files }}"

@@ -474,6 +474,7 @@
       },
       "id": 12,
       "options": {
+        "displayName": "My gauge",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -543,9 +544,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 7,
+        "w": 3,
         "x": 10,
-        "y": 6
+        "y": 5
       },
       "id": 16,
       "options": {
@@ -619,10 +620,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 7,
-        "x": 10,
-        "y": 11
+        "h": 5,
+        "w": 4,
+        "x": 13,
+        "y": 5
       },
       "id": 17,
       "options": {
@@ -947,7 +948,6 @@
         },
         "orientation": "auto",
         "shape": "gauge",
-        "gradient": "none",
         "barWidthFactor": 0.5,
         "segmentCount": 70,
         "segmentSpacing": 0.3,
@@ -957,8 +957,7 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false
+          "gradient": false
         }
       }
     },
@@ -972,7 +971,7 @@
       },
       "id": 5,
       "panels": [],
-      "title": "Neutral value (not sure we will implement it yet)",
+      "title": "Neutral value",
       "type": "row"
     },
     {
@@ -1024,6 +1023,7 @@
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
+        "neutral": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1094,6 +1094,7 @@
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
+        "neutral": 47,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
@@ -1113,6 +1114,61 @@
         }
       ],
       "title": "neutral value 47 (33 => 41)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "description": "should show a green gauge",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 10,
+        "y": 10
+      },
+      "id": 20,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_content",
+          "csvContent": "a\n0.95"
+        }
+      ],
+      "title": "Percentage w/ no min/max",
       "type": "gauge"
     }
   ],

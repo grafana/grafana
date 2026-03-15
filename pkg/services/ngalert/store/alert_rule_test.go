@@ -13,6 +13,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/google/uuid"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -238,6 +239,70 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			require.NoError(t, err)
 			require.EqualValues(t, 1, count) // only the current version
 		})
+	})
+
+	t.Run("updated rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create two folders with known fullpaths
+		folderAUID := util.GenerateShortUID()
+		folderATitle := "Folder A"
+		folderBUID := util.GenerateShortUID()
+		folderBTitle := "Folder B"
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderAUID,
+			Title:    folderATitle,
+			OrgID:    1,
+			Fullpath: folderATitle,
+		})
+
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderBUID,
+			Title:    folderBTitle,
+			OrgID:    1,
+			Fullpath: folderBTitle,
+		})
+
+		// Create a rule in folder A using the low-level createRule helper
+		ruleGen := gen.With(gen.WithNamespaceUID(folderAUID), gen.WithOrgID(1))
+		rule := createRule(t, testStore, ruleGen)
+
+		// Manually set the folder_fullpath to simulate existing rule
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = ? WHERE uid = ?", folderATitle, rule.UID)
+			return err
+		})
+		require.NoError(t, err)
+
+		// Fetch the rule to get current state
+		existingRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, folderATitle, existingRule.FolderFullpath, "Initial folder fullpath should be Folder A")
+
+		// Move the rule to folder B by updating NamespaceUID
+		newRule := models.CopyRule(existingRule)
+		newRule.NamespaceUID = folderBUID
+
+		err = testStore.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: existingRule,
+			New:      *newRule,
+		}})
+		require.NoError(t, err)
+
+		// Retrieve the rule and verify FolderFullpath is updated
+		updatedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, updatedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
 }
 
@@ -905,6 +970,37 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, insertedRule.UpdatedBy)
 	})
+
+	t.Run("inserted rules should have FolderFullpath populated", func(t *testing.T) {
+		// Create a fake folder service for this test
+		fakeFolderService := foldertest.NewFakeService()
+		testStore := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
+
+		// Create a folder with a known fullpath
+		folderUID := util.GenerateShortUID()
+		folderTitle := "Test Folder"
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:      folderUID,
+			Title:    folderTitle,
+			OrgID:    orgID,
+			Fullpath: folderTitle,
+		})
+
+		// Create an alert rule in this folder
+		rule := gen.With(gen.WithNamespaceUID(folderUID)).Generate()
+		insertedRules, err := testStore.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+		require.Len(t, insertedRules, 1)
+
+		// Retrieve the rule and verify FolderFullpath is populated
+		savedRule, err := testStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: orgID,
+			UID:   insertedRules[0].UID,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, savedRule.FolderFullpath, "FolderFullpath should be populated")
+		assert.Equal(t, folderTitle, savedRule.FolderFullpath, "FolderFullpath should match folder fullpath")
+	})
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
@@ -989,20 +1085,21 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			deref[i], deref[j] = deref[j], deref[i]
 		})
 		for _, rule := range deref {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 || len(rule.NotificationSettings[0].ActiveTimeIntervals) == 0 {
+			cpr := rule.ContactPointRouting()
+			if cpr == nil || cpr.Receiver == "" || len(cpr.MuteTimeIntervals) == 0 || len(cpr.ActiveTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && (slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) || slices.Contains(rule.NotificationSettings[0].ActiveTimeIntervals, intervalName)) {
+				if cpr.Receiver == receiver && (slices.Contains(cpr.MuteTimeIntervals, intervalName) || slices.Contains(cpr.ActiveTimeIntervals, intervalName)) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
-				receiver = rule.NotificationSettings[0].Receiver
-				if len(rule.NotificationSettings[0].MuteTimeIntervals) > 0 {
-					intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				receiver = cpr.Receiver
+				if len(cpr.MuteTimeIntervals) > 0 {
+					intervalName = cpr.MuteTimeIntervals[0]
 				}
-				if len(rule.NotificationSettings[0].ActiveTimeIntervals) > 0 {
-					intervalName = rule.NotificationSettings[0].ActiveTimeIntervals[0]
+				if len(cpr.ActiveTimeIntervals) > 0 {
+					intervalName = cpr.ActiveTimeIntervals[0]
 				}
 				expected = append(expected, rule.GetKey())
 			}
@@ -1042,7 +1139,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysFalse, false)
 
-			var expected []models.AlertRuleKey
+			expected := make([]models.AlertRuleKey, 0, len(receiveRules))
 			for _, rule := range receiveRules {
 				expected = append(expected, rule.GetKey())
 			}
@@ -1130,7 +1227,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, alwaysFalse, false)
 
-			var expected []models.AlertRuleKey
+			expected := make([]models.AlertRuleKey, 0, len(timeIntervalRules))
 			for _, rule := range timeIntervalRules {
 				expected = append(expected, rule.GetKey())
 			}
@@ -1196,7 +1293,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	})
 }
 
-func TestIntegrationListNotificationSettings(t *testing.T) {
+func TestIntegrationListContactPointRoutings(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	usr := models.UserUID("test")
@@ -1234,14 +1331,14 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
 	require.NoError(t, err)
 
-	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
+	result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{OrgID: 1})
 	require.NoError(t, err)
 	require.Len(t, result, len(orgRules))
 	for _, rule := range rulesWithNotificationsAndReceiver {
 		if !assert.Contains(t, result, rule.GetKey()) {
 			continue
 		}
-		assert.EqualValues(t, rule.NotificationSettings, result[rule.GetKey()])
+		assert.EqualValues(t, *rule.ContactPointRouting(), result[rule.GetKey()])
 	}
 
 	t.Run("should list notification settings by receiver name", func(t *testing.T) {
@@ -1250,7 +1347,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:        1,
 			ReceiverName: searchName,
 		})
@@ -1266,7 +1363,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			TimeIntervalName: searchName,
 		})
@@ -1277,7 +1374,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		}
 	})
 	t.Run("should return nothing if filter does not match", func(t *testing.T) {
-		result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		result, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     "not-found-receiver",
 			TimeIntervalName: "not-found-time-interval",
@@ -1292,21 +1389,22 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			orgRules[i], orgRules[j] = orgRules[j], orgRules[i]
 		})
 		for _, rule := range orgRules {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+			cpr := rule.ContactPointRouting()
+			if cpr == nil || cpr.Receiver == "" || len(cpr.MuteTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, timeInterval) {
+				if cpr.Receiver == receiver && slices.Contains(cpr.MuteTimeIntervals, timeInterval) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
-				receiver = rule.NotificationSettings[0].Receiver
-				timeInterval = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				receiver = cpr.Receiver
+				timeInterval = cpr.MuteTimeIntervals[0]
 				expected = append(expected, rule.GetKey())
 			}
 		}
 
-		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+		actual, err := store.ListContactPointRoutings(context.Background(), models.ListContactPointRoutingsQuery{
 			OrgID:            1,
 			ReceiverName:     receiver,
 			TimeIntervalName: timeInterval,
@@ -1726,6 +1824,55 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	// Setup.
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
+
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
+	require.NoError(t, err)
+	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
+	require.NoError(t, err)
+
+	oldRule := ruleV1
+	updatedRule := ruleV1
+	updateRule := func(title string, folderUID string) {
+		oldRule = updatedRule
+		updatedRule = models.CopyRule(oldRule, gen.WithTitle(title), gen.WithNamespaceUID(folderUID))
+		require.NoError(t, store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{{Existing: oldRule, New: *updatedRule}}))
+		updatedRule.Version++ // Simulate version increment after update to avoid conflict errors.
+	}
+
+	// Update rule a couple of times to create versions.
+	originalFolder := oldRule.NamespaceUID
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "newfolder-1")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "current-folder")
+
+	t.Run("should return rule versions folders sorted in decreasing order", func(t *testing.T) {
+		historicalFolders, err := store.GetAlertRuleVersionFolders(context.Background(), updatedRule.OrgID, updatedRule.GUID)
+		require.NoError(t, err)
+		assert.Equal(t, []string{ // Return folders with more recent first.
+			"current-folder",
+			originalFolder,
+			"newfolder-2",
+			"newfolder-1",
+		}, historicalFolders)
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
@@ -2050,6 +2197,119 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// After all pages, token should be empty
 		require.Empty(t, continueToken2, "should be no more pages")
+	})
+
+	t.Run("should sort by folder fullpath when enabled", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath sort orders conflict.
+		ruleNamespaceFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-z"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "z-folder"
+			},
+		))
+
+		ruleFullpathFirst := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("z-namespace"),
+			ruleGen.WithGroupName("group-a"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+
+		resultByNamespace, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByNamespace, 2)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByNamespace[0].UID)
+		require.Equal(t, ruleFullpathFirst.UID, resultByNamespace[1].UID)
+
+		resultByFullpath, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, resultByFullpath, 2)
+		require.Equal(t, ruleFullpathFirst.UID, resultByFullpath[0].UID)
+		require.Equal(t, ruleNamespaceFirst.UID, resultByFullpath[1].UID)
+	})
+
+	t.Run("should paginate with fullpath cursor and include folder fullpath in token", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService2 := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService2, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+
+		// Intentionally make namespace and fullpath order different to validate fullpath cursor behavior.
+		rule1 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("b-namespace"),
+			ruleGen.WithGroupName("group-1"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "a-folder"
+			},
+		))
+		rule2 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("a-namespace"),
+			ruleGen.WithGroupName("group-2"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "b-folder"
+			},
+		))
+		rule3 := createRule(t, store, ruleGen.With(
+			ruleGen.WithNamespaceUID("c-namespace"),
+			ruleGen.WithGroupName("group-3"),
+			func(r *models.AlertRule) {
+				r.FolderFullpath = "c-folder"
+			},
+		))
+
+		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page1, 1)
+		require.Equal(t, rule1.UID, page1[0].UID)
+		require.NotEmpty(t, token1)
+
+		cursor1, err := models.DecodeGroupCursor(token1)
+		require.NoError(t, err)
+		require.Equal(t, "a-folder", cursor1.FolderFullpath)
+		require.Equal(t, "b-namespace", cursor1.NamespaceUID)
+		require.Equal(t, "group-1", cursor1.RuleGroup)
+
+		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token1,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page2, 1)
+		require.Equal(t, rule2.UID, page2[0].UID)
+		require.NotEmpty(t, token2)
+
+		cursor2, err := models.DecodeGroupCursor(token2)
+		require.NoError(t, err)
+		require.Equal(t, "b-folder", cursor2.FolderFullpath)
+		require.Equal(t, "a-namespace", cursor2.NamespaceUID)
+		require.Equal(t, "group-2", cursor2.RuleGroup)
+
+		page3, token3, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               1,
+			ContinueToken:       token2,
+			SortByFullpath:      true,
+		})
+		require.NoError(t, err)
+		require.Len(t, page3, 1)
+		require.Equal(t, rule3.UID, page3[0].UID)
+		require.Empty(t, token3)
 	})
 }
 
@@ -2385,6 +2645,211 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("filter by LabelMatchers", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		ruleLower := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"team": "alerting", "severity": "warning"}),
+			ruleGen.WithTitle("rule_lowercase")))
+		ruleUpper := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"team": "Alerting", "severity": "critical"}),
+			ruleGen.WithTitle("rule_uppercase")))
+		ruleSpecial := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"key": `value"with"quotes`}),
+			ruleGen.WithTitle("rule_special")))
+		ruleGlob := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"glob": "*[?]"}),
+			ruleGen.WithTitle("rule_glob")))
+		ruleSpecialChars := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"label-with-hyphen": "line1\nline2\\end\"quote"}),
+			ruleGen.WithTitle("rule_special_chars")))
+		ruleEmpty := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"empty": ""}),
+			ruleGen.WithTitle("rule_empty")))
+		ruleNonempty := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
+			ruleGen.WithTitle("rule_nonempty")))
+		// include a rule with no labels at all,
+		// to ensure we handle that case correctly.
+		// JSON functions need to be able to handle null and empty string values.
+		ruleNoLabels := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{}),
+			ruleGen.WithTitle("rule_no_labels")))
+
+		tc := []struct {
+			name          string
+			labelMatchers labels.Matchers
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name: "equality matcher is case-sensitive",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower},
+			},
+			{
+				name: "equality matcher matches uppercase when specified",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "Alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper},
+			},
+			{
+				name: "inequality matcher is case-sensitive",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
+			},
+			{
+				name: "special characters in labels are handled correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchEqual, "key", `value"with"quotes`)
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleSpecial},
+			},
+			{
+				name: "matcher with non-existent label returns no rules",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "nonexistent", "value"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{},
+			},
+			{
+				name: "multiple matchers are ANDed",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "team", "Alerting"); return m }(),
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "severity", "critical"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleUpper},
+			},
+			{
+				name: "GLOB special characters are escaped correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "glob", "*[?]"); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleGlob},
+			},
+			{
+				name: "JSON escape characters are handled correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchEqual, "label-with-hyphen", "line1\nline2\\end\"quote")
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleSpecialChars},
+			},
+			{
+				name: "empty string value matches correctly",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNoLabels},
+			},
+			{
+				name: "inequality matcher on non-existent label matches all rules",
+				labelMatchers: labels.Matchers{
+					func() *labels.Matcher {
+						m, _ := labels.NewMatcher(labels.MatchNotEqual, "nonexistent", "value")
+						return m
+					}(),
+				},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
+			},
+		}
+
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:         orgID,
+					LabelMatchers: tt.labelMatchers,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+
+		t.Run("regex matcher returns error from store", func(t *testing.T) {
+			query := &models.ListAlertRulesQuery{
+				OrgID: orgID,
+				LabelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchRegexp, "team", "alert.*"); return m }(),
+				},
+			}
+			_, err := store.ListAlertRules(context.Background(), query)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "is not supported")
+		})
+
+		t.Run("not-regex matcher returns error from store", func(t *testing.T) {
+			query := &models.ListAlertRulesQuery{
+				OrgID: orgID,
+				LabelMatchers: labels.Matchers{
+					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotRegexp, "team", "alert.*"); return m }(),
+				},
+			}
+			_, err := store.ListAlertRules(context.Background(), query)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "is not supported")
+		})
+	})
+
+	t.Run("filter by PluginOriginFilter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		testOrgID := int64(12345)
+		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+
+		regularRule := createRule(t, store, testRuleGen)
+		pluginRule := createRule(t, store, testRuleGen.With(
+			models.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		))
+
+		tc := []struct {
+			name          string
+			filter        models.PluginOriginFilter
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should return all rules when PluginOriginFilterNone",
+				filter:        models.PluginOriginFilterNone,
+				expectedRules: []*models.AlertRule{regularRule, pluginRule},
+			},
+			{
+				name:          "should filter out plugin rules when PluginOriginFilterHide",
+				filter:        models.PluginOriginFilterHide,
+				expectedRules: []*models.AlertRule{regularRule},
+			},
+			{
+				name:          "should return only plugin rules when PluginOriginFilterOnly",
+				filter:        models.PluginOriginFilterOnly,
+				expectedRules: []*models.AlertRule{pluginRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{
+						OrgID: testOrgID,
+					},
+					PluginOriginFilter: tt.filter,
+				}
+				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
 }
 
 func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
@@ -2690,6 +3155,101 @@ func createTestStore(
 		Bus:            bus,
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
+}
+
+func Test_collectNamespaceUIDsByOrg(t *testing.T) {
+	t.Run("empty rules slice returns empty result", func(t *testing.T) {
+		result := collectNamespaceUIDsByOrg([]*models.AlertRule{})
+		require.Empty(t, result)
+	})
+
+	t.Run("rules with empty NamespaceUID are skipped", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Empty(t, result)
+	})
+
+	t.Run("single rule returns single entry", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple rules in same org/folder are deduplicated", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-1"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple folders in same org", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: "folder-1"}, // duplicate
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
+
+	t.Run("multiple orgs produce separate orgNamespaces entries", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 2, NamespaceUID: "folder-3"},
+			{OrgID: 2, NamespaceUID: "folder-4"},
+			{OrgID: 3, NamespaceUID: "folder-5"},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 3)
+
+		// Sort by OrgID for consistent testing
+		slices.SortFunc(result, func(a, b orgNamespaces) int {
+			if a.OrgID < b.OrgID {
+				return -1
+			}
+			if a.OrgID > b.OrgID {
+				return 1
+			}
+			return 0
+		})
+
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+
+		assert.Equal(t, int64(2), result[1].OrgID)
+		assert.ElementsMatch(t, []string{"folder-3", "folder-4"}, result[1].NamespaceUIDs)
+
+		assert.Equal(t, int64(3), result[2].OrgID)
+		assert.ElementsMatch(t, []string{"folder-5"}, result[2].NamespaceUIDs)
+	})
+
+	t.Run("mix of empty and non-empty namespace UIDs", func(t *testing.T) {
+		rules := []*models.AlertRule{
+			{OrgID: 1, NamespaceUID: "folder-1"},
+			{OrgID: 1, NamespaceUID: ""},
+			{OrgID: 1, NamespaceUID: "folder-2"},
+			{OrgID: 1, NamespaceUID: ""},
+		}
+		result := collectNamespaceUIDsByOrg(rules)
+		require.Len(t, result, 1)
+		assert.Equal(t, int64(1), result[0].OrgID)
+		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
+	})
 }
 
 type fakeBus struct {

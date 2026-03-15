@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
 import { ThemeColors } from './createColors';
@@ -26,29 +28,44 @@ export interface ThemeVizColor<T extends ThemeVizColorName> {
 
 type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
 
-type ThemeVizColorShadeName<T extends ThemeVizColorName> =
-  | `super-light-${T}`
-  | `light-${T}`
-  | T
-  | `semi-dark-${T}`
-  | `dark-${T}`;
+const createShadeSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
+  z.enum([`super-light-${color}`, `light-${color}`, color, `semi-dark-${color}`, `dark-${color}`]);
 
-type ThemeVizHueGeneric<T> = T extends ThemeVizColorName
-  ? {
-      name: T;
-      shades: Array<ThemeVizColor<T>>;
-    }
-  : never;
+type ThemeVizColorShadeName<T extends ThemeVizColorName> = z.infer<ReturnType<typeof createShadeSchema<T>>>;
+
+const createHueSchema = <T>(color: T extends ThemeVizColorName ? T : never) =>
+  z.object({
+    name: z.literal(color),
+    shades: z.array(
+      z.object({
+        color: z.string(),
+        name: createShadeSchema(color),
+        aliases: z.array(z.string()).optional(),
+        primary: z.boolean().optional(),
+      })
+    ),
+  });
+
+const ThemeVizHueSchema = z.union([
+  createHueSchema('red'),
+  createHueSchema('orange'),
+  createHueSchema('yellow'),
+  createHueSchema('green'),
+  createHueSchema('blue'),
+  createHueSchema('purple'),
+]);
 
 /**
  * @alpha
  */
-export type ThemeVizHue = ThemeVizHueGeneric<ThemeVizColorName>;
+export type ThemeVizHue = z.infer<typeof ThemeVizHueSchema>;
 
-export type ThemeVisualizationColorsInput = {
-  hues?: ThemeVizHue[];
-  palette?: string[];
-};
+export const ThemeVisualizationColorsInputSchema = z.object({
+  hues: z.array(ThemeVizHueSchema).optional(),
+  palette: z.array(z.string()).optional(),
+});
+
+export type ThemeVisualizationColorsInput = z.infer<typeof ThemeVisualizationColorsInputSchema>;
 
 /**
  * @internal

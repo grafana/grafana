@@ -1,8 +1,36 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboardsResponse, Link } from '../types';
+import { GnetDashboard, GnetDashboardsResponse, Link } from '../types';
+
+/**
+ * Panel types that are known to allow JavaScript code execution.
+ * These panels are filtered out due to security concerns.
+ */
+const UNSAFE_PANEL_TYPE_SLUGS = [
+  'aceiot-svg-panel',
+  'ae3e-plotly-panel',
+  'gapit-htmlgraphics-panel',
+  'marcusolsson-dynamictext-panel',
+  'volkovlabs-echarts-panel',
+  'volkovlabs-form-panel',
+];
+
+/**
+ * Minimum number of downloads required for a community dashboard to be shown as a suggestion.
+ *
+ * Rationale:
+ * - Dashboards with higher download counts have been vetted by a larger community
+ * - This acts as a heuristic for quality and trustworthiness
+ * - Reduces risk of malicious or poorly-maintained dashboards
+ *
+ * Trade-offs:
+ * - May filter out legitimate but less popular dashboards
+ * - Newer dashboards with good content but low download counts won't be shown
+ * - The threshold of 10,000 is somewhat arbitrary and may need tuning based on ecosystem growth
+ */
+const MIN_DOWNLOADS_FILTER = 10000;
 
 /**
  * Parameters for fetching community dashboards from Grafana.com
@@ -56,6 +84,7 @@ export async function fetchCommunityDashboards(
     pageSize: params.pageSize.toString(),
     includeLogo: params.includeLogo ? '1' : '0',
     includeScreenshots: params.includeScreenshots ? 'true' : 'false',
+    includePanelTypeSlugs: 'true',
   });
 
   if (params.dataSourceSlugIn) {
@@ -69,13 +98,21 @@ export async function fetchCommunityDashboards(
     showErrorAlert: false,
   });
 
-  // Grafana.com API returns format: { page: number, pages: number, items: GnetDashboard[] }
-  // We normalize it to use "dashboards" instead of "items" for consistency
   if (result && Array.isArray(result.items)) {
+    logInfo('Fetched community dashboards', {
+      searchParams: searchParams.toString(),
+      dataSourceType: params.dataSourceSlugIn ?? '',
+      total: result.items.length,
+      page: result.page,
+      pages: result.pages,
+    });
+
+    const dashboards = filterNonSafeDashboards(result.items, params.dataSourceSlugIn);
+
     return {
       page: result.page || params.page,
       pages: result.pages || 1,
-      items: result.items,
+      items: dashboards,
     };
   }
 
@@ -109,3 +146,51 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
     return [];
   }
 }
+
+// We only show dashboards with at least MIN_DOWNLOADS_FILTER downloads
+// and no unsafe panel types
+// They are previously ordered by downloads amount
+const filterNonSafeDashboards = (dashboards: GnetDashboard[], dataSourceType?: string): GnetDashboard[] => {
+  let unsafeDashboardsCount = 0;
+  let lowDownloadsCount = 0;
+
+  const filteredDashboards = dashboards.filter((item: GnetDashboard) => {
+    const unsafePanelTypes =
+      item.panelTypeSlugs?.filter((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug)) ?? [];
+    const hasLowDownloads = typeof item.downloads === 'number' && item.downloads < MIN_DOWNLOADS_FILTER;
+
+    if (unsafePanelTypes.length > 0 || hasLowDownloads) {
+      if (unsafePanelTypes.length > 0) {
+        unsafeDashboardsCount++;
+      }
+      if (hasLowDownloads) {
+        lowDownloadsCount++;
+      }
+
+      console.warn(
+        `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavaScript`
+      );
+
+      logWarning('Community dashboard filtered out due to low downloads or unsafe panel types', {
+        dashboardId: item.id.toString(),
+        dashboardName: item.name,
+        minAllowedDownloads: MIN_DOWNLOADS_FILTER.toString(),
+        downloads: item.downloads.toString(),
+        panelTypes: item.panelTypeSlugs?.join(', ') ?? '',
+        unsafePanelTypes: unsafePanelTypes.join(', '),
+      });
+      return false;
+    }
+    return true;
+  });
+
+  if (filteredDashboards.length === 0) {
+    logWarning('No community dashboards found after safe filtering', {
+      dataSourceType: dataSourceType ?? '',
+      unsafeDashboardsCount: unsafeDashboardsCount.toString(),
+      lowDownloadsCount: lowDownloadsCount.toString(),
+    });
+  }
+
+  return filteredDashboards;
+};

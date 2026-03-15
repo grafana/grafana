@@ -251,7 +251,16 @@ export {
   CSVReader,
   toCSV,
 } from './utils/csv';
-export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
+export {
+  parseLabels,
+  findCommonLabels,
+  findUniqueLabels,
+  matchAllLabels,
+  formatLabels,
+  extractFacetedLabels,
+  resolveFacetedFilterNames,
+  FIELD_NAME_FACET_KEY,
+} from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
 export { objRemoveUndefined, isEmptyObject } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
@@ -447,6 +456,8 @@ export {
 export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
+  type DashboardMutationAPI,
+  type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
@@ -521,6 +532,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
+  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
@@ -598,6 +610,7 @@ export {
   type PluginExtensionResourceAttributesContext,
   type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
+export { type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBindingStatus,
@@ -663,6 +676,7 @@ export {
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
   type DataSourceGetDrilldownsApplicabilityOptions,
+  type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
@@ -680,10 +694,10 @@ export {
   type QueryHint,
   type MetricFindValue,
   type DrilldownsApplicability,
+  type DrilldownRecommendation,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
-  type DataSourceSelectItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -718,6 +732,8 @@ export {
   type PanelPluginVisualizationSuggestion,
   type VisualizationSuggestionsBuilder,
   VisualizationSuggestionScore,
+  type VisualizationPresetsSupplier,
+  type VisualizationPresetsContext,
 } from './types/suggestions';
 export {
   type MatcherConfig,
@@ -793,6 +809,8 @@ export {
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type DataSourceWithLogsContextSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  hasLogsLabelTypesSupport,
   hasLogsContextSupport,
   SupplementaryQueryType,
   type SupplementaryQueryOptions,
@@ -841,7 +859,6 @@ export {
   DataLinkConfigOrigin,
   SupportedTransformationType,
   type InternalDataLink,
-  type LinkTarget,
   type LinkModel,
   type LinkModelSupplier,
   VariableOrigin,
@@ -849,6 +866,7 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
+export { type LinkTarget } from './types/linkTarget';
 export {
   type Action,
   type ActionModel,

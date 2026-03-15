@@ -74,7 +74,7 @@ export interface EditableDashboardElement {
   /**
    * Container objects can have children
    */
-  getOutlineChildren?(): SceneObject[];
+  getOutlineChildren?(isEditing?: boolean): SceneObject[];
 }
 
 export interface EditableDashboardElementInfo {

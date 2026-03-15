@@ -31,9 +31,11 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
+	// Query for documents
 	Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error)
 	// Get the resource stats
 	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
+	// Rebuild the search index
 	RebuildIndexes(ctx context.Context, in *RebuildIndexesRequest, opts ...grpc.CallOption) (*RebuildIndexesResponse, error)
 }
 
@@ -82,9 +84,11 @@ func (c *resourceIndexClient) RebuildIndexes(ctx context.Context, in *RebuildInd
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
+	// Query for documents
 	Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error)
 	// Get the resource stats
 	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
+	// Rebuild the search index
 	RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error)
 }
 

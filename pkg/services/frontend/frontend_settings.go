@@ -32,6 +32,7 @@ type FSFrontendSettings struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey,omitempty"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl,omitempty"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl,omitempty"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl,omitempty"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl,omitempty"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl,omitempty"`
 
@@ -46,4 +47,6 @@ type FSFrontendSettings struct {
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`
 	Http2Enabled                     bool              `json:"http2Enabled,omitempty"`
 	ReportingStaticContext           map[string]string `json:"reportingStaticContext,omitempty"`
+
+	LoginError string `json:"loginError,omitempty"`
 }

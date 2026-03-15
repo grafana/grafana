@@ -7,6 +7,7 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
+  Alert,
   Button,
   Checkbox,
   Combobox,
@@ -28,12 +29,12 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
-import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
+import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
-import { getConfigFormErrors } from '../utils/getFormErrors';
+import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
@@ -58,6 +59,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const repositoryName = data?.metadata?.name;
   const settings = useGetFrontendSettingsQuery();
   const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -78,13 +80,18 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState<string | undefined>();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(
-    () => getTargetOptions(settings.data?.allowedTargets || ['instance', 'folder']),
-    [settings.data]
-  );
+  const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
+
+  // Detect if repository uses GitHub App authentication
+  // Repositories using GitHub App have a connection reference in their spec,
+  // whereas PAT-based repositories store credentials directly
+  const connectionName = data?.spec?.connection?.name;
+  const usesGitHubApp = Boolean(connectionName && type === 'github');
+
+  const { options: connectionOptions, isLoading: connectionsLoading } = useConnectionOptions(usesGitHubApp);
 
   const {
     data: refsData,
@@ -108,17 +115,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
 
-  // TODO: this should be removed after 12.2 is released
-  useEffect(() => {
-    if (isGitBased && !data?.secure?.token) {
-      setTokenConfigured(false);
-      setError('token', {
-        type: 'manual',
-        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
-      });
-    }
-  }, [data, gitFields, setTokenConfigured, setError, isGitBased]);
-
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
@@ -130,28 +126,37 @@ export function ConfigForm({ data }: ConfigFormProps) {
       });
 
       reset(formData);
-      setTimeout(() => {
-        navigate('/admin/provisioning');
-      }, 300);
+      setTimeout(() => navigate(PROVISIONING_URL), 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate, repositoryName]);
+  }, [request.isSuccess, reset, getValues, repositoryName, navigate]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
+    setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
       await submitData(spec, form.token);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConfigFormErrors(err.data?.errors);
+        const fieldErrors = getConfigFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (fieldErrors.length > 0) {
+          for (const [field, errorMessage] of fieldErrors) {
+            setError(field, errorMessage);
+          }
+          return;
+        }
+
+        // Show unmapped error details as a top-level form error
+        const allErrors = extractFormErrors(err.data);
+        const detail = allErrors.find((e) => e.detail)?.detail;
+        if (detail) {
+          setSubmitError(detail);
           return;
         }
       }
 
-      // fallback for non-fetch errors or unmapped fields
+      // fallback for non-fetch errors or errors without details
       defaultAlert();
     } finally {
       setIsLoading(false);
@@ -162,6 +167,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
+        {submitError && (
+          <Alert
+            severity="error"
+            title={t('provisioning.config-form.error-save-failed', 'Failed to save repository setting')}
+          >
+            {submitError}
+          </Alert>
+        )}
         <Field noMargin label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
           <Input id="repository-type" value={getRepositoryTypeConfig(type)?.label || type} disabled />
         </Field>
@@ -181,38 +194,68 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            <InlineSecureValueWarning repo={data} />
-            <Field
-              noMargin
-              label={gitFields.tokenConfig.label}
-              required={gitFields.tokenConfig.required}
-              error={errors?.token?.message}
-              invalid={!!errors.token}
-              description={gitFields.tokenConfig.description}
-            >
-              <Controller
-                name={'token'}
-                control={control}
-                rules={{
-                  required: isEdit ? false : gitFields.tokenConfig.validation?.required,
-                }}
-                render={({ field: { ref, ...field } }) => {
-                  return (
-                    <SecretInput
+            {usesGitHubApp ? (
+              <Field
+                noMargin
+                label={t('provisioning.config-form.label-connection', 'GitHub App connection')}
+                description={t(
+                  'provisioning.config-form.description-connection',
+                  'Select the GitHub App connection to use'
+                )}
+                error={errors?.connectionName?.message}
+                invalid={!!errors.connectionName}
+              >
+                <Controller
+                  name="connectionName"
+                  control={control}
+                  rules={{
+                    required: t('provisioning.config-form.error-connection-required', 'Connection is required'),
+                  }}
+                  render={({ field: { ref, onChange, ...field } }) => (
+                    <Combobox
+                      options={connectionOptions}
+                      onChange={(option) => onChange(option?.value ?? '')}
+                      loading={connectionsLoading}
+                      disabled={connectionsLoading}
+                      invalid={!!errors.connectionName}
                       {...field}
-                      invalid={!!errors.token}
-                      id={'token'}
-                      placeholder={gitFields.tokenConfig.placeholder}
-                      isConfigured={tokenConfigured}
-                      onReset={() => {
-                        setValue('token', '');
-                        setTokenConfigured(false);
-                      }}
                     />
-                  );
-                }}
-              />
-            </Field>
+                  )}
+                />
+              </Field>
+            ) : (
+              <Field
+                noMargin
+                label={gitFields.tokenConfig.label}
+                required={gitFields.tokenConfig.required}
+                error={errors?.token?.message}
+                invalid={!!errors.token}
+                description={gitFields.tokenConfig.description}
+              >
+                <Controller
+                  name={'token'}
+                  control={control}
+                  rules={{
+                    required: isEdit ? false : gitFields.tokenConfig.validation?.required,
+                  }}
+                  render={({ field: { ref, ...field } }) => {
+                    return (
+                      <SecretInput
+                        {...field}
+                        invalid={!!errors.token}
+                        id={'token'}
+                        placeholder={gitFields.tokenConfig.placeholder}
+                        isConfigured={tokenConfigured}
+                        onReset={() => {
+                          setValue('token', '');
+                          setTokenConfigured(false);
+                        }}
+                      />
+                    );
+                  }}
+                />
+              </Field>
+            )}
             {gitFields.tokenUserConfig && (
               <Field
                 noMargin

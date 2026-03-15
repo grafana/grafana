@@ -80,10 +80,19 @@ repository: {
 					// Enabled must be saved as true before any sync job will run
 					enabled: bool
 					// Where values should be saved
-					target: "unified" | "legacy"
+					target: "instance" | "folder"
 					// When non-zero, the sync will run periodically
 					intervalSeconds?: int
 				}
+			#ConnectionInfo: {
+				name: string
+			}
+			#WebhookConfig: {
+				// Base URL of the Grafana instance used to construct the webhook endpoint.
+				// The API path is appended automatically. Trailing slashes are stripped.
+				// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
+				baseUrl?: string
+			}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
 					healthy: bool
@@ -124,20 +133,22 @@ repository: {
 					subscribedEvents?: [...string]
 					lastEvent?:        int
 				}
-				spec: {
-					// The repository display name (shown in the UI)
-					title: string
-					// Repository description
-					description?: string
-					// UI driven Workflow that allow changes to the contends of the repository.
-					// The order is relevant for defining the precedence of the workflows.
-					// When empty, the repository does not support any edits (eg, readonly)
-					workflows?: [...string]
-					// Sync settings -- how values are pulled from the repository into grafana
-					sync: #SyncOptions
-					// The repository type. When selected oneOf the values below should be non-nil
-					type: "local" | "github" | "git" | "bitbucket" | "gitlab"
-					// The repository on the local file system.
+			spec: {
+				// The repository display name (shown in the UI)
+				title: string
+				// Repository description
+				description?: string
+				// UI driven Workflow that allow changes to the contends of the repository.
+				// The order is relevant for defining the precedence of the workflows.
+				// When empty, the repository does not support any edits (eg, readonly)
+				workflows?: [...string]
+				// Sync settings -- how values are pulled from the repository into grafana
+				sync: #SyncOptions
+				// The repository type. When selected oneOf the values below should be non-nil
+				type: "local" | "github" | "git" | "bitbucket" | "gitlab"
+				// Webhook settings for the repository.
+				webhook?: #WebhookConfig
+				// The repository on the local file system.
 					// Mutually exclusive with local | github.
 					local?: #LocalRepositoryConfig
 					// The repository on GitHub.
@@ -152,6 +163,9 @@ repository: {
 					// The repository on GitLab.
 					// Mutually exclusive with local | github | git.
 					gitlab?: #GitLabRepositoryConfig
+					// The connection the repository references.
+					// This means the Repository is interacting with git via a Connection.
+					connection?: #ConnectionInfo
 				}
 				status: {
 					// The generation of the spec last time reconciliation ran
@@ -168,4 +182,4 @@ repository: {
 			}
 		}
 	}
-} 
+}

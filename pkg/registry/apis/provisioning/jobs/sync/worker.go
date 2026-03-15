@@ -3,16 +3,18 @@ package sync
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -28,9 +30,6 @@ type SyncWorker struct {
 
 	// ResourceClients for the repository
 	repositoryResources resources.RepositoryResourcesFactory
-
-	// Check if the system is using unified storage
-	storageStatus dualwrite.Service
 
 	// Patch status for the repository
 	patchStatus RepositoryPatchFn
@@ -48,7 +47,6 @@ type SyncWorker struct {
 func NewSyncWorker(
 	clients resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
-	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
 	metrics jobs.JobMetrics,
@@ -59,7 +57,6 @@ func NewSyncWorker(
 		clients:             clients,
 		repositoryResources: repositoryResources,
 		patchStatus:         patchStatus,
-		storageStatus:       storageStatus,
 		syncer:              syncer,
 		metrics:             metrics,
 		tracer:              tracer,
@@ -73,7 +70,8 @@ func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool
 
 func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
 	cfg := repo.Config()
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", job.Spec.Pull)
+	ctx = logging.Context(ctx, logger)
 	ctx, span := r.tracer.Start(ctx, "provisioning.sync.process",
 		trace.WithAttributes(
 			attribute.String("job.name", job.GetName()),
@@ -81,6 +79,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			attribute.String("job.action", string(job.Spec.Action)),
 			attribute.String("repository.name", cfg.Name),
 			attribute.String("repository.namespace", cfg.Namespace),
+			attribute.Bool("sync.incremental", job.Spec.Pull != nil && job.Spec.Pull.Incremental),
 		),
 	)
 	defer span.End()
@@ -96,13 +95,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		)
 	}()
 
-	// Check if we are onboarding from legacy storage
-	// HACK -- this should be handled outside of this worker
-	if r.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
-		err := fmt.Errorf("sync not supported until storage has migrated")
-		return tracing.Error(span, err)
-	}
-
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
@@ -117,6 +109,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Ensure the sync state is set to 'working' if not already set or still pending.
 	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
 	syncStatus.State = provisioning.JobStateWorking
+
+	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
+	quotaTracker := quotas.NewInMemoryQuotaTracker(usage.TotalResources, cfg.Status.Quota.MaxResourcesPerRepository)
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
@@ -149,7 +144,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	statusSpan.End()
 
 	setupCtx, setupSpan := r.tracer.Start(ctx, "provisioning.sync.setup_clients")
-	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw)
+	beforeCreateOptions := resources.WithFolderManagerOptions(resources.WithBeforeCreate(func(ctx context.Context, folder resources.Folder) error {
+		if !quotaTracker.TryAcquire() {
+			return quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded while creating folder %s", folder.Path))
+		}
+		return nil
+	}))
+	repositoryResources, err := r.repositoryResources.Client(setupCtx, rw, beforeCreateOptions)
 	if err != nil {
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
@@ -170,9 +171,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	syncCtx, syncSpan := r.tracer.Start(ctx, "provisioning.sync.execute")
 	progress.SetMessage(ctx, "execute sync job")
 	progress.StrictMaxErrors(20) // make it stop after 20 errors
-	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress)
+	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+	resultReasons := progress.ResultReasons()
+	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
+
 	if syncError != nil {
 		logger.Debug("failed to sync the repository", "error", syncError)
 		_ = tracing.Error(syncSpan, syncError)
@@ -184,10 +188,12 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	if syncStatus.State != provisioning.JobStateError {
+	if syncStatus.State != provisioning.JobStateError && !isQuotaWarning {
 		syncStatus.LastRef = currentRef
 	} else {
-		// Preserve the original lastRef on error
+		if isQuotaWarning {
+			logger.Info("repository is over quota, preserving lastRef")
+		}
 		syncStatus.LastRef = lastRef
 	}
 
@@ -204,6 +210,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	// Only add stats patch if stats are not nil
 	stats, err := repositoryResources.Stats(finalCtx)
+	var repoStats []provisioning.ResourceCount
 	switch {
 	case err != nil:
 		logger.Error("unable to read stats", "error", err)
@@ -212,14 +219,30 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		logger.Error("stats are nil")
 		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
 	case len(stats.Managed) == 1:
+		repoStats = stats.Managed[0].Stats
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
-			"value": stats.Managed[0].Stats,
+			"value": repoStats,
 		})
 	default:
 		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
 		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
+	}
+
+	// Update conditions based on sync outcome and quota evaluation.
+	// Both conditions are evaluated here in the sync worker (pull) because:
+	// 1. The sync worker performs reconciliation and eventually cleans up resources, so it has
+	//    the most up-to-date view of what resources actually exist.
+	// 2. The sync worker is responsible for updating stats after each sync operation, making it
+	//    the natural place to evaluate quotas against those stats.
+	// 3. This ensures conditions reflect the actual state after reconciliation,
+	//    not just what the controller thinks should exist.
+	quotaStatus := repo.Config().Status.Quota
+	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
+	syncCondition := EvaluatePullCondition(jobStatus.State, resultReasons)
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition, syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
 	}
 
 	// Only patch the specific fields we want to update, not the entire status

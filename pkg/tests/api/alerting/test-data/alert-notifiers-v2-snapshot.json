@@ -4,12 +4,12 @@
     "currentVersion": "v1",
     "name": "LINE",
     "heading": "LINE notify settings",
-    "description": "Send notifications to LINE notify",
+    "description": "Send notifications to LINE notify. This integration is deprecated and will be removed in a future release.",
     "versions": [
       {
         "typeAlias": "line",
         "version": "v1",
-        "canCreate": true,
+        "canCreate": false,
         "options": [
           {
             "element": "input",
@@ -67,7 +67,8 @@
           }
         ]
       }
-    ]
+    ],
+    "deprecated": true
   },
   {
     "type": "dingding",
@@ -93,6 +94,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -225,6 +227,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -783,7 +786,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -867,6 +870,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -1300,6 +1375,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1405,6 +1481,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2359,7 +2436,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -2443,6 +2520,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -2476,6 +2625,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2645,6 +2795,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2935,6 +3086,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -3139,6 +3291,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -4108,7 +4261,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -4192,12 +4345,85 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
             ]
           }
-        ]
+        ],
+        "deprecated": true
       }
     ]
   },
@@ -4405,6 +4631,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5217,7 +5444,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -5301,6 +5528,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -5334,6 +5633,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5826,7 +6126,7 @@
             "element": "input",
             "inputType": "text",
             "label": "User key",
-            "description": "The recipient user’s user key.",
+            "description": "The recipient user's user key.",
             "placeholder": "",
             "propertyName": "user_key",
             "selectOptions": null,
@@ -5844,7 +6144,7 @@
             "element": "input",
             "inputType": "text",
             "label": "Token",
-            "description": "Your registered application’s API token, see https://pushover.net/app",
+            "description": "Your registered application's API token, see https://pushover.net/app",
             "placeholder": "",
             "propertyName": "token",
             "selectOptions": null,
@@ -6513,7 +6813,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -6597,6 +6897,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -6630,6 +7002,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6928,6 +7301,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "token",
@@ -6946,6 +7320,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6994,6 +7369,24 @@
             "description": "Body of the slack message",
             "placeholder": "{{ template \"slack.default.text\" . }}",
             "propertyName": "text",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Footer",
+            "description": "Templated footer of the slack message",
+            "placeholder": "{{ template \"slack.default.footer\" . }}",
+            "propertyName": "footer",
             "selectOptions": null,
             "showWhen": {
               "field": "",
@@ -8083,7 +8476,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -8167,6 +8560,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -8469,7 +8934,7 @@
                 "label": "Region",
                 "description": "The AWS region. If blank, the region from the default credentials chain is used",
                 "placeholder": "",
-                "propertyName": "Region",
+                "propertyName": "region",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8487,7 +8952,7 @@
                 "label": "Access key",
                 "description": "The AWS API access_key. If blank the environment variable \"AWS_ACCESS_KEY_ID\" is used",
                 "placeholder": "",
-                "propertyName": "AccessKey",
+                "propertyName": "access_key",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8505,7 +8970,7 @@
                 "label": "Secret key",
                 "description": "The AWS API secret_key. If blank the environment variable \"AWS_ACCESS_SECRET_ID\" is used",
                 "placeholder": "",
-                "propertyName": "SecretKey",
+                "propertyName": "secret_key",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8523,7 +8988,7 @@
                 "label": "Profile",
                 "description": "Named AWS profile used to authenticate",
                 "placeholder": "",
-                "propertyName": "Profile",
+                "propertyName": "profile",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -8541,7 +9006,7 @@
                 "label": "Role ARN",
                 "description": "AWS Role ARN, an alternative to using AWS API keys",
                 "placeholder": "",
-                "propertyName": "RoleARN",
+                "propertyName": "role_arn",
                 "selectOptions": null,
                 "showWhen": {
                   "field": "",
@@ -9120,7 +9585,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -9204,6 +9669,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -9237,6 +9774,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -9344,7 +9882,7 @@
             "inputType": "text",
             "label": "Text",
             "description": "Message body template.",
-            "placeholder": "{{ template \"msteams.default.text\" . }}",
+            "placeholder": "{{ template \"msteamsv2.default.text\" . }}",
             "propertyName": "text",
             "selectOptions": null,
             "showWhen": {
@@ -9814,7 +10352,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -9898,6 +10436,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -10439,7 +11049,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -10523,6 +11133,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -11292,7 +11974,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -11376,6 +12058,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -11515,6 +12269,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -12190,7 +12945,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -12274,6 +13029,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -12308,6 +13135,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -12884,7 +13712,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -12968,6 +13796,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -13001,6 +13901,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13443,6 +14344,7 @@
                       "is": ""
                     },
                     "required": true,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -13641,6 +14543,7 @@
                           "is": ""
                         },
                         "required": false,
+                        "protected": true,
                         "validationRule": "",
                         "secure": false,
                         "dependsOn": "",
@@ -14223,7 +15126,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -14307,6 +15210,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -14955,7 +15930,7 @@
                     "label": "TLS config",
                     "description": "Configures the TLS settings.",
                     "placeholder": "",
-                    "propertyName": "TLSConfig",
+                    "propertyName": "tls_config",
                     "selectOptions": null,
                     "showWhen": {
                       "field": "",
@@ -15039,6 +16014,78 @@
                         "subformOptions": null
                       }
                     ]
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Proxy URL",
+                    "description": "HTTP proxy server to use to connect to the targets.",
+                    "placeholder": "",
+                    "propertyName": "proxy_url",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "No Proxy",
+                    "description": "Comma-separated list of domains for which the proxy should not be used.",
+                    "placeholder": "",
+                    "propertyName": "no_proxy",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Proxy From Environment",
+                    "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                    "placeholder": "",
+                    "propertyName": "proxy_from_environment",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Proxy Header Environment",
+                    "description": "Headers to send to proxies during CONNECT requests.",
+                    "placeholder": "",
+                    "propertyName": "proxy_connect_header",
+                    "selectOptions": null,
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": null
                   }
                 ]
               }
@@ -15072,6 +16119,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "secret",

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
@@ -13,6 +14,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -21,21 +24,38 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME, OTEL_PROBE_FIELD } from '../otel/f
 
 import { LogList, Props } from './LogList';
 
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+}));
+
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn().mockReturnValue({
+    isLoading: false,
     isAvailable: true,
   }),
 }));
+
+const FIELDS_LABEL = 'TestLabelType';
+
+const tempoDS: TempoDatasource & {
+  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+} = createTempoDatasource(undefined, { uid: 'abc-123' });
+// Test-only override: Mocked data source does not expose getLabelDisplayTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
+tempoDS.getLabelDisplayTypeFromFrame = () => {
+  return FIELDS_LABEL;
+};
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     reportInteraction: jest.fn(),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(tempoDS),
+    }),
   };
 });
-
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),
@@ -67,6 +87,7 @@ describe('LogList', () => {
       enableLogDetails: true,
       logs,
       showControls: false,
+      showLevel: true,
       showTime: false,
       sortOrder: LogsSortOrder.Descending,
       timeRange: getDefaultTimeRange(),
@@ -115,6 +136,57 @@ describe('LogList', () => {
 
     expect(screen.queryByText('info')).not.toBeInTheDocument();
     expect(screen.getByText('debug')).toBeInTheDocument();
+  });
+
+  test('Allows to toggle between ms and ns precision timestamps', async () => {
+    logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
+
+    render(<LogList {...defaultProps} showTime showControls logs={logs} />);
+
+    expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Show nanosecond timestamps'));
+
+    expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Log timestamps'));
+    await userEvent.click(screen.getByText('Hide timestamps'));
+
+    expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
+  });
+
+  test('Allows to toggle the display style of logs', async () => {
+    const { container } = render(
+      <LogList
+        {...defaultProps}
+        logs={[logs[0]]}
+        displayedFields={['name_of_the_label', LOG_LINE_BODY_FIELD_NAME, 'empty_field_without_value']}
+        showTime
+        showControls
+        wrapLogMessage
+        unwrappedColumns={false}
+      />
+    );
+
+    // 3 displayed fields - 1 empty field + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(4);
+    expect(screen.queryByLabelText('Enable columns')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Disable columns')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Set line wrap'));
+    await userEvent.click(screen.getByText('Disable line wrapping'));
+
+    // 3 displayed fields - 1 empty field + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(4);
+    expect(screen.getByLabelText('Enable columns')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Enable columns'));
+
+    // 3 displayed fields + time + level
+    expect(container.querySelectorAll('.field')).toHaveLength(5);
+    expect(screen.getByLabelText('Disable columns')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Enable columns')).not.toBeInTheDocument();
   });
 
   describe('OTel log lines', () => {
@@ -276,7 +348,7 @@ describe('LogList', () => {
         });
         await userEvent.click(screen.getByText('log message 1'));
         expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
-        expect(screen.getByText(/Fields/)).toBeInTheDocument();
+        expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
       });
     });
   });
@@ -334,24 +406,6 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
-    });
-
-    test('Allows to toggle between ms and ns precision timestamps', async () => {
-      logs = [createLogRow({ uid: '1', timeEpochMs: 1754472919504, timeEpochNs: '1754472919504133766' })];
-
-      render(<LogList {...defaultProps} showTime showControls logs={logs} />);
-
-      expect(screen.getByText('2025-08-06 03:35:19.504')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByLabelText('Log timestamps'));
-      await userEvent.click(screen.getByText('Show nanosecond timestamps'));
-
-      expect(screen.getByText('2025-08-06 03:35:19.504133766')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByLabelText('Log timestamps'));
-      await userEvent.click(screen.getByText('Hide timestamps'));
-
-      expect(screen.queryByText(/2025-08-06 03:35:19/)).not.toBeInTheDocument();
     });
   });
   describe('Interactions', () => {
@@ -457,7 +511,7 @@ describe('LogList', () => {
 
       // Default displayed fields
       expect(screen.getByText('Log line')).toBeInTheDocument();
-      expect(screen.getByText('OTel attributes')).toBeInTheDocument();
+      expect(screen.getByText('Log attributes')).toBeInTheDocument();
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();
@@ -490,7 +544,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();
@@ -504,10 +558,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close log details sidebar'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
     });
 
     test('Supports showing inline log details', async () => {
@@ -533,7 +587,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();
@@ -547,10 +601,10 @@ describe('LogList', () => {
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
       expect(onClickShowField).toHaveBeenCalledTimes(1);
 
-      await userEvent.click(screen.getByLabelText('Close log details'));
+      await userEvent.click(screen.getByLabelText('Close details for this log'));
 
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close details for this log')).not.toBeInTheDocument();
     });
 
     test('Allows people to select text without opening log details', async () => {
@@ -568,7 +622,7 @@ describe('LogList', () => {
       expect(screen.queryByText('name_of_the_label')).not.toBeInTheDocument();
       expect(screen.queryByText('value of the label')).not.toBeInTheDocument();
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
-      expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close log details sidebar')).not.toBeInTheDocument();
 
       spy.mockRestore();
     });

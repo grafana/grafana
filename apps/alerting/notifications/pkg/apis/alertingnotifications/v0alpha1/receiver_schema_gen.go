@@ -12,7 +12,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaReceiver = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &Receiver{}, &ReceiverList{}, resource.WithKind("Receiver"),
+	schemaReceiver = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", NewReceiver(), &ReceiverList{}, resource.WithKind("Receiver"),
 		resource.WithPlural("receivers"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {

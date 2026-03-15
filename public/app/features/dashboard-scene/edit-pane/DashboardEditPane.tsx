@@ -1,13 +1,15 @@
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph } from '@grafana/scenes';
+import { SceneObject, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { isRepeatCloneOrChildOf } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getRepeatCloneSourceKey } from '../utils/clone';
+import { DashboardInteractions } from '../utils/interactions';
+import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
 import { ElementSelection } from './ElementSelection';
 import {
@@ -18,6 +20,7 @@ import {
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  RepeatsUpdatedEvent,
 } from './shared';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -30,7 +33,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   isDocked?: boolean;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -52,6 +55,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
     this.panelEditAction = editAction;
+  }
+
+  public clone(withState: Partial<DashboardEditPaneState>): this {
+    // Clone without any undo/redo history
+    return super.clone({ ...withState, redoStack: [], undoStack: [] });
   }
 
   private onActivate() {
@@ -83,6 +91,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this._subs.add(
       dashboard.subscribeToEvent(ConditionalRenderingChangedEvent, ({ payload }) => {
+        this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(RepeatsUpdatedEvent, () => {
         this.forceRender();
       })
     );
@@ -202,14 +216,21 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
     let obj = sceneGraph.findByKey(this, element.id);
-    if (obj) {
-      // Do not select repeat clones or their children
-      if (isRepeatCloneOrChildOf(obj)) {
+    if (!obj) {
+      console.warn('Cannot find element by key="%s"!', element.id);
+      return;
+    }
+
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    if (sourceKey) {
+      obj = sceneGraph.findByKey(this, sourceKey);
+      if (!obj) {
+        console.warn('Cannot find element by source key="%s"!', sourceKey);
         return;
       }
-
-      this.selectObject(obj, element.id, options);
     }
+
+    this.selectObject(obj, obj.state.key!, options);
   }
 
   public getSelection(): SceneObject | SceneObject[] | undefined {
@@ -314,6 +335,29 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection?.markAsNewElement();
+  }
+
+  public addNewPanel(targetElement?: SceneObject) {
+    const panel = getDefaultVizPanel();
+    const dashboard = getDashboardSceneFor(this);
+    if (targetElement) {
+      const layout = getLayoutForObject(targetElement) ?? dashboard;
+      layout.addPanel(panel);
+    } else {
+      dashboard.addPanel(panel);
+    }
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(targetElement));
+  }
+
+  public pastePanel(targetElement?: SceneObject, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+    const dashboard = getDashboardSceneFor(this);
+    if (targetElement) {
+      const layout = getLayoutForObject(targetElement) ?? dashboard;
+      layout.pastePanel();
+    } else {
+      dashboard.pastePanel();
+    }
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(targetElement), 'click');
   }
 }
 

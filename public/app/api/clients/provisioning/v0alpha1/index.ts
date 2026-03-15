@@ -1,23 +1,50 @@
 import {
   generatedAPI,
+  type ConnectionSpec,
+  type ConnectionStatus,
+  type ErrorDetails,
   type JobSpec,
   type JobStatus,
   type RepositorySpec,
   type RepositoryStatus,
-  type ErrorDetails,
   type Status,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
+import { ThunkDispatch } from 'app/types/store';
 
-import { notifyApp } from '../../../../core/actions';
-import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
+
+const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
+  if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
+    if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
+      const statusError: Status = e.error.data;
+      dispatch(notifyApp(createErrorNotification(title, new Error(statusError.message || 'Unknown error'))));
+      return;
+    }
+
+    if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+      const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
+      if (nonFieldErrors.length > 0) {
+        dispatch(notifyApp(createErrorNotification(title)));
+      }
+      return;
+    }
+  }
+
+  handleError(e, dispatch, title);
+};
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -28,14 +55,75 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/jobs`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs'),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs', {
+        // The listJob query is always scoped to a single job via fieldSelector,
+        // so items will contain at most one entry. If items is empty, there's no
+        // cached job to update — activeJob is already undefined, so the existing
+        // FinishedJobStatus fallback handles it. We only need to set the error
+        // status when there IS a cached job that would otherwise appear stuck.
+        onError: (error, updateCachedData) => {
+          updateCachedData((draft) => {
+            if (draft.items?.[0]) {
+              draft.items[0].status = {
+                ...draft.items[0].status,
+                state: 'error',
+                message: String(error),
+              };
+            }
+          });
+        },
+      }),
     },
     listRepository: {
       query: ({ watch, ...queryArg }) => ({
         url: `/repositories`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
+      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
+    },
+    listConnection: {
+      query: ({ watch, ...queryArg }) => ({
+        url: `/connections`,
+        params: queryArg,
+      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
+      providesTags: (result) =>
+        result
+          ? [
+              { type: 'Connection', id: 'LIST' },
+              ...result.items
+                .map((connection) => ({ type: 'Connection' as const, id: connection.metadata?.name }))
+                .filter(Boolean),
+            ]
+          : [{ type: 'Connection', id: 'LIST' }],
     },
     deleteRepository: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
@@ -104,43 +192,15 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         try {
           await queryFulfilled;
         } catch (e) {
-          // Handle special cases first
-          if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
-            // Handle Status error responses (Kubernetes style)
-            if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
-              const statusError: Status = e.error.data;
-              dispatch(
-                notifyApp(
-                  createErrorNotification(
-                    'Error validating repository',
-                    new Error(statusError.message || 'Unknown error')
-                  )
-                )
-              );
-              return;
-            }
-            // Handle TestResults error responses with field errors
-            if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
-              const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
-              // Only show notification if there are errors that don't have a field, field errors are handled by the form
-              if (nonFieldErrors.length > 0) {
-                dispatch(notifyApp(createErrorNotification('Error validating repository')));
-              }
-              return;
-            }
-          }
-
-          // For all other cases, use handleError
-          handleError(e, dispatch, 'Error validating repository');
+          handleProvisioningFormError(e, dispatch, 'Error validating repository');
         }
       },
     },
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
-          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          if (showMsg) {
+          if (jobSpec.action === 'pull' || jobSpec.action === 'migrate') {
             dispatch(
               notifyApp(
                 createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))
@@ -237,6 +297,76 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
           }
         } catch (e) {
           console.error('Error in getRepositoryJobsWithPath:', e);
+        }
+      },
+    },
+    createConnection: {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
+              )
+            );
+          }
+        } catch (e) {
+          handleProvisioningFormError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-save-connection', 'Failed to save connection')
+          );
+        }
+      },
+    },
+    replaceConnection: {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(
+                  t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+                )
+              )
+            );
+          }
+        } catch (e) {
+          handleProvisioningFormError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-save-connection', 'Failed to save connection')
+          );
+        }
+      },
+    },
+    deleteConnection: {
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'Connection', id: 'LIST' }]),
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.connection-form.alert-connection-deleted', 'Connection deleted')
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection'),
+                  e
+                )
+              )
+            );
+          }
         }
       },
     },

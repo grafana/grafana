@@ -3,6 +3,12 @@ package kinds
 correlationsv0alpha1: {
 	kind:       "Correlation"  // note: must be uppercase
 	pluralName: "Correlations"
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: {
 			type:         CorrelationType
@@ -31,13 +37,15 @@ ConfigSpec: {
 	transformations?: [...TransformationSpec]
 }
 
-TargetSpec:  [string]: _
+TargetSpec: {
+	...
+}
 
 TransformationSpec: {
 	type: "regex" | "logfmt"
-	expression: string
-	field: string
-	mapValue: string
+	expression?: string
+	field?: string
+	mapValue?: string
 }
 
 CorrelationType: "query" | "external"

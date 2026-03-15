@@ -81,7 +81,7 @@ Replace the placeholders with your values:
 
 In your `grafana` directory, create a sub-folder called `dashboards`.
 
-This guide shows you how to creates three separate dashboards. For all dashboard configurations, replace the placeholders with your values:
+This guide shows you how to create three separate dashboards. For all dashboard configurations, replace the placeholders with your values:
 
 - _`<GRAFANA_CLOUD_STACK_NAME>`_: Name of your Grafana Cloud Stack
 - _`<GRAFANA_OPERATOR_NAMESPACE>`_: Namespace where the `grafana-operator` is deployed in your Kubernetes cluster

@@ -8,8 +8,8 @@ export enum DashboardEventAction {
 export interface DashboardEvent {
   uid: string;
   action: DashboardEventAction;
-  userId?: number;
   message?: string;
   sessionId?: string;
   timestamp?: number;
+  rv?: string;
 }

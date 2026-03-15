@@ -18,9 +18,12 @@ func (d *queryEvaluator) Eval(ctx context.Context, from time.Time, interval time
 		if err != nil {
 			return err
 		}
-		err = callback(idx, now, results)
+		cont, err := callback(idx, now, results)
 		if err != nil {
 			return err
+		}
+		if !cont {
+			break
 		}
 	}
 	return nil

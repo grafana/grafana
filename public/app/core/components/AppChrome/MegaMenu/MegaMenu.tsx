@@ -3,7 +3,7 @@ import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legacy/preferences';
+import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -62,10 +62,6 @@ export const MegaMenu = memo(
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
 
-    const handleMegaMenu = () => {
-      chrome.setMegaMenuOpen(!state.megaMenuOpen);
-    };
-
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
       if (state.megaMenuDocked) {
@@ -108,7 +104,7 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
+        <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
@@ -159,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      padding: theme.spacing(1, 1, 2, 1),
+      padding: theme.spacing(1, 1, 2, 0.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },

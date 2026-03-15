@@ -8,4 +8,5 @@ export enum ROUTES {
   ExposedComponents = 'exposed-components',
   AddedComponents = 'added-components',
   AddedLinks = 'added-links',
+  Config = 'config',
 }

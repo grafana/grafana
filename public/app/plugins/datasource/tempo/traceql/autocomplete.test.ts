@@ -491,7 +491,6 @@ function makeModel(value: string, offset: number) {
 }
 
 const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
-  id: 0,
   uid: 'gdev-tempo',
   type: 'tracing',
   name: 'tempo',

@@ -3,10 +3,12 @@ import { Resizable, ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  AbsoluteTimeRange,
   DataFrame,
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
@@ -16,14 +18,12 @@ import {
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
-import {
-  getSidebarWidth,
-  LogsTableFieldSelector,
-  MIN_WIDTH,
-} from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { FIELD_SELECTOR_MIN_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
+import { getFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/fieldSelectorUtils';
+import { getSuggestedFieldsFromTable } from 'app/features/logs/components/fieldSelector/getSuggestedFieldsFromTable';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
-
-import { parseLogsFrame } from '../../logs/logsFrame';
+import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
 import { SETTING_KEY_ROOT } from './utils/logs';
@@ -40,6 +40,10 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -273,10 +277,29 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
+  const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
 
   const styles = useStyles2(getStyles, height, sidebarWidth);
+
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        // Defer the Redux dispatch to avoid updating ExploreActions during Table's render cycle
+        // Even though this is called from an event handler, the synchronous Redux dispatch
+        // can cause ExploreActions (which subscribes to panes state) to re-render while
+        // Table is still rendering, triggering the React warning
+        setTimeout(() => {
+          updatePanelState({
+            tableSortBy: sortBy[0].displayName,
+            tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+          });
+        }, 0);
+      }
+    },
+    [updatePanelState]
+  );
 
   if (!columnsWithMeta) {
     return null;
@@ -483,18 +506,18 @@ export function LogsTableWrap(props: Props) {
           handleClasses={{ right: dragStyles.dragHandleVertical }}
           size={{ width: sidebarWidth, height: getLogsTableHeight() }}
           defaultSize={{ width: sidebarWidth, height: getLogsTableHeight() }}
-          minWidth={MIN_WIDTH}
+          minWidth={FIELD_SELECTOR_MIN_WIDTH}
           maxWidth={props.width * 0.8}
           onResize={getOnResize}
         >
           <LogsTableFieldSelector
+            getSuggestedFields={getSuggestedFieldsFromTable}
             clear={clearSelection}
             columnsWithMeta={columnsWithMeta}
             dataFrames={[currentDataFrame]}
-            logs={[]}
             reorder={reorderColumn}
-            setSidebarWidth={setSidebarWidth}
-            sidebarWidth={sidebarWidth}
+            setWidth={setSidebarWidth}
+            width={sidebarWidth}
             toggle={toggleColumn}
           />
         </Resizable>
@@ -512,6 +535,13 @@ export function LogsTableWrap(props: Props) {
               dataFrame={currentDataFrame}
               columnsWithMeta={columnsWithMeta}
               height={height}
+              tableSortBy={panelState?.tableSortBy}
+              tableSortDir={panelState?.tableSortDir}
+              onSortByChange={onSortByChange}
+              displayedFields={props.displayedFields}
+              exploreId={props.exploreId}
+              absoluteRange={props.absoluteRange}
+              logRows={props.logRows}
             />
           </div>
         </div>

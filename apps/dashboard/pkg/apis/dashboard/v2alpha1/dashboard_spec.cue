@@ -133,7 +133,7 @@ DashboardLink: {
 	placement?: DashboardLinkPlacement
 }
 
-// Dashboard Link placement. Defines where the link should be displayed. 
+// Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 DashboardLinkPlacement: "inControlsMenu"
 
@@ -215,7 +215,7 @@ FieldConfig: {
 	filterable?: bool
 
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -258,18 +258,32 @@ FieldConfig: {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: {...}
+
+	// Calculate min max per field
+	fieldMinMax?: bool
+
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode
 }
+
+// How null values should be handled
+NullValueMode: "null" | "connected" | "null as zero"
 
 DynamicConfigValue: {
 	id:     string | *""
 	value?: _
 }
 
+MatcherScope: "series" | "nested" | "annotation" | "exemplar"
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 MatcherConfig: {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string | *""
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope
 	// The matcher options. This is specific to the matcher implementation.
 	options?: _
 }
@@ -772,6 +786,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+VariableRegexApplyTo: *"value" | "text"
+
 // Determine the origin of the adhoc variable filter
 FilterOrigin: "dashboard"
 
@@ -790,6 +808,8 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+	// Additional properties for multi-props variables
+	properties?: {[string]: string}
 }
 
 // Query variable specification
@@ -807,6 +827,7 @@ QueryVariableSpec: {
 	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
+	regexApplyTo?: VariableRegexApplyTo
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]
@@ -931,6 +952,7 @@ CustomVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	valuesFormat?: "csv" | "json"
 }
 
 // Custom variable kind

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { VizPanel } from '@grafana/scenes';
+import { LazyLoader, VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
@@ -9,10 +9,12 @@ import { DashboardScene } from './DashboardScene';
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
   matchFound: boolean;
+  matchedPanels?: VizPanel[];
 }
 
 export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
   public matchFound = false;
+  public matchedPanels: VizPanel[] = [];
 
   public constructor(public keyPath: string) {}
 
@@ -21,6 +23,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
     if (/^\d+$/.test(this.keyPath)) {
       if (`panel-${this.keyPath}` === panel.state.key!) {
         this.matchFound = true;
+        if (!this.matchedPanels.includes(panel)) {
+          this.matchedPanels.push(panel);
+        }
         return true;
       }
 
@@ -29,6 +34,9 @@ export class SoloPanelContextWithPathIdFilter implements SoloPanelContextValue {
 
     if (this.keyPath === panel.getPathId()) {
       this.matchFound = true;
+      if (!this.matchedPanels.includes(panel)) {
+        this.matchedPanels.push(panel);
+      }
       return true;
     }
 
@@ -51,11 +59,23 @@ export function useSoloPanelContext() {
   return useContext(SoloPanelContext);
 }
 
-export function renderMatchingSoloPanels(soloPanelContext: SoloPanelContextValue, panels: VizPanel[]) {
+export function renderMatchingSoloPanels(
+  soloPanelContext: SoloPanelContextValue,
+  panels: VizPanel[],
+  isLazy?: boolean
+) {
   const matches: React.ReactNode[] = [];
   for (const panel of panels) {
     if (soloPanelContext.matches(panel)) {
-      matches.push(<panel.Component model={panel} key={panel.state.key} />);
+      if (isLazy) {
+        matches.push(
+          <LazyLoader key={panel.state.key!}>
+            <panel.Component model={panel} />
+          </LazyLoader>
+        );
+      } else {
+        matches.push(<panel.Component model={panel} key={panel.state.key} />);
+      }
     }
   }
 

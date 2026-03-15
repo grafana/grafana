@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { SeriesEditor } from './SeriesEditor';
@@ -7,6 +8,7 @@ import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig, Options } from './panelcfg.gen';
+import { xychartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
   // .setPanelChangeHandler(xyChartChangeHandler)
@@ -37,5 +39,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);
-    commonOptionsBuilder.addLegendOptions(builder);
-  });
+    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+  })
+  .setSuggestionsSupplier(xychartSuggestionsSupplier);

@@ -44,8 +44,8 @@ import {
   defaultDashboardLink,
   defaultFieldConfigSource,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -104,10 +104,10 @@ export function ensureV2Response(
 
   if (isDashboardResource(dto)) {
     accessMeta = dto.access;
-    annotationsMeta = {
-      ...dto.metadata.annotations,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-    };
+    annotationsMeta = { ...dto.metadata.annotations };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = `${dashboard.gnetId}`;
+    }
     creationTimestamp = dto.metadata.creationTimestamp;
     labelsMeta = {
       [DeprecatedInternalId]: dto.metadata.labels?.[DeprecatedInternalId],
@@ -132,7 +132,7 @@ export function ensureV2Response(
       [AnnoKeySlug]: dto.meta.slug,
     };
     if (dashboard.gnetId) {
-      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+      annotationsMeta[AnnoKeyDashboardGnetId] = `${dashboard.gnetId}`;
     }
     if (dto.meta.isSnapshot) {
       // FIXME -- lets not put non-annotation data in annotations!
@@ -499,7 +499,11 @@ export function getDefaultDatasource(): DataSourceRef {
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
-    const ds = t.datasource || panelDatasource;
+    // Check if target datasource is empty object {} (no keys), treat it as missing
+    // and fall through to use panel datasource (matches backend behavior)
+    const targetDs = t.datasource;
+    const isEmptyDatasourceObject = targetDs && typeof targetDs === 'object' && Object.keys(targetDs).length === 0;
+    const ds = isEmptyDatasourceObject ? panelDatasource : targetDs || panelDatasource;
     const q: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -524,8 +528,59 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
   });
 }
 
+/**
+ * Known Panel properties from the Panel schema (dashboard_kind.cue).
+ * These should NOT be passed to Angular migration handlers.
+ * Only "unknown" Angular-specific properties should be passed.
+ */
+const knownPanelProperties = new Set([
+  'type',
+  'id',
+  'pluginVersion',
+  'targets',
+  'title',
+  'description',
+  'transparent',
+  'datasource',
+  'gridPos',
+  'links',
+  'repeat',
+  'repeatDirection',
+  'maxPerRow',
+  'maxDataPoints',
+  'transformations',
+  'interval',
+  'timeFrom',
+  'timeShift',
+  'hideTimeOverride',
+  'timeCompare',
+  'libraryPanel',
+  'cacheTimeout',
+  'queryCachingTTL',
+  'options',
+  'fieldConfig',
+  'autoMigrateFrom',
+]);
+
+/**
+ * Extracts only the Angular-specific options from a panel,
+ * filtering out all known Panel schema properties.
+ * This is used to pass just the Angular options to migration handlers
+ * (e.g., sparkline, valueName, format for singlestat).
+ */
+function extractAngularOptions(panel: Panel): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(panel)) {
+    if (!knownPanelProperties.has(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function buildPanelKind(p: Panel): PanelKind {
-  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource ?? { type: '', uid: '' });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+  const queries = getPanelQueries((p.targets as any) || [], p.datasource ?? { type: '', uid: '' });
 
   const transformations = getPanelTransformations(p.transformations || []);
 
@@ -541,12 +596,40 @@ export function buildPanelKind(p: Panel): PanelKind {
   }
 
   // match backend conversion behavior
+  // Only set first threshold step value to null if it's explicitly null or undefined
+  // Preserve 0 values (0 is falsy but should be kept as 0, not converted to null)
   if (
     fieldConfig.defaults.thresholds?.steps &&
     fieldConfig.defaults.thresholds.steps.length > 0 &&
-    !fieldConfig.defaults.thresholds.steps[0]?.value
+    (fieldConfig.defaults.thresholds.steps[0]?.value === null ||
+      fieldConfig.defaults.thresholds.steps[0]?.value === undefined)
   ) {
     fieldConfig.defaults.thresholds.steps[0]!.value = null;
+  }
+
+  // Build options with Angular migration data if needed (matches backend behavior)
+  // autoMigrateFrom is set during v0->v1 migration when Angular panels are converted
+  let { autoMigrateFrom } = p;
+  let options = p.options ?? {};
+  const originalOptions = extractAngularOptions(p);
+
+  // When autoMigrateFrom is present OR when there are Angular-specific properties at root level,
+  // compose __angularMigration with only Angular-specific options.
+  // This filters out known Panel schema properties, passing only the Angular options to migration handlers.
+  // The second condition handles panels like "text" that have Angular-style properties (content, mode)
+  // but don't have autoMigrateFrom set because they don't need a type conversion.
+  if (!autoMigrateFrom && Object.keys(originalOptions).length > 0) {
+    autoMigrateFrom = p.type;
+  }
+
+  if (autoMigrateFrom) {
+    options = {
+      ...options,
+      __angularMigration: {
+        autoMigrateFrom,
+        originalOptions,
+      },
+    };
   }
 
   const panelKind: PanelKind = {
@@ -561,7 +644,7 @@ export function buildPanelKind(p: Panel): PanelKind {
         version: p.pluginVersion ?? '',
         spec: {
           fieldConfig: p.fieldConfig || defaultFieldConfigSource(),
-          options: p.options ?? {},
+          options,
         },
       },
       links:
@@ -646,6 +729,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...(v.definition && { definition: v.definition }),
             refresh: transformVariableRefreshToEnum(v.refresh),
             regex: v.regex ?? '',
+            ...(v.regexApplyTo && { regexApplyTo: v.regexApplyTo }),
             sort: v.sort ? transformSortVariableToEnum(v.sort) : 'disabled',
             query: {
               kind: 'DataQuery',
@@ -905,12 +989,13 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
               ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
               : v.spec.query.spec,
           datasource: {
-            type: v.spec.query?.spec.group,
-            uid: v.spec.query?.spec.datasource?.name,
+            type: v.spec.query?.group,
+            uid: v.spec.query?.datasource?.name,
           },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
+          regexApplyTo: v.spec.regexApplyTo,
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
@@ -1114,8 +1199,8 @@ function transformV2PanelToV1Panel(
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            uid: q.spec.query.spec.datasource?.uid,
-            type: q.spec.query.spec.group,
+            uid: q.spec.query.datasource?.name,
+            type: q.spec.query.group,
           },
           ...q.spec.query.spec,
         };
@@ -1258,6 +1343,16 @@ function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
       return FieldColorModeIdV1.ContinuousGreens;
     case 'continuous-purples':
       return FieldColorModeIdV1.ContinuousPurples;
+    case 'continuous-viridis':
+      return FieldColorModeIdV1.ContinuousViridis;
+    case 'continuous-magma':
+      return FieldColorModeIdV1.ContinuousMagma;
+    case 'continuous-plasma':
+      return FieldColorModeIdV1.ContinuousPlasma;
+    case 'continuous-inferno':
+      return FieldColorModeIdV1.ContinuousInferno;
+    case 'continuous-cividis':
+      return FieldColorModeIdV1.ContinuousCividis;
     case 'fixed':
       return FieldColorModeIdV1.Fixed;
     case 'shades':
@@ -1312,9 +1407,10 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 }
 
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
+  const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
 
-  const variables = getVariablesV1(spec.variables);
+  const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
+  const variables = getVariablesV1(spec.variables ?? []);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {
     uid: metadata.name,
@@ -1326,7 +1422,7 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
     preload: spec.preload,
     liveNow: spec.liveNow,
     editable: spec.editable,
-    gnetId: metadata.annotations?.[AnnoKeyDashboardGnetId],
+    gnetId: gnetId?.length ? +gnetId : undefined,
     revision: spec.revision,
     time: {
       from: spec.timeSettings.from,

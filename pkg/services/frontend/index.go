@@ -6,45 +6,48 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type IndexProvider struct {
 	log          logging.Logger
 	index        *template.Template
-	data         IndexViewData
 	hooksService *hooks.HooksService
+	config       *setting.Cfg
+	license      licensing.Licensing
 }
 
 type IndexViewData struct {
-	CSPContent           string
-	CSPReportOnlyContent string
-	CSPEnabled           bool
-	IsDevelopmentEnv     bool
+	IsDevelopmentEnv bool
 
-	Config *setting.Cfg
+	Config *setting.Cfg // TODO: remove and get from request config?
 
-	AppSubUrl    string
-	BuildVersion string
-	BuildCommit  string
-	AppTitle     string
+	AppTitle  string // TODO: remove and get from request config?
+	AppSubUrl string // TODO: remove and get from request config?
+
+	Settings FSFrontendSettings
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
-	Settings    FSFrontendSettings
 	DefaultUser dtos.CurrentUser
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
+
+	PublicDashboardAccessToken string
+
+	// Feature flag for image-renderer to check support for binding calls
+	RenderBindingSupported bool
 }
 
 // Templates setup.
@@ -56,7 +59,7 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -66,59 +69,13 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
-	frontendSettings := FSFrontendSettings{
-		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
-		AnonymousEnabled:                     cfg.Anonymous.Enabled,
-		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
-		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
-		ApplicationInsightsAutoRouteTracking: cfg.ApplicationInsightsAutoRouteTracking,
-		AuthProxyEnabled:                     cfg.AuthProxy.Enabled,
-		AutoAssignOrg:                        cfg.AutoAssignOrg,
-		CSPReportOnlyEnabled:                 cfg.CSPReportOnlyEnabled,
-		DisableLoginForm:                     cfg.DisableLoginForm,
-		DisableUserSignUp:                    !cfg.AllowUserSignUp,
-		GoogleAnalytics4Id:                   cfg.GoogleAnalytics4ID,
-		GoogleAnalytics4SendManualPageViews:  cfg.GoogleAnalytics4SendManualPageViews,
-		GoogleAnalyticsId:                    cfg.GoogleAnalyticsID,
-		GrafanaJavascriptAgent:               cfg.GrafanaJavascriptAgent,
-		Http2Enabled:                         cfg.Protocol == setting.HTTP2Scheme,
-		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
-		JwtUrlLogin:                          cfg.JWTAuth.URLLogin,
-		LdapEnabled:                          cfg.LDAPAuthEnabled,
-		LoginHint:                            cfg.LoginHint,
-		PasswordHint:                         cfg.PasswordHint,
-		ReportingStaticContext:               cfg.ReportingStaticContext,
-		RudderstackConfigUrl:                 cfg.RudderstackConfigURL,
-		RudderstackDataPlaneUrl:              cfg.RudderstackDataPlaneURL,
-		RudderstackIntegrationsUrl:           cfg.RudderstackIntegrationsURL,
-		RudderstackSdkUrl:                    cfg.RudderstackSDKURL,
-		RudderstackWriteKey:                  cfg.RudderstackWriteKey,
-		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
-		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,
-		BuildInfo:                            getBuildInfo(license, cfg),
-	}
 
 	return &IndexProvider{
 		log:          logger,
 		index:        t,
 		hooksService: hooksService,
-		data: IndexViewData{
-			AppTitle:     "Grafana",
-			AppSubUrl:    cfg.AppSubURL, // Based on the request?
-			BuildVersion: cfg.BuildVersion,
-			BuildCommit:  cfg.BuildCommit,
-			Config:       cfg,
-
-			CSPEnabled:           cfg.CSPEnabled,
-			CSPContent:           cfg.CSPTemplate,
-			CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
-
-			IsDevelopmentEnv: cfg.Env == setting.Dev,
-
-			Assets:      assetsManifest,
-			Settings:    frontendSettings,
-			DefaultUser: dtos.CurrentUser{},
-		},
+		config:       cfg,
+		license:      license,
 	}, nil
 }
 
@@ -131,26 +88,64 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	nonce, err := middleware.GenerateNonce()
+	requestConfig, err := FSRequestConfigFromContext(ctx)
 	if err != nil {
-		p.log.Error("error creating nonce", "err", err)
-		writer.WriteHeader(500)
+		p.log.Error("unable to get request config", "err", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// TODO -- restructure so the static stuff is under one variable and the rest is dynamic
-	data := p.data // copy everything
-	data.Nonce = nonce
-
-	if data.CSPEnabled {
-		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
-		writer.Header().Set("Content-Security-Policy", data.CSPContent)
-
-		policy := middleware.ReplacePolicyVariables(p.data.CSPReportOnlyContent, p.data.AppSubUrl, data.Nonce)
-		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
+	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	if err != nil {
+		p.log.Error("unable to get web assets", "err", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	reqCtx := contexthandler.FromContext(ctx)
+
+	// make a copy of the settings
+	fsSettings := requestConfig.FSFrontendSettings
+
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+
+	data := IndexViewData{
+		AppTitle:                   "Grafana",
+		AppSubUrl:                  p.config.AppSubURL,
+		IsDevelopmentEnv:           p.config.Env == setting.Dev,
+		Assets:                     assetsManifest,
+		DefaultUser:                dtos.CurrentUser{},
+		Nonce:                      reqCtx.RequestNonce,
+		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
+		Settings:                   fsSettings,
+		RenderBindingSupported:     renderBindingSupported,
+	}
+
+	// TODO -- reevaluate with mt authnz
+	// Check for login_error cookie and set a generic error message.
+	// The backend sets an encrypted cookie on oauth login failures that we can't read
+	// so we just show a generic error if the cookie is present.
+	if cookie, err := request.Cookie("login_error"); err == nil && cookie.Value != "" {
+		p.log.Info("request has login_error cookie")
+		// Defaults to a translation key that the frontend will resolve to a localized message
+		data.Settings.LoginError = p.config.OAuthLoginErrorMessage // TODO: get from request config
+
+		cookiePath := "/"
+		if p.config.AppSubURL != "" {
+			cookiePath = data.AppSubUrl
+		}
+		http.SetCookie(writer, &http.Cookie{
+			Name:     "login_error",
+			Value:    "",
+			Path:     cookiePath,
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   p.config.CookieSecure,
+			SameSite: p.config.CookieSameSiteMode,
+		})
+	}
+
 	p.runIndexDataHooks(reqCtx, &data)
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
@@ -175,31 +170,4 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
-}
-
-func getBuildInfo(license licensing.Licensing, cfg *setting.Cfg) dtos.FrontendSettingsBuildInfoDTO {
-	version := setting.BuildVersion
-	commit := setting.BuildCommit
-	commitShort := getShortCommitHash(setting.BuildCommit, 10)
-	buildstamp := setting.BuildStamp
-	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
-
-	buildInfo := dtos.FrontendSettingsBuildInfoDTO{
-		Version:       version,
-		VersionString: versionString,
-		Commit:        commit,
-		CommitShort:   commitShort,
-		Buildstamp:    buildstamp,
-		Edition:       license.Edition(),
-		Env:           cfg.Env,
-	}
-
-	return buildInfo
-}
-
-func getShortCommitHash(commitHash string, maxLength int) string {
-	if len(commitHash) > maxLength {
-		return commitHash[:maxLength]
-	}
-	return commitHash
 }

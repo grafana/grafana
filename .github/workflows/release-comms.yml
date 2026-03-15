@@ -111,12 +111,13 @@ jobs:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_enterprise.outputs.branch }}
-  post_changelog_on_forum:
-    needs: setup
-    uses: grafana/grafana/.github/workflows/community-release.yml@main
-    with:
-      version: ${{ needs.setup.outputs.version }}
-      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+  # Removed this for now since it doesn't work
+  # post_changelog_on_forum:
+  #   needs: setup
+  #   uses: grafana/grafana/.github/workflows/community-release.yml@main
+  #   with:
+  #     version: ${{ needs.setup.outputs.version }}
+  #     dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
   create_github_release:
     # a github release requires a git tag
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API

@@ -48,6 +48,18 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2", Tags: []string{}},
 		}, nil).Once()
 
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Type:         "dash-db",
+			Sort:         sorter,
+			Limit:        0,
+			Page:         1,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Tags: []string{"term"}},
+			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2", Tags: []string{}},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
@@ -124,6 +136,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50), Tags: []string{}},
 		}, nil).Once()
 
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Type:         "dash-db",
+			Sort:         sortOptionAsc,
+			Limit:        0,
+			Page:         1,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50), Tags: []string{}},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
@@ -185,6 +208,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			SignedInUser: user,
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2), Tags: []string{}},
+		}, nil).Once()
+
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Type:         "dash-db",
+			Sort:         sortOptionAsc,
+			Limit:        0,
+			Page:         1,
 		}).Return([]dashboards.DashboardSearchProjection{
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2), Tags: []string{}},
 		}, nil).Once()
@@ -293,6 +327,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			Title:        "test",
+			SignedInUser: user,
+			Type:         "dash-db",
+			Limit:        0,
+			Page:         1,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
@@ -315,6 +360,18 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			TitleExactMatch: true,
 			SignedInUser:    user,      // user from context should be used
 			Type:            "dash-db", // should set type based off of key
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			Title:           "test",
+			TitleExactMatch: true,
+			SignedInUser:    user,
+			Type:            "dash-db",
+			Limit:           0,
+			Page:            1,
 		}).Return([]dashboards.DashboardSearchProjection{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
@@ -350,6 +407,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			DashboardIds: []int64{1, 2},
+			SignedInUser: user,
+			Type:         "dash-db",
+			Limit:        0,
+			Page:         1,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
@@ -379,6 +447,19 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			FolderUIDs:    []string{"general", "folder1"},
 			SignedInUser:  user,      // user from context should be used
 			Type:          "dash-db", // should set type based off of key
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			DashboardUIDs: []string{"uid1", "uid2"},
+			Tags:          []string{"tag1", "tag2"},
+			FolderUIDs:    []string{"general", "folder1"},
+			SignedInUser:  user,
+			Type:          "dash-db",
+			Limit:         0,
+			Page:          1,
 		}).Return([]dashboards.DashboardSearchProjection{
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
@@ -532,6 +613,17 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
+		// Second call for total count with Page: 1, Limit: 0
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			SignedInUser: user,
+			Sort:         sort.SortAlphaAsc,
+			Type:         "dash-db",
+			Limit:        0,
+			Page:         1,
+		}).Return([]dashboards.DashboardSearchProjection{
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
@@ -552,7 +644,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	t.Run("Should set correct sort field when sorting by views", func(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", SortMeta: 100},
-		}, nil).Once()
+		}, nil).Twice() // Will be called twice due to the total count call
 
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -584,7 +676,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
 			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
-		}, nil).Once()
+		}, nil).Twice() // Will be called twice due to the total count call
 
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{

@@ -1,6 +1,8 @@
 import { FieldType, getDefaultTimeRange, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { createLogLine } from '../mocks/logRow';
@@ -70,6 +72,7 @@ describe('getTempoTraceFromLinks', () => {
         wrapLogMessage: true,
       }
     );
+    setTemplateSrv(new TemplateSrv());
   });
 
   test('Gets the trace information from a link', () => {

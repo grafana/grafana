@@ -60,6 +60,7 @@ import {
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { BacktestDropdownButton } from '../../backtesting/BacktestDropdownButton';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -290,6 +291,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                   <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
                 </Button>
               )}
+
+              {config.featureToggles.alertingBacktesting && <BacktestDropdownButton ruleDefinition={watch()} />}
             </Stack>
           </Stack>
         </div>

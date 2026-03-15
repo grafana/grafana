@@ -12,16 +12,17 @@ import {
   DataSourceDescription,
 } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Alert, SecureSocksProxySettings, Divider, Stack } from '@grafana/ui';
+import { Alert, Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions, ElasticsearchSecureJsonData } from '../types';
 
+import { ApiKeyConfig } from './ApiKeyConfig';
 import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
+export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions, ElasticsearchSecureJsonData>;
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -36,8 +37,19 @@ export const ConfigEditor = (props: Props) => {
     config: options,
     onChange: onOptionsChange,
   });
+  authProps.customMethods = [
+    {
+      id: 'custom-api-key',
+      label: 'API Key',
+      description: 'API Key authentication',
+      component: <ApiKeyConfig {...props} />,
+    },
+  ];
+  authProps.selectedMethod = options.jsonData.apiKeyAuth ? 'custom-api-key' : authProps.selectedMethod;
+
   if (config.sigV4AuthEnabled) {
     authProps.customMethods = [
+      ...authProps.customMethods,
       {
         id: 'custom-sigv4',
         label: 'SigV4 auth',
@@ -73,6 +85,7 @@ export const ConfigEditor = (props: Props) => {
             jsonData: {
               ...options.jsonData,
               sigV4Auth: method === 'custom-sigv4',
+              apiKeyAuth: method === 'custom-api-key',
               oauthPassThru: method === AuthMethod.OAuthForward,
             },
           });

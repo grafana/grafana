@@ -5,15 +5,21 @@ import { Trans } from '@grafana/i18n';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
-import { isFreeTierLicense } from '../utils/isFreeTierLicense';
 import { isOnPrem } from '../utils/isOnPrem';
 
 interface FeaturesListProps {
   hasRequiredFeatures: boolean;
+  isConnectionLimitExceeded?: boolean;
+  maxRepositories?: number;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+export const FeaturesList = ({
+  hasRequiredFeatures,
+  isConnectionLimitExceeded,
+  maxRepositories = 0,
+  onSetupFeatures,
+}: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -22,7 +28,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
           Get started with Git Sync
         </Trans>{' '}
-        {!isOnPrem() && <FeatureBadge featureState={FeatureState.privatePreview} />}
+        {!isOnPrem() && <FeatureBadge featureState={FeatureState.preview} />}
       </Text>
       <ul className={styles.featuresList}>
         <li>
@@ -35,10 +41,10 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
-        {isFreeTierLicense() && (
+        {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.free-tier-limit.message">
-              Free-tier accounts are capped to 1 connection, and 20 resources per folder
+            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
+              Your account is limited to {{ count: maxRepositories }} connected repositories
             </Trans>
           </li>
         )}
@@ -46,10 +52,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
       <Text>
         <Trans i18nKey="provisioning.features-list.learn-more-documentation">
           Want to learn more? See our{' '}
-          <TextLink
-            external
-            href={'https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/provision-resources/'}
-          >
+          <TextLink external href={'https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/'}>
             documentation
           </TextLink>
           .
@@ -65,7 +68,7 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
         </Box>
       ) : (
         <Stack direction="row" alignItems="center" gap={2}>
-          <RepositoryTypeCards />
+          <RepositoryTypeCards disabled={isConnectionLimitExceeded} />
         </Stack>
       )}
     </Stack>

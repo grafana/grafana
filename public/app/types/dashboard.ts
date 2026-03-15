@@ -31,7 +31,6 @@ export interface ImportDashboardResponseDTO {
 }
 
 export interface SaveDashboardResponseDTO {
-  id: number;
   slug: string;
   status: string;
   uid: string;
@@ -85,6 +84,13 @@ export interface DashboardMeta {
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
+
+  // Conversion status from the API response, indicating if the dashboard was converted from another version
+  conversionStatus?: {
+    storedVersion?: string;
+    failed: boolean;
+    error?: string;
+  };
 }
 
 export interface AnnotationActions {
@@ -95,7 +101,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 }
 
 export interface SnapshotSpec {
@@ -119,6 +124,7 @@ export enum DashboardRoutes {
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  AssistantPreview = 'assistant-preview',
 }
 
 export enum DashboardInitPhase {

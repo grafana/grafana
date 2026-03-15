@@ -18,7 +18,7 @@ import (
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
 type RepositoryResourcesFactory interface {
-	Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error)
+	Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error)
 }
 
 //go:generate mockery --name RepositoryResources --structname MockRepositoryResources --inpackage --filename repository_resources_mock.go --with-expecter
@@ -42,10 +42,24 @@ type RepositoryResources interface {
 }
 
 type repositoryResourcesFactory struct {
-	parsers ParserFactory
-	clients ClientFactory
-	lister  ResourceLister
+	parsers               ParserFactory
+	clients               ClientFactory
+	lister                ResourceLister
+	folderMetadataEnabled bool
 }
+
+type RepositoryResourcesOption func(*repositoryResourcesOptions)
+
+type repositoryResourcesOptions struct {
+	folderManagerOptions []FolderManagerOption
+}
+
+func WithFolderManagerOptions(opts ...FolderManagerOption) RepositoryResourcesOption {
+	return func(cfg *repositoryResourcesOptions) {
+		cfg.folderManagerOptions = append(cfg.folderManagerOptions, opts...)
+	}
+}
+
 type repositoryResources struct {
 	*FolderManager
 	*ResourcesManager
@@ -98,11 +112,16 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactory{parsers, clients, lister}
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+	return &repositoryResourcesFactory{
+		parsers:               parsers,
+		clients:               clients,
+		lister:                lister,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
 }
 
-func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error) {
 	clients, err := r.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients: %w", err)
@@ -117,7 +136,13 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		return nil, fmt.Errorf("create parser: %w", err)
 	}
 
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
+	cfg := &repositoryResourcesOptions{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderManagerOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/simplejson"
 )
 
 // metricsResponseProcessor handles processing of metrics query responses
@@ -26,7 +26,7 @@ func (p *metricsResponseProcessor) processBuckets(aggs map[string]interface{}, t
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
-	aggIDs := make([]string, 0)
+	aggIDs := make([]string, 0, len(aggs))
 	for k := range aggs {
 		aggIDs = append(aggIDs, k)
 	}
@@ -280,8 +280,8 @@ func (p *metricsResponseProcessor) processTopMetricsMetric(metric *MetricAgg, bu
 
 // processExtendedStatsMetric processes extended_stats metric aggregations
 func (p *metricsResponseProcessor) processExtendedStatsMetric(metric *MetricAgg, buckets []*simplejson.Json, props map[string]string) (data.Frames, error) {
-	metaKeys := make([]string, 0)
 	meta := metric.Meta.MustMap()
+	metaKeys := make([]string, 0, len(meta))
 	for k := range meta {
 		metaKeys = append(metaKeys, k)
 	}
@@ -630,8 +630,8 @@ func addPercentilesToFields(fields *[]*data.Field, bucket *simplejson.Json, metr
 }
 
 func addExtendedStatsToFields(fields *[]*data.Field, bucket *simplejson.Json, metric *MetricAgg, values []interface{}) {
-	metaKeys := make([]string, 0)
 	meta := metric.Meta.MustMap()
+	metaKeys := make([]string, 0, len(meta))
 	for k := range meta {
 		metaKeys = append(metaKeys, k)
 	}

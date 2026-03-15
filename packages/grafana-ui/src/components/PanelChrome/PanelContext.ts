@@ -34,7 +34,7 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
-  onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
+  onToggleSeriesVisibility?: (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
@@ -55,6 +55,15 @@ export interface PanelContext {
    */
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
+  /**
+   * Returns filters based on existing grouping or an empty array
+   */
+  getFiltersBasedOnGrouping?: (items: AdHocFilterItem[]) => AdHocFilterItem[];
+  /**
+   *
+   * Used to apply multiple filters at once
+   */
+  onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
   /**
    * Enables modifying thresholds directly from the panel
    *

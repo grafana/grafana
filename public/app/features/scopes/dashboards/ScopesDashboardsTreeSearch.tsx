@@ -6,6 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
+import { ContextualNavigationPaneToggle } from './ContextualNavigationPaneToggle';
+
 export interface ScopesDashboardsTreeSearchProps {
   disabled: boolean;
   query: string;
@@ -42,6 +44,7 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
         data-testid="scopes-dashboards-search"
         onChange={(value) => setInputState({ value, dirty: true })}
       />
+      <ContextualNavigationPaneToggle />
     </div>
   );
 }
@@ -49,6 +52,8 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      display: 'flex',
+      gap: theme.spacing(1),
       flex: '0 1 auto',
     }),
   };

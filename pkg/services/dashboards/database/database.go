@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -542,6 +541,9 @@ func (d *dashboardStore) saveDashboard(ctx context.Context, sess *db.Session, cm
 	tags := dash.GetTags()
 	if len(tags) > 0 {
 		for _, tag := range tags {
+			if len(tag) > 50 {
+				return nil, dashboards.ErrDashboardTagTooLong
+			}
 			if _, err := sess.Insert(dashboardTag{DashboardId: dash.ID, Term: tag, OrgID: dash.OrgID, DashboardUID: dash.UID}); err != nil {
 				return nil, err
 			}
@@ -626,7 +628,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{dashboard.UID, dashboard.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(dashboard.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
@@ -689,7 +690,6 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}}, // Column has TEXT type.
 		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
 		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
@@ -904,7 +904,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported, d.store.GetDialect()))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported, d.store.GetDialect(), d.cfg.MaxNestedFolderDepth))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})

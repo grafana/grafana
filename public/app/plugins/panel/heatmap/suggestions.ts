@@ -10,7 +10,8 @@ import { GraphFieldConfig } from '@grafana/schema';
 
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options, defaultOptions } from './types';
+import { Options } from './panelcfg.gen';
+import { defaultOptions } from './types';
 
 function determineScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   // look to see if the data has an explicity marker for heatmap data on it.
@@ -69,5 +70,14 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
     return;
   }
 
-  return [{ score: determineScore(dataSummary) }];
+  return [
+    {
+      score: determineScore(dataSummary),
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend = { show: false };
+        },
+      },
+    },
+  ];
 };

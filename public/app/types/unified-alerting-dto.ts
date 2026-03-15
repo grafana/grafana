@@ -293,6 +293,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   updated?: string;
   updated_by?: UpdatedBy | null;
   version?: number;
+  message?: string;
 }
 
 // types for Grafana-managed recording and alerting rules

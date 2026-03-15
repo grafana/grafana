@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -17,7 +16,7 @@ import (
 
 type grpcPlugin struct {
 	descriptor     PluginDescriptor
-	clientFactory  func() *plugin.Client
+	clientFactory  func() (*plugin.Client, error)
 	client         *plugin.Client
 	pluginClient   *ClientV2
 	logger         log.Logger
@@ -39,19 +38,23 @@ const (
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, tracer trace.Tracer, env func() []string) (backendplugin.Plugin, error) {
-		return newGrpcPlugin(descriptor, logger, tracer, env), nil
+		return newGrpcPlugin(descriptor, logger, tracer, env)
 	}
 }
 
-func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) *grpcPlugin {
+func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) (*grpcPlugin, error) {
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
-		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor, env(), logger, tracer))
+		clientFactory: func() (*plugin.Client, error) {
+			clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
+			if err != nil {
+				return nil, err
+			}
+			return plugin.NewClient(clientConfig), nil
 		},
 		state: pluginStateNotStarted,
-	}
+	}, nil
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -68,7 +71,12 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 
 	p.state = pluginStateStartInit
 
-	p.client = p.clientFactory()
+	var err error
+	p.client, err = p.clientFactory()
+	if err != nil {
+		p.state = pluginStateStartFail
+		return err
+	}
 	rpcClient, err := p.client.Client()
 	if err != nil {
 		p.state = pluginStateStartFail
@@ -88,14 +96,6 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	if p.pluginClient == nil {
 		p.state = pluginStateStartFail
 		return errors.New("no compatible plugin implementation found")
-	}
-
-	elevated, err := process.IsRunningWithElevatedPrivileges()
-	if err != nil {
-		p.logger.Debug("Error checking plugin process execution privilege", "error", err)
-	}
-	if elevated {
-		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	p.state = pluginStateStartSuccess
@@ -195,6 +195,15 @@ func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataReques
 	}
 
 	return pc.QueryData(ctx, req)
+}
+
+func (p *grpcPlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	pc, ok := p.getPluginClient(ctx)
+	if !ok {
+		return plugins.ErrPluginUnavailable
+	}
+
+	return pc.QueryChunkedData(ctx, req, w)
 }
 
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

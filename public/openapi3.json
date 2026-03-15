@@ -1905,7 +1905,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              "items": {
+                "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              },
+              "type": "array"
             }
           }
         },
@@ -3120,6 +3123,9 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          },
+          "userUID": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -3364,12 +3370,6 @@
       },
       "BacktestConfig": {
         "properties": {
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
           "condition": {
             "type": "string"
           },
@@ -3379,8 +3379,16 @@
             },
             "type": "array"
           },
+          "exec_err_state": {
+            "enum": [
+              "OK",
+              "Alerting",
+              "Error"
+            ],
+            "type": "string"
+          },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "from": {
             "format": "date-time",
@@ -3389,11 +3397,21 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "namespace_uid": {
+            "type": "string"
           },
           "no_data_state": {
             "enum": [
@@ -3403,11 +3421,17 @@
             ],
             "type": "string"
           },
+          "rule_group": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
           "to": {
             "format": "date-time",
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -3998,9 +4022,6 @@
           }
         },
         "type": "object"
-      },
-      "CookieType": {
-        "type": "string"
       },
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
@@ -6313,6 +6334,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -6322,6 +6349,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -7612,7 +7645,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -7988,6 +8021,10 @@
           "avatarUrl": {
             "type": "string"
           },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
@@ -8199,12 +8236,6 @@
       },
       "PatchPrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -8234,10 +8265,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -8798,6 +8826,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -8807,6 +8841,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -8843,15 +8883,6 @@
         },
         "type": "object"
       },
-      "PreferencesCookiePreferences": {
-        "description": "+k8s:openapi-gen=true",
-        "properties": {
-          "analytics": {},
-          "functional": {},
-          "performance": {}
-        },
-        "type": "object"
-      },
       "PreferencesNavbarPreference": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
@@ -8877,9 +8908,6 @@
       "PreferencesSpec": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/PreferencesCookiePreferences"
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -9846,6 +9874,14 @@
         },
         "type": "object"
       },
+      "RemoteWriteConfig": {
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Report": {
         "properties": {
           "created": {
@@ -9989,6 +10025,9 @@
       },
       "ReportOptions": {
         "properties": {
+          "csvEncoding": {
+            "type": "string"
+          },
           "layout": {
             "type": "string"
           },
@@ -10544,6 +10583,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -10553,6 +10598,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -11610,6 +11661,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "uid": {
             "type": "string"
           }
@@ -12270,44 +12324,8 @@
         "type": "object"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
-        "properties": {
-          "ForceQuery": {
-            "type": "boolean"
-          },
-          "Fragment": {
-            "type": "string"
-          },
-          "Host": {
-            "type": "string"
-          },
-          "OmitHost": {
-            "type": "boolean"
-          },
-          "Opaque": {
-            "type": "string"
-          },
-          "Path": {
-            "type": "string"
-          },
-          "RawFragment": {
-            "type": "string"
-          },
-          "RawPath": {
-            "type": "string"
-          },
-          "RawQuery": {
-            "type": "string"
-          },
-          "Scheme": {
-            "type": "string"
-          },
-          "User": {
-            "$ref": "#/components/schemas/Userinfo"
-          }
-        },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
-        "type": "object"
+        "format": "url",
+        "type": "string"
       },
       "Unstructured": {
         "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
@@ -12553,12 +12571,6 @@
       },
       "UpdatePrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -12589,10 +12601,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -12877,6 +12886,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
@@ -13510,6 +13523,9 @@
       },
       "healthResponse": {
         "properties": {
+          "apiserver": {
+            "type": "string"
+          },
           "commit": {
             "type": "string"
           },
@@ -13950,6 +13966,14 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14283,6 +14307,14 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14361,6 +14393,14 @@
             "in": "path",
             "name": "teamId",
             "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
             "schema": {
               "format": "int64",
               "type": "integer"
@@ -14498,6 +14538,21 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "includeHidden",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14573,6 +14628,14 @@
             "in": "path",
             "name": "userId",
             "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
             "schema": {
               "format": "int64",
               "type": "integer"
@@ -15018,17 +15081,8 @@
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
         "operationId": "reloadLDAPCfg",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
+          "410": {
+            "$ref": "#/components/responses/goneError"
           }
         },
         "security": [
@@ -17651,6 +17705,8 @@
     },
     "/dashboards/home": {
       "get": {
+        "deprecated": true,
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "operationId": "getHomeDashboard",
         "responses": {
           "200": {
@@ -17663,190 +17719,8 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get home dashboard.",
         "tags": [
           "dashboards"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/permissions": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
-        "operationId": "getDashboardPermissionsListByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getDashboardPermissionsListResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ]
-      },
-      "post": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
-        "operationId": "updateDashboardPermissionsByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDashboardACLCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Updates permissions for a dashboard.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
-        "operationId": "getDashboardVersionsByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/dashboardVersionsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets all existing versions for the dashboard.",
-        "tags": [
-          "dashboards",
-          "versions"
-        ]
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
-        "operationId": "getDashboardVersionByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "DashboardVersionID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/dashboardVersionResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get a specific dashboard version.",
-        "tags": [
-          "dashboards",
-          "versions"
         ]
       }
     },
@@ -18309,6 +18183,8 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "deprecated": true,
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {
@@ -18581,6 +18457,7 @@
     },
     "/datasources/id/{name}": {
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceIdByName",
         "parameters": [
@@ -18610,7 +18487,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
@@ -18618,6 +18495,7 @@
     },
     "/datasources/name/{name}": {
       "delete": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "deleteDataSourceByName",
         "parameters": [
@@ -18647,12 +18525,13 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
       },
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceByName",
         "parameters": [
@@ -18679,7 +18558,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
@@ -18793,161 +18672,6 @@
           {
             "in": "path",
             "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "required": true,
-          "x-originalParamName": "DatasourceProxyParam"
-        },
-        "responses": {
-          "201": {
-            "description": "(empty)"
-          },
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Data source proxy POST calls.",
-        "tags": [
-          "datasources"
-        ]
-      }
-    },
-    "/datasources/proxy/{id}/{datasource_proxy_route}": {
-      "delete": {
-        "deprecated": true,
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
-        "operationId": "datasourceProxyDELETEcalls",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "datasource_proxy_route",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Data source proxy DELETE calls.",
-        "tags": [
-          "datasources"
-        ]
-      },
-      "get": {
-        "deprecated": true,
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
-        "operationId": "datasourceProxyGETcalls",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasource_proxy_route",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Data source proxy GET calls.",
-        "tags": [
-          "datasources"
-        ]
-      },
-      "post": {
-        "deprecated": true,
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
-        "operationId": "datasourceProxyPOSTcalls",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasource_proxy_route",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "id",
             "required": true,
             "schema": {
               "type": "string"
@@ -19521,6 +19245,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -19550,6 +19281,13 @@
             "in": "path",
             "name": "dataSourceUID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
             "schema": {
               "type": "string"
             }
@@ -19635,6 +19373,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -19669,6 +19414,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "dataSourceType",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -19688,215 +19440,6 @@
         },
         "tags": [
           "enterprise"
-        ]
-      }
-    },
-    "/datasources/{id}": {
-      "delete": {
-        "deprecated": true,
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDataSourceByUID) instead",
-        "operationId": "deleteDataSourceByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete an existing data source by id.",
-        "tags": [
-          "datasources"
-        ]
-      },
-      "get": {
-        "deprecated": true,
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
-        "operationId": "getDataSourceByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getDataSourceResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get a single data source by Id.",
-        "tags": [
-          "datasources"
-        ]
-      },
-      "put": {
-        "deprecated": true,
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDataSourceByUID) instead",
-        "operationId": "updateDataSourceByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDataSourceCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Update an existing data source by its sequential ID.",
-        "tags": [
-          "datasources"
-        ]
-      }
-    },
-    "/datasources/{id}/health": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
-        "operationId": "checkDatasourceHealthByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Sends a health check request to the plugin datasource identified by the ID.",
-        "tags": [
-          "datasources",
-          "health"
-        ]
-      }
-    },
-    "/datasources/{id}/resources/{datasource_proxy_route}": {
-      "get": {
-        "deprecated": true,
-        "description": "Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead",
-        "operationId": "callDatasourceResourceByID",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasource_proxy_route",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Fetch data source resources by Id.",
-        "tags": [
-          "datasources"
         ]
       }
     },
@@ -20661,9 +20204,17 @@
             }
           },
           {
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma separated list of folder ID(s) to filter the elements by.\nDeprecated: Use FolderFilterUIDs instead.",
             "in": "query",
             "name": "folderFilter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A comma separated list of folder UID(s) to filter the elements by.",
+            "in": "query",
+            "name": "folderFilterUIDs",
             "schema": {
               "type": "string"
             }
@@ -22321,6 +21872,8 @@
     },
     "/playlists": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "searchPlaylists",
         "parameters": [
           {
@@ -22354,6 +21907,8 @@
         ]
       },
       "post": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "createPlaylist",
         "requestBody": {
           "content": {
@@ -22391,6 +21946,8 @@
     },
     "/playlists/{uid}": {
       "delete": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "deletePlaylist",
         "parameters": [
           {
@@ -22425,6 +21982,8 @@
         ]
       },
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "getPlaylist",
         "parameters": [
           {
@@ -22459,6 +22018,8 @@
         ]
       },
       "put": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "operationId": "updatePlaylist",
         "parameters": [
           {
@@ -22506,6 +22067,8 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "operationId": "getPlaylistItems",
         "parameters": [
           {
@@ -24690,8 +24253,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24729,8 +24291,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24768,8 +24329,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -27825,6 +27385,58 @@
           }
         },
         "summary": "Get an SSO Settings entry by Key",
+        "tags": [
+          "sso_settings"
+        ]
+      },
+      "patch": {
+        "description": "Partially updates the SSO Settings for a provider. Only provided fields are updated.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "patchProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "settings": {
+                    "additionalProperties": {},
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Patch SSO Settings",
         "tags": [
           "sso_settings"
         ]

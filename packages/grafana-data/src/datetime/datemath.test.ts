@@ -165,13 +165,33 @@ describe('DateMath', () => {
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
     });
 
-    it('should handle multiple math expressions', () => {
-      const date = dateMath.parseDateMath('-2d-6h', dateTime([2014, 1, 5]));
-      expect(date!.valueOf()).toEqual(dateTime([2014, 1, 2, 18]).valueOf());
+    it.each([
+      ['-2d-6h', [2014, 1, 5], [2014, 1, 2, 18]],
+      ['-30m-2d', [2014, 1, 5], [2014, 1, 2, 23, 30]],
+      ['-2d-1d', [2014, 1, 5], [2014, 1, 2]],
+      ['-1h-30m', [2014, 1, 5, 12, 0], [2014, 1, 5, 10, 30]],
+      ['-1d-1h-30m', [2014, 1, 5, 12, 0], [2014, 1, 4, 10, 30]],
+      ['-0d+8h+30m+30s', [2014, 1, 5, 12, 0], [2014, 1, 5, 20, 30, 30]],
+      ['+1d-6h', [2014, 1, 5], [2014, 1, 5, 18]],
+      ['-1w-1d', [2014, 1, 14], [2014, 1, 6]],
+      ['-1w/w', [2014, 1, 21], [2014, 1, 9]],
+    ])('should handle multiple math expressions: %s', (expression, inputDate, expectedDate) => {
+      const date = dateMath.parseDateMath(expression, dateTime(inputDate));
+      expect(date!.valueOf()).toEqual(dateTime(expectedDate).valueOf());
     });
 
     it('should return false when invalid expression', () => {
       const date = dateMath.parseDateMath('2', dateTime([2014, 1, 5]));
+      expect(date).toEqual(undefined);
+    });
+
+    it('should return false when numeric token is too large', () => {
+      const date = dateMath.parseDateMath('-12345678901h', dateTime([2014, 1, 5]));
+      expect(date).toEqual(undefined);
+    });
+
+    it('should return false when a complex expression has an oversized token', () => {
+      const date = dateMath.parseDateMath('-1d+12345678901h', dateTime([2014, 1, 5]));
       expect(date).toEqual(undefined);
     });
 

@@ -1,10 +1,9 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
-import { defaultMetricAgg } from '../../../../queryDef';
+import { ElasticsearchDataQuery, MetricAggregation } from '../../../../dataquery.gen';
+import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 
@@ -57,12 +56,18 @@ export const reducer = (
         It the future would be nice to have the same behavior but it's hard without a proper definition,
         as Elasticsearch will error sometimes if some settings are not compatible.
       */
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
           id: metric.id,
           type: action.payload.type,
           ...metricAggregationConfig[action.payload.type].defaults,
         } as MetricAggregation;
       });
+  }
+
+  if (changeEditorTypeAndResetQuery.match(action)) {
+    // Reset to default metric when switching to editor types
+    return [defaultMetricAgg('1')];
   }
 
   if (changeMetricField.match(action)) {
@@ -162,7 +167,8 @@ export const reducer = (
     if (state && state.length > 0) {
       return state;
     }
-    return [defaultMetricAgg('1')];
+    const metricType = queryTypeToMetricType(action.payload);
+    return [{ type: metricType, id: '1' }];
   }
 
   return state;

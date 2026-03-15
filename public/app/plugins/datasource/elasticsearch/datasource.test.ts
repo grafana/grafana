@@ -244,16 +244,22 @@ describe('ElasticDatasource', () => {
 
     describe('reportInteraction', () => {
       it('should report metric query', async () => {
-        const query = { ...createElasticQuery(), app: CoreApp.Explore };
+        const query = {
+          ...createElasticQuery(),
+          targets: [{ ...createElasticQuery().targets[0], queryType: 'lucene' }],
+          app: CoreApp.Explore,
+        };
         await expect(ds.query(query)).toEmitValuesWith((received) => {
           expect(received[0].state).toBe(LoadingState.Done);
           expect(reportInteraction).toHaveBeenCalledWith(
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'metric',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -270,6 +276,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'logs', id: '1' }],
               query: 'foo="bar"',
+              queryType: 'lucene',
             } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
@@ -280,9 +287,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'logs',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -299,6 +308,7 @@ describe('ElasticDatasource', () => {
               refId: 'A',
               metrics: [{ type: 'raw_data', id: '1' }],
               query: 'foo="bar"',
+              queryType: 'lucene',
             } as ElasticsearchDataQuery,
           ],
           app: CoreApp.Explore,
@@ -309,9 +319,11 @@ describe('ElasticDatasource', () => {
             'grafana_elasticsearch_query_executed',
             expect.objectContaining({
               app: CoreApp.Explore,
+              editor_type: 'builder',
               has_data: false,
               has_error: false,
               line_limit: undefined,
+              query_language: 'lucene',
               query_type: 'raw_data',
               simultaneously_sent_query_count: 1,
               with_lucene_query: true,
@@ -1000,7 +1012,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
         );
       });
 
@@ -1030,7 +1042,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
         );
       });
 
@@ -1087,7 +1099,7 @@ describe('ElasticDatasource', () => {
         });
         expect(postResourceRequestMock).toHaveBeenCalledWith(
           '_msearch',
-          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"gte":1683291160012,"lte":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc AND abc_key:\\"abc_value\\""}}]}},"size":10000}\n'
         );
       });
     });

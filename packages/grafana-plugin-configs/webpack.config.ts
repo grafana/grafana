@@ -112,6 +112,8 @@ const config = async (env: Env): Promise<Configuration> => {
       'slate-plain-serializer',
       '@grafana/slate-react',
       'react',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
       'react-dom',
       'react-redux',
       'redux',
@@ -312,6 +314,7 @@ const config = async (env: Env): Promise<Configuration> => {
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
+      conditionNames: ['@grafana-app/source', '...'],
       unsafeCache: true,
     },
 

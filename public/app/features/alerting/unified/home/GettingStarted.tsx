@@ -4,9 +4,12 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
+
+import { TUTORIAL_URL_ALERTING_GET_STARTED } from '../utils/docs';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -77,7 +80,7 @@ export default function GettingStarted() {
           <p>
             <Trans i18nKey="alerting.getting-stared.learn-more">
               For a hands-on introduction, refer to our{' '}
-              <TextLink href="https://grafana.com/tutorials/alerting-get-started/" inline={true} external>
+              <TextLink href={TUTORIAL_URL_ALERTING_GET_STARTED} inline={true} external>
                 tutorial to get started with Grafana Alerting
               </TextLink>
             </Trans>
@@ -123,6 +126,20 @@ export function WelcomeHeader({ className }: { className?: string }) {
   return (
     <Stack gap={2} direction="column">
       <ContentBox className={cx(styles.ctaContainer, className)}>
+        {config.featureToggles.alertingTriage && (
+          <>
+            <WelcomeCTABox
+              title={t('alerting.welcome-header.title-alert-activity', 'Alert activity')}
+              description={t(
+                'alerting.welcome-header.description-alert-activity',
+                'See what is currently alerting and explore historical data to investigate current or past issues.'
+              )}
+              href="/alerting/alerts"
+              hrefText={t('alerting.welcome-header.href-text-alert-activity', 'View alert activity')}
+            />
+            <div className={styles.separator} />
+          </>
+        )}
         <WelcomeCTABox
           title={t('alerting.welcome-header.title-alert-rules', 'Alert rules')}
           description={t(
@@ -206,7 +223,7 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   container: css({
     color: theme.colors.text.primary,
     flex: 1,
-    minWidth: '240px',
+    minWidth: '160px',
     display: 'grid',
     rowGap: theme.spacing(1),
     gridTemplateColumns: 'min-content 1fr 1fr 1fr',

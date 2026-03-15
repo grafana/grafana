@@ -66,7 +66,7 @@ export const runGenerateApis =
       let command;
       if (isEnterprise) {
         command =
-          'yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
+          'yarn workspace @grafana/openapi process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
         command = 'yarn workspace @grafana/api-clients generate-apis';
       }
@@ -143,8 +143,10 @@ export const updatePackageJsonExports =
       // Create the new export entry
       const newExportKey = `./rtkq/${groupName}/${version}`;
       const newExportValue = {
-        import: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
-        require: `./src/clients/rtkq/${groupName}/${version}/index.ts`,
+        '@grafana-app/source': `./src/clients/rtkq/${groupName}/${version}/index.ts`,
+        types: `./dist/types/clients/rtkq/${groupName}/${version}/index.d.ts`,
+        import: `./dist/esm/clients/rtkq/${groupName}/${version}/index.mjs`,
+        require: `./dist/cjs/clients/rtkq/${groupName}/${version}/index.cjs`,
       };
 
       // Check if export already exists

@@ -61,7 +61,6 @@ const defaultMeta: PluginMeta = {
 const getDefaultDatasource = (jsonDataOverrides = {}) =>
   new PrometheusDatasource(
     {
-      id: 1,
       uid: '',
       type: 'prometheus',
       name: 'prom-test',

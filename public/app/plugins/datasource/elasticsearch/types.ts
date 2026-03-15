@@ -1,4 +1,14 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { Observable } from 'rxjs';
+import { SemVer } from 'semver';
+
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  MetricFindValue,
+  TimeRange,
+} from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
 
 import {
@@ -63,9 +73,16 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   index?: string;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
+  defaultQueryMode?: QueryType;
+  apiKeyAuth?: boolean;
+}
+
+export interface ElasticsearchSecureJsonData {
+  apiKey?: string;
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
+export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
@@ -135,7 +152,7 @@ export interface ElasticsearchAnnotationQuery {
   index?: string;
 }
 
-export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+export type RangeMap = Record<string, { gte: number; lte: number; format: string }>;
 
 export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
 
@@ -182,6 +199,19 @@ export const isElasticsearchResponseWithHits = (res: unknown): res is Elasticsea
     })
   );
 };
+
+/**
+ * Minimal interface for what the QueryEditor components need from ElasticDatasource.
+ * Using this instead of importing ElasticDatasource directly breaks the circular import
+ * chain from components/QueryEditor back to datasource.ts.
+ */
+export interface ElasticDatasourceLike extends DataSourceApi<ElasticsearchDataQuery, ElasticsearchOptions> {
+  timeField: string;
+  defaultQueryMode?: QueryType;
+  query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse>;
+  getDatabaseVersion(useCachedData?: boolean): Promise<SemVer | null>;
+  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]>;
+}
 
 export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {
   return (

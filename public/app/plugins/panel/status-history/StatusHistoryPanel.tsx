@@ -23,7 +23,7 @@ import {
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
@@ -167,9 +167,9 @@ export const StatusHistoryPanel = ({
                 />
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
-                <AnnotationsPlugin2
+                <AnnotationsPlugin
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
+                  options={options.annotations}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

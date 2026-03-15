@@ -293,6 +293,61 @@ SELECT * FROM table1`)
       expect(parseRefsFromSqlExpression('SELECT * FROM\ntable1')).toEqual(['table1']);
     });
   });
+
+  describe('CTE (Common Table Expression) handling', () => {
+    it('should exclude single CTE name from results', () => {
+      const query = 'WITH my_cte AS (SELECT * FROM table1) SELECT * FROM my_cte';
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1']);
+    });
+
+    it('should exclude multiple CTE names from results', () => {
+      const query = `
+        WITH cte1 AS (SELECT * FROM table1),
+             cte2 AS (SELECT * FROM table2)
+        SELECT * FROM cte1 JOIN cte2 ON cte1.id = cte2.id
+      `;
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1', 'table2']);
+    });
+
+    it('should handle CTEs with external table references in main query', () => {
+      const query = `
+        WITH summary AS (SELECT id, count FROM table1)
+        SELECT * FROM summary JOIN table2 ON summary.id = table2.id
+      `;
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1', 'table2']);
+    });
+
+    it('should handle CTE names case-insensitively', () => {
+      const query = 'WITH MyCte AS (SELECT * FROM table1) SELECT * FROM mycte';
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1']);
+    });
+
+    it('should handle RECURSIVE CTEs', () => {
+      const query = `
+        WITH RECURSIVE cte AS (
+          SELECT * FROM table1
+          UNION ALL
+          SELECT * FROM cte WHERE depth < 10
+        )
+        SELECT * FROM cte
+      `;
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1']);
+    });
+
+    it('should handle queries without CTEs normally', () => {
+      const query = 'SELECT * FROM table1 JOIN table2 ON table1.id = table2.id';
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1', 'table2']);
+    });
+
+    it('should handle CTE that references another CTE', () => {
+      const query = `
+        WITH cte1 AS (SELECT * FROM table1),
+             cte2 AS (SELECT * FROM cte1)
+        SELECT * FROM cte2
+      `;
+      expect(parseRefsFromSqlExpression(query)).toEqual(['table1']);
+    });
+  });
 });
 
 describe('fingerprints', () => {

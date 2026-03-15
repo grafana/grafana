@@ -38,7 +38,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
-  const { closeDetails, detailsMode, setDetailsMode } = useLogDetailsContext();
+  const { closeDetails, detailsMode, setDetailsMode, toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +102,11 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     }
 
     setDetailsMode(newMode);
-  }, [detailsMode, logOptionsStorageKey, setDetailsMode]);
+
+    reportInteractionWrapper('logs_log_line_details_header_toggle_details_mode', {
+      newMode,
+    });
+  }, [detailsMode, logOptionsStorageKey, reportInteractionWrapper, setDetailsMode]);
 
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
@@ -141,6 +145,10 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
     },
     [onSearch, reportInteractionWrapper]
   );
+
+  const closeInlineDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
 
   return (
     <div className={styles.header} ref={containerRef}>
@@ -235,6 +243,7 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
             tabIndex={0}
           />
         )}
+        <div className={`${styles.divider} ${styles.dividerMargin}`} />
         <IconButton
           name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
           tooltip={
@@ -244,11 +253,22 @@ export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Pr
           }
           onClick={toggleDetailsMode}
         />
-        <IconButton
-          name="times"
-          tooltip={t('logs.log-line-details.close', 'Close log details')}
-          onClick={closeDetails}
-        />
+        <div className={styles.divider} />
+        {detailsMode === 'sidebar' ? (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-sidebar-details', 'Close log details sidebar')}
+            variant="primary"
+            onClick={closeDetails}
+          />
+        ) : (
+          <IconButton
+            name="times"
+            tooltip={t('logs.log-line-details.close-inline-details', 'Close details for this log')}
+            variant="primary"
+            onClick={closeInlineDetails}
+          />
+        )}
       </div>
     </div>
   );
@@ -265,6 +285,8 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   header: css({
     alignItems: 'center',
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
     background: theme.colors.background.canvas,
     display: 'flex',
     flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
@@ -280,6 +302,7 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     display: 'flex',
     gap: theme.spacing(1),
     paddingLeft: theme.spacing(1),
+    alignContent: 'center',
   }),
   copyLogButton: css({
     padding: 0,
@@ -292,5 +315,13 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+  }),
+  divider: css({
+    width: 1,
+    borderRight: `solid 1px ${theme.colors.border.medium}`,
+    height: theme.spacing(2.25),
+  }),
+  dividerMargin: css({
+    marginRight: theme.spacing(0.5),
   }),
 });

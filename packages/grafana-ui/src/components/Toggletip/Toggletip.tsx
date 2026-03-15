@@ -20,7 +20,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { Portal } from '../Portal/Portal';
+import { getPortalContainer, Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -47,6 +47,8 @@ export interface ToggletipProps {
   show?: boolean;
   /** Callback function to be called when the toggletip is opened */
   onOpen?: () => void;
+  /** Dismiss the toggletip when an ancestor element is scrolled */
+  dismissOnScroll?: boolean;
 }
 
 /**
@@ -67,6 +69,7 @@ export const Toggletip = memo(
     fitContent = false,
     onOpen,
     show,
+    dismissOnScroll = false,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
@@ -106,7 +109,7 @@ export const Toggletip = memo(
     });
 
     const click = useClick(context);
-    const dismiss = useDismiss(context);
+    const dismiss = useDismiss(context, { ancestorScroll: dismissOnScroll });
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
@@ -120,7 +123,7 @@ export const Toggletip = memo(
         })}
         {isOpen && (
           <Portal>
-            <FloatingFocusManager context={context} modal={true}>
+            <FloatingFocusManager context={context} modal={true} getInsideElements={() => [getPortalContainer()]}>
               <div
                 data-testid="toggletip-content"
                 className={cx(style.container, {

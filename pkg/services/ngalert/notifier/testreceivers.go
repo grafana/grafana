@@ -9,6 +9,7 @@ import (
 	v2 "github.com/prometheus/alertmanager/api/v2"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
@@ -25,17 +26,12 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 				SecureSettings:        gr.SecureSettings,
 			})
 		}
-		recv := &alertingNotify.APIReceiver{
+		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
 			ReceiverConfig: models.ReceiverConfig{
 				Integrations: integrations,
 			},
-		}
-		err := patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-		if err != nil {
-			return nil, 0, err
-		}
-		receivers = append(receivers, recv)
+		})
 	}
 	a := &alertingNotify.PostableAlert{}
 	if c.Alert != nil {
@@ -52,6 +48,14 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	})
 }
 
-func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
+func (am *alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig ngmodels.Integration, alert models.TestReceiversConfigAlertParams) (models.IntegrationStatus, error) {
+	cfg, err := IntegrationToIntegrationConfig(integrationConfig)
+	if err != nil {
+		return models.IntegrationStatus{}, err
+	}
+	return am.Base.TestIntegration(ctx, receiverName, cfg, alert)
+}
+
+func (am *alertmanager) GetReceivers(_ context.Context) ([]models.ReceiverStatus, error) {
 	return am.Base.GetReceiversStatus(), nil
 }

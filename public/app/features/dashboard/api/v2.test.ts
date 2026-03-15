@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import {
   AnnoKeyFolder,
@@ -317,7 +317,7 @@ describe('v2 dashboard API', () => {
   });
 
   describe('version error handling', () => {
-    it('should not throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
+    it('should throw DashboardVersionError for v0alpha1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
@@ -332,7 +332,7 @@ describe('v2 dashboard API', () => {
       mockGet.mockResolvedValueOnce(mockDashboardWithError);
 
       const api = new K8sDashboardV2API();
-      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
     it('should throw DashboardVersionError for v0alpha1 conversion error and v1 spec', async () => {
@@ -358,7 +358,7 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should not throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
+    it('should throw DashboardVersionError for v1beta1 conversion error and v2 spec', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
@@ -373,7 +373,7 @@ describe('v2 dashboard API', () => {
       mockGet.mockResolvedValueOnce(mockDashboardWithError);
 
       const api = new K8sDashboardV2API();
-      await expect(api.getDashboardDTO('test')).resolves.toBe(mockDashboardWithError);
+      await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
     it('should throw DashboardVersionError for v1beta1 conversion error and v1 spec', async () => {
@@ -483,6 +483,34 @@ describe('v2 dashboard API', () => {
 
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalled();
+    });
+
+    it('should preserve dashboard folder metadata', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          annotations: {
+            ...(mockDashboardDto.metadata.annotations || {}),
+            [AnnoKeyFolder]: 'randomFolderUid',
+          },
+        },
+      };
+
+      const api = new K8sDashboardV2API();
+      await api.restoreDashboard(dashboardToRestore);
+
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/v2beta1/'),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: expect.objectContaining({
+              [AnnoKeyFolder]: 'randomFolderUid',
+            }),
+          }),
+        }),
+        expect.anything()
+      );
     });
   });
 });

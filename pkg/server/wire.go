@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -41,7 +42,9 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -53,6 +56,10 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -119,7 +126,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -140,7 +146,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -169,6 +174,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -240,7 +246,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
 	provisioning.ProvideStubProvisioningService,
-	legacy.ProvideMigratorDashboardAccessor,
+	dashboardlegacy.ProvideMigrator,
+	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	playlistmigrator.ProvidePlaylistMigrator,
+	shorturlmigrator.ProvideShortURLMigrator,
+	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
@@ -275,11 +285,10 @@ var wireBasicSet = wire.NewSet(
 	datasourceproxy.ProvideService,
 	sort.ProvideService,
 	search.ProvideService,
-	searchV2.ProvideService,
-	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
+	live.ProvideDashboardActivityChannel,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	ldapservice.ProvideService,
@@ -296,6 +305,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
+	ghconnection.ProvideFactory,
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
@@ -329,6 +339,7 @@ var wireBasicSet = wire.NewSet(
 	dashsnapstore.ProvideStore,
 	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
 	dashsnapsvc.ProvideService,
+	datasourceservice.ProvideDataSourceRetriever,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,
@@ -348,6 +359,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
+	dashboardservice.ProvideDashboardAccessService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	wire.Bind(new(folder.Service), new(*folderimpl.Service)),
@@ -373,7 +385,6 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideReceiverPermissionsService,
 	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
 	starimpl.ProvideService,
-	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,
@@ -392,6 +403,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideReflectionService,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
+	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
@@ -470,6 +482,7 @@ var wireBasicSet = wire.NewSet(
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
+	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
@@ -513,7 +526,7 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
-	ngmetrics.ProvideServiceForTest,
+	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
@@ -568,4 +581,21 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
 	wire.Build(wireExtsSet)
 	return &unifiedsearch.StandardDocumentBuilders{}, nil
+}
+
+/*
+provideMigrationRegistry builds the MigrationRegistry from individual
+resource migrators. When adding a new resource migration, register
+it with the registry here.
+*/
+func provideMigrationRegistry(
+	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
+	playlistMigrator playlistmigrator.PlaylistMigrator,
+	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+) *unifiedmigrations.MigrationRegistry {
+	r := unifiedmigrations.NewMigrationRegistry()
+	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
+	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
+	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	return r
 }

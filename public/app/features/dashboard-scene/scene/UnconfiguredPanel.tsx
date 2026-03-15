@@ -1,13 +1,24 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, Dropdown, Icon, Menu, Stack, Text, usePanelContext, useStyles2 } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  EmptyState,
+  Icon,
+  Menu,
+  Stack,
+  Text,
+  usePanelContext,
+  useStyles2,
+} from '@grafana/ui';
 
-import { NEW_PANEL_TITLE } from '../../dashboard/utils/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -21,9 +32,15 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
 
-  const onMenuClick = useCallback((isOpen: boolean) => {
-    setIsOpen(isOpen);
-  }, []);
+  const onMenuClick = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        DashboardInteractions.panelActionClicked('configure_dropdown', props.id, 'panel');
+      }
+      setIsOpen(isOpen);
+    },
+    [props.id]
+  );
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
@@ -45,18 +62,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
-
-  useEffect(() => {
-    if (!panel || !config.featureToggles.newVizSuggestions) {
-      return;
-    }
-
-    if (panelContext.app === CoreApp.PanelEditor) {
-      panel.setState({ title: '' });
-    } else if (!panel.state.title) {
-      panel.setState({ title: NEW_PANEL_TITLE });
-    }
-  }, [panel, panelContext.app]);
 
   const MenuActions = () => (
     <Menu>
@@ -92,20 +97,30 @@ function UnconfiguredPanelComp(props: PanelProps) {
     );
   }
 
+  const { isEditing } = dashboard.state;
+
   return (
     <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
       <Box paddingBottom={2}>
-        <ButtonGroup>
-          <Button icon="sliders-v-alt" onClick={onConfigure}>
-            <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
-          </Button>
-          <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-            <Button
-              aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
-              icon={isOpen ? 'angle-up' : 'angle-down'}
-            />
-          </Dropdown>
-        </ButtonGroup>
+        {isEditing ? (
+          <ButtonGroup>
+            <Button icon="sliders-v-alt" onClick={onConfigure}>
+              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+            </Button>
+            <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
+              <Button
+                aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
+                icon={isOpen ? 'angle-up' : 'angle-down'}
+              />
+            </Dropdown>
+          </ButtonGroup>
+        ) : (
+          <EmptyState
+            variant="call-to-action"
+            message={t('dashboard.new-panel.missing-config', 'Missing panel configuration')}
+            hideImage
+          />
+        )}
       </Box>
     </Stack>
   );

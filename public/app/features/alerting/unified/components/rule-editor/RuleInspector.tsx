@@ -10,6 +10,7 @@ import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useS
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
+import { EXTERNAL_URL_PROMETHEUS_ALERTING_RULES } from '../../utils/docs';
 import {
   alertingRulerRuleToRuleForm,
   formValuesToRulerRuleDTO,
@@ -135,7 +136,7 @@ function YamlContentInfo() {
       <Trans i18nKey="alerting.yaml-content-info.body">
         The YAML content in the editor only contains alert rule configuration <br />
         To configure Prometheus, you need to provide the rest of the{' '}
-        <TextLink href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" external>
+        <TextLink href={EXTERNAL_URL_PROMETHEUS_ALERTING_RULES} external>
           configuration file content.
         </TextLink>
       </Trans>

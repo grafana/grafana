@@ -262,24 +262,18 @@ function createComponent<Props extends JSX.IntrinsicAttributes>(
   pluginId?: string,
   id?: string
 ): ComponentTypeWithExtensionMeta<Props> {
-  function ComponentWithMeta(props: Props) {
-    if (Implementation) {
-      return <Implementation {...props} />;
+  const ComponentWithMeta: ComponentTypeWithExtensionMeta<Props> = Object.assign(
+    Implementation || (() => <div>Test</div>),
+    {
+      meta: {
+        id: id ?? '',
+        pluginId: pluginId ?? '',
+        title: '',
+        description: '',
+        type: PluginExtensionTypes.component,
+      } satisfies PluginExtensionComponentMeta,
     }
-
-    return <div>Test</div>;
-  }
-
-  ComponentWithMeta.displayName = '';
-  ComponentWithMeta.propTypes = {};
-  ComponentWithMeta.contextTypes = {};
-  ComponentWithMeta.meta = {
-    id: id ?? '',
-    pluginId: pluginId ?? '',
-    title: '',
-    description: '',
-    type: PluginExtensionTypes.component,
-  } satisfies PluginExtensionComponentMeta;
+  );
 
   return ComponentWithMeta;
 }

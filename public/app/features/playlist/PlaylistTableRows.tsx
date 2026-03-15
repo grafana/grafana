@@ -41,7 +41,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       if (!first) {
         icon = 'exclamation-triangle';
         info.push(
-          <span>
+          <span key="no-dashboards">
             &nbsp;{' '}
             <span key="info">
               <Trans i18nKey="playlist.playlist-table-rows.no-dashboards-found">No dashboards found</Trans>
@@ -54,7 +54,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
     } else if (first) {
       info.push(
         item.dashboards.length > 1 ? (
-          <span>
+          <span key="multiple-dashboards">
             &nbsp;{' '}
             <span key="info">
               <Trans i18nKey="playlist.playlist-table-rows.multiple-dashboards-found" values={{ items: item.value }}>
@@ -69,7 +69,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
     } else {
       icon = 'exclamation-triangle';
       info.push(
-        <span>
+        <span key="not-found">
           &nbsp;{' '}
           <span key="info">
             <Trans i18nKey="playlist.playlist-table-rows.not-found" values={{ items: item.value }}>

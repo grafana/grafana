@@ -20,10 +20,18 @@ type SearchRequest struct {
 	Aggs        AggArray
 	CustomProps map[string]interface{}
 	TimeRange   backend.TimeRange
+	// RawBody contains the raw Elasticsearch Query DSL JSON for raw DSL queries
+	// When set, this takes precedence over all other fields during marshaling
+	RawBody map[string]interface{}
 }
 
 // MarshalJSON returns the JSON encoding of the request.
 func (r *SearchRequest) MarshalJSON() ([]byte, error) {
+	// If RawBody is set, use it directly for raw DSL queries
+	if len(r.RawBody) > 0 {
+		return json.Marshal(r.RawBody)
+	}
+
 	root := make(map[string]interface{})
 
 	root["size"] = r.Size

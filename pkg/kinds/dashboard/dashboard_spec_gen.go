@@ -32,7 +32,7 @@ type Spec struct {
 	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`
 	// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-	GnetId *string `json:"gnetId,omitempty"`
+	GnetId *int64 `json:"gnetId,omitempty"`
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
@@ -204,6 +204,9 @@ type Panel struct {
 	Options map[string]any `json:"options,omitempty"`
 	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
+	// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+	// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+	AutoMigrateFrom *string `json:"autoMigrateFrom,omitempty"`
 }
 
 // NewPanel creates a new Panel object.
@@ -284,6 +287,8 @@ type DashboardLink struct {
 	IncludeVars bool `json:"includeVars"`
 	// If true, includes current time range in the link as query params
 	KeepTime bool `json:"keepTime"`
+	// The source that registered the link (if any)
+	Origin *ControlSourceRef `json:"origin,omitempty"`
 }
 
 // NewDashboardLink creates a new DashboardLink object.
@@ -309,6 +314,26 @@ const (
 // Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
 const DashboardLinkPlacement = "inControlsMenu"
+
+type ControlSourceRef = DatasourceControlSourceRef
+
+// NewControlSourceRef creates a new ControlSourceRef object.
+func NewControlSourceRef() *ControlSourceRef {
+	return NewDatasourceControlSourceRef()
+}
+
+type DatasourceControlSourceRef struct {
+	Type string `json:"type"`
+	// The plugin type-id
+	Group string `json:"group"`
+}
+
+// NewDatasourceControlSourceRef creates a new DatasourceControlSourceRef object.
+func NewDatasourceControlSourceRef() *DatasourceControlSourceRef {
+	return &DatasourceControlSourceRef{
+		Type: "datasource",
+	}
+}
 
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -338,6 +363,8 @@ func NewDataTransformerConfig() *DataTransformerConfig {
 type MatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *MatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options any `json:"options,omitempty"`
 }
@@ -348,6 +375,15 @@ func NewMatcherConfig() *MatcherConfig {
 		Id: "",
 	}
 }
+
+type MatcherScope string
+
+const (
+	MatcherScopeSeries     MatcherScope = "series"
+	MatcherScopeNested     MatcherScope = "nested"
+	MatcherScopeAnnotation MatcherScope = "annotation"
+	MatcherScopeExemplar   MatcherScope = "exemplar"
+)
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
@@ -404,7 +440,7 @@ type FieldConfig struct {
 	// True if data source field supports ad-hoc filters
 	Filterable *bool `json:"filterable,omitempty"`
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -834,6 +870,10 @@ type VariableModel struct {
 	// Optional field, if you want to extract part of a series name or metric node segment.
 	// Named capture groups can be used to separate the display text and value.
 	Regex *string `json:"regex,omitempty"`
+	// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+	ValuesFormat *VariableModelValuesFormat `json:"valuesFormat,omitempty"`
+	// Determine whether regex applies to variable value or display text
+	RegexApplyTo *VariableRegexApplyTo `json:"regexApplyTo,omitempty"`
 	// Additional static options for query variable
 	StaticOptions []VariableOption `json:"staticOptions,omitempty"`
 	// Ordering of static options in relation to options returned from data source for query variable
@@ -847,6 +887,7 @@ func NewVariableModel() *VariableModel {
 		Multi:            (func(input bool) *bool { return &input })(false),
 		AllowCustomValue: (func(input bool) *bool { return &input })(true),
 		IncludeAll:       (func(input bool) *bool { return &input })(false),
+		ValuesFormat:     (func(input VariableModelValuesFormat) *VariableModelValuesFormat { return &input })(VariableModelValuesFormatCsv),
 	}
 }
 
@@ -895,6 +936,8 @@ type VariableOption struct {
 	Text StringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value StringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewVariableOption creates a new VariableOption object.
@@ -940,6 +983,15 @@ const (
 	VariableSortAlphabeticalCaseInsensitiveDesc VariableSort = 6
 	VariableSortNaturalAsc                      VariableSort = 7
 	VariableSortNaturalDesc                     VariableSort = 8
+)
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+type VariableRegexApplyTo string
+
+const (
+	VariableRegexApplyToValue VariableRegexApplyTo = "value"
+	VariableRegexApplyToText  VariableRegexApplyTo = "text"
 )
 
 // Contains the list of annotations that are associated with the dashboard.
@@ -1175,6 +1227,13 @@ const (
 	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
 	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
 	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+)
+
+type VariableModelValuesFormat string
+
+const (
+	VariableModelValuesFormatCsv  VariableModelValuesFormat = "csv"
+	VariableModelValuesFormatJson VariableModelValuesFormat = "json"
 )
 
 type VariableModelStaticOptionsOrder string

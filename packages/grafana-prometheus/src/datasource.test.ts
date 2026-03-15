@@ -79,7 +79,6 @@ describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     uid: 'ABCDEF',
     access: 'proxy',
     user: 'test',
@@ -316,6 +315,71 @@ describe('PrometheusDatasource', () => {
         const [result] = fetchMockCalledWith(fetchMock);
         expect(result).toMatchObject({
           expr: `metric{job="foo", k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"} - metric{k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"}`,
+        });
+      });
+    });
+
+    describe('with multi-value operators', () => {
+      it('should remap =| to =~ and apply filter to expression', () => {
+        const filters = [
+          {
+            key: 'cluster',
+            operator: '=|',
+            value: 'prod-us-east-1',
+            values: ['prod-us-east-1', 'staging-eu-west-1', 'dev-eu-west-2'],
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({
+          expr: `metric{job="foo", cluster=~"prod-us-east-1|staging-eu-west-1|dev-eu-west-2"} - metric{cluster=~"prod-us-east-1|staging-eu-west-1|dev-eu-west-2"}`,
+        });
+      });
+
+      it('should remap !=| to !~ and apply filter to expression', () => {
+        const filters = [
+          {
+            key: 'namespace',
+            operator: '!=|',
+            value: 'kube-system',
+            values: ['kube-system', 'kube-public'],
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({
+          expr: `metric{job="foo", namespace!~"kube-system|kube-public"} - metric{namespace!~"kube-system|kube-public"}`,
+        });
+      });
+
+      it('should handle =| with a single value', () => {
+        const filters = [
+          {
+            key: 'cluster',
+            operator: '=|',
+            value: 'prod',
+            values: ['prod'],
+          },
+        ];
+        ds.query({
+          interval: '15s',
+          range: getMockTimeRange(),
+          filters,
+          targets: [target],
+        } as DataQueryRequest<PromQuery>);
+        const [result] = fetchMockCalledWith(fetchMock);
+        expect(result).toMatchObject({
+          expr: `metric{job="foo", cluster=~"prod"} - metric{cluster=~"prod"}`,
         });
       });
     });
@@ -1102,7 +1166,6 @@ describe('PrometheusDatasource', () => {
 describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     uid: 'ABCDEF',
     user: 'test',
     password: 'mupp',
@@ -1249,7 +1312,6 @@ describe('modifyQuery', () => {
     describe('scope filters', () => {
       const instanceSettings = {
         access: 'proxy',
-        id: 1,
         jsonData: {},
         name: 'scoped-prom',
         readOnly: false,
@@ -1313,7 +1375,6 @@ describe('PrometheusDatasource incremental query logic', () => {
 
     const incrementalInstanceSettings = {
       url: 'proxied',
-      id: 1,
       uid: 'ABCDEF',
       access: 'proxy',
       user: 'test',

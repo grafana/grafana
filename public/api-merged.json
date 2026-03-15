@@ -65,6 +65,12 @@
             "type": "boolean",
             "name": "includeHidden",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -374,6 +380,12 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -414,6 +426,12 @@
             "schema": {
               "$ref": "#/definitions/SetTeamRolesCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -572,6 +590,17 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -612,6 +641,12 @@
             "name": "userId",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "targetOrgId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -1040,17 +1075,8 @@
         "summary": "Reloads the LDAP configuration.",
         "operationId": "reloadLDAPCfg",
         "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
+          "410": {
+            "$ref": "#/responses/goneError"
           }
         }
       }
@@ -3402,185 +3428,18 @@
     },
     "/dashboards/home": {
       "get": {
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "tags": [
           "dashboards"
         ],
-        "summary": "Get home dashboard.",
         "operationId": "getHomeDashboard",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getHomeDashboardResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/permissions": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardPermissionsListByUID) instead",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ],
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "operationId": "getDashboardPermissionsListByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDashboardPermissionsListResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Please refer to [updated API](#/dashboards/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
-        "tags": [
-          "dashboards",
-          "permissions"
-        ],
-        "summary": "Updates permissions for a dashboard.",
-        "operationId": "updateDashboardPermissionsByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDashboardACLCommand"
-            }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionsByUID) instead",
-        "tags": [
-          "dashboards",
-          "versions"
-        ],
-        "summary": "Gets all existing versions for the dashboard.",
-        "operationId": "getDashboardVersionsByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dashboardVersionsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
-      "get": {
-        "description": "Please refer to [updated API](#/dashboards/getDashboardVersionByUID) instead",
-        "tags": [
-          "dashboards",
-          "versions"
-        ],
-        "summary": "Get a specific dashboard version.",
-        "operationId": "getDashboardVersionByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardVersionID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dashboardVersionResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -4023,12 +3882,14 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "tags": [
           "dashboards",
           "versions"
         ],
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "operationId": "restoreDashboardVersionByUID",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -4278,8 +4139,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "operationId": "getDataSourceIdByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4313,8 +4175,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "operationId": "getDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4343,8 +4206,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "operationId": "deleteDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4477,146 +4341,6 @@
           {
             "type": "string",
             "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/proxy/{id}/{datasource_proxy_route}": {
-      "get": {
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy GET calls.",
-        "operationId": "datasourceProxyGETcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy POST calls.",
-        "operationId": "datasourceProxyPOSTcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "DatasourceProxyParam",
-            "in": "body",
-            "required": true,
-            "schema": {}
-          },
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "(empty)"
-          },
-          "202": {
-            "description": "(empty)"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Data source proxy DELETE calls.",
-        "operationId": "datasourceProxyDELETEcalls",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
             "in": "path",
             "required": true
           },
@@ -5135,6 +4859,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5161,6 +4890,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           },
           {
             "name": "body",
@@ -5228,6 +4962,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5256,6 +4995,11 @@
             "name": "dataSourceUID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "name": "dataSourceType",
+            "in": "query"
           }
         ],
         "responses": {
@@ -5264,200 +5008,6 @@
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{id}": {
-      "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Get a single data source by Id.",
-        "operationId": "getDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDataSourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "put": {
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Update an existing data source by its sequential ID.",
-        "operationId": "updateDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDataSourceCommand"
-            }
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDataSourceByUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Delete an existing data source by id.",
-        "operationId": "deleteDataSourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{id}/health": {
-      "get": {
-        "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
-        "tags": [
-          "datasources",
-          "health"
-        ],
-        "summary": "Sends a health check request to the plugin datasource identified by the ID.",
-        "operationId": "checkDatasourceHealthByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{id}/resources/{datasource_proxy_route}": {
-      "get": {
-        "description": "Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead",
-        "tags": [
-          "datasources"
-        ],
-        "summary": "Fetch data source resources by Id.",
-        "operationId": "callDatasourceResourceByID",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -6166,8 +5716,14 @@
           },
           {
             "type": "string",
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma separated list of folder ID(s) to filter the elements by.\nDeprecated: Use FolderFilterUIDs instead.",
             "name": "folderFilter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A comma separated list of folder UID(s) to filter the elements by.",
+            "name": "folderFilterUIDs",
             "in": "query"
           },
           {
@@ -7724,11 +7280,13 @@
     },
     "/playlists": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlists.",
         "operationId": "searchPlaylists",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7753,11 +7311,13 @@
         }
       },
       "post": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Create playlist.",
         "operationId": "createPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7789,11 +7349,13 @@
     },
     "/playlists/{uid}": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist.",
         "operationId": "getPlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7821,11 +7383,13 @@
         }
       },
       "put": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Update playlist.",
         "operationId": "updatePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -7861,11 +7425,13 @@
         }
       },
       "delete": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1).",
         "tags": [
           "playlists"
         ],
         "summary": "Delete playlist.",
         "operationId": "deletePlaylist",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -7895,11 +7461,13 @@
     },
     "/playlists/{uid}/items": {
       "get": {
+        "description": "Please refer to [new API](?api=playlist.grafana.app-v1) instead (items are included in the playlist spec).",
         "tags": [
           "playlists"
         ],
         "summary": "Get playlist items.",
         "operationId": "getPlaylistItems",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -9926,8 +9494,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -9971,8 +9538,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -10013,8 +9579,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -12574,6 +12139,53 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "patch": {
+        "description": "Partially updates the SSO Settings for a provider. Only provided fields are updated.\n\nYou need to have a permission with action `settings:write` and scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Patch SSO Settings",
+        "operationId": "patchProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     }
   },
@@ -13587,6 +13199,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -13831,12 +13446,6 @@
     "BacktestConfig": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
         "condition": {
           "type": "string"
         },
@@ -13846,8 +13455,16 @@
             "$ref": "#/definitions/AlertQuery"
           }
         },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string"
         },
         "from": {
           "type": "string",
@@ -13856,11 +13473,21 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "keep_firing_for": {
+          "type": "string"
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "missing_series_evals_to_resolve": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_uid": {
+          "type": "string"
         },
         "no_data_state": {
           "type": "string",
@@ -13870,12 +13497,18 @@
             "OK"
           ]
         },
+        "rule_group": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
         "to": {
           "type": "string",
           "format": "date-time"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -14464,9 +14097,6 @@
           "type": "string"
         }
       }
-    },
-    "CookieType": {
-      "type": "string"
     },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
@@ -16780,6 +16410,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -16789,6 +16425,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -18080,7 +17722,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -18455,6 +18097,10 @@
         "avatarUrl": {
           "type": "string"
         },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
         "email": {
           "type": "string"
         },
@@ -18666,12 +18312,6 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -18701,11 +18341,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -19265,6 +18902,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -19274,6 +18917,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -19309,15 +18958,6 @@
         }
       }
     },
-    "PreferencesCookiePreferences": {
-      "description": "+k8s:openapi-gen=true",
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
-      }
-    },
     "PreferencesNavbarPreference": {
       "description": "+k8s:openapi-gen=true",
       "type": "object",
@@ -19344,9 +18984,6 @@
       "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/PreferencesCookiePreferences"
-        },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
           "type": "string"
@@ -20312,6 +19949,14 @@
         }
       }
     },
+    "RemoteWriteConfig": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
     "Report": {
       "type": "object",
       "properties": {
@@ -20456,6 +20101,9 @@
     "ReportOptions": {
       "type": "object",
       "properties": {
+        "csvEncoding": {
+          "type": "string"
+        },
         "layout": {
           "type": "string"
         },
@@ -21011,6 +20659,12 @@
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "limit": {
           "type": "integer",
           "format": "int64"
@@ -21020,6 +20674,12 @@
         },
         "query_offset": {
           "type": "string"
+        },
+        "remote_write": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteWriteConfig"
+          }
         },
         "rules": {
           "type": "array",
@@ -22078,6 +21738,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         }
@@ -22736,47 +22399,11 @@
         }
       }
     },
-    "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
-      "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
-      "properties": {
-        "ForceQuery": {
-          "type": "boolean"
-        },
-        "Fragment": {
-          "type": "string"
-        },
-        "Host": {
-          "type": "string"
-        },
-        "OmitHost": {
-          "type": "boolean"
-        },
-        "Opaque": {
-          "type": "string"
-        },
-        "Path": {
-          "type": "string"
-        },
-        "RawFragment": {
-          "type": "string"
-        },
-        "RawPath": {
-          "type": "string"
-        },
-        "RawQuery": {
-          "type": "string"
-        },
-        "Scheme": {
-          "type": "string"
-        },
-        "User": {
-          "$ref": "#/definitions/Userinfo"
-        }
-      }
-    },
-    "Unstructured": {
+    "URL": { 
+			"type": "string", 
+			"format": "url" 
+		},
+		"Unstructured": {
       "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
@@ -23021,12 +22648,6 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -23057,11 +22678,8 @@
           ]
         },
         "timezone": {
-          "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
+          "type": "string"
         },
         "weekStart": {
           "type": "string"
@@ -23346,6 +22964,10 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "email": {
           "type": "string"
@@ -23981,6 +23603,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },
@@ -25674,7 +25299,10 @@
     "searchTeamGroupsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        }
       }
     },
     "searchTeamsResponse": {

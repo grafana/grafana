@@ -1,6 +1,7 @@
 import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
 import { multiLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery';
 import { multiLineFullQueryWithCaseClause } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
@@ -11,7 +12,7 @@ import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
-import { LogGroup, LogGroupField } from '../../../types';
+import { LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition from '../definition';
 import {
   SELECT,
@@ -96,14 +97,22 @@ describe('LogsSQLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 103 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(
-        expect.arrayContaining([FROM, `${FROM} \`logGroups(logGroupIdentifier: [...])\``, CASE, ...ALL_FUNCTIONS])
+        expect.arrayContaining([
+          FROM,
+          `${FROM} \`$__logGroups\``,
+          `${FROM} \`logGroups(logGroupIdentifier: [...])\``,
+          CASE,
+          ...ALL_FUNCTIONS,
+        ])
       );
     });
 
-    it('returns logGroups suggestion after from keyword', async () => {
+    it('returns logGroups and $__logGroups suggestion after from keyword', async () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 108 });
       const suggestionLabels = suggestions.map((s) => s.label);
-      expect(suggestionLabels).toEqual(expect.arrayContaining(['`logGroups(logGroupIdentifier: [...])`']));
+      expect(suggestionLabels).toEqual(
+        expect.arrayContaining(['`$__logGroups`', '`logGroups(logGroupIdentifier: [...])`'])
+      );
     });
 
     it('returns where, having, limit, group by, order by, and join suggestions after from arguments', async () => {

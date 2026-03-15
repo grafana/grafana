@@ -1,6 +1,8 @@
+import { DataSourceRef } from '@grafana/schema';
+import { ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import { LoadingState } from './data';
 import { MetricFindValue } from './datasource';
-import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
 
@@ -31,6 +33,8 @@ export enum VariableRefresh {
   onDashboardLoad,
   onTimeRangeChanged,
 }
+
+export type VariableRegexApplyTo = 'value' | 'text';
 
 export enum VariableSort {
   disabled,
@@ -89,6 +93,7 @@ export interface VariableOption {
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
+  properties?: Record<string, any>;
 }
 
 export interface IntervalVariableModel extends VariableWithOptions {
@@ -101,6 +106,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 
 export interface CustomVariableModel extends VariableWithMultiSupport {
   type: 'custom';
+  valuesFormat?: 'csv' | 'json';
 }
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
@@ -117,6 +123,7 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   queryValue?: string;
   query: any;
   regex: string;
+  regexApplyTo?: VariableRegexApplyTo;
   refresh: VariableRefresh;
   staticOptions?: VariableOption[];
   staticOptionsOrder?: 'before' | 'after' | 'sorted';
@@ -192,6 +199,7 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  origin?: ControlSourceRef;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

@@ -26,8 +26,11 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -259,16 +262,18 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId =
-    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-      ? UNCONFIGURED_PANEL_PLUGIN_ID
-      : 'timeseries';
+export function getDefaultPluginId(): string {
+  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+    ? UNCONFIGURED_PANEL_PLUGIN_ID
+    : 'timeseries';
+}
 
-  const newPanelTitle =
-    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      ? ''
-      : t('dashboard.new-panel-title', 'New panel');
+export function getDefaultVizPanel(): VizPanel {
+  const defaultPluginId = getDefaultPluginId();
+
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
@@ -287,14 +292,16 @@ export function getDefaultVizPanel(): VizPanel {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
-    $data: new SceneDataTransformer({
-      $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
-        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-        $behaviors: [new DashboardDatasourceBehaviour({})],
-      }),
-      transformations: [],
-    }),
+    $data: datasourceSettings
+      ? new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            queries: [{ refId: 'A' }],
+            datasource: getDataSourceRef(datasourceSettings),
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+          transformations: [],
+        })
+      : undefined,
   });
 }
 
@@ -420,6 +427,23 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
 
+export const getLayoutForObject = (
+  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene
+): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
+  const gridManagerForObject = sceneGraph.findObject(
+    object,
+    (currentSceneObject) =>
+      currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
+  );
+  if (
+    gridManagerForObject instanceof AutoGridLayoutManager ||
+    gridManagerForObject instanceof DefaultGridLayoutManager
+  ) {
+    return gridManagerForObject;
+  }
+  return null;
+};
+
 // @returns true if the panel is a valid library panel reference
 // a valid library panel reference is a panel with this
 // property: `libraryPanel: {name: string, uid: string}`
@@ -466,4 +490,12 @@ export const dashboardLog = createLogger('Dashboard');
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
   return !!changes.diffCount;
+}
+
+export function isDashboardSceneEnabled(): boolean {
+  return !!(config.featureToggles.dashboardScene || config.featureToggles.dashboardNewLayouts);
+}
+
+export function isPublicDashboardsSceneEnabled(): boolean {
+  return !!(config.featureToggles.publicDashboardsScene || config.featureToggles.dashboardNewLayouts);
 }

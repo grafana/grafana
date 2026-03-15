@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 import { PanelLogEvents } from 'app/core/log_events';
 
 interface Props {
