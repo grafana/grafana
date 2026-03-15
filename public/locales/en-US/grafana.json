@@ -10140,6 +10140,10 @@
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sort-by": "Sort by {{column}}",  
+      "sort-column": "Sort column",
+      "ascending": "ascending",
+      "descending": "descending",
       "sparkline": {
         "no-data": "no data"
       },

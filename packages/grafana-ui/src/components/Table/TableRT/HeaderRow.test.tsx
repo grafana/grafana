@@ -1,0 +1,95 @@
+import { render, screen } from '@testing-library/react';
+import { HeaderGroup } from 'react-table';
+
+import { HeaderRow } from './HeaderRow';
+import { TableStyles } from './styles';
+
+describe('HeaderRow', () => {
+  describe('aria-labels for sort buttons', () => {
+    it('has "Sort by {column}" when column is not sorted', () => {
+      const columns = [{ headerText: 'temperature', isSorted: false }];
+
+      setup(columns);
+
+      expect(screen.getByRole('button', { name: 'Sort by temperature' })).toHaveAttribute(
+        'aria-label',
+        'Sort by temperature'
+      );
+    });
+
+    it('has "Sort by {column}, ascending" when column is sorted ascending', () => {
+      const columns = [
+        {
+          headerText: 'temperature',
+          isSorted: true,
+          isSortedDesc: false,
+        },
+      ];
+
+      setup(columns);
+
+      expect(screen.getByRole('button', { name: /Sort by temperature/ })).toHaveAttribute(
+        'aria-label',
+        'Sort by temperature, ascending'
+      );
+    });
+
+    it('has "Sort by {column}, descending" when column is sorted descending', () => {
+      const columns = [{ headerText: 'temperature', isSorted: true, isSortedDesc: true }];
+
+      setup(columns);
+
+      expect(screen.getByRole('button', { name: /Sort by temperature/ })).toHaveAttribute(
+        'aria-label',
+        'Sort by temperature, descending'
+      );
+    });
+
+    it('uses "Sort column" fallback when header content is not a string', () => {
+      const columnWithNonStringHeader = {
+        ...createMockColumn({ headerText: 'temperature' }),
+        render: () => null,
+      };
+      const columns = [columnWithNonStringHeader];
+
+      setup(columns);
+
+      expect(screen.getByRole('button', { name: 'Sort column' })).toHaveAttribute('aria-label', 'Sort column');
+    });
+  });
+});
+function createMockColumn(columnOverrides: MockColumnOverrides) {
+  const { headerText, canSort = true, isSorted = false, isSortedDesc = false } = columnOverrides;
+
+  return {
+    getHeaderProps: () => ({ key: `col-${headerText}`, style: {} }),
+    getSortByToggleProps: () => ({}),
+    render: (key: string) => (key === 'Header' ? headerText : null),
+    field: { config: { custom: {} } },
+    canSort,
+    isSorted,
+    isSortedDesc,
+    canResize: false,
+    isResizing: false,
+    justifyContent: 'flex-start',
+    totalLeft: 0,
+  };
+}
+
+interface MockColumnOverrides {
+  headerText?: string;
+  canSort?: boolean;
+  isSorted?: boolean;
+  isSortedDesc?: boolean;
+}
+
+function setup(columns: MockColumnOverrides[]) {
+  const mockHeaderGroups = [
+    {
+      getHeaderGroupProps: () => ({ key: 'hg1' }),
+      headers: columns.map(createMockColumn),
+    },
+  ];
+  // @ts-ignore
+  render(<HeaderRow headerGroups={mockHeaderGroups as HeaderGroup[]} showTypeIcons={true} tableStyles={{} as TableStyles} />);
+}

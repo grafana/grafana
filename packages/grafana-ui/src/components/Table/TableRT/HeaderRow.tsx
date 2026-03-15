@@ -2,6 +2,7 @@ import { HeaderGroup, Column } from 'react-table';
 
 import { Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, TFunction } from '@grafana/i18n';
 
 import { getFieldTypeIcon } from '../../../types/icon';
 import { Icon } from '../../Icon/Icon';
@@ -57,9 +58,14 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
 
   let headerContent = column.render('Header');
 
+  const ariaLabel =
+    typeof headerContent === 'string'
+      ? getAriaLabel(headerContent, column.isSortedDesc, column.isSorted, t)
+      : t('grafana-ui.table.sort-column', 'Sort column');
+
   let sortHeaderContent = column.canSort && (
     <>
-      <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel}>
+      <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} aria-label={ariaLabel}>
         {showTypeIcons && (
           <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
         )}
@@ -89,3 +95,11 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
     </div>
   );
 }
+
+const getAriaLabel = (column: string, isDesc: boolean, isSorted: boolean, t: TFunction) => {
+  const columnLabel = t('grafana-ui.table.sort-by-column', 'Sort by {{column}}', { column });
+  const directionLabel = isDesc
+    ? t('grafana-ui.table.descending', 'descending')
+    : t('grafana-ui.table.ascending', 'ascending');
+  return isSorted ? `${columnLabel}, ${directionLabel}` : columnLabel;
+};
