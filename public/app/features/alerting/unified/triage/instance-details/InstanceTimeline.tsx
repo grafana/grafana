@@ -385,7 +385,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
             size="sm"
             icon="eye"
             href={createRelativeUrl(
-              `/alerting/notifications-history/view/${notification.uuid}/${encodeURIComponent(notification.timestamp)}`
+              `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
             )}
           >
             {t('alerting.instance-details.view-notification-detail', 'Details')}

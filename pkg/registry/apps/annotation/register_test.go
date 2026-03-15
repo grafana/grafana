@@ -4,25 +4,28 @@ import (
 	"strings"
 	"testing"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
-	ctx := t.Context()
+	ctx := identity.WithServiceIdentityContext(t.Context(), 1)
 
 	cfg := &setting.Cfg{}
 	nsMapper := request.GetNamespaceMapper(cfg)
 
 	store := NewMemoryStore()
 	adapter := &k8sRESTAdapter{
-		store:  store,
-		mapper: nsMapper,
+		store:        store,
+		mapper:       nsMapper,
+		accessClient: authtypes.FixedAccessClient(true),
 	}
 
 	t.Run("should generate name from generateName", func(t *testing.T) {

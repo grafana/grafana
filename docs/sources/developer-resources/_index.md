@@ -9,6 +9,8 @@ labels:
     - cloud
 weight: 900
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/
+aliases:
+  - developers/
 ---
 
 # Developer resources
