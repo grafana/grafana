@@ -10140,7 +10140,7 @@
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
-      "sort-by": "Sort by {{column}}",  
+      "sort-by": "Sort by column {{column}}",  
       "sort-column": "Sort column",
       "ascending": "ascending",
       "descending": "descending",

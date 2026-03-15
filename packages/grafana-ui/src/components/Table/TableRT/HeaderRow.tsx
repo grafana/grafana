@@ -97,7 +97,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
 }
 
 const getAriaLabel = (column: string, isDesc: boolean, isSorted: boolean, t: TFunction) => {
-  const columnLabel = t('grafana-ui.table.sort-by-column', 'Sort by {{column}}', { column });
+  const columnLabel = t('grafana-ui.table.sort-by-column', 'Sort by column {{column}}', { column });
   const directionLabel = isDesc
     ? t('grafana-ui.table.descending', 'descending')
     : t('grafana-ui.table.ascending', 'ascending');
