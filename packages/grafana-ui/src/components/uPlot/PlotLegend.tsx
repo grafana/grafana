@@ -7,6 +7,8 @@ import {
   extractFacetedLabels,
   getFieldDisplayName,
   getFieldSeriesColor,
+  reduceField,
+  ReducerID,
   resolveFacetedFilterNames,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -48,6 +50,11 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
     const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
     if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
+
+    // Don't count all-null series as visible (avoids placeholder with Total: 0)
+    if (reduceField({ field, reducers: [ReducerID.allIsNull] })[ReducerID.allIsNull]) {
       return false;
     }
 
@@ -93,6 +100,13 @@ export const PlotLegend = memo(function PlotLegend({
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
       if (!field || field.config.custom?.hideFrom?.legend) {
+        return undefined;
+      }
+
+      // Don't show series with all null values in legend - they display misleading "Total: 0"
+      // Fixes https://github.com/grafana/grafana/issues/102205
+      const allIsNull = reduceField({ field, reducers: [ReducerID.allIsNull] })[ReducerID.allIsNull];
+      if (allIsNull) {
         return undefined;
       }
 
