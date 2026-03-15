@@ -2688,6 +2688,7 @@ __metadata:
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
   dependencies:
     "@emotion/css": "npm:11.13.5"
+    "@grafana/azure-sdk": "npm:0.1.0"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
     "@grafana/i18n": "npm:13.0.0-pre"
@@ -3349,12 +3350,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/azure-sdk@npm:0.0.8":
-  version: 0.0.8
-  resolution: "@grafana/azure-sdk@npm:0.0.8"
+"@grafana/azure-sdk@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/azure-sdk@npm:0.1.0"
   dependencies:
-    react-dom: "npm:^19.2.0"
-  checksum: 10/9fc1571658f73b321f1e53761e15add98541c5e743b90ed6c13e55a176e6667a62883435165efe20da45bf8ed94f9d229cdcb4761bc00cba1304f0ef8ee28954
+    react-dom: "npm:18.3.1"
+  checksum: 10/cd2dc07d0ab754eaa4c5e015dbba6c3541dab20132f5c21f4e84e34aeba1b2185fe428b436817c9a630fbfc5cf8e2958007d1feb103e56f2255ed0405ddd129c
   languageName: node
   linkType: hard
 
@@ -20092,7 +20093,7 @@ __metadata:
     "@grafana/api-clients": "workspace:*"
     "@grafana/assistant": "npm:0.1.24"
     "@grafana/aws-sdk": "npm:^0.10.1"
-    "@grafana/azure-sdk": "npm:0.0.8"
+    "@grafana/azure-sdk": "npm:0.1.0"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.2.0"
@@ -28756,7 +28757,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0, react-dom@npm:^19.2.0":
+"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0":
   version: 19.2.0
   resolution: "react-dom@npm:19.2.0"
   dependencies:
