@@ -1,4 +1,4 @@
-import { createInteractionEvent, EventProperty } from '@grafana/runtime/internal';
+import { createInteractionEvent } from '@grafana/runtime/internal';
 
 import { FEATURE_VARIANTS } from '../constants';
 
