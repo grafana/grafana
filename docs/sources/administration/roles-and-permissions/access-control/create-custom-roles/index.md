@@ -91,9 +91,9 @@ Use custom roles only when you need fine-grained control that these options don'
 
 Creating and editing custom roles is not currently possible in the Grafana UI. Instead, use one of the following methods:
 
-- The RBAC HTTP API
-- Terraform
-- Grafana provisioning using a YAML file
+- The [RBAC HTTP API](#create-custom-roles-using-the-http-api)
+- [Terraform](#create-custom-roles-using-terraform)
+- [Grafana provisioning](#create-custom-roles-using-file-based-provisioning) using a YAML file
 
 ## Before you begin
 
