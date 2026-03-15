@@ -272,6 +272,12 @@ export function NestedFolderPicker({
   let label = getSelectedFolderResult.data?.title;
   if (value === '') {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
+  } else if (getSelectedFolderResult.data?.parents?.length && getSelectedFolderResult.data?.title) {
+    // Include parent hierarchy when available (e.g. "Development Environment / accounts")
+    label = [
+      ...getSelectedFolderResult.data.parents.map((p) => p.title),
+      getSelectedFolderResult.data.title,
+    ].join(' / ');
   }
 
   // Display the folder name and provisioning status when the picker is closed
