@@ -126,7 +126,7 @@ describe('useDefaultValues', () => {
     expect(result.current.error).toBeDefined();
   });
 
-  it('returns Ready with null values when no repository matches', async () => {
+  it('returns Error with null values when no repository matches', async () => {
     server.use(
       http.get(`${BASE}/settings`, () =>
         HttpResponse.json({

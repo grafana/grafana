@@ -27,7 +27,7 @@ interface RepositoryViewData {
   folder?: Folder;
   status: RepoViewStatus;
   error?: unknown;
-  isLoading?: boolean; // TODO: status now contains loading state, this can be remove
+  isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
 }

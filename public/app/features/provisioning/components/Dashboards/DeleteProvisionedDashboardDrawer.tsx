@@ -1,3 +1,4 @@
+import { Spinner } from '@grafana/ui';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
@@ -27,7 +28,11 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
     error,
   } = useProvisionedDashboardData(dashboard);
 
-  if (!defaultValues || repoDataStatus === RepoViewStatus.Error) {
+  if (repoDataStatus === RepoViewStatus.Loading || !defaultValues) {
+    return <Spinner />;
+  }
+
+  if (repoDataStatus === RepoViewStatus.Error) {
     return <FormLoadingErrorAlert error={error} />;
   }
 
