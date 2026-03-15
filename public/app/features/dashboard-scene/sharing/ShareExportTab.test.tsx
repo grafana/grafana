@@ -4,6 +4,7 @@ import {
   Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
+  defaultDashboardPreferences,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as dashboardApiModule from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -35,6 +36,7 @@ const mockV1Spec: DashboardDataDTO = {
 
 const mockV2Spec: DashboardV2Spec = {
   title: 'Test Dashboard V2',
+  preferences: defaultDashboardPreferences(),
   description: 'Test V2 dashboard',
   annotations: [],
   cursorSync: 'Off',

@@ -22,7 +22,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultDashboardPreferences, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -1772,6 +1772,7 @@ function createV1DashboardWithTransformations(transformationIds: string[]): Dash
 function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV2Spec {
   return {
     title: 'Test Dashboard V2',
+    preferences: defaultDashboardPreferences(),
     annotations: [],
     cursorSync: 'Off',
     editable: true,
@@ -1866,6 +1867,7 @@ function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV
 function createV2DashboardWithTransformations(transformationIds: string[]): DashboardV2Spec {
   return {
     title: 'Test Dashboard V2',
+    preferences: defaultDashboardPreferences(),
     annotations: [],
     cursorSync: 'Off',
     editable: true,

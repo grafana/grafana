@@ -2,6 +2,7 @@ import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
+  defaultDashboardPreferences,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResourceList } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
@@ -111,6 +112,7 @@ describe('UnifiedDashboardAPI', () => {
       const mockCommand: SaveDashboardCommand<DashboardV2Spec> = {
         dashboard: {
           title: 'test',
+          preferences: defaultDashboardPreferences(),
           elements: {},
           annotations: [],
           cursorSync: 'Crosshair',

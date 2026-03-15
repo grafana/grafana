@@ -1,4 +1,8 @@
-import { Spec as DashboardV2Spec, defaultDataQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  Spec as DashboardV2Spec,
+  defaultDataQueryKind,
+  defaultDashboardPreferences,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 export const panelWithQueriesOnly = {
@@ -768,6 +772,7 @@ export const testDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
   },
   spec: {
     title: 'V2 Test Dashboard',
+    preferences: defaultDashboardPreferences(),
     description: 'Test dashboard for V2 schema',
     tags: [],
     cursorSync: 'Off',

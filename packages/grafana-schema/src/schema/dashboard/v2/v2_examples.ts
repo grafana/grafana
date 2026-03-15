@@ -1,7 +1,8 @@
-import { defaultDataQueryKind, Spec } from './index';
+import { defaultDashboardPreferences, defaultDataQueryKind, Spec } from './index';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
+  preferences: defaultDashboardPreferences(),
   description: 'This is a default dashboard',
   cursorSync: 'Off',
   liveNow: false,

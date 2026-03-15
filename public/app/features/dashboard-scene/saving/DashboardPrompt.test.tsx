@@ -1,6 +1,6 @@
 import { SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultDashboardPreferences, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { ObjectMeta } from 'app/features/apiserver/types';
 
@@ -288,6 +288,7 @@ describe('DashboardPrompt', () => {
         it('should return true for completely empty dashboard v2', () => {
           const emptyDashboardV2: DashboardV2Spec = {
             title: '',
+            preferences: defaultDashboardPreferences(),
             tags: [],
             elements: {},
             layout: {

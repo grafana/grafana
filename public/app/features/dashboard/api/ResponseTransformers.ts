@@ -181,6 +181,7 @@ export function ensureV2Response(
 
   const spec: DashboardV2Spec = {
     title: dashboard.title,
+    preferences: dashboardDefaults.preferences,
     description: dashboard.description,
     tags: dashboard.tags ?? [],
     cursorSync: transformCursorSynctoEnum(dashboard.graphTooltip),

@@ -8,6 +8,7 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
+  defaultDashboardPreferences,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
@@ -854,6 +855,7 @@ describe('ResponseTransformers', () => {
         },
         spec: {
           title: 'Dashboard Title',
+          preferences: defaultDashboardPreferences(),
           description: 'Dashboard Description',
           tags: ['tag1', 'tag2'],
           cursorSync: 'Off',

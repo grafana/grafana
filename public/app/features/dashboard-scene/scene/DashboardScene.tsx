@@ -111,9 +111,16 @@ type CopiedPanelStyles = {
   styles: PanelStyles;
 };
 
+export interface DashboardScenePreferences {
+  defaultLayoutTemplate?: DashboardLayoutManager;
+}
+
 export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | undefined;
+
+  /** Dashboard-specific preferences **/
+  preferences: DashboardScenePreferences;
 
   /** The title */
   title: string;
@@ -213,11 +220,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
+      body:
+        state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
+      preferences: state.preferences ?? {},
     });
 
     this.serializer =

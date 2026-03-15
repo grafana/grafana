@@ -30,6 +30,7 @@ import {
   QueryVariableKind,
   SwitchVariableKind,
   TextVariableKind,
+  defaultDashboardPreferences,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
@@ -747,6 +748,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         },
         spec: {
           title: 'Dashboard with annotation options',
+          preferences: defaultDashboardPreferences(),
           editable: true,
           preload: false,
           liveNow: false,
