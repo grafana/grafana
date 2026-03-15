@@ -227,6 +227,34 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit?: number
   ): Promise<string[]> => {
+    const effectiveLimit = this.getEffectiveLimit(limit);
+
+    // For __name__ (metric name), always use /label/__name__/values instead of /series.
+    // /series returns full series data and can crash/fail when many series match (e.g. 1.5M+).
+    // /label/__name__/values returns only unique metric names and handles match[] efficiently.
+    // Fixes https://github.com/grafana/grafana/issues/102219
+    if (removeQuotesIfExist(labelKey) === METRIC_LABEL) {
+      const timeParams = this.datasource.getAdjustedInterval(timeRange);
+      const effectiveMatch = !match || match === EMPTY_SELECTOR ? undefined : match;
+      const cacheKey = `${effectiveMatch ?? ''}-__name__`;
+      const maybeCachedValues = this._cache.getLabelValues(timeRange, cacheKey, effectiveLimit);
+      if (maybeCachedValues) {
+        return maybeCachedValues;
+      }
+
+      const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(labelKey));
+      const searchParams = {
+        limit: effectiveLimit,
+        ...timeParams,
+        ...(effectiveMatch ? { 'match[]': effectiveMatch } : {}),
+      };
+      const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
+      const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+      const labelValues = value ?? [];
+      this._cache.setLabelValues(timeRange, cacheKey, effectiveLimit, labelValues);
+      return labelValues;
+    }
+
     let effectiveMatch = '';
     if (!match || match === EMPTY_SELECTOR) {
       // Just and empty matcher {} or no matcher
@@ -245,7 +273,6 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
       effectiveMatch = `{${metricFilter}${labelFilters}}`;
     }
 
-    const effectiveLimit = this.getEffectiveLimit(limit);
     const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, effectiveLimit);
     if (maybeCachedValues) {
       return maybeCachedValues;

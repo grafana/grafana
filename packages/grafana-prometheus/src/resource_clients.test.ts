@@ -367,6 +367,36 @@ describe('SeriesApiClient', () => {
   });
 
   describe('queryLabelValues', () => {
+    it('should use /label/__name__/values for metric autocomplete when labels are selected (avoids /series overload)', async () => {
+      mockRequest.mockResolvedValueOnce(['metric1', 'metric2']);
+
+      const result = await client.queryLabelValues(mockTimeRange, '__name__', '{label="value"}');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/label/__name__/values',
+        expect.objectContaining({
+          'match[]': '{label="value"}',
+        }),
+        expect.any(Object)
+      );
+      expect(result).toEqual(['metric1', 'metric2']);
+    });
+
+    it('should use /label/__name__/values without match when no labels selected', async () => {
+      mockRequest.mockResolvedValueOnce(['metric1', 'metric2', 'metric3']);
+
+      const result = await client.queryLabelValues(mockTimeRange, '__name__');
+
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/label/__name__/values',
+        expect.not.objectContaining({
+          'match[]': expect.anything(),
+        }),
+        expect.any(Object)
+      );
+      expect(result).toEqual(['metric1', 'metric2', 'metric3']);
+    });
+
     it('should fetch and process label values from series', async () => {
       mockRequest.mockResolvedValueOnce([
         { __name__: 'metric1', job: 'grafana' },
