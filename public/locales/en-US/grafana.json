@@ -4052,6 +4052,12 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "presets": {
+      "fixed-purple-hue": "Fixed purple hue",
+      "palette-classic": "Palette classic",
+      "palette-classic-stacked": "Palette classic stacked",
+      "viridis-hue": "Viridis hue"
+    },
     "suggestions": {
       "horizontal": "Horizontal bar chart",
       "hz-stacked": "Horizontal bar chart - stacked",
@@ -8850,6 +8856,7 @@
       "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     },
+    "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -14958,6 +14965,7 @@
       "annotation-region-label": "Annotation region"
     },
     "annotation-tooltip2": {
+      "cluster-header": "annotations",
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },

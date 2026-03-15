@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	authtypes "github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -57,6 +58,7 @@ func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		cfg: cfg,
@@ -83,8 +85,9 @@ func RegisterAppInstaller(
 
 	// Layer 2→3: Wrap Store interface with K8s REST adapter
 	installer.k8sAdapter = &k8sRESTAdapter{
-		store:  store,
-		mapper: mapper,
+		store:        store,
+		mapper:       mapper,
+		accessClient: accessClient,
 	}
 
 	// Create the tags handler
@@ -96,7 +99,7 @@ func RegisterAppInstaller(
 	tagHandler := newTagsHandler(tagProvider)
 
 	// Create the search handler
-	searchHandler := newSearchHandler(store)
+	searchHandler := newSearchHandler(store, accessClient)
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -170,7 +173,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
 
-		// Any authenticated user can access the API
+		// Allow all authenticated users; fine-grained authz is handled per-operation in k8sRESTAdapter.
 		return authorizer.DecisionAllow, "", nil
 	})
 }
@@ -228,6 +231,7 @@ type k8sRESTAdapter struct {
 	store          Store
 	mapper         grafrequest.NamespaceMapper
 	tableConverter rest.TableConvertor
+	accessClient   authtypes.AccessClient
 }
 
 func (s *k8sRESTAdapter) New() runtime.Object {
@@ -318,16 +322,44 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 		return nil, err
 	}
 
-	// Return list with continue token for pagination
+	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
+	filtered := make([]annotationV0.Annotation, 0, len(result.Items))
+	for _, anno := range result.Items {
+		allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, &anno, utils.VerbList)
+		if err != nil {
+			return nil, err
+		}
+		if allowed {
+			filtered = append(filtered, anno)
+		}
+	}
+
 	return &annotationV0.AnnotationList{
-		Items:    result.Items,
+		Items:    filtered,
 		ListMeta: metav1.ListMeta{Continue: result.Continue},
 	}, nil
 }
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := request.NamespaceValue(ctx)
-	return s.store.Get(ctx, namespace, name)
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		// Return NotFound to avoid leaking existence.
+		return nil, apierrors.NewNotFound(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+		)
+	}
+
+	return annotation, nil
 }
 
 func (s *k8sRESTAdapter) Create(ctx context.Context,
@@ -335,22 +367,33 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	resource, ok := obj.(*annotationV0.Annotation)
+	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, fmt.Errorf("expected annotation")
 	}
 
-	// Validate either name or generateName is provided
-	if resource.Name == "" && resource.GenerateName == "" {
+	namespace := request.NamespaceValue(ctx)
+
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbCreate)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, apierrors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			annotation.Name, fmt.Errorf("insufficient permissions"),
+		)
+	}
+
+	if annotation.Name == "" && annotation.GenerateName == "" {
 		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
 	}
 
-	// If a name is empty and generateName is not, generate a unique name using the provided prefix
-	if resource.Name == "" && resource.GenerateName != "" {
-		resource.Name = resource.GenerateName + util.GenerateShortUID()
+	if annotation.Name == "" && annotation.GenerateName != "" {
+		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
-	return s.store.Create(ctx, resource)
+	return s.store.Create(ctx, annotation)
 }
 
 func (s *k8sRESTAdapter) Update(ctx context.Context,
@@ -363,7 +406,13 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 ) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
 
-	obj, err := objInfo.UpdatedObject(ctx, nil)
+	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
+	existing, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, existing)
 	if err != nil {
 		return nil, false, err
 	}
@@ -381,6 +430,28 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("namespace in URL does not match namespace in body")
 	}
 
+	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
+	allowed, err := canAccessAnnotation(ctx, s.accessClient, namespace, existing, utils.VerbUpdate)
+	if err != nil {
+		return nil, false, err
+	}
+	if !allowed {
+		return nil, false, apierrors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			existing.Name, fmt.Errorf("insufficient permissions"),
+		)
+	}
+	allowed, err = canAccessAnnotation(ctx, s.accessClient, namespace, resource, utils.VerbUpdate)
+	if err != nil {
+		return nil, false, err
+	}
+	if !allowed {
+		return nil, false, apierrors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			resource.Name, fmt.Errorf("insufficient permissions"),
+		)
+	}
+
 	updated, err := s.store.Update(ctx, resource)
 	if err != nil {
 		return nil, false, err
@@ -391,10 +462,80 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace := request.NamespaceValue(ctx)
-	err := s.store.Delete(ctx, namespace, name)
+
+	annotation, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbDelete)
+	if err != nil {
+		return nil, false, err
+	}
+	if !allowedDelete {
+		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
+		allowedRead, err := canAccessAnnotation(ctx, s.accessClient, namespace, annotation, utils.VerbGet)
+		if err != nil {
+			return nil, false, err
+		}
+		if !allowedRead {
+			return nil, false, apierrors.NewNotFound(
+				annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name,
+			)
+		}
+		return nil, false, apierrors.NewForbidden(
+			annotationV0.AnnotationKind().GroupVersionResource().GroupResource(),
+			name, fmt.Errorf("insufficient permissions"),
+		)
+	}
+
+	err = s.store.Delete(ctx, namespace, name)
 	return nil, false, err
 }
 
 func (s *k8sRESTAdapter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for annotation is not available")
+}
+
+// canAccessAnnotation checks that the caller has permission to perform verb on anno,
+// using the legacy annotation authorization model (dashboard-scoped or org-scoped).
+func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClient, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
+	if anno == nil {
+		return false, apierrors.NewBadRequest("annotation must not be nil")
+	}
+
+	authInfo, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return false, apierrors.NewUnauthorized("no identity found for request")
+	}
+
+	var checkReq authtypes.CheckRequest
+
+	if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
+		// Org-level annotation: scope is annotations:type:organization.
+		checkReq = authtypes.CheckRequest{
+			Verb:      verb,
+			Group:     "annotation.grafana.app",
+			Resource:  "annotations",
+			Namespace: namespace,
+			Name:      "organization",
+		}
+	} else {
+		// Dashboard annotation: use dashboard.grafana.app/annotations virtual resource,
+		// which maps to annotation actions scoped to dashboards:uid:<dashboardUID>.
+		checkReq = authtypes.CheckRequest{
+			Verb:      verb,
+			Group:     "dashboard.grafana.app",
+			Resource:  "annotations",
+			Namespace: namespace,
+			Name:      *anno.Spec.DashboardUID,
+		}
+	}
+
+	resp, err := accessClient.Check(ctx, authInfo, checkReq, "")
+	if err != nil {
+		return false, fmt.Errorf("authz check failed: %w", err)
+	}
+
+	return resp.Allowed, nil
 }
