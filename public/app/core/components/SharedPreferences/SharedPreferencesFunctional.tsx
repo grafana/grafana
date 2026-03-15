@@ -1,5 +1,9 @@
-import { memo, useMemo, useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 
+import {
+  useGetPreferencesQuery,
+  useUpdatePreferencesMutation,
+} from '@grafana/api-clients/rtkq/preferences/generic/v1alpha1';
 import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,18 +26,17 @@ import {
   WeekStart,
   WeekStartPicker,
 } from '@grafana/ui';
-import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props, State } from './utils';
+import { getLanguageOptions, getRegionalFormatOptions, getStyles, getTranslatedThemeName, Props } from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
-  const [state, setState] = useState<UserPreferencesDTO & State>({
-    isLoading: false,
-    isSubmitting: false,
+  const { data: prefs, isLoading } = useGetPreferencesQuery({ resourceUri: props.resourceUri });
+  const [updatePreferences, { isLoading: isSubmitting }] = useUpdatePreferencesMutation();
+  const [state, setState] = useState<UserPreferencesDTO>({
     theme: '',
     timezone: '',
     weekStart: '',
@@ -46,8 +49,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   const themes = getSelectableThemes();
   const styles = useStyles2(getStyles);
-
-  const service = useMemo(() => new PreferencesService(props.resourceUri), [props.resourceUri]);
 
   // Options are translated, so must be called after init but call them
   // in constructor to avoid memo-break of array changing every render
@@ -63,30 +64,20 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
 
   useEffect(() => {
-    const loadPreferences = async () => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      try {
-        const prefs = await service.load();
-        setState((prev) => ({
-          ...prev,
-          homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
-          theme: prefs.theme ?? prev.theme,
-          timezone: prefs.timezone ?? prev.timezone,
-          weekStart: prefs.weekStart ?? prev.weekStart,
-          language: prefs.language ?? prev.language,
-          regionalFormat: prefs.regionalFormat ?? prev.regionalFormat,
-          queryHistory: prefs.queryHistory ?? prev.queryHistory,
-          navbar: prefs.navbar ?? prev.navbar,
-        }));
-      } catch (err) {
-        console.error('Failed to load preferences', err);
-      } finally {
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    loadPreferences();
-  }, [service]);
+    if (prefs) {
+      setState((prev) => ({
+        ...prev,
+        homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
+        theme: prefs.theme ?? prev.theme,
+        timezone: prefs.timezone ?? prev.timezone,
+        weekStart: prefs.weekStart ?? prev.weekStart,
+        language: prefs.language ?? prev.language,
+        regionalFormat: prefs.regionalFormat ?? prev.regionalFormat,
+        queryHistory: prefs.queryHistory ?? prev.queryHistory,
+        navbar: prefs.navbar ?? prev.navbar,
+      }));
+    }
+  }, [prefs]);
 
   const handleSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -100,8 +91,9 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       return;
     }
     setState((prev) => ({ ...prev, isSubmitting: true }));
-    await service
-      .update({
+    await updatePreferences({
+      resourceUri: props.resourceUri,
+      preferences: {
         homeDashboardUID: state.homeDashboardUID,
         theme: state.theme,
         timezone: state.timezone,
@@ -110,10 +102,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         regionalFormat: state.regionalFormat,
         queryHistory: state.queryHistory,
         navbar: state.navbar,
-      })
-      .finally(() => {
-        setState((prev) => ({ ...prev, isSubmitting: false }));
-      });
+      },
+    });
     window.location.reload();
   };
 
@@ -167,8 +157,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         <Stack direction="column" gap={2}>
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
             description={
               config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
@@ -195,8 +185,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="home-dashboard-select">
                 <span className={styles.labelText}>
@@ -218,7 +208,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            disabled={state.isLoading}
+            disabled={isLoading}
             label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
             data-testid={selectors.components.TimeZonePicker.containerV2}
           >
@@ -232,8 +222,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-preferences.fields.week-start-label', 'Week start')}
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
@@ -246,8 +236,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
           <Field
             noMargin
-            loading={state.isLoading}
-            disabled={state.isLoading}
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="language-preference-select">
                 <span className={styles.labelText}>
@@ -269,8 +259,8 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
           {config.featureToggles.localeFormatPreference && (
             <Field
               noMargin
-              loading={state.isLoading}
-              disabled={state.isLoading}
+              loading={isLoading}
+              disabled={isLoading}
               label={
                 <Label htmlFor="locale-preference">
                   <span className={styles.labelText}>
@@ -298,7 +288,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       </FieldSet>
       <Box marginTop={6}>
         <Button
-          disabled={state.isSubmitting}
+          disabled={isSubmitting}
           type="submit"
           variant="primary"
           data-testid={selectors.components.UserProfile.preferencesSaveButton}
