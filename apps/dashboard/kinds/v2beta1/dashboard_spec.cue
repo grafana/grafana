@@ -1,6 +1,8 @@
 package v2beta1
 
 DashboardSpec: {
+	preferences: DashboardPreferences
+
 	annotations: [...AnnotationQueryKind] | *[]
 
 	// Configuration of dashboard cursor sync behavior.
@@ -1111,4 +1113,10 @@ ConditionalRenderingTimeRangeSizeKind: {
 
 ConditionalRenderingTimeRangeSizeSpec: {
 	value: string
+}
+
+// Dashboard specific preferences (applied per dashboard = all users using the dashbaord)
+DashboardPreferences: {
+	// default layout template to be used when new containers are created
+	defaultLayoutTemplate?: AutoGridLayoutKind | GridLayoutKind
 }
