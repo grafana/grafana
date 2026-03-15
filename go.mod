@@ -701,7 +701,9 @@ require (
 	github.com/GeorgeD19/json-logic-go v0.0.0-20220225111652-48cc2d2c387e // indirect
 	github.com/dariubs/percent v0.0.0-20190521174708-8153fcbd48ae // indirect
 	github.com/go-redsync/redsync/v4 v4.13.0 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
+	github.com/gorilla/sessions v1.4.0 // indirect
+	github.com/minio/minio-go/v7 v7.0.98 // indirect
+	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/redis/rueidis/rueidiscompat v1.0.72 // indirect
 	github.com/sony/gobreaker/v2 v2.1.0 // indirect
 	github.com/thomaspoignant/go-feature-flag/modules/core v0.5.1 // indirect
