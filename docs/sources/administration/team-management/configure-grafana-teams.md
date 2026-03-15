@@ -31,7 +31,7 @@ Before you begin creating and working with Grafana Teams:
   - The `None` basic role can't view any resources by default. Recommended for `isolated` teams.
   - the `Viewer` role can view all resources by default. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync.
-Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
+  Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
 
 {{< admonition type="note" >}}
 [Grafana Organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/) do not exist in Grafana Cloud.
