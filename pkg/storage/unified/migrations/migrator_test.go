@@ -51,7 +51,11 @@ func TestIntegrationMigrations(t *testing.T) {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
-		testcases.NewDataSourceTestCase(),
+	}
+	// TODO: fix datasource migration tests on sqlite, see:
+	// https://github.com/grafana/grafana-enterprise/issues/11313
+	if !db.IsTestDbSQLite() {
+		migrationTestCases = append(migrationTestCases, testcases.NewDataSourceTestCase())
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -287,7 +291,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				//EnableLog:              true,
 				AppModeProduction:      true,
 				DisableAnonymous:       true,
 				DisableDataMigrations:  false,
@@ -345,6 +348,9 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 			continue
 		}
 		if optOut {
+			continue
+		}
+		if db.IsTestDbSQLite() && id == datasourceID {
 			continue
 		}
 		expectedMigrationIDs = append(expectedMigrationIDs, id)

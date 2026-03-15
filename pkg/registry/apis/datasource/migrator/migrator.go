@@ -2,21 +2,16 @@ package migrator
 
 import (
 	"context"
-	"database/sql"
-	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"text/template"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -25,15 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
-
-//go:embed query_datasources.sql
-var datasourceSQLTemplatesFS embed.FS
-
-var sqlQueryDataSources = template.Must(
-	template.New("sql").ParseFS(datasourceSQLTemplatesFS, "query_datasources.sql"),
-).Lookup("query_datasources.sql")
 
 // DataSourceMigrator handles migrating datasources from legacy SQL storage.
 type DataSourceMigrator interface {
@@ -67,7 +54,10 @@ func ProvideDataSourceMigrator(
 // types found in the database, grouping by type and using per-plugin converters.
 func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating datasources...")
-	datasources, err := m.listDataSources(ctx, orgId)
+	datasources, err := m.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID:           orgId,
+		DataSourceLimit: 10000,
+	})
 	if err != nil {
 		return err
 	}
@@ -119,7 +109,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 
 		// Set TypeMeta with the per-plugin group
 		obj.TypeMeta = metav1.TypeMeta{
-			APIVersion: ds.Type + "." + group + "/" + datasourceV0.VERSION,
+			APIVersion: group + "/" + datasourceV0.VERSION,
 			Kind:       "DataSource",
 		}
 
@@ -176,104 +166,4 @@ func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets map[st
 		}
 	}
 	return values, nil
-}
-
-func scanDataSource(rows *sql.Rows) (*datasources.DataSource, error) {
-	ds := &datasources.DataSource{}
-	var jsonDataBytes []byte
-	var secureJsonDataBytes []byte
-	var created, updated time.Time
-
-	err := rows.Scan(
-		&ds.ID, &ds.OrgID, &ds.Version, &ds.Type, &ds.Name, &ds.Access, &ds.URL,
-		&ds.User, &ds.Database, &ds.BasicAuth, &ds.BasicAuthUser,
-		&jsonDataBytes, &secureJsonDataBytes, &ds.WithCredentials,
-		&ds.IsDefault, &ds.ReadOnly, &ds.UID, &created, &updated,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	ds.Created = created
-	ds.Updated = updated
-
-	if len(jsonDataBytes) > 0 {
-		ds.JsonData, err = simplejson.NewJson(jsonDataBytes)
-		if err != nil {
-			ds.JsonData = simplejson.New()
-		}
-	}
-
-	// Parse secure_json_data - we only need the keys, not the encrypted values
-	if len(secureJsonDataBytes) > 0 {
-		var secureKeys map[string][]byte
-		if err := json.Unmarshal(secureJsonDataBytes, &secureKeys); err == nil {
-			ds.SecureJsonData = secureKeys
-		}
-	}
-
-	return ds, nil
-}
-
-type dataSourceQuery struct {
-	OrgID int64
-}
-
-type sqlDataSourceQuery struct {
-	sqltemplate.SQLTemplate
-	Query *dataSourceQuery
-
-	DataSourceTable string
-}
-
-func (r sqlDataSourceQuery) Validate() error {
-	return nil
-}
-
-func newDataSourceQueryReq(sql *legacysql.LegacyDatabaseHelper, query *dataSourceQuery) sqlDataSourceQuery {
-	return sqlDataSourceQuery{
-		SQLTemplate:     sqltemplate.New(sql.DialectForDriver()),
-		Query:           query,
-		DataSourceTable: sql.Table("data_source"),
-	}
-}
-
-func (m *dataSourceMigrator) listDataSources(ctx context.Context, orgID int64) ([]*datasources.DataSource, error) {
-	helper, err := m.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req := newDataSourceQueryReq(helper, &dataSourceQuery{
-		OrgID: orgID,
-	})
-
-	rawQuery, err := sqltemplate.Execute(sqlQueryDataSources, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlQueryDataSources.Name(), err)
-	}
-
-	rows, err := helper.DB.GetSqlxSession().Query(ctx, rawQuery, req.GetArgs()...)
-	if rows != nil {
-		defer func() {
-			_ = rows.Close()
-		}()
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	datasources := make([]*datasources.DataSource, 0, 100)
-	for rows.Next() {
-		ds, err := scanDataSource(rows)
-		if err != nil {
-			return nil, fmt.Errorf("scanning datasource row: %w", err)
-		}
-		if err = rows.Err(); err != nil {
-			return nil, err
-		}
-		datasources = append(datasources, ds)
-	}
-
-	return datasources, nil
 }

@@ -41,6 +41,11 @@ func (tc *datasourcesTestCase) RenameTables() []string {
 func (tc *datasourcesTestCase) Resources() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		{
+			Group:    "grafana-testdata-datasource.datasource.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "datasources",
+		},
+		{
 			Group:    "*.datasource.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "datasources",
@@ -75,7 +80,7 @@ func (tc *datasourcesTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) b
 	})
 	tc.testdata = append(tc.testdata, ds.UID)
 
-	return false // TODO, should be true should be supported by mode0 (legacy API)
+	return true
 }
 
 func (tc *datasourcesTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
