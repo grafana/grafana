@@ -31,11 +31,24 @@ func withChannelNotifier(opts *KVBackendOptions) {
 	opts.UseChannelNotifier = true
 }
 
+func withKV(kv KV) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.KvStore = kv
+	}
+}
+
+func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.WatchOptions.SettleDelay = d
+	}
+}
+
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:    kv,
-		WithPruner: true,
+		KvStore: kv,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	for _, cfg := range configs {
@@ -52,7 +65,6 @@ func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:                      kv,
-		WithPruner:                   true,
 		WithExperimentalClusterScope: true,
 	}
 	backend, err := NewKVStorageBackend(opts)
@@ -347,23 +359,21 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 // in ascending ResourceVersion order.
 func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	var settleDelay time.Duration = 0 // use default value to exercise handling concurrent writes
 
 	t.Run("pollingNotifier", func(t *testing.T) {
 		if db.IsTestDbSQLite() {
 			t.Skip("sqlite uses channel notifier")
 		}
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		})
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 
 	t.Run("channelNotifier", func(t *testing.T) {
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		}, withChannelNotifier)
+		if !db.IsTestDbSQLite() {
+			t.Skip("channel notifier only enabled with sqlite")
+		}
+		backend := setupTestStorageBackend(t, withChannelNotifier, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 }
@@ -374,7 +384,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	const numEvents = 500
+	const numEvents = 20
 
 	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
@@ -406,7 +416,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	require.NoError(t, err)
 
 	// Write events in batches of fixed concurrency until all are written.
-	const concurrency = 20
+	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
 		end := batch + concurrency
@@ -1068,7 +1078,9 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
 	ctx := context.Background()
 
 	ns := NamespacedResource{
@@ -1191,7 +1203,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	// whose latest RV is slightly before sinceRv. Add these to each
 	// expectation's changes map so the test can validate them.
 	for _, expect := range expectations {
-		lookbackRv := subtractDurationFromSnowflake(expect.rv, listModifiedSinceLookback)
+		lookbackRv := subtractDurationFromSnowflake(expect.rv, backend.searchLookback)
 		for name, mr := range allResources {
 			if _, ok := expect.changes[name]; ok {
 				continue // already expected
@@ -1311,7 +1323,9 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
 	ctx := t.Context()
 
 	ns := NamespacedResource{

@@ -488,7 +488,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     pluginVersion: panel.pluginVersion,
     seriesLimit: config.panelSeriesLimit,
     displayMode: panel.transparent ? 'transparent' : undefined,
-    // To be replaced with it's own option persited option instead derived
+    // To be replaced with its own option persited option instead derived
     hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
