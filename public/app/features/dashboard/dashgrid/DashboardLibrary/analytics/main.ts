@@ -1,4 +1,4 @@
-import { createInteractionEvent } from '@grafana/runtime/internal';
+import { createInteractionEvent, EventProperty } from '@grafana/runtime/internal';
 
 import { FEATURE_VARIANTS } from '../constants';
 
@@ -13,7 +13,11 @@ import {
   SearchPerformedProperties,
 } from './types';
 
-const newDashboardLibraryInteraction = createInteractionEvent('grafana', 'dashboard_library');
+const SCHEMA_VERSION = 1;
+
+const newDashboardLibraryInteraction = createInteractionEvent('grafana', 'dashboard_library', {
+  schema_version: SCHEMA_VERSION,
+});
 
 export const NewDashboardLibraryInteractions = {
   loaded: newDashboardLibraryInteraction<LoadedProperties>('loaded'),
