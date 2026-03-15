@@ -2218,16 +2218,16 @@
       "title-no-alertmanager-found": "Не найден обработчик оповещений Alertmanager"
     },
     "notification-detail": {
-      "action-silence": "",
-      "action-view-contact-point": "",
+      "alert-status-firing": "",
+      "alert-status-resolved": "",
       "alerts-empty": "",
       "alerts-loading": "",
       "batch-all-ok": "",
       "batch-count-one": "",
+      "common-annotations": "",
+      "common-labels": "",
       "current": "",
       "debug-details-heading": "",
-      "delivery-failed": "",
-      "delivery-success": "",
       "error-title": "",
       "error-title-banner": "",
       "error-unknown": "",
@@ -2237,18 +2237,34 @@
       "field-retry": "",
       "field-timestamp": "",
       "field-uuid": "",
-      "firing-alerts": "",
-      "group-labels-heading": "",
+      "info-group-labels": "",
       "loading": "",
+      "menu-analyze": "",
+      "menu-copy-link": "",
+      "menu-silence": "",
+      "menu-view-contact-point": "",
+      "menu-view-rule": "",
+      "menu-view-rule-n": "",
+      "more-details-heading": "",
       "no": "",
+      "no-common-data": "",
       "not-found-body": "",
       "not-found-title": "",
       "page-title": "",
       "related-loading": "",
-      "related-sidebar-subtitle": "",
-      "related-sidebar-title": "",
-      "resolved-alerts": "",
       "retry-tooltip": "",
+      "sidebar-contact-point": "",
+      "sidebar-delivery-failed": "",
+      "sidebar-delivery-outcome": "",
+      "sidebar-delivery-success": "",
+      "sidebar-duration": "",
+      "sidebar-integration": "",
+      "sidebar-retry": "",
+      "sidebar-retry-value": "",
+      "sidebar-timestamp": "",
+      "tab-alerts": "",
+      "tab-overview": "",
+      "tab-related": "",
       "uuid-not-found-body": "",
       "uuid-not-found-title": "",
       "yes": "",
@@ -2263,15 +2279,7 @@
       "batch-failed_one": "",
       "batch-failed_few": "",
       "batch-failed_many": "",
-      "batch-failed_other": "",
-      "related-count_one": "",
-      "related-count_few": "",
-      "related-count_many": "",
-      "related-count_other": "",
-      "related-count-with-failures_one": "",
-      "related-count-with-failures_few": "",
-      "related-count-with-failures_many": "",
-      "related-count-with-failures_other": ""
+      "batch-failed_other": ""
     },
     "notification-history": {
       "enrichment-explore": "",
@@ -4091,6 +4099,12 @@
         "label-constant": "Постоянная",
         "label-negative-y": "Отрицательные для оси Y"
       }
+    },
+    "presets": {
+      "fixed-purple-hue": "",
+      "palette-classic": "",
+      "palette-classic-stacked": "",
+      "viridis-hue": ""
     },
     "suggestions": {
       "horizontal": "Горизонтальная гистограмма",
@@ -6630,6 +6644,13 @@
     "add-variable": {
       "label-variable": ""
     },
+    "adhoc-origin-filters-controller": {
+      "input-placeholder": ""
+    },
+    "adhoc-origin-filters-editor": {
+      "description": "",
+      "label": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
       "label-annotation-query": ""
@@ -8925,6 +8946,7 @@
       "threshold-labels-description": "Показывать пороговые и нейтральные значения",
       "threshold-markers": "Показывать пороговые значения"
     },
+    "data-links-actions-menu": "",
     "description-min-height": "Минимальная высота строки (горизонтальная ориентация)",
     "description-min-width": "Минимальная ширина столбца (вертикальная ориентация)",
     "description-neutral": "Оставить пустым, чтобы использовать мин. как нейтральную точку",
@@ -13421,14 +13443,19 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "Подключиться к репозиториям Bitbucket",
+      "bitbucket-tooltip": "",
       "github": "GitHub",
       "github-description": "Подключиться к репозиториям GitHub",
+      "github-tooltip": "",
       "gitlab": "GitLab",
       "gitlab-description": "Подключиться к репозиториям GitLab",
+      "gitlab-tooltip": "",
       "local": "Локальный",
       "local-description": "Настроить подготовку файлов",
+      "local-tooltip": "",
       "pure-git": "Pure Git",
-      "pure-git-description": "Подключиться к любому репозиторию Git"
+      "pure-git-description": "Подключиться к любому репозиторию Git",
+      "pure-git-tooltip": ""
     },
     "resource-tree": {
       "header-hash": "Хеш",
@@ -13568,6 +13595,8 @@
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "git-protocol-alert-body": "",
+      "git-protocol-alert-title": "",
       "github-app-connection-status": "",
       "github-app-creation-default-error": "Не удалось создать подключение",
       "github-app-creation-failed": "Не удалось создать подключение к приложению GitHub",
@@ -13581,6 +13610,8 @@
       "github-app-no-connections": "Подключения к GitHub не найдены",
       "github-app-no-connections-message": "У вас нет подключений к приложению GitHub. Выберите «Подключиться к новому приложению», чтобы установить соединение.",
       "github-app-select-connection": "",
+      "github-enterprise-alert-body": "",
+      "github-enterprise-alert-title": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "Настройте репозиторий",
       "step-connect": "Подключить",
@@ -15110,6 +15141,7 @@
       "annotation-region-label": ""
     },
     "annotation-tooltip2": {
+      "cluster-header": "",
       "tooltip-delete": "Удалить",
       "tooltip-edit": "Редактировать"
     },

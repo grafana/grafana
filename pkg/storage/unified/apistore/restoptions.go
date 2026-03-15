@@ -68,6 +68,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 		KvStore:                      kv,
 		WithExperimentalClusterScope: true,
 		Log:                          log.New(),
+		DisablePruner:                true,
 	})
 	if err != nil {
 		return nil, err
