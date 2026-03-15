@@ -73,6 +73,14 @@ var appManifestData = app.ManifestData{
 					"list",
 				},
 			},
+			{
+				Group:    "usageinsights.grafana.app",
+				Resource: "dashboardstats",
+				Actions: []app.KindPermissionAction{
+					"get",
+					"list",
+				},
+			},
 		},
 	},
 }

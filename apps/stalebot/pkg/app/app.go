@@ -1,6 +1,9 @@
 package app
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/stalebot/pkg/apis/stalebot/v1alpha1"
@@ -50,6 +53,25 @@ func New(cfg app.Config) (app.App, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	scanner := NewDashboardScanner(cfg.KubeConfig)
+	go func() {
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		fmt.Println("Stalebot is running!!!")
+		if err := scanner.FindStaleDashboards(context.Background(), "default"); err != nil {
+			// log error
+			_ = err
+
+		}
+	}()
 
 	return a, nil
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
+	"github.com/grafana/grafana/pkg/registry/apps/stalebot"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,6 +29,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	notificationsAppInstaller := &notifications.AppInstaller{}
 	annotationAppInstaller := &annotation.AppInstaller{}
 	exampleAppInstaller := &example.AppInstaller{}
+	stalebotAppInstaller := &stalebot.AppInstaller{}
 	advisorAppInstaller := &advisor.AppInstaller{}
 	historianAppInstaller := &historian.AppInstaller{}
 	quotasAppInstaller := &quotas.QuotasAppInstaller{}
@@ -61,6 +63,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				nil,
 				annotationAppInstaller,
 				exampleAppInstaller,
+				stalebotAppInstaller,
 				advisorAppInstaller,
 				historianAppInstaller,
 				quotasAppInstaller,
