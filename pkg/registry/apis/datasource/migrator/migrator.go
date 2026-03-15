@@ -161,14 +161,18 @@ func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets map[st
 
 	values := make(common.InlineSecureValues)
 	for k, v := range dsSecrets {
+		if v == "" {
+			continue // do not create empty secret values
+		}
 		name, err := m.secretStore.CreateInline(ctx, objRef, common.NewSecretValue(v))
 		if err != nil {
 			return nil, err
 		}
-		if err == nil {
-			values[k] = common.InlineSecureValue{
-				Name: name,
-			}
+		if name == "" {
+			return nil, fmt.Errorf("did not create a new secret")
+		}
+		values[k] = common.InlineSecureValue{
+			Name: name,
 		}
 	}
 	return values, nil

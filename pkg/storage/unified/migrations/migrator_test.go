@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -52,6 +51,7 @@ func TestIntegrationMigrations(t *testing.T) {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+		testcases.NewDataSourceTestCase(),
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -326,12 +326,14 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	datasourceID           = "datasources migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
+	datasourceID:           false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
