@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 ---
 
-## Panel groupings
+# Panel groupings
 
 <!--should this be dashboard groupings and should groupings live on their own page to give this page room to breathe -->
 
@@ -54,7 +54,7 @@ The following sections describe:
 - [How to group panels](#group-panels)
 - [How to ungroup panels](#ungroup-panels)
 
-### Grouping configuration options
+## Grouping configuration options
 
 The following table describes the options you can set for a row or tab:
 
@@ -71,7 +71,7 @@ The following table describes the options you can set for a row or tab:
 
 <!-- prettier-ignore-end -->
 
-### Grouping layouts
+## Grouping layouts
 
 When you have panels grouped into rows or tabs, the **Layout** options available depend on which dashboard element is selected and the nesting level of that element.
 
@@ -84,7 +84,7 @@ You can nest up to two levels deep, which means a dashboard can have a maximum o
 
 You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.
 
-### Group panels
+## Group panels
 
 To group panels, follow these steps:
 
@@ -109,7 +109,7 @@ To group panels, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-#### Add nested groupings
+### Add nested groupings
 
 To add a second-level (or nested) grouping, follow these steps:
 
@@ -128,7 +128,7 @@ To add a second-level (or nested) grouping, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-#### Add more groupings at the same level
+### Add more groupings at the same level
 
 To add more first-level groupings, follow these steps:
 
@@ -143,7 +143,7 @@ To add more first-level groupings, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-### Ungroup panels
+## Ungroup panels
 
 You can ungroup some or all of the dashboard groupings without losing your panels.
 Ungrouping behavior depends on whether you're working with first-level or nested groupings:
