@@ -131,7 +131,8 @@ export class RowsLayoutManager
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem({});
+    const scene = getDashboardSceneFor(this);
+    const newRow = row ?? new RowItem({ layout: scene.getDefaultLayout() });
     const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
 
     const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
@@ -288,7 +289,11 @@ export class RowsLayoutManager
 
     const perform = () => {
       if (!rowsAfterRemoval.length) {
-        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+        parent.switchLayout(
+          row.getLayout() instanceof AutoGridLayoutManager
+            ? AutoGridLayoutManager.createEmpty()
+            : DefaultGridLayoutManager.fromVizPanels([])
+        );
       } else {
         this.setState({ rows: rowsAfterRemoval });
       }

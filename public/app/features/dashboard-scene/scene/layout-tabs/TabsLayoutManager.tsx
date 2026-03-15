@@ -177,7 +177,9 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({});
+    const scene = getDashboardSceneFor(this);
+
+    const newTab = tab ?? new TabItem({ layout: scene.getDefaultLayout() });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
@@ -360,7 +362,11 @@ export class TabsLayoutManager
 
     const perform = () => {
       if (!tabsAfterRemoval.length) {
-        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+        parent.switchLayout(
+          tab.getLayout() instanceof AutoGridLayoutManager
+            ? AutoGridLayoutManager.createEmpty()
+            : DefaultGridLayoutManager.fromVizPanels([])
+        );
       } else {
         const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
         this.setState({

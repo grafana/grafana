@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 
-import { PageLayoutType } from '@grafana/data';
+import { PageLayoutType, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
@@ -28,6 +28,8 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -111,6 +113,14 @@ export class GeneralSettingsEditView
 
   public onEditableChange = (value: boolean) => {
     this._dashboard.setState({ editable: value });
+  };
+
+  public onDefaultGridChange = (value: 'AutoGridLayout' | 'GridLayout') => {
+    if (value === 'AutoGridLayout') {
+      this._dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    } else if (value === 'GridLayout') {
+      this._dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    }
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
@@ -216,6 +226,19 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     },
   ];
 
+  const DEFAULT_GRID_OPTIONS: Array<SelectableValue<'AutoGridLayout' | 'GridLayout'>> = [
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
+      value: 'AutoGridLayout',
+    },
+    {
+      label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
+      value: 'GridLayout',
+    },
+  ];
+
+  const defaultGrid = dashboard.getDefaultLayout() instanceof AutoGridLayoutManager ? 'AutoGridLayout' : 'GridLayout';
+
   const GRAPH_TOOLTIP_OPTIONS = [
     {
       value: 0,
@@ -305,6 +328,17 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
           </Field>
         </Box>
+
+        <Field
+          noMargin
+          label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+          description={t(
+            'dashboard-settings.general.default-grid-description',
+            'Pick what grid type to be used for new rows and tabs'
+          )}
+        >
+          <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
+        </Field>
 
         <TimePickerSettings
           onTimeZoneChange={model.onTimeZoneChange}
