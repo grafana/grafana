@@ -12843,7 +12843,7 @@
       "configure": "Configure",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
       "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories",
-      "max-repos-reached-tooltip-onprem": "Your instance has reached the maximum number of connected repositories"
+      "max-repos-reached-tooltip-onprem": "Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration."
     },
     "connect-step": {
       "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",

@@ -80,7 +80,7 @@ export function getConfigureRepoTooltip({
     return isOnPrem()
       ? t(
           'provisioning.connect-repository-button.max-repos-reached-tooltip-onprem',
-          'Your instance has reached the maximum number of connected repositories'
+          'Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration.'
         )
       : t(
           'provisioning.connect-repository-button.max-repos-reached-tooltip',
