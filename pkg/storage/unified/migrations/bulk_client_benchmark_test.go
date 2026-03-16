@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -116,7 +117,7 @@ func (benchmarkBulkStoreServer) BulkProcess(stream resourcepb.BulkStore_BulkProc
 	var processed int64
 	for {
 		_, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return stream.SendAndClose(&resourcepb.BulkResponse{Processed: processed})
 		}
 		if err != nil {
@@ -130,7 +131,7 @@ func (benchmarkBulkStoreServer) BulkProcessBatched(stream resourcepb.BulkStore_B
 	var processed int64
 	for {
 		batch, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return stream.SendAndClose(&resourcepb.BulkResponse{Processed: processed})
 		}
 		if err != nil {

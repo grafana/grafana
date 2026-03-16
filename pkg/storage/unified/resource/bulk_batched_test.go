@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -51,7 +52,7 @@ func TestBulkProcessBatchFlattenerRecv(t *testing.T) {
 			got := make([]string, 0, len(tt.wantNames))
 			for {
 				req, err := flattener.Recv()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break
 				}
 				require.NoError(t, err)
