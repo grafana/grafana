@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -258,12 +258,14 @@ func UserAgentStreamInterceptor() grpc.StreamClientInterceptor {
 func TracingStreamInterceptor() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		// Start an OpenTelemetry span for the gRPC call
-		ctx, span := tracing.DefaultTracer().Start(ctx, "tempo.grpc.stream", 
-			attribute.String("rpc.method", method),
-			attribute.String("rpc.service", "tempo"),
-			attribute.String("rpc.system", "grpc"),
-			attribute.String("stream.name", desc.StreamName),
-			attribute.Bool("stream.client", true),
+		ctx, span := tracing.DefaultTracer().Start(ctx, "tempo.grpc.stream",
+			trace.WithAttributes(
+				attribute.String("rpc.method", method),
+				attribute.String("rpc.service", "tempo"),
+				attribute.String("rpc.system", "grpc"),
+				attribute.String("stream.name", desc.StreamName),
+				attribute.Bool("stream.client", true),
+			),
 		)
 		defer span.End()
 
