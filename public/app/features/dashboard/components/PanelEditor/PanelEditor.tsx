@@ -301,7 +301,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.panelToolbar}>
-        <Stack justifyContent={variables.length > 0 ? 'space-between' : 'flex-end'} alignItems="flex-start">
+        <Stack justifyContent={variables.length > 0 ? 'space-between' : 'flex-end'} alignItems="flex-start" width="100%">
           {this.renderTemplateVariables(styles)}
           <Stack gap={1}>
             <InlineSwitch
