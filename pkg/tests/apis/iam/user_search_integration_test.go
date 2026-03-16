@@ -41,7 +41,6 @@ func TestIntegrationUserSearch(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
@@ -91,7 +90,6 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
@@ -191,7 +189,6 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
@@ -259,7 +256,6 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
@@ -360,7 +356,6 @@ func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
