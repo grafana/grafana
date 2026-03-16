@@ -984,6 +984,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newSavedQueriesExperience",
+			Description:  "Enables the new Saved queries (query library) modal experience",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
