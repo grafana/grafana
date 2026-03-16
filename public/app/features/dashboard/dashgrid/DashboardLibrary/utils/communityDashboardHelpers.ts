@@ -101,6 +101,7 @@ export function navigateToTemplate(
     contentKind,
     eventLocation,
     mappings: JSON.stringify(mappings),
+    suggestedDashboardBanner: 'true',
   });
 
   // Add datasource types for tracking if available

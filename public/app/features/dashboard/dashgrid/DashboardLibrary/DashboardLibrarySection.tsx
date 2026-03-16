@@ -21,12 +21,14 @@ import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHel
 const PAGE_SIZE = 9;
 
 interface DashboardLibrarySectionProps {
-  suggestedBanner?: boolean;
   dashboards?: PluginDashboard[];
   datasourceUid?: string;
 }
 
-export const DashboardLibrarySection = ({ suggestedBanner = false, dashboards, datasourceUid: datasourceUidProp }: DashboardLibrarySectionProps) => {
+export const DashboardLibrarySection = ({
+  dashboards,
+  datasourceUid: datasourceUidProp,
+}: DashboardLibrarySectionProps) => {
   const [searchParams] = useSearchParams();
   const datasourceUidFromUrl = searchParams.get('dashboardLibraryDatasourceUid');
   const datasourceUid = datasourceUidProp ?? datasourceUidFromUrl;
@@ -98,7 +100,7 @@ export const DashboardLibrarySection = ({ suggestedBanner = false, dashboards, d
       title: dashboard.title || 'Template',
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      renderBanner: suggestedBanner ? 'true' : 'false',
+      suggestedDashboardBanner: 'true',
       // tracking event purpose values
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,

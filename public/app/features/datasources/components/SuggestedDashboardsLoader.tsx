@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 import {
   fetchCommunityDashboards,
@@ -19,14 +19,14 @@ export interface SuggestedDashboardsLoaderChildProps {
 }
 
 interface SuggestedDashboardsLoaderProps {
-  dataSource: { uid: string; type: string; typeName: string };
+  datasourceUid: string;
   fetchOnMount?: boolean;
   onFetchComplete?: (hasDashboards: boolean) => void;
   children: (props: SuggestedDashboardsLoaderChildProps) => ReactNode;
 }
 
 export const SuggestedDashboardsLoader = ({
-  dataSource,
+  datasourceUid,
   fetchOnMount,
   onFetchComplete,
   children,
@@ -45,7 +45,7 @@ export const SuggestedDashboardsLoader = ({
     setFetchStatus('loading');
 
     try {
-      const ds = getDataSourceSrv().getInstanceSettings(dataSource.uid);
+      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
       if (!ds) {
         setFetchStatus('done');
         onFetchComplete?.(false);
@@ -54,17 +54,15 @@ export const SuggestedDashboardsLoader = ({
 
       const [provisioned, communityResponse] = await Promise.all([
         fetchProvisionedDashboards(ds.type),
-        config.featureToggles.suggestedDashboards && config.featureToggles.dashboardLibrary
-          ? fetchCommunityDashboards({
-              orderBy: 'downloads',
-              direction: 'desc',
-              page: 1,
-              pageSize: 10,
-              includeScreenshots: true,
-              dataSourceSlugIn: ds.type,
-              includeLogo: true,
-            })
-          : Promise.resolve({ items: [] }),
+        fetchCommunityDashboards({
+          orderBy: 'downloads',
+          direction: 'desc',
+          page: 1,
+          pageSize: 10,
+          includeScreenshots: true,
+          dataSourceSlugIn: ds.type,
+          includeLogo: true,
+        }),
       ]);
 
       setProvisionedDashboards(provisioned);
@@ -74,7 +72,7 @@ export const SuggestedDashboardsLoader = ({
     } catch {
       setFetchStatus('error');
     }
-  }, [dataSource.uid, onFetchComplete]);
+  }, [datasourceUid, onFetchComplete]);
 
   useEffect(() => {
     if (fetchOnMount) {
@@ -91,7 +89,7 @@ export const SuggestedDashboardsLoader = ({
       <SuggestedDashboardsModal
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
-        datasourceUid={dataSource.uid}
+        datasourceUid={datasourceUid}
         provisionedDashboards={fetchStatus === 'done' ? provisionedDashboards : undefined}
         communityDashboards={fetchStatus === 'done' ? communityDashboards : undefined}
       />

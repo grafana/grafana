@@ -20,7 +20,6 @@ interface SuggestedDashboardsModalProps {
   onDismiss: () => void;
   datasourceUid?: string;
   initialMappingContext?: MappingContext | null;
-  entryPoint?: 'datasource-page' | string;
   provisionedDashboards?: PluginDashboard[];
   communityDashboards?: GnetDashboard[];
 }
@@ -44,7 +43,6 @@ export const SuggestedDashboardsModal = ({
   onDismiss,
   datasourceUid,
   initialMappingContext,
-  entryPoint,
   provisionedDashboards,
   communityDashboards,
 }: SuggestedDashboardsModalProps) => {
@@ -141,18 +139,14 @@ export const SuggestedDashboardsModal = ({
 
       <TabContent className={styles.tabContent}>
         {activeView === 'datasource' && (
-          <DashboardLibrarySection
-            suggestedBanner={entryPoint === 'datasource-page'}
-            dashboards={provisionedDashboards}
-            datasourceUid={datasourceUid ?? undefined}
-          />
+          <DashboardLibrarySection dashboards={provisionedDashboards} datasourceUid={datasourceUid} />
         )}
         {activeView === 'community' && (
           <CommunityDashboardSection
             onShowMapping={handleShowMapping}
             datasourceType={datasourceInfo.type}
             dashboards={communityDashboards}
-            datasourceUid={datasourceUid ?? undefined}
+            datasourceUid={datasourceUid}
           />
         )}
         {activeView === 'mapping' && mappingContext && (

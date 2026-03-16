@@ -9,7 +9,7 @@ import { useDataSource } from '../state/hooks';
 import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
-import { BuildADashboardButton } from './BuildADashboardButton';
+import { BuildDashboardButton } from './BuildDashboardButton';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
 
 interface Props {
@@ -126,7 +126,7 @@ export function EditDataSourceActions({ uid }: Props) {
           )}
         </>
       )}
-      <BuildADashboardButton dataSource={dataSource} size="sm" />
+      <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" />
     </>
   );
 }

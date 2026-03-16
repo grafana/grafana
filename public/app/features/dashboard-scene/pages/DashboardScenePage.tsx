@@ -125,7 +125,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
-      <SuggestedDashboardBanner route={route.routeName} dashboard={dashboard} datasource={queryParams.datasource} />
+      <SuggestedDashboardBanner route={route.routeName} dashboard={dashboard} datasourceUid={queryParams.datasource} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       <DashboardBrandingFooter

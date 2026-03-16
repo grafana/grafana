@@ -10,7 +10,7 @@ import { ROUTES } from '../../connections/constants';
 import { trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
-import { BuildADashboardButton } from './BuildADashboardButton';
+import { BuildDashboardButton } from './BuildDashboardButton';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -37,7 +37,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <BuildADashboardButton dataSource={dataSource} size="md" />
+        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" />
 
         {/* Explore */}
         {hasExploreRights && (
