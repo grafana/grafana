@@ -629,6 +629,11 @@ export interface FeatureToggles {
   */
   savedQueriesRBAC?: boolean;
   /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
