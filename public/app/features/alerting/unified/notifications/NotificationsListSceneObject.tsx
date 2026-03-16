@@ -39,7 +39,6 @@ import {
 
 import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
-import { StateTag } from '../components/StateTag';
 import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
@@ -295,12 +294,32 @@ interface NotificationStateProps {
 }
 
 function NotificationState({ status }: NotificationStateProps) {
+  const styles = useStyles2(getStyles);
   const isFiring = status === 'firing';
-  const statusText = isFiring
-    ? t('alerting.notifications-list.status-firing', 'Firing')
-    : t('alerting.notifications-list.status-resolved', 'Resolved');
-  const state = isFiring ? 'bad' : 'good';
-  return <StateTag state={state}>{statusText}</StateTag>;
+
+  return (
+    <Stack gap={0.5} direction="row" alignItems="center">
+      {isFiring ? (
+        <>
+          <Icon name="circle" size="md" className={styles.mutedColor} />
+          <Icon name="arrow-right" size="lg" />
+          <Tooltip content={t('alerting.notifications-list.status-firing', 'Firing')} placement="top">
+            <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
+          </Tooltip>
+        </>
+      ) : (
+        <>
+          <Tooltip content={t('alerting.notifications-list.status-firing', 'Firing')} placement="top">
+            <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
+          </Tooltip>
+          <Icon name="arrow-right" size="lg" />
+          <Tooltip content={t('alerting.notifications-list.status-resolved', 'Resolved')} placement="top">
+            <Icon name="check-circle" size="md" className={styles.normalColor} />
+          </Tooltip>
+        </>
+      )}
+    </Stack>
+  );
 }
 
 interface NotificationDetailsProps {
@@ -502,7 +521,19 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: '180px',
     }),
     stateCol: css({
-      width: '100px',
+      width: '130px',
+    }),
+    mutedColor: css({
+      fill: theme.colors.text.secondary,
+    }),
+    normalColor: css({
+      fill: theme.colors.success.text,
+    }),
+    warningColor: css({
+      fill: theme.colors.warning.text,
+    }),
+    alertingColor: css({
+      fill: theme.colors.error.text,
     }),
     labelsCol: css({
       display: 'flex',
