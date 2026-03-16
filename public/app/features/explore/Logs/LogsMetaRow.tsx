@@ -136,15 +136,13 @@ export const LogsMetaRow = memo(
                 };
               })}
             />
-            {!logsPanelControlsEnabled &&
-              !newLogsPanelEnabled &&
-              !config.exploreHideLogsDownload && (
-                <Dropdown overlay={downloadMenu}>
-                  <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                    <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
-                  </ToolbarButton>
-                </Dropdown>
-              )}
+            {!logsPanelControlsEnabled && !newLogsPanelEnabled && !config.exploreHideLogsDownload && (
+              <Dropdown overlay={downloadMenu}>
+                <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
+                  <Trans i18nKey="explore.logs-meta-row.download">Download</Trans>
+                </ToolbarButton>
+              </Dropdown>
+            )}
           </div>
         )}
       </>
