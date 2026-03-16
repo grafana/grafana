@@ -84,11 +84,8 @@ describe('getBucketSize', () => {
     it('returns bucket size from first bucket (xMax[0] - xMin[0])', () => {
       const frame = createLinearHistogramFrame();
       const bucketSize = getBucketSize(frame);
-      // buildHistogram creates uniform buckets; first bucket span
-      expect(bucketSize).toBeGreaterThan(0);
-      expect(typeof bucketSize).toBe('number');
+      expect(bucketSize).toEqual(2);
     });
-
     it('returns correct bucket size for explicit xMin/xMax frame', () => {
       const frame = createDataFrame({
         fields: [
@@ -99,7 +96,6 @@ describe('getBucketSize', () => {
       });
       expect(getBucketSize(frame)).toBe(1);
     });
-
     it('handles non-integer bucket sizes with rounding', () => {
       const frame = createDataFrame({
         fields: [
@@ -111,7 +107,6 @@ describe('getBucketSize', () => {
       expect(getBucketSize(frame)).toBe(0.5);
     });
   });
-
   describe('ordinal (string) histogram frames', () => {
     it('returns 1 for ordinal/string xMin field (classic histogram buckets)', () => {
       const frame = createOrdinalHistogramFrame();
@@ -123,8 +118,6 @@ describe('getBucketSize', () => {
 describe('Histogram', () => {
   const defaultProps: HistogramProps = {
     options: {
-      combine: false,
-      bucketCount: 30,
       legend: defaultLegendOptions,
       tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None },
     },
@@ -132,9 +125,8 @@ describe('Histogram', () => {
     legend: defaultLegendOptions,
     width: 400,
     height: 300,
-    bucketSize: 1,
+    bucketSize: 2,
     alignedFrame: createLinearHistogramFrame(),
-    rawSeries: [createLinearHistogramFrame()],
   };
 
   it('renders histogram container and chart with valid histogram frame', async () => {
@@ -337,13 +329,13 @@ describe('Histogram', () => {
       };
 
       // xValue=0.5 is in bucket 0 [0,1); xValue < data[0][1]=1 so closestIdx=1 -> return 0
-      expect(dataIdx!(mockU, 0, 1, 0.5)).toBe(0);
+      expect(dataIdx(mockU, 0, 1, 0.5)).toBe(0);
 
       // xValue=1.5 is in bucket 1 [1,2); xValue >= data[0][1]=1 so return closestIdx=1
-      expect(dataIdx!(mockU, 0, 1, 1.5)).toBe(1);
+      expect(dataIdx(mockU, 0, 1, 1.5)).toBe(1);
 
       // xValue=2.9 is in bucket 2 [2,3); xValue >= data[0][2]=2 so return closestIdx=2
-      expect(dataIdx!(mockU, 0, 2, 2.9)).toBe(2);
+      expect(dataIdx(mockU, 0, 2, 2.9)).toBe(2);
     });
   });
 

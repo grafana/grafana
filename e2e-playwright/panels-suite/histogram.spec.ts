@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { expect, test } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'UTv--wqMk';
 
@@ -6,7 +6,7 @@ const DASHBOARD_UID = 'UTv--wqMk';
 test.use({ viewport: { width: 1920, height: 2400 } });
 
 test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () => {
-  test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
+  test('renders successfully', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
     });
@@ -25,61 +25,60 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
-  test('displays panels with legends', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: 'panel-4' }),
+  test.describe('panel options', { tag: ['@panel-options'] }, () => {
+    test('legend', { tag: ['@legend'] }, async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: 'panel-4' }),
+      });
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
+      ).toBeVisible();
+
+      const panelOptionsLegendGroup = page.getByTestId(selectors.components.OptionsGroup.group('Legend'));
+      const legendVisibilityClickableLabel = panelOptionsLegendGroup.getByText('Visibility');
+      const legendVisibilityLabel = page.getByLabel(/Legend.+Visibility/);
+      const legendVisibilitySwitch = legendVisibilityLabel.getByRole('switch');
+
+      await expect(legendVisibilitySwitch, 'legend is enabled by default').toBeChecked();
+
+      const legend = page.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+      await expect(legend, 'legend is rendered in histogram panel').toBeVisible();
+
+      await legendVisibilityClickableLabel.click();
+      await expect(legendVisibilitySwitch).not.toBeChecked();
+
+      await expect(legend, 'legend is no longer visible').not.toBeVisible();
     });
-
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
-    ).toBeVisible();
-
-    const legendVisibilityLabel = page.getByLabel(/Legend.+Visibility/);
-    const legendVisibilitySwitch = legendVisibilityLabel.getByRole('switch');
-    await expect(legendVisibilitySwitch).not.toBeChecked();
-
-    const legend = page.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
-    await expect(legend, 'legend is visible').toBeVisible();
-
-    await legendVisibilityLabel.click();
-    await expect(legendVisibilitySwitch).toBeChecked();
-
-    await expect(legend, 'legend is visible').not.toBeVisible();
   });
 
-  // test('a11y', { tag: ['@a11y'] }, async ({ scanForA11yViolations, selectors, page }) => {
-  //   await page.goto(
-  //     selectors.pages.SoloPanel.url(`${DASHBOARD_UID}/panel-tests-histogram?orgId=1&panelId=4`)
-  //   );
-  //   await expect(
-  //     page.getByTestId(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
-  //   ).toBeVisible({ timeout: 15000 });
-  //   await expect(page.locator('.uplot')).toBeVisible({ timeout: 10000 });
-  //   const report = await scanForA11yViolations({
-  //     options: {
-  //       runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
-  //     },
-  //   });
-  //   expect(report).toHaveNoA11yViolations({ ignoredRules: ['page-has-heading-one', 'region', 'color-contrast'] });
-  // });
+  test.describe('a11y', { tag: ['@a11y'] }, () => {
+    test('run a11y report', async ({ gotoDashboardPage, scanForA11yViolations, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ viewPanel: 'panel-4' }),
+      });
 
-  // test('panel edit opens and chart is visible', async ({ gotoDashboardPage, selectors, page }) => {
-  //   const dashboardPage = await gotoDashboardPage({
-  //     uid: DASHBOARD_UID,
-  //     queryParams: new URLSearchParams({ editPanel: '4' }),
-  //   });
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
+      ).toBeVisible();
 
-  //   await expect(
-  //     dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
-  //   ).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('.uplot')).toBeVisible();
+      const report = await scanForA11yViolations({
+        options: {
+          runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
+        },
+      });
 
-  //   const chart = page.locator('.uplot').first();
-  //   await expect(chart, 'chart is visible in edit mode').toBeVisible({ timeout: 15000 });
-
-  //   const optionsPaneContent = dashboardPage.getByGrafanaSelector(
-  //     selectors.components.PanelEditor.OptionsPane.content
-  //   );
-  //   await expect(optionsPaneContent, 'options pane is visible').toBeVisible({ timeout: 10000 });
-  // });
+      expect(report).toHaveNoA11yViolations({
+        ignoredRules: [
+          'page-has-heading-one',
+          'region',
+          // @todo remove aria-command-name after https://github.com/grafana/grafana/issues/119651 is fixed
+          'aria-command-name',
+        ],
+      });
+    });
+  });
 });

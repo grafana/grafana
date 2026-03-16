@@ -523,13 +523,13 @@ export const versionedComponents = {
       },
       Histogram: {
         container: {
-          [MIN_GRAFANA_VERSION]: 'data-testid viz-layout',
+          ['13.0.0']: 'data-testid viz-layout',
         },
         chart: {
-          [MIN_GRAFANA_VERSION]: 'uplot-main-div',
+          ['13.0.0']: 'data-testid histogram-uplot',
         },
         legend: {
-          [MIN_GRAFANA_VERSION]: 'data-testid viz-layout-legend',
+          ['13.0.0']: 'data-testid viz-layout-legend',
         },
       },
       PieChart: {
