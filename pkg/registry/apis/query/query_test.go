@@ -202,13 +202,19 @@ func TestQueryAPI(t *testing.T) {
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 
-			require.NoError(t, mr.err, "Should not have error in responder")
-			require.Equal(t, tc.expectedStatus, mr.statusCode, "Should return expected status code")
-			require.NotNil(t, mr.response, "Should have a response object")
+			result := rr.Result()
+			defer func() {
+				_ = result.Body.Close()
+			}()
+
+			require.False(t, mr.responderUsed, "Responder should be unused")
+
+			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
 
 			// Verify the response is the expected type
-			qdr, ok := mr.response.(*queryapi.QueryDataResponse)
-			require.True(t, ok, "Response should be QueryDataResponse type")
+			qdr := &queryapi.QueryDataResponse{}
+			err = json.NewDecoder(result.Body).Decode(qdr)
+			require.NoError(t, err, "Failed to decode response body")
 			require.NotNil(t, qdr.Responses, "Should have responses")
 
 			// Load expected frames from testdata if provided
@@ -248,20 +254,17 @@ func TestQueryAPI(t *testing.T) {
 }
 
 type mockResponder struct {
-	statusCode int
-	response   runtime.Object
-	err        error
+	responderUsed bool
 }
 
 // Object writes the provided object to the response. Invoking this method multiple times is undefined.
 func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
-	m.statusCode = statusCode
-	m.response = obj
+	m.responderUsed = true
 }
 
 // Error writes the provided error to the response. This method may only be invoked once.
 func (m *mockResponder) Error(err error) {
-	m.err = err
+	m.responderUsed = true
 }
 
 type mockClient struct {
