@@ -36,6 +36,7 @@ const (
 	prunerMaxEvents             = 20
 	defaultEventRetentionPeriod = 1 * time.Hour
 	defaultEventPruningInterval = 5 * time.Minute
+	defaultSearchLookback       = 1 * time.Second
 	clusterScopeNamespace       = "__cluster__"
 )
 
@@ -75,7 +76,7 @@ type kvStorageBackend struct {
 	eventStore                   *eventStore
 	notifier                     notifier
 	log                          log.Logger
-	withPruner                   bool
+	disablePruner                bool
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
@@ -86,6 +87,8 @@ type kvStorageBackend struct {
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
+	watchOpts WatchOptions
+
 	rvManager *rvmanager.ResourceVersionManager
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
@@ -94,19 +97,21 @@ type kvStorageBackend struct {
 	// tenantWatcher watches Tenant CRDs for pending-delete state.
 	// nil if tenant watching is not configured.
 	tenantWatcher *TenantWatcher
+
+	searchLookback time.Duration
 }
 
 var _ KVBackend = &kvStorageBackend{}
 
 type KVBackend interface {
 	StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	Stop()
 }
 
 type KVBackendOptions struct {
 	KvStore                      KV
-	WithPruner                   bool
+	DisablePruner                bool
 	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
 	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
@@ -116,6 +121,7 @@ type KVBackendOptions struct {
 	GarbageCollection            GarbageCollectionConfig
 
 	UseChannelNotifier bool
+	WatchOptions       WatchOptions
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -129,6 +135,10 @@ type KVBackendOptions struct {
 
 	// TenantWatcherConfig, if set, enables watching Tenant CRDs for pending-delete state.
 	TenantWatcherConfig *TenantWatcherConfig
+
+	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
+	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
+	SearchLookback time.Duration
 }
 
 var (
@@ -169,12 +179,18 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventPruningInterval = defaultEventPruningInterval
 	}
 
+	searchLookback := opts.SearchLookback
+	if searchLookback < 0 {
+		searchLookback = defaultSearchLookback
+	}
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:                    opts.WatchOptions.normalize(),
 		snowflake:                    s,
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
@@ -185,6 +201,8 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
 		garbageCollection:            opts.GarbageCollection,
+		searchLookback:               opts.SearchLookback,
+		disablePruner:                opts.DisablePruner,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -285,6 +303,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	}
 
 	counter := 0
+	deleted := 0
 	// iterate over all keys for the resource and delete versions beyond the latest 20
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
@@ -308,14 +327,22 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 			if err != nil {
 				return err
 			}
+			deleted += 1
 		}
 	}
+
+	k.log.Debug("pruned history successfully",
+		"namespace", key.Namespace,
+		"group", key.Group,
+		"resource", key.Resource,
+		"name", key.Name,
+		"rows", deleted)
 
 	return nil
 }
 
 func (k *kvStorageBackend) initPruner(ctx context.Context) error {
-	if !k.withPruner {
+	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil
@@ -1109,17 +1136,12 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-// listModifiedSinceLookback is the duration subtracted from sinceRv before
-// querying the data or event store. This guards against concurrent writes that
-// commit slightly out-of-order, ensuring recently-committed events are re-scanned.
-const listModifiedSinceLookback = time.Second
-
 // ListModifiedSince returns all resources that have changed since the given
-// resource version. A small lookback window (listModifiedSinceLookback) is
-// applied so that events committed concurrently with the previous call are not
-// missed. Because of this, callers may receive events with resource versions
-// slightly before sinceRv. If a `lastCalledWithSinceRv` parameter is passed,
-// the lookback may be skipped as an optimization.
+// resource version. If searchLookback is non-zero, a lookback window is applied
+// so that events committed concurrently with the previous call are not missed.
+// Because of this, callers may receive events with resource versions slightly
+// before sinceRv. If a `lastCalledWithSinceRv` parameter is passed, the
+// lookback may be skipped as an optimization.
 func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	if !key.Valid() {
 		return 0, func(yield func(*ModifiedResource, error) bool) {
@@ -1151,16 +1173,16 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
 	sinceRvTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
 
-	var skipLookback bool
-	if lastCalledWithSinceRv != nil {
-		skipLookback = (*lastCalledWithSinceRv).Sub(sinceRvTime) > listModifiedSinceLookback
-	}
-
 	var effectiveRv int64
-	if skipLookback {
+	if k.searchLookback == 0 {
 		effectiveRv = sinceRv
 	} else {
-		effectiveRv = subtractDurationFromSnowflake(sinceRv, listModifiedSinceLookback)
+		skipLookback := lastCalledWithSinceRv != nil && (*lastCalledWithSinceRv).Sub(sinceRvTime) > k.searchLookback
+		if skipLookback {
+			effectiveRv = sinceRv
+		} else {
+			effectiveRv = subtractDurationFromSnowflake(sinceRv, k.searchLookback)
+		}
 	}
 
 	// If no new events since effectiveRv, return early and avoid doing a range query.
@@ -1171,11 +1193,11 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	sinceRvAge := time.Since(sinceRvTime)
 
 	if sinceRvAge > time.Hour {
-		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
 	}
 
-	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "skipLookback", skipLookback)
+	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
 }
 
@@ -1577,7 +1599,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
-	notifierEvents := k.notifier.Watch(ctx, defaultWatchOptions())
+	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
 	go func() {
 		for event := range notifierEvents {
 			// fetch the data
@@ -1649,6 +1671,7 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	}
 }
 
+//nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// TODO cross-node lock
 	err := b.bulkLock.Start(setting.Collection)
@@ -1709,6 +1732,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			b.log.Error("failed to delete collection: %s", err)
 			return rsp
 		}
+
+		// Delete legacy resource rows for this collection so they can be re-synced after import.
+		if b.rvManager != nil {
+			if err := b.dataStore.deleteLegacyResourceCollection(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+				b.log.Error("failed to delete legacy resource collection", "error", err)
+				return rsp
+			}
+		}
+
 		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
 			Namespace:     key.Namespace,
 			Group:         key.Group,
@@ -1727,6 +1759,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	updatedResources := make(map[NamespacedResource]bool)
+	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
+	lastMicroRV := make(map[string]int64)
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -1815,6 +1849,47 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		saved = append(saved, dataKey)
 		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
+
+		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
+		if b.rvManager != nil {
+			microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
+			generation := obj.GetGeneration()
+			if action == DataActionDeleted {
+				generation = 0
+			}
+
+			// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
+			nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
+			var previousRV int64
+			if action != DataActionCreated {
+				previousRV = lastMicroRV[nameKey]
+			}
+
+			if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, b.rvManager.DB(), dataKey, microRV, previousRV, generation); err != nil {
+				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
+				return rsp
+			}
+			lastMicroRV[nameKey] = microRV
+		}
+	}
+
+	// Sync legacy resource table and bump RV counter for each collection.
+	if b.rvManager != nil && rsp.Error == nil {
+		for _, key := range setting.Collection {
+			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+				b.log.Error("failed to sync legacy resource from history", "error", err)
+				return rsp
+			}
+
+			// Bump the RV counter so subsequent WriteEvent calls generate RVs above the bulk-imported ones.
+			// Without this, ExecWithRV could produce colliding or lower RVs. Same pattern as SQL backend's ProcessBulk.
+			_, err := b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+				return "", nil
+			})
+			if err != nil {
+				b.log.Warn("error increasing RV for bulk", "error", err)
+			}
+		}
 	}
 
 	if rsp.Error == nil {

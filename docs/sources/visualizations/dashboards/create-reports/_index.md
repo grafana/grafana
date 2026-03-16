@@ -96,7 +96,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 For Grafana Enterprise, the Reporting feature has the following requirements:
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
-- The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.10+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
+- The [Grafana image renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/) must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
 ### Rendering configuration
 
@@ -329,7 +329,7 @@ If you selected a PDF attachment, configure the following formatting options:
 #### Table data in PDF
 
 {{< admonition type="note" >}}
-Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, as well as in [Grafana Cloud](/docs/grafana-cloud/).
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) with the [Grafana image renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/), as well as in [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
