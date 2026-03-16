@@ -10,7 +10,5 @@ FROM
     "grafana"."short_url" as s
 WHERE
     s.org_id = 1
-    AND s.id > 0
 ORDER BY
     s.id ASC
-LIMIT 1000

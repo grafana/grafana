@@ -42,49 +42,17 @@ func ProvideShortURLMigrator(sql legacysql.LegacyDatabaseProvider) ShortURLMigra
 	return &shortURLMigrator{sql: sql}
 }
 
-const shortURLBatchSize int64 = 1000
-
 // MigrateShortURLs handles the short URL migration logic
 func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating short URLs...")
-
-	count := 0
-	lastID := int64(0)
-
-	for {
-		batchCount, batchLastID, err := m.migrateShortURLBatch(ctx, orgId, lastID, opts, stream, &count)
-		if err != nil {
-			return err
-		}
-		lastID = batchLastID
-
-		if int64(batchCount) < shortURLBatchSize {
-			break
-		}
-	}
-
-	opts.Progress(-2, fmt.Sprintf("finished short URLs... (%d)", count))
-	return nil
-}
-
-// migrateShortURLBatch fetches and processes a single batch of short URLs.
-// It returns the number of rows processed and the last ID seen.
-func (m *shortURLMigrator) migrateShortURLBatch(
-	ctx context.Context,
-	orgId int64,
-	lastID int64,
-	opts migrations.MigrateOptions,
-	stream resourcepb.BulkStore_BulkProcessClient,
-	count *int,
-) (int, int64, error) {
-	rows, err := m.ListShortURLs(ctx, orgId, lastID, shortURLBatchSize)
+	rows, err := m.ListShortURLs(ctx, orgId)
 	if rows != nil {
 		defer func() {
 			_ = rows.Close()
 		}()
 	}
 	if err != nil {
-		return 0, lastID, err
+		return err
 	}
 
 	var id int64
@@ -94,11 +62,12 @@ func (m *shortURLMigrator) migrateShortURLBatch(
 	var createdAt int64
 	var lastSeenAt int64
 
-	batchCount := 0
-	for rows.Next() {
+	count := 0
+
+	for i := 1; rows.Next(); i++ {
 		err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
 		if err != nil {
-			return batchCount, id, err
+			return err
 		}
 
 		shortURL := &shorturlv1beta1.ShortURL{
@@ -125,7 +94,7 @@ func (m *shortURLMigrator) migrateShortURLBatch(
 
 		body, err := json.Marshal(shortURL)
 		if err != nil {
-			return batchCount, id, err
+			return err
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -139,36 +108,35 @@ func (m *shortURLMigrator) migrateShortURLBatch(
 			Action: resourcepb.BulkRequest_ADDED,
 		}
 
-		opts.Progress(*count, fmt.Sprintf("%s (%d)", uid, len(req.Value)))
-		*count++
-		batchCount++
+		opts.Progress(i, fmt.Sprintf("%s (%d)", req.Key.Name, len(req.Value)))
+		count++
 
 		err = stream.Send(req)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
+				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
 				err = nil
 			}
-			return batchCount, id, err
+			return err
 		}
 	}
 
 	if err = rows.Err(); err != nil {
-		return batchCount, id, err
+		return err
 	}
 
-	return batchCount, id, nil
+	opts.Progress(-2, fmt.Sprintf("finished short URLs... (%d)", count))
+	return nil
 }
 
-func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64, lastID int64, limit int64) (*sql.Rows, error) {
+func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64) (*sql.Rows, error) {
 	helper, err := m.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	req := newShortURLQueryReq(helper, &ShortURLQuery{
-		OrgID:  orgID,
-		LastID: lastID,
-		Limit:  limit,
+		OrgID: orgID,
 	})
 
 	rawQuery, err := sqltemplate.Execute(sqlQueryShortURLs, req)
@@ -180,9 +148,7 @@ func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64, lastI
 }
 
 type ShortURLQuery struct {
-	OrgID  int64
-	LastID int64
-	Limit  int64
+	OrgID int64
 }
 
 type sqlShortURLQuery struct {

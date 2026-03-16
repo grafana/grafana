@@ -31,9 +31,7 @@ func TestShortURLQueries(t *testing.T) {
 				{
 					Name: "list",
 					Data: getShortURLQuery(&ShortURLQuery{
-						OrgID:  1,
-						LastID: 0,
-						Limit:  1000,
+						OrgID: 1,
 					}),
 				},
 			},

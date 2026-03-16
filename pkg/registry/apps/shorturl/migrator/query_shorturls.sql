@@ -10,7 +10,5 @@ FROM
     {{ .Ident .ShortURLTable }} as s
 WHERE
     s.org_id = {{ .Arg .Query.OrgID }}
-    AND s.id > {{ .Arg .Query.LastID }}
 ORDER BY
     s.id ASC
-LIMIT {{ .Arg .Query.Limit }}
