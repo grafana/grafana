@@ -502,11 +502,7 @@ export enum VizOrientation {
   Vertical = 'vertical',
 }
 
-export interface VizAnnotations {
-  /**
-   * Controls indicator lines and shaded regions behavior
-   */
-  canvasControls?: AnnotationDisplayOptions;
+export interface VizAnnotations extends AnnotationDisplayOptions {
   /**
    * Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
    */
@@ -518,10 +514,10 @@ export interface VizAnnotations {
 }
 
 export interface AnnotationDisplayOptions {
-  lines: {
+  lines?: {
     width?: number;
   };
-  regions: {
+  regions?: {
     opacity?: number;
   };
 }

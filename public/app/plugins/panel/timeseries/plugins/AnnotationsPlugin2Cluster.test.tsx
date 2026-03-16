@@ -809,7 +809,8 @@ describe('AnnotationsPlugin2', () => {
               {
                 annotations: [mockAnnotationFrame],
                 options: {
-                  canvasControls: { lines: { width: 5 }, regions: { opacity: 0.1 } },
+                  lines: { width: 5 },
+                  regions: { opacity: 0.1 },
                 },
               },
               config
@@ -825,7 +826,8 @@ describe('AnnotationsPlugin2', () => {
                 annotations: [mockIRMAnnotationRegion],
                 canvasRegionRendering: true,
                 options: {
-                  canvasControls: { lines: { width: 2 }, regions: { opacity } },
+                  lines: { width: 2 },
+                  regions: { opacity },
                 },
               },
               config
@@ -848,7 +850,8 @@ describe('AnnotationsPlugin2', () => {
               {
                 annotations: [mockAnnotationFrame],
                 options: {
-                  canvasControls: { lines: { width: 0 }, regions: { opacity: 0 } },
+                  lines: { width: 0 },
+                  regions: { opacity: 0 },
                 },
               },
               config
@@ -865,7 +868,8 @@ describe('AnnotationsPlugin2', () => {
                 annotations: [mockIRMAnnotationRegion],
                 canvasRegionRendering: true,
                 options: {
-                  canvasControls: { lines: { width: 2 }, regions: { opacity: 0 } },
+                  lines: { width: 2 },
+                  regions: { opacity: 0 },
                 },
               },
               config
@@ -900,7 +904,8 @@ describe('AnnotationsPlugin2', () => {
                 annotations: [mockAnnotationFrame],
                 options: {
                   multiLane: true,
-                  canvasControls: { lines: { width: 2 }, regions: { opacity: 0.1 } },
+                  lines: { width: 2 },
+                  regions: { opacity: 0.1 },
                 },
               },
               config

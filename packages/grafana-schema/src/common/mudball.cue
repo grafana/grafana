@@ -164,14 +164,14 @@ VizAnnotations: {
 	// Sets whether clustering is enabled. Set as a number to provide for threshold customization in the future without breaking API changes. Any value > 0 will enable clustering.
 	clustering?: number
 	// Controls indicator lines and shaded regions behavior
-	canvasControls?: AnnotationDisplayOptions
+	AnnotationDisplayOptions
 } @cuetsy(kind="interface")
 
 AnnotationDisplayOptions: {
-    lines: {
+    lines?: {
         width?: number
     },
-    regions: {
+    regions?: {
         opacity?: number
     }
 } @cuetsy(kind="interface")

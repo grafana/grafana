@@ -129,8 +129,8 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      const regionOpacity = options?.canvasControls?.regions?.opacity;
-      const lineWidth = options?.canvasControls?.lines?.width;
+      const regionOpacity = options?.regions?.opacity;
+      const lineWidth = options?.lines?.width;
       const shouldRenderRegion = (regionOpacity !== undefined ? regionOpacity > 0 : undefined) ?? !options?.multiLane;
       const shouldRenderLine = (lineWidth !== undefined ? lineWidth > 0 : undefined) ?? !options?.multiLane;
 
@@ -217,8 +217,8 @@ export const AnnotationsPlugin2Cluster = ({
     getColorByName,
     options?.multiLane,
     options?.clustering,
-    options?.canvasControls?.lines?.width,
-    options?.canvasControls?.regions?.opacity,
+    options?.lines?.width,
+    options?.regions?.opacity,
   ]);
 
   // ensure xAnnos are re-drawn whenever they change
