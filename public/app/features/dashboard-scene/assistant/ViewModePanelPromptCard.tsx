@@ -10,8 +10,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { ElementSelection } from '../ElementSelection';
-import { EditPaneSelectionActions } from '../types';
+import { ElementSelection } from '../edit-pane/ElementSelection';
+import { EditPaneSelectionActions } from '../edit-pane/types';
 
 import { panelHasData } from './PanelAssistantHint';
 

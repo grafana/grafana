@@ -2,10 +2,10 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneGridLayout, VizPanel, sceneGraph } from '@grafana/scenes';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
-import { activateFullSceneTree } from '../../utils/test-utils';
+import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import {
   PanelAssistantHintItem,

@@ -12,6 +12,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from '../assistant/DashboardAssistantViewMode';
+import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -19,8 +21,6 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from './assistant/DashboardAssistantViewMode';
-import { ViewModePanelPromptCard } from './assistant/ViewModePanelPromptCard';
 
 interface Props {
   dashboard: DashboardScene;
