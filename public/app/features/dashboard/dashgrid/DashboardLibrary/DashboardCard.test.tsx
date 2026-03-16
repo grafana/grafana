@@ -32,6 +32,7 @@ describe('DashboardCard', () => {
     jest.clearAllMocks();
     // Default: assistant not available
     useAssistantMock.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: mockOpenAssistant,
     } as unknown as AssistantHook);
@@ -530,6 +531,7 @@ describe('DashboardCard', () => {
     beforeEach(() => {
       // Enable assistant for these tests
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: true,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);
@@ -565,6 +567,7 @@ describe('DashboardCard', () => {
 
     it('should not show Assistant button when assistant is unavailable', () => {
       useAssistantMock.mockReturnValue({
+        isLoading: false,
         isAvailable: false,
         openAssistant: mockOpenAssistant,
       } as unknown as AssistantHook);

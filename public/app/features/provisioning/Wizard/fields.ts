@@ -104,7 +104,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'GitLab Project Access Token with repository permissions'
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.gitlab.token-required', 'GitLab token is required'),
@@ -213,7 +213,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       },
       url: {
         ...shared.url,
-        description: t('provisioning.git.url-description', 'The Git repository URL'),
+        description: t(
+          'provisioning.git.url-description',
+          'The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).'
+        ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder: 'https://git.example.com/owner/repository.git',
         required: true,

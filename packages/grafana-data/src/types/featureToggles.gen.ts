@@ -394,6 +394,11 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
+  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
@@ -648,6 +653,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardTemplatesAssistantButton?: boolean;
+  /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
   /**
   * Enables the new alert list view design
   * @default false
@@ -1223,6 +1233,11 @@ export interface FeatureToggles {
   */
   alertEnrichmentConditional?: boolean;
   /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */
@@ -1403,6 +1418,11 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
+  /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
@@ -1578,6 +1598,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
+  * Use the new team service that uses the app platform APIs
+  * @default false
+  */
+  kubernetesTeamService?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
@@ -1657,6 +1682,11 @@ export interface FeatureToggles {
   * @default false
   */
   flameGraphWithCallTree?: boolean;
+  /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
