@@ -61,8 +61,8 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 		},
 	}
 
-	runBenchmark := func(b *testing.B, batchOpts resource.BulkBatchOptions) {
-		restore := resource.SetBulkBatchOptionsForTesting(batchOpts)
+	runBenchmark := func(b *testing.B, maxItems, maxBytes int, maxIdle time.Duration) {
+		restore := resource.SetBulkBatchOptionsForTesting(maxItems, maxBytes, maxIdle)
 		b.Cleanup(restore)
 		b.ReportAllocs()
 		b.ResetTimer()
@@ -77,64 +77,52 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 	}
 
 	cases := []struct {
-		name string
-		opts resource.BulkBatchOptions
+		name     string
+		maxItems int
+		maxBytes int
+		maxIdle  time.Duration
 	}{
 		{
-			name: "batch_size_1",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 1,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_1",
+			maxItems: 1,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batch_size_4",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 4,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_4",
+			maxItems: 4,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batch_size_8",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 8,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_8",
+			maxItems: 8,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batch_size_16",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 16,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_16",
+			maxItems: 16,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batch_size_32",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 32,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_32",
+			maxItems: 32,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batch_size_128",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 128,
-				MaxBytes: 1 << 20,
-			},
+			name:     "batch_size_128",
+			maxItems: 128,
+			maxBytes: 1 << 20,
 		},
 		{
-			name: "batched_default",
-			opts: resource.BulkBatchOptions{
-				MaxItems: 1000,
-				MaxBytes: 2 * 1024 * 1024,
-				MaxIdle:  5 * time.Millisecond,
-			},
+			name:     "batched_default",
+			maxItems: 1000,
+			maxBytes: 2 * 1024 * 1024,
+			maxIdle:  5 * time.Millisecond,
 		},
 	}
 
 	for _, tc := range cases {
 		b.Run(tc.name, func(b *testing.B) {
-			runBenchmark(b, tc.opts)
+			runBenchmark(b, tc.maxItems, tc.maxBytes, tc.maxIdle)
 		})
 	}
 }

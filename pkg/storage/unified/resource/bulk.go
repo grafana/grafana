@@ -30,18 +30,11 @@ type bulkBatchOptions struct {
 	MaxIdle  time.Duration
 }
 
-// BulkBatchOptions configures internal BulkProcess batching.
-// Testing and benchmarks may override these values through SetBulkBatchOptionsForTesting.
-type BulkBatchOptions = bulkBatchOptions
-
 var (
-	defaultBulkBatchOptions = bulkBatchOptions{
-		MaxItems: 1000,
-		MaxBytes: 2 * 1024 * 1024,
-		MaxIdle:  5 * time.Millisecond,
-	}
-	bulkBatchOptionsMu sync.RWMutex
-	bulkBatchConfig    = defaultBulkBatchOptions
+	defaultBulkBatchOptions = bulkBatchOptions{MaxItems: 1000, MaxBytes: 2 * 1024 * 1024, MaxIdle: 5 * time.Millisecond}
+	bulkBatchMaxItems       = defaultBulkBatchOptions.MaxItems
+	bulkBatchMaxBytes       = defaultBulkBatchOptions.MaxBytes
+	bulkBatchMaxIdle        = defaultBulkBatchOptions.MaxIdle
 )
 
 // Logged in trace.
@@ -131,28 +124,31 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 }
 
 func currentBulkBatchOptions() bulkBatchOptions {
-	bulkBatchOptionsMu.RLock()
-	defer bulkBatchOptionsMu.RUnlock()
-	return bulkBatchConfig
+	return bulkBatchOptions{
+		MaxItems: bulkBatchMaxItems,
+		MaxBytes: bulkBatchMaxBytes,
+		MaxIdle:  bulkBatchMaxIdle,
+	}
 }
 
-func setBulkBatchOptionsForTesting(opts bulkBatchOptions) func() {
-	bulkBatchOptionsMu.Lock()
-	prev := bulkBatchConfig
-	bulkBatchConfig = opts
-	bulkBatchOptionsMu.Unlock()
-
+func setBulkBatchOptionsForTesting(maxItems, maxBytes int, maxIdle time.Duration) func() {
+	prevItems := bulkBatchMaxItems
+	prevBytes := bulkBatchMaxBytes
+	prevIdle := bulkBatchMaxIdle
+	bulkBatchMaxItems = maxItems
+	bulkBatchMaxBytes = maxBytes
+	bulkBatchMaxIdle = maxIdle
 	return func() {
-		bulkBatchOptionsMu.Lock()
-		bulkBatchConfig = prev
-		bulkBatchOptionsMu.Unlock()
+		bulkBatchMaxItems = prevItems
+		bulkBatchMaxBytes = prevBytes
+		bulkBatchMaxIdle = prevIdle
 	}
 }
 
 // SetBulkBatchOptionsForTesting overrides the internal BulkProcess batching thresholds.
 // It is intended for tests and benchmarks and returns a restore function.
-func SetBulkBatchOptionsForTesting(opts BulkBatchOptions) func() {
-	return setBulkBatchOptionsForTesting(opts)
+func SetBulkBatchOptionsForTesting(maxItems, maxBytes int, maxIdle time.Duration) func() {
+	return setBulkBatchOptionsForTesting(maxItems, maxBytes, maxIdle)
 }
 
 // BulkWrite implements ResourceServer.

@@ -16,10 +16,7 @@ import (
 )
 
 func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(bulkBatchOptions{
-		MaxItems: 2,
-		MaxBytes: 1 << 20,
-	})
+	restore := setBulkBatchOptionsForTesting(2, 1<<20, 0)
 	t.Cleanup(restore)
 
 	reqs := []*resourcepb.BulkRequest{
@@ -44,11 +41,7 @@ func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 }
 
 func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(bulkBatchOptions{
-		MaxItems: 100,
-		MaxBytes: 1 << 20,
-		MaxIdle:  5 * time.Millisecond,
-	})
+	restore := setBulkBatchOptionsForTesting(100, 1<<20, 5*time.Millisecond)
 	t.Cleanup(restore)
 
 	reqs := []*resourcepb.BulkRequest{
@@ -72,10 +65,7 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 }
 
 func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(bulkBatchOptions{
-		MaxItems: 2,
-		MaxBytes: 1 << 20,
-	})
+	restore := setBulkBatchOptionsForTesting(2, 1<<20, 0)
 	t.Cleanup(restore)
 
 	reqs := []*resourcepb.BulkRequest{
@@ -95,10 +85,7 @@ func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
 }
 
 func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(bulkBatchOptions{
-		MaxItems: 10,
-		MaxBytes: 1 << 20,
-	})
+	restore := setBulkBatchOptionsForTesting(10, 1<<20, 0)
 	t.Cleanup(restore)
 
 	req := newTestBulkRequest("item-1")
