@@ -365,23 +365,93 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 	})
 }
 
-// TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata verifies that when a
-// folder with _folder.json (stable UID + custom title) is moved on the filesystem,
-// a full sync correctly recreates the folder at the new location with the same UID
-// and title. This works because the DELETE+CREATE flow removes the folder from the
-// in-memory tree during deletion, so the creation phase can recreate it.
+// findFolderUIDBySourcePath lists all folders managed by repoName and returns the UID
+// of the folder whose grafana.app/sourcePath annotation matches the given sourcePath.
+func findFolderUIDBySourcePath(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string) string {
+	t.Helper()
+	var uid string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		for _, f := range list.Items {
+			annotations := f.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] == sourcePath {
+				uid = f.GetName()
+				return
+			}
+		}
+		c.Errorf("no folder managed by %q with sourcePath %q found", repoName, sourcePath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected folder with sourcePath %q for repo %q", sourcePath, repoName)
+	return uid
+}
+
+// requireDashboardParents lists all dashboards managed by repoName and asserts that
+// for each entry in expected (keyed by grafana.app/sourcePath), the grafana.app/folder
+// annotation matches the expected parent UID.
+func requireDashboardParents(t *testing.T, helper *common.ProvisioningTestHelper, repoName string, expected map[string]string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		found := make(map[string]string) // sourcePath → folder annotation
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			sp := annotations["grafana.app/sourcePath"]
+			if _, ok := expected[sp]; ok {
+				found[sp] = annotations["grafana.app/folder"]
+			}
+		}
+		for sp, expectedParent := range expected {
+			actualParent, ok := found[sp]
+			if !assert.True(c, ok, "dashboard with sourcePath %q not found", sp) {
+				continue
+			}
+			assert.Equal(c, expectedParent, actualParent, "dashboard %q parent folder", sp)
+		}
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected dashboards with correct parents for repo %q", repoName)
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata verifies that when folders
+// are moved on the filesystem, a full sync correctly handles the DELETE+CREATE flow:
+// - Folders with _folder.json preserve their stable UID at the new location
+// - Folders without _folder.json get new auto-generated UIDs
+// - Dashboard parent folder annotations are updated to reflect the new structure
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
 	const repo = "folder-move-metadata"
 
-	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("move-uid", "Team A Display"))
+	// Initial filesystem layout:
+	//   teamA/_folder.json          (uid="team-a-uid", title="Team A Display")
+	//   teamA/dashboard.json        (all-panels.json)
+	//   teamB/_folder.json          (uid="team-b-uid", title="Team B Display")
+	//   teamB/dashboard.json        (text-options.json)
+	//   teamC/dashboard.json        (timeline-demo.json)
+	//   teamC/teamD/.keep           (empty nested folder)
+	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A Display"))
+	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B Display"))
+	writeToProvisioningPath(t, helper, "teamC/teamD/.keep", []byte{})
+
 	helper.CreateRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/all-panels.json": "teamA/dashboard.json",
+			"testdata/all-panels.json":    "teamA/dashboard.json",
+			"testdata/text-options.json":  "teamB/dashboard.json",
+			"testdata/timeline-demo.json": "teamC/dashboard.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
@@ -389,16 +459,69 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 
 	helper.SyncAndWait(t, repo, nil)
 
-	// Verify folder was created with stable UID, custom title, and correct source path
-	requireFolderState(t, helper, "move-uid", "Team A Display", "teamA", repo)
+	// --- Verify initial state ---
+	// teamA and teamB have stable UIDs from _folder.json
+	requireFolderState(t, helper, "team-a-uid", "Team A Display", "teamA", repo)
+	requireFolderState(t, helper, "team-b-uid", "Team B Display", "teamB", repo)
 
-	// Move folder on filesystem: teamA → teamB
-	moveInProvisioningPath(t, helper, "teamA", "teamB")
+	// teamC and teamD have auto-generated UIDs — discover them
+	teamCUID := findFolderUIDBySourcePath(t, helper, repo, "teamC")
+	teamDUID := findFolderUIDBySourcePath(t, helper, repo, "teamC/teamD")
+	require.NotEmpty(t, teamCUID, "teamC should have an auto-generated UID")
+	require.NotEmpty(t, teamDUID, "teamD should have an auto-generated UID")
+
+	// Verify teamC is at root level, teamD is inside teamC
+	requireFolderState(t, helper, teamCUID, "teamC", "teamC", repo)
+	requireFolderState(t, helper, teamDUID, "teamD", "teamC/teamD", teamCUID)
+
+	// Verify dashboard parent folder annotations
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"teamA/dashboard.json": "team-a-uid",
+		"teamB/dashboard.json": "team-b-uid",
+		"teamC/dashboard.json": teamCUID,
+	})
+
+	// --- Perform filesystem moves ---
+	// 1. teamB → teamC/teamB (move teamB inside teamC)
+	moveInProvisioningPath(t, helper, "teamB", "teamC/teamB")
+	// 2. teamC → teamA/teamC (move teamC inside teamA — carries teamC/teamB along)
+	moveInProvisioningPath(t, helper, "teamC", "teamA/teamC")
+	// 3. teamA/teamC/teamD → teamA/teamD (move teamD out of teamC, directly under teamA)
+	moveInProvisioningPath(t, helper, "teamA/teamC/teamD", "teamA/teamD")
+
+	// Resulting filesystem:
+	//   teamA/_folder.json
+	//   teamA/dashboard.json
+	//   teamA/teamC/dashboard.json
+	//   teamA/teamC/teamB/_folder.json
+	//   teamA/teamC/teamB/dashboard.json
+	//   teamA/teamD/.keep
 
 	helper.SyncAndWait(t, repo, nil)
 
-	// After move: folder should be recreated with the same stable UID at the new location.
-	// The source path should reflect the new location, and the title should be preserved
-	// from _folder.json.
-	requireFolderState(t, helper, "move-uid", "Team A Display", "teamB", repo)
+	// --- Verify final state ---
+	// teamA: stable UID preserved, still at root
+	requireFolderState(t, helper, "team-a-uid", "Team A Display", "teamA", repo)
+
+	// teamC: auto-UID → deleted and recreated with a new UID, now child of teamA
+	newTeamCUID := findFolderUIDBySourcePath(t, helper, repo, "teamA/teamC")
+	require.NotEmpty(t, newTeamCUID, "teamC should exist at new path")
+
+	// teamB: stable UID preserved (thanks to _folder.json), parent changed to new teamC
+	requireFolderState(t, helper, "team-b-uid", "Team B Display", "teamA/teamC/teamB", newTeamCUID)
+
+	// teamC: verify parent is teamA
+	requireFolderState(t, helper, newTeamCUID, "teamC", "teamA/teamC", "team-a-uid")
+
+	// teamD: auto-UID → deleted and recreated with a new UID, now child of teamA
+	newTeamDUID := findFolderUIDBySourcePath(t, helper, repo, "teamA/teamD")
+	require.NotEmpty(t, newTeamDUID, "teamD should exist at new path")
+	requireFolderState(t, helper, newTeamDUID, "teamD", "teamA/teamD", "team-a-uid")
+
+	// Verify dashboard parent folder annotations after moves
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"teamA/dashboard.json":             "team-a-uid",
+		"teamA/teamC/teamB/dashboard.json": "team-b-uid",
+		"teamA/teamC/dashboard.json":       newTeamCUID,
+	})
 }
