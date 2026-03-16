@@ -27,7 +27,7 @@ import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/Add
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
+// NI fork: PublicDashboardBadgeLegacy import removed - public dashboards not used
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -213,9 +213,7 @@ export const DashNav = memo<Props>((props) => {
       );
     }
 
-    if (dashboard.uid) {
-      buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
-    }
+    // NI fork: public dashboards are not used, badge removed to avoid unnecessary API calls
 
     if (isDevEnv && config.featureToggles.dashboardScene) {
       buttons.push(
