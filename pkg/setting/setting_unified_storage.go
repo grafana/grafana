@@ -3,6 +3,7 @@ package setting
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -132,14 +133,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
-	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
-		// Helper log to find instances running migrations in the future
-		cfg.Logger.Info("Unified migration configs enforced")
-		cfg.enforceMigrationToUnifiedConfigs()
-	} else {
-		// Helper log to find instances disabling migration
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
-	}
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -147,6 +140,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
@@ -199,6 +193,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
@@ -212,11 +207,20 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }
 
-// enforceMigrationToUnifiedConfigs enforces configurations required to run migrated resources in mode 5
-// All migrated resources in MigratedUnifiedResources are set to mode 5 and unified search is enabled
-func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
+// applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
+// or disables local search when a remote search server is configured.
+func (cfg *Cfg) applyMigrationEnforcements() {
+	if !cfg.ShouldRunMigrations() {
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
+		if cfg.shouldProxySearchRemotely() {
+			cfg.EnableSearch = false
+		}
+		return
+	}
+
+	cfg.Logger.Info("Unified migration configs enforced", "storage_type", cfg.UnifiedStorageType(), "target", cfg.Target)
+
 	section := cfg.Raw.Section("unified_storage")
-	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
 	if !cfg.EnableSearch {
 		cfg.Logger.Info("Enforcing enable_search for unified storage")
 		section.Key("enable_search").SetValue("true")
@@ -240,6 +244,27 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 			AutoMigrationThreshold: resourceCfg.AutoMigrationThreshold,
 		}
 	}
+}
+
+func isTargetEligibleForMigrations(targets []string) bool {
+	return slices.Contains(targets, "all") || slices.Contains(targets, "core")
+}
+
+// shouldProxySearchRemotely reports whether local search should be disabled in
+// favor of a remote search server. This is true when a search_server_address is
+// configured and the current target is not a dedicated search-server (which
+// needs local indexing to serve search RPCs).
+func (cfg *Cfg) shouldProxySearchRemotely() bool {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	return apiserverCfg.Key("search_server_address").MustString("") != "" &&
+		!slices.Contains(cfg.Target, "search-server")
+}
+
+// ShouldRunMigrations reports whether data migrations to unified storage should run.
+func (cfg *Cfg) ShouldRunMigrations() bool {
+	return !cfg.DisableDataMigrations &&
+		cfg.UnifiedStorageType() == "unified" &&
+		isTargetEligibleForMigrations(cfg.Target)
 }
 
 // UnifiedStorageType returns the configured storage type without creating or mutating keys.

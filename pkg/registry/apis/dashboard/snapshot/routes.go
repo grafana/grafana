@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage) *builder.APIRoutes {
+func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -155,7 +155,20 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
-					// TODO: validate dashboard exists. Need to call dashboards api, Maybe in a validation hook?
+					// Validate that the dashboard exists
+					dashboardUID, _ := cmd.Dashboard.Object["uid"].(string)
+					if dashboardUID == "" {
+						wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
+						return
+					}
+					_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+						UID:   dashboardUID,
+						OrgID: user.GetOrgID(),
+					})
+					if err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("dashboard with UID %q not found", dashboardUID), nil)
+						return
+					}
 
 					cmd.OrgID = user.GetOrgID()
 					cmd.UserID, _ = identity.UserIdentifier(user.GetID())

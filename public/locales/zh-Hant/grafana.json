@@ -2185,16 +2185,16 @@
       "title-no-alertmanager-found": "找不到 Alertmanager"
     },
     "notification-detail": {
-      "action-silence": "",
-      "action-view-contact-point": "",
+      "alert-status-firing": "",
+      "alert-status-resolved": "",
       "alerts-empty": "",
       "alerts-loading": "",
       "batch-all-ok": "",
       "batch-count-one": "",
+      "common-annotations": "",
+      "common-labels": "",
       "current": "",
       "debug-details-heading": "",
-      "delivery-failed": "",
-      "delivery-success": "",
       "error-title": "",
       "error-title-banner": "",
       "error-unknown": "",
@@ -2204,26 +2204,40 @@
       "field-retry": "",
       "field-timestamp": "",
       "field-uuid": "",
-      "firing-alerts": "",
-      "group-labels-heading": "",
+      "info-group-labels": "",
       "loading": "",
+      "menu-analyze": "",
+      "menu-copy-link": "",
+      "menu-silence": "",
+      "menu-view-contact-point": "",
+      "menu-view-rule": "",
+      "menu-view-rule-n": "",
+      "more-details-heading": "",
       "no": "",
+      "no-common-data": "",
       "not-found-body": "",
       "not-found-title": "",
       "page-title": "",
       "related-loading": "",
-      "related-sidebar-subtitle": "",
-      "related-sidebar-title": "",
-      "resolved-alerts": "",
       "retry-tooltip": "",
+      "sidebar-contact-point": "",
+      "sidebar-delivery-failed": "",
+      "sidebar-delivery-outcome": "",
+      "sidebar-delivery-success": "",
+      "sidebar-duration": "",
+      "sidebar-integration": "",
+      "sidebar-retry": "",
+      "sidebar-retry-value": "",
+      "sidebar-timestamp": "",
+      "tab-alerts": "",
+      "tab-overview": "",
+      "tab-related": "",
       "uuid-not-found-body": "",
       "uuid-not-found-title": "",
       "yes": "",
       "alert-count-inline_other": "",
       "batch-count-many_other": "",
-      "batch-failed_other": "",
-      "related-count_other": "",
-      "related-count-with-failures_other": ""
+      "batch-failed_other": ""
     },
     "notification-history": {
       "enrichment-explore": "",
@@ -4013,6 +4027,12 @@
         "label-constant": "常數",
         "label-negative-y": "負 Y"
       }
+    },
+    "presets": {
+      "fixed-purple-hue": "",
+      "palette-classic": "",
+      "palette-classic-stacked": "",
+      "viridis-hue": ""
     },
     "suggestions": {
       "horizontal": "橫向長條圖",
@@ -6522,6 +6542,13 @@
     "add-variable": {
       "label-variable": ""
     },
+    "adhoc-origin-filters-controller": {
+      "input-placeholder": ""
+    },
+    "adhoc-origin-filters-editor": {
+      "description": "",
+      "label": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
       "label-annotation-query": ""
@@ -8784,6 +8811,7 @@
       "threshold-labels-description": "顯示閾值和中性值",
       "threshold-markers": "顯示閾值"
     },
+    "data-links-actions-menu": "",
     "description-min-height": "最小列高（橫向）",
     "description-min-width": "最小欄寬（縱向）",
     "description-neutral": "留空以使用最小值作為中性點",
@@ -13175,14 +13203,19 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "連接到 Bitbucket 儲存庫",
+      "bitbucket-tooltip": "",
       "github": "GitHub",
       "github-description": "連接到 GitHub 儲存庫",
+      "github-tooltip": "",
       "gitlab": "GitLab",
       "gitlab-description": "連接到 GitLab 儲存庫",
+      "gitlab-tooltip": "",
       "local": "本機",
       "local-description": "設定檔案佈建",
+      "local-tooltip": "",
       "pure-git": "純 Git",
-      "pure-git-description": "連接到任何 Git 儲存庫"
+      "pure-git-description": "連接到任何 Git 儲存庫",
+      "pure-git-tooltip": ""
     },
     "resource-tree": {
       "header-hash": "雜湊",
@@ -13322,6 +13355,8 @@
         "dismiss": "繼續工作",
         "title": "要捨棄儲存庫設定嗎？"
       },
+      "git-protocol-alert-body": "",
+      "git-protocol-alert-title": "",
       "github-app-connection-status": "",
       "github-app-creation-default-error": "無法建立連線",
       "github-app-creation-failed": "無法建立 GitHub 應用程式連線",
@@ -13335,6 +13370,8 @@
       "github-app-no-connections": "找不到 GitHub 連線",
       "github-app-no-connections-message": "您沒有任何現有的 GitHub 應用程式連線。請選擇「連線到新的應用程式」加以建立。",
       "github-app-select-connection": "",
+      "github-enterprise-alert-body": "",
+      "github-enterprise-alert-title": "",
       "step-bootstrap": "選擇要同步的內容",
       "step-configure-repo": "設定資源庫",
       "step-connect": "連接",
@@ -14840,6 +14877,7 @@
       "annotation-region-label": ""
     },
     "annotation-tooltip2": {
+      "cluster-header": "",
       "tooltip-delete": "刪除",
       "tooltip-edit": "編輯"
     },

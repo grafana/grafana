@@ -4,6 +4,7 @@ import { FeatureState, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Box, FeatureBadge, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
+import { QuotaLimitMessage } from '../Shared/QuotaLimitMessage';
 import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
 import { isOnPrem } from '../utils/isOnPrem';
 
@@ -43,9 +44,7 @@ export const FeaturesList = ({
         </li>
         {!!maxRepositories && (
           <li>
-            <Trans i18nKey="provisioning.quota-limit.message-repositories-info" count={maxRepositories}>
-              Your account is limited to {{ count: maxRepositories }} connected repositories
-            </Trans>
+            <QuotaLimitMessage maxRepositories={maxRepositories} showActionLink={false} />
           </li>
         )}
       </ul>
