@@ -337,9 +337,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         const { errors: doneErrors, error: doneError } = data;
         if (doneErrors?.length) {
           errorMessage =
-            doneErrors.length === 1
-              ? doneErrors[0].message
-              : 'Multiple errors found. Click for more details';
+            doneErrors.length === 1 ? doneErrors[0].message : 'Multiple errors found. Click for more details';
         } else if (doneError) {
           errorMessage = doneError.message;
         }
