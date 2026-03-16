@@ -3,6 +3,7 @@ package authorizer
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
+
+// maxBatchCheckItems is the typical server limit for a single BatchCheck request.
+const maxBatchCheckItems = 50
 
 // TODO: Logs, Metrics, Traces?
 
@@ -48,38 +52,77 @@ func isAccessPolicy(authInfo types.AuthInfo) bool {
 	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
-// CanViewTarget returns whether the caller has get_permissions on the given target resource.
-// authInfo must be the authenticated identity (e.g. from types.AuthInfoFrom(ctx)); pass it in so callers can fetch once when looping.
-func (r *ResourcePermissionsAuthorizer) CanViewTarget(ctx context.Context, authInfo types.AuthInfo, namespace, apiGroup, resource, name string) (bool, error) {
+// CanViewTargets returns only items for which the caller has get_permissions on the target resource.
+// getTarget(i) supplies the resource identity for item i; when ok is false that item is excluded.
+func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context, authInfo types.AuthInfo, items []T, getTarget func(i int) (namespace, apiGroup, resource, name string, ok bool)) ([]T, error) {
 	if authInfo == nil {
-		return false, storewrapper.ErrUnauthenticated
+		return nil, storewrapper.ErrUnauthenticated
 	}
-	targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
-	parent := ""
-	// Fetch the parent of the resource
-	// It's not efficient to do for every item in the list, but it's a good starting point.
-	// Access Policies have global scope, so no parent check needed
-	if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
-		gotParent, err := r.parentProvider.GetParent(ctx, targetGR, namespace, name)
-		if err != nil {
-			r.logger.Debug("can view target: error fetching parent, denying this item in the list",
-				"error", fmt.Sprintf("%v", err), "namespace", namespace, "group", apiGroup, "resource", resource, "name", name)
-			return false, nil
+	n := len(items)
+	if n == 0 {
+		return nil, nil
+	}
+	accessPolicy := isAccessPolicy(authInfo)
+
+	// build checks - use item index as correlation ID so results map back without a side table
+	checks := make([]types.BatchCheckItem, 0, n)
+	var namespace string
+	for i := 0; i < n; i++ {
+		ns, apiGroup, resource, name, ok := getTarget(i)
+		if !ok {
+			continue
 		}
-		parent = gotParent
+		if namespace == "" {
+			namespace = ns
+		}
+		targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
+		parent := ""
+		if !accessPolicy && r.parentProvider.HasParent(targetGR) {
+			var err error
+			parent, err = r.parentProvider.GetParent(ctx, targetGR, ns, name)
+			if err != nil {
+				r.logger.Debug("can view targets: error fetching parent, denying this item",
+					"error", fmt.Sprintf("%v", err), "namespace", ns, "group", apiGroup, "resource", resource, "name", name)
+				continue
+			}
+		}
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: strconv.Itoa(i),
+			Group:         apiGroup,
+			Resource:      resource,
+			Name:          name,
+			Verb:          utils.VerbGetPermissions,
+			Folder:        parent,
+		})
 	}
-	checkReq := types.CheckRequest{
-		Namespace: namespace,
-		Group:     apiGroup,
-		Resource:  resource,
-		Verb:      utils.VerbGetPermissions,
-		Name:      name,
+
+	allowed := make([]bool, n)
+	for start := 0; start < len(checks); start += maxBatchCheckItems {
+		end := start + maxBatchCheckItems
+		if end > len(checks) {
+			end = len(checks)
+		}
+		res, err := r.accessClient.BatchCheck(ctx, authInfo, types.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return nil, err
+		}
+		for id, result := range res.Results {
+			if idx, err := strconv.Atoi(id); err == nil {
+				allowed[idx] = result.Allowed
+			}
+		}
 	}
-	res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
-	if err != nil {
-		return false, err
+
+	filtered := make([]T, 0, n)
+	for i, item := range items {
+		if allowed[i] {
+			filtered = append(filtered, item)
+		}
 	}
-	return res.Allowed, nil
+	return filtered, nil
 }
 
 // AfterGet implements ResourceStorageAuthorizer.
@@ -207,16 +250,12 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 
 	switch l := list.(type) {
 	case *iamv0.ResourcePermissionList:
-		filtered := make([]iamv0.ResourcePermission, 0, len(l.Items))
-		for _, item := range l.Items {
-			target := item.Spec.Resource
-			allowed, err := r.CanViewTarget(ctx, authInfo, item.Namespace, target.ApiGroup, target.Resource, target.Name)
-			if err != nil {
-				return nil, err
-			}
-			if allowed {
-				filtered = append(filtered, item)
-			}
+		filtered, err := CanViewTargets(r, ctx, authInfo, l.Items, func(i int) (string, string, string, string, bool) {
+			t := l.Items[i].Spec.Resource
+			return l.Items[i].Namespace, t.ApiGroup, t.Resource, t.Name, true
+		})
+		if err != nil {
+			return nil, err
 		}
 		l.Items = filtered
 		return l, nil
