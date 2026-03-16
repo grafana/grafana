@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -124,6 +125,7 @@ type Service struct {
 	isInitialized  bool
 	sql            db.DB
 	serverLock     *serverlock.ServerLockService
+	singleFlight   singleflight.Group
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -268,23 +270,47 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
-	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+	assemble := func() ([]accesscontrol.Permission, error) {
+		permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, teamsPermissions...)
+
+		userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, userManagedPermissions...)
+		span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
+
+		return permissions, nil
+	}
+
+	// Skip deduplication when the caller explicitly wants a fresh load.
+	if options.ReloadCache {
+		return assemble()
+	}
+
+	// Deduplicate concurrent permission assemblies for the same user.
+	// Without this, concurrent requests for the same user each independently
+	// re-assemble from sub-caches on cache expiry, amplifying DB load.
+	res, err, _ := s.singleFlight.Do(user.GetCacheKey(), func() (any, error) {
+		return assemble()
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
+	permissions, ok := res.([]accesscontrol.Permission)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type returned from singleFlight: %T", res)
 	}
-	permissions = append(permissions, teamsPermissions...)
-
-	userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
-	}
-	permissions = append(permissions, userManagedPermissions...)
-	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
