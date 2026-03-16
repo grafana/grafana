@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "İstemci kimliği",
       "aria-label-client-secret": "İstemci gizli anahtarı",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "İstemci gizli anahtarı",
       "aria-label-tenant-id": "Kiracı kimliği",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "Uygulama (istemci) kimliği",
       "label-client-secret": "İstemci gizli anahtarı",
+      "label-private-key": "",
       "label-symbol-client-secret": "İstemci gizli anahtarı",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "Dizin (kiracı) kimliği",
       "placeholder-symbol-client-secret": "yapılandırılmış",
       "reset-symbol-client-secret": "Sıfırla"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Azure hizmetleri için kimlik doğrulama türünü seçin",
-      "label-authentication": "Kimlik doğrulama",
+      "label-authentication": "",
       "title-authentication": "Kimlik doğrulama"
     },
     "basic-logs-toggle": {

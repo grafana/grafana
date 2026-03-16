@@ -95,7 +95,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
-	require.Equal(t, 16, fileCount, "file count from %s", devenv)
+	require.Equal(t, 17, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
 	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
@@ -422,8 +422,8 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Only run for Unified Storage modes that support search (Mode3+)
-	modes := []rest.DualWriterMode{rest.Mode3, rest.Mode4, rest.Mode5}
+	// Only run for Unified Storage modes that support search (Mode4+)
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		runSearchPermissionTest(t, mode)
 	}

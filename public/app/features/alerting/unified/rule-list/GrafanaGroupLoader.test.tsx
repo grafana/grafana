@@ -55,6 +55,7 @@ const ui = {
 describe('GrafanaGroupLoader', () => {
   beforeEach(() => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -230,6 +231,7 @@ describe('GrafanaGroupLoader', () => {
 
   it('should render Analyze rule menu item when assistant is available', async () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: true,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),
@@ -261,6 +263,7 @@ describe('GrafanaGroupLoader', () => {
 
   it('should not render Analyze rule menu item when assistant is not available', async () => {
     mockUseAssistant.mockReturnValue({
+      isLoading: false,
       isAvailable: false,
       openAssistant: jest.fn(),
       closeAssistant: jest.fn(),

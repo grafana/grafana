@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,10 +31,6 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
-
-// CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
-// Used by wire to identify the storage backend for core roles.
-type CoreRoleStorageBackend interface{ resource.StorageBackend }
 
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
@@ -56,7 +54,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore                  *team.LegacyStore
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
-	coreRolesStorage                 CoreRoleStorageBackend
 	roleApiInstaller                 RoleApiInstaller
 	globalRoleApiInstaller           GlobalRoleApiInstaller
 	teamLBACApiInstaller             TeamLBACApiInstaller
@@ -97,6 +94,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	// non-k8s api route
 	display *user.LegacyDisplayREST
 
+	// ac is used for legacy permission checks in role bindings.
+	// nil where only k8s-mapped permissions are supported.
+	ac accesscontrol.AccessControl
+
+	// roleConfigProvider provides the REST config for a dynamic client that fetches
+	// roles referenced by role bindings
+	roleConfigProvider iamauthorizer.ConfigProvider
+
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
@@ -104,4 +109,13 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
+
+	cfgProvider configprovider.ConfigProvider
+
+	apiConfig Config
+}
+
+// Config holds IAM-specific configuration
+type Config struct {
+	SingleOrganization bool
 }

@@ -27,6 +27,9 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
         if (s.options?.reduceOptions?.values) {
           s.options.reduceOptions.limit = 2;
         }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
+        }
       },
     },
   } satisfies VisualizationSuggestion<Options>);
