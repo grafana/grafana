@@ -38,17 +38,6 @@ jest.mock('./interactions', () => ({
   },
 }));
 
-jest.mock('./analytics/main', () => ({
-  ...jest.requireActual('./analytics/main'),
-  NewDashboardLibraryInteractions: {
-    loaded: jest.fn(),
-    searchPerformed: jest.fn(),
-    itemClicked: jest.fn(),
-    compatibilityCheckTriggered: jest.fn(),
-    compatibilityCheckCompleted: jest.fn(),
-  },
-}));
-
 // Track the datasource type for mocking
 let mockDatasourceType = 'prometheus';
 
@@ -141,6 +130,16 @@ describe('CommunityDashboardSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDatasourceType = 'prometheus';
+
+    jest.spyOn(NewDashboardLibraryInteractions, 'loaded').mockImplementation(() => {});
+    jest.spyOn(NewDashboardLibraryInteractions, 'searchPerformed').mockImplementation(() => {});
+    jest.spyOn(NewDashboardLibraryInteractions, 'itemClicked').mockImplementation(() => {});
+    jest.spyOn(NewDashboardLibraryInteractions, 'compatibilityCheckTriggered').mockImplementation(() => {});
+    jest.spyOn(NewDashboardLibraryInteractions, 'compatibilityCheckCompleted').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should render', async () => {
