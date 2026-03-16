@@ -629,6 +629,11 @@ export interface FeatureToggles {
   */
   savedQueriesRBAC?: boolean;
   /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -959,6 +964,11 @@ export interface FeatureToggles {
   * @default false
   */
   teamHttpHeadersFromAppPlatform?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
   * @default false

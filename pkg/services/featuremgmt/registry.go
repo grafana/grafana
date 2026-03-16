@@ -984,6 +984,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newSavedQueriesExperience",
+			Description:  "Enables the new Saved queries (query library) modal experience",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
@@ -1496,6 +1504,14 @@ var (
 		{
 			Name:         "teamHttpHeadersFromAppPlatform",
 			Description:  "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
+			Name:         "teamLBACApiReadFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
