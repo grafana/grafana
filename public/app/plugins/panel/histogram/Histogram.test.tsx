@@ -133,6 +133,25 @@ describe('getBucketSize', () => {
   it('returns 1 for ordinal xMin field (classic histogram buckets)', () => {
     expect(getBucketSize(ordinalHistogramFrame)).toBe(1);
   });
+  /**
+   * Regression test for #46754: Frames with xMax < xMin produce negative bucket size.
+   * getBucketSize returns the computed value; buildHistogram treats negative as auto.
+   */
+  it('returns negative bucket size for malformed frame (xMax < xMin)', () => {
+    const malformedFrame = createDataFrame({
+      fields: [
+        { name: 'xMin', type: FieldType.number, values: [2, 3, 4] },
+        { name: 'xMax', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'count', type: FieldType.number, values: [5, 10, 15], config: {} },
+      ],
+    });
+    const bucketSize = getBucketSize(malformedFrame);
+    expect(getBucketSize(malformedFrame)).toBe(-1);
+    const histogramFields = buildHistogram([malformedFrame], { bucketSize });
+    expect(histogramFields?.xMax.values).toEqual([2, 3, 4, 5, 6, 11, 16]);
+    expect(histogramFields?.xMin.values).toEqual([1, 2, 3, 4, 5, 10, 15]);
+    expect(histogramFields?.counts[0].values).toEqual([0, 1, 1, 1, 0, 0, 0]);
+  });
 });
 
 const defaultLegendOptions: VizLegendOptions = {
@@ -306,6 +325,52 @@ describe('Histogram', () => {
       } as HistogramProps;
 
       render(<Histogram {...props} />);
+      expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+    });
+
+    /**
+     * Regression test for #40872 / PR #46754: Negative bucket size crashes UI.
+     * buildHistogram treats bucketSize < 0 as auto and recalculates from data instead of crashing.
+     */
+    it('buildHistogram uses auto bucket size when options.bucketSize is negative', () => {
+      const rawFrame = createDataFrame({
+        fields: [{ name: 'values', type: FieldType.number, values: [1, 2, 3, 4, 5, 10, 15, 20] }],
+      });
+      const hist = buildHistogram([rawFrame], { bucketSize: -1, bucketOffset: 0 }, theme);
+      expect(hist).not.toBeNull();
+      expect(hist!.xMin.values.length).toBeGreaterThan(0);
+      expect(hist!.xMax.values.length).toBe(hist!.xMin.values.length);
+      // With auto bucket size, xMax - xMin should be positive for each bucket
+      const bucketSize = hist!.xMax.values[0] - hist!.xMin.values[0];
+      expect(bucketSize).toBeGreaterThan(0);
+    });
+
+    /**
+     * Regression test for #40872 / PR #46754: Malformed histogram data (xMax < xMin) should not crash.
+     * Histogram component must handle frames with negative bucket size from getBucketSize.
+     */
+    it('renders without crashing when frame has negative bucket size (xMax < xMin)', () => {
+      const malformedFrame = createDataFrame({
+        fields: [
+          { name: 'xMin', type: FieldType.number, values: [2, 3, 4] },
+          { name: 'xMax', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15], config: {} },
+        ],
+      });
+      malformedFrame.fields.forEach((field, i) => {
+        field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
+      });
+
+      const props: HistogramProps = {
+        ...defaultPropsNoFrames,
+        options: { ...defaultOptions, legend: { ...defaultLegendOptions, showLegend: false } },
+        legend: { ...defaultLegendOptions, showLegend: false },
+        alignedFrame: malformedFrame,
+        bucketSize: getBucketSize(malformedFrame),
+        rawSeries: [malformedFrame],
+      } as HistogramProps;
+
+      expect(() => render(<Histogram {...props} />)).not.toThrow();
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
     });
 
