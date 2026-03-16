@@ -183,7 +183,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				namespacer:           func(int64) string { return "default" },
 				DataSourcesService:   &dataSourcesServiceMock{},
 			}
-			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 			sc := setupScenarioContext(t, "/api/datasources/uid/test-uid")
 			handler := hs.getK8sDataSourceByUIDHandler()
@@ -225,7 +225,7 @@ func newResourceTestContext(t *testing.T, method, path string, params map[string
 }
 
 func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
-	setupOpenFeatureFlag(t, flagDatasourceResourceEndpointRedirect, false)
+	setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, false)
 
 	configProvider := &mockDirectRestConfigProvider{
 		host:      "http://localhost",
@@ -236,7 +236,7 @@ func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
 		Features:            featuremgmt.WithFeatures(),
 		clientConfigProvider: configProvider,
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 	handler := hs.callK8sDataSourceResourceHandler()
 
@@ -325,7 +325,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, flagDatasourceResourceEndpointRedirect, true)
+			setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
 
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
@@ -338,7 +338,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
 			}
-			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 			urlPath := "/api/datasources/uid/" + tt.uid + "/resources"
 			if tt.subPath != "" {
