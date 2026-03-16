@@ -10,10 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -67,6 +69,10 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				GVR:  dashv0.SnapshotResourceInfo.GroupVersionResource(),
 			})
 			ns := client.Args.Namespace
+
+			// Create a dashboard with the UID referenced by snapshot tests,
+			// so the dashboard validation in the create handler passes.
+			createTestDashboard(t, helper, ns)
 
 			t.Log("Testing:", tc.description)
 
@@ -206,4 +212,34 @@ func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns s
 	require.NotEmpty(t, rsp.Result.Key, "response should have a key")
 
 	return rsp.Result
+}
+
+// createTestDashboard creates a dashboard with the UID "a-valid-uid" so that
+// snapshot creation (which validates the dashboard exists) can succeed.
+func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, ns string) {
+	t.Helper()
+
+	dashClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: ns,
+		GVR:       dashv1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": dashv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":      "a-valid-uid",
+				"namespace": ns,
+			},
+			"spec": map[string]interface{}{
+				"title":         "Test Dashboard",
+				"schemaVersion": 42,
+			},
+		},
+	}
+
+	_, err := dashClient.Resource.Create(context.Background(), obj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create test dashboard")
 }
