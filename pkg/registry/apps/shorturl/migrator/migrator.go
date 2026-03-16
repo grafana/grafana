@@ -66,7 +66,6 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 		// We buffer them in memory so we can close the DB cursor before sending
 		// to the potentially slow gRPC stream.
 		chunk := make([]*resourcepb.BulkRequest, 0, limit)
-		chunkRead := 0
 
 		for rows.Next() {
 			err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
@@ -76,7 +75,6 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 			}
 
 			lastID = id // Keep track of the highest ID in this batch
-			chunkRead++
 
 			shortURL := &shorturlv1beta1.ShortURL{
 				TypeMeta: metav1.TypeMeta{
@@ -126,7 +124,7 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 
 		_ = rows.Close() // Close the db connection for this chunk
 
-		if chunkRead == 0 {
+		if len(chunk) == 0 {
 			break // No more rows found
 		}
 
@@ -138,13 +136,12 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 			if err != nil {
 				if errors.Is(err, io.EOF) {
 					opts.Progress(count, fmt.Sprintf("stream EOF/cancelled. index=%d", count))
-					err = nil
 				}
 				return err
 			}
 		}
 
-		if int64(chunkRead) < limit {
+		if int64(len(chunk)) < limit {
 			// If we read less than the limit, we're at the end of the results.
 			break
 		}
