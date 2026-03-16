@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var appsNamespace = NamespacedResource{
@@ -28,11 +31,24 @@ func withChannelNotifier(opts *KVBackendOptions) {
 	opts.UseChannelNotifier = true
 }
 
+func withKV(kv KV) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.KvStore = kv
+	}
+}
+
+func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.WatchOptions.SettleDelay = d
+	}
+}
+
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
-		KvStore:    kv,
-		WithPruner: true,
+		KvStore: kv,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	for _, cfg := range configs {
@@ -49,7 +65,6 @@ func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore:                      kv,
-		WithPruner:                   true,
 		WithExperimentalClusterScope: true,
 	}
 	backend, err := NewKVStorageBackend(opts)
@@ -336,6 +351,139 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
+// concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
+// in ascending ResourceVersion order.
+func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	var settleDelay time.Duration = 0 // use default value to exercise handling concurrent writes
+
+	t.Run("pollingNotifier", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite uses channel notifier")
+		}
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+
+	t.Run("channelNotifier", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("channel notifier only enabled with sqlite")
+		}
+		backend := setupTestStorageBackend(t, withChannelNotifier, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
+		testConcurrentWatchWriteEvents(t, backend)
+	})
+}
+
+func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	const numEvents = 20
+
+	// Pre-create all WriteEvent structs.
+	writeEvents := make([]WriteEvent, numEvents)
+	for i := range numEvents {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		writeEvents[i] = WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		}
+	}
+
+	// Start watching before any writes.
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	// Write events in batches of fixed concurrency until all are written.
+	const concurrency = 5
+	writtenRVs := make(map[int64]bool, numEvents)
+	for batch := 0; batch < numEvents; batch += concurrency {
+		end := batch + concurrency
+		if end > numEvents {
+			end = numEvents
+		}
+		batchSize := end - batch
+
+		type writeResult struct {
+			rv  int64
+			err error
+		}
+		results := make(chan writeResult, batchSize)
+		var wg sync.WaitGroup
+		for i := batch; i < end; i++ {
+			wg.Go(func() {
+				rv, err := backend.WriteEvent(ctx, writeEvents[i])
+				results <- writeResult{rv: rv, err: err}
+			})
+		}
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			require.NoError(t, res.err, "all WriteEvent calls must succeed")
+			require.Greater(t, res.rv, int64(0))
+			writtenRVs[res.rv] = true
+		}
+	}
+	require.Len(t, writtenRVs, numEvents, "each write must produce a unique RV")
+
+	// Collect events from the watch stream.
+	received := make([]*WrittenEvent, 0, numEvents)
+	receiveCtx, stop := context.WithTimeout(ctx, 15*time.Second)
+	defer stop()
+	for len(received) < numEvents {
+		select {
+		case evt := <-stream:
+			received = append(received, evt)
+		case <-receiveCtx.Done():
+			t.Fatalf("timed out: received %d/%d events", len(received), numEvents)
+		}
+	}
+
+	// Assert completeness: every written RV was received.
+	receivedRVs := make(map[int64]bool, len(received))
+	for _, evt := range received {
+		receivedRVs[evt.ResourceVersion] = true
+	}
+
+	require.Equal(t, writtenRVs, receivedRVs, "should have received all written RVs")
+
+	// Assert ascending RV order.
+	for i := 1; i < len(received); i++ {
+		require.Greater(t, received[i].ResourceVersion, received[i-1].ResourceVersion,
+			"events must arrive in ascending RV order: event[%d].RV=%d should be > event[%d].RV=%d",
+			i, received[i].ResourceVersion, i-1, received[i-1].ResourceVersion)
+	}
+
+	// Assert correct resource names.
+	receivedNames := make(map[string]bool, len(received))
+	for _, evt := range received {
+		receivedNames[evt.Key.Name] = true
+	}
+	for i := range numEvents {
+		name := fmt.Sprintf("concurrent-resource-%d", i)
+		require.True(t, receivedNames[name], "event for resource %q was not received", name)
 	}
 }
 
@@ -930,7 +1078,9 @@ func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
 	ctx := context.Background()
 
 	ns := NamespacedResource{
@@ -941,7 +1091,7 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 
 	expectations := seedBackend(t, backend, ctx, ns)
 	for _, expectation := range expectations {
-		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv)
+		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv, nil)
 
 		for mr, err := range seq {
 			require.NoError(t, err)
@@ -950,14 +1100,20 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 			require.Equal(t, mr.Key.Resource, ns.Resource)
 
 			expectedMr, ok := expectation.changes[mr.Key.Name]
-			require.True(t, ok, "ListModifiedSince yielded unexpected resource: ", mr.Key.String())
+			require.True(t, ok, "ListModifiedSince yielded unexpected resource: %s", mr.Key.String())
 			require.Equal(t, mr.ResourceVersion, expectedMr.ResourceVersion)
 			require.Equal(t, mr.Action, expectedMr.Action)
 			require.Equal(t, string(mr.Value), string(expectedMr.Value))
 			delete(expectation.changes, mr.Key.Name)
 		}
 
-		require.Equal(t, 0, len(expectation.changes), "ListModifiedSince failed to return one or more expected items")
+		// Events with RV >= sinceRv are required and must have been returned.
+		// Lookback events (RV < sinceRv) are optional — they may or may not
+		// be returned depending on timing.
+		for name, mr := range expectation.changes {
+			require.Less(t, mr.ResourceVersion, expectation.rv,
+				"required event for %s (rv=%d >= sinceRv=%d) was not returned", name, mr.ResourceVersion, expectation.rv)
+		}
 	}
 }
 
@@ -997,7 +1153,7 @@ func generateOldSnowflake(t *testing.T) int64 {
 	return snowflakeFromTime(twoHoursAgo)
 }
 
-// seedBackend seeds the kvstore with data and return the expected result for ListModifiedSince calls
+// seedBackend seeds the kvstore with data and returns the expected result for ListModifiedSince calls
 func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource) []expectation {
 	uniqueStringGen := randomStringGenerator()
 	nsDifferentNamespace := NamespacedResource{
@@ -1014,6 +1170,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 		changes: make(map[string]*ModifiedResource),
 	})
 
+	allResources := make(map[string]*ModifiedResource)
 	for range 100 {
 		updates := rand.IntN(5)
 		shouldDelete := rand.IntN(100) < 10
@@ -1022,6 +1179,8 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 			rv:      mr.ResourceVersion,
 			changes: make(map[string]*ModifiedResource),
 		})
+
+		allResources[mr.Key.Name] = mr
 
 		for _, expect := range expectations {
 			expect.changes[mr.Key.Name] = mr
@@ -1034,11 +1193,26 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	}
 
 	// last test will simulate calling ListModifiedSince with a newer RV than all the updates above
-	rv, _ := backend.ListModifiedSince(ctx, ns, 1)
+	rv, _ := backend.ListModifiedSince(ctx, ns, 1, nil)
 	expectations = append(expectations, expectation{
 		rv:      rv,
-		changes: make(map[string]*ModifiedResource), // empty
+		changes: make(map[string]*ModifiedResource),
 	})
+
+	// ListModifiedSince applies a lookback window, so it may return resources
+	// whose latest RV is slightly before sinceRv. Add these to each
+	// expectation's changes map so the test can validate them.
+	for _, expect := range expectations {
+		lookbackRv := subtractDurationFromSnowflake(expect.rv, backend.searchLookback)
+		for name, mr := range allResources {
+			if _, ok := expect.changes[name]; ok {
+				continue // already expected
+			}
+			if mr.ResourceVersion >= lookbackRv {
+				expect.changes[name] = mr
+			}
+		}
+	}
 
 	return expectations
 }
@@ -1121,7 +1295,7 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 			sinceRV := tt.sinceRV()
 
 			// List resources
-			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV)
+			rv, seq := backend.ListModifiedSince(ctx, ns, sinceRV, nil)
 
 			changes := make(map[string]*ModifiedResource)
 			for mr, err := range seq {
@@ -1146,6 +1320,86 @@ func TestKvStorageBackend_ListModifiedSince_WithFolder(t *testing.T) {
 			require.Equal(t, objectToJSONBytes(t, testObj2), changes["dashboard-2"].Value)
 		})
 	}
+}
+
+func TestKvStorageBackend_ListModifiedSince_TimestampOptimization(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.SearchLookback = time.Second
+	})
+	ctx := t.Context()
+
+	ns := NamespacedResource{
+		Namespace: "timestamp-opt-ns",
+		Group:     "test.group",
+		Resource:  "test-resources",
+	}
+
+	// Write an initial event to get a base RV.
+	rv1, _ := addTestObject(t, backend, ctx, ns, "item1", "value1")
+	creationTime := time.Now()
+
+	t.Run("nil lastCalledWithSinceRv always applies lookback", func(t *testing.T) {
+		// With nil, lookback is applied so events slightly before sinceRv may appear.
+		latestRv, seq := backend.ListModifiedSince(ctx, ns, rv1, nil)
+		require.GreaterOrEqual(t, latestRv, rv1)
+		var count int
+		for _, err := range seq {
+			count++
+			require.NoError(t, err)
+		}
+		require.Equal(t, 1, count)
+	})
+
+	t.Run("recent lastCalledWithSinceRv still applies lookback", func(t *testing.T) {
+		latestRv, seq := backend.ListModifiedSince(ctx, ns, rv1, &creationTime)
+		require.GreaterOrEqual(t, latestRv, rv1)
+		for _, err := range seq {
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("old lastCalledWithSinceRv with no new events returns empty", func(t *testing.T) {
+		// Get the current latest RV by listing with nil.
+		latestRv, _ := backend.ListModifiedSince(ctx, ns, rv1, nil)
+
+		// The sinceRv was created approximately now. For lookback to be skipped,
+		// lastCalledWithSinceRv must be > 1s after sinceRv's embedded timestamp.
+		// Simulate this by using a time 2 second in the future.
+		futureTime := time.Now().Add(2 * time.Second)
+		returnedRv, seq := backend.ListModifiedSince(ctx, ns, latestRv, &futureTime)
+		require.Equal(t, latestRv, returnedRv)
+
+		count := 0
+		for _, err := range seq {
+			require.NoError(t, err)
+			count++
+		}
+		require.Equal(t, 0, count, "expected empty iterator")
+	})
+
+	t.Run("old lastCalledWithSinceRv with new events returns them", func(t *testing.T) {
+		// Get the current latest RV.
+		latestRv, _ := backend.ListModifiedSince(ctx, ns, rv1, nil)
+
+		// Write a new event after latestRv.
+		rv2, _ := addTestObject(t, backend, ctx, ns, "item2", "value2")
+		require.Greater(t, rv2, latestRv)
+
+		// The sinceRv (latestRv) was created approximately now. Use a time 1 second
+		// in the future so lookback is skipped, but new events still get returned.
+		futureTime := time.Now().Add(1 * time.Second)
+		returnedRv, seq := backend.ListModifiedSince(ctx, ns, latestRv, &futureTime)
+		require.GreaterOrEqual(t, returnedRv, rv2)
+
+		found := false
+		for res, err := range seq {
+			require.NoError(t, err)
+			if res.Key.Name == "item2" {
+				found = true
+			}
+		}
+		require.True(t, found, "expected new event to be returned")
+	})
 }
 
 func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx context.Context, ns NamespacedResource, uniqueStringGen func() string, updates int, deleted bool) *ModifiedResource {

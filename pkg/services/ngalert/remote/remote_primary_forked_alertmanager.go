@@ -30,7 +30,7 @@ func NewRemotePrimaryFactory(
 	cfg AlertmanagerConfig,
 	store kvstore.KVStore,
 	crypto Crypto,
-	autogenFn AutogenFn,
+	autogenRuleStore autogenRuleStore,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	features featuremgmt.FeatureToggles,
@@ -47,7 +47,7 @@ func NewRemotePrimaryFactory(
 			cfg.OrgID = orgID
 			cfg.PromoteConfig = true
 			l := log.New("ngalert.forked-alertmanager.remote-primary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t, features)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenRuleStore, m, t, features)
 			if err != nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 				return internalAM, nil

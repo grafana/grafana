@@ -7,8 +7,8 @@ import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
+import { Details } from '../../components/rule-viewer/Details';
 import { Title } from '../../components/rule-viewer/RuleViewer';
-import { Details } from '../../components/rule-viewer/tabs/Details';
 import { QueryResults } from '../../components/rule-viewer/tabs/Query';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';

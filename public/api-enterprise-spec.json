@@ -597,11 +597,6 @@
             "in": "query"
           },
           {
-            "type": "boolean",
-            "name": "includeMapped",
-            "in": "query"
-          },
-          {
             "type": "integer",
             "format": "int64",
             "name": "targetOrgId",
@@ -9068,6 +9063,9 @@
     "healthResponse": {
       "type": "object",
       "properties": {
+        "apiserver": {
+          "type": "string"
+        },
         "commit": {
           "type": "string"
         },
