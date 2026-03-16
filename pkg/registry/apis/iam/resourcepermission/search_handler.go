@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -126,6 +127,7 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.namespaceRequired").Errorf("namespace is required"), w)
 		return
 	}
+	ctx = request.WithNamespace(ctx, namespace)
 	userUID := r.URL.Query().Get("userUID")
 	if userUID == "" {
 		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.userUIDRequired").Errorf("userUID query parameter is required"), w)
@@ -138,7 +140,7 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 	}
 	permissions = filterPermissionsByGet(ctx, namespace, permissions, h.backend, h.authorizer)
 	result := &iamv0.PermissionsSearchResult{
-		Permissions: toPermissionSpecs(permissions),
+		Permissions: permissions,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(result)
@@ -160,24 +162,24 @@ func toPermissionSpecs(perms []accesscontrol.Permission) []iamv0.PermissionSpec 
 func filterPermissionsByGet(
 	ctx context.Context,
 	namespace string,
-	perms []accesscontrol.Permission,
+	perms []iamv0.PermissionSpec,
 	backend *ResourcePermSqlBackend,
 	authorizer *iamauthorizer.ResourcePermissionsAuthorizer,
-) []accesscontrol.Permission {
+) []iamv0.PermissionSpec {
 	if backend == nil || authorizer == nil || len(perms) == 0 {
-		return []accesscontrol.Permission{}
+		return []iamv0.PermissionSpec{}
 	}
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return nil
 	}
-	out := make([]accesscontrol.Permission, 0, len(perms))
+	out := make([]iamv0.PermissionSpec, 0, len(perms))
 	for _, p := range perms {
-		apiGroup, resource, name, err := backend.ParseScopeToTarget(p.Scope)
+		grn, err := backend.ParseScope(p.Scope)
 		if err != nil {
 			continue
 		}
-		allowed, err := authorizer.CanViewTarget(ctx, authInfo, namespace, apiGroup, resource, name)
+		allowed, err := authorizer.CanViewTarget(ctx, authInfo, namespace, grn.Group, grn.Resource, grn.Name)
 		if err != nil {
 			continue
 		}

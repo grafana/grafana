@@ -531,7 +531,7 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 
 // ListDirectPermissionsForUser returns all direct resource permissions (dashboard/folder level) for the given user UID in the namespace (org).
 // Used by the ResourcePermissions search subresource
-func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Context, namespace, userUID string) ([]accesscontrol.Permission, error) {
+func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Context, namespace, userUID string) ([]v0alpha1.PermissionSpec, error) {
 	if userUID == "" {
 		return nil, nil
 	}
@@ -563,21 +563,9 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
-	seen := make(map[string]accesscontrol.Permission)
-	for _, a := range assignments {
-		key := a.Action + "|" + a.Scope
-		if _, ok := seen[key]; !ok {
-			seen[key] = accesscontrol.Permission{
-				Action:  a.Action,
-				Scope:   a.Scope,
-				Created: a.Created,
-				Updated: a.Updated,
-			}
-		}
-	}
-	result := make([]accesscontrol.Permission, 0, len(seen))
-	for _, p := range seen {
-		result = append(result, p)
+	result := make([]v0alpha1.PermissionSpec, len(assignments))
+	for i, a := range assignments {
+		result[i] = v0alpha1.PermissionSpec{Action: a.Action, Scope: a.Scope}
 	}
 	return result, nil
 }

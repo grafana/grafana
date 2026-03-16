@@ -143,14 +143,14 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
 	)
 
-	grn, err := s.parseScope(assignments[0].Scope)
+	grn, err := s.ParseScope(assignments[0].Scope)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.parseScope(assign.Scope)
+		parsedGrn, err := s.ParseScope(assign.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -235,8 +235,8 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 	}
 }
 
-// parseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
-func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, error) {
+// ParseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
+func (s *ResourcePermSqlBackend) ParseScope(scope string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -250,16 +250,6 @@ func (s *ResourcePermSqlBackend) parseScope(scope string) (*groupResourceName, e
 		Resource: gr.Resource,
 		Name:     parts[2],
 	}, nil
-}
-
-// ParseScopeToTarget parses a scope string (e.g. folders:uid:fold1) into target resource (apiGroup, resource, name).
-// Used by the search handler to filter results by get_permissions on each target resource.
-func (s *ResourcePermSqlBackend) ParseScopeToTarget(scope string) (apiGroup, resource, name string, err error) {
-	grn, err := s.parseScope(scope)
-	if err != nil {
-		return "", "", "", err
-	}
-	return grn.Group, grn.Resource, grn.Name, nil
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs) into its components

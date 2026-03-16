@@ -56,10 +56,13 @@ func (r *ResourcePermissionsAuthorizer) CanViewTarget(ctx context.Context, authI
 	}
 	targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
 	parent := ""
+	// Fetch the parent of the resource
+	// It's not efficient to do for every item in the list, but it's a good starting point.
+	// Access Policies have global scope, so no parent check needed
 	if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
 		gotParent, err := r.parentProvider.GetParent(ctx, targetGR, namespace, name)
 		if err != nil {
-			r.logger.Debug("can view target: error fetching parent, denying",
+			r.logger.Debug("can view target: error fetching parent, denying this item in the list",
 				"error", fmt.Sprintf("%v", err), "namespace", namespace, "group", apiGroup, "resource", resource, "name", name)
 			return false, nil
 		}
@@ -197,12 +200,13 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, oldObj
 
 // FilterList implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, storewrapper.ErrUnauthenticated
+	}
+
 	switch l := list.(type) {
 	case *iamv0.ResourcePermissionList:
-		authInfo, ok := types.AuthInfoFrom(ctx)
-		if !ok {
-			return nil, storewrapper.ErrUnauthenticated
-		}
 		filtered := make([]iamv0.ResourcePermission, 0, len(l.Items))
 		for _, item := range l.Items {
 			target := item.Spec.Resource
