@@ -83,88 +83,6 @@ const decimalBucketsFrame = createDataFrame({
   ],
 });
 
-/** Stamps frame with origins and display processors (required for prepConfig). */
-function stampFrameWithDisplay(frame: ReturnType<typeof createDataFrame>) {
-  frame.fields.forEach((field, i) => {
-    field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
-    if (!field.display) {
-      field.display = getDisplayProcessor({ field, theme });
-    }
-  });
-  return frame;
-}
-
-/** Builds HistogramProps for a given frame (for use with render/rerender). */
-function buildHistogramProps(frame: DataFrame, overrides?: Partial<HistogramProps>): HistogramProps {
-  const mergedOptions = { ...defaultOptions, ...overrides?.options };
-  return {
-    ...defaultPropsNoFrames,
-    options: mergedOptions,
-    legend: mergedOptions.legend ?? defaultLegendOptions,
-    alignedFrame: frame,
-    rawSeries: [frame],
-    bucketSize: getBucketSize(frame),
-    structureRev: 1,
-    ...overrides,
-  } as HistogramProps;
-}
-
-/** Creates a linear histogram frame with display processors for xSplits/config tests. */
-function createLinearHistogramFrame(
-  xMin: number[],
-  xMax: number[],
-  count: number[],
-  countConfig?: { min?: number; max?: number }
-) {
-  return stampFrameWithDisplay(
-    createDataFrame({
-      fields: [
-        { name: 'xMin', type: FieldType.number, values: xMin },
-        { name: 'xMax', type: FieldType.number, values: xMax },
-        { name: 'count', type: FieldType.number, values: count, config: countConfig ?? {} },
-      ],
-    })
-  );
-}
-
-/** Invokes the x scale range function with a mock uPlot instance. */
-function invokeXScaleRange(
-  config: ReturnType<UPlotConfigBuilder['getConfig']>,
-  xData: number[],
-  wantedMin: number,
-  wantedMax: number | undefined
-): [number, number] {
-  const rangeFn = config.scales?.x?.range as ((u: unknown, min: number, max?: number) => [number, number]) | undefined;
-  if (!rangeFn) {
-    return [0, 0];
-  }
-  const mockU = { data: [xData] };
-  return rangeFn(mockU as never, wantedMin, wantedMax);
-}
-
-/** Invokes the x axis splits function with a mock uPlot instance. */
-function invokeXSplits(
-  config: ReturnType<UPlotConfigBuilder['getConfig']>,
-  xData: number[],
-  pixelsPerUnit: number,
-  minSpace: number,
-  scaleMin: number,
-  scaleMax: number
-): number[] {
-  const xAxis = config.axes?.find((a) => a.scale === 'x');
-  const splitsFn = xAxis?.splits as ((u: unknown, axisIdx: number, ...args: unknown[]) => number[]) | undefined;
-  if (!splitsFn) {
-    return [];
-  }
-  const axisIdx = config.axes!.findIndex((a) => a.scale === 'x');
-  const mockU = {
-    data: [xData],
-    axes: [{ _space: minSpace }, { _space: minSpace }],
-    valToPos: (val: number) => val * pixelsPerUnit,
-  };
-  return splitsFn(mockU as never, axisIdx, scaleMin, scaleMax, undefined as never, undefined as never) ?? [];
-}
-
 describe('Histogram dataframe utils', () => {
   const xMaxValues = [0.2, 0.4, 0.6000000000000001, 1.5999999999999999, 2, 2.2];
   const xMinValues = [0, 0.2, 0.4, 1.4, 1.8, 2];
@@ -623,6 +541,84 @@ describe('Histogram', () => {
     });
 
     /**
+     * x axis values: Ordinal scale returns splits as-is (no label culling).
+     */
+    it('ordinal x axis values returns splits unchanged', () => {
+      const frame = stampFrameWithDisplay(ordinalHistogramFrame);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const splits = [0, 1, 2, 3];
+      const result = invokeXAxisValues(config, splits, 100);
+      expect(result).toEqual([0, 1, 2, 3]);
+    });
+
+    /**
+     * x axis values: With wide bbox, all tick labels are shown (keepMod=1).
+     */
+    it('linear x axis values shows all labels when bbox is wide enough', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20]);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const splits = [0, 1, 2, 3, 4];
+      const result = invokeXAxisValues(config, splits, 1000);
+      expect(result).toHaveLength(5);
+      expect(result.every((v) => v != null)).toBe(true);
+    });
+
+    /**
+     * x axis values: With narrow bbox, every keepMod-th label is shown to avoid overlap.
+     */
+    it('linear x axis values culls labels when bbox is narrow', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6]);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const splits = [0, 1, 2, 3, 4, 5, 6];
+      const result = invokeXAxisValues(config, splits, 50);
+      expect(result).toHaveLength(7);
+      const nonNullCount = result.filter((v) => v != null).length;
+      expect(nonNullCount).toBeLessThan(7);
+    });
+
+    /**
      * Config invalidation: When alignedFrame changes and bucketSize changes,
      * config is rebuilt so the chart reflects the new frame structure.
      */
@@ -781,3 +777,100 @@ describe('Histogram', () => {
     });
   });
 });
+
+/** Stamps frame with origins and display processors (required for prepConfig). */
+function stampFrameWithDisplay(frame: ReturnType<typeof createDataFrame>) {
+  frame.fields.forEach((field, i) => {
+    field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
+    if (!field.display) {
+      field.display = getDisplayProcessor({ field, theme });
+    }
+  });
+  return frame;
+}
+
+/** Builds HistogramProps for a given frame (for use with render/rerender). */
+function buildHistogramProps(frame: DataFrame, overrides?: Partial<HistogramProps>): HistogramProps {
+  const mergedOptions = { ...defaultOptions, ...overrides?.options };
+  return {
+    ...defaultPropsNoFrames,
+    options: mergedOptions,
+    legend: mergedOptions.legend ?? defaultLegendOptions,
+    alignedFrame: frame,
+    rawSeries: [frame],
+    bucketSize: getBucketSize(frame),
+    structureRev: 1,
+    ...overrides,
+  } as HistogramProps;
+}
+
+/** Creates a linear histogram frame with display processors for xSplits/config tests. */
+function createLinearHistogramFrame(
+  xMin: number[],
+  xMax: number[],
+  count: number[],
+  countConfig?: { min?: number; max?: number }
+) {
+  return stampFrameWithDisplay(
+    createDataFrame({
+      fields: [
+        { name: 'xMin', type: FieldType.number, values: xMin },
+        { name: 'xMax', type: FieldType.number, values: xMax },
+        { name: 'count', type: FieldType.number, values: count, config: countConfig ?? {} },
+      ],
+    })
+  );
+}
+
+/** Invokes the x scale range function with a mock uPlot instance. */
+function invokeXScaleRange(
+  config: ReturnType<UPlotConfigBuilder['getConfig']>,
+  xData: number[],
+  wantedMin: number,
+  wantedMax: number | undefined
+): [number, number] {
+  const rangeFn = config.scales?.x?.range as ((u: unknown, min: number, max?: number) => [number, number]) | undefined;
+  if (!rangeFn) {
+    throw new Error('missing rangeFn');
+  }
+  const mockU = { data: [xData] };
+  return rangeFn(mockU as never, wantedMin, wantedMax);
+}
+
+/** Invokes the x axis values (tick labels) function with a mock uPlot instance. */
+function invokeXAxisValues(
+  config: ReturnType<UPlotConfigBuilder['getConfig']>,
+  splits: number[],
+  bboxWidth: number
+): Array<string | number | null> {
+  const xAxis = config.axes?.find((a) => a.scale === 'x');
+  const valuesFn = xAxis?.values as ((u: unknown, splits: number[]) => Array<string | number | null>) | undefined;
+  if (!valuesFn) {
+    throw new Error('Missing valuesFn');
+  }
+  const mockU = { bbox: { width: bboxWidth } };
+  return valuesFn(mockU as never, splits) ?? [];
+}
+
+/** Invokes the x axis splits function with a mock uPlot instance. */
+function invokeXSplits(
+  config: ReturnType<UPlotConfigBuilder['getConfig']>,
+  xData: number[],
+  pixelsPerUnit: number,
+  minSpace: number,
+  scaleMin: number,
+  scaleMax: number
+): number[] {
+  const xAxis = config.axes?.find((a) => a.scale === 'x');
+  const splitsFn = xAxis?.splits as ((u: unknown, axisIdx: number, ...args: unknown[]) => number[]) | undefined;
+  if (!splitsFn) {
+    throw new Error('Missing splitsFn');
+  }
+  const axisIdx = config.axes!.findIndex((a) => a.scale === 'x');
+  const mockU = {
+    data: [xData],
+    axes: [{ _space: minSpace }, { _space: minSpace }],
+    valToPos: (val: number) => val * pixelsPerUnit,
+  };
+  return splitsFn(mockU as never, axisIdx, scaleMin, scaleMax, undefined as never, undefined as never) ?? [];
+}
