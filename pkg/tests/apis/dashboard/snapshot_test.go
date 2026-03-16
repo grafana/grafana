@@ -285,7 +285,6 @@ func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns s
 				"panels":        []interface{}{},
 				"uid":           "a-valid-uid",
 				"schemaVersion": 39,
-				"uid":           "a-valid-uid",
 				"time": map[string]interface{}{
 					"from": "now-6h",
 					"to":   "now",
