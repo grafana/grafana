@@ -20,6 +20,7 @@ import (
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -232,21 +233,26 @@ func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
 		transport: &mockRoundTripper{statusCode: http.StatusOK, responseBody: []byte(`{}`)},
 	}
 	hs := &HTTPServer{
-		Cfg:                 setting.NewCfg(),
-		Features:            featuremgmt.WithFeatures(),
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(),
 		clientConfigProvider: configProvider,
+		DataSourceCache:      &fakeDatasources.FakeCacheService{},
 	}
 	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
+	ctx, recorder := newResourceTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources", map[string]string{":uid": "test-uid", "*": ""})
 	handler := hs.callK8sDataSourceResourceHandler()
+	handler.(func(*contextmodel.ReqContext))(ctx)
 
-	// The handler is always a closure now; flag is evaluated per-request.
-	assert.IsType(t, (func(*contextmodel.ReqContext))(nil), handler,
-		"expected closure handler type")
+	// The legacy handler should have been called (returning 500 from the fake cache
+	// service since no datasources are configured), and the k8s path should be empty.
+	assert.Empty(t, configProvider.lastServedPath, "expected no k8s redirect when flag is disabled")
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 
-	// When the flag is disabled, no redirect should occur (k8s path should not be set).
-	assert.Empty(t, configProvider.lastServedPath,
-		"expected no k8s redirect when flag is disabled")
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	assert.Equal(t, "Unable to load datasource meta data", body["message"],
+		"expected legacy handler error, not a k8s redirect")
 }
 
 func TestCallK8sDataSourceResourceHandler(t *testing.T) {
