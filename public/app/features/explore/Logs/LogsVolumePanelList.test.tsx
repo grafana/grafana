@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { DataQueryResponse, LoadingState, EventBusSrv, LogRowModel, arrayToDataFrame, DataTopic } from '@grafana/data';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
@@ -8,11 +7,6 @@ import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import * as logUtils from '../../logs/utils';
 
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: jest.fn(),
-}));
 
 jest.mock('../Graph/ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
@@ -39,10 +33,6 @@ function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () =
 }
 
 describe('LogsVolumePanelList', () => {
-  beforeEach(() => {
-    (useBooleanFlagValue as jest.Mock).mockImplementation((_: string, defaultValue: boolean) => defaultValue);
-  });
-
   it('shows loading message', () => {
     renderPanel({ state: LoadingState.Loading, error: undefined, data: [] });
     expect(screen.getByText('Loading...')).toBeInTheDocument();

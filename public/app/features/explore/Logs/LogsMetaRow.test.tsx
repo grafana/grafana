@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { ComponentProps } from 'react';
 
 import { FieldType, LogLevel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind, store, toDataFrame } from '@grafana/data';
@@ -12,11 +11,6 @@ import { logRowsToReadableJson } from '../../logs/utils';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsMetaRow } from './LogsMetaRow';
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: jest.fn(),
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -48,10 +42,6 @@ const setup = (propOverrides?: Partial<LogsMetaRowProps>, disableDownload = fals
 };
 
 describe('LogsMetaRow', () => {
-  beforeEach(() => {
-    (useBooleanFlagValue as jest.Mock).mockImplementation((_: string, defaultValue: boolean) => defaultValue);
-  });
-
   it('renders the dedupe number', async () => {
     setup({ dedupStrategy: LogsDedupStrategy.numbers, dedupCount: 1234 });
     expect(await screen.findByText('1234')).toBeInTheDocument();
