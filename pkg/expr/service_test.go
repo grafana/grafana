@@ -239,17 +239,17 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 // the pipeline handles non-executable nodes gracefully per-node instead of
 // returning a global error.
 type nonExecutableNode struct {
-	id       int64
-	refID    string
-	ntype    NodeType
-	inputTo  map[string]struct{}
+	id        int64
+	refID     string
+	ntype     NodeType
+	inputTo   map[string]struct{}
 	needsVars []string
 }
 
-func (n *nonExecutableNode) ID() int64          { return n.id }
-func (n *nonExecutableNode) NodeType() NodeType { return n.ntype }
-func (n *nonExecutableNode) RefID() string      { return n.refID }
-func (n *nonExecutableNode) String() string     { return n.refID }
+func (n *nonExecutableNode) ID() int64           { return n.id }
+func (n *nonExecutableNode) NodeType() NodeType  { return n.ntype }
+func (n *nonExecutableNode) RefID() string       { return n.refID }
+func (n *nonExecutableNode) String() string      { return n.refID }
 func (n *nonExecutableNode) NeedsVars() []string { return n.needsVars }
 func (n *nonExecutableNode) SetInputTo(refID string) {
 	if n.inputTo == nil {
