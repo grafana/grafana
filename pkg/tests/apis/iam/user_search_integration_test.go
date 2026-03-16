@@ -26,13 +26,14 @@ import (
 func TestIntegrationUserSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -75,13 +76,14 @@ func TestIntegrationUserSearch(t *testing.T) {
 func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -142,8 +144,8 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 			}
 
 			t.Run("sort by lastSeenAt", func(t *testing.T) {
-				if mode >= rest.Mode3 {
-					t.Skip("Skipping lastSeenAt sort test for Mode >= 3: API does not persist status.lastSeenAt")
+				if mode >= rest.Mode4 {
+					t.Skip("Skipping lastSeenAt sort test for Mode >= 4: API does not persist status.lastSeenAt")
 				}
 				// Populate lastSeenAt
 				// Alice: 30 minutes ago
@@ -174,13 +176,14 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode2}
+	modes := []rest.DualWriterMode{rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -241,13 +244,14 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 func TestIntegrationUserSearch_Paging(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -341,13 +345,14 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -612,7 +617,7 @@ func verifyOrder(t *testing.T, hits []iamv0.GetSearchUsersUserHit, expectedValue
 }
 
 func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, lastSeen time.Time, mode rest.DualWriterMode) {
-	if mode < rest.Mode3 {
+	if mode < rest.Mode4 {
 		err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Table("user").Where("login = ?", login).Update(map[string]interface{}{
 				"last_seen_at": lastSeen,
@@ -622,8 +627,8 @@ func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, la
 		require.NoError(t, err)
 	}
 
-	// Use the new APIs to update the user resource status in Mode3+
-	if mode >= rest.Mode3 {
+	// Use the new APIs to update the user resource status in Mode4+
+	if mode >= rest.Mode4 {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,

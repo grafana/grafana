@@ -167,7 +167,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
-  layoutOrchestrator?: DashboardLayoutOrchestrator;
+  layoutOrchestrator: DashboardLayoutOrchestrator;
   /** True while default variables from datasources are being loaded */
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */

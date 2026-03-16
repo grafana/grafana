@@ -7,9 +7,9 @@ import {
   EventBusPlugin,
   TooltipDisplayMode,
   TooltipPlugin2,
-  XAxisInteractionAreaPlugin,
   usePanelContext,
   useTheme2,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
@@ -19,7 +19,7 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
@@ -152,9 +152,9 @@ export const StateTimelinePanel = ({
                 />
               )}
               {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
-                <AnnotationsPlugin2
+                <AnnotationsPlugin
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
+                  options={options.annotations}
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}

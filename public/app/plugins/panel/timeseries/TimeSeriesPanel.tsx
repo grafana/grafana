@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import {
-  PanelProps,
-  DataFrameType,
+  alignTimeRangeCompareData,
   DashboardCursorSync,
   DataFrame,
-  alignTimeRangeCompareData,
+  DataFrameType,
+  FieldType,
+  PanelProps,
   shouldAlignTimeCompare,
   useDataLinksContext,
-  FieldType,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
@@ -16,15 +16,15 @@ import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
-  XAxisInteractionAreaPlugin,
   usePanelContext,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
-import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
@@ -216,9 +216,9 @@ export const TimeSeriesPanel = ({
             )}
             {!isVerticallyOriented && (
               <>
-                <AnnotationsPlugin2
+                <AnnotationsPlugin
                   replaceVariables={replaceVariables}
-                  multiLane={options.annotations?.multiLane}
+                  options={options.annotations}
                   annotations={data.annotations ?? []}
                   config={uplotConfig}
                   timeZone={timeZone}

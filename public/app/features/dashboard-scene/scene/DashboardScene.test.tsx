@@ -22,7 +22,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -1735,7 +1735,7 @@ describe('DashboardScene', () => {
             origin: { type: 'datasource' as const, group: 'prometheus' },
           },
         },
-      ];
+      ] as VariableKind[];
 
       const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
       scene.addDefaultVariables(defaultVariables);
@@ -1768,7 +1768,7 @@ describe('DashboardScene', () => {
             origin: { type: 'datasource' as const, group: 'prometheus' },
           },
         },
-      ]);
+      ] as VariableKind[]);
 
       scene.addDefaultVariables([
         {
@@ -1780,7 +1780,7 @@ describe('DashboardScene', () => {
             origin: { type: 'datasource' as const, group: 'loki' },
           },
         },
-      ]);
+      ] as VariableKind[]);
 
       const variables = sceneGraph.getVariables(scene).state.variables;
       expect(variables.length).toBe(existingVarCount + 2);

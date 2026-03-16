@@ -27,7 +27,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `publicDashboardsScene`               | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                   | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
-| `logsContextDatasourceUi`             | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
@@ -78,7 +77,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                   |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
-| `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
@@ -96,6 +94,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
+| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |

@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
@@ -88,7 +88,6 @@ export function QueryEditorContextWrapper({
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading || queryRunnerState?.data?.state === undefined,
       queryError,
     }),
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]

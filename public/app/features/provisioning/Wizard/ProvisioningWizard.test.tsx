@@ -62,7 +62,7 @@ async function navigateToConnectionStep(
   if (type !== 'local' && data?.token) {
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxx',
       bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
     };
@@ -454,7 +454,7 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ATATTxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();

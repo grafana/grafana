@@ -32,9 +32,17 @@ import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 import { TabItem } from './TabItem';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
+type TabsPlaceholder = {
+  width: number;
+  height: number;
+  index: number;
+};
+
 interface TabsLayoutManagerState extends SceneObjectState {
   tabs: TabItem[];
   currentTabSlug?: string;
+  isDropTarget?: boolean;
+  placeholder?: TabsPlaceholder;
 }
 
 export class TabsLayoutManager
@@ -135,6 +143,16 @@ export class TabsLayoutManager
 
       return acc;
     }, []);
+  }
+
+  public setPlaceholder(placeholder: TabsPlaceholder) {
+    this.setState({ placeholder });
+  }
+
+  public setIsDropTarget(isDropTarget: boolean) {
+    this.setState({
+      isDropTarget,
+    });
   }
 
   public addPanel(vizPanel: VizPanel) {

@@ -42,11 +42,16 @@ async function loadDefaultControlsByRefs(refs: DataSourceRef[], traceId: string)
         });
 
         if (dsVariables && dsVariables.length) {
+          // Replace non-word characters so the name satisfies WORD_CHARACTERS_REGEX
+          // from ../settings/variables/utils (template variable names must match \w+).
+          const sanitizedType = ds.type.replace(/\W/g, '_');
           defaultVariables.push(
             ...dsVariables.map((v) => {
               const variable = { ...v };
               variable.spec = {
                 ...variable.spec,
+                name: `${sanitizedType}_${variable.spec.name}`,
+                label: variable.spec.label || variable.spec.name,
                 origin: {
                   type: 'datasource' as const,
                   group: ds.type,
@@ -163,13 +168,10 @@ async function emitDefaultVariables(ds: DataSourceApi, traceId: string, subscrib
     });
 
     if (variables?.length) {
-      subscriber.next({
-        type: 'variables',
-        data: variables.map((v) => ({
-          ...v,
-          spec: { ...v.spec, origin: { type: 'datasource' as const, group: ds.type } },
-        })),
-      });
+      for (const v of variables) {
+        v.spec.origin = { type: 'datasource', group: ds.type };
+      }
+      subscriber.next({ type: 'variables', data: variables });
     }
   } catch (e) {
     console.warn('Failed to load default variables from datasource', ds.type, e);
