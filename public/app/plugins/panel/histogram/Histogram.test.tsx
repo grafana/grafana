@@ -176,7 +176,8 @@ describe('Histogram', () => {
 
     const props: HistogramProps = {
       ...defaultPropsNoFrames,
-      options: { ...defaultPropsNoFrames.options, ...overrides?.options, ...optionsOverrides },
+      options: mergedOptions,
+      legend: mergedOptions.legend ?? defaultLegendOptions,
       rawSeries: [rawHistogramFrame],
       bucketSize: getBucketSize(alignedFrame),
       alignedFrame,
@@ -192,9 +193,7 @@ describe('Histogram', () => {
         setUp(undefined, { legend: { ...defaultLegendOptions, showLegend: false } });
 
         expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
-        await waitFor(() => {
-          expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
-        });
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
         expect(
           screen.queryByTestId(selectors.components.Panels.Visualization.Histogram.legend)
         ).not.toBeInTheDocument();
@@ -224,7 +223,6 @@ describe('Histogram', () => {
         const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
         expect(container).toBeInTheDocument();
         expect(legend).toBeInTheDocument();
-        // Chart renders after legend measurement - testing this to help catch unintentional regression, but this is not necessarily desirable behavior!
         await waitFor(() => {
           expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
         });
