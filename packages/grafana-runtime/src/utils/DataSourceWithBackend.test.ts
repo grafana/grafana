@@ -69,11 +69,11 @@ jest.mock('../services', () => ({
 }));
 jest.mock('./publicDashboardQueryHandler');
 
-const mockGetObjectValue = jest.fn().mockReturnValue([]);
+const mockGetBooleanValue = jest.fn().mockReturnValue(false);
 jest.mock('../internal/openFeature', () => ({
   ...jest.requireActual('../internal/openFeature'),
   getFeatureFlagClient: () => ({
-    getObjectValue: mockGetObjectValue,
+    getBooleanValue: mockGetBooleanValue,
   }),
 }));
 
@@ -617,26 +617,21 @@ describe('DataSourceWithBackend', () => {
 
   describe('buildResourcesDatasourceUrl', () => {
     afterEach(() => {
-      mockGetObjectValue.mockReset().mockReturnValue([]);
+      mockGetBooleanValue.mockReset().mockReturnValue(false);
     });
 
-    test('check that buildResourcesDatasourceUrl uses the new URL when datasource type is in allowed list', () => {
-      mockGetObjectValue.mockReturnValue(['dummy']);
+    test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
+      mockGetBooleanValue.mockReturnValue(true);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
-      expect(mockGetObjectValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', {
-        types: [],
-      });
+      expect(mockGetBooleanValue).toHaveBeenCalledWith(
+        'datasources.apiserver.useNewAPIsForDatasourceResources',
+        false
+      );
       expect(url).toBe('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels');
     });
 
-    test('check that buildResourcesDatasourceUrl uses the legacy URL when datasource type is not in allowed list', () => {
-      mockGetObjectValue.mockReturnValue([]);
-      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
-      expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
-    });
-
-    test('check that buildResourcesDatasourceUrl uses the legacy URL when allowed list contains other types', () => {
-      mockGetObjectValue.mockReturnValue(['prometheus', 'loki']);
+    test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
+      mockGetBooleanValue.mockReturnValue(false);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
