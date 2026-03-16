@@ -50,6 +50,14 @@ func ProvideEventualRestConfigProvider() *eventualRestConfigProvider {
 	}
 }
 
+// ProvideDirectRestConfigProvider provides a DirectRestConfigProvider for use in
+// CLI wire sets that don't start the full apiserver.
+func ProvideDirectRestConfigProvider() DirectRestConfigProvider {
+	return &eventualRestConfigProvider{
+		ready: make(chan struct{}),
+	}
+}
+
 var (
 	_ RestConfigProvider       = (*eventualRestConfigProvider)(nil)
 	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)

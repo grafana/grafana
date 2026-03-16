@@ -1583,6 +1583,11 @@ export interface FeatureToggles {
   */
   kubernetesServiceAccountTokensApi?: boolean;
   /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1597,6 +1602,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamSync?: boolean;
+  /**
+  * Use the new team service that uses the app platform APIs
+  * @default false
+  */
+  kubernetesTeamService?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false

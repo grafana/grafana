@@ -834,6 +834,10 @@ const (
 	// Enables service account token APIs in the app platform
 	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
+	// FlagKubernetesSsoSettingsApi
+	// Enables SSO settings APIs in the app platform
+	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -845,6 +849,10 @@ const (
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies

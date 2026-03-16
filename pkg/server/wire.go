@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
@@ -174,6 +175,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -383,6 +385,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	ossaccesscontrol.ProvideReceiverPermissionsService,
 	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
+	ossaccesscontrol.ProvideRoutePermissionsService,
+	wire.Bind(new(accesscontrol.RoutePermissionsService), new(*ossaccesscontrol.RoutePermissionsService)),
 	starimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
@@ -402,6 +406,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideReflectionService,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
+	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
