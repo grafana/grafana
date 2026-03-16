@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//nolint:gosec // Test RSA private key (generated for testing purposes only)
+//nolint:gosec // trufflehog:ignore // Test RSA private key (generated for testing purposes only)
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAoInVbLY9io2Q/wHvUIXlEHg2Qyvd8eRzBAVEJ92DS6fx9H10
 06V0VRm78S0MXyo6i+n8ZAbZ0/R+GWpP2Ephxm0Gs2zo+iO2mpB19xQFI4o6ZTOw

@@ -39,7 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-//nolint:gosec // Test RSA private key (generated for testing purposes only)
+//nolint:gosec // trufflehog:ignore // Test RSA private key (generated for testing purposes only)
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
 MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
 KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
