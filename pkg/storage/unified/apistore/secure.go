@@ -76,7 +76,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				continue
 			}
 			if !val.Create.IsZero() {
-				n, err := store.CreateInline(ctx, v.ref, val.Create)
+				n, err := store.CreateInline(ctx, v.ref, val.Create, val.Description)
 				if err != nil {
 					return err
 				}
