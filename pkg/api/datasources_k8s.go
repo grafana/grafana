@@ -124,7 +124,7 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 
 // callK8sDataSourceResourceHandler returns a handler that proxies
 // /api/datasources/uid/:uid/resources/* to
-// /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid}/resource/*
+// /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid}/resources/*
 // when the feature toggle is enabled.
 //
 // The feature flag is evaluated per-request via OpenFeature, allowing dynamic rollout.
