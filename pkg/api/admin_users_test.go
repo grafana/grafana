@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -568,5 +569,200 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
+	})
+}
+
+func TestAdminSetUserAuthInfo(t *testing.T) {
+	t.Run("Should link auth info successfully", func(t *testing.T) {
+		authInfoService := &authinfotest.FakeService{
+			ExpectedError: user.ErrUserNotFound, // no existing auth link
+			SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+				return nil
+			},
+		}
+		userService := &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1, UID: "user-uid-1"},
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			authInfoService: authInfoService,
+			userService:     userService,
+		}
+
+		cmd := dtos.AdminSetUserAuthInfoForm{
+			AuthModule: login.GoogleAuthModule,
+			AuthId:     "google-id-123",
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			return hs.AdminSetUserAuthInfo(c)
+		})
+		sc.m.Post("/api/admin/users/:id/auth", sc.defaultHandler)
+		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 200, sc.resp.Code)
+		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+		require.NoError(t, err)
+		assert.Equal(t, "Auth info set", respJSON.Get("message").MustString())
+	})
+
+	t.Run("Should return 400 for unknown auth module", func(t *testing.T) {
+		hs := HTTPServer{
+			Cfg:         setting.NewCfg(),
+			userService: usertest.NewUserServiceFake(),
+		}
+
+		cmd := dtos.AdminSetUserAuthInfoForm{
+			AuthModule: "oauth_unknown_provider",
+			AuthId:     "some-id",
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			return hs.AdminSetUserAuthInfo(c)
+		})
+		sc.m.Post("/api/admin/users/:id/auth", sc.defaultHandler)
+		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 400, sc.resp.Code)
+	})
+
+	t.Run("Should return 404 for nonexistent user", func(t *testing.T) {
+		userService := &usertest.FakeUserService{
+			ExpectedError: user.ErrUserNotFound,
+		}
+
+		hs := HTTPServer{
+			Cfg:         setting.NewCfg(),
+			userService: userService,
+		}
+
+		cmd := dtos.AdminSetUserAuthInfoForm{
+			AuthModule: login.GoogleAuthModule,
+			AuthId:     "google-id-123",
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/999/auth")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			return hs.AdminSetUserAuthInfo(c)
+		})
+		sc.m.Post("/api/admin/users/:id/auth", sc.defaultHandler)
+		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 404, sc.resp.Code)
+	})
+
+	t.Run("Should return 409 when auth link already exists", func(t *testing.T) {
+		authInfoService := &authinfotest.FakeService{
+			ExpectedUserAuth: &login.UserAuth{
+				UserId:     1,
+				AuthModule: login.GoogleAuthModule,
+				AuthId:     "existing-google-id",
+			},
+		}
+		userService := &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1, UID: "user-uid-1"},
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			authInfoService: authInfoService,
+			userService:     userService,
+		}
+
+		cmd := dtos.AdminSetUserAuthInfoForm{
+			AuthModule: login.GoogleAuthModule,
+			AuthId:     "new-google-id",
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			c.Req.Body = mockRequestBody(cmd)
+			c.Req.Header.Add("Content-Type", "application/json")
+			sc.context = c
+			return hs.AdminSetUserAuthInfo(c)
+		})
+		sc.m.Post("/api/admin/users/:id/auth", sc.defaultHandler)
+		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 409, sc.resp.Code)
+	})
+}
+
+func TestAdminDeleteUserAuthInfo(t *testing.T) {
+	t.Run("Should delete auth info successfully", func(t *testing.T) {
+		authInfoService := &authinfotest.FakeService{
+			ExpectedUserAuth: &login.UserAuth{
+				UserId:     1,
+				AuthModule: login.GoogleAuthModule,
+				AuthId:     "google-id-123",
+			},
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			authInfoService: authInfoService,
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth/oauth_google")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			sc.context = c
+			return hs.AdminDeleteUserAuthInfo(c)
+		})
+		sc.m.Delete("/api/admin/users/:id/auth/:authModule", sc.defaultHandler)
+		sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 200, sc.resp.Code)
+		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+		require.NoError(t, err)
+		assert.Equal(t, "Auth info deleted", respJSON.Get("message").MustString())
+	})
+
+	t.Run("Should return 400 for unknown auth module", func(t *testing.T) {
+		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth/oauth_unknown")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			sc.context = c
+			return hs.AdminDeleteUserAuthInfo(c)
+		})
+		sc.m.Delete("/api/admin/users/:id/auth/:authModule", sc.defaultHandler)
+		sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 400, sc.resp.Code)
+	})
+
+	t.Run("Should return 404 when no auth link exists", func(t *testing.T) {
+		authInfoService := &authinfotest.FakeService{
+			ExpectedError: user.ErrUserNotFound,
+		}
+
+		hs := HTTPServer{
+			Cfg:             setting.NewCfg(),
+			authInfoService: authInfoService,
+		}
+
+		sc := setupScenarioContext(t, "/api/admin/users/1/auth/oauth_google")
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			sc.context = c
+			return hs.AdminDeleteUserAuthInfo(c)
+		})
+		sc.m.Delete("/api/admin/users/:id/auth/:authModule", sc.defaultHandler)
+		sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+		assert.Equal(t, 404, sc.resp.Code)
 	})
 }
