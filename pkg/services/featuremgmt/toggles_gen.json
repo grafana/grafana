@@ -3260,13 +3260,16 @@
     {
       "metadata": {
         "name": "lokiQueryLimitsContext",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-11-21T13:19:55Z"
+        "resourceVersion": "1773689052002",
+        "creationTimestamp": "2025-11-21T13:19:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-16 19:24:12.002889 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Send X-Loki-Query-Limits-Context header to Loki on first split request",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
+        "codeowner": "@grafana/oss-big-tent",
         "frontend": true,
         "expression": "false"
       }

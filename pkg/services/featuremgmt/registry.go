@@ -2385,7 +2385,7 @@ var (
 			Description:  "Send X-Loki-Query-Limits-Context header to Loki on first split request",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
+			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 		},
 		{
