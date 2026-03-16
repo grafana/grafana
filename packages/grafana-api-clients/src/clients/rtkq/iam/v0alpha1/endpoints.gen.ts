@@ -3,7 +3,6 @@ export const addTagTypes = [
   'API Discovery',
   'Display',
   'ExternalGroupMapping',
-  'ResourcePermission',
   'Search',
   'ServiceAccount',
   'SSOSetting',
@@ -153,15 +152,6 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['ExternalGroupMapping'],
-      }),
-      searchResourcePermissions: build.query<SearchResourcePermissionsApiResponse, SearchResourcePermissionsApiArg>({
-        query: (queryArg) => ({
-          url: `/resourcepermissions/search`,
-          params: {
-            userUID: queryArg.userUid,
-          },
-        }),
-        providesTags: ['ResourcePermission'],
       }),
       searchExternalGroupMappings: build.mutation<
         SearchExternalGroupMappingsApiResponse,
@@ -937,11 +927,6 @@ export type UpdateExternalGroupMappingApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
-};
-export type SearchResourcePermissionsApiResponse = /** status 200 undefined */ object;
-export type SearchResourcePermissionsApiArg = {
-  /** User UID to list direct resource permissions for */
-  userUid: string;
 };
 export type SearchExternalGroupMappingsApiResponse = unknown;
 export type SearchExternalGroupMappingsApiArg = {
@@ -2243,8 +2228,6 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
-  useSearchResourcePermissionsQuery,
-  useLazySearchResourcePermissionsQuery,
   useSearchExternalGroupMappingsMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
