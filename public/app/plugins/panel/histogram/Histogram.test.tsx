@@ -4,6 +4,7 @@ import {
   buildHistogram,
   createDataFrame,
   createTheme,
+  DataFrame,
   DataFrameType,
   FieldType,
   getDisplayProcessor,
@@ -94,10 +95,7 @@ function stampFrameWithDisplay(frame: ReturnType<typeof createDataFrame>) {
 }
 
 /** Builds HistogramProps for a given frame (for use with render/rerender). */
-function buildHistogramProps(
-  frame: ReturnType<typeof createDataFrame>,
-  overrides?: Partial<HistogramProps>
-): HistogramProps {
+function buildHistogramProps(frame: DataFrame, overrides?: Partial<HistogramProps>): HistogramProps {
   const mergedOptions = { ...defaultOptions, ...overrides?.options };
   return {
     ...defaultPropsNoFrames,
@@ -379,7 +377,7 @@ describe('Histogram', () => {
     });
 
     /**
-     * x scale range (lines 113-136): Log scale uses (wantedMax ?? 1) * bucketFactor when wantedMax is undefined.
+     * x scale range: Log scale uses (wantedMax ?? 1) * bucketFactor when wantedMax is undefined.
      */
     it('log scale range applies bucketFactor when wantedMax is provided', () => {
       const logScaleFrame = stampFrameWithDisplay(
@@ -509,21 +507,19 @@ describe('Histogram', () => {
       expect(histFields!.counts[0].values.length).toBeLessThanOrEqual(1001);
 
       const frame = histogramFieldsToFrame(joinHistograms([histFields!]), theme);
-      const props: HistogramProps = {
-        ...defaultPropsNoFrames,
-        options: { ...defaultOptions, legend: { ...defaultLegendOptions, showLegend: false } },
-        legend: { ...defaultLegendOptions, showLegend: false },
-        alignedFrame: frame,
-        bucketSize: getBucketSize(frame),
-        rawSeries: [sparseFrame],
-      } as HistogramProps;
-
-      render(<Histogram {...props} />);
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [sparseFrame],
+          bucketSize: getBucketSize(frame),
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
     });
 
     /**
-     * Regression test for #40872 / PR #46754: Negative bucket size crashes UI.
+     * Regression test for #46754: Negative bucket size crashes UI.
      * buildHistogram treats bucketSize < 0 as auto and recalculates from data instead of crashing.
      */
     it('buildHistogram uses auto bucket size when options.bucketSize is negative', () => {
@@ -540,7 +536,7 @@ describe('Histogram', () => {
     });
 
     /**
-     * Regression test for #40872 / PR #46754: Malformed histogram data (xMax < xMin) should not crash.
+     * Regression test for #46754: Malformed histogram data (xMax < xMin) should not crash.
      * Histogram component must handle frames with negative bucket size from getBucketSize.
      */
     it('renders without crashing when frame has negative bucket size (xMax < xMin)', () => {
@@ -567,7 +563,7 @@ describe('Histogram', () => {
     });
 
     /**
-     * xSplits (lines 83-99): splits shifter ensures splits align to bucket boundaries.
+     * xSplits: splits shifter ensures splits align to bucket boundaries.
      * When skip > 1 (minSpace/bucketWidth), only every skip-th boundary is shown to avoid label overlap.
      */
     it('x axis splits align to bucket boundaries and respect skip for label density', () => {
@@ -601,7 +597,7 @@ describe('Histogram', () => {
     });
 
     /**
-     * xSplits (lines 83-99): when skip=1 (bucketWidth >= minSpace), all bucket boundaries are included.
+     * xSplits: when skip=1 (bucketWidth >= minSpace), all bucket boundaries are included.
      */
     it('x axis splits include all bucket boundaries when skip is 1', () => {
       const frame = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
@@ -627,7 +623,7 @@ describe('Histogram', () => {
     });
 
     /**
-     * Config invalidation (lines 327-342): When alignedFrame changes and bucketSize changes,
+     * Config invalidation: When alignedFrame changes and bucketSize changes,
      * config is rebuilt so the chart reflects the new frame structure.
      */
     it('rebuilds config when alignedFrame and bucketSize change', async () => {
@@ -640,12 +636,16 @@ describe('Histogram', () => {
         return null;
       };
 
-      const props = buildHistogramProps(frame1, {
-        children: captureConfig,
-        structureRev: 1,
-        legend: { ...defaultLegendOptions, showLegend: false },
-      });
-      const { rerender } = render(<Histogram {...props} />);
+      const { rerender } = setUp(
+        {
+          alignedFrame: frame1,
+          rawSeries: [frame1],
+          bucketSize: getBucketSize(frame1),
+          children: captureConfig,
+          structureRev: 1,
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
 
       await waitFor(() => {
         expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
@@ -664,14 +664,15 @@ describe('Histogram', () => {
 
       const configAfterUpdate = configs[configs.length - 1]?.getConfig();
       expect(configAfterUpdate).toBeDefined();
-      // Config should reflect frame2: range for xData [0,2,4] with bucketSize=2
+      // Config should reflect frame2 range for xData with bucketSize of 2
       const [min, max] = invokeXScaleRange(configAfterUpdate!, [0, 2, 4], 0, 6);
       expect(min).toBe(0);
       expect(max).toBe(6);
     });
 
     /**
-     * Config invalidation: When alignedFrame changes and structureRev changes config is rebuilt.
+     * Config invalidation: When alignedFrame changes and structureRev changes,
+     * config is rebuilt.
      */
     it('rebuilds config when alignedFrame and structureRev change', async () => {
       const frame1 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
@@ -683,14 +684,15 @@ describe('Histogram', () => {
         return null;
       };
 
-      const { rerender } = render(
-        <Histogram
-          {...buildHistogramProps(frame1, {
-            children: captureConfig,
-            structureRev: 1,
-            legend: { ...defaultLegendOptions, showLegend: false },
-          })}
-        />
+      const { rerender } = setUp(
+        {
+          alignedFrame: frame1,
+          rawSeries: [frame1],
+          bucketSize: getBucketSize(frame1),
+          children: captureConfig,
+          structureRev: 1,
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
       );
 
       await waitFor(() => {
@@ -719,13 +721,14 @@ describe('Histogram', () => {
       const frame1 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
       const frame2 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [5, 15, 25]);
 
-      const { rerender } = render(
-        <Histogram
-          {...buildHistogramProps(frame1, {
-            structureRev: 1,
-            legend: { ...defaultLegendOptions, showLegend: false },
-          })}
-        />
+      const { rerender } = setUp(
+        {
+          alignedFrame: frame1,
+          rawSeries: [frame1],
+          bucketSize: getBucketSize(frame1),
+          structureRev: 1,
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
       );
 
       await waitFor(() => {
