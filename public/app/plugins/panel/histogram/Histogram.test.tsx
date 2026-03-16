@@ -12,6 +12,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, TooltipDisplayMode, VizLegendOptions } from '@grafana/ui';
 
 import { getBucketSize, Histogram, HistogramProps } from './Histogram';
+import { Options } from './panelcfg.gen';
 
 // Mock uplot to avoid canvas initialization in tests.
 // Histogram uses uPlot.paths.bars and uPlot.rangeLog during prepConfig.
@@ -127,54 +128,68 @@ describe('getBucketSize', () => {
   });
 });
 
+const defaultLegendOptions: VizLegendOptions = {
+  showLegend: true,
+  displayMode: LegendDisplayMode.List,
+  placement: 'bottom',
+  calcs: [],
+};
+
+const defaultOptions: Options = {
+  legend: defaultLegendOptions,
+  tooltip: {
+    mode: TooltipDisplayMode.Single,
+    // @ts-expect-error @todo mock grafana schema
+    sort: 'none',
+  },
+};
+
+const defaultPropsNoFrames: Partial<HistogramProps> = {
+  options: defaultOptions,
+  theme,
+  legend: defaultLegendOptions,
+  width: 400,
+  height: 300,
+};
+
 describe('Histogram', () => {
-  const defaultLegendOptions: VizLegendOptions = {
-    showLegend: true,
-    displayMode: LegendDisplayMode.List,
-    placement: 'bottom',
-    calcs: [],
+  const setUp = (overrides?: Partial<HistogramProps>, optionsOverrides?: Partial<Options>) => {
+    const hist = buildHistogram([rawHistogramFrame], {}, theme);
+    const alignedFrame = histogramFieldsToFrame(hist!);
+
+    const props: HistogramProps = {
+      ...defaultPropsNoFrames,
+      options: { ...defaultPropsNoFrames.options, ...overrides?.options, ...optionsOverrides },
+      rawSeries: [rawHistogramFrame],
+      bucketSize: getBucketSize(alignedFrame),
+      alignedFrame,
+      ...overrides,
+    } as HistogramProps;
+
+    return render(<Histogram {...props} />);
   };
 
-  const hist = buildHistogram([rawHistogramFrame], {}, theme);
-  const alignedFrame = histogramFieldsToFrame(hist!);
+  describe('options', () => {
+    describe('legend', () => {
+      it('renders with combine: true', async () => {
+        setUp(undefined, { combine: true });
 
-  const defaultProps: HistogramProps = {
-    options: {
-      combine: true,
-      legend: defaultLegendOptions,
-      tooltip: {
-        mode: TooltipDisplayMode.Single,
-        // @ts-ignore @todo mock grafana schema
-        sort: 'none',
-      },
-    },
-    theme,
-    legend: defaultLegendOptions,
-    width: 400,
-    height: 300,
-    bucketSize: getBucketSize(alignedFrame),
-    alignedFrame,
-  };
-
-  it('renders legend', async () => {
-    render(<Histogram {...defaultProps} />);
-
-    const legend = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
-    const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
-    expect(container).toBeInTheDocument();
-    expect(legend).toBeInTheDocument();
-    // Chart renders after legend measurement - testing this to help catch unintentional regression, but this is not necessarily desirable behavior!
-    await waitFor(() => {
-      expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        const legend = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+        const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
+        expect(container).toBeInTheDocument();
+        expect(legend).toBeInTheDocument();
+        // Chart renders after legend measurement - testing this to help catch unintentional regression, but this is not necessarily desirable behavior!
+        await waitFor(() => {
+          expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        });
+        // Legend button should be rendered
+        expect(legend.querySelector('[type="button"]')).toBeVisible();
+        // Legend should contain series name (combined histogram uses "Count")
+        expect(legend.querySelector('[type="button"]')).toHaveTextContent('Count');
+      });
     });
-
-    // Legend button should be rendered
-    await waitFor(() => {
-      expect(legend.querySelector('[type="button"]')).toBeVisible();
-    });
-    // Legend should contain series name
-    expect(legend.querySelector('[type="button"]')).toHaveTextContent('value');
   });
+
   //
   // it('does not render legend when showLegend is false', () => {
   //   render(<Histogram {...defaultProps} legend={{ ...defaultLegendOptions, showLegend: false }} />);
