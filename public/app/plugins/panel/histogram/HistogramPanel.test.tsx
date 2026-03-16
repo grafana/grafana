@@ -7,7 +7,24 @@ import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
 import { getPanelProps } from '../test-utils';
 
 import { HistogramPanel } from './HistogramPanel';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
+
+jest.mock('@grafana/ui', () => {
+  return {
+    ...jest.requireActual('@grafana/ui'),
+    TooltipPlugin2: (props: {
+      render?: (
+        u: unknown,
+        dataIdxs: Array<number | null>,
+        seriesIdx: number | null,
+        isPinned?: boolean
+      ) => React.ReactNode;
+    }) => {
+      const content = props.render?.({}, [0, 0], 0, false);
+      return <div data-testid="histogram-tooltip-plugin">{content}</div>;
+    },
+  };
+});
 
 const rawValuesFrame = createDataFrame({
   fields: [
@@ -55,6 +72,39 @@ describe('HistogramPanel', () => {
     expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
   });
 
-  it.todo('renders TooltipPlugin2');
-  it.todo('renders HistogramTooltip');
+  it('renders TooltipPlugin2 when tooltip mode is not None', () => {
+    setUp(undefined, {
+      tooltip: {
+        mode: TooltipDisplayMode.Single,
+        //@ts-expect-error
+        sort: 'none',
+      },
+    });
+
+    expect(screen.getByTestId('histogram-tooltip-plugin')).toBeInTheDocument();
+  });
+
+  it('does not render TooltipPlugin2 when tooltip mode is None', () => {
+    setUp(undefined, {
+      tooltip: {
+        mode: TooltipDisplayMode.None,
+        //@ts-expect-error
+        sort: 'none',
+      },
+    });
+
+    expect(screen.queryByTestId('histogram-tooltip-plugin')).not.toBeInTheDocument();
+  });
+
+  it('renders HistogramTooltip', () => {
+    setUp(undefined, {
+      tooltip: {
+        mode: TooltipDisplayMode.Single,
+        //@ts-expect-error
+        sort: 'none',
+      },
+    });
+
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeInTheDocument();
+  });
 });
