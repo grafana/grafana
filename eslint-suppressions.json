@@ -1660,11 +1660,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/PublicDashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
