@@ -2571,6 +2571,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingPolicyRoutingSettings",
+			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:            "appPluginAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,

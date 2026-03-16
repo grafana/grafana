@@ -1623,6 +1623,11 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
+  * @default false
+  */
+  alertingPolicyRoutingSettings?: boolean;
+  /**
   * Registers an API server for each backend app plugin exposing a settings endpoint
   * @default false
   */
