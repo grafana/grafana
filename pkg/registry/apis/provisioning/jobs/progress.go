@@ -54,16 +54,19 @@ type jobProgressRecorder struct {
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
 	resultReasons       map[string]struct{}
+	metrics             *JobMetrics
+	action              provisioning.JobAction
 }
 
-func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
+func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
-		started: time.Now(),
-		// Have a faster notifier for messages and total
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
-		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
+		started:             time.Now(),
+		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
 		resultReasons:       make(map[string]struct{}),
+		metrics:             metrics,
+		action:              action,
 	}
 }
 
@@ -122,6 +125,10 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 
 	r.updateSummary(result)
 	r.mu.Unlock()
+
+	if r.metrics != nil {
+		r.metrics.RecordResourceOperation(r.action, result)
+	}
 
 	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
 	if shouldLogError {
@@ -236,12 +243,18 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		r.summaries[key] = summary
 	}
 
+	fileInfo := fmt.Sprintf("(file: %s", result.Path())
+	if result.Name() != "" {
+		fileInfo = fmt.Sprintf("%s, name: %s", fileInfo, result.Name())
+	}
+	fileInfo = fmt.Sprintf("%s, action: %s)", fileInfo, result.Action())
+
 	if result.Error() != nil {
-		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error().Error(), result.Path(), result.Name(), result.Action())
+		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
 	} else if result.Warning() != nil {
-		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning().Error(), result.Path(), result.Name(), result.Action())
+		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
 		summary.Warning++
 	} else {

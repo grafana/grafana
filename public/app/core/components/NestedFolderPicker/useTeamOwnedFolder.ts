@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/internal/rtkq/legacy';
 import type { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/rtkq/legacy';
 import { isFetchError } from '@grafana/runtime';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 

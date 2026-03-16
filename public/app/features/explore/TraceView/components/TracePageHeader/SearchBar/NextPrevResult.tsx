@@ -23,6 +23,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { Trace } from '../../types/trace';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 export type NextPrevResultProps = {
   trace: Trace;
@@ -167,7 +168,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           const matchedServices: string[] = [];
           spanFilterMatches.forEach((spanID) => {
             if (trace.processes[spanID]) {
-              matchedServices.push(trace.processes[spanID].serviceName);
+              matchedServices.push(getServiceDisplayName(trace.processes[spanID]));
             }
           });
 
@@ -199,7 +200,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
     [focusedSpanIndexForSearch, getTooltip, spanFilterMatches, trace.processes, trace.spans]
   );
 
-  const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
+  const services = new Set(values(trace.processes).map((p) => getServiceDisplayName(p))).size;
   const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
 
   return (
