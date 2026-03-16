@@ -95,29 +95,13 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		},
 	}
 
-	compileFunc := func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
+	// CanViewTarget (used by FilterList) calls Check per item. Allow fold-1 and dash-2 (dash-2 with parent fold-1).
+	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
 		require.NotNil(t, id)
-		// Compile is called with the user's identity
 		require.Equal(t, "user:u001", id.GetUID())
 		require.Equal(t, "org-2", id.GetNamespace())
-		// Check the request values
-		require.Equal(t, "org-2", req.Namespace)
-		if req.Resource == "folders" {
-			require.Equal(t, "folder.grafana.app", req.Group)
-			require.Equal(t, "folders", req.Resource)
-		}
-		if req.Resource == "dashboards" {
-			require.Equal(t, "dashboard.grafana.app", req.Group)
-			require.Equal(t, "dashboards", req.Resource)
-		}
-
-		// Return a checker that allows access to fold-1 and its content
-		return func(name, folder string) bool {
-			if name == "fold-1" || folder == "fold-1" {
-				return true
-			}
-			return false
-		}, &types.NoopZookie{}, nil
+		allowed := (req.Name == "fold-1") || (req.Name == "dash-2" && folder == "fold-1")
+		return types.CheckResponse{Allowed: allowed}, nil
 	}
 
 	getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
@@ -127,7 +111,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		return "", nil
 	}
 
-	accessClient := &fakeAccessClient{compileFunc: compileFunc}
+	accessClient := &fakeAccessClient{checkFunc: checkFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 	ctx := types.WithAuthInfo(context.Background(), user)
@@ -135,7 +119,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 	obj, err := resPermAuthz.FilterList(ctx, list)
 	require.NoError(t, err)
 	require.NotNil(t, list)
-	require.True(t, accessClient.compileCalled, "accessClient.Compile should be called")
+	require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
 	require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
 
 	filtered, ok := obj.(*iamv0.ResourcePermissionList)
