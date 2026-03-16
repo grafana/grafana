@@ -1583,6 +1583,11 @@ export interface FeatureToggles {
   */
   kubernetesServiceAccountTokensApi?: boolean;
   /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
