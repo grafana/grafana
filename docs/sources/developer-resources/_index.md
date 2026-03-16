@@ -11,34 +11,27 @@ weight: 900
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/
 aliases:
   - developers/
+cards:
+  items:
+    - title: Contribute to Grafana
+      height: 24
+      href: ./contribute/
+      description: Refer to the Contribute to Grafana guide to learn the various ways you can contribute to Grafana, and read the Grafana Labs Software Grant and Contributor License Agreement before making any contribution.
+    - title: Data Model
+      height: 24
+      href: ./data-model/
+      description: Learn about the Grafana Data Model and the Data Plane contract. 
+    - title: Grafana APIs
+      height: 24
+      href: ./api-reference/
+      description: Read the API reference guides available in Grafana. 
 ---
 
 # Developer resources
 
 This section of the documentation contains additional resources for developers and contributors.
 
-## Contribute to Grafana
-
-Refer to the [Contribute to Grafana](https://grafana.com/docs/grafana-cloud/developer-resources/contribute) guide to learn the various ways you can contribute to Grafana. Read the [Grafana Labs Software Grant and Contributor License Agreement](https://grafana.com/docs/grafana-cloud/developer-resources/cla) before making any contribution.
-
-## Data Model and the Grafana developer portal
-
-You can learn about the Grafana Data Model and the Data Plane contract in [Grafana Data Model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/data-model/index.md).
-
-Refer to the [Grafana developer portal](https://grafana.com/developers) to access the following documentation:
-
-- [Grafana plugin development tools](https://grafana.com/developers/plugin-tools)
-- [Grafana React components library](https://developers.grafana.com)
-- [Grafana Scenes library](https://grafana.com/developers/scenes)
-
-## API reference guides
-
-Learn about the following Grafana APIs:
-
-- [HTTP API](./api-reference/http-api/)
-- [Cloud API](./api-reference/cloud-api/)
-- [Synthetic Monitoring API](./api-reference/synthetic-monitoring-api/)
-- [Tracing API](./api-reference/tracing-api/)
+{{< card-grid key="cards" type="simple" >}}
 
 ## Other resources
 
