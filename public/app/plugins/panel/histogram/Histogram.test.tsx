@@ -4,6 +4,7 @@ import {
   buildHistogram,
   createDataFrame,
   createTheme,
+  DataFrameType,
   FieldType,
   histogramFieldsToFrame,
   toDataFrame,
@@ -34,6 +35,9 @@ jest.mock('uplot', () => {
 const theme = createTheme();
 
 const rawHistogramFrame = toDataFrame({
+  meta: {
+    type: DataFrameType.HeatmapCells,
+  },
   fields: [
     {
       name: 'time',
@@ -157,6 +161,15 @@ describe('Histogram', () => {
     const hist = buildHistogram([rawHistogramFrame], {}, theme);
     const alignedFrame = histogramFieldsToFrame(hist!);
 
+    // Stamp field.state.origin so PlotLegend can resolve legend items (dataFrameFieldIndex).
+    // HistogramPanel does this for data.series before processing; the test bypasses that.
+    alignedFrame.fields.forEach((field, fieldIndex) => {
+      field.state = {
+        ...field.state,
+        origin: { frameIndex: 0, fieldIndex },
+      };
+    });
+
     const props: HistogramProps = {
       ...defaultPropsNoFrames,
       options: { ...defaultPropsNoFrames.options, ...overrides?.options, ...optionsOverrides },
@@ -184,7 +197,7 @@ describe('Histogram', () => {
         });
         // Legend button should be rendered
         expect(legend.querySelector('[type="button"]')).toBeVisible();
-        // Legend should contain series name (combined histogram uses "Count")
+        // Legend should contain count of fields since combine: true is set
         expect(legend.querySelector('[type="button"]')).toHaveTextContent('Count');
       });
     });
