@@ -67,7 +67,7 @@ func ProvideStorageBackend(
 
 type Backend interface {
 	resource.StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -156,6 +156,7 @@ func NewStorageBackend(
 		EventRetentionPeriod: cfg.EventRetentionPeriod,
 		EventPruningInterval: cfg.EventPruningInterval,
 		SearchLookback:       cfg.SearchLookback,
+		WatchOptions:         resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
