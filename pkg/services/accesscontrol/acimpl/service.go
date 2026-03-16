@@ -298,9 +298,8 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	}
 
 	// Deduplicate concurrent permission assemblies for the same user.
-	// Without this, N concurrent requests (e.g. 800 datasource proxy calls on the
-	// alert rule creation page) each independently re-assemble from sub-caches,
-	// causing a thundering herd on cache expiry.
+	// Without this, concurrent requests for the same user each independently
+	// re-assemble from sub-caches on cache expiry, amplifying DB load.
 	res, err, _ := s.singleFlight.Do(user.GetCacheKey(), func() (any, error) {
 		return assemble()
 	})
