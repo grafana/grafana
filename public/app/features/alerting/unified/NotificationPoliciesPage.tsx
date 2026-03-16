@@ -22,18 +22,18 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import {
-  trackNotificationPoliciesFilterContactPoint,
-  trackNotificationPoliciesFilterMatchers,
-  trackNotificationPoliciesFilterPolicyTree,
-  trackNotificationPoliciesToggledAll,
-} from './Analytics';
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { Spacer } from './components/Spacer';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import {
+  trackNotificationPoliciesFilterContactPoint,
+  trackNotificationPoliciesFilterMatchers,
+  trackNotificationPoliciesFilterPolicyTree,
+  trackNotificationPoliciesToggledAll,
+} from './components/notification-policies/notificationPolicyAnalytics';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';

@@ -9,7 +9,6 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { AccessControlAction } from '../../../../../types/accessControl';
-import * as analytics from '../../Analytics';
 import NotificationPolicies from '../../NotificationPoliciesPage';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
@@ -19,6 +18,7 @@ import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { countPolicies } from './PoliciesList';
+import * as analytics from './notificationPolicyAnalytics';
 
 jest.mock('../../useRouteGroupsMatcher');
 

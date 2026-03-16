@@ -34,7 +34,6 @@ import {
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { trackNotificationPolicyExported } from '../../Analytics';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
@@ -52,6 +51,7 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { useRoutesMatchingFilters } from './RoutesMatchingFiltersContext';
+import { trackNotificationPolicyExported } from './notificationPolicyAnalytics';
 import { TimingOptions } from './timingOptions';
 
 const POLICIES_PER_PAGE = 20;

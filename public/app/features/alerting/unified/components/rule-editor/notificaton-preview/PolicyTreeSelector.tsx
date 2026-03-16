@@ -6,9 +6,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
 import { Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { trackNotificationPolicySelectorChanged } from '../../../Analytics';
 import { RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
+import { trackNotificationPolicySelectorChanged } from '../../notification-policies/notificationPolicyAnalytics';
 import {
   NAMED_ROOT_LABEL_NAME,
   useListNotificationPolicyRoutes,

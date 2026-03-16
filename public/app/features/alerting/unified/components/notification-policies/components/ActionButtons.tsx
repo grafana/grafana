@@ -4,11 +4,11 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, Route } from '../../../../../../plugins/datasource/alertmanager/types';
-import { trackNotificationPolicyExported } from '../../../Analytics';
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
+import { trackNotificationPolicyExported } from '../notificationPolicyAnalytics';
 import { useExportRoutingTree } from '../useExportRoutingTree';
 import { isRouteProvisioned, useDeleteRoutingTree } from '../useNotificationPolicyRoute';
 

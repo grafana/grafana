@@ -27,7 +27,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { RulerGrafanaRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import * as analytics from '../../../Analytics';
+import * as analytics from '../../notification-policies/notificationPolicyAnalytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
