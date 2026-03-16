@@ -357,7 +357,10 @@ class DataSourceWithBackend<
    * Internal function to build the datasource URL based on the feature toggle
    */
   buildResourcesDatasourceUrl(path: string): string {
-    if (config.featureToggles.datasourcesApiServerEnableResourceEndpointFrontend) {
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.useNewAPIsForDatasourceResources', {
+      types: [],
+    }) as string[];
+    if (allowedTypes.includes(this.type)) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
