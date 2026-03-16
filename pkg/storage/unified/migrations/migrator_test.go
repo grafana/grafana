@@ -482,14 +482,14 @@ func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
 			mockClient := resource.NewMockResourceClient(t)
 
 			var capturedCtx context.Context
-			bulkStream := &noopBulkProcessClient{}
-			var streamResult resourcepb.BulkStore_BulkProcessClient
+			bulkStream := &noopBulkProcessBatchedClient{}
+			var streamResult resourcepb.BulkStore_BulkProcessBatchedClient
 			if tt.streamErr == nil {
 				streamResult = bulkStream
 			}
 
 			mockClient.EXPECT().
-				BulkProcess(mock.Anything).
+				BulkProcessBatched(mock.Anything).
 				Run(func(ctx context.Context, opts ...grpc.CallOption) {
 					capturedCtx = ctx
 				}).
@@ -516,22 +516,22 @@ func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
 			})
 
 			require.Error(t, err)
-			require.NotNil(t, capturedCtx, "BulkProcess should have been called")
+			require.NotNil(t, capturedCtx, "BulkProcessBatched should have been called")
 			require.Error(t, capturedCtx.Err(), "stream context should be canceled after Migrate returns an error")
 		})
 	}
 }
 
-// noopBulkProcessClient is a minimal BulkStore_BulkProcessClient for testing.
-type noopBulkProcessClient struct {
+// noopBulkProcessBatchedClient is a minimal BulkStore_BulkProcessBatchedClient for testing.
+type noopBulkProcessBatchedClient struct {
 	grpc.ClientStream
 }
 
-func (n *noopBulkProcessClient) Send(*resourcepb.BulkRequest) error {
+func (n *noopBulkProcessBatchedClient) Send(*resourcepb.BulkRequestBatch) error {
 	return nil
 }
 
-func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
+func (n *noopBulkProcessBatchedClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
 	return &resourcepb.BulkResponse{}, nil
 }
 

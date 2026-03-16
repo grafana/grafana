@@ -63,7 +63,11 @@ type resourceClientStreamProvider struct {
 func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
 	settings := buildCollectionSettings(opts, registry)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
-	return r.client.BulkProcess(ctx)
+	stream, err := r.client.BulkProcessBatched(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return newBulkProcessBatchingClient(stream, defaultBulkProcessBatchOptions()), nil
 }
 
 // This can migrate Folders, Dashboards, LibraryPanels and Playlists

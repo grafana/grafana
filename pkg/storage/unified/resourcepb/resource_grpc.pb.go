@@ -348,7 +348,8 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	BulkStore_BulkProcess_FullMethodName = "/resource.BulkStore/BulkProcess"
+	BulkStore_BulkProcess_FullMethodName        = "/resource.BulkStore/BulkProcess"
+	BulkStore_BulkProcessBatched_FullMethodName = "/resource.BulkStore/BulkProcessBatched"
 )
 
 // BulkStoreClient is the client API for BulkStore service.
@@ -359,6 +360,8 @@ type BulkStoreClient interface {
 	// Events will not be sent until the stream is complete
 	// Only the *create* permissions is checked
 	BulkProcess(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessClient, error)
+	// Same semantics as BulkProcess, but groups multiple requests into each stream message.
+	BulkProcessBatched(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessBatchedClient, error)
 }
 
 type bulkStoreClient struct {
@@ -404,6 +407,41 @@ func (x *bulkStoreBulkProcessClient) CloseAndRecv() (*BulkResponse, error) {
 	return m, nil
 }
 
+func (c *bulkStoreClient) BulkProcessBatched(ctx context.Context, opts ...grpc.CallOption) (BulkStore_BulkProcessBatchedClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BulkStore_ServiceDesc.Streams[1], BulkStore_BulkProcessBatched_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &bulkStoreBulkProcessBatchedClient{ClientStream: stream}
+	return x, nil
+}
+
+type BulkStore_BulkProcessBatchedClient interface {
+	Send(*BulkRequestBatch) error
+	CloseAndRecv() (*BulkResponse, error)
+	grpc.ClientStream
+}
+
+type bulkStoreBulkProcessBatchedClient struct {
+	grpc.ClientStream
+}
+
+func (x *bulkStoreBulkProcessBatchedClient) Send(m *BulkRequestBatch) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessBatchedClient) CloseAndRecv() (*BulkResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(BulkResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // BulkStoreServer is the server API for BulkStore service.
 // All implementations should embed UnimplementedBulkStoreServer
 // for forward compatibility
@@ -412,6 +450,8 @@ type BulkStoreServer interface {
 	// Events will not be sent until the stream is complete
 	// Only the *create* permissions is checked
 	BulkProcess(BulkStore_BulkProcessServer) error
+	// Same semantics as BulkProcess, but groups multiple requests into each stream message.
+	BulkProcessBatched(BulkStore_BulkProcessBatchedServer) error
 }
 
 // UnimplementedBulkStoreServer should be embedded to have forward compatible implementations.
@@ -420,6 +460,9 @@ type UnimplementedBulkStoreServer struct {
 
 func (UnimplementedBulkStoreServer) BulkProcess(BulkStore_BulkProcessServer) error {
 	return status.Errorf(codes.Unimplemented, "method BulkProcess not implemented")
+}
+func (UnimplementedBulkStoreServer) BulkProcessBatched(BulkStore_BulkProcessBatchedServer) error {
+	return status.Errorf(codes.Unimplemented, "method BulkProcessBatched not implemented")
 }
 
 // UnsafeBulkStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -459,6 +502,32 @@ func (x *bulkStoreBulkProcessServer) Recv() (*BulkRequest, error) {
 	return m, nil
 }
 
+func _BulkStore_BulkProcessBatched_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BulkStoreServer).BulkProcessBatched(&bulkStoreBulkProcessBatchedServer{ServerStream: stream})
+}
+
+type BulkStore_BulkProcessBatchedServer interface {
+	SendAndClose(*BulkResponse) error
+	Recv() (*BulkRequestBatch, error)
+	grpc.ServerStream
+}
+
+type bulkStoreBulkProcessBatchedServer struct {
+	grpc.ServerStream
+}
+
+func (x *bulkStoreBulkProcessBatchedServer) SendAndClose(m *BulkResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *bulkStoreBulkProcessBatchedServer) Recv() (*BulkRequestBatch, error) {
+	m := new(BulkRequestBatch)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // BulkStore_ServiceDesc is the grpc.ServiceDesc for BulkStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -470,6 +539,11 @@ var BulkStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "BulkProcess",
 			Handler:       _BulkStore_BulkProcess_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BulkProcessBatched",
+			Handler:       _BulkStore_BulkProcessBatched_Handler,
 			ClientStreams: true,
 		},
 	},

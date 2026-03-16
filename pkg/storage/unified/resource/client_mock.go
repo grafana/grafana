@@ -98,6 +98,79 @@ func (_c *MockResourceClient_BulkProcess_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// BulkProcessBatched provides a mock function with given fields: ctx, opts
+func (_m *MockResourceClient) BulkProcessBatched(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessBatchedClient, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkProcessBatched")
+	}
+
+	var r0 resourcepb.BulkStore_BulkProcessBatchedClient
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessBatchedClient, error)); ok {
+		return rf(ctx, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ...grpc.CallOption) resourcepb.BulkStore_BulkProcessBatchedClient); ok {
+		r0 = rf(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(resourcepb.BulkStore_BulkProcessBatchedClient)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceClient_BulkProcessBatched_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkProcessBatched'
+type MockResourceClient_BulkProcessBatched_Call struct {
+	*mock.Call
+}
+
+// BulkProcessBatched is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...grpc.CallOption
+func (_e *MockResourceClient_Expecter) BulkProcessBatched(ctx interface{}, opts ...interface{}) *MockResourceClient_BulkProcessBatched_Call {
+	return &MockResourceClient_BulkProcessBatched_Call{Call: _e.mock.On("BulkProcessBatched",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *MockResourceClient_BulkProcessBatched_Call) Run(run func(ctx context.Context, opts ...grpc.CallOption)) *MockResourceClient_BulkProcessBatched_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_BulkProcessBatched_Call) Return(_a0 resourcepb.BulkStore_BulkProcessBatchedClient, _a1 error) *MockResourceClient_BulkProcessBatched_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceClient_BulkProcessBatched_Call) RunAndReturn(run func(context.Context, ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessBatchedClient, error)) *MockResourceClient_BulkProcessBatched_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CountManagedObjects provides a mock function with given fields: ctx, in, opts
 func (_m *MockResourceClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	_va := make([]interface{}, len(opts))

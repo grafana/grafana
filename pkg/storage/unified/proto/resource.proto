@@ -352,6 +352,10 @@ message BulkRequest {
   string folder = 4;
 }
 
+message BulkRequestBatch {
+  repeated BulkRequest items = 1;
+}
+
 message BulkResponse {
   message Summary {
     string namespace = 1;
@@ -633,6 +637,9 @@ service BulkStore {
   // Events will not be sent until the stream is complete
   // Only the *create* permissions is checked
   rpc BulkProcess(stream BulkRequest) returns (BulkResponse);
+
+  // Same semantics as BulkProcess, but groups multiple requests into each stream message.
+  rpc BulkProcessBatched(stream BulkRequestBatch) returns (BulkResponse);
 }
 
 // Query managed objects
