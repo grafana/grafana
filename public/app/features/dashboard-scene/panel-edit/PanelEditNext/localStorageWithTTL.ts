@@ -11,8 +11,8 @@ function isExpired<T>(item: StoredValueWithTTL<T>, ttlMs: number): boolean {
   return Date.now() - item.timestamp > ttlMs;
 }
 
-export const setLocalStorageWithTTL = (key: string, value: boolean) => {
-  const item: StoredValueWithTTL<boolean> = {
+export const setLocalStorageWithTTL = <T>(key: string, value: T) => {
+  const item: StoredValueWithTTL<T> = {
     value,
     timestamp: Date.now(),
   };
