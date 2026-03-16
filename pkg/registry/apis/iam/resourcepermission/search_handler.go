@@ -17,7 +17,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
