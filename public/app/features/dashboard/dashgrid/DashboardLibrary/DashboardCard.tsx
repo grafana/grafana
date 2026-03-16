@@ -254,10 +254,10 @@ function getStyles(theme: GrafanaTheme2) {
     gap: theme.spacing(1.5),
     padding: theme.spacing(2),
     opacity: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'opacity 0.15s ease',
     },
-    borderRadius: theme.shape.radius.default,
   });
 
   return {
@@ -266,15 +266,15 @@ function getStyles(theme: GrafanaTheme2) {
           "Thumbnail Thumbnail"
           "Heading Heading"
           "Bottom Bottom"`,
-      gridTemplateRows: 'auto auto auto',
+      gridTemplateRows: 'auto auto 1fr',
       gridTemplateColumns: '1fr auto',
-      height: 'auto',
       width: '350px',
       background: 'transparent',
-      gridGap: theme.spacing(0.5),
-      paddingLeft: 0,
-      paddingRight: 0,
-      alignSelf: 'start',
+      border: `1px solid ${theme.colors.border.strong}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
+      gridGap: theme.spacing(1),
+      padding: theme.spacing(1),
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
@@ -283,12 +283,8 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: theme.shape.radius.default,
-      borderColor: theme.colors.border.strong,
-      borderWidth: 1,
-      borderStyle: 'solid',
       width: '100%',
-      maxWidth: '350px',
-      height: '180px',
+      aspectRatio: '16/9',
       backgroundColor: theme.colors.background.canvas,
       position: 'relative',
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
@@ -318,7 +314,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       borderRadius: theme.shape.radius.default,
       width: '100%',
-      height: '180px',
+      aspectRatio: '16/9',
       backgroundColor: theme.colors.background.secondary,
       position: 'relative',
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
@@ -341,7 +337,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridArea: 'Bottom',
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       wordBreak: 'break-word',
     }),
     title: css({
