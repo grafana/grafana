@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "Error fetching notifications",
+      "integration-tooltip": "{{integration}} #{{index}}",
       "no-error-details": "No error details available",
       "notification-error": "Notification Error",
       "outcome-failed": "Failed",
