@@ -19,6 +19,8 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -122,6 +124,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			routes := GetRoutes(
 				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
 				tt.setupStorageMock(t),
 				dashboardService,
