@@ -5,6 +5,7 @@
     "name": "v1beta1.annotation-filtering.v42"
   },
   "spec": {
+    "preferences": {},
     "annotations": [
       {
         "kind": "AnnotationQuery",
