@@ -850,6 +850,10 @@ const (
 	// Use the new team service that uses the app platform APIs
 	FlagKubernetesTeamService = "kubernetesTeamService"
 
+	// FlagKubernetesUserService
+	// Use the new user service that uses the app platform APIs
+	FlagKubernetesUserService = "kubernetesUserService"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"

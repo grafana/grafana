@@ -1603,6 +1603,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamService?: boolean;
   /**
+  * Use the new user service that uses the app platform APIs
+  * @default false
+  */
+  kubernetesUserService?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

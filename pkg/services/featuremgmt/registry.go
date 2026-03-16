@@ -2539,6 +2539,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUserService",
+			Description:  "Use the new user service that uses the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,

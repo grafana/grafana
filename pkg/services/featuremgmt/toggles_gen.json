@@ -2956,6 +2956,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUserService",
+        "resourceVersion": "1773667977489",
+        "creationTimestamp": "2026-03-16T13:32:57Z"
+      },
+      "spec": {
+        "description": "Use the new user service that uses the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUsersApi",
         "resourceVersion": "1772099076728",
         "creationTimestamp": "2026-02-26T09:44:36Z"
