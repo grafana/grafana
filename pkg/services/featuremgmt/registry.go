@@ -976,14 +976,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "newSavedQueriesExperience",
-			Description:  "Enables the new Saved queries frontend experience",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaSharingSquad,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
