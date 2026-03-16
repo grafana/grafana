@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
@@ -12,10 +12,16 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { getPluginPresets } from 'app/features/panel/presets/getPresets';
 
 import { PanelStylesSection } from './PanelStylesSection';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('app/features/panel/presets/getPresets', () => ({
   getPluginPresets: jest.fn(),
@@ -47,16 +53,16 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', (
     selectedKey,
   }: {
     items: PanelPluginVisualizationSuggestion[];
-    onItemClick: (item: PanelPluginVisualizationSuggestion) => void;
+    onItemClick: (item: PanelPluginVisualizationSuggestion, index: number) => void;
     selectedKey?: string;
   }) => (
     <div>
-      {items.map((item) => (
+      {items.map((item, index) => (
         <button
           key={item.hash}
           data-testid={`preset-${item.hash}`}
           data-selected={selectedKey === item.hash ? 'true' : 'false'}
-          onClick={() => onItemClick(item)}
+          onClick={() => onItemClick(item, index)}
         >
           {item.name}
         </button>
@@ -67,6 +73,7 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationCardGrid', (
 
 const mockGetPluginPresets = jest.mocked(getPluginPresets);
 const mockSceneGraph = jest.mocked(sceneGraph);
+const mockReportInteraction = jest.mocked(reportInteraction);
 
 const fakePlugin = {} as PanelPlugin;
 
@@ -171,9 +178,23 @@ describe('PanelStylesSection', () => {
     expect(screen.getByTestId('category-title')).toHaveTextContent('Panel styles');
   });
 
-  it('gets presets directly from the panel plugin', () => {
+  it('passes data series to getPluginPresets', () => {
     render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
-    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin);
+    expect(mockGetPluginPresets).toHaveBeenCalledWith(fakePlugin, mockData.series);
+  });
+
+  it('fires preset_applied interaction when a card is clicked', async () => {
+    const user = userEvent.setup();
+    render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
+    await waitFor(() => expect(screen.getByTestId('preset-smooth-hash')).toBeInTheDocument());
+
+    await user.click(screen.getByTestId('preset-smooth-hash'));
+
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_viz_preset_applied', {
+      pluginId: 'timeseries',
+      presetName: 'Smooth',
+      presetIndex: 2,
+    });
   });
 
   it('calls onApplyPreset when a card is clicked', async () => {

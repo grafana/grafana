@@ -75,7 +75,7 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 		Theme:  models.ThemeDark, // from config?
 		Width:  1024,
 		Height: -1, // full page height
-	}, nil)
+	})
 	if err != nil {
 		return "", err
 	}

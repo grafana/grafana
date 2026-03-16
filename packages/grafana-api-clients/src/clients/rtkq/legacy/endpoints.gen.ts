@@ -162,7 +162,6 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           params: {
             includeHidden: queryArg.includeHidden,
-            includeMapped: queryArg.includeMapped,
             targetOrgId: queryArg.targetOrgId,
           },
         }),
@@ -2150,7 +2149,6 @@ export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
   includeHidden?: boolean;
-  includeMapped?: boolean;
   targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
@@ -5022,6 +5020,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;

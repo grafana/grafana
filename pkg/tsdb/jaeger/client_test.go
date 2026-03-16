@@ -359,6 +359,19 @@ func TestJaegerClient_Trace(t *testing.T) {
 			expectError:    true,
 			expectedError:  backend.DownstreamError(errors.New("traceID is empty")),
 		},
+		{
+			name:           "Empty data array (trace not found or no results)",
+			traceId:        "abc123",
+			jsonData:       `{"traceIdTimeParams": {"enabled": false}}`,
+			start:          0,
+			end:            0,
+			mockResponse:   `{"data":[],"errors":null,"limit":20,"offset":0,"total":0}`,
+			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
+			expectedURL:    "/api/traces/abc123",
+			expectError:    false,
+			expectedError:  nil,
+		},
 	}
 
 	for _, tt := range tests {

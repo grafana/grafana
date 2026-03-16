@@ -149,7 +149,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 53)
+		assert.Len(t, provider.loadedPlugins, 52)
 	})
 
 	t.Run("returns error when static root path not found", func(t *testing.T) {
