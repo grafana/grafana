@@ -58,14 +58,12 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     );
   }, [dispatch, folderUID, stateManager]);
 
-  // Trigger search when "starred" query param changes
+  // Trigger search when "starred" or "teamFolders" query params change
   useEffect(() => {
-    stateManager.onSetStarred(search.has('starred'));
-  }, [search, stateManager]);
-
-  // Trigger search when "teamFolders" query param changes
-  useEffect(() => {
-    stateManager.onSetTeamFolders(search.has('teamFolders'));
+    const starred = search.get('starred') === 'true';
+    const teamFolders = search.get('teamFolders') === 'true';
+    stateManager.onSetStarred(starred);
+    stateManager.onSetTeamFolders(teamFolders);
   }, [search, stateManager]);
 
   useEffect(() => {
