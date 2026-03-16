@@ -33,11 +33,12 @@ import (
 var ErrNoBranches = errors.New("no branches found in repository")
 
 type RepositoryConfig struct {
-	URL       string
-	Branch    string
-	TokenUser string
-	Token     common.RawSecureValue
-	Path      string
+	URL           string
+	Branch        string
+	TokenUser     string
+	Token         common.RawSecureValue
+	Path          string
+	SkipGitSuffix bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -53,6 +54,9 @@ func NewRepository(
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
 	var opts []options.Option
+	if gitConfig.SkipGitSuffix {
+		opts = append(opts, options.WithoutGitSuffix())
+	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
