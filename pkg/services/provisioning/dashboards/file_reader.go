@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -30,6 +30,36 @@ var (
 	// ErrGetOrCreateFolder is returned when there is a failure to fetch or create a provisioning folder.
 	ErrGetOrCreateFolder = errors.New("failed to get or create provisioning folder")
 )
+
+// folderPathCacheEntry holds id and uid for a folder path.
+// Used by getOrCreateFolderFullpath to avoid redundant Get/Create calls for the same path during a single walkDisk.
+// The cache is not thread-safe and is scoped to one provisioning cycle (walkDisk).
+type folderPathCacheEntry struct {
+	id  int64
+	uid string
+}
+
+// deterministicFolderUID returns a stable UID for a folder path so that the same path
+// (org + provisioner + fullpath) always yields the same UID across runs and instances.
+func deterministicFolderUID(orgID int64, provisionerName string, folderFullpath string) string {
+	input := fmt.Sprintf("%d:%s:%s", orgID, provisionerName, folderFullpath)
+	hash, _ := util.Md5SumString(input)
+	// MD5 hex is 32 chars, within Grafana UID max length of 40.
+	return hash
+}
+
+// splitFolderFullpath splits folderFullpath by "/" and returns non-empty segments.
+// The path comes from the filesystem (filepath.Rel + ReplaceAll), so no escape handling is needed.
+func splitFolderFullpath(folderFullpath string) []string {
+	parts := strings.Split(folderFullpath, "/")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
 
 // FileReader is responsible for reading dashboards from disk and
 // insert/update dashboards to the Grafana database using
@@ -218,8 +248,11 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in Grafana as they are in on the filesystem.
+// folderPathCache is created per walk and passed to getOrCreateFolderFullpath to avoid redundant Get/Create
+// for shared ancestor paths. It is not thread-safe and must not be shared across provisioning cycles.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
+	folderPathCache := make(map[string]folderPathCacheEntry)
 	for path, fileInfo := range filesFoundOnDisk {
 		dashboardsFolder := filepath.Dir(path)
 		relPath, err := filepath.Rel(resolvedPath, dashboardsFolder)
@@ -240,7 +273,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderID = 0
 			folderUID = ""
 		} else {
-			folderID, folderUID, err = fr.getOrCreateFolderFullpath(ctx, folderFullpath, fr.Cfg.OrgID)
+			folderID, folderUID, err = fr.getOrCreateFolderFullpath(ctx, folderFullpath, fr.Cfg.OrgID, folderPathCache)
 			if err != nil {
 				return fmt.Errorf("%w with full path %q from file system structure: %w", ErrGetOrCreateFolder, folderFullpath, err)
 			}
@@ -465,29 +498,49 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, folder
 	return fr.getOrCreateFolderInternal(ctx, cfg.OrgID, folderName, nil, explicitUID)
 }
 
-func (fr *FileReader) getOrCreateFolderByTitle(ctx context.Context, folderName string, orgID int64, parentUID *string) (int64, string, error) {
-	return fr.getOrCreateFolderInternal(ctx, orgID, folderName, parentUID, nil)
-}
-
-func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullpath string, orgID int64) (int64, string, error) {
-	folderTitles := folderimpl.SplitFullpath(folderFullpath)
+// getOrCreateFolderFullpath creates the nested folder hierarchy for folderFullpath (e.g. "level1/level2"),
+// reusing cached entries when cache is provided to avoid redundant Get/Create for shared ancestors.
+func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullpath string, orgID int64, cache map[string]folderPathCacheEntry) (int64, string, error) {
+	folderTitles := splitFolderFullpath(folderFullpath)
 	if len(folderTitles) == 0 {
 		return 0, "", fmt.Errorf("invalid folder full path: %s", folderFullpath)
 	}
 
-	// Build nested hierarchy: each folder is created under the previous one.
-	// folderUID tracks the parent for the next level (nil for the first/root folder).
-	var folderUID *string
-	var folderID int64
+	maxDepth := setting.DefaultMaxNestedFolderDepth
+	if len(folderTitles) > maxDepth {
+		return 0, "", fmt.Errorf("nested folder depth %d exceeds maximum %d", len(folderTitles), maxDepth)
+	}
+
+	// folderUID: UID of the current folder in the chain (becomes the parent for the next).
+	// parentForNext: pointer to folderUID, passed to getOrCreateFolderInternal. nil for the first level.
+	var folderUID string
+	var parentForNext *string
+	var folderID int64 // deprecated but still required for compatibility
 	for i := range folderTitles {
-		id, uid, err := fr.getOrCreateFolderByTitle(ctx, folderTitles[i], orgID, folderUID)
+		cumulativePath := strings.Join(folderTitles[:i+1], "/")
+		if cache != nil {
+			if entry, ok := cache[cumulativePath]; ok {
+				// Cache hit: reuse folder from a previous file in the same walk.
+				folderID = entry.id
+				folderUID = entry.uid
+				parentForNext = &folderUID
+				continue
+			}
+		}
+
+		uid := deterministicFolderUID(orgID, fr.Cfg.Name, cumulativePath)
+		id, uid, err := fr.getOrCreateFolderInternal(ctx, orgID, folderTitles[i], parentForNext, &uid)
 		if err != nil {
 			return 0, "", err
 		}
 		folderID = id
-		folderUID = &uid
+		folderUID = uid
+		parentForNext = &folderUID
+		if cache != nil {
+			cache[cumulativePath] = folderPathCacheEntry{id: id, uid: uid}
+		}
 	}
-	return folderID, *folderUID, nil
+	return folderID, folderUID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
