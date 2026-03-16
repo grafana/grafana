@@ -16,8 +16,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelContext, UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { TimeRange2 } from '@grafana/ui/internal';
 
-import { toHex } from '../../../../../../packages/grafana-data/src/valueFormats/arithmeticFormatters';
-
 import { AnnotationsPlugin2Cluster } from './AnnotationsPlugin2Cluster';
 import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from './annotations2-cluster/constants';
 import {
