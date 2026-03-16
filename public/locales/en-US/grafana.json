@@ -6450,7 +6450,6 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "author": "Author: ",
       "customize-with-assistant-button": "Customize with assistant",
       "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",

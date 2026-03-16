@@ -40,8 +40,6 @@ interface Props {
   compatibilityState?: CompatibilityState;
   /** Handler called when Check button is clicked in the badge */
   onCompatibilityCheck?: () => void;
-  /** Dashboard author name shown below the title */
-  author?: string;
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
 }
@@ -60,7 +58,6 @@ function DashboardCardComponent({
   showCompatibilityBadge,
   compatibilityState,
   onCompatibilityCheck,
-  author,
   showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -176,14 +173,6 @@ function DashboardCardComponent({
           )}
         </div>
       </div>
-      {author && (
-        <div className={styles.metaRow}>
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="dashboard-library.card.author">Author: </Trans>
-            {author}
-          </Text>
-        </div>
-      )}
       {(dashboard.description || hasCompatActions) && (
         <div className={styles.bottomSection}>
           {dashboard.description && (
@@ -276,14 +265,13 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateAreas: `
           "Thumbnail Thumbnail"
           "Heading Heading"
-          "Meta Meta"
           "Bottom Bottom"`,
-      gridTemplateRows: 'auto auto auto auto',
+      gridTemplateRows: 'auto auto auto',
       gridTemplateColumns: '1fr auto',
       height: 'auto',
       width: '350px',
       background: 'transparent',
-      gridGap: theme.spacing(1),
+      gridGap: theme.spacing(0.5),
       paddingLeft: 0,
       paddingRight: 0,
       alignSelf: 'start',
@@ -311,12 +299,6 @@ function getStyles(theme: GrafanaTheme2) {
     overlayButton: css({
       width: '80%',
       justifyContent: 'center',
-    }),
-    metaRow: css({
-      gridArea: 'Meta',
-      display: 'flex',
-      gap: theme.spacing(2),
-      flexWrap: 'wrap',
     }),
     thumbnail: css({
       width: '100%',

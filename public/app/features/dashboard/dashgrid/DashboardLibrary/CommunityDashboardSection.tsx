@@ -383,7 +383,6 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                         ? () => handleCheckCompatibility(dashboard, 'manual')
                         : undefined
                     }
-                    author={isGnetDashboard(dashboard) ? dashboard.userName : undefined}
                   />
                 );
               })}
