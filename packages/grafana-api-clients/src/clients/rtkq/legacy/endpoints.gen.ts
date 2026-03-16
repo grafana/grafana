@@ -162,7 +162,6 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           params: {
             includeHidden: queryArg.includeHidden,
-            includeMapped: queryArg.includeMapped,
             targetOrgId: queryArg.targetOrgId,
           },
         }),
@@ -2150,7 +2149,6 @@ export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
   includeHidden?: boolean;
-  includeMapped?: boolean;
   targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
@@ -4051,6 +4049,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5021,6 +5020,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;
@@ -5649,20 +5649,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  RawFragment?: string;
-  RawPath?: string;
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5807,7 +5794,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5829,7 +5816,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey

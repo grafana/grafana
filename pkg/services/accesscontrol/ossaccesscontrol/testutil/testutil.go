@@ -46,7 +46,7 @@ func ProvideFolderPermissions(
 		return nil, err
 	}
 
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, cfg)
 	fService := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
@@ -61,7 +61,7 @@ func ProvideFolderPermissions(
 	if err != nil {
 		return nil, err
 	}
-	teamSvc, err := teamimpl.ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
 	if err != nil {
 		return nil, err
 	}

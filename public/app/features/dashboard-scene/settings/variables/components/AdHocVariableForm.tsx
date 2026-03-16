@@ -4,11 +4,12 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { AdHocFiltersController } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { VariableCheckboxField } from './VariableCheckboxField';
+import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
@@ -19,6 +20,7 @@ export interface AdHocVariableFormProps {
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  originFiltersController?: AdHocFiltersController;
   inline?: boolean;
   datasourceSupported: boolean;
 }
@@ -30,6 +32,7 @@ export function AdHocVariableForm({
   onDataSourceChange,
   onDefaultKeysChange,
   onAllowCustomValueChange,
+  originFiltersController,
   defaultKeys,
   inline,
   datasourceSupported,
@@ -63,7 +66,7 @@ export function AdHocVariableForm({
         <DataSourcePicker
           current={datasource}
           onChange={onDataSourceChange}
-          width={30}
+          width={inline ? undefined : 30}
           variables={true}
           dashboard={true}
           noDefault
@@ -81,6 +84,10 @@ export function AdHocVariableForm({
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && originFiltersController && (
+        <AdHocOriginFiltersEditor controller={originFiltersController} />
+      )}
 
       {datasourceSupported && onDefaultKeysChange && (
         <>
@@ -124,16 +131,22 @@ export function AdHocVariableForm({
       )}
 
       {datasourceSupported && onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
+        <Field
+          label={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
           )}
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
+          noMargin
+        >
+          <Switch
+            value={allowCustomValue ?? true}
+            onChange={onAllowCustomValueChange}
+            data-testid={
+              selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+            }
+          />
+        </Field>
       )}
     </Stack>
   );

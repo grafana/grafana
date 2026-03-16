@@ -1000,6 +1000,77 @@ describe('GrafanaReceiverForm', () => {
     });
   });
 
+  describe('Imported (provisioned) contact point', () => {
+    it('should not show Reset buttons for configured secure fields when contact point is provisioned', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [integrationFactory.slack({ token: 'xoxb-my-token' }).build()])
+        .build({ provenance: 'converted_prometheus' });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      const tokenField = ui.slack.token.get();
+      expect(tokenField).toHaveValue('configured');
+      expect(tokenField).toBeDisabled();
+
+      expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
+    });
+
+    it('should not show Save button when contact point is provisioned', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .email()
+            .params({ settings: { addresses: 'test@example.com' } })
+            .build(),
+        ])
+        .build({ provenance: 'converted_prometheus' });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      expect(ui.saveButton.query()).not.toBeInTheDocument();
+    });
+
+    it('should not show Duplicate or Delete buttons when contact point is provisioned', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .email()
+            .params({ settings: { addresses: 'test@example.com' } })
+            .build(),
+        ])
+        .build({ provenance: 'converted_prometheus' });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      expect(screen.queryByRole('button', { name: /Duplicate/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument();
+    });
+
+    it('should make the name field read-only when contact point is provisioned', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .email()
+            .params({ settings: { addresses: 'test@example.com' } })
+            .build(),
+        ])
+        .build({ provenance: 'converted_prometheus', name: 'provisioned-cp' });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      const nameField = screen.getByRole('textbox', { name: /^name/i });
+      expect(nameField).toHaveAttribute('readonly');
+    });
+  });
+
   describe('with alertingSyncNotifiersApiMigration flag enabled', () => {
     beforeEach(() => {
       config.featureToggles.alertingSyncNotifiersApiMigration = true;

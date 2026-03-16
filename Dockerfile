@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.23.3 AS alpine-base
 FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.25.7-alpine AS go-builder-base
+FROM golang:1.26.1-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -67,11 +67,9 @@ ARG WIRE_TAGS="oss"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
-  # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
-  binutils-gold \
   bash \
   # Install build dependencies
-  gcc g++ make git; \
+  make git; \
   fi
 
 WORKDIR /tmp/grafana
@@ -86,7 +84,6 @@ COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
-COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
 COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
 COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
@@ -119,15 +116,17 @@ COPY apps/alerting/notifications apps/alerting/notifications
 COPY apps/alerting/rules apps/alerting/rules
 COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
+COPY pkg/infra/features pkg/infra/features
 COPY apps/example apps/example
 
 RUN go mod download
 
-COPY embed.go Makefile build.go package.json ./
+COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
+COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg

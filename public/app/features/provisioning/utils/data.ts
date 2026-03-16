@@ -23,9 +23,13 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
+  if (data.webhook?.baseUrl) {
+    spec.webhook = { baseUrl: data.webhook.baseUrl };
+  }
+
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
+    branch: data.branch || '',
     path: data.path,
   };
 

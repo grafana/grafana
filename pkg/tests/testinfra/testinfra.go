@@ -148,6 +148,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
 		tracingService := tracing.NewNoopTracerService()
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
+		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
@@ -190,16 +191,29 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		}
 	})
 
-	// Wait for Grafana to be ready
+	// Wait for Grafana to be ready, retrying until the health endpoint responds or the timeout is reached.
 	addr := listener.Addr().String()
-	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		assert.NoError(t, err)
-	})
-	require.Equal(t, 200, resp.StatusCode)
+	healthURL := fmt.Sprintf("http://%s/api/health", addr)
+	healthClient := &http.Client{Timeout: 2 * time.Second}
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		resp, err := healthClient.Get(healthURL)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+		if err == nil && resp != nil && resp.StatusCode == 200 {
+			break
+		}
+		if err != nil {
+			t.Logf("Health check error: %v", err)
+		} else if resp != nil {
+			t.Logf("Health check returned status %d", resp.StatusCode)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("Grafana health endpoint did not return 200 within 30s")
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	t.Logf("Grafana is listening on %s", addr)
 
@@ -388,6 +402,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
+	if opts.RBACSingleOrganization {
+		_, err = rbacSect.NewKey("single_organization", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.DisableAuthZClientCache {
 		authzSect, err := cfg.NewSection("authorization")
@@ -643,10 +661,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
-	if opts.UnifiedStorageEnableSearch {
+	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
-		_, err = section.NewKey("enable_search", "true")
+		_, err = section.NewKey("enable_search", "false")
 		require.NoError(t, err)
 	}
 	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
@@ -659,6 +677,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("disable_data_migrations", "true")
+		require.NoError(t, err)
+	}
+	if opts.MigrationParquetBuffer {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -802,7 +826,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-	UnifiedStorageEnableSearch            bool
+	UnifiedStorageDisableSearch           bool
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
@@ -813,10 +837,12 @@ type GrafanaOpts struct {
 	LicensePath                           string
 	EnableRecordingRules                  bool
 	EnableSCIM                            bool
+	RBACSingleOrganization                bool
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
 	DisableDataMigrations                 bool
+	MigrationParquetBuffer                bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

@@ -104,7 +104,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'GitLab Project Access Token with repository permissions'
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+        placeholder: 'glpat-xxxxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.gitlab.token-required', 'GitLab token is required'),
@@ -142,13 +142,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
     },
     bitbucket: {
       token: {
-        label: t('provisioning.bitbucket.token-label', 'App Password'),
-        description: t(
-          'provisioning.bitbucket.token-description',
-          'Bitbucket App Password with repository permissions'
-        ),
+        label: t('provisioning.bitbucket.token-label', 'API Token'),
+        description: t('provisioning.bitbucket.token-description', 'Bitbucket API Token with repository permissions'),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'ATBBxxxxxxxxxxxxxxxx',
+        placeholder: 'ATATTxxxxxxxxxxxxxxxx',
         required: true,
         validation: {
           required: t('provisioning.bitbucket.token-required', 'Bitbucket token is required'),
@@ -158,7 +155,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.tokenUser,
         description: t(
           'provisioning.bitbucket.token-user-description',
-          'The username that will be used to access the repository with the app password'
+          'The username that will be used to access the repository with the API token'
         ),
         required: true,
         validation: {

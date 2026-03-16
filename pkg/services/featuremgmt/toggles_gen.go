@@ -39,6 +39,10 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
+	// FlagAlertingRuleGroupSortByFolderFullpath
+	// Sort alert rule groups by folder full path in the Prometheus rules API
+	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"
+
 	// FlagLiveAPIServer
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
@@ -71,10 +75,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableDatagridEditing
-	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditing = "enableDatagridEditing"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -94,6 +94,14 @@ const (
 	// FlagProvisioning
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
+
+	// FlagProvisioningFolderMetadata
+	// Allow setting folder metadata for provisioned folders
+	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
+
+	// FlagProvisioningExport
+	// Enable export functionality for provisioned resources
+	FlagProvisioningExport = "provisioningExport"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -183,9 +191,9 @@ const (
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -247,9 +255,17 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagReportRenderBinding
+	// Enables render binding support for report rendering
+	FlagReportRenderBinding = "reportRenderBinding"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -418,10 +434,6 @@ const (
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
-
-	// FlagNewFiltersUI
-	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-	FlagNewFiltersUI = "newFiltersUI"
 
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
@@ -626,6 +638,10 @@ const (
 	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
 
+	// FlagKubernetesAuthZRoleBindingsRedirect
+	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
+
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
@@ -633,10 +649,6 @@ const (
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
-
-	// FlagKubernetesAuthzCoreRolesApi
-	// Registers AuthZ Core Roles /apis endpoint
-	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
 
 	// FlagKubernetesAuthzGlobalRolesApi
 	// Registers AuthZ Global Roles /apis endpoint
@@ -674,6 +686,10 @@ const (
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
+
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
@@ -689,10 +705,6 @@ const (
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
-
-	// FlagTabularNumbers
-	// Use fixed-width numbers globally in the UI
-	FlagTabularNumbers = "tabularNumbers"
 
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
@@ -802,9 +814,25 @@ const (
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 
+	// FlagKubernetesTeamsApi
+	// Enables team APIs in the app platform
+	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
+
 	// FlagKubernetesTeamsHandlerRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
 	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+
+	// FlagKubernetesUsersApi
+	// Enables user APIs in the app platform
+	FlagKubernetesUsersApi = "kubernetesUsersApi"
+
+	// FlagKubernetesServiceAccountsApi
+	// Enables service account APIs in the app platform
+	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"
+
+	// FlagKubernetesServiceAccountTokensApi
+	// Enables service account token APIs in the app platform
+	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
@@ -818,9 +846,17 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+
+	// FlagAppPluginAPIServer
+	// Registers an API server for each backend app plugin exposing a settings endpoint
+	FlagAppPluginAPIServer = "appPluginAPIServer"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
@@ -834,6 +870,10 @@ const (
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
 
+	// FlagAlertingNotificationHistoryTriage
+	// Enables the notification history timeline in the triage instance details drawer
+	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
@@ -841,4 +881,36 @@ const (
 	// FlagFrontendServiceUseSettingsService
 	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
 	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
+
+	// FlagManagedPluginsV2
+	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
+	FlagManagedPluginsV2 = "managedPluginsV2"
+
+	// FlagRememberUserOrgForSso
+	// Remember the last viewed organization for users using SSO
+	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
+
+	// FlagDsAbstractionApp
+	// Registers the dsabstraction app for querying datasources via unified SQL
+	FlagDsAbstractionApp = "dsAbstractionApp"
+
+	// FlagDatasourcesApiServerEnableHealthEndpoint
+	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
+
+	// FlagAnalyticsFramework
+	// Enables new analytics framework
+	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
+
+	// FlagInlineLogDetailsNoScrolls
+	// Enables an inline version of Log Details that creates no new scrolls
+	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
 )

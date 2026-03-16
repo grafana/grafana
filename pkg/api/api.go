@@ -131,6 +131,12 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
 			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
+			ac.EvalPermission(secret.ActionSecretKeepersCreate),
+			ac.EvalPermission(secret.ActionSecretKeepersRead),
+		)), hs.Index)
+		r.Get("/admin/secrets/secure-values", authorize(ac.EvalAny(
+			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
+			ac.EvalPermission(secret.ActionSecretSecureValuesRead),
 		)), hs.Index)
 		r.Get("/admin/secrets/keepers", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretKeepersCreate),
@@ -423,7 +429,7 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceDisableIdApi) {
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceLegacyIdApi) {
 				// Deprecated Access by internal ID
 				datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
 				datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))

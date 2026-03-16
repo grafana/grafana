@@ -1,4 +1,4 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
@@ -46,9 +46,9 @@ export class K8sDashboardV2API
     this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto', params);
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.

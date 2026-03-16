@@ -134,31 +134,6 @@ describe('DashboardLayoutOrchestrator', () => {
     });
   });
 
-  describe('isDragging', () => {
-    it('should return false when nothing is being dragged', () => {
-      const { orchestrator } = setup();
-
-      expect(orchestrator.isDragging()).toBe(false);
-    });
-
-    it('should return true when dragging a grid item', () => {
-      const { orchestrator, gridItem } = setup();
-
-      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
-
-      expect(orchestrator.isDragging()).toBe(true);
-    });
-
-    it('should return true when dragging a row', () => {
-      const { orchestrator } = setupWithRows();
-
-      // Note: draggingRow is set via startRowDrag which requires more setup
-      // This test verifies the state check logic
-      orchestrator.setState({ draggingRow: undefined });
-      expect(orchestrator.isDragging()).toBe(false);
-    });
-  });
-
   describe('isDroppedElsewhere', () => {
     it('should return false when not dragging', () => {
       const { orchestrator } = setup();
@@ -380,36 +355,6 @@ function setup() {
   });
 
   return { orchestrator, manager, gridItem, panel };
-}
-
-function setupWithRows() {
-  const panel = new VizPanel({
-    title: 'Panel A',
-    key: 'panel-1',
-    pluginId: 'table',
-  });
-
-  const gridItem = new AutoGridItem({
-    key: 'grid-item-1',
-    body: panel,
-  });
-
-  const manager = new AutoGridLayoutManager({
-    layout: new AutoGridLayout({ children: [gridItem] }),
-  });
-
-  const tabsManager = new TabsLayoutManager({
-    tabs: [new TabItem({ title: 'Tab 1', layout: manager })],
-  });
-
-  const orchestrator = new DashboardLayoutOrchestrator();
-
-  new DashboardScene({
-    body: tabsManager,
-    layoutOrchestrator: orchestrator,
-  });
-
-  return { orchestrator, manager, gridItem, panel, tabsManager };
 }
 
 function setupAutoGrid() {

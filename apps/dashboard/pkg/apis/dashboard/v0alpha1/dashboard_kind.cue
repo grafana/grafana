@@ -37,7 +37,7 @@ lineage: schemas: [{
 			revision?: int64
 
 			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
-			gnetId?: string
+			gnetId?: int64
 
 			// Tags associated with dashboard.
 			tags?: [...string]
@@ -305,6 +305,8 @@ lineage: schemas: [{
 			includeVars: bool | *false
 			// If true, includes current time range in the link as query params
 			keepTime: bool | *false
+			// The source that registered the link (if any)
+			origin?: #ControlSourceRef
 
 		} @cuetsy(kind="interface")
 
@@ -739,11 +741,15 @@ lineage: schemas: [{
 			uid: string
 		} @cuetsy(kind="interface")
 
+		#MatcherScope: "series" | "nested" | "annotation" | "exemplar" @cuetsy(kind="type")
+
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
 			// The matcher id. This is used to find the matcher implementation from registry.
 			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+			scope?: #MatcherScope
 			// The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
@@ -852,6 +858,14 @@ lineage: schemas: [{
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		#DatasourceControlSourceRef: {
+			type: "datasource"
+			// The plugin type-id
+			group: string
+		}
+
+		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

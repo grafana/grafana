@@ -8,18 +8,28 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.7
+GO_VERSION = 1.25.8
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
-GO_BUILD_FLAGS += $(GO_RACE_FLAG)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_CGO),-cgo-enabled=$(GO_BUILD_CGO))
+# Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
+BUILD_NUMBER ?= local
+BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
+BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
+BUILD_BRANCH := $(if $(BUILD_BRANCH),$(BUILD_BRANCH),$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"))
+BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell date +%s 2>/dev/null))
+GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
+	-X main.commit=$(BUILD_COMMIT) \
+	-X main.buildBranch=$(BUILD_BRANCH) \
+	-X main.buildstamp=$(BUILD_STAMP) \
+	$(if $(ENTERPRISE_COMMIT_SHA),-X main.enterpriseCommit=$(ENTERPRISE_COMMIT_SHA)) \
+	$(if $(LDFLAGS),-extldflags \"$(LDFLAGS)\")
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
+
+CUE = cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -37,7 +47,7 @@ all: deps build
 
 .PHONY: deps-go
 deps-go: ## Install backend dependencies.
-	$(GO) run $(GO_RACE_FLAG) build.go setup
+	go mod download
 
 .PHONY: deps-js
 deps-js: node_modules ## Install frontend dependencies.
@@ -125,7 +135,13 @@ OAPI_SPEC_TARGET = public/openapi3.json
 
 .PHONY: openapi3-gen
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
+	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go cleanup $(ENTERPRISE_SPEC_TARGET) $(MERGED_SPEC_TARGET)
 	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+
+.PHONY: generate-openapi
+generate-openapi: openapi3-gen
+	$(GO) test ./pkg/tests/apis || true
+	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -252,8 +268,8 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(cue) fix kinds/**/*.cue
-	$(cue) fix public/app/plugins/**/**/*.cue
+	$(CUE) fix kinds/**/*.cue
+	$(CUE) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -269,33 +285,16 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: ## Build all Go binaries.
-	@echo "build go files with updated workspace"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build
-
-.PHONY: build-go-fast
-build-go-fast: ## Build all Go binaries without updating workspace.
-	@echo "!!! [DEPRECATED] use build-go, they do the same thing now. This command will be removed soon"
+build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+	@echo "build go binaries"
+	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false $(if $(GO_BUILD_DEV),-gcflags "all=-N -l",-trimpath) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 
 .PHONY: build-backend
-build-backend: ## Build Grafana backend.
-	@echo "build backend"
-	$(MAKE) gen-themes
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
+build-backend: build-go
 
 .PHONY: build-air
-build-air: build-backend
+build-air: build-go
 	@cp ./bin/grafana ./bin/grafana-air
-
-.PHONY: build-server
-build-server: ## Build Grafana server.
-	@echo "build server"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
-
-.PHONY: build-cli
-build-cli: ## Build Grafana CLI application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 .PHONY: build-js
 build-js: ## Build frontend assets.
@@ -567,6 +566,7 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
+	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

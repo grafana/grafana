@@ -338,6 +338,16 @@ export interface DashboardLink {
    */
   keepTime: boolean;
   /**
+   * The source that registered the link (if any)
+   */
+  origin?: {
+    type: 'datasource';
+    /**
+     * The plugin type-id
+     */
+    group: string;
+  };
+  /**
    * Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
    */
   placement?: DashboardLinkPlacement;
@@ -1022,6 +1032,8 @@ export interface LibraryPanelRef {
   uid: string;
 }
 
+export type MatcherScope = ('series' | 'nested' | 'annotation' | 'exemplar');
+
 /**
  * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
  * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
@@ -1035,6 +1047,10 @@ export interface MatcherConfig {
    * The matcher options. This is specific to the matcher implementation.
    */
   options?: unknown;
+  /**
+   * If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+   */
+  scope?: MatcherScope;
 }
 
 export const defaultMatcherConfig: Partial<MatcherConfig> = {
@@ -1207,7 +1223,7 @@ export interface Dashboard {
   /**
    * ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
    */
-  gnetId?: string;
+  gnetId?: number;
   /**
    * Configuration of dashboard cursor sync behavior.
    * Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).

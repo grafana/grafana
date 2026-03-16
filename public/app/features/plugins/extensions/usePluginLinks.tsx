@@ -1,17 +1,14 @@
-import { isString } from 'lodash';
 import { useMemo } from 'react';
 
-import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
+import { PluginExtensionLink, usePluginContext } from '@grafana/data';
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import {
-  generateExtensionId,
+  addedLinkToExtensionLink,
   getExtensionPointPluginDependencies,
-  getLinkExtensionOnClick,
   getLinkExtensionOverrides,
-  getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
 } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
@@ -72,22 +69,14 @@ export function usePluginLinks({
         continue;
       }
 
-      const path = overrides?.path || addedLink.path;
-      const extension: PluginExtensionLink = {
-        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
-        type: PluginExtensionTypes.link,
-        pluginId: pluginId,
-        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
-
-        // Configurable properties
-        icon: overrides?.icon || addedLink.icon,
-        title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description || '',
-        path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
-        category: overrides?.category || addedLink.category,
-        openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
-      };
-
+      const extension = addedLinkToExtensionLink(
+        pluginId,
+        extensionPointId,
+        addedLink,
+        overrides,
+        linkLog,
+        frozenContext
+      );
       extensions.push(extension);
       extensionsByPlugin[pluginId] += 1;
     }

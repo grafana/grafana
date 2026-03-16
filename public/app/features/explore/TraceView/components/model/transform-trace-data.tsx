@@ -22,6 +22,7 @@ import { TraceResponse, Trace, TraceSpan, TraceProcess } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
+import { getServiceDisplayName } from '../utils/service-name';
 
 import { getTraceName } from './trace-viewer';
 
@@ -146,8 +147,8 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (!span) {
       return;
     }
-    const { serviceName } = span.process;
-    svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
+    const svcKey = getServiceDisplayName(span.process);
+    svcCounts[svcKey] = (svcCounts[svcKey] || 0) + 1;
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
