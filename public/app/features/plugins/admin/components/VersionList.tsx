@@ -15,7 +15,6 @@ import { VersionInstallButton } from './VersionInstallButton';
 
 interface Props {
   plugin: CatalogPlugin;
-  communityManaged?: boolean;
 }
 
 export const VersionList = ({ plugin }: Props) => {
@@ -229,7 +228,7 @@ function shouldDisableVersionInstallation({
     const isLatestMajorVersion = latestMajorVersions.has(version.version);
 
     // should disable the install when the version is lower than the current installed
-    // or when the version is not among the the latest major versions
+    // or when the version is not among the latest major versions
     return lessThanInstalledVersion || !isLatestMajorVersion;
   }
 
@@ -247,6 +246,10 @@ function shouldDisableVersionInstallation({
  * @returns set of latest versions
  */
 export function getLatestMajorVersions(versions: Version[]) {
+  if (versions.length === 0) {
+    return new Set<string>();
+  }
+
   const latestVersions: string[] = [];
   const pureVersions = versions.map((v) => v.version);
   const sortedVersions = pureVersions.sort((a, b) => compare(a, b));

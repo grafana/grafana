@@ -387,14 +387,18 @@ export function isManagedPlugin(id: string, remote?: RemotePlugin) {
 
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
+  // pluginCatalogManagedPlugins considers the instance config as source of truth
+  if (pluginCatalogManagedPlugins?.includes(id)) {
+    return true;
+  }
+
   let remoteManaged = false;
   if (remote) {
     remoteManaged = remote.managed.enabled && getFeatureFlagClient().getBooleanValue('managedPluginsV2', false);
   }
 
-  // pluginCatalogManagedPlugins considers the instance config as source of truth
-  // while remoteManaged considers the grafana-com as source of truth
-  return pluginCatalogManagedPlugins?.includes(id) || remoteManaged;
+  // remoteManaged considers the grafana-com as source of truth
+  return remoteManaged;
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {

@@ -906,7 +906,7 @@ describe('Plugins/Helpers', () => {
         setTestFlags({});
       });
 
-      test('should return true if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
         expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
           isManaged: false,
         });
