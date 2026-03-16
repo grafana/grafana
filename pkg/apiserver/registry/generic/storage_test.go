@@ -52,12 +52,12 @@ func TestNewRegistryStore_KeyFuncSelection(t *testing.T) {
 		expectedKeyContains  string
 	}{
 		{
-			name:                 "Cluster-scoped resource does not require namespace",
+			name:                 "Cluster-scoped resource requires '__cluster__' namespace",
 			resourceInfo:         clusterScopedResourceInfo,
 			testName:             "admin-role",
 			testNamespace:        "",
 			expectNamespaceError: false,
-			expectedKeyContains:  "/resource/globalroles/name/admin-role",
+			expectedKeyContains:  "/resource/globalroles/namespace/__cluster__/name/admin-role",
 		},
 		{
 			name:                 "Namespaced resource requires namespace",
@@ -109,10 +109,10 @@ func TestNewRegistryStore_KeyFuncSelection(t *testing.T) {
 				t.Errorf("KeyFunc() = %q, expected to contain %q", key, tt.expectedKeyContains)
 			}
 
-			// cluster scoped resources should not have a namespace in the key
+			// cluster scoped resources should use the __cluster__ sentinel namespace
 			if tt.resourceInfo.IsClusterScoped() {
-				if strings.Contains(key, "/namespace/") {
-					t.Errorf("Cluster-scoped resource key %q should not contain namespace", key)
+				if !strings.Contains(key, "/namespace/"+ClusterNamespace) {
+					t.Errorf("Cluster-scoped resource key %q should contain namespace %q", key, ClusterNamespace)
 				}
 			}
 

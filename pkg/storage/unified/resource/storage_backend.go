@@ -49,41 +49,22 @@ type GarbageCollectionConfig struct {
 	DashboardsMaxAge time.Duration // dashboard retention
 }
 
-// convertClusterNamespaceToEmpty converts the internal __cluster__ namespace back to empty string
-// for cluster-scoped resources when returning to users
-func convertClusterNamespaceToEmpty(namespace string) string {
-	if namespace == clusterScopeNamespace {
-		return ""
-	}
-	return namespace
-}
-
-// convertEmptyToClusterNamespace converts empty namespace to the internal __cluster__ namespace
-// for cluster-scoped resources when WithExperimentalClusterScope is enabled
-func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterScope bool) string {
-	if withExperimentalClusterScope && namespace == "" {
-		return clusterScopeNamespace
-	}
-	return namespace
-}
-
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake                    *snowflake.Node
-	kv                           KV
-	bulkLock                     *BulkLock
-	dataStore                    *dataStore
-	eventStore                   *eventStore
-	notifier                     notifier
-	log                          log.Logger
-	disablePruner                bool
-	eventRetentionPeriod         time.Duration
-	eventPruningInterval         time.Duration
-	historyPruner                Pruner
-	garbageCollection            GarbageCollectionConfig
-	withExperimentalClusterScope bool
-	lastImportStore              *lastImportStore
-	lastImportTimeMaxAge         time.Duration
+	snowflake            *snowflake.Node
+	kv                   KV
+	bulkLock             *BulkLock
+	dataStore            *dataStore
+	eventStore           *eventStore
+	notifier             notifier
+	log                  log.Logger
+	disablePruner        bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	garbageCollection    GarbageCollectionConfig
+	lastImportStore      *lastImportStore
+	lastImportTimeMaxAge time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -110,15 +91,14 @@ type KVBackend interface {
 }
 
 type KVBackendOptions struct {
-	KvStore                      KV
-	DisablePruner                bool
-	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
-	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Tracer                       trace.Tracer          // TODO add tracing
-	Reg                          prometheus.Registerer // TODO add metrics
-	Log                          log.Logger
-	GarbageCollection            GarbageCollectionConfig
+	KvStore              KV
+	DisablePruner        bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+	Log                  log.Logger
+	GarbageCollection    GarbageCollectionConfig
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -185,24 +165,23 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	backend := &kvStorageBackend{
-		kv:                           kv,
-		bulkLock:                     NewBulkLock(),
-		dataStore:                    newDataStore(kv),
-		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:                    opts.WatchOptions.normalize(),
-		snowflake:                    s,
-		log:                          logger,
-		eventRetentionPeriod:         eventRetentionPeriod,
-		eventPruningInterval:         eventPruningInterval,
-		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
-		rvManager:                    opts.RvManager,
-		dbKeepAlive:                  opts.DBKeepAlive,
-		lastImportStore:              newLastImportStore(kv),
-		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
-		searchLookback:               opts.SearchLookback,
-		disablePruner:                opts.DisablePruner,
+		kv:                   kv,
+		bulkLock:             NewBulkLock(),
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:            opts.WatchOptions.normalize(),
+		snowflake:            s,
+		log:                  logger,
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+		rvManager:            opts.RvManager,
+		dbKeepAlive:          opts.DBKeepAlive,
+		lastImportStore:      newLastImportStore(kv),
+		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
+		garbageCollection:    opts.GarbageCollection,
+		searchLookback:       opts.SearchLookback,
+		disablePruner:        opts.DisablePruner,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -610,14 +589,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	rv := k.snowflake.Generate().Int64()
 
-	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
-
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
-			Namespace: namespace,
+			Namespace: event.Key.Namespace,
 			Name:      event.Key.Name,
 		})
 		if err != nil {
@@ -644,7 +621,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		_, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
-			Namespace: namespace,
+			Namespace: event.Key.Namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
@@ -672,7 +649,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	dataKey := DataKey{
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
-		Namespace:       namespace,
+		Namespace:       event.Key.Namespace,
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
@@ -714,7 +691,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
-			Namespace: namespace,
+			Namespace: event.Key.Namespace,
 			Name:      event.Key.Name,
 		})
 		if err != nil {
@@ -740,7 +717,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
-			Namespace: namespace,
+			Namespace: event.Key.Namespace,
 			Name:      event.Key.Name,
 		})
 		if err != nil {
@@ -766,7 +743,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	// Write event
 	eventData := Event{
-		Namespace:       namespace,
+		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Name:            event.Key.Name,
@@ -783,7 +760,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	_ = k.historyPruner.Add(PruningKey{
-		Namespace: namespace,
+		Namespace: event.Key.Namespace,
 		Group:     event.Key.Group,
 		Resource:  event.Key.Resource,
 		Name:      event.Key.Name,
@@ -797,8 +774,6 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
-
-	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {
@@ -836,7 +811,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
-		Namespace: namespace,
+		Namespace: req.Key.Namespace,
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
 	if errors.Is(err, ErrNotFound) {
@@ -847,7 +822,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	data, err := k.dataStore.Get(ctx, DataKey{
 		Group:           req.Key.Group,
 		Resource:        req.Key.Resource,
-		Namespace:       namespace,
+		Namespace:       req.Key.Namespace,
 		Name:            req.Key.Name,
 		ResourceVersion: meta.ResourceVersion,
 		Action:          meta.Action,
@@ -874,14 +849,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Options.Key.Namespace, k.withExperimentalClusterScope)
-
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
 			Resource:  req.Options.Key.Resource,
-			Namespace: namespace,
+			Namespace: req.Options.Key.Namespace,
 			Name:      req.Options.Key.Name,
 		},
 		ResourceVersion: req.ResourceVersion,
@@ -1011,7 +984,7 @@ func (i *kvListIterator) ResourceVersion() int64 {
 }
 
 func (i *kvListIterator) Namespace() string {
-	return convertClusterNamespaceToEmpty(i.currentDataObj.Key.Namespace)
+	return i.currentDataObj.Key.Namespace
 }
 
 func (i *kvListIterator) Name() string {
@@ -1633,7 +1606,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 			events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
-					Namespace: convertClusterNamespaceToEmpty(event.Namespace),
+					Namespace: event.Namespace,
 					Group:     event.Group,
 					Resource:  event.Resource,
 					Name:      event.Name,

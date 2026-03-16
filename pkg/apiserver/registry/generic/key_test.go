@@ -148,7 +148,7 @@ func TestClusterScopedKeyFunc(t *testing.T) {
 			name:     "Valid cluster-scoped resource",
 			ctx:      context.Background(),
 			objName:  "admin",
-			expected: "/group/iam.grafana.app/resource/globalroles/name/admin",
+			expected: "/group/iam.grafana.app/resource/globalroles/namespace/__cluster__/name/admin",
 			wantErr:  false,
 		},
 		{

@@ -62,15 +62,7 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 }
 
 func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
-	kv := setupBadgerKV(t)
-	opts := KVBackendOptions{
-		KvStore:                      kv,
-		WithExperimentalClusterScope: true,
-	}
-	backend, err := NewKVStorageBackend(opts)
-	kvBackend := backend.(*kvStorageBackend)
-	require.NoError(t, err)
-	return kvBackend
+	return setupTestStorageBackend(t)
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -2120,15 +2112,8 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 	return testObj, rv
 }
 
-// TestKvStorageBackend_ClusterScopedResources tests create, update, delete, list, and watch
-// operations for cluster-scoped resources (empty namespace).
-// This test requires the backend to be configured with WithExperimentalClusterScoped set to true.
-//
-// The test verifies that:
-// - All write operations accept empty namespace
-// - ReadResource responses return empty namespace
-// - ListIterator results return empty namespace
-// - WatchWriteEvents return empty namespace
+// TestKvStorageBackend_ClusterScopedResources tests CRUD, list, and watch
+// for cluster-scoped resources using the "__cluster__" namespace.
 func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	backend := setupTestStorageBackendWithClusterScope(t)
 	ctx := context.Background()
@@ -2137,9 +2122,8 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	stream, err := backend.WatchWriteEvents(ctx)
 	require.NoError(t, err)
 
-	// Use empty namespace for cluster-scoped resources
 	clusterNS := NamespacedResource{
-		Namespace: "",
+		Namespace: clusterScopeNamespace,
 		Group:     "cluster.example.com",
 		Resource:  "clusterresources",
 	}
@@ -2153,7 +2137,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	writeEvent1 := WriteEvent{
 		Type: resourcepb.WatchEvent_ADDED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 			Name:      "cluster-item1",
@@ -2174,7 +2158,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	writeEvent2 := WriteEvent{
 		Type: resourcepb.WatchEvent_ADDED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 			Name:      "cluster-item2",
@@ -2195,7 +2179,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	writeEvent3 := WriteEvent{
 		Type: resourcepb.WatchEvent_ADDED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 			Name:      "cluster-item3",
@@ -2216,7 +2200,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	writeEvent2Updated := WriteEvent{
 		Type: resourcepb.WatchEvent_MODIFIED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 			Name:      "cluster-item2",
@@ -2230,11 +2214,11 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, rv4, rv3)
 
-	// Test Read - Read latest cluster-item2
+	// Test Read - Read latest cluster-item2 using __cluster__ namespace
 	readReq := &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Name:      "cluster-item2",
-			Namespace: "", // Request with empty namespace
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 		},
@@ -2245,7 +2229,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.Equal(t, rv4, response.ResourceVersion)
 	require.Contains(t, string(response.Value), "updated-data")
 	require.NotNil(t, response.Key, "response key should be populated")
-	require.Empty(t, response.Key.Namespace, "cluster-scoped resource should have empty namespace in response")
+	require.Equal(t, clusterScopeNamespace, response.Key.Namespace, "cluster-scoped resource should have __cluster__ namespace")
 
 	// Test Read - Read early version of cluster-item2
 	readReq.ResourceVersion = rv3 // Should return rv2 version
@@ -2254,13 +2238,13 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.Equal(t, rv2, response.ResourceVersion)
 	require.Contains(t, string(response.Value), "data-2")
 	require.NotNil(t, response.Key, "response key should be populated")
-	require.Empty(t, response.Key.Namespace, "cluster-scoped resource should have empty namespace in response")
+	require.Equal(t, clusterScopeNamespace, response.Key.Namespace, "cluster-scoped resource should have __cluster__ namespace")
 
 	// Test Delete - Delete cluster-item1
 	writeEvent1Delete := WriteEvent{
 		Type: resourcepb.WatchEvent_DELETED,
 		Key: &resourcepb.ResourceKey{
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 			Name:      "cluster-item1",
@@ -2274,11 +2258,11 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, rv5, rv4)
 
-	// Test List - List all cluster-scoped resources
+	// Test List - List cluster-scoped resources using __cluster__ namespace
 	listReq := &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Namespace: "",
+				Namespace: clusterScopeNamespace,
 				Group:     "cluster.example.com",
 				Resource:  "clusterresources",
 			},
@@ -2313,9 +2297,9 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.GreaterOrEqual(t, rv, rv5)
 	require.Len(t, listedItems, 2) // cluster-item2 and cluster-item3 (item1 was deleted)
 
-	// Verify all items have empty namespace
+	// Verify all items have __cluster__ namespace
 	for _, item := range listedItems {
-		require.Empty(t, item.namespace, "cluster-scoped resources should have empty namespace")
+		require.Equal(t, clusterScopeNamespace, item.namespace, "cluster-scoped resources should have __cluster__ namespace")
 	}
 
 	// Verify items are sorted and have expected content
@@ -2324,11 +2308,45 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	require.Equal(t, "cluster-item3", listedItems[1].name)
 	require.Contains(t, string(listedItems[1].value), "data-3")
 
-	// Verify deleted resource is not in list
+	// Test Cross-Namespace List - empty namespace should return all namespaces including __cluster__
+	crossNSListReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     "cluster.example.com",
+				Resource:  "clusterresources",
+			},
+		},
+		Limit: 10,
+	}
+
+	var crossNSItems []struct {
+		name      string
+		namespace string
+	}
+	_, err = backend.ListIterator(ctx, crossNSListReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			crossNSItems = append(crossNSItems, struct {
+				name      string
+				namespace string
+			}{
+				name:      iter.Name(),
+				namespace: iter.Namespace(),
+			})
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Len(t, crossNSItems, 2, "cross-namespace list should also return cluster-scoped resources")
+
+	// Verify deleted resource is not found
 	readReqDeleted := &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Name:      "cluster-item1",
-			Namespace: "",
+			Namespace: clusterScopeNamespace,
 			Group:     "cluster.example.com",
 			Resource:  "clusterresources",
 		},
@@ -2337,12 +2355,8 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	responseDeleted := backend.ReadResource(ctx, readReqDeleted)
 	require.NotNil(t, responseDeleted.Error)
 	require.Equal(t, int32(404), responseDeleted.Error.Code)
-	// Key should still be empty for cluster-scoped resources even on error
-	if responseDeleted.Key != nil {
-		require.Empty(t, responseDeleted.Key.Namespace, "cluster-scoped resource should have empty namespace even on error")
-	}
 
-	// Test Watch - Verify all events were published with empty namespace
+	// Test Watch - Verify all events were published with __cluster__ namespace
 	watchedEvents := []struct {
 		name         string
 		expectedType resourcepb.WatchEvent_Type
@@ -2359,7 +2373,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 		select {
 		case event := <-stream:
 			require.Equal(t, expected.name, event.Key.Name, "Event %d: wrong name", i)
-			require.Empty(t, event.Key.Namespace, "Event %d: cluster-scoped resource should have empty namespace", i)
+			require.Equal(t, clusterScopeNamespace, event.Key.Namespace, "Event %d: cluster-scoped resource should have __cluster__ namespace", i)
 			require.Equal(t, "cluster.example.com", event.Key.Group, "Event %d: wrong group", i)
 			require.Equal(t, "clusterresources", event.Key.Resource, "Event %d: wrong resource", i)
 			require.Equal(t, expected.expectedType, event.Type, "Event %d: wrong type", i)
