@@ -32,7 +32,7 @@ export const SuggestedDashboardsLoader = ({
   children,
 }: SuggestedDashboardsLoaderProps) => {
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle');
-  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
+  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>();
   const [communityDashboards, setCommunityDashboards] = useState<GnetDashboard[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const hasFetchedRef = useRef(false);
@@ -80,8 +80,11 @@ export const SuggestedDashboardsLoader = ({
     }
   }, [fetchOnMount, triggerFetch]);
 
-  const hasDashboards = provisionedDashboards.length > 0 || communityDashboards.length > 0;
-  const openModal = useCallback(() => setIsOpen(true), []);
+  const hasDashboards = (provisionedDashboards?.length ?? 0) > 0 || (communityDashboards?.length ?? 0) > 0;
+  const openModal = useCallback(() => {
+    triggerFetch();
+    setIsOpen(true);
+  }, [triggerFetch]);
 
   return (
     <>
@@ -90,8 +93,8 @@ export const SuggestedDashboardsLoader = ({
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
         datasourceUid={datasourceUid}
-        provisionedDashboards={fetchStatus === 'done' ? provisionedDashboards : undefined}
-        communityDashboards={fetchStatus === 'done' ? communityDashboards : undefined}
+        provisionedDashboards={provisionedDashboards}
+        communityDashboards={communityDashboards}
       />
     </>
   );

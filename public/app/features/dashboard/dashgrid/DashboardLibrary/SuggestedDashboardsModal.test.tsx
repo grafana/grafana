@@ -70,7 +70,13 @@ describe('SuggestedDashboardsModal', () => {
   });
 
   it('should render CommunityDashboardSection when activeView is community', () => {
-    render(<SuggestedDashboardsModal {...defaultProps} defaultTab="community" />);
+    // Passing communityDashboards (non-empty) with no provisionedDashboards forces community tab as default
+    render(
+      <SuggestedDashboardsModal
+        {...defaultProps}
+        communityDashboards={[{ id: 1, name: 'Test', slug: 'test', downloads: 0, description: '', datasource: '' }]}
+      />
+    );
 
     expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
     expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();

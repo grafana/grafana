@@ -106,13 +106,18 @@ const setup = async (
   successScenario = true,
   datasourceUid = 'test-datasource-uid'
 ) => {
+  // Provide a default single dashboard unless caller explicitly overrides dashboards
+  const defaultDashboards = 'dashboards' in props ? props.dashboards : [createMockGnetDashboard()];
+  const { dashboards: _dashboards, ...restProps } = props;
+
   const renderResult = render(
-    <CommunityDashboardSection onShowMapping={jest.fn()} datasourceType={mockDatasourceType} {...props} />,
-    {
-      historyOptions: {
-        initialEntries: [`/test?dashboardLibraryDatasourceUid=${datasourceUid}`],
-      },
-    }
+    <CommunityDashboardSection
+      onShowMapping={jest.fn()}
+      datasourceType={mockDatasourceType}
+      datasourceUid={datasourceUid}
+      dashboards={defaultDashboards}
+      {...restProps}
+    />
   );
 
   if (successScenario) {
@@ -131,21 +136,16 @@ describe('CommunityDashboardSection', () => {
   });
 
   it('should render', async () => {
-    mockFetchCommunityDashboards.mockResolvedValue({
-      page: 1,
-      pages: 5,
-      items: [
-        createMockGnetDashboard(),
-        createMockGnetDashboard({ id: 2, name: 'Test Dashboard 2' }),
-        createMockGnetDashboard({ id: 3, name: 'Test Dashboard 3' }),
-      ],
-    });
-
-    // Mock compatibility check to prevent auto-check errors
     mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson());
     mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
 
-    await setup();
+    const dashboards = [
+      createMockGnetDashboard(),
+      createMockGnetDashboard({ id: 2, name: 'Test Dashboard 2' }),
+      createMockGnetDashboard({ id: 3, name: 'Test Dashboard 3' }),
+    ];
+
+    await setup({ dashboards });
 
     await waitFor(() => {
       expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
@@ -155,16 +155,8 @@ describe('CommunityDashboardSection', () => {
   });
 
   it('should show error when fetching a specific community dashboard after clicking use dashboard button fails', async () => {
-    mockFetchCommunityDashboards.mockResolvedValue({
-      page: 1,
-      pages: 5,
-      items: [createMockGnetDashboard()],
-    });
-
-    // Mock compatibility check to prevent auto-check errors
     mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson());
     mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
-
     mockOnUseCommunityDashboard.mockRejectedValue(new Error('Failed to use community dashboard'));
 
     const { user } = await setup();
@@ -184,11 +176,18 @@ describe('CommunityDashboardSection', () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     mockFetchCommunityDashboards.mockRejectedValue(new Error('Failed to fetch community dashboards'));
 
-    await setup(undefined, false);
+    const { user } = await setup({ dashboards: [] }, false);
 
-    await waitFor(() => {
-      expect(screen.getByText('Error loading community dashboards')).toBeInTheDocument();
-    });
+    // Type a search query to trigger a fetch (search bypasses pre-fetched data)
+    const searchInput = screen.getByRole('textbox');
+    await user.type(searchInput, 'test');
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('Error loading community dashboards')).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboards', expect.any(Error));
     consoleErrorSpy.mockRestore();
@@ -199,11 +198,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should show "Check" button when datasource type is prometheus', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       // Mock the auto-check to prevent it from running
       mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson());
@@ -223,11 +217,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should hide compatibility badge when datasource type is not prometheus', async () => {
       mockDatasourceType = 'influxdb';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       await setup();
 
@@ -239,34 +228,29 @@ describe('CommunityDashboardSection', () => {
       expect(screen.queryByTestId('compatibility-badge-loading')).not.toBeInTheDocument();
     });
 
-    it('should hide compatibility badge when no datasourceUid in URL', async () => {
+    it('should hide compatibility badge when no datasourceUid is provided', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
-      // Render without datasourceUid in URL
-      render(<CommunityDashboardSection onShowMapping={jest.fn()} datasourceType="prometheus" />, {
-        historyOptions: {
-          initialEntries: ['/test'],
-        },
-      });
+      // Render without datasourceUid
+      render(
+        <CommunityDashboardSection
+          onShowMapping={jest.fn()}
+          datasourceType="prometheus"
+          dashboards={[createMockGnetDashboard()]}
+        />
+      );
 
-      // Wait for component to finish initial rendering
       await waitFor(() => {
-        expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+        expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
       });
+
+      // Verify badge is not rendered
+      expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('compatibility-badge-loading')).not.toBeInTheDocument();
     });
 
     it('should auto-trigger compatibility check on initial load for prometheus', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
       mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
@@ -285,11 +269,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should track analytics when compatibility check is triggered', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
       mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
@@ -310,11 +289,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should track analytics when compatibility check completes', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
       mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
@@ -338,11 +312,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should show success badge after compatibility check completes', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson({ title: 'Interpolated' }));
       mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
@@ -358,11 +327,6 @@ describe('CommunityDashboardSection', () => {
     it('should show error badge when compatibility check fails', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       mockInterpolateDashboard.mockRejectedValue(new Error('Failed to interpolate dashboard'));
 
@@ -378,11 +342,6 @@ describe('CommunityDashboardSection', () => {
     it('should allow manual check when clicking Check button', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       // First call fails (simulating search result state), second call succeeds
       mockInterpolateDashboard
@@ -410,11 +369,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should show loading state during compatibility check', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       // Create a promise that we control
       let resolveCheck: (value: CompatibilityCheckResult) => void;
@@ -447,11 +401,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should not show compatibility badge for prometheus datasources', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       await setup();
 
@@ -467,11 +416,6 @@ describe('CommunityDashboardSection', () => {
 
     it('should not trigger auto-checks on initial load', async () => {
       mockDatasourceType = 'prometheus';
-      mockFetchCommunityDashboards.mockResolvedValue({
-        page: 1,
-        pages: 5,
-        items: [createMockGnetDashboard()],
-      });
 
       await setup();
 

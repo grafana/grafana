@@ -4,13 +4,8 @@ import { render } from 'test/test-utils';
 import { locationService } from '@grafana/runtime';
 
 import { DashboardLibrarySection } from './DashboardLibrarySection';
-import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { createMockPluginDashboard } from './utils/test-utils';
-
-jest.mock('./api/dashboardLibraryApi', () => ({
-  fetchProvisionedDashboards: jest.fn(),
-}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -58,9 +53,6 @@ jest.mock('./DashboardCard', () => {
   };
 });
 
-const mockFetchProvisionedDashboards = fetchProvisionedDashboards as jest.MockedFunction<
-  typeof fetchProvisionedDashboards
->;
 const mockLocationServicePush = locationService.push as jest.MockedFunction<typeof locationService.push>;
 const mockDashboardLibraryInteractionsLoaded = DashboardLibraryInteractions.loaded as jest.MockedFunction<
   typeof DashboardLibraryInteractions.loaded
@@ -80,53 +72,35 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
     ];
 
-    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
+    expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-card-Dashboard 2')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
-      expect(screen.getByTestId('dashboard-card-Dashboard 2')).toBeInTheDocument();
-    });
+  it('should show skeletons while dashboards are loading (undefined)', async () => {
+    render(<DashboardLibrarySection dashboards={undefined} datasourceUid="test-uid" />);
+
+    expect(screen.getAllByTestId('dashboard-card-skeleton').length).toBeGreaterThan(0);
   });
 
   it('should show empty state when there are no dashboards', async () => {
-    mockFetchProvisionedDashboards.mockResolvedValue([]);
+    render(<DashboardLibrarySection dashboards={[]} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('No test-datasource provisioned dashboards found')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.'
-        )
-      ).toBeInTheDocument();
-      const browseButton = screen.getByRole('button', { name: 'Browse plugins' });
-      expect(browseButton).toBeInTheDocument();
-    });
+    expect(screen.getByText('No test-datasource provisioned dashboards found')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.'
+      )
+    ).toBeInTheDocument();
+    const browseButton = screen.getByRole('button', { name: 'Browse plugins' });
+    expect(browseButton).toBeInTheDocument();
   });
 
   it('should show empty state without datasource type when datasourceUid is not provided', async () => {
-    mockFetchProvisionedDashboards.mockResolvedValue([]);
+    render(<DashboardLibrarySection dashboards={[]} />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('No provisioned dashboards found')).toBeInTheDocument();
-    });
+    expect(screen.getByText('No provisioned dashboards found')).toBeInTheDocument();
   });
 
   it('should render pagination when there are more than 9 dashboards', async () => {
@@ -134,20 +108,12 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: `Dashboard ${i + 1}`, uid: `uid-${i + 1}` })
     );
 
-    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      const pagination = screen.getByRole('navigation');
-      expect(pagination).toBeInTheDocument();
-      expect(within(pagination).getByText('1')).toBeInTheDocument();
-      expect(within(pagination).getByText('2')).toBeInTheDocument();
-    });
+    const pagination = screen.getByRole('navigation');
+    expect(pagination).toBeInTheDocument();
+    expect(within(pagination).getByText('1')).toBeInTheDocument();
+    expect(within(pagination).getByText('2')).toBeInTheDocument();
   });
 
   it('should not render pagination when there are 9 or fewer dashboards', async () => {
@@ -155,17 +121,9 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: `Dashboard ${i + 1}`, uid: `uid-${i + 1}` })
     );
 
-    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
 
     const pagination = screen.queryByRole('navigation');
     expect(pagination).not.toBeInTheDocument();
@@ -179,17 +137,9 @@ describe('DashboardLibrarySection', () => {
       path: 'test/path.json',
     });
 
-    mockFetchProvisionedDashboards.mockResolvedValue([dashboard]);
+    render(<DashboardLibrarySection dashboards={[dashboard]} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
 
     const dashboardCard = screen.getByTestId('dashboard-card-Test Dashboard');
     dashboardCard.click();
@@ -213,17 +163,9 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
     ];
 
-    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockDashboardLibraryInteractionsLoaded).toHaveBeenCalledWith({
@@ -243,17 +185,9 @@ describe('DashboardLibrarySection', () => {
       pluginId: 'test-plugin',
     });
 
-    mockFetchProvisionedDashboards.mockResolvedValue([dashboard]);
+    render(<DashboardLibrarySection dashboards={[dashboard]} datasourceUid="test-uid" />);
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
 
     const dashboardCard = screen.getByTestId('dashboard-card-Test Dashboard');
     dashboardCard.click();

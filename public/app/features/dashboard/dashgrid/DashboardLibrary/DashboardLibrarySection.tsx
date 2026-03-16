@@ -1,7 +1,5 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -12,7 +10,6 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
-import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
@@ -25,14 +22,7 @@ interface DashboardLibrarySectionProps {
   datasourceUid?: string;
 }
 
-export const DashboardLibrarySection = ({
-  dashboards,
-  datasourceUid: datasourceUidProp,
-}: DashboardLibrarySectionProps) => {
-  const [searchParams] = useSearchParams();
-  const datasourceUidFromUrl = searchParams.get('dashboardLibraryDatasourceUid');
-  const datasourceUid = datasourceUidProp ?? datasourceUidFromUrl;
-
+export const DashboardLibrarySection = ({ dashboards, datasourceUid }: DashboardLibrarySectionProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const hasTrackedLoaded = useRef(false);
 
@@ -45,25 +35,12 @@ export const DashboardLibrarySection = ({
     return ds?.type || '';
   }, [datasourceUid]);
 
-  const { value: templateDashboards, loading } = useAsync(async (): Promise<PluginDashboard[]> => {
-    if (dashboards !== undefined) {
-      return dashboards;
-    }
-    if (!datasourceUid) {
-      return [];
-    }
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    if (!ds) {
-      return [];
-    }
-    return fetchProvisionedDashboards(ds.type);
-  }, [datasourceUid, dashboards]);
-
+  const loading = dashboards === undefined;
   // Track analytics only once on first successful load
   useEffect(() => {
-    if (!loading && !hasTrackedLoaded.current && templateDashboards && templateDashboards.length > 0) {
+    if (!loading && !hasTrackedLoaded.current && dashboards && dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
-        numberOfItems: templateDashboards.length,
+        numberOfItems: dashboards.length,
         contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
         datasourceTypes: [datasourceType],
         sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
@@ -71,18 +48,18 @@ export const DashboardLibrarySection = ({
       });
       hasTrackedLoaded.current = true;
     }
-  }, [loading, templateDashboards, datasourceType]);
+  }, [loading, dashboards, datasourceType]);
 
   // Calculate pagination
-  const totalDashboards = templateDashboards?.length || 0;
+  const totalDashboards = dashboards?.length || 0;
   const totalPages = Math.ceil(totalDashboards / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
-  const dashboardsToShow = templateDashboards?.slice(startIndex, endIndex) ?? [];
+  const dashboardsToShow = dashboards?.slice(startIndex, endIndex) ?? [];
 
   const styles = useStyles2(getStyles);
 
-  const showEmptyState = !loading && (!templateDashboards || templateDashboards.length === 0);
+  const showEmptyState = !loading && (!dashboards || dashboards.length === 0);
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
@@ -146,7 +123,7 @@ export const DashboardLibrarySection = ({
             lg: loading ? 3 : (dashboardsToShow.length || 1) >= 3 ? 3 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
           }}
         >
-          {loading && !templateDashboards
+          {loading && !dashboards
             ? Array.from({ length: 9 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
             : dashboardsToShow.map((dashboard, index) => {
                 const globalIndex = startIndex + index;

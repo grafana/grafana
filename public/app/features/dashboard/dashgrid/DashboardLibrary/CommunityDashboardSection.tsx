@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useAsyncRetry, useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -70,9 +69,12 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashb
     error,
     retry,
   } = useAsyncRetry(async () => {
-    // Use pre-fetched data when available and no search query is active
-    if (dashboards !== undefined && !debouncedSearchQuery.trim()) {
-      return { dashboards, datasourceType: datasourceType ?? '' };
+    // No active search: use pre-fetched data from parent (or show loading if not yet available)
+    if (!debouncedSearchQuery.trim()) {
+      if (dashboards !== undefined) {
+        return { dashboards, datasourceType: datasourceType ?? '' };
+      }
+      return null; // dashboards not yet ready from parent — show loading state
     }
 
     if (!datasourceUid) {
@@ -133,8 +135,10 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashb
 
   const styles = useStyles2(getStyles);
 
-  const showEmptyState = !loading && (!response?.dashboards || response.dashboards.length === 0);
-  const showError = !loading && error;
+  const isLoadingFromParent = dashboards === undefined && !debouncedSearchQuery.trim();
+  const showLoading = loading || isLoadingFromParent;
+  const showEmptyState = !showLoading && (!response?.dashboards || response.dashboards.length === 0);
+  const showError = !showLoading && error;
 
   const [{ error: isPreviewDashboardError }, onPreviewCommunityDashboard] = useAsyncFn(
     async (dashboard: GnetDashboard) => {
@@ -279,7 +283,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashb
       />
 
       <div className={styles.resultsContainer}>
-        {loading ? (
+        {showLoading ? (
           <Grid
             gap={4}
             columns={{

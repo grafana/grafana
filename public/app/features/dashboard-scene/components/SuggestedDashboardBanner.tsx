@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, TextLink } from '@grafana/ui';
+import { Alert, TextLink } from '@grafana/ui';
 import { SuggestedDashboardsLoader } from 'app/features/datasources/components/SuggestedDashboardsLoader';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -27,7 +27,7 @@ export function SuggestedDashboardBanner({ route, dashboard, datasourceUid }: Pr
   }
 
   return (
-    <SuggestedDashboardsLoader datasourceUid={datasourceUid} fetchOnMount>
+    <SuggestedDashboardsLoader datasourceUid={datasourceUid}>
       {({ openModal }) => (
         <Alert
           severity="info"
@@ -37,9 +37,9 @@ export function SuggestedDashboardBanner({ route, dashboard, datasourceUid }: Pr
         >
           <Trans i18nKey="dashboard-scene.suggested-dashboard-banner.body">
             Not what you&apos;re looking for? View{' '}
-            <Button variant="secondary" onClick={openModal}>
+            <TextLink href={window.location.href} onClick={openModal}>
               other suggested dashboards
-            </Button>{' '}
+            </TextLink>{' '}
             or <TextLink href="/dashboard/new">create one from scratch</TextLink>.
           </Trans>
         </Alert>
