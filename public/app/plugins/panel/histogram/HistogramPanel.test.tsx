@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, DataFrame, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import {
+  createDataFrame,
+  createTheme,
+  DataFrame,
+  FieldType,
+  getDefaultTimeRange,
+  getDisplayProcessor,
+  LoadingState,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/schema';
 
@@ -36,6 +44,17 @@ const rawValuesFrame = createDataFrame({
   ],
 });
 
+/** Pre-bucketed histogram frame (xMin, xMax, count) - triggers getHistogramFields path when series.length === 1 */
+const explicitHistogramFrame = stampFrameWithDisplay(
+  createDataFrame({
+    fields: [
+      { name: 'xMin', type: FieldType.number, values: [0, 1, 2, 3] },
+      { name: 'xMax', type: FieldType.number, values: [1, 2, 3, 4] },
+      { name: 'count', type: FieldType.number, values: [5, 10, 15, 20], config: {} },
+    ],
+  })
+);
+
 const defaultPanelOptions: Options = {
   ...defaultOptions,
   combine: true,
@@ -69,7 +88,13 @@ describe('HistogramPanel', () => {
   it('renders', () => {
     setUp();
 
-    expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeVisible();
+  });
+
+  it('shows no data message when series is empty', () => {
+    setUp({ series: [] });
+
+    expect(screen.getByText('No histogram found in response')).toBeVisible();
   });
 
   it('renders TooltipPlugin2 when tooltip mode is not None', () => {
@@ -81,7 +106,7 @@ describe('HistogramPanel', () => {
       },
     });
 
-    expect(screen.getByTestId('histogram-tooltip-plugin')).toBeInTheDocument();
+    expect(screen.getByTestId('histogram-tooltip-plugin')).toBeVisible();
   });
 
   it('does not render TooltipPlugin2 when tooltip mode is None', () => {
@@ -96,15 +121,41 @@ describe('HistogramPanel', () => {
     expect(screen.queryByTestId('histogram-tooltip-plugin')).not.toBeInTheDocument();
   });
 
-  it('renders HistogramTooltip', () => {
-    setUp(undefined, {
-      tooltip: {
-        mode: TooltipDisplayMode.Single,
-        //@ts-expect-error
-        sort: 'none',
-      },
-    });
+  it('renders HistogramTooltip with bucket range and count content', () => {
+    setUp(
+      { series: [explicitHistogramFrame] },
+      {
+        tooltip: {
+          mode: TooltipDisplayMode.Multi,
+          //@ts-expect-error
+          sort: 'none',
+        },
+      }
+    );
 
-    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
+    expect(screen.getByText('Bucket')).toBeVisible();
+    expect(screen.getByText('0 - 1')).toBeVisible();
+    expect(screen.getByText('count')).toBeVisible();
+    expect(screen.getByText('5')).toBeVisible();
+  });
+
+  it('renders histogram from explicit histogram fields via getHistogramFields when series has one frame', () => {
+    setUp({ series: [explicitHistogramFrame] });
+
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeVisible();
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
+    expect(screen.getByText('Bucket')).toBeVisible();
+    expect(screen.getByText('0 - 1')).toBeVisible();
   });
 });
+
+function stampFrameWithDisplay(frame: DataFrame): DataFrame {
+  const theme = createTheme();
+  frame.fields.forEach((field) => {
+    if (!field.display) {
+      field.display = getDisplayProcessor({ field, theme });
+    }
+  });
+  return frame;
+}
