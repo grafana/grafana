@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { DragDropContext, Draggable, DraggableProvidedDragHandleProps, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -272,9 +272,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                   {p}
                 </th>
               ))}
-              <th className={cx(styles.headerIconCell, styles.actionCell)}>
-                <PasteButton onClick={handlePaste} />
-              </th>
+              <th className={styles.headerIconCell} />
             </tr>
           </thead>
           <DragDropContext onDragEnd={handleReorder}>
@@ -324,6 +322,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                     onValueChange={(key, val) => handleDraftChange(key, val)}
                     onCellKeyDown={handleCellKeyDown}
                     onFirstInputPaste={onPaste}
+                    onClickPaste={handlePaste}
                     autoFocusFirst={shouldFocusDraft}
                   />
                 </tbody>
@@ -351,6 +350,7 @@ interface SpreadsheetRowCellsProps {
   onFirstInputPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
   autoFocusFirst?: boolean;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
+  onClickPaste?: (text: string) => void;
 }
 
 function SpreadsheetRowCells({
@@ -364,6 +364,7 @@ function SpreadsheetRowCells({
   onFirstInputPaste,
   autoFocusFirst,
   dragHandleProps,
+  onClickPaste,
 }: SpreadsheetRowCellsProps) {
   const styles = useStyles2(getStyles);
 
@@ -385,15 +386,20 @@ function SpreadsheetRowCells({
             </div>
           </Tooltip>
         )}
-        {!onRemove && onAdd && (
-          <IconButton
-            name="plus"
-            variant="primary"
-            aria-label={addTooltip}
-            tooltip={addTooltip}
-            tooltipPlacement="top"
-            onClick={onAdd}
-          />
+        {!onRemove && (
+          <div className={styles.actionsGroup}>
+            {onClickPaste && <PasteButton onClick={onClickPaste} />}
+            {onAdd && (
+              <IconButton
+                name="plus"
+                variant="primary"
+                aria-label={addTooltip}
+                tooltip={addTooltip}
+                tooltipPlacement="top"
+                onClick={onAdd}
+              />
+            )}
+          </div>
         )}
       </td>
       {properties.map((p, i) => (
@@ -564,12 +570,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     actionCell: css({
       padding: theme.spacing(0.5),
       width: theme.spacing(4),
-      textAlign: 'center',
+      textAlign: 'right',
       verticalAlign: 'middle',
       '& > button': {
         display: 'flex',
         margin: '0 auto',
       },
+    }),
+    actionsGroup: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: 0,
+      '& > :last-child': css({
+        marginRight: 0,
+      }),
     }),
   };
 };
