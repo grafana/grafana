@@ -24,8 +24,7 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			_ = db.Close()
 		})
 		kvOpts := resource.KVBackendOptions{
-			KvStore:                      resource.NewBadgerKV(db),
-			WithExperimentalClusterScope: true,
+			KvStore: resource.NewBadgerKV(db),
 			// keep it low in tests as most of them don't exercise concurrent writes
 			WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 		}

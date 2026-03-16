@@ -37,7 +37,6 @@ const (
 	defaultEventRetentionPeriod = 1 * time.Hour
 	defaultEventPruningInterval = 5 * time.Minute
 	defaultSearchLookback       = 1 * time.Second
-	clusterScopeNamespace       = "__cluster__"
 )
 
 type GarbageCollectionConfig struct {
@@ -47,24 +46,6 @@ type GarbageCollectionConfig struct {
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
-}
-
-// convertClusterNamespaceToEmpty converts the internal __cluster__ namespace back to empty string
-// for cluster-scoped resources when returning to users
-func convertClusterNamespaceToEmpty(namespace string) string {
-	if namespace == clusterScopeNamespace {
-		return ""
-	}
-	return namespace
-}
-
-// convertEmptyToClusterNamespace converts empty namespace to the internal __cluster__ namespace
-// for cluster-scoped resources when WithExperimentalClusterScope is enabled
-func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterScope bool) string {
-	if withExperimentalClusterScope && namespace == "" {
-		return clusterScopeNamespace
-	}
-	return namespace
 }
 
 // kvStorageBackend Unified storage backend based on KV storage.
@@ -80,9 +61,8 @@ type kvStorageBackend struct {
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
-	garbageCollection            GarbageCollectionConfig
-	withExperimentalClusterScope bool
-	lastImportStore              *lastImportStore
+	garbageCollection GarbageCollectionConfig
+	lastImportStore   *lastImportStore
 	lastImportTimeMaxAge         time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
@@ -110,9 +90,8 @@ type KVBackend interface {
 }
 
 type KVBackendOptions struct {
-	KvStore                      KV
-	DisablePruner                bool
-	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
+	KvStore       KV
+	DisablePruner bool
 	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
 	Tracer                       trace.Tracer          // TODO add tracing
@@ -195,7 +174,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
-		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
@@ -610,7 +588,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	rv := k.snowflake.Generate().Int64()
 
-	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := event.Key.Namespace
 
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
@@ -798,7 +776,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := req.Key.Namespace
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {
@@ -1009,7 +987,7 @@ func (i *kvListIterator) ResourceVersion() int64 {
 }
 
 func (i *kvListIterator) Namespace() string {
-	return convertClusterNamespaceToEmpty(i.currentDataObj.Key.Namespace)
+	return i.currentDataObj.Key.Namespace
 }
 
 func (i *kvListIterator) Name() string {
@@ -1631,7 +1609,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 			events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
-					Namespace: convertClusterNamespaceToEmpty(event.Namespace),
+					Namespace: event.Namespace,
 					Group:     event.Group,
 					Resource:  event.Resource,
 					Name:      event.Name,

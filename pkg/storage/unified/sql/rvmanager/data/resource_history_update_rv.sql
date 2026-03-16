@@ -12,8 +12,7 @@ SET {{ .Ident "resource_version" }} = (
       'unified', {{ $.SlashFunc }}, 'data', {{ $.SlashFunc }},
       {{ $.Ident "group" }}, {{ $.SlashFunc }},
       {{ $.Ident "resource" }}, {{ $.SlashFunc }},
-      {{/* SQL backend stores cluster-scoped namespace as "". KV uses __cluster__ */}}
-      CASE WHEN {{ $.Ident "namespace" }} = '' THEN '__cluster__' ELSE {{ $.Ident "namespace" }} END, {{ $.SlashFunc }},
+      CASE WHEN {{ $.Ident "namespace" }} = '' THEN '' ELSE CONCAT({{ $.Ident "namespace" }}, {{ $.SlashFunc }}) END,
       {{ $.Ident "name" }}, {{ $.SlashFunc }},
       CAST({{ $.Arg $snowflakeRv }} AS {{ if eq $.DialectName "postgres" }}BIGINT{{ else }}SIGNED{{ end }}),
       {{ $.TildeFunc }},

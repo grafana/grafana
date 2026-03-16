@@ -1792,7 +1792,7 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
 	if tenantID == "" {
-		tenantID = clusterScopeNamespace
+		tenantID = "__cluster__"
 	}
 
 	for {
