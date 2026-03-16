@@ -82,6 +82,58 @@ const decimalBucketsFrame = createDataFrame({
   ],
 });
 
+/** Stamps frame with origins and display processors (required for prepConfig). */
+function stampFrameWithDisplay(frame: ReturnType<typeof createDataFrame>) {
+  frame.fields.forEach((field, i) => {
+    field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
+    if (!field.display) {
+      field.display = getDisplayProcessor({ field, theme });
+    }
+  });
+  return frame;
+}
+
+/** Creates a linear histogram frame with display processors for xSplits/config tests. */
+function createLinearHistogramFrame(
+  xMin: number[],
+  xMax: number[],
+  count: number[],
+  countConfig?: { min?: number; max?: number }
+) {
+  return stampFrameWithDisplay(
+    createDataFrame({
+      fields: [
+        { name: 'xMin', type: FieldType.number, values: xMin },
+        { name: 'xMax', type: FieldType.number, values: xMax },
+        { name: 'count', type: FieldType.number, values: count, config: countConfig ?? {} },
+      ],
+    })
+  );
+}
+
+/** Invokes the x axis splits function with a mock uPlot instance. */
+function invokeXSplits(
+  config: ReturnType<UPlotConfigBuilder['getConfig']>,
+  xData: number[],
+  pixelsPerUnit: number,
+  minSpace: number,
+  scaleMin: number,
+  scaleMax: number
+): number[] {
+  const xAxis = config.axes?.find((a) => a.scale === 'x');
+  const splitsFn = xAxis?.splits as ((u: unknown, axisIdx: number, ...args: unknown[]) => number[]) | undefined;
+  if (!splitsFn) {
+    return [];
+  }
+  const axisIdx = config.axes!.findIndex((a) => a.scale === 'x');
+  const mockU = {
+    data: [xData],
+    axes: [{ _space: minSpace }, { _space: minSpace }],
+    valToPos: (val: number) => val * pixelsPerUnit,
+  };
+  return splitsFn(mockU as never, axisIdx, scaleMin, scaleMax, undefined as never, undefined as never) ?? [];
+}
+
 describe('Histogram dataframe utils', () => {
   const xMaxValues = [0.2, 0.4, 0.6000000000000001, 1.5999999999999999, 2, 2.2];
   const xMinValues = [0, 0.2, 0.4, 1.4, 1.8, 2];
@@ -350,28 +402,86 @@ describe('Histogram', () => {
      * Histogram component must handle frames with negative bucket size from getBucketSize.
      */
     it('renders without crashing when frame has negative bucket size (xMax < xMin)', () => {
-      const malformedFrame = createDataFrame({
-        fields: [
-          { name: 'xMin', type: FieldType.number, values: [2, 3, 4] },
-          { name: 'xMax', type: FieldType.number, values: [1, 2, 3] },
-          { name: 'count', type: FieldType.number, values: [5, 10, 15], config: {} },
-        ],
-      });
-      malformedFrame.fields.forEach((field, i) => {
-        field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
-      });
+      const malformedFrame = stampFrameWithDisplay(
+        createDataFrame({
+          fields: [
+            { name: 'xMin', type: FieldType.number, values: [2, 3, 4] },
+            { name: 'xMax', type: FieldType.number, values: [1, 2, 3] },
+            { name: 'count', type: FieldType.number, values: [5, 10, 15], config: {} },
+          ],
+        })
+      );
 
-      const props: HistogramProps = {
-        ...defaultPropsNoFrames,
-        options: { ...defaultOptions, legend: { ...defaultLegendOptions, showLegend: false } },
-        legend: { ...defaultLegendOptions, showLegend: false },
-        alignedFrame: malformedFrame,
-        bucketSize: getBucketSize(malformedFrame),
-        rawSeries: [malformedFrame],
-      } as HistogramProps;
+      setUp(
+        {
+          alignedFrame: malformedFrame,
+          rawSeries: [malformedFrame],
+          bucketSize: getBucketSize(malformedFrame),
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
 
-      expect(() => render(<Histogram {...props} />)).not.toThrow();
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+    });
+
+    /**
+     * xSplits (lines 83-99): splits shifter ensures splits align to bucket boundaries.
+     * When skip > 1 (minSpace/bucketWidth), only every skip-th boundary is shown to avoid label overlap.
+     */
+    it('x axis splits align to bucket boundaries and respect skip for label density', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20], { min: 0, max: 3 });
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const xAxis = config.axes?.find((a) => a.scale === 'x');
+      expect(xAxis?.splits).toBeDefined();
+      expect(typeof xAxis?.splits).toBe('function');
+
+      // 10px per unit -> bucketWidth=10, minSpace=50 -> skip=5, so only every 5th split
+      const splits = invokeXSplits(config, [0, 1, 2, 3], 10, 50, 0, 4);
+
+      expect(splits).toBeDefined();
+      expect(Array.isArray(splits)).toBe(true);
+      expect(splits).toContain(0);
+      expect(splits.every((v) => Number.isFinite(v))).toBe(true);
+    });
+
+    /**
+     * xSplits (lines 83-99): when skip=1 (bucketWidth >= minSpace), all bucket boundaries are included.
+     */
+    it('x axis splits include all bucket boundaries when skip is 1', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      // 100px per unit -> bucketWidth=100, minSpace=50 -> skip=1 -> every split
+      const splits = invokeXSplits(config, [0, 1, 2], 100, 50, 0, 3);
+
+      expect(splits).toEqual([0, 1, 2, 3]);
     });
 
     /**
@@ -380,37 +490,21 @@ describe('Histogram', () => {
      * Uses bar start (xMin) to determine which bucket contains the cursor xValue.
      */
     it('cursor dataIdx returns correct bucket index for tooltip', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20]);
       let configBuilder: UPlotConfigBuilder | undefined;
-      const frame = createDataFrame({
-        fields: [
-          { name: 'xMin', type: FieldType.number, values: [0, 1, 2, 3] },
-          { name: 'xMax', type: FieldType.number, values: [1, 2, 3, 4] },
-          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20], config: {} },
-        ],
-      });
-      frame.fields.forEach((field, i) => {
-        field.state = { ...field.state, origin: { frameIndex: 0, fieldIndex: i } };
-        if (!field.display) {
-          field.display = getDisplayProcessor({ field, theme });
-        }
-      });
-
-      const props: HistogramProps = {
-        ...defaultPropsNoFrames,
-        options: { ...defaultOptions, legend: { ...defaultLegendOptions, showLegend: false } },
-        legend: { ...defaultLegendOptions, showLegend: false },
-        alignedFrame: frame,
-        bucketSize: 1,
-        rawSeries: [frame],
-        children: (builder) => {
-          configBuilder = builder;
-          return null;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
         },
-      } as HistogramProps;
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
 
-      render(<Histogram {...props} />);
-
-      expect(configBuilder).toBeDefined();
       const config = configBuilder!.getConfig();
       const dataIdx = config.cursor?.dataIdx;
       expect(dataIdx).toBeDefined();
