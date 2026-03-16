@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import * as H from 'history';
 import { debounce } from 'lodash';
 
-import { NavIndex, PanelPlugin } from '@grafana/data';
+import { NavIndex, PanelPlugin, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -42,7 +42,9 @@ import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
+import { getLocalStorageWithTTL } from './PanelEditNext/useLocalStorageWithTTL';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -408,6 +410,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
+    store.setObject(QUERY_EDITOR_V2_PREFERENCE_KEY, {
+      value: newUseQueryExperienceNext,
+      timestamp: Date.now(),
+    });
+
     this.setState({
       useQueryExperienceNext: newUseQueryExperienceNext,
       dataPane,
@@ -419,8 +426,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
+  const storedPreference = getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY);
+  const useQueryExperienceNext = storedPreference ?? getFeatureFlagClient().getBooleanValue('queryEditorNext', false);
+
   return new PanelEditor({
-    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
+    useQueryExperienceNext,
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

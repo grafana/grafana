@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import {
@@ -31,6 +31,7 @@ import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { buildPanelEditScene } from './PanelEditor';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -333,10 +334,12 @@ describe('PanelEditor', () => {
   describe('Query editor version toggle', () => {
     describe('when queryEditorNext feature toggle is enabled', () => {
       beforeEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({ queryEditorNext: true });
       });
 
       afterEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({});
       });
 
@@ -366,6 +369,7 @@ describe('PanelEditor', () => {
 
     describe('when queryEditorNext feature toggle is disabled', () => {
       beforeEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
         setTestFlags({});
       });
 
