@@ -82,7 +82,7 @@ function setup(columns: MockColumnOverrides[]) {
     },
   ];
   render(
-    // @ts-ignore 
+    // @ts-ignore
     <HeaderRow headerGroups={mockHeaderGroups as HeaderGroup[]} showTypeIcons={true} tableStyles={{} as TableStyles} />
   );
 }
