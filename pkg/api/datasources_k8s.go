@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -125,16 +126,28 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 // /api/datasources/uid/:uid/resources/* to
 // /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid}/resource/*
 // when the feature toggle is enabled.
+//
+// The feature flag is evaluated per-request via OpenFeature, allowing dynamic rollout.
 func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
-	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpointAPIRedirect) {
-		return hs.CallDatasourceResourceWithUID
-	}
-
 	return func(c *contextmodel.ReqContext) {
 		start := time.Now()
+		ctx := c.Req.Context()
 		defer func() {
-			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("callK8sDataSourceResourceHandler"), time.Since(start).Seconds())
+			metricutil.ObserveWithExemplar(ctx, hs.dsConfigHandlerRequestsDuration.WithLabelValues("callK8sDataSourceResourceHandler"), time.Since(start).Seconds())
 		}()
+
+		redirect := openfeature.NewDefaultClient().Boolean(
+			ctx,
+			featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect,
+			false,
+			openfeature.TransactionContext(ctx),
+		)
+
+		if !redirect {
+			hs.dsEndpointRedirects.WithLabelValues("resources", "unknown", "legacy").Inc()
+			hs.CallDatasourceResourceWithUID(c)
+			return
+		}
 
 		dsUID := web.Params(c.Req)[":uid"]
 		if !util.IsValidShortUID(dsUID) {
@@ -163,6 +176,9 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		}
 
 		conn := conns.Items[0]
+		pluginType := pluginTypeFromConnection(conn)
+		hs.dsEndpointRedirects.WithLabelValues("resources", pluginType, "remote").Inc()
+
 		namespace := hs.namespacer(c.GetOrgID())
 		subPath := web.Params(c.Req)["*"]
 
@@ -175,6 +191,18 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		c.Req.URL.Path = k8sPath
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
+}
+
+// pluginTypeFromConnection extracts the plugin type identifier from a DataSourceConnection.
+// Falls back to extracting from the APIGroup (e.g. "prometheus.datasource.grafana.app" -> "prometheus").
+func pluginTypeFromConnection(conn datasourceV0.DataSourceConnection) string {
+	if conn.Plugin != "" {
+		return conn.Plugin
+	}
+	if parts := strings.SplitN(conn.APIGroup, ".", 2); len(parts) > 0 {
+		return parts[0]
+	}
+	return "unknown"
 }
 
 // handleK8sError converts K8s API errors to HTTP responses

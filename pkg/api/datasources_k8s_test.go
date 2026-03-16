@@ -7,8 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
@@ -22,6 +25,32 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var openfeatureTestMu sync.Mutex
+
+func setupOpenFeatureFlag(t *testing.T, flagName string, enabled bool) {
+	t.Helper()
+	openfeatureTestMu.Lock()
+
+	variant := "disabled"
+	if enabled {
+		variant = "enabled"
+	}
+
+	err := openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flagName: {
+			Key:            flagName,
+			DefaultVariant: variant,
+			Variants:       map[string]any{"enabled": true, "disabled": false},
+		},
+	}))
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMu.Unlock()
+	})
+}
 
 // implements datasource.ConnectionClient
 type mockConnectionClient struct {
@@ -154,7 +183,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				namespacer:           func(int64) string { return "default" },
 				DataSourcesService:   &dataSourcesServiceMock{},
 			}
-			hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
 
 			sc := setupScenarioContext(t, "/api/datasources/uid/test-uid")
 			handler := hs.getK8sDataSourceByUIDHandler()
@@ -196,17 +225,28 @@ func newResourceTestContext(t *testing.T, method, path string, params map[string
 }
 
 func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
-	hs := &HTTPServer{
-		Cfg:      setting.NewCfg(),
-		Features: featuremgmt.WithFeatures(),
+	setupOpenFeatureFlag(t, flagDatasourceResourceEndpointRedirect, false)
+
+	configProvider := &mockDirectRestConfigProvider{
+		host:      "http://localhost",
+		transport: &mockRoundTripper{statusCode: http.StatusOK, responseBody: []byte(`{}`)},
 	}
-	hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+	hs := &HTTPServer{
+		Cfg:                 setting.NewCfg(),
+		Features:            featuremgmt.WithFeatures(),
+		clientConfigProvider: configProvider,
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
 
 	handler := hs.callK8sDataSourceResourceHandler()
 
-	// When the flag is disabled, the factory should return the legacy handler (a method value)
+	// The handler is always a closure now; flag is evaluated per-request.
 	assert.IsType(t, (func(*contextmodel.ReqContext))(nil), handler,
-		"expected legacy handler type when feature flag is disabled")
+		"expected closure handler type")
+
+	// When the flag is disabled, no redirect should occur (k8s path should not be set).
+	assert.Empty(t, configProvider.lastServedPath,
+		"expected no k8s redirect when flag is disabled")
 }
 
 func TestCallK8sDataSourceResourceHandler(t *testing.T) {
@@ -285,20 +325,20 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, flagDatasourceResourceEndpointRedirect, true)
+
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
 				transport: &mockRoundTripper{statusCode: http.StatusOK, responseBody: []byte(`{}`)},
 			}
 			hs := &HTTPServer{
-				Cfg: setting.NewCfg(),
-				Features: featuremgmt.WithFeatures(
-					featuremgmt.FlagDatasourcesApiServerEnableResourceEndpointAPIRedirect,
-				),
+				Cfg:                  setting.NewCfg(),
+				Features:             featuremgmt.WithFeatures(),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
 				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
 			}
-			hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsResourceEndpointRequests = setupDsConfigHandlerMetrics()
 
 			urlPath := "/api/datasources/uid/" + tt.uid + "/resources"
 			if tt.subPath != "" {
