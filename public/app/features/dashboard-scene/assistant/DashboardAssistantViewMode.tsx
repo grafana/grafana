@@ -68,18 +68,30 @@ function hasSelectedVizPanelsWithData(selection: ElementSelection | undefined): 
   return selected instanceof VizPanel && panelHasData(selected);
 }
 
+// Register a custom CSS property so the browser can interpolate the angle natively,
+// avoiding 101 keyframe steps for the conic-gradient rotation.
+if (typeof CSS !== 'undefined' && 'registerProperty' in CSS) {
+  try {
+    CSS.registerProperty({
+      name: '--border-angle',
+      syntax: '<angle>',
+      initialValue: '0deg',
+      inherits: false,
+    });
+  } catch {
+    // Already registered — ignore
+  }
+}
+
+const selectionBorderAnimation = keyframes({
+  '0%': { '--border-angle': '0deg' },
+  '100%': { '--border-angle': '360deg' },
+});
+
 export function getAssistantViewModeStyles(theme: GrafanaTheme2) {
   const bg = theme.colors.background.canvas;
   const c1 = 'rgb(168, 85, 247)';
   const c2 = 'rgb(249, 115, 22)';
-
-  const selectionBorderFrames: Record<string, { backgroundImage: string }> = {};
-  for (let i = 0; i <= 100; i++) {
-    selectionBorderFrames[`${i}%`] = {
-      backgroundImage: `linear-gradient(${bg}, ${bg}), conic-gradient(from ${i * 3.6}deg, transparent 60%, ${c1} 80%, ${c2} 100%, transparent 15%)`,
-    };
-  }
-  const selectionBorderAnimation = keyframes(selectionBorderFrames);
 
   return {
     viewModeHoverOverride: css({
@@ -97,7 +109,7 @@ export function getAssistantViewModeStyles(theme: GrafanaTheme2) {
         border: '1px solid transparent',
         backgroundImage: `
           linear-gradient(${bg}, ${bg}),
-          conic-gradient(from 0deg, transparent 60%, ${c1} 80%, ${c2} 100%, transparent 15%)
+          conic-gradient(from var(--border-angle), transparent 60%, ${c1} 80%, ${c2} 100%, transparent 15%)
         `,
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
