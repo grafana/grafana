@@ -158,17 +158,21 @@ const defaultPropsNoFrames: Partial<HistogramProps> = {
 
 describe('Histogram', () => {
   const setUp = (overrides?: Partial<HistogramProps>, optionsOverrides?: Partial<Options>) => {
-    const hist = buildHistogram([rawHistogramFrame], {}, theme);
-    const alignedFrame = histogramFieldsToFrame(hist!);
+    const mergedOptions = { ...defaultPropsNoFrames.options, ...overrides?.options, ...optionsOverrides };
+    const rawFrames = [rawHistogramFrame];
 
-    // Stamp field.state.origin so PlotLegend can resolve legend items (dataFrameFieldIndex).
-    // HistogramPanel does this for data.series before processing; the test bypasses that.
-    alignedFrame.fields.forEach((field, fieldIndex) => {
-      field.state = {
-        ...field.state,
-        origin: { frameIndex: 0, fieldIndex },
-      };
+    // stamp origins for legend calcs (currently done in HistogramPanel.tsx)
+    rawFrames.forEach((frame, frameIndex) => {
+      frame.fields.forEach((field, fieldIndex) => {
+        field.state = {
+          ...field.state,
+          origin: { frameIndex, fieldIndex },
+        };
+      });
     });
+
+    const hist = buildHistogram(rawFrames, mergedOptions, theme);
+    const alignedFrame = histogramFieldsToFrame(hist!);
 
     const props: HistogramProps = {
       ...defaultPropsNoFrames,
@@ -184,6 +188,35 @@ describe('Histogram', () => {
 
   describe('options', () => {
     describe('legend', () => {
+      it('does not render legend when showLegend is false', async () => {
+        setUp(undefined, { legend: { ...defaultLegendOptions, showLegend: false } });
+
+        expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        });
+        expect(
+          screen.queryByTestId(selectors.components.Panels.Visualization.Histogram.legend)
+        ).not.toBeInTheDocument();
+      });
+
+      it('renders with combine: false', async () => {
+        setUp(undefined, { combine: false });
+
+        const legend = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+        const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
+        expect(container).toBeInTheDocument();
+        expect(legend).toBeInTheDocument();
+        // Chart renders after legend measurement - testing this to help catch unintentional regression, but this is not necessarily desirable behavior!
+        await waitFor(() => {
+          expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+        });
+        // Legend button should be rendered
+        expect(legend.querySelector('[type="button"]')).toBeVisible();
+        // Legend should contain series name
+        expect(legend.querySelector('[type="button"]')).toHaveTextContent('A-series');
+      });
+
       it('renders with combine: true', async () => {
         setUp(undefined, { combine: true });
 
@@ -202,15 +235,6 @@ describe('Histogram', () => {
       });
     });
   });
-
-  //
-  // it('does not render legend when showLegend is false', () => {
-  //   render(<Histogram {...defaultProps} legend={{ ...defaultLegendOptions, showLegend: false }} />);
-  //
-  //   expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
-  //   expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
-  //   expect(screen.queryByTestId(selectors.components.Panels.Visualization.Histogram.legend)).not.toBeInTheDocument();
-  // });
 
   // describe('bug fix regression tests', () => {
   //   /**
