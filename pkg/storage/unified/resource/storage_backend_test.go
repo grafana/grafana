@@ -1553,6 +1553,27 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 	}
 
 	t.Run("history source", func(t *testing.T) {
+		t.Run("requires name", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			_, err := backend.ListHistory(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source: resourcepb.ListRequest_HISTORY,
+				Limit:  10,
+			}, func(iter ListIterator) error {
+				return nil
+			})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "name is required")
+		})
+
 		t.Run("named resource", func(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
@@ -1595,51 +1616,7 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			require.Equal(t, objectToJSONBytes(t, initialObj), items[2].value)
 		})
 
-		t.Run("across entire nsr", func(t *testing.T) {
-			backend := setupTestStorageBackend(t)
-			ctx := t.Context()
-
-			// resource-c: create (rv1), update (rv2) — alive, should appear with 2 history entries
-			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-c", nsr, "resources", "test-data", 0)
-			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-c", nsr, "resources", "test-data", rv1)
-
-			// resource-a: create (rv3)
-			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
-
-			// resource-b: create (rv3), update (rv4), delete (rv5) — deleted
-			rv4 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
-			rv5 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "resource-b", nsr, "resources", "test-data", rv4)
-			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv5)
-
-			// resource-other-type: create — different resource type, should NOT appear
-			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
-
-			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{
-						Namespace: "default",
-						Group:     "apps",
-						Resource:  "resources",
-					},
-				},
-				Source: resourcepb.ListRequest_HISTORY,
-				Limit:  10,
-			})
-
-			// resource-a's create (rv3) and resource-c's create (rv1)
-			// and update (rv2) should appear.
-			// resource-b is deleted so its live history is empty.
-			// The events should be ordered by RV, not name.
-			require.Len(t, items, 3)
-			require.Equal(t, "resource-a", items[0].name)
-			require.Equal(t, rv3, items[0].resourceVersion) // descending: rv3 first
-			require.Equal(t, "resource-c", items[1].name)
-			require.Equal(t, rv2, items[1].resourceVersion)
-			require.Equal(t, "resource-c", items[2].name)
-			require.Equal(t, rv1, items[2].resourceVersion)
-		})
-
-		t.Run("ascending order", func(t *testing.T) {
+		t.Run("version filter NotOlderThan", func(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
 
@@ -1647,6 +1624,7 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "updated-data", rv1)
 			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_MODIFIED, "test-resource", nsr, "resources", "final-data", rv2)
 
+			// Request NotOlderThan rv2 — should return rv2 and rv3 only, in RV DESC order
 			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
@@ -1656,17 +1634,16 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 						Name:      "test-resource",
 					},
 				},
-				Source:         resourcepb.ListRequest_HISTORY,
+				Source:          resourcepb.ListRequest_HISTORY,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
-				Limit:          10,
+				ResourceVersion: rv2,
+				Limit:           10,
 			})
 
-			require.Len(t, items, 3)
-
-			// Ascending: oldest first
-			require.Equal(t, rv1, items[0].resourceVersion)
+			require.Len(t, items, 2)
+			// RV DESC order regardless of NotOlderThan
+			require.Equal(t, rv3, items[0].resourceVersion)
 			require.Equal(t, rv2, items[1].resourceVersion)
-			require.Equal(t, rv3, items[2].resourceVersion)
 		})
 	})
 
@@ -1741,14 +1718,18 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
 
-			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted2", nsr, "resources", "test-data", 0)
-			deleteRV1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted2", nsr, "resources", "test-data", rv1)
+			// Create names so that Name ASC disagrees with RV order.
+			// resource-c is deleted first (lower RV), resource-a is deleted second (higher RV).
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-c", nsr, "resources", "test-data", 0)
+			deleteRVC := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-c", nsr, "resources", "test-data", rv1)
 
-			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-deleted1", nsr, "resources", "test-data", 0)
-			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-deleted1", nsr, "resources", "test-data", rv2)
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "test-data", 0)
+			deleteRVA := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-a", nsr, "resources", "test-data", rv2)
 
+			// resource-live: not deleted, should NOT appear
 			writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-live", nsr, "resources", "test-data", 0)
 
+			// resource-other-type: different resource type, should NOT appear
 			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-other-type", otherNSR, "other-resources", "test-data", 0)
 			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-other-type", otherNSR, "other-resources", "test-data", rv3)
 
@@ -1764,17 +1745,17 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 				Limit:  10,
 			})
 
-			require.Len(t, items, 2) // deleted1 and deleted2
+			require.Len(t, items, 2) // resource-a and resource-c
 
-			// deleted1 first (most recent event)
-			require.Equal(t, "resource-deleted1", items[0].name)
-			require.Equal(t, deleteRV2, items[0].resourceVersion)
+			// Name ASC order (not RV order)
+			require.Equal(t, "resource-a", items[0].name)
+			require.Equal(t, deleteRVA, items[0].resourceVersion)
 
-			require.Equal(t, "resource-deleted2", items[1].name)
-			require.Equal(t, deleteRV1, items[1].resourceVersion)
+			require.Equal(t, "resource-c", items[1].name)
+			require.Equal(t, deleteRVC, items[1].resourceVersion)
 		})
 
-		t.Run("ascending order", func(t *testing.T) {
+		t.Run("version filter NotOlderThan", func(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			ctx := t.Context()
 
@@ -1784,6 +1765,7 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "test-data", 0)
 			deleteRV2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "test-data", rv2)
 
+			// NotOlderThan with RV 0 should return all, in Name ASC order
 			items := listHistory(ctx, t, backend, &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
@@ -1799,12 +1781,81 @@ func TestKvStorageBackend_ListHistory(t *testing.T) {
 
 			require.Len(t, items, 2)
 
-			// Ascending: oldest deletion first
+			// Name ASC order
 			require.Equal(t, "resource-a", items[0].name)
 			require.Equal(t, deleteRV1, items[0].resourceVersion)
 
 			require.Equal(t, "resource-b", items[1].name)
 			require.Equal(t, deleteRV2, items[1].resourceVersion)
+		})
+
+		t.Run("pagination", func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+
+			// Delete 3 resources: resource-b, resource-a, resource-c (in that creation order)
+			rv1 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-b", nsr, "resources", "data-b", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-b", nsr, "resources", "data-b", rv1)
+
+			rv2 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-a", nsr, "resources", "data-a", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-a", nsr, "resources", "data-a", rv2)
+
+			rv3 := writeEvent(ctx, t, backend, resourcepb.WatchEvent_ADDED, "resource-c", nsr, "resources", "data-c", 0)
+			writeEvent(ctx, t, backend, resourcepb.WatchEvent_DELETED, "resource-c", nsr, "resources", "data-c", rv3)
+
+			// Page 1: limit 2
+			var page1 []historyEntry
+			var continueToken string
+			_, err := backend.ListHistory(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source: resourcepb.ListRequest_TRASH,
+				Limit:  2,
+			}, func(iter ListIterator) error {
+				for iter.Next() {
+					if err := iter.Error(); err != nil {
+						return err
+					}
+					page1 = append(page1, historyEntry{
+						name:            iter.Name(),
+						resourceVersion: iter.ResourceVersion(),
+					})
+					if len(page1) >= 2 {
+						continueToken = iter.ContinueToken()
+						break
+					}
+				}
+				return iter.Error()
+			})
+			require.NoError(t, err)
+			require.Len(t, page1, 2)
+
+			// Name ASC: resource-a, resource-b
+			require.Equal(t, "resource-a", page1[0].name)
+			require.Equal(t, "resource-b", page1[1].name)
+			require.NotEmpty(t, continueToken)
+
+			// Page 2: use continue token
+			page2 := listHistory(ctx, t, backend, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default",
+						Group:     "apps",
+						Resource:  "resources",
+					},
+				},
+				Source:        resourcepb.ListRequest_TRASH,
+				Limit:         2,
+				NextPageToken: continueToken,
+			})
+
+			require.Len(t, page2, 1)
+			require.Equal(t, "resource-c", page2[0].name)
 		})
 	})
 }
