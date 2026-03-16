@@ -1,10 +1,17 @@
 package provisioning
 
 import (
+	"encoding/json"
+	"os"
+	"path"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -188,4 +195,144 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 	}
 
 	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
+}
+
+// folderMetadataJSON generates a valid _folder.json payload with a stable UID and title.
+func folderMetadataJSON(uid, title string) []byte {
+	folder := map[string]any{
+		"apiVersion": "folder.grafana.app/v1beta1",
+		"kind":       "Folder",
+		"metadata": map[string]any{
+			"name": uid,
+		},
+		"spec": map[string]any{
+			"title": title,
+		},
+	}
+	data, _ := json.MarshalIndent(folder, "", "\t")
+	return data
+}
+
+// writeToProvisioningPath writes raw content to a relative path under the provisioning directory.
+func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper, relativePath string, data []byte) {
+	t.Helper()
+	fullPath := path.Join(helper.ProvisioningPath, relativePath)
+	require.NoError(t, os.MkdirAll(path.Dir(fullPath), 0o750))
+	require.NoError(t, os.WriteFile(fullPath, data, 0o600))
+}
+
+// requireRepoFolderTitle lists all folders managed by repoName and asserts that
+// exactly one has the given title.
+func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedTitle string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
+			if title == expectedTitle {
+				return
+			}
+		}
+		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected folder with title %q for repo %q", expectedTitle, repoName)
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataTitle verifies that
+// full sync uses spec.title from _folder.json when creating/updating folders.
+func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("folder uses spec.title from _folder.json", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title"
+
+		// Write _folder.json with a custom title different from the directory name.
+		writeToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-1", "My Team Display Name"))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "my-team/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderTitle(t, helper, repo, "My Team Display Name")
+	})
+
+	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title-empty"
+
+		// Write _folder.json with an empty title — should fall back to directory name.
+		writeToProvisioningPath(t, helper, "reports/_folder.json", folderMetadataJSON("stable-uid-2", ""))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "reports/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderTitle(t, helper, repo, "reports")
+	})
+
+	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title-absent"
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "analytics/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderTitle(t, helper, repo, "analytics")
+	})
+
+	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title-nested"
+
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent Display"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child Display"))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderTitle(t, helper, repo, "Parent Display")
+		requireRepoFolderTitle(t, helper, repo, "Child Display")
+	})
 }

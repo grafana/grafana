@@ -61,7 +61,7 @@ type NotificationPolicyService interface {
 }
 
 type routeService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -118,7 +118,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return exportResponse(c, e)
 	}
 
-	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 	}

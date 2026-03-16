@@ -215,10 +215,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section == LastImportTimeSection {
-		return k.saveLastImportTime(ctx, key)
-	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection {
+	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -256,9 +253,12 @@ func (w *sqlWriteCloser) Close() error {
 
 	w.closed = true
 	value := w.buf.Bytes()
-	if value == nil {
-		// to prevent NOT NULL constraint violations
-		value = []byte{}
+	if len(value) == 0 {
+		return ErrEmptyValue
+	}
+
+	if w.section == LastImportTimeSection {
+		return w.kv.saveLastImportTime(w.ctx, w.key)
 	}
 
 	qb, err := w.kv.getQueryBuilder(w.section)

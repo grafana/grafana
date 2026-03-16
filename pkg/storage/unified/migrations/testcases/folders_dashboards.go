@@ -6,11 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 // foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
@@ -59,7 +61,11 @@ func (tc *foldersAndDashboardsTestCase) Resources() []schema.GroupVersionResourc
 	}
 }
 
-func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) {
+func (tc *foldersAndDashboardsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
+	// nothing
+}
+
+func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
 
 	// Create parent folder
@@ -79,6 +85,8 @@ func (tc *foldersAndDashboardsTestCase) Setup(t *testing.T, helper *apis.K8sTest
 	// Create dashboard with library panel in child folder
 	tc.dashboardUID = createTestDashboardWithLibraryPanel(t, helper, "dashboard-with-library-panel",
 		tc.libPanelUID, "Test LP in dashboard", child.UID)
+
+	return true // mode0 still supported
 }
 
 func (tc *foldersAndDashboardsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
