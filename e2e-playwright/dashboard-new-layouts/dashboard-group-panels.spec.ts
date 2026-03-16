@@ -26,9 +26,21 @@ test.describe(
   },
   () => {
     // Helper functions
+    function getDashboardImportJsonWithoutMetadataName() {
+      // Remove fixed metadata.name to avoid tests importing the same dashboard UID
+      // when this suite runs in parallel across workers/shards.
+      const dashboard = JSON.parse(JSON.stringify(testV2Dashboard)) as { metadata?: { name?: string } };
+      if (dashboard.metadata && 'name' in dashboard.metadata) {
+        delete dashboard.metadata.name;
+      }
+      return JSON.stringify(dashboard);
+    }
+
     async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
       await page.goto(selectors.pages.ImportDashboard.url);
-      await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
+      await page
+        .getByTestId(selectors.components.DashboardImportPage.textarea)
+        .fill(getDashboardImportJsonWithoutMetadataName());
       await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
       await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
       await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
