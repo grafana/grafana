@@ -42,7 +42,7 @@ Refer to [About organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION
 
 ## Create a Grafana Team
 
-A team is a group of users within a Grafana instance that have common permissions needs. Teams to help make user-permission management more efficient. A user can belong to multiple Teams.
+A team is a group of users within a Grafana instance that have common permissions needs. Teams help make user-permission management more efficient. A user can belong to multiple Teams.
 Grafana Teams includes common access to the following:
 
 - dashboards
