@@ -91,7 +91,6 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
-import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
@@ -1238,12 +1237,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Default layout used for new Tab and Row containers
+   * Undefined if default layout is not set in preferences
    */
   getDefaultLayout() {
     if (this.state.preferences.defaultLayoutTemplate) {
       return this.state.preferences.defaultLayoutTemplate.clone();
     }
-    return AutoGridLayoutManager.createEmpty();
+    return undefined;
   }
 
   updateDefaultLayoutTemplate(template: DashboardLayoutManager) {

@@ -237,7 +237,12 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     },
   ];
 
-  const defaultGrid = dashboard.getDefaultLayout() instanceof AutoGridLayoutManager ? 'AutoGridLayout' : 'GridLayout';
+  let defaultGrid: 'AutoGridLayout' | 'GridLayout' | undefined;
+  if (dashboard.getDefaultLayout() instanceof AutoGridLayoutManager) {
+    defaultGrid = 'AutoGridLayout';
+  } else if (dashboard.getDefaultLayout() instanceof DefaultGridLayoutManager) {
+    defaultGrid = 'GridLayout';
+  }
 
   const GRAPH_TOOLTIP_OPTIONS = [
     {
