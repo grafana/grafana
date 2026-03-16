@@ -146,17 +146,6 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 	_ = json.NewEncoder(w).Encode(result)
 }
 
-func toPermissionSpecs(perms []accesscontrol.Permission) []iamv0.PermissionSpec {
-	if len(perms) == 0 {
-		return nil
-	}
-	out := make([]iamv0.PermissionSpec, len(perms))
-	for i, p := range perms {
-		out[i] = iamv0.PermissionSpec{Action: p.Action, Scope: p.Scope}
-	}
-	return out
-}
-
 // filterPermissionsByGet returns only permissions for which the caller has get_permissions on the target resource.
 // Uses the same CanViewTarget helper as FilterList so auth logic lives in one place.
 func filterPermissionsByGet(
