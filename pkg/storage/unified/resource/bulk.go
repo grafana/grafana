@@ -200,6 +200,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		checker: make(map[string]authlib.ItemChecker), // Can create
 		stream:  stream,
 		span:    span,
+		stopCh:  make(chan struct{}),
 	}
 	settings, err := NewBulkSettings(md)
 	if err != nil {
@@ -280,6 +281,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 
 	// BulkProcess requests
 	rsp := backend.ProcessBulk(ctx, settings, runner)
+	runner.stop()
 	if rsp == nil {
 		rsp = &resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
@@ -313,6 +315,8 @@ type batchRunner struct {
 	recvOnce sync.Once
 	recvCh   chan batchStreamResult
 	pending  *batchStreamResult
+	stopCh   chan struct{}
+	stopOnce sync.Once
 }
 
 type batchStreamResult struct {
@@ -504,18 +508,24 @@ func (b *batchRunner) recvLoop() {
 	for {
 		req, err := b.stream.Recv()
 		if errors.Is(err, io.EOF) {
-			b.recvCh <- batchStreamResult{eof: true}
+			if !b.sendResult(batchStreamResult{eof: true}) {
+				return
+			}
 			return
 		}
 		if err != nil {
 			b.span.AddEvent("next", trace.WithAttributes(attribute.String("error", err.Error())))
-			b.recvCh <- batchStreamResult{err: err, rollback: true}
+			if !b.sendResult(batchStreamResult{err: err, rollback: true}) {
+				return
+			}
 			return
 		}
 		if req == nil {
-			b.recvCh <- batchStreamResult{
+			if !b.sendResult(batchStreamResult{
 				err:      fmt.Errorf("missing request"),
 				rollback: true,
+			}) {
+				return
 			}
 			return
 		}
@@ -535,13 +545,32 @@ func (b *batchRunner) recvLoop() {
 		if err != nil {
 			attrs = append(attrs, attribute.String("error", err.Error()))
 			b.span.AddEvent("next", trace.WithAttributes(attrs...))
-			b.recvCh <- batchStreamResult{err: err, rollback: true}
+			if !b.sendResult(batchStreamResult{err: err, rollback: true}) {
+				return
+			}
 			return
 		}
 
 		b.span.AddEvent("next", trace.WithAttributes(attrs...))
-		b.recvCh <- batchStreamResult{request: req}
+		if !b.sendResult(batchStreamResult{request: req}) {
+			return
+		}
 	}
+}
+
+func (b *batchRunner) sendResult(result batchStreamResult) bool {
+	select {
+	case <-b.stopCh:
+		return false
+	case b.recvCh <- result:
+		return true
+	}
+}
+
+func (b *batchRunner) stop() {
+	b.stopOnce.Do(func() {
+		close(b.stopCh)
+	})
 }
 
 func resetTimer(timer *time.Timer, d time.Duration) {

@@ -93,6 +93,7 @@ func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
 		stream:  &testBulkProcessServer{requests: []*resourcepb.BulkRequest{req}},
 		checker: map[string]authlib.ItemChecker{},
 		span:    trace.SpanFromContext(context.Background()),
+		stopCh:  make(chan struct{}),
 	}
 
 	require.True(t, runner.NextBatch())
@@ -101,13 +102,42 @@ func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
 	require.ErrorContains(t, runner.err, "missing access control")
 }
 
+func TestBatchRunnerStopUnblocksBlockedSend(t *testing.T) {
+	runner := &batchRunner{
+		recvCh: make(chan batchStreamResult, 1),
+		stopCh: make(chan struct{}),
+	}
+	runner.recvCh <- batchStreamResult{request: newTestBulkRequest("item-1")}
+
+	sendDone := make(chan bool, 1)
+	go func() {
+		sendDone <- runner.sendResult(batchStreamResult{request: newTestBulkRequest("item-2")})
+	}()
+
+	select {
+	case <-sendDone:
+		t.Fatal("sendResult should block until the runner is stopped")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	runner.stop()
+
+	select {
+	case sent := <-sendDone:
+		require.False(t, sent)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for sendResult to unblock")
+	}
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey) *batchRunner {
 	return &batchRunner{
 		stream: stream,
 		checker: map[string]authlib.ItemChecker{
 			NSGR(key): func(string, string) bool { return true },
 		},
-		span: trace.SpanFromContext(context.Background()),
+		span:   trace.SpanFromContext(context.Background()),
+		stopCh: make(chan struct{}),
 	}
 }
 
