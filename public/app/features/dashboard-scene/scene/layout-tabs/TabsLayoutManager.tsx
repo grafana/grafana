@@ -362,11 +362,7 @@ export class TabsLayoutManager
 
     const perform = () => {
       if (!tabsAfterRemoval.length) {
-        parent.switchLayout(
-          tab.getLayout() instanceof AutoGridLayoutManager
-            ? AutoGridLayoutManager.createEmpty()
-            : DefaultGridLayoutManager.fromVizPanels([])
-        );
+        parent.switchLayout(AutoGridLayoutManager.createEmpty());
       } else {
         const newCurrentTabIndex = tabIndex > 0 ? tabIndex - 1 : 0;
         this.setState({

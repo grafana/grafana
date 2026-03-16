@@ -289,11 +289,7 @@ export class RowsLayoutManager
 
     const perform = () => {
       if (!rowsAfterRemoval.length) {
-        parent.switchLayout(
-          row.getLayout() instanceof AutoGridLayoutManager
-            ? AutoGridLayoutManager.createEmpty()
-            : DefaultGridLayoutManager.fromVizPanels([])
-        );
+        parent.switchLayout(AutoGridLayoutManager.createEmpty());
       } else {
         this.setState({ rows: rowsAfterRemoval });
       }

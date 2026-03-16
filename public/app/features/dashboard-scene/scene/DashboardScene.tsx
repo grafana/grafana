@@ -1236,6 +1236,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return Boolean(this.state.$variables?.state.variables.find((v) => Boolean(v.state.error)));
   }
 
+  /**
+   * Default layout used for new Tab and Row containers
+   */
   getDefaultLayout() {
     if (this.state.preferences.defaultLayoutTemplate) {
       return this.state.preferences.defaultLayoutTemplate.clone();

@@ -334,7 +334,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
           description={t(
             'dashboard-settings.general.default-grid-description',
-            'Pick what grid type to be used for new rows and tabs'
+            'Select layout type to be used for new rows and tabs'
           )}
         >
           <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
