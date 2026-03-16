@@ -2958,7 +2958,8 @@
       "metadata": {
         "name": "kubernetesUserService",
         "resourceVersion": "1773667977489",
-        "creationTimestamp": "2026-03-16T13:32:57Z"
+        "creationTimestamp": "2026-03-16T13:32:57Z",
+        "deletionTimestamp": "2026-03-16T15:49:36Z"
       },
       "spec": {
         "description": "Use the new user service that uses the app platform APIs",
@@ -2976,6 +2977,20 @@
       },
       "spec": {
         "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesUsersRedirect",
+        "resourceVersion": "1773676176614",
+        "creationTimestamp": "2026-03-16T15:49:36Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the user service to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,

@@ -2539,8 +2539,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesUserService",
-			Description:  "Use the new user service that uses the app platform APIs",
+			Name:         "kubernetesUsersRedirect",
+			Description:  "Redirects the requests of the user service to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
