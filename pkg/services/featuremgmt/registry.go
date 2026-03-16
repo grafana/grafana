@@ -2507,6 +2507,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesSsoSettingsApi",
+			Description:  "Enables SSO settings APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
