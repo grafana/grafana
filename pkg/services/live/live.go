@@ -794,14 +794,16 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
 
-	// Compare by org ID to support both k8s namespace format and legacy bare numeric org ID format
-	if user.GetNamespace() != ns.Value && user.GetOrgID() != ns.OrgID {
+	// Compare by org ID to support both k8s namespace format and legacy bare numeric org ID format.
+	// Normalize to canonical namespace so downstream lookups use the correct key.
+	canonicalNS := user.GetNamespace()
+	if canonicalNS != ns.Value && user.GetOrgID() != ns.OrgID {
 		logger.Info("Error subscribing: wrong namespace", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}
 
 	if g.Pipeline != nil {
-		rule, ok, err := g.Pipeline.Get(ns.Value, channel)
+		rule, ok, err := g.Pipeline.Get(canonicalNS, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.PublishReply{}, centrifuge.ErrorInternal
@@ -825,7 +827,7 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
-			_, err := g.Pipeline.ProcessInput(clientCtxWithSpan, ns.Value, channel, e.Data)
+			_, err := g.Pipeline.ProcessInput(clientCtxWithSpan, canonicalNS, channel, e.Data)
 			if err != nil {
 				logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				return centrifuge.PublishReply{}, centrifuge.ErrorInternal
