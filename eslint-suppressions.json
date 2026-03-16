@@ -2922,11 +2922,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/datasource/DataSourceVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/editor/VariableEditorContainer.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
