@@ -2887,11 +2887,6 @@
       "count": 3
     }
   },
-  "public/app/features/variables/adhoc/AdHocVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/AdHocFilter.tsx": {
     "no-restricted-syntax": {
       "count": 1
