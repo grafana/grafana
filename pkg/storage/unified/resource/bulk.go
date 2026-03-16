@@ -24,6 +24,26 @@ import (
 const grpcMetaKeyCollection = "x-gf-batch-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
+type bulkBatchOptions struct {
+	MaxItems int
+	MaxBytes int
+	MaxIdle  time.Duration
+}
+
+// BulkBatchOptions configures internal BulkProcess batching.
+// Testing and benchmarks may override these values through SetBulkBatchOptionsForTesting.
+type BulkBatchOptions = bulkBatchOptions
+
+var (
+	defaultBulkBatchOptions = bulkBatchOptions{
+		MaxItems: 1000,
+		MaxBytes: 2 * 1024 * 1024,
+		MaxIdle:  5 * time.Millisecond,
+	}
+	bulkBatchOptionsMu sync.RWMutex
+	bulkBatchConfig    = defaultBulkBatchOptions
+)
+
 // Logged in trace.
 var metadataKeys = []string{
 	grpcMetaKeyCollection,
@@ -42,6 +62,17 @@ type BulkRequestIterator interface {
 	Request() *resourcepb.BulkRequest
 
 	// RollbackRequested returns true if there was an error advancing the iterator. Checked after Next() returns true.
+	RollbackRequested() bool
+}
+
+type BulkRequestBatchIterator interface {
+	// NextBatch advances the iterator to the next batch if one exists.
+	NextBatch() bool
+
+	// Batch returns the current batch. Only valid after NextBatch() returns true.
+	Batch() []*resourcepb.BulkRequest
+
+	// RollbackRequested returns true if there was an error advancing the iterator. Checked after NextBatch() returns true.
 	RollbackRequested() bool
 }
 
@@ -97,6 +128,31 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 		}
 	}
 	return settings, nil
+}
+
+func currentBulkBatchOptions() bulkBatchOptions {
+	bulkBatchOptionsMu.RLock()
+	defer bulkBatchOptionsMu.RUnlock()
+	return bulkBatchConfig
+}
+
+func setBulkBatchOptionsForTesting(opts bulkBatchOptions) func() {
+	bulkBatchOptionsMu.Lock()
+	prev := bulkBatchConfig
+	bulkBatchConfig = opts
+	bulkBatchOptionsMu.Unlock()
+
+	return func() {
+		bulkBatchOptionsMu.Lock()
+		bulkBatchConfig = prev
+		bulkBatchOptionsMu.Unlock()
+	}
+}
+
+// SetBulkBatchOptionsForTesting overrides the internal BulkProcess batching thresholds.
+// It is intended for tests and benchmarks and returns a restore function.
+func SetBulkBatchOptionsForTesting(opts BulkBatchOptions) func() {
+	return setBulkBatchOptionsForTesting(opts)
 }
 
 // BulkWrite implements ResourceServer.
@@ -244,16 +300,30 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 }
 
 var (
-	_ BulkRequestIterator = (*batchRunner)(nil)
+	_ BulkRequestIterator      = (*batchRunner)(nil)
+	_ BulkRequestBatchIterator = (*batchRunner)(nil)
 )
 
 type batchRunner struct {
 	stream   resourcepb.BulkStore_BulkProcessServer
 	rollback bool
 	request  *resourcepb.BulkRequest
+	batch    []*resourcepb.BulkRequest
+	batchIdx int
 	err      error
 	checker  map[string]authlib.ItemChecker
 	span     trace.Span
+
+	recvOnce sync.Once
+	recvCh   chan batchStreamResult
+	pending  *batchStreamResult
+}
+
+type batchStreamResult struct {
+	request  *resourcepb.BulkRequest
+	err      error
+	rollback bool
+	eof      bool
 }
 
 // Next implements BulkRequestIterator.
@@ -262,44 +332,135 @@ func (b *batchRunner) Next() bool {
 		return true
 	}
 
-	b.request, b.err = b.stream.Recv()
-	if errors.Is(b.err, io.EOF) {
-		b.err = nil
-		b.rollback = false
+	if b.batchIdx < len(b.batch) {
+		b.request = b.batch[b.batchIdx]
+		b.batchIdx++
+		return true
+	}
+
+	if !b.NextBatch() {
+		return false
+	}
+	if b.rollback {
 		b.request = nil
+		return true
+	}
+	if len(b.batch) == 0 {
+		b.err = fmt.Errorf("missing request batch")
+		b.rollback = true
+		return true
+	}
+
+	b.request = b.batch[0]
+	b.batchIdx = 1
+	return true
+}
+
+func (b *batchRunner) NextBatch() bool {
+	if b.rollback {
+		return true
+	}
+
+	b.batch = b.batch[:0]
+	b.batchIdx = 0
+	opts := currentBulkBatchOptions()
+	payloadBytes := 0
+
+	appendRequest := func(req *resourcepb.BulkRequest) bool {
+		b.batch = append(b.batch, req)
+		payloadBytes += len(req.Value)
+
+		if opts.MaxItems > 0 && len(b.batch) >= opts.MaxItems {
+			return true
+		}
+		if opts.MaxBytes > 0 && payloadBytes >= opts.MaxBytes {
+			return true
+		}
 		return false
 	}
 
-	if b.err != nil {
+	result := b.readNextResult()
+	switch {
+	case result.eof:
+		return false
+	case result.err != nil:
+		b.err = result.err
+		b.rollback = result.rollback
+		return true
+	case result.request == nil:
+		b.err = fmt.Errorf("missing request")
 		b.rollback = true
-		b.span.AddEvent("next", trace.WithAttributes(attribute.String("error", b.err.Error())))
 		return true
+	default:
+		if appendRequest(result.request) {
+			return true
+		}
 	}
 
-	if b.request != nil {
-		key := b.request.Key
-		k := NSGR(key)
-		checker, ok := b.checker[k]
-		if !ok {
-			b.err = fmt.Errorf("missing access control for: %s", k)
-			b.rollback = true
-		} else if !checker(key.Name, b.request.Folder) {
-			b.err = fmt.Errorf("not allowed to create resource")
-			b.rollback = true
+	if opts.MaxIdle <= 0 {
+		for {
+			select {
+			case result, ok := <-b.recvChannel():
+				if !ok {
+					return true
+				}
+				switch {
+				case result.eof || result.err != nil:
+					b.pending = &result
+					return true
+				case result.request == nil:
+					b.pending = &batchStreamResult{
+						err:      fmt.Errorf("missing request"),
+						rollback: true,
+					}
+					return true
+				default:
+					if appendRequest(result.request) {
+						return true
+					}
+				}
+			default:
+				return true
+			}
 		}
-
-		// Mention resource in the span.
-		attrs := []attribute.KeyValue{
-			attribute.String("key", nsgrWithName(key)),
-		}
-		if b.err != nil {
-			attrs = append(attrs, attribute.String("error", b.err.Error()))
-		}
-
-		b.span.AddEvent("next", trace.WithAttributes(attrs...))
-		return true
 	}
-	return false
+
+	timer := time.NewTimer(opts.MaxIdle)
+	defer stopAndDrainTimer(timer)
+
+	for {
+		select {
+		case result, ok := <-b.recvChannel():
+			if !ok {
+				return true
+			}
+			switch {
+			case result.eof || result.err != nil:
+				b.pending = &result
+				return true
+			case result.request == nil:
+				b.pending = &batchStreamResult{
+					err:      fmt.Errorf("missing request"),
+					rollback: true,
+				}
+				return true
+			default:
+				if appendRequest(result.request) {
+					return true
+				}
+				resetTimer(timer, opts.MaxIdle)
+			}
+		case <-timer.C:
+			return true
+		}
+	}
+}
+
+func (b *batchRunner) Batch() []*resourcepb.BulkRequest {
+	if b.rollback {
+		return nil
+	}
+	return b.batch
 }
 
 // Request implements BulkRequestIterator.
@@ -317,6 +478,93 @@ func (b *batchRunner) RollbackRequested() bool {
 		return true
 	}
 	return false
+}
+
+func (b *batchRunner) recvChannel() <-chan batchStreamResult {
+	b.recvOnce.Do(func() {
+		b.recvCh = make(chan batchStreamResult, 1)
+		go b.recvLoop()
+	})
+	return b.recvCh
+}
+
+func (b *batchRunner) readNextResult() batchStreamResult {
+	if b.pending != nil {
+		result := *b.pending
+		b.pending = nil
+		return result
+	}
+
+	result, ok := <-b.recvChannel()
+	if !ok {
+		return batchStreamResult{eof: true}
+	}
+	return result
+}
+
+func (b *batchRunner) recvLoop() {
+	defer close(b.recvCh)
+
+	for {
+		req, err := b.stream.Recv()
+		if errors.Is(err, io.EOF) {
+			b.recvCh <- batchStreamResult{eof: true}
+			return
+		}
+		if err != nil {
+			b.span.AddEvent("next", trace.WithAttributes(attribute.String("error", err.Error())))
+			b.recvCh <- batchStreamResult{err: err, rollback: true}
+			return
+		}
+		if req == nil {
+			b.recvCh <- batchStreamResult{
+				err:      fmt.Errorf("missing request"),
+				rollback: true,
+			}
+			return
+		}
+
+		key := req.Key
+		k := NSGR(key)
+		checker, ok := b.checker[k]
+		if !ok {
+			err = fmt.Errorf("missing access control for: %s", k)
+		} else if !checker(key.Name, req.Folder) {
+			err = fmt.Errorf("not allowed to create resource")
+		}
+
+		attrs := []attribute.KeyValue{
+			attribute.String("key", nsgrWithName(key)),
+		}
+		if err != nil {
+			attrs = append(attrs, attribute.String("error", err.Error()))
+			b.span.AddEvent("next", trace.WithAttributes(attrs...))
+			b.recvCh <- batchStreamResult{err: err, rollback: true}
+			return
+		}
+
+		b.span.AddEvent("next", trace.WithAttributes(attrs...))
+		b.recvCh <- batchStreamResult{request: req}
+	}
+}
+
+func resetTimer(timer *time.Timer, d time.Duration) {
+	if !timer.Stop() {
+		select {
+		case <-timer.C:
+		default:
+		}
+	}
+	timer.Reset(d)
+}
+
+func stopAndDrainTimer(timer *time.Timer) {
+	if !timer.Stop() {
+		select {
+		case <-timer.C:
+		default:
+		}
+	}
 }
 
 type bulkRV struct {
