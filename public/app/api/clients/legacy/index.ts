@@ -1,22 +1,20 @@
-import { generatedAPI } from '@grafana/api-clients/internal/rtkq/legacy';
+import { generatedAPI, SetTeamRolesApiArg, CreateTeamApiArg } from '@grafana/api-clients/internal/rtkq/legacy';
 import { RequestOptions } from '@grafana/api-clients/rtkq';
-
-interface EndpointWithQuery {
-  query?: (arg: Record<string, unknown>) => RequestOptions;
-}
 
 /**
  * Adds a check to the endpoint that will pass on the showSuccessAlert property to the backend_srv. This way it's
  * possible to disable the automatic toast that some of the legacy endpoints produce.
  * @param endpointDefinition
  */
-function withSuccessAlertCheck(endpointDefinition: EndpointWithQuery) {
-  const originalQuery = endpointDefinition.query as ((arg: Record<string, unknown>) => RequestOptions) | undefined;
+function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: ApiArg) => RequestOptions }>(
+  endpointDefinition: Def
+) {
+  const originalQuery = endpointDefinition.query;
   if (!originalQuery) {
     return;
   }
 
-  endpointDefinition.query = (queryArg) => {
+  endpointDefinition.query = (queryArg: ApiArg) => {
     const requestOptions = originalQuery(queryArg);
 
     const showSuccessAlert = 'showSuccessAlert' in queryArg ? Boolean(queryArg.showSuccessAlert) : undefined;
@@ -31,8 +29,12 @@ function withSuccessAlertCheck(endpointDefinition: EndpointWithQuery) {
 
 export const legacyAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
-    createTeam: (endpointDefinition) => withSuccessAlertCheck(endpointDefinition as EndpointWithQuery),
-    setTeamRoles: (endpointDefinition) => withSuccessAlertCheck(endpointDefinition as EndpointWithQuery),
+    createTeam: (endpointDefinition) => {
+      withSuccessAlertCheck<CreateTeamApiArg, typeof endpointDefinition>(endpointDefinition);
+    },
+    setTeamRoles: (endpointDefinition) => {
+      withSuccessAlertCheck<SetTeamRolesApiArg, typeof endpointDefinition>(endpointDefinition);
+    },
   },
 });
 
