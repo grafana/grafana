@@ -2900,6 +2900,7 @@
         "name": "kubernetesTeamService",
         "resourceVersion": "1773147086908",
         "creationTimestamp": "2026-03-06T08:45:27Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-10 12:51:26.908818 +0000 UTC"
         }
@@ -2944,7 +2945,22 @@
       "metadata": {
         "name": "kubernetesTeamsHandlerRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z"
+      },
+      "spec": {
+        "description": "Redirects the request of the team endpoints to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsRedirect",
+        "resourceVersion": "1773677806097",
+        "creationTimestamp": "2026-03-16T16:16:46Z"
       },
       "spec": {
         "description": "Redirects the request of the team endpoints to the app platform APIs",

@@ -818,9 +818,9 @@ const (
 	// Enables team APIs in the app platform
 	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
 
-	// FlagKubernetesTeamsHandlerRedirect
+	// FlagKubernetesTeamsRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
-	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
 
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
@@ -849,10 +849,6 @@ const (
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
-
-	// FlagKubernetesTeamService
-	// Use the new team service that uses the app platform APIs
-	FlagKubernetesTeamService = "kubernetesTeamService"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
