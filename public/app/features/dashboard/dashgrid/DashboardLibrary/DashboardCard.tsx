@@ -162,7 +162,6 @@ function DashboardCardComponent({
           {assistantAvailable && showAssistantButton && (
             <Button
               variant="secondary"
-              fill="outline"
               className={styles.overlayButton}
               onClick={onUseAssistantClick}
               icon="ai-sparkle"
@@ -265,7 +264,6 @@ function getStyles(theme: GrafanaTheme2) {
     justifyContent: 'center',
     gap: theme.spacing(1.5),
     padding: theme.spacing(2),
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'opacity 0.15s ease',
