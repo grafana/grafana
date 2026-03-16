@@ -381,7 +381,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget = options.route === DashboardRoutes.Report || options.route === DashboardRoutes.Embedded;
+      const isRenderTarget =
+        options.route === DashboardRoutes.Report ||
+        options.route === DashboardRoutes.Embedded ||
+        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
         isRenderTarget;

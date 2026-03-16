@@ -1502,6 +1502,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamLBACApiReadFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
@@ -2501,6 +2509,14 @@ var (
 		{
 			Name:         "kubernetesServiceAccountTokensApi",
 			Description:  "Enables service account token APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesSsoSettingsApi",
+			Description:  "Enables SSO settings APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

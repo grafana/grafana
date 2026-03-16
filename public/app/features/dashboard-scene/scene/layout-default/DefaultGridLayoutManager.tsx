@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneGridLayout,
@@ -187,7 +187,17 @@ export class DefaultGridLayoutManager
 
   public pastePanel() {
     const emptySpace = findSpaceForNewPanel(this.state.grid);
-    const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    let newGridItem;
+
+    try {
+      newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
 
     if (config.featureToggles.dashboardNewLayouts) {
       dashboardEditActions.edit({

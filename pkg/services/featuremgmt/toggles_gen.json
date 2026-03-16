@@ -2839,6 +2839,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesSsoSettingsApi",
+        "resourceVersion": "1773664314259",
+        "creationTimestamp": "2026-03-16T12:31:54Z"
+      },
+      "spec": {
+        "description": "Enables SSO settings APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesStars",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -4500,6 +4514,19 @@
       },
       "spec": {
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamLBACApiReadFromAppPlatform",
+        "resourceVersion": "1773679095440",
+        "creationTimestamp": "2026-03-16T16:38:15Z"
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"

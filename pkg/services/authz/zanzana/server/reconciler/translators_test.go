@@ -177,12 +177,6 @@ func TestTranslateGlobalRoleBindingToTuples(t *testing.T) {
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
 		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.GlobalRoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
-		},
 	}
 
 	for _, tt := range tests {
@@ -235,12 +229,6 @@ func TestTranslateRoleBindingToTuples(t *testing.T) {
 			subjectKind:  iamv0.RoleBindingSpecSubjectKindTeam,
 			subjectName:  "team1",
 			expectedUser: "team:team1#member",
-		},
-		{
-			name:         "basic role subject",
-			subjectKind:  iamv0.RoleBindingSpecSubjectKindBasicRole,
-			subjectName:  "basic_viewer",
-			expectedUser: "role:basic_viewer#assignee",
 		},
 	}
 
@@ -766,7 +754,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.RoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.RoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.RoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.RoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {
@@ -820,7 +807,6 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			{iamv0.GlobalRoleBindingSpecSubjectKindUser, "uid1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindServiceAccount, "sa1"},
 			{iamv0.GlobalRoleBindingSpecSubjectKindTeam, "team1"},
-			{iamv0.GlobalRoleBindingSpecSubjectKindBasicRole, "basic_viewer"},
 		}
 
 		for _, s := range subjects {

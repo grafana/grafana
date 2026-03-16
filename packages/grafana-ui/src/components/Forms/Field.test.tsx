@@ -4,6 +4,7 @@ import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
 
 import { Field } from './Field';
+import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 describe('Field', () => {
   it('renders the label', () => {
@@ -38,5 +39,32 @@ describe('Field', () => {
     );
 
     expect(screen.getByLabelText('My other label')).toBeInTheDocument();
+  });
+
+  describe('fieldset/legend rendering for group controls', () => {
+    const radioOptions = [
+      { label: 'Light', value: 'light' },
+      { label: 'Dark', value: 'dark' },
+    ];
+
+    it('renders the fieldset group with an accessible name from the legend', () => {
+      render(
+        <Field label="Theme">
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
+    });
+
+    it('renders required indicator inside the legend', () => {
+      render(
+        <Field label="Theme" required>
+          <RadioButtonGroup options={radioOptions} />
+        </Field>
+      );
+
+      expect(screen.getByRole('group', { name: 'Theme *' })).toBeInTheDocument();
+    });
   });
 });

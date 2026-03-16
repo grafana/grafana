@@ -551,6 +551,10 @@ const (
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
+	// FlagTeamLBACApiReadFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -833,6 +837,10 @@ const (
 	// FlagKubernetesServiceAccountTokensApi
 	// Enables service account token APIs in the app platform
 	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
+
+	// FlagKubernetesSsoSettingsApi
+	// Enables SSO settings APIs in the app platform
+	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
 
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform

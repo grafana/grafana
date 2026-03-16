@@ -960,6 +960,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -1582,6 +1587,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesServiceAccountTokensApi?: boolean;
+  /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
   /**
   * Enables external group mapping APIs in the app platform
   * @default false
