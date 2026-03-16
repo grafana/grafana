@@ -40,6 +40,9 @@ interface Props {
   compatibilityState?: CompatibilityState;
   /** Handler called when Check button is clicked in the badge */
   onCompatibilityCheck?: () => void;
+  /** Dashboard author name shown below the title */
+  author?: string;
+  /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
 }
 
@@ -57,6 +60,7 @@ function DashboardCardComponent({
   showCompatibilityBadge,
   compatibilityState,
   onCompatibilityCheck,
+  author,
   showAssistantButton,
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -100,17 +104,15 @@ function DashboardCardComponent({
     }
   };
 
+  const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
+
   return (
     <Card className={styles.card} noMargin>
       <Card.Heading className={styles.title}>
-        {isCompatibilityAppEnabled ? (
-          <span className={styles.titleWithInfo}>
-            <span className={styles.titleText}>{title}</span>
-            {detailsButton}
-          </span>
-        ) : (
-          title
-        )}
+        <span className={styles.titleWithInfo} role="group" aria-label={title}>
+          <span className={styles.titleText}>{title}</span>
+          {detailsButton}
+        </span>
       </Card.Heading>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
@@ -140,36 +142,71 @@ function DashboardCardComponent({
             />
           </div>
         )}
-      </div>
-      <div title={dashboard.description || ''} className={styles.descriptionWrapper}>
-        {dashboard.description && (
-          <Card.Description data-testid="dashboard-card-description" className={styles.description}>
-            {dashboard.description}
-          </Card.Description>
-        )}
-      </div>
-      <Card.Actions className={styles.actionsContainer}>
-        <Button variant="secondary" onClick={() => onClick()}>
-          {kind === 'template_dashboard' ? (
-            <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-          ) : (
-            <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
-          )}
-        </Button>
-        {assistantAvailable && showAssistantButton && (
-          <Button variant="secondary" fill="text" onClick={onUseAssistantClick} icon="ai-sparkle">
-            <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+        <div className={styles.thumbnailOverlay}>
+          <Button
+            variant="secondary"
+            className={styles.overlayButton}
+            onClick={() => onClick()}
+            aria-label={
+              kind === 'template_dashboard'
+                ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
+                : t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+            }
+          >
+            {kind === 'template_dashboard' ? (
+              <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
+            ) : (
+              <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+            )}
           </Button>
-        )}
-        {!isCompatibilityAppEnabled && detailsButton}
-        {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
-          <CompatibilityBadge
-            state={compatibilityState ?? { status: 'idle' }}
-            onCheck={onCompatibilityCheck}
-            onRetry={onCompatibilityCheck}
-          />
-        )}
-      </Card.Actions>
+          {assistantAvailable && showAssistantButton && (
+            <Button
+              variant="secondary"
+              fill="outline"
+              className={styles.overlayButton}
+              onClick={onUseAssistantClick}
+              icon="ai-sparkle"
+              aria-label={t(
+                'dashboard-library.card.customize-with-assistant-button-label',
+                'Customize with assistant: {{title}}',
+                { title }
+              )}
+            >
+              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with assistant</Trans>
+            </Button>
+          )}
+        </div>
+      </div>
+      {author && (
+        <div className={styles.metaRow}>
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="dashboard-library.card.author">Author: </Trans>
+            {author}
+          </Text>
+        </div>
+      )}
+      {(dashboard.description || hasCompatActions) && (
+        <div className={styles.bottomSection}>
+          {dashboard.description && (
+            <div title={dashboard.description}>
+              <Card.Description data-testid="dashboard-card-description" className={styles.description}>
+                {dashboard.description}
+              </Card.Description>
+            </div>
+          )}
+          {hasCompatActions && (
+            <div className={styles.actionsContainer}>
+              {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
+                <CompatibilityBadge
+                  state={compatibilityState ?? { status: 'idle' }}
+                  onCheck={onCompatibilityCheck}
+                  onRetry={onCompatibilityCheck}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
@@ -219,13 +256,30 @@ function DetailsTooltipContent({ details }: { details: Details }) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  const thumbnailOverlay = css({
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(2),
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    opacity: 0,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.15s ease',
+    },
+    borderRadius: theme.shape.radius.default,
+  });
+
   return {
     card: css({
       gridTemplateAreas: `
-          "Heading Heading"
           "Thumbnail Thumbnail"
-          "Description Description"
-          "Actions Secondary"`,
+          "Heading Heading"
+          "Meta Meta"
+          "Bottom Bottom"`,
       gridTemplateRows: 'auto auto auto auto',
       gridTemplateColumns: '1fr auto',
       height: 'auto',
@@ -234,6 +288,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridGap: theme.spacing(1),
       paddingLeft: 0,
       paddingRight: 0,
+      alignSelf: 'start',
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
@@ -250,6 +305,20 @@ function getStyles(theme: GrafanaTheme2) {
       height: '180px',
       backgroundColor: theme.colors.background.canvas,
       position: 'relative',
+      [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
+        opacity: 1,
+      },
+    }),
+    thumbnailOverlay,
+    overlayButton: css({
+      width: '80%',
+      justifyContent: 'center',
+    }),
+    metaRow: css({
+      gridArea: 'Meta',
+      display: 'flex',
+      gap: theme.spacing(2),
+      flexWrap: 'wrap',
     }),
     thumbnail: css({
       width: '100%',
@@ -272,6 +341,9 @@ function getStyles(theme: GrafanaTheme2) {
       height: '180px',
       backgroundColor: theme.colors.background.secondary,
       position: 'relative',
+      [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
+        opacity: 1,
+      },
     }),
     logo: css({
       objectFit: 'fill',
@@ -285,10 +357,12 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    descriptionWrapper: css({
-      gridArea: 'Description',
+    bottomSection: css({
+      gridArea: 'Bottom',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
       wordBreak: 'break-word',
-      minHeight: `calc(${theme.typography.body.lineHeight} * 1em)`, // Preserve space even when empty
     }),
     title: css({
       display: '-webkit-box',
@@ -319,7 +393,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
     }),
     actionsContainer: css({
-      marginTop: 0,
+      display: 'flex',
       alignItems: 'center',
       flexWrap: 'nowrap',
     }),
