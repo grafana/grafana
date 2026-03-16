@@ -115,7 +115,6 @@ type Service struct {
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
 	permRegistry   permreg.PermissionRegistry
-	isInitialized  bool
 	singleFlight   singleflight.Group
 }
 
