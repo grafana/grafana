@@ -52,40 +52,6 @@ func isAccessPolicy(authInfo types.AuthInfo) bool {
 	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
-// CanViewTarget returns whether the caller has get_permissions on the given target resource.
-// authInfo must be the authenticated identity (e.g. from types.AuthInfoFrom(ctx)); pass it in so callers can fetch once when looping.
-func (r *ResourcePermissionsAuthorizer) CanViewTarget(ctx context.Context, authInfo types.AuthInfo, namespace, apiGroup, resource, name string) (bool, error) {
-	if authInfo == nil {
-		return false, storewrapper.ErrUnauthenticated
-	}
-	targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
-	parent := ""
-	// Fetch the parent of the resource
-	// It's not efficient to do for every item in the list, but it's a good starting point.
-	// Access Policies have global scope, so no parent check needed
-	if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
-		gotParent, err := r.parentProvider.GetParent(ctx, targetGR, namespace, name)
-		if err != nil {
-			r.logger.Debug("can view target: error fetching parent, denying this item in the list",
-				"error", fmt.Sprintf("%v", err), "namespace", namespace, "group", apiGroup, "resource", resource, "name", name)
-			return false, nil
-		}
-		parent = gotParent
-	}
-	checkReq := types.CheckRequest{
-		Namespace: namespace,
-		Group:     apiGroup,
-		Resource:  resource,
-		Verb:      utils.VerbGetPermissions,
-		Name:      name,
-	}
-	res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
-	if err != nil {
-		return false, err
-	}
-	return res.Allowed, nil
-}
-
 // CanViewTargets returns only items for which the caller has get_permissions on the target resource.
 // getTarget(i) supplies the resource identity for item i; when ok is false that item is excluded.
 func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context, authInfo types.AuthInfo, items []T, getTarget func(i int) (namespace, apiGroup, resource, name string, ok bool)) ([]T, error) {
