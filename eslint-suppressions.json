@@ -2525,11 +2525,6 @@
       "count": 1
     }
   },
-  "public/app/features/org/OrgDetailsPage.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/org/OrgProfile.tsx": {
     "no-restricted-syntax": {
       "count": 1
