@@ -1233,6 +1233,11 @@ export interface FeatureToggles {
   */
   alertEnrichmentConditional?: boolean;
   /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */
@@ -1592,6 +1597,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamSync?: boolean;
+  /**
+  * Use the new team service that uses the app platform APIs
+  * @default false
+  */
+  kubernetesTeamService?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false

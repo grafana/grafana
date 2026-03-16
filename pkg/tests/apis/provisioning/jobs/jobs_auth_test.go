@@ -9,14 +9,20 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	testinfra "github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func withJobsAuthFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+}
 
 func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t)
+	helper := common.RunGrafana(t, withJobsAuthFolderMetadata)
 	ctx := context.Background()
 
 	const repo = "jobs-auth-test"
@@ -87,8 +93,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 
 	t.Run("editor can create job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Action: provisioning.JobActionFixFolderMetadata,
 		})
 
 		var statusCode int
@@ -109,8 +114,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 
 	t.Run("viewer cannot create job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{},
+			Action: provisioning.JobActionFixFolderMetadata,
 		})
 
 		var statusCode int
