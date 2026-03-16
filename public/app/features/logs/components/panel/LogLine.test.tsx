@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Grammar } from 'prismjs';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -17,7 +18,6 @@ import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
-import { Grammar } from 'prismjs';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -397,7 +397,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     });
   });
 
-  describe.only('Custom syntax highlighting', () => {
+  describe('Custom syntax highlighting', () => {
     const entry = `{"place":"luna","count":3,"true":false}`;
     const grammar: Grammar = {
       property: {
