@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { ComponentProps } from 'react';
 
 import LogsNavigation from './LogsNavigation';
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: jest.fn(),
+}));
 
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({
@@ -26,6 +32,10 @@ const setup = (propOverrides?: Partial<LogsNavigationProps>) => {
 };
 
 describe('LogsNavigation', () => {
+  beforeEach(() => {
+    (useBooleanFlagValue as jest.Mock).mockImplementation((_: string, defaultValue: boolean) => defaultValue);
+  });
+
   it('should render scroll to top with default logs order', async () => {
     setup();
 
