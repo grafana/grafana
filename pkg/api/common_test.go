@@ -288,11 +288,7 @@ func mockRequestBody(v any) io.ReadCloser {
 // when setting up an API test server via SetupAPITestServer.
 type APITestServerOption func(hs *HTTPServer)
 
-// SetupAPITestServer sets up a webtest.Server ready for testing all
-// routes registered via HTTPServer.registerRoutes().
-// Optionally customize HTTPServer configuration by providing APITestServerOption
-// option(s).
-func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
+func setupAPITestServer(t *testing.T, opts ...APITestServerOption) *HTTPServer {
 	t.Helper()
 
 	hs := &HTTPServer{
@@ -318,7 +314,35 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	hs.registerRoutes()
 
+	return hs
+}
+
+// SetupAPITestServer sets up a webtest.Server ready for testing all
+// routes registered via HTTPServer.registerRoutes().
+// Optionally customize HTTPServer configuration by providing APITestServerOption
+// option(s).
+func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
+	hs := setupAPITestServer(t, opts...)
+
 	s := webtest.NewServer(t, hs.RouteRegister)
+
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	s.Mux.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+
+	return s
+}
+
+// SetupInProcessAPITestServer is like SetupAPITestServer but handles requests
+// in the calling goroutine instead of over TCP (which uses a different goroutine).
+// openfeature's TestProvider relies on flags being stored and fetched from the
+// same goroutine, so we will need to use this function when testing code that
+// uses openfeature for evaluating feature flags. For more information, see
+// https://pkg.go.dev/go.openfeature.dev/openfeature/v2/providers/testing#TestProvider
+func SetupInProcessAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Server {
+	hs := setupAPITestServer(t, opts...)
+
+	s := webtest.NewInProcessServer(t, hs.RouteRegister)
 
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)

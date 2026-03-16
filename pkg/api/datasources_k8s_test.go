@@ -70,7 +70,6 @@ func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 // datasources_test for legacy, and in the integration tests for the new
 // endpoints.
 func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
-
 	tests := []struct {
 		name             string
 		connectionResult *queryV0.DataSourceConnectionList

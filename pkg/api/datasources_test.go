@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -446,7 +447,11 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs: setting.NewInMemoryFlag(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs, false),
+			})
+
+			server := SetupInProcessAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}

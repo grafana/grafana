@@ -26,6 +26,8 @@ type Server struct {
 	RouteRegister routing.RouteRegister
 	TestServer    *httptest.Server
 	HttpClient    *http.Client
+	// handle requests in the current goroutine, instead of over TCP
+	inProcess bool
 }
 
 // NewServer starts and returns a new server.
@@ -53,7 +55,18 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 		Mux:           m,
 		TestServer:    testServer,
 		HttpClient:    httpclient.New(),
+		inProcess:     false,
 	}
+}
+
+// NewInProcessServer returns a server that handles requests in the calling
+// goroutine instead of over TCP, which will use a different goroutine. Use
+// this when handlers evaluate feature flags using openfeature, because the
+// openfeature TestProvider stores flag values in goroutine-local state.
+func NewInProcessServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
+	s := NewServer(t, routeRegister)
+	s.inProcess = true
+	return s
 }
 
 // NewGetRequest creates a new GET request setup for test.
@@ -74,7 +87,9 @@ func (s *Server) NewRequest(method string, target string, body io.Reader) *http.
 		target = "/" + target
 	}
 
-	target = s.TestServer.URL + target
+	if !s.inProcess {
+		target = s.TestServer.URL + target
+	}
 	req := httptest.NewRequest(method, target, body)
 	reqID := generateRequestIdentifier()
 	req = requestWithRequestIdentifier(req, reqID)
@@ -84,6 +99,15 @@ func (s *Server) NewRequest(method string, target string, body io.Reader) *http.
 
 // Send sends a HTTP request to the test server and returns an HTTP response.
 func (s *Server) Send(req *http.Request) (*http.Response, error) {
+	if s.inProcess {
+		rec := httptest.NewRecorder()
+		req.RequestURI = req.URL.Path
+		if req.URL.RawQuery != "" {
+			req.RequestURI += "?" + req.URL.RawQuery
+		}
+		s.Mux.ServeHTTP(rec, req)
+		return rec.Result(), nil
+	}
 	return s.HttpClient.Do(req)
 }
 
