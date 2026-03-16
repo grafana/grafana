@@ -1146,32 +1146,10 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthzApis?: boolean;
-  /**
-  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthZHandlerRedirect?: boolean;
-  /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
   */
   kubernetesAuthZResourcePermissionsRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRolesRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRoleBindingsRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1203,10 +1181,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRoleBindingsApi?: boolean;
   /**
-  * Enables create, delete, and update mutations for resources owned by IAM identity
+  * Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
   * @default false
   */
-  kubernetesAuthnMutation?: boolean;
+  kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false

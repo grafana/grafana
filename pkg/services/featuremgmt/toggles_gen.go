@@ -626,25 +626,9 @@ const (
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
-	// FlagKubernetesAuthzApis
-	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
-
-	// FlagKubernetesAuthZHandlerRedirect
-	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
-
 	// FlagKubernetesAuthZResourcePermissionsRedirect
 	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
-
-	// FlagKubernetesAuthZRolesRedirect
-	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
-
-	// FlagKubernetesAuthZRoleBindingsRedirect
-	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -670,9 +654,9 @@ const (
 	// Registers AuthZ Role Bindings /apis endpoint
 	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
 
-	// FlagKubernetesAuthnMutation
-	// Enables create, delete, and update mutations for resources owned by IAM identity
-	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+	// FlagKubernetesAuthzRolesAndRoleBindingsRedirect
+	// Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthzRolesAndRoleBindingsRedirect = "kubernetesAuthzRolesAndRoleBindingsRedirect"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
