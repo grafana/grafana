@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import { upperFirst } from 'lodash';
+import { upperFirst } from 'lodash-es';
 import { ComponentProps, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';

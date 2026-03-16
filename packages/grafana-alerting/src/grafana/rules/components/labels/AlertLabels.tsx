@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain } from 'lodash';
+import { chain } from 'lodash-es';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';

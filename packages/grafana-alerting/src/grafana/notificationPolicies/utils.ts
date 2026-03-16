@@ -1,4 +1,4 @@
-import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
+import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash-es';
 
 import { RoutingTree, RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 

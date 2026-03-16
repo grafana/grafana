@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { upperFirst } from 'lodash';
+import { upperFirst } from 'lodash-es';
 
 export const DEFAULT_NAMESPACE = 'default' as const;
 

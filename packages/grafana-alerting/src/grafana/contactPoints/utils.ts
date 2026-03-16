@@ -1,4 +1,4 @@
-import { countBy, isEmpty } from 'lodash';
+import { countBy, isEmpty } from 'lodash-es';
 
 import { Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 

@@ -1,4 +1,4 @@
-import { chain } from 'lodash';
+import { chain } from 'lodash-es';
 
 import { Combobox, ComboboxOption } from '@grafana/ui';
 

@@ -67,7 +67,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/lodash": "^4",
+    "@types/lodash-es": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "^1",
@@ -98,7 +98,7 @@
     "@grafana/i18n": "13.0.0-pre",
     "@reduxjs/toolkit": "2.10.1",
     "fishery": "^2.3.1",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "tinycolor2": "^1.6.0"
   }
 }
