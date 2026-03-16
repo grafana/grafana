@@ -1,5 +1,6 @@
-import { store } from '@grafana/data';
 import { useCallback, useSyncExternalStore } from 'react';
+
+import { store } from '@grafana/data';
 
 interface StoredValueWithTTL<T> {
   value: T;
