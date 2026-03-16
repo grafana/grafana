@@ -314,6 +314,7 @@ type Cfg struct {
 	OAuthLoginErrorMessage               string
 	OAuthCookieMaxAge                    int
 	OAuthAllowInsecureEmailLookup        bool
+	AutoLinkPreprovisionedUsers          bool
 	OAuthRefreshTokenServerLockMinWaitMs int64
 
 	JWTAuth    AuthJWTSettings
@@ -1932,6 +1933,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	cfg.AutoLinkPreprovisionedUsers = auth.Key("auto_link_preprovisioned_users").MustBool(false)
 
 	const defaultMaxLifetime = "30d"
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)

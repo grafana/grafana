@@ -169,6 +169,8 @@ In certain cases, however, enabling user lookups by email can be a feasible opti
 - The infrastructure allows email-based identification without compromising security.
 
 **Important note**: While it is possible to configure Grafana to allow email-based user lookups, we strongly recommend against this approach in most cases due to potential security risks.
+If you only need to link admin-pre-created users (not all users) by email, consider `auto_link_preprovisioned_users` instead, which only matches users with no existing auth connections.
+
 If you still choose to proceed, the following configuration can be applied to enable email lookup.
 
 ```bash
@@ -191,6 +193,25 @@ curl --request PUT \
 ```
 
 Finally, you can also enable it using the UI by going to **Administration -> Authentication -> Auth settings**.
+
+### Auto-link pre-provisioned users
+
+When enabled, users pre-created by an admin (with no existing auth connections) are automatically linked when they log in via OAuth with a matching email address. Unlike `oauth_allow_insecure_email_lookup`, this only matches users with zero auth connections, reducing the risk of unintended account linking.
+
+This setting trusts the OAuth provider's email claim (same trust model as `oauth_allow_insecure_email_lookup`), but limits the blast radius to admin-pre-created accounts that have never logged in via any auth provider.
+
+**When to use each option:**
+
+- `auto_link_preprovisioned_users`: When you pre-create users via the admin API and want them auto-linked on first OAuth login.
+- `oauth_allow_insecure_email_lookup`: When you want ANY existing user matched by email (broader — use with trusted providers only).
+- Admin API (`POST /api/admin/users/:id/auth`): When you want explicit, manual control over identity linking.
+
+Defaults to `false`.
+
+```bash
+[auth]
+auto_link_preprovisioned_users = true
+```
 
 ### Automatic OAuth login
 
