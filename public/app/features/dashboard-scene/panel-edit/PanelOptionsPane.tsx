@@ -108,7 +108,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (options.fieldConfig) {
       const fieldConfigWithOverrides = {
-        ...options.fieldConfig,
+        defaults: {
+          ...newFieldConfig.defaults,
+          custom: options.fieldConfig.defaults?.custom ?? {},
+        },
         overrides: newFieldConfig.overrides,
       };
       panel.onFieldConfigChange(fieldConfigWithOverrides, true);

@@ -12,6 +12,31 @@ The clients are auto-generated [RTK Query](https://redux-toolkit.js.org/rtk-quer
 yarn add @grafana/api-clients
 ```
 
+## TypeScript configuration
+
+This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports), which require `moduleResolution` to be set to `"bundler"` in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+If you use ts-node, add the following to your `tsconfig.json`:
+
+```json
+{
+  "ts-node": {
+    "compilerOptions": {
+      "module": "es2020",
+      "moduleResolution": "Bundler"
+    }
+  }
+}
+```
+
 ## Usage
 
 Each API client is available as a separate subpath export, scoped by group and version:

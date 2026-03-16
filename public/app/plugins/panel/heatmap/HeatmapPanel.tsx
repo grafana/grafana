@@ -5,14 +5,14 @@ import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
-  TooltipPlugin2,
+  EventBusPlugin,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
-  EventBusPlugin,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
@@ -20,7 +20,7 @@ import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
-import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
@@ -258,9 +258,9 @@ const HeatmapPanelViz = ({
                 maxWidth={options.tooltip.maxWidth}
               />
             )}
-            <AnnotationsPlugin2
+            <AnnotationsPlugin
               replaceVariables={replaceVariables}
-              multiLane={options.annotations?.multiLane}
+              options={options.annotations}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}

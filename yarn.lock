@@ -2688,6 +2688,7 @@ __metadata:
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
   dependencies:
     "@emotion/css": "npm:11.13.5"
+    "@grafana/azure-sdk": "npm:0.1.0"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
     "@grafana/i18n": "npm:13.0.0-pre"
@@ -3349,12 +3350,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/azure-sdk@npm:0.0.8":
-  version: 0.0.8
-  resolution: "@grafana/azure-sdk@npm:0.0.8"
+"@grafana/azure-sdk@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/azure-sdk@npm:0.1.0"
   dependencies:
-    react-dom: "npm:^19.2.0"
-  checksum: 10/9fc1571658f73b321f1e53761e15add98541c5e743b90ed6c13e55a176e6667a62883435165efe20da45bf8ed94f9d229cdcb4761bc00cba1304f0ef8ee28954
+    react-dom: "npm:18.3.1"
+  checksum: 10/cd2dc07d0ab754eaa4c5e015dbba6c3541dab20132f5c21f4e84e34aeba1b2185fe428b436817c9a630fbfc5cf8e2958007d1feb103e56f2255ed0405ddd129c
   languageName: node
   linkType: hard
 
@@ -3729,19 +3730,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:3.4.0":
-  version: 3.4.0
-  resolution: "@grafana/plugin-e2e@npm:3.4.0"
+"@grafana/plugin-e2e@npm:3.4.7":
+  version: 3.4.7
+  resolution: "@grafana/plugin-e2e@npm:3.4.7"
   dependencies:
-    "@grafana/e2e-selectors": "npm:12.4.0-21983999378"
+    "@grafana/e2e-selectors": "npm:13.0.0-22967232448"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@axe-core/playwright": ^4.11.1
     "@playwright/test": ^1.52.0
-    axe-core: ^4.11.1
-  checksum: 10/61c46fa4d39202deec7eba598a481a172b86a67ac1e788a4c7a23dc54f625526ad18cfe5d2697a0f2abb1b4a4c4b1283fdfdee1e766227cc739b83dea851a2c5
+  peerDependenciesMeta:
+    "@axe-core/playwright":
+      optional: true
+  checksum: 10/da5aa668882d7d827c94f837a21c4764c1417830b1759f8e17a75664e1df341b22167586ed52c8a715ea0365de1267e1f60d335bd3f469532566ad5515036f64
   languageName: node
   linkType: hard
 
@@ -3891,13 +3894,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.1.6":
-  version: 7.1.6
-  resolution: "@grafana/scenes-react@npm:7.1.6"
+"@grafana/scenes-react@npm:7.1.7":
+  version: 7.1.7
+  resolution: "@grafana/scenes-react@npm:7.1.7"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.1.6"
+    "@grafana/scenes": "npm:7.1.7"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3911,7 +3914,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/7235d230bc1b4825a2ba0288317b789f8b1489a88a9e46a0cf66b29489412dc733f740a613991e1b7d5b76d41b5b906af7d0d3b69249abd0a74dfc61e12fbd2f
+  checksum: 10/f76bb782483d8337219c0bed5f4942c0962d8b2409a1e69cd9e9cbbf61269cd09d96d3b58c617199d9ff200b0d1c199f401d51ccd1893c24384f41b54d382fb8
   languageName: node
   linkType: hard
 
@@ -3946,9 +3949,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.1.6":
-  version: 7.1.6
-  resolution: "@grafana/scenes@npm:7.1.6"
+"@grafana/scenes@npm:7.1.7":
+  version: 7.1.7
+  resolution: "@grafana/scenes@npm:7.1.7"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -3973,7 +3976,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/33b86d123fa8be6ed5d55dba344432b2b307f7500a6040e2f0bc6fef7f62aae580367ee1ae3300c07cfdf98405b9527f278d83022183dfa953b79132f569f319
+  checksum: 10/ca1ce05c01119cc1e486193b60d242506d16905a9c03bc8dc531c066478433237891ae1ac3f4df256d5b16df7a722d652f20854345a2502f0360435082cbb402
   languageName: node
   linkType: hard
 
@@ -20092,7 +20095,7 @@ __metadata:
     "@grafana/api-clients": "workspace:*"
     "@grafana/assistant": "npm:0.1.24"
     "@grafana/aws-sdk": "npm:^0.10.1"
-    "@grafana/azure-sdk": "npm:0.0.8"
+    "@grafana/azure-sdk": "npm:0.1.0"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.2.0"
@@ -20108,12 +20111,12 @@ __metadata:
     "@grafana/llm": "npm:1.0.3"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:3.4.0"
+    "@grafana/plugin-e2e": "npm:3.4.7"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.1.6"
-    "@grafana/scenes-react": "npm:7.1.6"
+    "@grafana/scenes": "npm:7.1.7"
+    "@grafana/scenes-react": "npm:7.1.7"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -28756,7 +28759,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0, react-dom@npm:^19.2.0":
+"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0":
   version: 19.2.0
   resolution: "react-dom@npm:19.2.0"
   dependencies:
