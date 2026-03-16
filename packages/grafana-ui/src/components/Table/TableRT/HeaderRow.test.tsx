@@ -11,10 +11,7 @@ describe('HeaderRow', () => {
 
       setup(columns);
 
-      expect(screen.getByRole('button', { name: 'Sort by temperature' })).toHaveAttribute(
-        'aria-label',
-        'Sort by temperature'
-      );
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sort by column temperature');
     });
 
     it('has "Sort by {column}, ascending" when column is sorted ascending', () => {
@@ -28,10 +25,7 @@ describe('HeaderRow', () => {
 
       setup(columns);
 
-      expect(screen.getByRole('button', { name: /Sort by temperature/ })).toHaveAttribute(
-        'aria-label',
-        'Sort by temperature, ascending'
-      );
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sort by column temperature, ascending');
     });
 
     it('has "Sort by {column}, descending" when column is sorted descending', () => {
@@ -39,10 +33,7 @@ describe('HeaderRow', () => {
 
       setup(columns);
 
-      expect(screen.getByRole('button', { name: /Sort by temperature/ })).toHaveAttribute(
-        'aria-label',
-        'Sort by temperature, descending'
-      );
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sort by column temperature, descending');
     });
 
     it('uses "Sort column" fallback when header content is not a string', () => {
@@ -54,7 +45,7 @@ describe('HeaderRow', () => {
 
       setup(columns);
 
-      expect(screen.getByRole('button', { name: 'Sort column' })).toHaveAttribute('aria-label', 'Sort column');
+      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sort column');
     });
   });
 });
@@ -91,5 +82,7 @@ function setup(columns: MockColumnOverrides[]) {
     },
   ];
   // @ts-ignore
-  render(<HeaderRow headerGroups={mockHeaderGroups as HeaderGroup[]} showTypeIcons={true} tableStyles={{} as TableStyles} />);
+  render(
+    <HeaderRow headerGroups={mockHeaderGroups as HeaderGroup[]} showTypeIcons={true} tableStyles={{} as TableStyles} />
+  );
 }
