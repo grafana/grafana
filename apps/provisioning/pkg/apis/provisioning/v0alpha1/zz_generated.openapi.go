@@ -937,7 +937,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://github.com/example/test.git`).",
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
 							Type:        []string{"string"},
 							Format:      "",
 						},
