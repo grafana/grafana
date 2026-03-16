@@ -378,6 +378,17 @@ describe('PanelEditor', () => {
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
       });
+
+      it('should ignore a stored v2 preference and use the v1 query editor experience', async () => {
+        store.setObject(QUERY_EDITOR_V2_PREFERENCE_KEY, {
+          value: true,
+          timestamp: Date.now(),
+        });
+
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
     });
   });
   describe('isVizPickerOpen', () => {
