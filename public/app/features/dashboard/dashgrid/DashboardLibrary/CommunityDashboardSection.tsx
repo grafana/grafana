@@ -14,7 +14,7 @@ import { MappingContext } from './SuggestedDashboardsModal';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
-import { DashboardLibraryInteractions } from './interactions';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -116,7 +116,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   // Track analytics only once on first successful load
   useEffect(() => {
     if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
+      SuggestedDashboardInteractions.loaded({
         numberOfItems: response.dashboards.length,
         contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
         datasourceTypes: [response.datasourceType],
@@ -141,7 +141,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       // Track item click
-      DashboardLibraryInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [response.datasourceType],
         libraryItemId: String(dashboard.id),

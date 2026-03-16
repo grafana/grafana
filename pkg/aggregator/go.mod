@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/grafana-plugin-sdk-go v0.290.0
+	github.com/grafana/grafana-plugin-sdk-go v0.290.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20260118065639-60cb766a97d6
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -133,7 +133,7 @@ require (
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
 	golang.org/x/term v0.40.0 // indirect

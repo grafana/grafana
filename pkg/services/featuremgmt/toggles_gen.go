@@ -686,6 +686,10 @@ const (
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
+
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
@@ -842,6 +846,10 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
+	// FlagKubernetesTeamService
+	// Use the new team service that uses the app platform APIs
+	FlagKubernetesTeamService = "kubernetesTeamService"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
@@ -893,6 +901,10 @@ const (
 	// FlagAnalyticsFramework
 	// Enables new analytics framework
 	FlagAnalyticsFramework = "analyticsFramework"
+
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
 	// FlagInlineLogDetailsNoScrolls
 	// Enables an inline version of Log Details that creates no new scrolls

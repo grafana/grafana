@@ -63,15 +63,27 @@ Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x only. 
 
 ### The Pure Git repository type
 
-The Pure Git repository type uses the standard Git over HTTP protocol, with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync.
+The Pure Git repository type uses the [Smart HTTP protocol v2](https://git-scm.com/docs/protocol-v2) (Git over HTTPS), with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync.
+
+{{< admonition type="note" >}}
+
+Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported. Make sure your Git server supports protocol v2 over HTTPS.
+
+{{< /admonition >}}
 
 However, Pure Git doesn't include any features that require provider APIs, such as webhook-driven instant sync, automated PR comments, or deep links to source files.
 
-### Enhanced integrations: GitHub, GitLab, Bitbucket
+### Enhanced integrations: GitHub, GitHub Enterprise, GitLab, Bitbucket
 
 If your Git provider is GitHub, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
 The GitHub enhanced integration is the most feature-complete experience today. It enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes. It is available in Grafana OSS, Enterprise, and Cloud.
+
+{{< admonition type="note" >}}
+
+**GitHub Enterprise Server** is currently only supported through the Pure Git repository type. A dedicated enhanced integration for GitHub Enterprise Server is planned for upcoming releases.
+
+{{< /admonition >}}
 
 The GitLab and Bitbucket integrations have limited functionality for the moment, and are only available in Grafana Enterprise and Grafana Cloud. Expect continued improvements around pull request workflows, linking, and sync behavior in upcoming releases.
 
