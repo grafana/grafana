@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Menu } from '@grafana/ui';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { Menu, Alert } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
@@ -22,9 +23,18 @@ export interface Props {
 }
 
 const AddPanelMenu = ({ dashboard }: Props) => {
-  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
+  const { error, value: panels = [] } = useListedPanelPluginMetas();
+  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(panels), [panels]);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+
+  if (error) {
+    return (
+      <Alert severity="error" title={t('dashboard.add-menu.load-error', 'Failed to load panel plugins')}>
+        {error.message}
+      </Alert>
+    );
+  }
 
   return (
     <Menu>
