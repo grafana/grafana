@@ -1,4 +1,4 @@
-import { createInteractionEvent } from '@grafana/runtime/internal';
+import { defineFeatureEvents } from '@grafana/runtime/internal';
 
 import { FEATURE_VARIANTS } from '../constants';
 
@@ -15,7 +15,7 @@ import {
 
 const SCHEMA_VERSION = 1;
 
-const newDashboardLibraryInteraction = createInteractionEvent('grafana', 'dashboard_library', {
+const newDashboardLibraryInteraction = defineFeatureEvents('grafana', 'dashboard_library', {
   schema_version: SCHEMA_VERSION,
 });
 
