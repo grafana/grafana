@@ -56,6 +56,7 @@ jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
     useAssistant: jest.fn().mockReturnValue({
+      isLoading: false,
       isAvailable: true,
     }),
   };

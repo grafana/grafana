@@ -2185,16 +2185,16 @@
       "title-no-alertmanager-found": "未找到 Alertmanager"
     },
     "notification-detail": {
-      "action-silence": "",
-      "action-view-contact-point": "",
+      "alert-status-firing": "",
+      "alert-status-resolved": "",
       "alerts-empty": "",
       "alerts-loading": "",
       "batch-all-ok": "",
       "batch-count-one": "",
+      "common-annotations": "",
+      "common-labels": "",
       "current": "",
       "debug-details-heading": "",
-      "delivery-failed": "",
-      "delivery-success": "",
       "error-title": "",
       "error-title-banner": "",
       "error-unknown": "",
@@ -2204,26 +2204,40 @@
       "field-retry": "",
       "field-timestamp": "",
       "field-uuid": "",
-      "firing-alerts": "",
-      "group-labels-heading": "",
+      "info-group-labels": "",
       "loading": "",
+      "menu-analyze": "",
+      "menu-copy-link": "",
+      "menu-silence": "",
+      "menu-view-contact-point": "",
+      "menu-view-rule": "",
+      "menu-view-rule-n": "",
+      "more-details-heading": "",
       "no": "",
+      "no-common-data": "",
       "not-found-body": "",
       "not-found-title": "",
       "page-title": "",
       "related-loading": "",
-      "related-sidebar-subtitle": "",
-      "related-sidebar-title": "",
-      "resolved-alerts": "",
       "retry-tooltip": "",
+      "sidebar-contact-point": "",
+      "sidebar-delivery-failed": "",
+      "sidebar-delivery-outcome": "",
+      "sidebar-delivery-success": "",
+      "sidebar-duration": "",
+      "sidebar-integration": "",
+      "sidebar-retry": "",
+      "sidebar-retry-value": "",
+      "sidebar-timestamp": "",
+      "tab-alerts": "",
+      "tab-overview": "",
+      "tab-related": "",
       "uuid-not-found-body": "",
       "uuid-not-found-title": "",
       "yes": "",
       "alert-count-inline_other": "",
       "batch-count-many_other": "",
-      "batch-failed_other": "",
-      "related-count_other": "",
-      "related-count-with-failures_other": ""
+      "batch-failed_other": ""
     },
     "notification-history": {
       "enrichment-explore": "",
@@ -4013,6 +4027,12 @@
         "label-constant": "固定",
         "label-negative-y": "负 Y"
       }
+    },
+    "presets": {
+      "fixed-purple-hue": "",
+      "palette-classic": "",
+      "palette-classic-stacked": "",
+      "viridis-hue": ""
     },
     "suggestions": {
       "horizontal": "水平条形图",
@@ -6522,6 +6542,13 @@
     "add-variable": {
       "label-variable": ""
     },
+    "adhoc-origin-filters-controller": {
+      "input-placeholder": ""
+    },
+    "adhoc-origin-filters-editor": {
+      "description": "",
+      "label": ""
+    },
     "annotation-control": {
       "description-add-event-data-to-graphs": "",
       "label-annotation-query": ""
@@ -8784,6 +8811,7 @@
       "threshold-labels-description": "显示阈值和中性值",
       "threshold-markers": "显示阈值"
     },
+    "data-links-actions-menu": "",
     "description-min-height": "最小行高（水平方向）",
     "description-min-width": "最小列宽（垂直方向）",
     "description-neutral": "留空以使用最小值作为中性点",
@@ -13175,14 +13203,19 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "连接到 Bitbucket 存储库",
+      "bitbucket-tooltip": "",
       "github": "GitHub",
       "github-description": "连接到 GitHub 存储库",
+      "github-tooltip": "",
       "gitlab": "GitLab",
       "gitlab-description": "连接到 GitLab 存储库",
+      "gitlab-tooltip": "",
       "local": "本地",
       "local-description": "配置文件预置",
+      "local-tooltip": "",
       "pure-git": "纯 Git",
-      "pure-git-description": "连接到任何 Git 存储库"
+      "pure-git-description": "连接到任何 Git 存储库",
+      "pure-git-tooltip": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -13322,6 +13355,8 @@
         "dismiss": "继续工作",
         "title": "丢弃存储库设置？"
       },
+      "git-protocol-alert-body": "",
+      "git-protocol-alert-title": "",
       "github-app-connection-status": "",
       "github-app-creation-default-error": "创建连接失败",
       "github-app-creation-failed": "创建 GitHub 应用连接失败",
@@ -13335,6 +13370,8 @@
       "github-app-no-connections": "未找到 GitHub 关联",
       "github-app-no-connections-message": "您没有任何现有的 GitHub 应用连接。请选择“连接到新应用”以创建一个连接。",
       "github-app-select-connection": "",
+      "github-enterprise-alert-body": "",
+      "github-enterprise-alert-title": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "配置存储库",
       "step-connect": "连接",
@@ -14840,6 +14877,7 @@
       "annotation-region-label": ""
     },
     "annotation-tooltip2": {
+      "cluster-header": "",
       "tooltip-delete": "删除",
       "tooltip-edit": "编辑"
     },

@@ -10,7 +10,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.303.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.20.0
 	k8s.io/apimachinery v0.35.1
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4
 )
@@ -135,7 +135,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.290.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.290.1 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect

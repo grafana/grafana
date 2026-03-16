@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import {
@@ -8,8 +9,9 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
 import { Options } from '../panelcfg.gen';
@@ -89,31 +91,36 @@ const renderValueFactory = (options: Options) => {
       count,
     }: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps?: DataLinksContextMenuApi
-  ): JSX.Element => (
-    <RadialGauge
-      alignmentFactors={alignmentFactors}
-      barWidthFactor={options.barWidthFactor}
-      endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
-      glowBar={options.effects?.barGlow}
-      glowCenter={options.effects?.centerGlow}
-      gradient={options.effects?.gradient}
-      height={height}
-      nameManualFontSize={options.text?.titleSize}
-      neutral={options.neutral}
-      onClick={menuProps?.openMenu}
-      roundedBars={options.barShape === 'rounded'}
-      segmentCount={options.segmentCount}
-      segmentSpacing={options.segmentSpacing}
-      shape={options.shape}
-      showScaleLabels={options.showThresholdLabels}
-      textMode={options.textMode}
-      thresholdsBar={options.showThresholdMarkers}
-      valueManualFontSize={options.text?.valueSize}
-      values={[value]}
-      vizCount={count}
-      width={width}
-    />
-  );
+  ): JSX.Element => {
+    let el = (
+      <RadialGauge
+        alignmentFactors={alignmentFactors}
+        barWidthFactor={options.barWidthFactor}
+        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
+        glowBar={options.effects?.barGlow}
+        glowCenter={options.effects?.centerGlow}
+        gradient={options.effects?.gradient}
+        height={height}
+        nameManualFontSize={options.text?.titleSize}
+        neutral={options.neutral}
+        roundedBars={options.barShape === 'rounded'}
+        segmentCount={options.segmentCount}
+        segmentSpacing={options.segmentSpacing}
+        shape={options.shape}
+        showScaleLabels={options.showThresholdLabels}
+        textMode={options.textMode}
+        thresholdsBar={options.showThresholdMarkers}
+        valueManualFontSize={options.text?.valueSize}
+        values={[value]}
+        vizCount={count}
+        width={width}
+      />
+    );
+    if (menuProps?.openMenu) {
+      el = <DataLinkMenuWrapper openMenu={menuProps.openMenu}>{el}</DataLinkMenuWrapper>;
+    }
+    return el;
+  };
 
   const renderValue = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>
@@ -134,3 +141,29 @@ const renderValueFactory = (options: Options) => {
 
   return renderValue;
 };
+
+function DataLinkMenuWrapper({
+  children,
+  openMenu,
+}: {
+  children: React.ReactNode;
+  openMenu: DataLinksContextMenuApi['openMenu'];
+}) {
+  const styles = useStyles2(getDataLinkMenuWrapperStyles);
+  return (
+    <button
+      className={styles}
+      onClick={openMenu}
+      aria-label={t('gauge.data-links-actions-menu', 'Open data links and actions menu')}
+    >
+      {children}
+    </button>
+  );
+}
+
+const getDataLinkMenuWrapperStyles = () =>
+  css({
+    cursor: 'context-menu',
+    background: 'none',
+    border: 'none',
+  });

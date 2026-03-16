@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -1697,7 +1698,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := common.RunGrafana(t)
+	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+	})
 	ctx := context.Background()
 
 	const repo = "job-permissions-test"
@@ -1710,11 +1713,14 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	}
 	helper.CreateRepo(t, testRepo)
 
-	jobSpec := provisioning.JobSpec{
+	adminJobBody := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
-	}
-	body := common.AsJSON(jobSpec)
+	})
+
+	editorJobBody := common.AsJSON(provisioning.JobSpec{
+		Action: provisioning.JobActionFixFolderMetadata,
+	})
 
 	t.Run("editor can POST jobs", func(t *testing.T) {
 		var statusCode int
@@ -1723,7 +1729,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -1745,7 +1751,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(editorJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
@@ -1761,7 +1767,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 			Resource("repositories").
 			Name(repo).
 			SubResource("jobs").
-			Body(body).
+			Body(adminJobBody).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&statusCode)
 
