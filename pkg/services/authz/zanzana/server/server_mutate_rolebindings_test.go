@@ -77,5 +77,4 @@ func TestIntegrationServerMutateRoleBindings(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 0)
 	})
-
 }
