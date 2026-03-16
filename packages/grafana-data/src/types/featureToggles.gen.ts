@@ -1626,6 +1626,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryTriage?: boolean;
   /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
+  /**
   * Whether to use the new React 19 runtime
   * @default false
   */

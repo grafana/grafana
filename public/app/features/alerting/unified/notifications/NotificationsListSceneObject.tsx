@@ -12,6 +12,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -285,18 +286,20 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
             </Stack>
           </Tooltip>
         </div>
-        <div className={styles.viewCol}>
-          <LinkButton
-            href={createRelativeUrl(
-              `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
-            )}
-            size="sm"
-            variant="secondary"
-            icon="eye"
-          >
-            <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
-          </LinkButton>
-        </div>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <div className={styles.viewCol}>
+            <LinkButton
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
+              )}
+              size="sm"
+              variant="secondary"
+              icon="eye"
+            >
+              <Trans i18nKey="alerting.notifications-list.view-link">View</Trans>
+            </LinkButton>
+          </div>
+        )}
       </div>
       {!isCollapsed && (
         <div className={styles.expandedRow}>
