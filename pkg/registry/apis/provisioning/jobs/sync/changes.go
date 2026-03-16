@@ -122,6 +122,9 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 						parentPath = parentPath + "/"
 					}
 					if existing, ok := lookup[parentPath]; ok {
+						if existing.Hash == file.Hash {
+							continue
+						}
 						changes = append(changes, ResourceFileChange{
 							Action:   repository.FileActionUpdated,
 							Path:     existing.Path,

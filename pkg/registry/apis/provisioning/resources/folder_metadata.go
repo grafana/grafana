@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -127,18 +128,23 @@ func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
 	return data, nil
 }
 
-// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
-func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, error) {
+func readFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, string, error) {
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
 	info, err := repo.Read(ctx, metadataPath, ref)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var f folders.Folder
 	if err := json.Unmarshal(info.Data, &f); err != nil {
-		return nil, fmt.Errorf("parse folder manifest: %w", err)
+		return nil, "", fmt.Errorf("parse folder manifest: %w", err)
 	}
-	return &f, nil
+	return &f, info.Hash, nil
+}
+
+// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
+func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, error) {
+	f, _, err := readFolderMetadata(ctx, repo, folderPath, ref)
+	return f, err
 }
 
 // WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
@@ -154,21 +160,44 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 	return folder.Name, nil
 }
 
+// ApplyFolderMetadata applies stable UID, title, and checksum from _folder.json.
+// Returns true when metadata supplied a non-empty title.
+func ApplyFolderMetadata(ctx context.Context, reader repository.Reader, f *Folder, ref string, folderMetadataEnabled bool) (hasTitle bool, err error) {
+	if !folderMetadataEnabled {
+		return false, nil
+	}
+
+	meta, hash, err := readFolderMetadata(ctx, reader, f.Path, ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
+
+	if meta.Name != "" {
+		f.ID = meta.Name
+	}
+	if meta.Spec.Title != "" {
+		f.Title = meta.Spec.Title
+		hasTitle = true
+	}
+	f.Checksum = hash
+	return hasTitle, nil
+}
+
 // GetFolderID returns the folder ID for the given path.
 // When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
 // If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
 // Returns an error if reading the metadata file fails for reasons other than not existing.
 func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
 	if folderMetadataEnabled {
-		meta, err := ReadFolderMetadata(ctx, reader, path, ref)
-		if err != nil {
-			// Only fall back to hash-based ID if the file doesn't exist
-			if !errors.Is(err, repository.ErrFileNotFound) {
-				return "", fmt.Errorf("read folder metadata: %w", err)
-			}
-			// File doesn't exist - fall back to hash-based ID
-		} else if meta.Name != "" {
-			return meta.Name, nil
+		f := Folder{Path: path}
+		if _, err := ApplyFolderMetadata(ctx, reader, &f, ref, true); err != nil {
+			return "", err
+		}
+		if f.ID != "" {
+			return f.ID, nil
 		}
 	}
 	return ParseFolder(path, reader.Config().Name).ID, nil

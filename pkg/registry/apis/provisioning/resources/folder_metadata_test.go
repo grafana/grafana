@@ -98,6 +98,38 @@ func TestWriteFolderMetadata(t *testing.T) {
 	})
 }
 
+func TestApplyFolderMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("no-op when folder metadata is disabled", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+
+		f := ParseFolder("team-a/project-x/", "test-repo")
+		hasTitle, err := ApplyFolderMetadata(ctx, reader, &f, "", false)
+		require.NoError(t, err)
+		require.False(t, hasTitle)
+		require.Equal(t, ParseFolder("team-a/project-x/", "test-repo").ID, f.ID)
+		require.Empty(t, f.Checksum)
+	})
+
+	t.Run("applies stable UID title and checksum when metadata exists", func(t *testing.T) {
+		reader := repository.NewMockReader(t)
+		manifest := NewFolderManifest("stable-uid-123", "Custom Title")
+		data, err := json.Marshal(manifest)
+		require.NoError(t, err)
+		reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
+			Return(&repository.FileInfo{Data: data, Hash: "meta-hash"}, nil)
+
+		f := ParseFolder("team-a/project-x/", "test-repo")
+		hasTitle, err := ApplyFolderMetadata(ctx, reader, &f, "", true)
+		require.NoError(t, err)
+		require.True(t, hasTitle)
+		require.Equal(t, "stable-uid-123", f.ID)
+		require.Equal(t, "Custom Title", f.Title)
+		require.Equal(t, "meta-hash", f.Checksum)
+	})
+}
+
 func TestMissingFolderMetadata_SentinelError(t *testing.T) {
 	t.Run("errors.Is matches ErrMissingFolderMetadata", func(t *testing.T) {
 		err := &MissingFolderMetadata{Path: "x/"}

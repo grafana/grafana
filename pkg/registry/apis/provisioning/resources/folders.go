@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,27 +89,6 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
-// applyFolderMetadata reads folder metadata for the given folder path and applies
-// the stable UID and title to given folder.
-// Returns true if a non-empty title was found in the metadata.
-func (fm *FolderManager) applyFolderMetadata(ctx context.Context, f *Folder) (hasFolderMetadataTitle bool, err error) {
-	meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, "")
-	if err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-		if meta.Spec.Title != "" {
-			f.Title = meta.Spec.Title
-			hasFolderMetadataTitle = true
-		}
-		return hasFolderMetadataTitle, nil
-	}
-	if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return false, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
-	}
-	return false, nil
-}
-
 // EnsureFoldersExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
 	cfg := fm.repo.Config()
@@ -124,7 +104,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	hasFolderMetadataTitle, err := fm.applyFolderMetadata(ctx, &f)
+	hasFolderMetadataTitle, err := ApplyFolderMetadata(ctx, fm.repo, &f, "", fm.folderMetadataEnabled)
 	if err != nil {
 		return "", err
 	}
@@ -141,7 +121,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		hasFolderMetadataTitle, err := fm.applyFolderMetadata(ctx, &f)
+		hasFolderMetadataTitle, err := ApplyFolderMetadata(ctx, fm.repo, &f, "", fm.folderMetadataEnabled)
 		if err != nil {
 			return err
 		}
@@ -177,7 +157,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-// - it will update the title if it has changed
+// - it will update metadata-backed properties if they have changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -190,17 +170,38 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
 
+		needsUpdate := false
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		if currentTitle != folder.Title {
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			needsUpdate = true
+		}
+
+		if folder.Checksum != "" {
+			meta, err := utils.MetaAccessor(obj)
+			if err != nil {
+				return fmt.Errorf("create meta accessor for existing object: %w", err)
+			}
+			currentSource, _ := meta.GetSourceProperties()
+			desiredSource := utils.SourceProperties{
+				Path:     strings.TrimSuffix(folder.Path, "/"),
+				Checksum: folder.Checksum,
+			}
+			if currentSource.Path != desiredSource.Path || currentSource.Checksum != desiredSource.Checksum {
+				meta.SetSourceProperties(desiredSource)
+				needsUpdate = true
+			}
+		}
+
+		if needsUpdate {
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
-			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
-				return fmt.Errorf("set folder title: %w", err)
-			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("update folder title: %w", err)
+				return fmt.Errorf("update folder: %w", err)
 			}
 		}
 
@@ -247,7 +248,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Identity: cfg.GetName(),
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
-		Path: folder.Path,
+		Path:     folder.Path,
+		Checksum: folder.Checksum,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {

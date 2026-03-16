@@ -158,8 +158,8 @@ func folderMetadataJSON(uid, title string) []byte {
 }
 
 // requireRepoFolderTitle lists all folders managed by repoName and asserts that
-// exactly one has the given title, returning its K8s name (UID).
-func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, expectedTitle string) string {
+// exactly one with the given sourcePath has the expected title, returning its K8s name (UID).
+func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, expectedSourcePath, expectedTitle string) string {
 	t.Helper()
 	var folderUID string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -172,15 +172,19 @@ func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context,
 			if mgr != repoName {
 				continue
 			}
+			srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			if srcPath != expectedSourcePath {
+				continue
+			}
 			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
 			if title == expectedTitle {
 				folderUID = f.GetName()
 				return
 			}
 		}
-		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
+		c.Errorf("no folder managed by %q at path %q with title %q found", repoName, expectedSourcePath, expectedTitle)
 	}, waitTimeoutDefault, waitIntervalDefault,
-		"expected folder with title %q for repo %q", expectedTitle, repoName)
+		"expected folder with title %q at path %q for repo %q", expectedTitle, expectedSourcePath, repoName)
 	return folderUID
 }
 
@@ -203,7 +207,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		// Full sync creates the folder with "Original" title.
 		helper.syncAndWait(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Original")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "my-team", "Original")
 
 		// Push commit changing _folder.json to a new title.
 		require.NoError(t, local.CreateFile("my-team/_folder.json", string(folderMetadataJSON("stable-uid-incr-1", "Updated"))))
@@ -216,7 +220,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		// Incremental sync should reconcile the title.
 		helper.syncAndWaitIncremental(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Updated")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "my-team/_folder.json", "Updated")
 	})
 
 	t.Run("updates nested folder title", func(t *testing.T) {
@@ -234,8 +238,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		// Full sync.
 		helper.syncAndWait(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Original")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent", "Parent Original")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent/child", "Child Title")
 
 		// Push commit changing only the parent's title.
 		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("parent-uid-nested", "Parent Updated"))))
@@ -248,8 +252,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		// Incremental sync should update parent title, child unchanged.
 		helper.syncAndWaitIncremental(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Updated")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent/_folder.json", "Parent Updated")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent/child", "Child Title")
 	})
 }
 
@@ -284,7 +288,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		helper.syncAndWaitIncremental(t, repoName)
 
 		// Verify the Grafana folder was created with the metadata title, not the directory name.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team Display Name")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "my-team", "My Team Display Name")
 	})
 
 	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
@@ -311,7 +315,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		helper.syncAndWaitIncremental(t, repoName)
 
 		// Should use directory name "reports" as the title.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "reports")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "reports", "reports")
 	})
 
 	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
@@ -337,7 +341,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		helper.syncAndWaitIncremental(t, repoName)
 
 		// Should use directory name "analytics" as the title.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "analytics")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "analytics", "analytics")
 	})
 
 	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
@@ -365,8 +369,8 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		helper.syncAndWaitIncremental(t, repoName)
 
 		// Both folders should use their metadata titles.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Display")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Display")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent", "Parent Display")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "parent/child", "Child Display")
 	})
 
 	t.Run("directory rename preserves metadata title", func(t *testing.T) {
@@ -383,7 +387,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 
 		// Full sync creates the folder with "My Team" title.
 		helper.syncAndWait(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "old-dir", "My Team")
 
 		// Rename directory via git mv (keeps _folder.json with same UID and title).
 		_, err := local.Git("mv", "old-dir", "new-dir")
@@ -395,6 +399,6 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 
 		// Incremental sync — title must remain "My Team" (from _folder.json), not "new-dir".
 		helper.syncAndWaitIncremental(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "new-dir", "My Team")
 	})
 }

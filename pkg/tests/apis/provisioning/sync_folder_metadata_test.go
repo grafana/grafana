@@ -222,8 +222,8 @@ func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper
 }
 
 // requireRepoFolderTitle lists all folders managed by repoName and asserts that
-// exactly one has the given title.
-func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedTitle string) {
+// exactly one with the given sourcePath has the expected title.
+func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedSourcePath, expectedTitle string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -235,14 +235,18 @@ func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper,
 			if mgr != repoName {
 				continue
 			}
+			srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			if srcPath != expectedSourcePath {
+				continue
+			}
 			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
 			if title == expectedTitle {
 				return
 			}
 		}
-		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
+		c.Errorf("no folder managed by %q at path %q with title %q found", repoName, expectedSourcePath, expectedTitle)
 	}, 30*time.Second, 100*time.Millisecond,
-		"expected folder with title %q for repo %q", expectedTitle, repoName)
+		"expected folder with title %q at path %q for repo %q", expectedTitle, expectedSourcePath, repoName)
 }
 
 // TestIntegrationProvisioning_FullSync_FolderMetadataTitleUpdate verifies that
@@ -268,14 +272,14 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitleUpdate(t *testing.T
 
 		// First sync creates the folder with "Original" title.
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "Original")
+		requireRepoFolderTitle(t, helper, repo, "my-team", "Original")
 
 		// Update _folder.json with a new title.
 		writeToProvisioningPath(t, helper, "my-team/_folder.json", folderMetadataJSON("stable-uid-update", "Updated"))
 
 		// Second sync should reconcile the title.
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "Updated")
+		requireRepoFolderTitle(t, helper, repo, "my-team", "Updated")
 	})
 
 	t.Run("no-op when _folder.json title matches", func(t *testing.T) {
@@ -296,11 +300,11 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitleUpdate(t *testing.T
 
 		// First sync.
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "Stable Title")
+		requireRepoFolderTitle(t, helper, repo, "my-team", "Stable Title")
 
 		// Second sync with no changes — title should still be the same.
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "Stable Title")
+		requireRepoFolderTitle(t, helper, repo, "my-team", "Stable Title")
 	})
 }
 
@@ -328,7 +332,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		helper.SyncAndWait(t, repo, nil)
 
-		requireRepoFolderTitle(t, helper, repo, "My Team Display Name")
+		requireRepoFolderTitle(t, helper, repo, "my-team", "My Team Display Name")
 	})
 
 	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
@@ -350,7 +354,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		helper.SyncAndWait(t, repo, nil)
 
-		requireRepoFolderTitle(t, helper, repo, "reports")
+		requireRepoFolderTitle(t, helper, repo, "reports", "reports")
 	})
 
 	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
@@ -369,7 +373,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		helper.SyncAndWait(t, repo, nil)
 
-		requireRepoFolderTitle(t, helper, repo, "analytics")
+		requireRepoFolderTitle(t, helper, repo, "analytics", "analytics")
 	})
 
 	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
@@ -391,8 +395,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		helper.SyncAndWait(t, repo, nil)
 
-		requireRepoFolderTitle(t, helper, repo, "Parent Display")
-		requireRepoFolderTitle(t, helper, repo, "Child Display")
+		requireRepoFolderTitle(t, helper, repo, "parent", "Parent Display")
+		requireRepoFolderTitle(t, helper, repo, "parent/child", "Child Display")
 	})
 
 	t.Run("directory rename preserves metadata title", func(t *testing.T) {
@@ -413,7 +417,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		// First sync creates the folder with "My Team" title.
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "My Team")
+		requireRepoFolderTitle(t, helper, repo, "old-dir", "My Team")
 
 		// Rename directory: old-dir → new-dir (keep _folder.json with same UID and title).
 		oldPath := path.Join(helper.ProvisioningPath, "old-dir")
@@ -422,6 +426,6 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 
 		// Second sync — title must remain "My Team" (from _folder.json), not "new-dir".
 		helper.SyncAndWait(t, repo, nil)
-		requireRepoFolderTitle(t, helper, repo, "My Team")
+		requireRepoFolderTitle(t, helper, repo, "new-dir", "My Team")
 	})
 }

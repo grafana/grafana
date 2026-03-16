@@ -497,6 +497,44 @@ func TestChanges(t *testing.T) {
 		require.NotNil(t, changes[0].Existing)
 	})
 
+	t.Run("_folder.json does not record update when metadata checksum is unchanged", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "same-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Hash: "same-hash"},
+				{Path: "my-folder/dashboard.json", Hash: "ghi", Resource: "dashboards"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target)
+		require.NoError(t, err)
+		require.Empty(t, changes)
+	})
+
+	t.Run("_folder.json records update when existing folder has no checksum yet", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Hash: ""},
+				{Path: "my-folder/dashboard.json", Hash: "ghi", Resource: "dashboards"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target)
+		require.NoError(t, err)
+		require.Len(t, changes, 1)
+		require.Equal(t, repository.FileActionUpdated, changes[0].Action)
+		require.Equal(t, "my-folder/", changes[0].Path)
+	})
+
 	t.Run("_folder.json does not record update when parent folder is new", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "new-folder/", Hash: "abc", Blob: false},

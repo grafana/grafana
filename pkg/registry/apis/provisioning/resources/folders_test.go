@@ -8,6 +8,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -95,7 +96,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		repo := repository.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
-		repo.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not found"))
+		repo.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not found")).Maybe()
 		return repo, cfg
 	}
 
@@ -331,6 +332,47 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Equal(t, "New Title", newTitle, "the updated object should have the new title")
 	})
 
+	t.Run("updates source metadata when it has changed", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				obj := managedFolder(name, "Same Title", cfg.Name)
+				meta, err := utils.MetaAccessor(obj)
+				require.NoError(t, err)
+				meta.SetSourceProperties(utils.SourceProperties{
+					Path:     "old-path",
+					Checksum: "old-checksum",
+				})
+				return obj, nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:       "folder-id",
+			Title:    "Same Title",
+			Path:     "new-path/",
+			Checksum: "new-checksum",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-id"}, client.updateCalls)
+
+		meta, err := utils.MetaAccessor(updatedObj)
+		require.NoError(t, err)
+		source, ok := meta.GetSourceProperties()
+		require.True(t, ok)
+		require.Equal(t, "new-path", source.Path)
+		require.Equal(t, "new-checksum", source.Checksum)
+	})
+
 	t.Run("returns error when update fails", func(t *testing.T) {
 		repo, cfg := newRepo(t)
 		tree := NewEmptyFolderTree()
@@ -352,7 +394,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		}, "")
 
 		require.Error(t, err)
-		require.ErrorContains(t, err, "update folder title")
+		require.ErrorContains(t, err, "update folder")
 		require.Equal(t, []string{"folder-id"}, client.updateCalls)
 	})
 
@@ -510,7 +552,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found"))
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found")).Maybe()
 
 		// Pre-populate tree with the parent's hash-derived ID so EnsureFolderPathExist
 		// finds it immediately without needing to create it.
@@ -539,7 +581,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found"))
+		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found")).Maybe()
 
 		parentFolder := ParseFolder("parent/", config.Name)
 
@@ -1027,8 +1069,6 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
-			Return(nil, errors.New("connection refused"))
 
 		// Pre-populate tree so the function returns early after ignoring the error.
 		tree := NewEmptyFolderTree()
