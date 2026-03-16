@@ -43,6 +43,12 @@ const (
 	labelPendingDelete = "cloud.grafana.com/pending-delete"
 )
 
+// IsPendingDelete reports whether an object's namespace is undergoing a
+// soft-delete, as indicated by the pending-delete label.
+func IsPendingDelete(labels map[string]string) bool {
+	return labels[labelPendingDelete] == "true"
+}
+
 type queueItem struct {
 	key      string
 	obj      interface{}
@@ -597,7 +603,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
-	if obj.Labels[labelPendingDelete] == "true" {
+	if IsPendingDelete(obj.Labels) {
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return nil
 	}
