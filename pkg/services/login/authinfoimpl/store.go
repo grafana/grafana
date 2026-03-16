@@ -257,6 +257,13 @@ func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	})
 }
 
+func (s *Store) DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM user_auth WHERE user_id = ? AND auth_module = ?", userID, authModule)
+		return err
+	})
+}
+
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
 func (s *Store) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
