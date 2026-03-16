@@ -50,7 +50,7 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     id: 'canvasSwitchEditor',
     path: 'annotations',
     category,
-    name: t('grafana-ui.builder.annotations.canvasControls.name', 'Enable annotation indicators'),
+    name: t('grafana-ui.builder.annotations.canvasControls.name', 'Hide lines and areas'),
     description: t(
       'grafana-ui.builder.annotations.canvasControls.desc',
       'Displays annotation indicator lines and shaded regions'

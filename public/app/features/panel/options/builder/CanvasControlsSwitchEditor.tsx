@@ -18,27 +18,21 @@ export const CanvasControlsSwitchEditor = ({
   return (
     <Switch
       id={id}
-      value={isEnabled(value)}
-      onChange={(event) =>
-        onChange(
-          event?.currentTarget.checked
-            ? { ...value, ...CANVAS_CONTROLS_ENABLED }
-            : { ...value, ...CANVAS_CONTROLS_DISABLED }
-        )
-      }
+      value={isHidden(value)}
+      onChange={(event) => onChange(event?.currentTarget.checked ? CANVAS_CONTROLS_DISABLED : CANVAS_CONTROLS_ENABLED)}
     />
   );
 };
 
-const isEnabled = (options: VizAnnotations | undefined): boolean => {
+const isHidden = (options: VizAnnotations | undefined): boolean => {
   // If multiLane is enabled we do not render canvas controls until the user has set a value
   if (options?.regions === undefined && options?.lines === undefined) {
-    return !options?.multiLane;
+    return !!options?.multiLane;
   }
 
-  if (!options?.regions?.opacity || !options?.lines?.width) {
+  if (options?.regions?.opacity && options?.lines?.width) {
     return false;
   }
 
-  return options.regions.opacity > 0 && options.lines.width > 0;
+  return true;
 };
