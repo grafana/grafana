@@ -182,11 +182,12 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 
 func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	tests := []struct {
-		name          string
-		setupMocks    func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
-		changes       []ResourceFileChange
-		expectedError string
-		description   string
+		name                  string
+		setupMocks            func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
+		changes               []ResourceFileChange
+		expectedError         string
+		description           string
+		folderMetadataEnabled bool
 	}{
 		{
 			name:        "too many errors",
@@ -571,8 +572,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "successful apply with folder deletion",
-			description: "Should successfully apply changes when deleting an existing folder",
+			name:                  "successful apply with folder deletion",
+			description:           "Should successfully apply changes when deleting an existing folder",
+			folderMetadataEnabled: true,
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionDeleted,
@@ -748,7 +750,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			})
 
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
