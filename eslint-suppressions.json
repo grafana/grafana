@@ -1065,11 +1065,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/SplitPaneWrapper/SplitPaneWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
