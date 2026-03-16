@@ -85,7 +85,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 
 func TestResourcePermissions_FilterList(t *testing.T) {
 	// In this test, the user has permission to access only fold-1 and dash-2.
-	// We verify that FilterList returns only those two objects.
+	// We verify that FilterList returns only those two objects (uses BatchCheck).
 
 	list := &iamv0.ResourcePermissionList{
 		Items: []iamv0.ResourcePermission{
@@ -95,13 +95,18 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		},
 	}
 
-	// CanViewTarget (used by FilterList) calls Check per item. Allow fold-1 and dash-2 (dash-2 with parent fold-1).
-	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+	// FilterList uses CanViewTargets -> BatchCheck. Allow fold-1 (index 0) and dash-2 (index 2), deny fold-2 (index 1).
+	batchCheckFunc := func(_ context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
 		require.NotNil(t, id)
 		require.Equal(t, "user:u001", id.GetUID())
 		require.Equal(t, "org-2", id.GetNamespace())
-		allowed := (req.Name == "fold-1") || (req.Name == "dash-2" && folder == "fold-1")
-		return types.CheckResponse{Allowed: allowed}, nil
+		require.Len(t, req.Checks, 3)
+		results := make(map[string]types.BatchCheckResult)
+		for _, c := range req.Checks {
+			allowed := (c.Name == "fold-1") || (c.Name == "dash-2" && c.Folder == "fold-1")
+			results[c.CorrelationID] = types.BatchCheckResult{Allowed: allowed}
+		}
+		return types.BatchCheckResponse{Results: results}, nil
 	}
 
 	getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
@@ -111,7 +116,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		return "", nil
 	}
 
-	accessClient := &fakeAccessClient{checkFunc: checkFunc}
+	accessClient := &fakeAccessClient{batchCheckFunc: batchCheckFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 	ctx := types.WithAuthInfo(context.Background(), user)
@@ -119,7 +124,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 	obj, err := resPermAuthz.FilterList(ctx, list)
 	require.NoError(t, err)
 	require.NotNil(t, list)
-	require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
+	require.True(t, accessClient.batchCheckCalled, "accessClient.BatchCheck should be called")
 	require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
 
 	filtered, ok := obj.(*iamv0.ResourcePermissionList)
