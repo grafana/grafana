@@ -11,10 +11,15 @@ function isExpired<T>(item: StoredValueWithTTL<T>, ttlMs: number): boolean {
   return Date.now() - item.timestamp > ttlMs;
 }
 
-/**
- * Read a TTL-wrapped value from localStorage (non-hook, for use outside React components).
- * Returns null if missing or expired.
- */
+export const setLocalStorageWithTTL = (key: string, value: boolean) => {
+  const item: StoredValueWithTTL<boolean> = {
+    value,
+    timestamp: Date.now(),
+  };
+
+  store.setObject(key, item);
+};
+
 export function getLocalStorageWithTTL<T>(key: string, ttlMs: number = ONE_WEEK_MS): T | null {
   const item = store.getObject<StoredValueWithTTL<T>>(key);
   if (!item || typeof item.timestamp !== 'number' || isExpired(item, ttlMs)) {

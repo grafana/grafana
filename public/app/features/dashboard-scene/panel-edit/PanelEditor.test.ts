@@ -420,7 +420,7 @@ interface SetupOptions {
 async function setup(options: SetupOptions = {}) {
   const panelPluginId = options.pluginId ?? 'text';
   const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery });
-  let pluginResolve = (plugin: PanelPlugin) => {};
+  let pluginResolve = (plugin: PanelPlugin) => { };
 
   pluginPromise = new Promise<PanelPlugin>((resolve) => {
     pluginResolve = resolve;
