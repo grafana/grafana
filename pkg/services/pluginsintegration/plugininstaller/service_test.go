@@ -21,10 +21,10 @@ import (
 
 func TestService_IsDisabled(t *testing.T) {
 	tests := []struct {
-		name                  string
-		preinstallPluginsSync []setting.InstallPlugin
+		name                   string
+		preinstallPluginsSync  []setting.InstallPlugin
 		preinstallPluginsAsync []setting.InstallPlugin
-		expectedDisabled      bool
+		expectedDisabled       bool
 	}{
 		{
 			name:                   "enabled when async plugins are configured",
