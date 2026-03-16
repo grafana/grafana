@@ -18,9 +18,9 @@ import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboa
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from './DashboardAssistantViewMode';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-import { ViewModePanelPromptCard } from './ViewModePanelPromptCard';
+import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from './assistant/DashboardAssistantViewMode';
+import { ViewModePanelPromptCard } from './assistant/ViewModePanelPromptCard';
 
 interface Props {
   dashboard: DashboardScene;

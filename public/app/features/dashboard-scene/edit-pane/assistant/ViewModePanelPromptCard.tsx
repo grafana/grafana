@@ -10,9 +10,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { ElementSelection } from './ElementSelection';
+import { ElementSelection } from '../ElementSelection';
+import { EditPaneSelectionActions } from '../types';
+
 import { panelHasData } from './PanelAssistantHint';
-import { EditPaneSelectionActions } from './types';
 
 interface ViewModePanelPromptCardProps {
   selection: ElementSelection | undefined;

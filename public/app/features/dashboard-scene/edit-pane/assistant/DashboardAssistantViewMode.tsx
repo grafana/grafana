@@ -6,9 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneObject, VizPanel } from '@grafana/scenes';
 
-import { ElementSelection } from './ElementSelection';
+import { ElementSelection } from '../ElementSelection';
+import { EditPaneSelectionActions } from '../types';
+
 import { panelHasData, useAssistantPanelHints } from './PanelAssistantHint';
-import { EditPaneSelectionActions } from './types';
 
 interface DashboardAssistantViewModeProps {
   dashboard: SceneObject;
