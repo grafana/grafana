@@ -5,7 +5,8 @@ export function nullToValue(frame: DataFrame) {
   return {
     ...frame,
     fields: frame.fields.map((field) => {
-      const noValue = +field.config?.noValue!;
+      const noValueConfig = field.config?.noValue;
+      const noValue = noValueConfig !== '' && noValueConfig != null ? +noValueConfig : NaN;
 
       if (!Number.isNaN(noValue)) {
         const transformedVals = field.values.slice();

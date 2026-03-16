@@ -4,7 +4,14 @@ export function nullToValue(frame: DataFrame) {
   return {
     ...frame,
     fields: frame.fields.map((field) => {
-      const noValue = Number(field.config.noValue);
+      const noValueConfig = field.config.noValue;
+
+      // Number('') returns 0, which would incorrectly replace nulls with 0
+      if (noValueConfig === '' || noValueConfig == null) {
+        return field;
+      }
+
+      const noValue = Number(noValueConfig);
 
       if (!Number.isNaN(noValue)) {
         return nullToValueField(field, noValue);
