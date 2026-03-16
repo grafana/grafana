@@ -164,7 +164,6 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
       series: [],
       timeRange: getDefaultTimeRange(),
     },
-    isLoading: false,
     queryError: undefined,
     ...qrState,
   };
@@ -195,6 +194,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
+    pendingSavedQuery: null,
+    setPendingSavedQuery: jest.fn(),
+    showVersionBanner: false,
     ...uiStateOverrides,
   };
 

@@ -13,14 +13,19 @@ import { useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
+  useQueryEditorBanner: jest.fn().mockReturnValue({ showBanner: false, dismissBanner: jest.fn() }),
+}));
+
+jest.mock('../QueryEditorBanner', () => ({
+  QueryEditorBanner: () => <div data-testid="query-editor-banner" />,
 }));
 
 jest.mock('./QueryEditor/QueryEditorContextWrapper', () => ({
   QueryEditorContextWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock('./QueryEditor/Sidebar/QueryEditorSidebar', () => ({
-  QueryEditorSidebar: () => <div data-testid="query-editor-sidebar" />,
+jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
+  Sidebar: () => <div data-testid="query-editor-sidebar" />,
 }));
 
 // Minimal mock so instanceof checks in VizAndDataPaneNext work without scene setup

@@ -15,7 +15,7 @@ import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { parse } from '../../../utils/rule-id';
 import { MetaText } from '../../MetaText';
-import { AnnotationValue } from '../../rule-viewer/tabs/Details';
+import { AnnotationValue } from '../../rule-viewer/Details';
 import { ErrorMessageRow } from '../state-history/ErrorMessageRow';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';

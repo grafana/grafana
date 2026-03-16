@@ -26,6 +26,9 @@ const withDefaults = (
         if (s.options?.reduceOptions) {
           s.options.reduceOptions.limit = 4;
         }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
+        }
       },
     },
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
@@ -42,32 +45,10 @@ export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options,
     return;
   }
 
-  const suggestedRange = dataSummary.rawFrames?.reduce(
-    ([min, max], frame) => {
-      let newMin = min;
-      let newMax = max;
-      for (const f of frame.fields) {
-        if (f.type === FieldType.number) {
-          newMin = Math.min(newMin, f.state?.calcs?.min ?? Infinity);
-          newMax = Math.max(newMax, f.state?.calcs?.max ?? -Infinity);
-        }
-      }
-      return [newMin, newMax];
-    },
-    [Infinity, -Infinity]
-  );
-
-  let fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> | undefined = undefined;
-  if (suggestedRange && suggestedRange.every(isFinite)) {
-    const delta = suggestedRange[1] - suggestedRange[0];
-    fieldConfig = {
-      defaults: {
-        min: Math.floor(suggestedRange[0] - delta * 0.1),
-        max: Math.ceil(suggestedRange[1] + delta * 0.1),
-      },
-      overrides: [],
-    };
-  }
+  const fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> = {
+    defaults: {},
+    overrides: [],
+  };
 
   const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
     {

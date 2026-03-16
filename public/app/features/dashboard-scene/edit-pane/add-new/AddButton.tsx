@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { IconName, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Button } from '@grafana/ui';
@@ -7,21 +7,26 @@ type AddButtonProps = {
   icon: IconName;
   label: string;
   onClick: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   tooltip?: string;
+  className?: string;
+  tabIndex?: number;
   disabled?: boolean;
 };
 
-export function AddButton({ icon, label, tooltip, onClick, disabled }: AddButtonProps) {
+export function AddButton({ icon, label, tooltip, tabIndex, onClick, onKeyDown, className, disabled }: AddButtonProps) {
   const styles = useStyles2(getStyles);
   return (
     <Button
-      className={styles.iconButton}
+      className={cx(styles.iconButton, className)}
       variant="secondary"
       fill="outline"
       size="lg"
+      tabIndex={tabIndex}
       icon={icon}
       tooltip={tooltip}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       disabled={disabled}
     >
       {label}

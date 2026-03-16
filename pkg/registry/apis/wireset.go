@@ -28,7 +28,6 @@ import (
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
-	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	iam.ProvideNoopRoleApiInstaller,
 	iam.ProvideNoopGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
@@ -52,6 +51,7 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
+	extras.ProvideQuotaGetter,
 )
 
 var WireSet = wire.NewSet(
