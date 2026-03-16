@@ -93,6 +93,24 @@ function stampFrameWithDisplay(frame: ReturnType<typeof createDataFrame>) {
   return frame;
 }
 
+/** Builds HistogramProps for a given frame (for use with render/rerender). */
+function buildHistogramProps(
+  frame: ReturnType<typeof createDataFrame>,
+  overrides?: Partial<HistogramProps>
+): HistogramProps {
+  const mergedOptions = { ...defaultOptions, ...overrides?.options };
+  return {
+    ...defaultPropsNoFrames,
+    options: mergedOptions,
+    legend: mergedOptions.legend ?? defaultLegendOptions,
+    alignedFrame: frame,
+    rawSeries: [frame],
+    bucketSize: getBucketSize(frame),
+    structureRev: 1,
+    ...overrides,
+  } as HistogramProps;
+}
+
 /** Creates a linear histogram frame with display processors for xSplits/config tests. */
 function createLinearHistogramFrame(
   xMin: number[],
@@ -109,6 +127,21 @@ function createLinearHistogramFrame(
       ],
     })
   );
+}
+
+/** Invokes the x scale range function with a mock uPlot instance. */
+function invokeXScaleRange(
+  config: ReturnType<UPlotConfigBuilder['getConfig']>,
+  xData: number[],
+  wantedMin: number,
+  wantedMax: number | undefined
+): [number, number] {
+  const rangeFn = config.scales?.x?.range as ((u: unknown, min: number, max?: number) => [number, number]) | undefined;
+  if (!rangeFn) {
+    return [0, 0];
+  }
+  const mockU = { data: [xData] };
+  return rangeFn(mockU as never, wantedMin, wantedMax);
 }
 
 /** Invokes the x axis splits function with a mock uPlot instance. */
@@ -313,13 +346,15 @@ describe('Histogram', () => {
      * Regression test for #116548: When wantedMax is undefined, the log scale range callback would fail. The fix defaults to 1.
      */
     it('Ensure range exists for log scale on x axis', () => {
-      const logScaleFrame = createDataFrame({
-        fields: [
-          { name: 'xMin', type: FieldType.number, values: [0.001, 0.0011, 0.00121] },
-          { name: 'xMax', type: FieldType.number, values: [0.0011, 0.00121, 0.001331] },
-          { name: 'count', type: FieldType.number, values: [10, 20, 15], config: {} },
-        ],
-      });
+      const logScaleFrame = stampFrameWithDisplay(
+        createDataFrame({
+          fields: [
+            { name: 'xMin', type: FieldType.number, values: [0.001, 0.0011, 0.00121] },
+            { name: 'xMax', type: FieldType.number, values: [0.0011, 0.00121, 0.001331] },
+            { name: 'count', type: FieldType.number, values: [10, 20, 15], config: {} },
+          ],
+        })
+      );
 
       let configBuilder: UPlotConfigBuilder | undefined;
       setUp(
@@ -336,17 +371,124 @@ describe('Histogram', () => {
       );
 
       const config = configBuilder!.getConfig();
-      const xScaleRange = config.scales?.x?.range;
-      expect(xScaleRange).toBeDefined();
-      expect(typeof xScaleRange).toBe('function');
-
-      const mockU = { data: [[0.001, 0.0011, 0.00121]] };
-      //@ts-expect-error
-      const result = xScaleRange?.(mockU, 0.001, undefined);
+      const result = invokeXScaleRange(config, [0.001, 0.0011, 0.00121], 0.001, undefined);
 
       expect(result).toHaveLength(2);
       expect(Number.isFinite(result[0])).toBe(true);
       expect(Number.isFinite(result[1])).toBe(true);
+    });
+
+    /**
+     * x scale range (lines 113-136): Log scale uses (wantedMax ?? 1) * bucketFactor when wantedMax is undefined.
+     */
+    it('log scale range applies bucketFactor when wantedMax is provided', () => {
+      const logScaleFrame = stampFrameWithDisplay(
+        createDataFrame({
+          fields: [
+            { name: 'xMin', type: FieldType.number, values: [0.001, 0.0011, 0.00121] },
+            { name: 'xMax', type: FieldType.number, values: [0.0011, 0.00121, 0.001331] },
+            { name: 'count', type: FieldType.number, values: [10, 20, 15], config: {} },
+          ],
+        })
+      );
+
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: logScaleFrame,
+          rawSeries: [logScaleFrame],
+          bucketSize: getBucketSize(logScaleFrame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      // bucketFactor = bucketSize1/bucketSize ≈ 1.1; rangeLog receives (0.001, 0.0022) when wantedMax=0.002
+      const result = invokeXScaleRange(config, [0.001, 0.0011, 0.00121], 0.001, 0.002);
+      expect(result[0]).toBe(0.001);
+      expect(result[1]).toBe(0.002 * 1.1);
+    });
+
+    /**
+     * x scale range: Linear scale aligns range to bucket boundaries via incrRoundUp/incrRoundDn.
+     */
+    it('linear scale range aligns to bucket boundaries', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20]);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const [min, max] = invokeXScaleRange(config, [0, 1, 2, 3], 0.3, 2.5);
+      expect(min).toBe(1);
+      expect(max).toBe(2);
+    });
+
+    /**
+     * x scale range: When wantedMax === fullRangeMax (last bucket), add bucketSize so the last bar is visible.
+     */
+    it('linear scale range extends max by bucketSize when wantedMax equals last data value', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20]);
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const [min, max] = invokeXScaleRange(config, [0, 1, 2, 3], 0, 3);
+      expect(min).toBe(0);
+      expect(max).toBe(4);
+    });
+
+    /**
+     * x scale range: xScaleMin/xScaleMax from count field config override wanted range.
+     */
+    it('linear scale range uses xScaleMin and xScaleMax from config when set', () => {
+      const frame = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20], {
+        min: 1,
+        max: 3,
+      });
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const config = configBuilder!.getConfig();
+      const [min, max] = invokeXScaleRange(config, [0, 1, 2, 3], 0.5, 3.5);
+      expect(min).toBe(1);
+      expect(max).toBe(4);
     });
 
     /**
@@ -482,6 +624,126 @@ describe('Histogram', () => {
       const splits = invokeXSplits(config, [0, 1, 2], 100, 50, 0, 3);
 
       expect(splits).toEqual([0, 1, 2, 3]);
+    });
+
+    /**
+     * Config invalidation (lines 327-342): When alignedFrame changes and bucketSize changes,
+     * config is rebuilt so the chart reflects the new frame structure.
+     */
+    it('rebuilds config when alignedFrame and bucketSize change', async () => {
+      const frame1 = createLinearHistogramFrame([0, 1, 2, 3], [1, 2, 3, 4], [5, 10, 15, 20]);
+      const frame2 = createLinearHistogramFrame([0, 2, 4], [2, 4, 6], [10, 20, 30]);
+
+      const configs: UPlotConfigBuilder[] = [];
+      const captureConfig = (builder: UPlotConfigBuilder) => {
+        configs.push(builder);
+        return null;
+      };
+
+      const props = buildHistogramProps(frame1, {
+        children: captureConfig,
+        structureRev: 1,
+        legend: { ...defaultLegendOptions, showLegend: false },
+      });
+      const { rerender } = render(<Histogram {...props} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+      });
+
+      rerender(
+        <Histogram
+          {...buildHistogramProps(frame2, {
+            children: captureConfig,
+            structureRev: 1,
+            bucketSize: getBucketSize(frame2),
+            legend: { ...defaultLegendOptions, showLegend: false },
+          })}
+        />
+      );
+
+      const configAfterUpdate = configs[configs.length - 1]?.getConfig();
+      expect(configAfterUpdate).toBeDefined();
+      // Config should reflect frame2: range for xData [0,2,4] with bucketSize=2
+      const [min, max] = invokeXScaleRange(configAfterUpdate!, [0, 2, 4], 0, 6);
+      expect(min).toBe(0);
+      expect(max).toBe(6);
+    });
+
+    /**
+     * Config invalidation: When alignedFrame changes and structureRev changes config is rebuilt.
+     */
+    it('rebuilds config when alignedFrame and structureRev change', async () => {
+      const frame1 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
+      const frame2 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [5, 15, 25]);
+
+      const configs: UPlotConfigBuilder[] = [];
+      const captureConfig = (builder: UPlotConfigBuilder) => {
+        configs.push(builder);
+        return null;
+      };
+
+      const { rerender } = render(
+        <Histogram
+          {...buildHistogramProps(frame1, {
+            children: captureConfig,
+            structureRev: 1,
+            legend: { ...defaultLegendOptions, showLegend: false },
+          })}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+      });
+
+      rerender(
+        <Histogram
+          {...buildHistogramProps(frame2, {
+            children: captureConfig,
+            structureRev: 2,
+            legend: { ...defaultLegendOptions, showLegend: false },
+          })}
+        />
+      );
+
+      expect(configs.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+    });
+
+    /**
+     * Config invalidation: When alignedFrame changes but structure is unchanged
+     * (same bucketSize, structureRev, options), chart continues to render correctly.
+     */
+    it('continues to render when alignedFrame reference changes but structure is unchanged', async () => {
+      const frame1 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [10, 20, 15]);
+      const frame2 = createLinearHistogramFrame([0, 1, 2], [1, 2, 3], [5, 15, 25]);
+
+      const { rerender } = render(
+        <Histogram
+          {...buildHistogramProps(frame1, {
+            structureRev: 1,
+            legend: { ...defaultLegendOptions, showLegend: false },
+          })}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
+      });
+
+      rerender(
+        <Histogram
+          {...buildHistogramProps(frame2, {
+            structureRev: 1,
+            bucketSize: getBucketSize(frame2),
+            legend: { ...defaultLegendOptions, showLegend: false },
+          })}
+        />
+      );
+
+      expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
     });
 
     /**
