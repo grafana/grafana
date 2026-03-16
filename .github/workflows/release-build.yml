@@ -111,7 +111,7 @@ jobs:
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
             let workflow = 'release-build.yml';
 
-            if (REF == 'main') {
+            if (REF == 'main' && SOURCE_EVENT == 'push') {
               workflow = 'release-build-pro.yml';
             }
 

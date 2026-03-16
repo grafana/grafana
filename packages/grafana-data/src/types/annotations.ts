@@ -49,6 +49,7 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
+  // @todo this is actually a number, and sending a string will break the API response! https://github.com/grafana/grafana/issues/120097
   id?: string;
   from: number;
   to: number;

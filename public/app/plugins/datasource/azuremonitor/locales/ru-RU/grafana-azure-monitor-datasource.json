@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "Идентификатор клиента",
       "aria-label-client-secret": "Секрет клиента",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Секрет клиента",
       "aria-label-tenant-id": "Идентификатор клиента",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "Идентификатор приложения (клиента)",
       "label-client-secret": "Секрет клиента",
+      "label-private-key": "",
       "label-symbol-client-secret": "Секрет клиента",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "Идентификатор каталога (клиента)",
       "placeholder-symbol-client-secret": "установлен",
       "reset-symbol-client-secret": "Сброс"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Выберите тип аутентификации для служб Azure.",
-      "label-authentication": "Аутентификация",
+      "label-authentication": "",
       "title-authentication": "Аутентификация"
     },
     "basic-logs-toggle": {

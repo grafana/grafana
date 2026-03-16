@@ -271,7 +271,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
         <div className={styles.viewCol}>
           <LinkButton
             href={createRelativeUrl(
-              `/alerting/notifications-history/view/${record.uuid}/${encodeURIComponent(record.timestamp)}`
+              `/alerting/notifications-history/view/${record.uuid}?ts=${new Date(record.timestamp).getTime()}`
             )}
             size="sm"
             variant="secondary"
@@ -365,7 +365,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
             <Stack direction="row" gap={1} alignItems="center">
               <Text variant="bodySmall" color="secondary">
                 <strong>
-                  <Trans i18nKey="alerting.notifications-scene.labels">Labels:</Trans>
+                  <Trans i18nKey="alerting.notifications-scene.group-labels">Group Labels:</Trans>
                 </strong>
               </Text>
               <AlertLabels labels={filteredLabels} size="sm" />

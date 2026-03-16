@@ -601,6 +601,14 @@ var (
 			Owner:           identityAccessTeam,
 		},
 		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1929,6 +1937,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertEnrichmentPreview",
+			Description:  "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingImportAlertmanagerAPI",
 			Description:  "Enables the API to import Alertmanager configuration",
 			Stage:        FeatureStageExperimental,
@@ -2491,6 +2507,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesSsoSettingsApi",
+			Description:  "Enables SSO settings APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2509,6 +2533,14 @@ var (
 		{
 			Name:         "kubernetesTeamSync",
 			Description:  "Use the new APIs for syncing users to teams",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamService",
+			Description:  "Use the new team service that uses the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
