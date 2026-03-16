@@ -3666,6 +3666,9 @@ __metadata:
     "@grafana/runtime": "npm:13.0.0-pre"
     "@grafana/schema": "npm:13.0.0-pre"
     "@grafana/ui": "npm:13.0.0-pre"
+    "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
+    "@rollup/plugin-image": "npm:3.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:16.3.0"
@@ -3678,6 +3681,7 @@ __metadata:
     react: "npm:18.3.1"
     react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
+    rollup: "npm:4.59.0"
     rxjs: "npm:7.8.2"
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
@@ -30192,7 +30196,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:^4.22.4":
+"rollup@npm:4.59.0, rollup@npm:^4.22.4":
   version: 4.59.0
   resolution: "rollup@npm:4.59.0"
   dependencies:
