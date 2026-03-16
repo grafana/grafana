@@ -14,12 +14,7 @@ import {
   ImportDashboardDTO,
   LibraryPanelInputState,
 } from '../../types';
-import {
-  uidDescriptionFallback,
-  uidDescriptionI18nKey,
-  uidLabelFallback,
-  uidLabelI18nKey,
-} from '../utils/uidFieldText';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 
 import { LibraryPanelsList } from './LibraryPanelsList';
@@ -93,8 +88,8 @@ export function ImportForm({
           />
         </Field>
         <Field
-          label={t(uidLabelI18nKey, uidLabelFallback)}
-          description={t(uidDescriptionI18nKey, uidDescriptionFallback)}
+          label={getUidFieldLabel()}
+          description={getUidFieldDescription()}
           invalid={!!errors.uid}
           error={errors.uid?.message}
           noMargin

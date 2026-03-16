@@ -9,7 +9,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardInput, DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
-import { uidDescriptionFallback, uidDescriptionI18nKey, uidLabelFallback, uidLabelI18nKey } from '../utils/uidFieldText';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
@@ -86,8 +86,8 @@ export const ImportDashboardFormV2 = ({
       </Field>
 
       <Field
-        label={t(uidLabelI18nKey, uidLabelFallback)}
-        description={t(uidDescriptionI18nKey, uidDescriptionFallback)}
+        label={getUidFieldLabel()}
+        description={getUidFieldDescription()}
         invalid={!!errors.k8s?.name}
         error={errors.k8s?.name?.message}
         noMargin
