@@ -13,3 +13,4 @@ canonical: https://grafana.com/docs/grafana/latest/developer-resources/data-mode
 # Grafana Data Model
 
 Lorem Ipsum
+

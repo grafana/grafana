@@ -23,10 +23,11 @@ Refer to the [Contribute to Grafana](https://grafana.com/docs/grafana-cloud/deve
 
 ## Data Model and the Grafana developer portal
 
-Go to the [Grafana developer portal](https://grafana.com/developers) to access the following documentation:
+You can learn about the Grafana Data Model and the Data Plane contract in [Grafana Data Model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/data-model/index.md).
+
+Refer to the [Grafana developer portal](https://grafana.com/developers) to access the following documentation:
 
 - [Grafana plugin development tools](https://grafana.com/developers/plugin-tools)
-- [Grafana data model](https://grafana.com/developers/dataplane)
 - [Grafana React components library](https://developers.grafana.com)
 - [Grafana Scenes library](https://grafana.com/developers/scenes)
 
