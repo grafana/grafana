@@ -2349,6 +2349,7 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
+      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -6745,6 +6746,9 @@
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
     },
+    "dashboard-links-list": {
+      "add-link": "Add link"
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
     },
@@ -7024,6 +7028,13 @@
       "type-dashboards": "Dashboards",
       "type-link": "Link",
       "with-tags": "With tags"
+    },
+    "links-list": {
+      "drag-end-description": "Reorder links list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})"
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
@@ -7381,6 +7392,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -12788,6 +12806,7 @@
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
+      "error-quota-exceeded-message-onprem": "This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12801,6 +12820,7 @@
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
+      "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
     "code-block": {
@@ -12847,7 +12867,8 @@
     "connect-repository-button": {
       "configure": "Configure",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
-      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories"
+      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories",
+      "max-repos-reached-tooltip-onprem": "Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration."
     },
     "connect-step": {
       "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
@@ -13051,7 +13072,7 @@
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "url-description": "The Git repository URL",
+      "url-description": "The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
     },
@@ -13178,21 +13199,23 @@
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
       "message-both-resources_one": "and {{count}} synced resource per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-repositories-info_one": "Your account is limited to {{count}} connected repository",
-      "message-repositories-info_other": "Your account is limited to {{count}} connected repositories",
-      "message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
-      "message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_other": "Your account is limited to {{count}} connected repositories.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
+      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
-      "note-message-both-repositories_one": "Your account is limited to {{count}} connected repository",
-      "note-message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "note-message-both-resources_one": "and {{count}} synced resource per repository. To increase limits,",
-      "note-message-both-resources_other": "and {{count}} synced resources per repository. To increase limits,",
-      "note-message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
-      "note-message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
-      "note-message-resource_one": "Your account is limited to {{count}} synced resource per repository. To add more resources,",
-      "note-message-resource_other": "Your account is limited to {{count}} synced resources per repository. To add more resources,",
+      "to-increase-limits": "To add more {{type}},",
+      "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
