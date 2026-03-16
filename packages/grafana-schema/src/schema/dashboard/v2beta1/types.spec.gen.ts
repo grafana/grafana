@@ -1014,6 +1014,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	query: DataQueryKind;
 	regex: string;
 	regexApplyTo?: VariableRegexApplyTo;
@@ -1135,6 +1136,7 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	origin?: ControlSourceRef;
 }
 
@@ -1166,6 +1168,7 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	origin?: ControlSourceRef;
 }
 
@@ -1203,6 +1206,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 	origin?: ControlSourceRef;
 }
@@ -1246,6 +1250,7 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	origin?: ControlSourceRef;
 }
 
@@ -1286,6 +1291,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 	valuesFormat?: "csv" | "json";
 	origin?: ControlSourceRef;
@@ -1331,6 +1337,7 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	origin?: ControlSourceRef;
 }
 
@@ -1370,6 +1377,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 	origin?: ControlSourceRef;
 }
@@ -1439,6 +1447,7 @@ export interface SwitchVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	origin?: ControlSourceRef;
 }
 

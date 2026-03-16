@@ -824,6 +824,7 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
@@ -858,6 +859,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 }
 
 // Text variable kind
@@ -878,6 +880,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 }
 
 // Constant variable kind
@@ -904,6 +907,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -930,6 +934,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 }
 
 // Interval variable kind
@@ -951,6 +956,7 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 	valuesFormat?: "csv" | "json"
 }
@@ -976,6 +982,7 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 }
 
 // Group variable kind
@@ -995,6 +1002,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -1036,6 +1044,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
+	docsUrl?:      string
 }
 
 SwitchVariableKind: {

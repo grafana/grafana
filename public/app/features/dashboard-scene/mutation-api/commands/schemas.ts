@@ -118,6 +118,7 @@ const commonVariableSpecFields = {
   name: z.string().describe('The name of the variable. Must be unique within the dashboard.'),
   label: z.string().optional().describe('The label of the variable displayed in the UI dropdown'),
   description: z.string().optional().describe('The description of the variable, shown as tooltip'),
+  docsUrl: z.string().optional().describe('Optional URL opened when the variable info icon is clicked'),
   hide: variableHideSchema,
   skipUrlSync: z
     .boolean()

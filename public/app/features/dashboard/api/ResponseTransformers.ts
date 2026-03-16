@@ -694,6 +694,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
       name: v.name,
       ...(v.label !== undefined && { label: v.label }),
       ...(v.description && { description: v.description }),
+      ...(v.docsUrl && { docsUrl: v.docsUrl }),
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
     };
@@ -970,6 +971,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       name: v.spec.name,
       label: v.spec.label,
       ...(v.spec.description && { description: v.spec.description }),
+      ...(v.spec.docsUrl && { docsUrl: v.spec.docsUrl }),
       skipUrlSync: v.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(v.spec.hide),
       type: transformToV1VariableTypes(v),

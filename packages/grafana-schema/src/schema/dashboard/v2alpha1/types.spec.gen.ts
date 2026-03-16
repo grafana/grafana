@@ -1118,6 +1118,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
@@ -1223,6 +1224,7 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
@@ -1253,6 +1255,7 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
@@ -1289,6 +1292,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 }
 
@@ -1331,6 +1335,7 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
@@ -1370,6 +1375,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 	valuesFormat?: "csv" | "json";
 }
@@ -1409,6 +1415,7 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
@@ -1442,6 +1449,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	allowCustomValue: boolean;
 }
 
@@ -1511,6 +1519,7 @@ export interface SwitchVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({

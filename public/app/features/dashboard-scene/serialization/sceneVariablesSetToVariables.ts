@@ -41,6 +41,19 @@ import {
   transformSortVariableToEnum,
   LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
+
+function getDocsUrlFromState(state: unknown): string | undefined {
+  if (!state || typeof state !== 'object') {
+    return undefined;
+  }
+
+  if (!('docsUrl' in state)) {
+    return undefined;
+  }
+
+  const docsUrl = state.docsUrl;
+  return typeof docsUrl === 'string' && docsUrl.length > 0 ? docsUrl : undefined;
+}
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
  * @param set - The SceneVariables object containing the variables to convert.
@@ -60,10 +73,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       continue;
     }
 
+    const docsUrl = getDocsUrlFromState(variable.state);
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
       description: variable.state.description ?? undefined,
+      ...(docsUrl && { docsUrl }),
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
@@ -328,10 +343,12 @@ export function sceneVariablesSetToSchemaV2Variables(
       continue;
     }
 
+    const docsUrl = getDocsUrlFromState(variable.state);
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
       description: variable.state.description ?? undefined,
+      ...(docsUrl && { docsUrl }),
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: transformVariableHideToEnum(variable.state.hide) || defaultVariableHide(),
     };

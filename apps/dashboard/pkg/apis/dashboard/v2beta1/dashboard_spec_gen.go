@@ -1664,6 +1664,7 @@ type DashboardQueryVariableSpec struct {
 	Refresh            DashboardVariableRefresh                      `json:"refresh"`
 	SkipUrlSync        bool                                          `json:"skipUrlSync"`
 	Description        *string                                       `json:"description,omitempty"`
+	DocsUrl            *string                                       `json:"docsUrl,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
 	RegexApplyTo       *DashboardVariableRegexApplyTo                `json:"regexApplyTo,omitempty"`
@@ -1876,6 +1877,7 @@ type DashboardTextVariableSpec struct {
 	Hide        DashboardVariableHide      `json:"hide"`
 	SkipUrlSync bool                       `json:"skipUrlSync"`
 	Description *string                    `json:"description,omitempty"`
+	DocsUrl     *string                    `json:"docsUrl,omitempty"`
 	Origin      *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
@@ -1932,6 +1934,7 @@ type DashboardConstantVariableSpec struct {
 	Hide        DashboardVariableHide      `json:"hide"`
 	SkipUrlSync bool                       `json:"skipUrlSync"`
 	Description *string                    `json:"description,omitempty"`
+	DocsUrl     *string                    `json:"docsUrl,omitempty"`
 	Origin      *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
@@ -1994,6 +1997,7 @@ type DashboardDatasourceVariableSpec struct {
 	Hide             DashboardVariableHide      `json:"hide"`
 	SkipUrlSync      bool                       `json:"skipUrlSync"`
 	Description      *string                    `json:"description,omitempty"`
+	DocsUrl          *string                    `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                       `json:"allowCustomValue"`
 	Origin           *DashboardControlSourceRef `json:"origin,omitempty"`
 }
@@ -2062,6 +2066,7 @@ type DashboardIntervalVariableSpec struct {
 	Hide        DashboardVariableHide      `json:"hide"`
 	SkipUrlSync bool                       `json:"skipUrlSync"`
 	Description *string                    `json:"description,omitempty"`
+	DocsUrl     *string                    `json:"docsUrl,omitempty"`
 	Origin      *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
@@ -2127,6 +2132,7 @@ type DashboardCustomVariableSpec struct {
 	Hide             DashboardVariableHide                    `json:"hide"`
 	SkipUrlSync      bool                                     `json:"skipUrlSync"`
 	Description      *string                                  `json:"description,omitempty"`
+	DocsUrl          *string                                  `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                                     `json:"allowCustomValue"`
 	ValuesFormat     *DashboardCustomVariableSpecValuesFormat `json:"valuesFormat,omitempty"`
 	Origin           *DashboardControlSourceRef               `json:"origin,omitempty"`
@@ -2187,6 +2193,7 @@ type DashboardGroupByVariableSpec struct {
 	Hide         DashboardVariableHide      `json:"hide"`
 	SkipUrlSync  bool                       `json:"skipUrlSync"`
 	Description  *string                    `json:"description,omitempty"`
+	DocsUrl      *string                    `json:"docsUrl,omitempty"`
 	Origin       *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 
@@ -2248,6 +2255,7 @@ type DashboardAdhocVariableSpec struct {
 	Hide             DashboardVariableHide            `json:"hide"`
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
+	DocsUrl          *string                          `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
 	Origin           *DashboardControlSourceRef       `json:"origin,omitempty"`
 }
@@ -2349,6 +2357,7 @@ type DashboardSwitchVariableSpec struct {
 	Hide          DashboardVariableHide      `json:"hide"`
 	SkipUrlSync   bool                       `json:"skipUrlSync"`
 	Description   *string                    `json:"description,omitempty"`
+	DocsUrl       *string                    `json:"docsUrl,omitempty"`
 	Origin        *DashboardControlSourceRef `json:"origin,omitempty"`
 }
 

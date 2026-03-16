@@ -89,6 +89,26 @@ describe('VariableControls', () => {
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
+
+  it('should render a docs link on variable info icon when docsUrl is set', async () => {
+    const docsUrlProps: Record<string, unknown> = { docsUrl: 'https://grafana.com/docs' };
+    const dashboard = buildScene([
+      new TextBoxVariable({
+        name: 'TextVarWithDocs',
+        description: 'Text variable docs',
+        hide: VariableHide.dontHide,
+        ...docsUrlProps,
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    const docsLink = await screen.findByTestId('variable-description-docs-link');
+    expect(docsLink).toHaveAttribute('href', 'https://grafana.com/docs');
+    expect(docsLink).toHaveAttribute('target', '_blank');
+    expect(docsLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
 });
 
 function buildScene(variables: SceneVariable[] = []) {

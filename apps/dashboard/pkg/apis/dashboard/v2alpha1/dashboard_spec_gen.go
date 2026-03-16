@@ -1798,6 +1798,7 @@ type DashboardQueryVariableSpec struct {
 	Refresh            DashboardVariableRefresh                      `json:"refresh"`
 	SkipUrlSync        bool                                          `json:"skipUrlSync"`
 	Description        *string                                       `json:"description,omitempty"`
+	DocsUrl            *string                                       `json:"docsUrl,omitempty"`
 	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
@@ -1981,6 +1982,7 @@ type DashboardTextVariableSpec struct {
 	Hide        DashboardVariableHide   `json:"hide"`
 	SkipUrlSync bool                    `json:"skipUrlSync"`
 	Description *string                 `json:"description,omitempty"`
+	DocsUrl     *string                 `json:"docsUrl,omitempty"`
 }
 
 // NewDashboardTextVariableSpec creates a new DashboardTextVariableSpec object.
@@ -2036,6 +2038,7 @@ type DashboardConstantVariableSpec struct {
 	Hide        DashboardVariableHide   `json:"hide"`
 	SkipUrlSync bool                    `json:"skipUrlSync"`
 	Description *string                 `json:"description,omitempty"`
+	DocsUrl     *string                 `json:"docsUrl,omitempty"`
 }
 
 // NewDashboardConstantVariableSpec creates a new DashboardConstantVariableSpec object.
@@ -2097,6 +2100,7 @@ type DashboardDatasourceVariableSpec struct {
 	Hide             DashboardVariableHide     `json:"hide"`
 	SkipUrlSync      bool                      `json:"skipUrlSync"`
 	Description      *string                   `json:"description,omitempty"`
+	DocsUrl          *string                   `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                      `json:"allowCustomValue"`
 }
 
@@ -2164,6 +2168,7 @@ type DashboardIntervalVariableSpec struct {
 	Hide        DashboardVariableHide     `json:"hide"`
 	SkipUrlSync bool                      `json:"skipUrlSync"`
 	Description *string                   `json:"description,omitempty"`
+	DocsUrl     *string                   `json:"docsUrl,omitempty"`
 }
 
 // NewDashboardIntervalVariableSpec creates a new DashboardIntervalVariableSpec object.
@@ -2228,6 +2233,7 @@ type DashboardCustomVariableSpec struct {
 	Hide             DashboardVariableHide                    `json:"hide"`
 	SkipUrlSync      bool                                     `json:"skipUrlSync"`
 	Description      *string                                  `json:"description,omitempty"`
+	DocsUrl          *string                                  `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                                     `json:"allowCustomValue"`
 	ValuesFormat     *DashboardCustomVariableSpecValuesFormat `json:"valuesFormat,omitempty"`
 }
@@ -2285,6 +2291,7 @@ type DashboardGroupByVariableSpec struct {
 	Hide         DashboardVariableHide     `json:"hide"`
 	SkipUrlSync  bool                      `json:"skipUrlSync"`
 	Description  *string                   `json:"description,omitempty"`
+	DocsUrl      *string                   `json:"docsUrl,omitempty"`
 }
 
 // NewDashboardGroupByVariableSpec creates a new DashboardGroupByVariableSpec object.
@@ -2343,6 +2350,7 @@ type DashboardAdhocVariableSpec struct {
 	Hide             DashboardVariableHide            `json:"hide"`
 	SkipUrlSync      bool                             `json:"skipUrlSync"`
 	Description      *string                          `json:"description,omitempty"`
+	DocsUrl          *string                          `json:"docsUrl,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
 }
 
@@ -2444,6 +2452,7 @@ type DashboardSwitchVariableSpec struct {
 	Hide          DashboardVariableHide `json:"hide"`
 	SkipUrlSync   bool                  `json:"skipUrlSync"`
 	Description   *string               `json:"description,omitempty"`
+	DocsUrl       *string               `json:"docsUrl,omitempty"`
 }
 
 // NewDashboardSwitchVariableSpec creates a new DashboardSwitchVariableSpec object.

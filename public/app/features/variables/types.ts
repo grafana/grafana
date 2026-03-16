@@ -33,6 +33,7 @@ export const initialVariableModelState: BaseVariableModel = {
   state: LoadingState.NotStarted,
   error: null,
   description: null,
+  docsUrl: null,
 };
 
 export interface VariableQueryEditorProps {

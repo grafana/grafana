@@ -3,10 +3,12 @@ import { PropsWithChildren, ReactElement, useMemo } from 'react';
 import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Stack, Tooltip } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';
+
+import { VariableDescriptionInfoIcon } from './shared/VariableDescriptionInfoIcon';
 
 interface Props {
   variable: TypedVariableModel;
@@ -44,7 +46,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
   const elementId = VARIABLE_PREFIX + variable.id;
   if (variable.description) {
     return (
-      <Tooltip content={variable.description} placement={'bottom'}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <label
           className="gf-form-label gf-form-label--variable"
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
@@ -52,7 +54,12 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
         >
           {labelOrName}
         </label>
-      </Tooltip>
+        <VariableDescriptionInfoIcon
+          description={variable.description}
+          docsUrl={variable.docsUrl}
+          label={typeof labelOrName === 'string' ? labelOrName : variable.name}
+        />
+      </span>
     );
   }
 

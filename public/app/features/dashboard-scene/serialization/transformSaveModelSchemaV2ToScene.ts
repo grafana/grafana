@@ -331,6 +331,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
+    ...(variable.spec.docsUrl ? { docsUrl: variable.spec.docsUrl } : {}),
     origin: variable.spec.origin,
   };
   if (variable.kind === defaultAdhocVariableKind().kind) {
@@ -577,6 +578,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             label: v.spec.label,
             readOnly: true,
             description: v.spec.description,
+            ...(v.spec.docsUrl ? { docsUrl: v.spec.docsUrl } : {}),
             skipUrlSync: v.spec.skipUrlSync,
             hide: transformVariableHideToEnumV1(v.spec.hide),
             datasource: ds,
@@ -618,6 +620,7 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
       name: variable.spec.name,
       label: variable.spec.label,
       description: variable.spec.description,
+      ...(variable.spec.docsUrl ? { docsUrl: variable.spec.docsUrl } : {}),
       value: currentInterval,
       text: currentInterval,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
@@ -646,6 +649,7 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     name: variable.spec.name,
     label: variable.spec.label,
     description: variable.spec.description,
+    ...(variable.spec.docsUrl ? { docsUrl: variable.spec.docsUrl } : {}),
     value: current?.value ?? '',
     text: current?.text ?? '',
     hide: transformVariableHideToEnumV1(variable.spec.hide),

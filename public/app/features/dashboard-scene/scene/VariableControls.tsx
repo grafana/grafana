@@ -13,6 +13,7 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { VariableDescriptionInfoIcon } from 'app/features/variables/pickers/shared/VariableDescriptionInfoIcon';
 
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
@@ -165,6 +166,7 @@ function VariableLabel({
   className?: string;
   layout?: ControlsLayout;
 }) {
+  const styles = useStyles2(getStyles);
   const { state } = variable;
   const elementId = `var-${state.key}`;
 
@@ -173,6 +175,26 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const docsUrl =
+    'docsUrl' in state && typeof state.docsUrl === 'string' && state.docsUrl.length > 0 ? state.docsUrl : undefined;
+  const description = state.description ?? undefined;
+
+  if (description) {
+    return (
+      <div className={cx(styles.labelWithDescription, className)}>
+        <ControlsLabel
+          htmlFor={elementId}
+          isLoading={state.loading}
+          onCancel={() => variable.onCancel?.()}
+          label={labelOrName}
+          error={state.error}
+          layout={layout ?? 'horizontal'}
+          className={className}
+        />
+        <VariableDescriptionInfoIcon description={description} docsUrl={docsUrl} label={labelOrName} />
+      </div>
+    );
+  }
 
   return (
     <ControlsLabel
@@ -182,7 +204,7 @@ function VariableLabel({
       label={labelOrName}
       error={state.error}
       layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      description={description}
       className={className}
     />
   );
@@ -230,5 +252,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  labelWithDescription: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
   }),
 });

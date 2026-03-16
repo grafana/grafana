@@ -843,6 +843,7 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	query:        DataQueryKind
 	regex:        string | *""
 	regexApplyTo?: VariableRegexApplyTo
@@ -877,6 +878,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	origin?: ControlSourceRef
 }
 
@@ -898,6 +900,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	origin?: ControlSourceRef
 }
 
@@ -925,6 +928,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 	origin?: ControlSourceRef
 }
@@ -952,6 +956,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	origin?: ControlSourceRef
 }
 
@@ -974,6 +979,7 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 	valuesFormat?: "csv" | "json"
 	origin?: ControlSourceRef
@@ -994,6 +1000,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
+	docsUrl?:      string
 	origin?: ControlSourceRef
 }
 
@@ -1016,6 +1023,7 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	origin?: ControlSourceRef
 }
 
@@ -1040,6 +1048,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	docsUrl?:     string
 	allowCustomValue: bool | *true
 	origin?: ControlSourceRef
 }
