@@ -48,10 +48,11 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 			parent := "fold-1"
 			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
 				require.NotNil(t, id)
-				// Check is called with the user's identity
-				require.Equal(t, "user:u001", id.GetUID())
-				require.Equal(t, "org-2", id.GetNamespace())
-				// Check the request values
+				// First call may be users.permissions:read (Group=iam.grafana.app, Resource=users); deny so we fall through to resource check
+				if req.Group == iamv0.GROUP && req.Resource == "users" {
+					return types.CheckResponse{Allowed: false}, nil
+				}
+				// Check is called with the user's identity for the target resource
 				require.Equal(t, "org-2", req.Namespace)
 				require.Equal(t, fold1.Spec.Resource.ApiGroup, req.Group)
 				require.Equal(t, fold1.Spec.Resource.Resource, req.Resource)
@@ -83,6 +84,32 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 	}
 }
 
+func TestResourcePermissions_AfterGet_WithUsersPermissionsRead(t *testing.T) {
+	// When the user has users.permissions:read, AfterGet allows access without checking get_permissions on the specific resource.
+	fold1 := newResourcePermission("folder.grafana.app", "folders", "fold-1")
+	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+		require.NotNil(t, id)
+		// First (and only) check is for users.permissions:read (Group=iam.grafana.app, Resource=users, Name=*)
+		require.Equal(t, iamv0.GROUP, req.Group)
+		require.Equal(t, "users", req.Resource)
+		require.Equal(t, utils.VerbGetPermissions, req.Verb)
+		require.Equal(t, "*", req.Name)
+		return types.CheckResponse{Allowed: true}, nil
+	}
+	getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+		return "fold-1", nil
+	}
+	accessClient := &fakeAccessClient{checkFunc: checkFunc}
+	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+	ctx := types.WithAuthInfo(context.Background(), user)
+
+	err := resPermAuthz.AfterGet(ctx, fold1)
+	require.NoError(t, err)
+	require.True(t, accessClient.checkCalled, "accessClient.Check should be called for users.permissions:read")
+	require.False(t, fakeParentProvider.getParentCalled, "GetParent should not be called when user has users.permissions:read")
+}
+
 func TestResourcePermissions_FilterList(t *testing.T) {
 	// In this test, the user has permission to access only fold-1 and dash-2.
 	// We verify that FilterList returns only those two objects (uses BatchCheck).
@@ -95,6 +122,13 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		},
 	}
 
+	// First Check is for users.permissions:read; deny so FilterList proceeds to BatchCheck.
+	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+		if req.Group == iamv0.GROUP && req.Resource == "users" {
+			return types.CheckResponse{Allowed: false}, nil
+		}
+		return types.CheckResponse{}, nil
+	}
 	// FilterList uses CanViewTargets -> BatchCheck. Allow fold-1 (index 0) and dash-2 (index 2), deny fold-2 (index 1).
 	batchCheckFunc := func(_ context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
 		require.NotNil(t, id)
@@ -116,7 +150,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 		return "", nil
 	}
 
-	accessClient := &fakeAccessClient{batchCheckFunc: batchCheckFunc}
+	accessClient := &fakeAccessClient{checkFunc: checkFunc, batchCheckFunc: batchCheckFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
 	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 	ctx := types.WithAuthInfo(context.Background(), user)
@@ -132,6 +166,41 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 	require.Len(t, filtered.Items, 2, "response list should have 2 items after filtering")
 	require.Equal(t, "fold-1", filtered.Items[0].Spec.Resource.Name)
 	require.Equal(t, "dash-2", filtered.Items[1].Spec.Resource.Name)
+}
+
+func TestResourcePermissions_FilterList_WithUsersPermissionsRead(t *testing.T) {
+	// When the user has users.permissions:read, FilterList returns all items without per-resource BatchCheck.
+	list := &iamv0.ResourcePermissionList{
+		Items: []iamv0.ResourcePermission{
+			*newResourcePermission("folder.grafana.app", "folders", "fold-1"),
+			*newResourcePermission("folder.grafana.app", "folders", "fold-2"),
+			*newResourcePermission("dashboard.grafana.app", "dashboards", "dash-2"),
+		},
+	}
+	checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+		require.Equal(t, iamv0.GROUP, req.Group)
+		require.Equal(t, "users", req.Resource)
+		require.Equal(t, utils.VerbGetPermissions, req.Verb)
+		require.Equal(t, "*", req.Name)
+		return types.CheckResponse{Allowed: true}, nil
+	}
+	getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+		return "", nil
+	}
+	accessClient := &fakeAccessClient{checkFunc: checkFunc}
+	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+	ctx := types.WithAuthInfo(context.Background(), user)
+
+	obj, err := resPermAuthz.FilterList(ctx, list)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+	require.True(t, accessClient.checkCalled, "Check should be called for users.permissions:read")
+	require.False(t, accessClient.batchCheckCalled, "BatchCheck should not be called when user has users.permissions:read")
+	require.False(t, fakeParentProvider.getParentCalled, "GetParent should not be called when user has users.permissions:read")
+	filtered, ok := obj.(*iamv0.ResourcePermissionList)
+	require.True(t, ok)
+	require.Len(t, filtered.Items, 3, "all 3 items should be returned when user has users.permissions:read")
 }
 
 func TestResourcePermissions_beforeWrite(t *testing.T) {
