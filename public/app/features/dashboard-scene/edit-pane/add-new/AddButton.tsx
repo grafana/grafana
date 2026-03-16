@@ -11,6 +11,7 @@ type AddButtonProps = {
   tooltip?: string;
   className?: string;
   tabIndex?: number;
+  // When disabled, callers should set tooltip to explain why.
   disabled?: boolean;
 };
 

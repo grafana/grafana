@@ -6541,6 +6541,11 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-link": {
+      "inline-instance-name": "New link",
+      "label-link": "Link",
+      "tooltip": "Add link to another dashboard or external site"
+    },
     "add-new-edit-pane": {
       "group-layouts": "Group layouts"
     },
@@ -6548,12 +6553,8 @@
       "label": "Rows"
     },
     "add-tab": {
-      "label": "Tabs"
-    },
-    "add-link": {
-      "inline-instance-name": "New link",
-      "label-link": "Link",
-      "tooltip": "Add link to another dashboard or external site"
+      "add-label": "Add tab",
+      "group-label": "Group into tabs"
     },
     "add-to-dashboard": {
       "message": {
