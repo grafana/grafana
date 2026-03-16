@@ -3375,6 +3375,20 @@
     },
     {
       "metadata": {
+        "name": "newSavedQueriesExperience",
+        "resourceVersion": "1773689097406",
+        "creationTimestamp": "2026-03-16T19:24:57Z"
+      },
+      "spec": {
+        "description": "Enables the new Saved queries (query library) modal experience",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-02-17T19:05:46Z"
