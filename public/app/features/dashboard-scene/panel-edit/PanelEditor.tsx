@@ -44,7 +44,7 @@ import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
 import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
-import { getLocalStorageWithTTL } from './PanelEditNext/useLocalStorageWithTTL';
+import { getLocalStorageWithTTL } from './PanelEditNext/getLocalStorageWithTTL';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
