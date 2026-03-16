@@ -21,17 +21,20 @@ func TestStripK8sNamespace(t *testing.T) {
 	require.Equal(t, int64(123), ns.OrgID)
 	require.Equal(t, "plugin/testdata/random-20Hz-stream", channel)
 
-	// Legacy bare numeric org ID format (backwards compatibility)
+	// Legacy bare numeric org ID format (backwards compatibility).
+	// Value is normalized to canonical k8s namespace.
 	channelID = "1/grafana/dashboard/uid/abc123"
 	ns, channel, err = StripK8sNamespace(channelID)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), ns.OrgID)
+	require.Equal(t, "default", ns.Value)
 	require.Equal(t, "grafana/dashboard/uid/abc123", channel)
 
 	channelID = "42/plugin/testdata/random-20Hz-stream"
 	ns, channel, err = StripK8sNamespace(channelID)
 	require.NoError(t, err)
 	require.Equal(t, int64(42), ns.OrgID)
+	require.Equal(t, "org-42", ns.Value)
 	require.Equal(t, "plugin/testdata/random-20Hz-stream", channel)
 
 	// Invalid bare numeric org ID (zero or negative)
