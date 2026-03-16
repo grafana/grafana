@@ -84,7 +84,7 @@ export function getAssistantViewModeStyles(theme: GrafanaTheme2) {
     viewModeHoverOverride: css({
       '.dashboard-selectable-element:not(.dashboard-selected-element):hover': {
         outline: 'none',
-        backgroundColor: 'transparent',
+        backgroundColor: theme.colors.background.primary,
       },
       '.dashboard-selected-element': {
         outline: 'none',
