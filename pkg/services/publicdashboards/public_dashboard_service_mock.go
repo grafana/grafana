@@ -98,9 +98,9 @@ func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Con
 	return r0, r1
 }
 
-// ExistsEnabledByDashboardUid provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
-	ret := _m.Called(ctx, dashboardUid)
+// ExistsEnabledByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
+	ret := _m.Called(ctx, orgId, dashboardUid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExistsEnabledByDashboardUid")
@@ -108,17 +108,17 @@ func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Co
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
-		return rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (bool, error)); ok {
+		return rf(ctx, orgId, dashboardUid)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) bool); ok {
+		r0 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardUid)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgId, dashboardUid)
 	} else {
 		r1 = ret.Error(1)
 	}

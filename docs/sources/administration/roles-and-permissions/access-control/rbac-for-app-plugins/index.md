@@ -8,7 +8,7 @@ labels:
     - enterprise
 menuTitle: RBAC for app plugins
 title: RBAC for app plugins
-weight: 90
+weight: 400
 refs:
   manage-rbac-roles-update-basic-role-permissions:
     - pattern: /docs/grafana/
@@ -89,11 +89,11 @@ The following table lists app plugins that have fine-grained RBAC support:
 
 ### Revoke fine-grained access from app plugins
 
-To list all the permissions granted to a basic role, use the [HTTP API endpoint to query for the role](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#get-a-role).
-Basic role UIDs are listed in [RBAC role definitions list](ref:rbac-role-definitions).
-To remove the undesired plugin permissions from a basic role, you must [update the basic role's permissions](ref:manage-rbac-roles-update-basic-role-permissions).
+To list all the permissions granted to a basic role, use the [HTTP API endpoint to query for the role](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#get-a-role). Basic role UIDs are listed in [RBAC role definitions list](ref:rbac-role-definitions).
 
-### Grant additional access to app plugins
+To remove any undesired plugin permissions from a basic role, [update the basic role's permissions](ref:manage-rbac-roles-update-basic-role-permissions).
+
+## Grant additional access to app plugins
 
 To grant access to app plugins, you can use the predefined [fixed plugin roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#fixed-roles) or create [custom roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) with specific plugin permissions.
 To learn about how to assign an RBAC role, refer to [the documentation on assigning RBAC roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/assign-rbac-roles/#assign-rbac-roles).
