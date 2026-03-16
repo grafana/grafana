@@ -74,6 +74,7 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
       : t('dashboard.panel-assistant.prompt-card.placeholder', 'Ask Assistant about this panel...');
 
   const closedExplicitlyRef = useRef(false);
+  const selectedPanelKeys = useMemo(() => selectedPanels.map((p) => p.state.key).join(','), [selectedPanels]);
 
   useEffect(() => {
     if (visible && selectedPanels.length > 0) {
@@ -90,7 +91,8 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
       };
     }
     return undefined;
-  }, [visible, selectedPanels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, selectedPanelKeys]);
 
   const handleClose = useCallback(() => {
     closedExplicitlyRef.current = true;

@@ -8,7 +8,6 @@ import { SceneObject, VizPanel } from '@grafana/scenes';
 
 import { ElementSelection } from './ElementSelection';
 import { panelHasData, useAssistantPanelHints } from './PanelAssistantHint';
-import { ViewModePanelPromptCard } from './ViewModePanelPromptCard';
 import { EditPaneSelectionActions } from './types';
 
 interface DashboardAssistantViewModeProps {
@@ -54,18 +53,6 @@ export function useDashboardAssistantViewMode({
     isEnabled,
     isViewModeWithPanelSelected,
   };
-}
-
-export function DashboardAssistantPopover({
-  dashboard,
-  editPane,
-  selection,
-}: {
-  dashboard: SceneObject;
-  editPane: EditPaneSelectionActions;
-  selection: ElementSelection | undefined;
-}) {
-  return <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />;
 }
 
 function hasSelectedVizPanelsWithData(selection: ElementSelection | undefined): boolean {

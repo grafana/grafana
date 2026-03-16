@@ -18,12 +18,9 @@ import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboa
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import {
-  DashboardAssistantPopover,
-  getAssistantViewModeStyles,
-  useDashboardAssistantViewMode,
-} from './DashboardAssistantViewMode';
+import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from './DashboardAssistantViewMode';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { ViewModePanelPromptCard } from './ViewModePanelPromptCard';
 
 interface Props {
   dashboard: DashboardScene;
@@ -167,7 +164,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         </div>
         {renderBody()}
         {isViewModeWithPanelSelected && (
-          <DashboardAssistantPopover selection={selection} editPane={editPane} dashboard={dashboard} />
+          <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />
         )}
       </ElementSelectionContext.Provider>
     </div>
