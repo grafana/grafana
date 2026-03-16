@@ -3,13 +3,15 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { SuggestedDashboardsLoader } from 'app/features/datasources/components/SuggestedDashboardsLoader';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface Props {
-  route: string | undefined;
+  route?: string;
   dashboard: DashboardScene;
   datasourceUid?: string;
 }
@@ -26,6 +28,14 @@ export function SuggestedDashboardBanner({ route, dashboard, datasourceUid }: Pr
     return null;
   }
 
+  const onSuggestedDashboardsClick = (onClick: () => void) => {
+    DashboardLibraryInteractions.entryPointClicked({
+      entryPoint: SOURCE_ENTRY_POINTS.DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER,
+      contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+    });
+    onClick();
+  };
+
   return (
     <SuggestedDashboardsLoader datasourceUid={datasourceUid}>
       {({ openModal }) => (
@@ -37,7 +47,7 @@ export function SuggestedDashboardBanner({ route, dashboard, datasourceUid }: Pr
         >
           <Trans i18nKey="dashboard-scene.suggested-dashboard-banner.body">
             Not what you&apos;re looking for? View{' '}
-            <TextLink href={window.location.href} onClick={openModal}>
+            <TextLink href={window.location.href} onClick={() => onSuggestedDashboardsClick(openModal)}>
               other suggested dashboards
             </TextLink>{' '}
             or <TextLink href="/dashboard/new">create one from scratch</TextLink>.

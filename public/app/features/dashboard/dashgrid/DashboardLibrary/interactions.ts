@@ -131,22 +131,6 @@ export const SuggestedDashboardInteractions = {
   },
 };
 
-export const BasicProvisionedDashboardInteractions = {
-  ...DashboardLibraryInteractions,
-  loaded: (properties: LoadedInteractionProperties) => {
-    reportDashboardLibraryInteraction('loaded', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    });
-  },
-  itemClicked: (properties: ItemClickedInteractionProperties) => {
-    reportDashboardLibraryInteraction('item_clicked', {
-      ...properties,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    });
-  },
-};
-
 const reportDashboardLibraryInteraction = (name: string, properties?: Record<string, unknown>) => {
   reportInteraction(`grafana_dashboard_library_${name}`, { ...properties, schema_version: SCHEMA_VERSION });
 };

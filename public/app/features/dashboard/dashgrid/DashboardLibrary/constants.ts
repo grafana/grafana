@@ -10,6 +10,7 @@ export const CONTENT_KINDS = {
   DATASOURCE_DASHBOARD: 'datasource_dashboard',
   COMMUNITY_DASHBOARD: 'community_dashboard',
   TEMPLATE_DASHBOARD: 'template_dashboard',
+  SUGGESTED_DASHBOARDS: 'suggested_dashboards',
 } as const;
 
 export const TemplateDashboardSourceEntryPoint = {
@@ -19,8 +20,16 @@ export const TemplateDashboardSourceEntryPoint = {
   ASSISTANT_BUTTON: 'assistant_button',
 } as const;
 
-export const SOURCE_ENTRY_POINTS = {
+const SuggestedDashboardSourceEntryPoint = {
   DATASOURCE_PAGE: 'datasource_page',
+  DATASOURCE_PAGE_BUILD_BUTTON: 'datasource_page_build_button',
+  DATASOURCE_PAGE_SUCCESS_BANNER: 'datasource_page_success_banner',
+  DATASOURCE_LIST_BUILD_BUTTON: 'datasource_list_build_button',
+  DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
+} as const;
+
+export const SOURCE_ENTRY_POINTS = {
+  ...SuggestedDashboardSourceEntryPoint,
   ...TemplateDashboardSourceEntryPoint,
 } as const;
 
@@ -37,7 +46,6 @@ export const CREATION_ORIGINS = {
 
 export const FEATURE_VARIANTS = {
   SUGGESTED_DASHBOARDS: 'suggested_dashboards',
-  BASIC_PROVISIONED_DASHBOARDS: 'basic_provisioned_dashboards',
 } as const;
 
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];

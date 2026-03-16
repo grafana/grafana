@@ -4,6 +4,8 @@ import { config } from '@grafana/runtime';
 import { Button, ComponentSize, Dropdown, Icon, LinkButton, Menu } from '@grafana/ui';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useDispatch } from 'app/types/store';
 
 import { ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
@@ -15,9 +17,10 @@ interface BuildDashboardButtonProps {
   dataSource: DataSourceSettings;
   size: ComponentSize;
   fill: ButtonFill;
+  context: 'datasource_page' | 'datasource_list';
 }
 
-export const BuildDashboardButton = ({ dataSource, size, fill }: BuildDashboardButtonProps) => {
+export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildDashboardButtonProps) => {
   const dispatch = useDispatch();
 
   if (!config.featureToggles.suggestedDashboards) {
@@ -61,7 +64,13 @@ export const BuildDashboardButton = ({ dataSource, size, fill }: BuildDashboardB
                 disabled={fetchStatus === 'loading' || (fetchStatus === 'done' && !hasDashboards)}
                 onClick={(e) => {
                   e.nativeEvent.stopPropagation();
-                  trackDsConfigClicked('build_a_dashboard');
+                  DashboardLibraryInteractions.entryPointClicked({
+                    entryPoint:
+                      context === 'datasource_page'
+                        ? SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON
+                        : SOURCE_ENTRY_POINTS.DATASOURCE_LIST_BUILD_BUTTON,
+                    contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                  });
                   openModal();
                 }}
               />

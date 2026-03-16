@@ -14,6 +14,8 @@ import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config, usePluginLinks, usePluginComponents, renderLimitedComponents } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2, Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -31,8 +33,8 @@ interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   severity?: AlertVariant;
   exploreUrl: string;
   dataSourceId: string;
-  hasDashboards: boolean;
-  openModal: () => void;
+  hasDashboards?: boolean;
+  onSuggestedDashboardsClick?: () => void;
   onDashboardLinkClicked: () => void;
   extensionLinks?: PluginExtensionLink[];
 }
@@ -62,7 +64,7 @@ const AlertSuccessMessage = ({
   exploreUrl,
   dataSourceId,
   hasDashboards,
-  openModal,
+  onSuggestedDashboardsClick,
   onDashboardLinkClicked,
 }: AlertMessageProps) => {
   const theme = useTheme2();
@@ -73,7 +75,7 @@ const AlertSuccessMessage = ({
 
   return (
     <div className={styles.content}>
-      {hasDashboards ? (
+      {config.featureToggles.suggestedDashboards && hasDashboards ? (
         <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
           Next, you can start to visualize data by{' '}
           <Link
@@ -91,7 +93,7 @@ const AlertSuccessMessage = ({
             className="external-link"
             onClick={(e) => {
               e.preventDefault();
-              openModal();
+              onSuggestedDashboardsClick?.();
             }}
           >
             suggested dashboards
@@ -262,22 +264,39 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
             <>
               {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
-                <SuggestedDashboardsLoader dataSource={dataSource} fetchOnMount>
-                  {({ fetchStatus, hasDashboards, openModal }) =>
-                    fetchStatus === 'loading' || fetchStatus === 'idle' ? (
-                      <Spinner />
-                    ) : (
-                      <AlertSuccessMessage
-                        title={message ?? ''}
-                        exploreUrl={exploreUrl}
-                        dataSourceId={dataSource.uid}
-                        hasDashboards={hasDashboards}
-                        openModal={openModal}
-                        onDashboardLinkClicked={onDashboardLinkClicked}
-                      />
-                    )
-                  }
-                </SuggestedDashboardsLoader>
+                config.featureToggles.suggestedDashboards ? (
+                  <SuggestedDashboardsLoader datasourceUid={dataSource.uid} fetchOnMount>
+                    {({ fetchStatus, hasDashboards, openModal }) => {
+                      const onSuggestedDashboardsClick = () => {
+                        DashboardLibraryInteractions.entryPointClicked({
+                          entryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_SUCCESS_BANNER,
+                          contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                        });
+                        openModal();
+                      };
+
+                      return fetchStatus === 'loading' || fetchStatus === 'idle' ? (
+                        <Spinner />
+                      ) : (
+                        <AlertSuccessMessage
+                          title={message ?? ''}
+                          exploreUrl={exploreUrl}
+                          dataSourceId={dataSource.uid}
+                          hasDashboards={hasDashboards}
+                          onSuggestedDashboardsClick={onSuggestedDashboardsClick}
+                          onDashboardLinkClicked={onDashboardLinkClicked}
+                        />
+                      );
+                    }}
+                  </SuggestedDashboardsLoader>
+                ) : (
+                  <AlertSuccessMessage
+                    title={message ?? ''}
+                    exploreUrl={exploreUrl}
+                    dataSourceId={dataSource.uid}
+                    onDashboardLinkClicked={onDashboardLinkClicked}
+                  />
+                )
               ) : null}
               {severity === 'error' && errorDetailsLink ? <ErrorDetailsLink link={String(errorDetailsLink)} /> : null}
               {detailsVerboseMessage ? (
