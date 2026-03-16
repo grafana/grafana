@@ -48,6 +48,40 @@ func isAccessPolicy(authInfo types.AuthInfo) bool {
 	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
+// CanViewTarget returns whether the caller has get_permissions on the given target resource.
+// authInfo must be the authenticated identity (e.g. from types.AuthInfoFrom(ctx)); pass it in so callers can fetch once when looping.
+func (r *ResourcePermissionsAuthorizer) CanViewTarget(ctx context.Context, authInfo types.AuthInfo, namespace, apiGroup, resource, name string) (bool, error) {
+	if authInfo == nil {
+		return false, storewrapper.ErrUnauthenticated
+	}
+	targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
+	parent := ""
+	// Fetch the parent of the resource
+	// It's not efficient to do for every item in the list, but it's a good starting point.
+	// Access Policies have global scope, so no parent check needed
+	if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
+		gotParent, err := r.parentProvider.GetParent(ctx, targetGR, namespace, name)
+		if err != nil {
+			r.logger.Debug("can view target: error fetching parent, denying this item in the list",
+				"error", fmt.Sprintf("%v", err), "namespace", namespace, "group", apiGroup, "resource", resource, "name", name)
+			return false, nil
+		}
+		parent = gotParent
+	}
+	checkReq := types.CheckRequest{
+		Namespace: namespace,
+		Group:     apiGroup,
+		Resource:  resource,
+		Verb:      utils.VerbGetPermissions,
+		Name:      name,
+	}
+	res, err := r.accessClient.Check(ctx, authInfo, checkReq, parent)
+	if err != nil {
+		return false, err
+	}
+	return res.Allowed, nil
+}
+
 // AfterGet implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
 	authInfo, ok := types.AuthInfoFrom(ctx)
@@ -173,61 +207,18 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 
 	switch l := list.(type) {
 	case *iamv0.ResourcePermissionList:
-		var (
-			filteredItems []iamv0.ResourcePermission
-			err           error
-			canViewFuncs  = map[schema.GroupResource]types.ItemChecker{}
-		)
+		filtered := make([]iamv0.ResourcePermission, 0, len(l.Items))
 		for _, item := range l.Items {
 			target := item.Spec.Resource
-			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
-
-			// Reuse the same canView for items with the same resource
-			canView, found := canViewFuncs[targetGR]
-
-			if !found {
-				listReq := types.ListRequest{
-					Namespace: item.Namespace,
-					Group:     target.ApiGroup,
-					Resource:  target.Resource,
-					Verb:      utils.VerbGetPermissions,
-				}
-
-				//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
-				canView, _, err = r.accessClient.Compile(ctx, authInfo, listReq)
-				if err != nil {
-					return nil, err
-				}
-
-				canViewFuncs[targetGR] = canView
+			allowed, err := r.CanViewTarget(ctx, authInfo, item.Namespace, target.ApiGroup, target.Resource, target.Name)
+			if err != nil {
+				return nil, err
 			}
-
-			parent := ""
-			// Fetch the parent of the resource
-			// It's not efficient to do for every item in the list, but it's a good starting point.
-			// Access Policies have global scope, so no parent check needed
-			if !isAccessPolicy(authInfo) && r.parentProvider.HasParent(targetGR) {
-				p, err := r.parentProvider.GetParent(ctx, targetGR, item.Namespace, target.Name)
-				if err != nil {
-					// Skip item on error fetching parent
-					r.logger.Warn("filter list: error fetching parent, skipping item",
-						"error", err.Error(),
-						"namespace", item.Namespace,
-						"group", target.ApiGroup,
-						"resource", target.Resource,
-						"name", target.Name,
-					)
-					continue
-				}
-				parent = p
-			}
-
-			allowed := canView(item.Spec.Resource.Name, parent)
 			if allowed {
-				filteredItems = append(filteredItems, item)
+				filtered = append(filtered, item)
 			}
 		}
-		l.Items = filteredItems
+		l.Items = filtered
 		return l, nil
 	default:
 		return nil, fmt.Errorf("expected ResourcePermissionList, got %T: %w", l, storewrapper.ErrUnexpectedType)

@@ -2349,6 +2349,7 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
+      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
