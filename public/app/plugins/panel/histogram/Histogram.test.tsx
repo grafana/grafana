@@ -282,7 +282,7 @@ describe('Histogram', () => {
      * Regression test for #114557: Fix runaway bucket densification with extremely sparse + large datasets
      * getHistogramFields now caps densification at MAX_DENSIFIED_BUCKETS (1000) to prevent OOM.
      */
-    it.skip('caps densification at MAX_DENSIFIED_BUCKETS for sparse HeatmapCells', () => {
+    it('caps densification at MAX_DENSIFIED_BUCKETS for sparse HeatmapCells', () => {
       const sparseFrame = toDataFrame({
         meta: { type: DataFrameType.HeatmapCells },
         fields: [
@@ -314,7 +314,7 @@ describe('Histogram', () => {
      * The dataIdx callback must return the correct bucket index for tooltip placement.
      * Uses bar start (xMin) to determine which bucket contains the cursor xValue.
      */
-    it.skip('cursor dataIdx returns correct bucket index for tooltip', () => {
+    it('cursor dataIdx returns correct bucket index for tooltip', () => {
       let configBuilder: UPlotConfigBuilder | undefined;
       const frame = createDataFrame({
         fields: [
