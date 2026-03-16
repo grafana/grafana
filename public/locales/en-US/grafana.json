@@ -5562,6 +5562,8 @@
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
+      "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "select-layout-header": "Select layout",
       "show-less-dashboards": "Show less",
       "show-more-dashboards": "Show more",
       "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",

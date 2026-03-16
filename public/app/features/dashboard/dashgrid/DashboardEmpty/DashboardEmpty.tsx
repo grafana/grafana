@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill } from '@grafana/ui';
+import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
@@ -136,7 +136,22 @@ const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: Ne
             <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
           </Text>
         </Box>
-        <Box marginTop={3} display="flex" justifyContent="center">
+        <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
+          <Text element="p" textAlignment="center" color="secondary">
+            <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
+          </Text>
+          <Tooltip
+            content={
+              <Trans i18nKey="dashboard.empty.layout-default-hint">
+                The selected layout will also be used as the default for all new tabs and rows. You can change this
+                later in Dashboard Settings &gt; General.
+              </Trans>
+            }
+          >
+            <Icon name="info-circle" size="sm" />
+          </Tooltip>
+        </Box>
+        <Box marginTop={1} display="flex" justifyContent="center">
           <Stack gap={1}>
             <FilterPill
               label={t('dashboard.empty.auto-grid', 'Auto grid')}
