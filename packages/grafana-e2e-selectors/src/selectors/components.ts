@@ -525,9 +525,6 @@ export const versionedComponents = {
         container: {
           ['13.0.0']: 'data-testid viz-layout',
         },
-        chart: {
-          ['13.0.0']: 'data-testid histogram-uplot',
-        },
         legend: {
           ['13.0.0']: 'data-testid viz-layout-legend',
         },
