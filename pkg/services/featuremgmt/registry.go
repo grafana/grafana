@@ -2689,6 +2689,13 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:        "queryFetchConfigFromSettingsService",
+			Description: "Enables the query service to fetch the configuration from the settings service",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
 	}
 )
 

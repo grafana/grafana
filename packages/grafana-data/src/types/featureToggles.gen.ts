@@ -1697,4 +1697,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
 }

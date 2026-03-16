@@ -3890,6 +3890,19 @@
     },
     {
       "metadata": {
+        "name": "queryFetchConfigFromSettingsService",
+        "resourceVersion": "1773659793759",
+        "creationTimestamp": "2026-03-16T11:16:33Z"
+      },
+      "spec": {
+        "description": "Enables the query service to fetch the configuration from the settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-10-07T18:31:45Z",
