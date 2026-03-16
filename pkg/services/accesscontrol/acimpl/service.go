@@ -115,8 +115,6 @@ type Service struct {
 	store          accesscontrol.Store
 	permRegistry   permreg.PermissionRegistry
 	isInitialized  bool
-	sql            db.DB
-	serverLock     *serverlock.ServerLockService
 	singleFlight   singleflight.Group
 }
 
