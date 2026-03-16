@@ -682,8 +682,10 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 
+	// Compare by org ID to support both k8s namespace format ("default", "org-N")
+	// and legacy bare numeric org ID format ("1", "2", etc.)
 	ns := user.GetNamespace()
-	if ns != info.Value {
+	if ns != info.Value && user.GetOrgID() != info.OrgID {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
@@ -792,7 +794,8 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
 
-	if user.GetNamespace() != ns.Value {
+	// Compare by org ID to support both k8s namespace format and legacy bare numeric org ID format
+	if user.GetNamespace() != ns.Value && user.GetOrgID() != ns.OrgID {
 		logger.Info("Error subscribing: wrong namespace", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}

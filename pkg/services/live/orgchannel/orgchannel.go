@@ -2,6 +2,7 @@ package orgchannel
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	authlib "github.com/grafana/authlib/types"
@@ -13,7 +14,8 @@ func PrependK8sNamespace(ns string, channel string) string {
 }
 
 // StripK8sNamespace strips k8s namespace from the full channel ID.
-// We use the k8s namespace for multi-tenancy across orgs and stacks
+// We use the k8s namespace for multi-tenancy across orgs and stacks.
+// For backwards compatibility, bare numeric org IDs (e.g. "1") are also accepted.
 func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	parts := strings.SplitN(channel, "/", 2)
 	if len(parts) != 2 {
@@ -21,6 +23,12 @@ func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	}
 	ns, err := authlib.ParseNamespace(parts[0])
 	if err == nil && ns.OrgID < 1 {
+		// Legacy format: bare numeric org ID (e.g. "1" instead of "default" or "org-2")
+		orgID, numErr := strconv.ParseInt(parts[0], 10, 64)
+		if numErr == nil && orgID > 0 {
+			ns.OrgID = orgID
+			return ns, parts[1], nil
+		}
 		return ns, "", fmt.Errorf("namespace does not reference a valid org ID: %s", parts[0])
 	}
 	return ns, parts[1], err
