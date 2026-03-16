@@ -766,8 +766,8 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		}
 
 		publicDashboardStore := &FakePublicDashboardStore{}
-		publicDashboardStore.On("Find", mock.Anything, "ExistingUid").Return(pubdash, nil)
-		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrPublicDashboardNotFound.Errorf(""))
+		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		publicDashboardStore.On("FindByOrgAndUid", mock.Anything, mock.Anything, "ExistingUid").Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
