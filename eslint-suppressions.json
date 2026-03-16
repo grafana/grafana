@@ -1843,11 +1843,6 @@
       "count": 7
     }
   },
-  "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
