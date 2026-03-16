@@ -384,6 +384,11 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
   */
