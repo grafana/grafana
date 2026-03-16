@@ -1244,7 +1244,7 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 		},
 		{
 			Name:            "Public dashboard not found",
-			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID: error"),
+			ExpectedErrResp: ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID and orgId: 1: error"),
 			mockFindStore:   &mockFindResponse{pubdash, errors.New("error")},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           1,
@@ -1264,9 +1264,9 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 			orgId:           1,
 		},
 		{
-			Name:            "Public dashboard belongs to another org",
-			ExpectedErrResp: ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", 2),
-			mockFindStore:   &mockFindResponse{&PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}, nil},
+			Name:            "Public dashboard from another org is treated as not found",
+			ExpectedErrResp: ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
+			mockFindStore:   &mockFindResponse{nil, nil},
 			mockDeleteStore: &mockDeleteResponse{0, nil},
 			orgId:           2,
 		},
@@ -1283,9 +1283,9 @@ func TestIntegrationDeletePublicDashboard(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("Find", mock.Anything, mock.Anything).Return(tt.mockFindStore.PublicDashboard, tt.mockFindStore.Err)
+			store.On("FindByOrgAndUid", mock.Anything, tt.orgId, "pubdashUID").Return(tt.mockFindStore.PublicDashboard, tt.mockFindStore.Err)
 			if tt.ExpectedErrResp == nil || tt.mockDeleteStore.StoreRespErr != nil {
-				store.On("Delete", mock.Anything, mock.Anything).Return(tt.mockDeleteStore.AffectedRowsResp, tt.mockDeleteStore.StoreRespErr)
+				store.On("Delete", mock.Anything, tt.orgId, "pubdashUID").Return(tt.mockDeleteStore.AffectedRowsResp, tt.mockDeleteStore.StoreRespErr)
 			}
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, store, nil, nil)
 			err := service.Delete(context.Background(), tt.orgId, "pubdashUID", "uid")
