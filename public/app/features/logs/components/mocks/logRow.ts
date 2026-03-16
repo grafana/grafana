@@ -1,4 +1,4 @@
-import { Grammar } from 'prismjs';
+import type { Grammar } from 'prismjs';
 
 import { FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 

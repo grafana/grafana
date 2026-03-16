@@ -1,4 +1,4 @@
-import { Grammar } from 'prismjs';
+import type { Grammar } from 'prismjs';
 import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
