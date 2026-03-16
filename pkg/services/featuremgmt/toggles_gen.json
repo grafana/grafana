@@ -4521,6 +4521,19 @@
     },
     {
       "metadata": {
+        "name": "teamLBACApiReadFromAppPlatform",
+        "resourceVersion": "1773679095440",
+        "creationTimestamp": "2026-03-16T16:38:15Z"
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tempoAlerting",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-15T13:36:36Z"
