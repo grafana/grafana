@@ -91,6 +91,59 @@ func TestFolderTree(t *testing.T) {
 		}
 	})
 
+	t.Run("add new folder increments count", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		assert.Equal(t, 0, tree.Count())
+
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+		assert.Equal(t, 1, tree.Count())
+		assert.True(t, tree.In("a"))
+
+		tree.Add(Folder{ID: "b", Title: "B", Path: "b/"}, "a")
+		assert.Equal(t, 2, tree.Count())
+		assert.True(t, tree.In("b"))
+	})
+
+	t.Run("add existing folder updates parent and metadata without incrementing count", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+
+		tree.Add(Folder{ID: "x", Title: "Old Title", Path: "old-path/"}, "old-parent")
+		assert.Equal(t, 1, tree.Count())
+
+		// Re-add with new parent, title, and path
+		tree.Add(Folder{ID: "x", Title: "New Title", Path: "new-path/"}, "new-parent")
+		assert.Equal(t, 1, tree.Count(), "count should not increment for existing folder ID")
+		assert.True(t, tree.In("x"))
+
+		// Verify the metadata was updated
+		id, ok := tree.DirPath("x", "")
+		assert.True(t, ok)
+		assert.Equal(t, "New Title", id.Title)
+	})
+
+	t.Run("remove existing folder decrements count and removes from tree", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+		tree.Add(Folder{ID: "b", Title: "B", Path: "b/"}, "a")
+		assert.Equal(t, 2, tree.Count())
+		assert.True(t, tree.In("b"))
+
+		tree.Remove("b")
+		assert.Equal(t, 1, tree.Count())
+		assert.False(t, tree.In("b"))
+		assert.True(t, tree.In("a"))
+	})
+
+	t.Run("remove non-existent folder is a no-op", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+		assert.Equal(t, 1, tree.Count())
+
+		tree.Remove("non-existent")
+		assert.Equal(t, 1, tree.Count())
+		assert.True(t, tree.In("a"))
+	})
+
 	t.Run("walk tree", func(t *testing.T) {
 		tree := &folderTree{
 			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},

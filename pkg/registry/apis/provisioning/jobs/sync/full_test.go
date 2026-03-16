@@ -620,6 +620,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Version: "v1",
 				}, nil)
 
+				repoResources.On("RemoveFolderFromTree", "test-folder").Return()
+
 				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
 					"test-folder",
 					"folders",

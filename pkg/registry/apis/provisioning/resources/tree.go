@@ -22,6 +22,7 @@ type FolderTree interface {
 	In(folder string) bool
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
+	Remove(folderID string)
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
@@ -98,9 +99,22 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 func (t *folderTree) Add(folder Folder, parent string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	_, exists := t.tree[folder.ID]
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
-	t.count++
+	if !exists {
+		t.count++
+	}
+}
+
+func (t *folderTree) Remove(folderID string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if _, exists := t.tree[folderID]; exists {
+		delete(t.tree, folderID)
+		delete(t.folders, folderID)
+		t.count--
+	}
 }
 
 func (t *folderTree) Count() int {

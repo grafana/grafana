@@ -221,6 +221,34 @@ func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper
 	require.NoError(t, os.WriteFile(fullPath, data, 0o600))
 }
 
+// moveInProvisioningPath renames (moves) a relative path within the provisioning directory.
+func moveInProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper, from, to string) {
+	t.Helper()
+	fromPath := path.Join(helper.ProvisioningPath, from)
+	toPath := path.Join(helper.ProvisioningPath, to)
+	require.NoError(t, os.MkdirAll(path.Dir(toPath), 0o750), "create parent for move destination")
+	require.NoError(t, os.Rename(fromPath, toPath), "move %s to %s", from, to)
+}
+
+// requireFolderState gets a folder by UID and asserts its title, source path, and parent.
+func requireFolderState(t *testing.T, helper *common.ProvisioningTestHelper, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+		if !assert.NoError(c, err, "failed to get folder %s", folderUID) {
+			return
+		}
+
+		title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		assert.Equal(c, expectedTitle, title, "folder title")
+
+		annotations := obj.GetAnnotations()
+		assert.Equal(c, expectedSourcePath, annotations["grafana.app/sourcePath"], "source path")
+		assert.Equal(c, expectedParent, annotations["grafana.app/folder"], "parent folder")
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected folder %q with title=%q sourcePath=%q parent=%q", folderUID, expectedTitle, expectedSourcePath, expectedParent)
+}
+
 // requireRepoFolderTitle lists all folders managed by repoName and asserts that
 // exactly one has the given title.
 func requireRepoFolderTitle(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedTitle string) {
@@ -335,4 +363,42 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		requireRepoFolderTitle(t, helper, repo, "Parent Display")
 		requireRepoFolderTitle(t, helper, repo, "Child Display")
 	})
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata verifies that when a
+// folder with _folder.json (stable UID + custom title) is moved on the filesystem,
+// a full sync correctly recreates the folder at the new location with the same UID
+// and title. This works because the DELETE+CREATE flow removes the folder from the
+// in-memory tree during deletion, so the creation phase can recreate it.
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "folder-move-metadata"
+
+	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("move-uid", "Team A Display"))
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "teamA/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify folder was created with stable UID, custom title, and correct source path
+	requireFolderState(t, helper, "move-uid", "Team A Display", "teamA", repo)
+
+	// Move folder on filesystem: teamA → teamB
+	moveInProvisioningPath(t, helper, "teamA", "teamB")
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// After move: folder should be recreated with the same stable UID at the new location.
+	// The source path should reflect the new location, and the title should be preserved
+	// from _folder.json.
+	requireFolderState(t, helper, "move-uid", "Team A Display", "teamB", repo)
 }

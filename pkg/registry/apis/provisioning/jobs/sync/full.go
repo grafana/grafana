@@ -184,6 +184,11 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			// Remove from in-memory tree so subsequent folder creations
+			// (e.g., at a new path with the same _folder.json UID) are not short-circuited.
+			if safepath.IsDir(change.Path) {
+				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+			}
 		}
 		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
