@@ -6,7 +6,7 @@ keywords:
   - resources
   - data model
 title: Grafana Data Model
-weight: 300
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/data-model/
 ---
 
