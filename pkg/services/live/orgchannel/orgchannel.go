@@ -14,10 +14,7 @@ func PrependK8sNamespace(ns string, channel string) string {
 }
 
 // StripK8sNamespace strips k8s namespace from the full channel ID.
-// We use the k8s namespace for multi-tenancy across orgs and stacks.
-// For backwards compatibility, bare numeric org IDs (e.g. "1") are also accepted
-// and normalized to their canonical k8s namespace form ("default" for org 1,
-// "org-N" for other orgs) so callers can compare by namespace string.
+// Legacy bare numeric org IDs (e.g. "1") are normalized to canonical form.
 func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	parts := strings.SplitN(channel, "/", 2)
 	if len(parts) != 2 {
@@ -25,9 +22,7 @@ func StripK8sNamespace(channel string) (authlib.NamespaceInfo, string, error) {
 	}
 	ns, err := authlib.ParseNamespace(parts[0])
 	if err == nil && ns.OrgID < 1 {
-		// Legacy format: bare numeric org ID (e.g. "1" instead of "default" or "org-2").
-		// Normalize Value to the canonical k8s namespace so downstream code can
-		// use simple string comparison for namespace isolation.
+		// Legacy format: bare numeric org ID. Normalize to canonical k8s namespace.
 		orgID, numErr := strconv.ParseInt(parts[0], 10, 64)
 		if numErr == nil && orgID > 0 {
 			ns.OrgID = orgID
