@@ -2,8 +2,10 @@ package authinfoimpl
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/stretchr/testify/mock"
@@ -28,4 +30,39 @@ func TestAuthInfoService_GetUserAuthModuleLabels(t *testing.T) {
 
 	// Verify labels mapped and order preserved
 	require.Equal(t, expected, actual)
+}
+
+func TestAuthInfoService_DeleteUserAuthInfoByModule(t *testing.T) {
+	t.Run("Should delegate to store and invalidate cache", func(t *testing.T) {
+		store := authinfotest.NewMockAuthInfoStore(t)
+
+		userID := int64(42)
+		authModule := login.GoogleAuthModule
+
+		store.On("DeleteUserAuthInfoByModule", mock.Anything, userID, authModule).Return(nil)
+
+		fakeCache := remotecache.FakeCacheStorage{Storage: map[string][]byte{}}
+		svc := ProvideService(store, fakeCache, nil)
+
+		err := svc.DeleteUserAuthInfoByModule(context.Background(), userID, authModule)
+		require.NoError(t, err)
+
+		store.AssertCalled(t, "DeleteUserAuthInfoByModule", mock.Anything, userID, authModule)
+	})
+
+	t.Run("Should propagate store errors", func(t *testing.T) {
+		store := authinfotest.NewMockAuthInfoStore(t)
+
+		userID := int64(42)
+		authModule := login.GoogleAuthModule
+		expectedErr := errors.New("database error")
+
+		store.On("DeleteUserAuthInfoByModule", mock.Anything, userID, authModule).Return(expectedErr)
+
+		fakeCache := remotecache.FakeCacheStorage{Storage: map[string][]byte{}}
+		svc := ProvideService(store, fakeCache, nil)
+
+		err := svc.DeleteUserAuthInfoByModule(context.Background(), userID, authModule)
+		require.ErrorIs(t, err, expectedErr)
+	})
 }
