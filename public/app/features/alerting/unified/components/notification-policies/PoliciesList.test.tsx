@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, within } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -16,7 +16,7 @@ import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
-import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { countPolicies } from './PoliciesList';
 
