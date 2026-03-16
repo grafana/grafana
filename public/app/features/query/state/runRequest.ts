@@ -61,11 +61,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
       error = packet.error;
     }
     if (packet.errors?.length) {
-      if (errors) {
-        errors = [...errors, ...packet.errors];
-      } else {
-        errors = [...packet.errors];
-      }
+      errors = [...(errors ?? []), ...packet.errors];
     }
 
     if (packet.data && packet.data.length) {
