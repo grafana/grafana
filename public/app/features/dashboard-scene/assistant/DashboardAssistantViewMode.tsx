@@ -34,11 +34,10 @@ export function useDashboardAssistantViewMode({
   selection,
 }: DashboardAssistantViewModeProps) {
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  // TODO: remove hardcoded true before merging — for local dev without assistant backend
   const isEnabled =
     !!config.featureToggles.dashboardAssistantPopover &&
     config.bootData.user.isSignedIn &&
-    (isAssistantAvailable || true);
+    isAssistantAvailable;
 
   useAssistantPanelHints(dashboard, isEditing, isEnabled);
 
