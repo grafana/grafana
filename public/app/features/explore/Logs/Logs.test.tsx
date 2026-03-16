@@ -16,7 +16,6 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
@@ -29,6 +28,19 @@ import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
 
 const reportInteraction = jest.fn();
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
@@ -69,6 +81,7 @@ describe('Logs', () => {
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
     jest.clearAllMocks();
+    setBooleanFlags({});
   });
 
   beforeAll(() => {
@@ -464,15 +477,8 @@ describe('Logs', () => {
   });
 
   describe('with table visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-      config.featureToggles.logsExploreTableVisualisation = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({ logsExploreTableVisualisation: true });
     });
 
     it('should show visualisation type radio group', () => {

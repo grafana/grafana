@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize, groupBy } from 'lodash';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
@@ -34,7 +35,7 @@ import {
   store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataTopic } from '@grafana/schema';
 import {
   Button,
@@ -209,6 +210,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
+  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', false);
+  const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
+  const logsExploreTableVisualisationEnabled = useBooleanFlagValue('logsExploreTableVisualisation', false);
+  const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', false);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
@@ -567,27 +572,27 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    if (!config.featureToggles.newLogContext) {
+    if (!newLogContextEnabled) {
       reportInteraction('grafana_explore_logs_log_context_closed', {
         datasourceType: contextRow?.datasourceType,
         logRowUid: contextRow?.uid,
       });
     }
     onCloseCallbackRef?.current();
-  }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
+  }, [contextRow?.datasourceType, contextRow?.uid, newLogContextEnabled, onCloseCallbackRef]);
 
   const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     setContextOpen(true);
     setContextRow(row);
-    if (!config.featureToggles.newLogContext) {
+    if (!newLogContextEnabled) {
       reportInteraction('grafana_explore_logs_log_context_opened', {
         datasourceType: row.datasourceType,
         logRowUid: row.uid,
       });
     }
     onCloseCallbackRef.current = onClose;
-  }, []);
+  }, [newLogContextEnabled]);
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
@@ -762,7 +767,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
+      {(!newLogsPanelEnabled || !newLogContextEnabled) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -774,7 +779,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           timeZone={timeZone}
         />
       )}
-      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
+      {newLogsPanelEnabled && newLogContextEnabled && getRowContext && contextRow && (
         <LogLineContext
           open={contextOpen}
           log={contextRow}
@@ -815,7 +820,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       </div>
       <PanelChrome
         titleItems={[
-          config.featureToggles.logsExploreTableVisualisation ? (
+          logsExploreTableVisualisationEnabled ? (
             visualisationType === 'logs' ? null : (
               <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
                 <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
@@ -826,7 +831,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         title={t('explore.unthemed-logs.title-logs', 'Logs')}
         actions={
           <>
-            {config.featureToggles.logsExploreTableVisualisation && (
+            {logsExploreTableVisualisationEnabled && (
               <div className={styles.visualisationType}>
                 <RadioButtonGroup
                   className={styles.visualisationTypeRadio}
@@ -860,8 +865,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       >
         <div className={styles.stickyNavigation}>
           {visualisationType !== 'table' &&
-            !config.featureToggles.newLogsPanel &&
-            !config.featureToggles.logsPanelControls && (
+            !newLogsPanelEnabled &&
+            !logsPanelControlsEnabled && (
               <div className={styles.logOptions}>
                 <InlineFieldRow>
                   <InlineField
@@ -981,7 +986,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
+          {!logsPanelControlsEnabled && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
@@ -1003,8 +1008,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
-            config.featureToggles.logsPanelControls &&
+          {(!newLogsPanelEnabled || visualisationType === 'table') &&
+            logsPanelControlsEnabled &&
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
@@ -1059,8 +1064,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </div>
             )}
-          {!config.featureToggles.logsPanelControls &&
-            !config.featureToggles.newLogsPanel &&
+          {!logsPanelControlsEnabled &&
+            !newLogsPanelEnabled &&
             visualisationType === 'logs' &&
             hasData && (
               <>
@@ -1116,7 +1121,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
               </>
             )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
+          {newLogsPanelEnabled && visualisationType === 'logs' && (
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
               {logsContainerRef.current && hasData && (
                 <LogList

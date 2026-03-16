@@ -3,13 +3,25 @@ import { ComponentProps } from 'react';
 
 import { DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
 import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -94,15 +106,8 @@ describe('LogsTable', () => {
     mockTransformationsRegistry(transformers);
   });
 
-  let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-
-  beforeAll(() => {
-    originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-    config.featureToggles.logsExploreTableVisualisation = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+  beforeEach(() => {
+    setBooleanFlags({ logsExploreTableVisualisation: true });
   });
 
   it('should render 4 table rows', async () => {
@@ -196,19 +201,11 @@ describe('LogsTable', () => {
   });
 
   describe('LogsTable (loki dataplane)', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-    let originalLokiDataplaneValue = config.featureToggles.lokiLogsDataplane;
-
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-      originalLokiDataplaneValue = config.featureToggles.lokiLogsDataplane;
-      config.featureToggles.logsExploreTableVisualisation = true;
-      config.featureToggles.lokiLogsDataplane = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
-      config.featureToggles.lokiLogsDataplane = originalLokiDataplaneValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        logsExploreTableVisualisation: true,
+        lokiLogsDataplane: true,
+      });
     });
 
     it('should render 4 table rows', async () => {
