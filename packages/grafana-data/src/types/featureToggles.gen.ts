@@ -960,6 +960,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
