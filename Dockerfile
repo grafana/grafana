@@ -74,62 +74,61 @@ RUN if grep -i -q alpine /etc/issue; then \
 
 WORKDIR /tmp/grafana
 
-COPY go.* ./
+COPY go.mod go.sum go.work go.work.sum ./
 COPY .citools .citools
 
-# Copy go dependencies first
-# If updating this, please also update devenv/frontend-service/backend.dockerfile
-COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apiserver pkg/apiserver
-COPY pkg/apimachinery pkg/apimachinery
-COPY pkg/build pkg/build
-COPY pkg/build/wire pkg/build/wire
-COPY pkg/storage/unified/resource pkg/storage/unified/resource
-COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
-COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
-COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
-COPY pkg/semconv pkg/semconv
-COPY pkg/plugins pkg/plugins
-COPY pkg/aggregator pkg/aggregator
-COPY apps/playlist apps/playlist
-COPY apps/quotas apps/quotas
-COPY apps/plugins apps/plugins
-COPY apps/shorturl apps/shorturl
-COPY apps/annotation apps/annotation
-COPY apps/correlations apps/correlations
-COPY apps/preferences apps/preferences
-COPY apps/collections apps/collections
-COPY apps/provisioning apps/provisioning
-COPY apps/secret apps/secret
-COPY apps/scope apps/scope
-COPY apps/logsdrilldown apps/logsdrilldown
-COPY apps/advisor apps/advisor
-COPY apps/dashboard apps/dashboard
-COPY apps/dashvalidator apps/dashvalidator
-COPY apps/folder apps/folder
-COPY apps/iam apps/iam
-COPY apps apps
-COPY kindsv2 kindsv2
-COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
-COPY apps/alerting/historian apps/alerting/historian
-COPY apps/alerting/notifications apps/alerting/notifications
-COPY apps/alerting/rules apps/alerting/rules
-COPY pkg/codegen pkg/codegen
-COPY pkg/plugins/codegen pkg/plugins/codegen
-COPY pkg/infra/features pkg/infra/features
-COPY apps/example apps/example
+# Copy go.mod/go.sum from each workspace module for dependency caching.
+# Only dependency file changes invalidate the go mod download cache layer.
+COPY apps/advisor/go.mod apps/advisor/go.sum apps/advisor/
+COPY apps/alerting/alertenrichment/go.mod apps/alerting/alertenrichment/go.sum apps/alerting/alertenrichment/
+COPY apps/alerting/historian/go.mod apps/alerting/historian/go.sum apps/alerting/historian/
+COPY apps/alerting/notifications/go.mod apps/alerting/notifications/go.sum apps/alerting/notifications/
+COPY apps/alerting/rules/go.mod apps/alerting/rules/go.sum apps/alerting/rules/
+COPY apps/annotation/go.mod apps/annotation/go.sum apps/annotation/
+COPY apps/collections/go.mod apps/collections/go.sum apps/collections/
+COPY apps/correlations/go.mod apps/correlations/go.sum apps/correlations/
+COPY apps/dashboard/go.mod apps/dashboard/go.sum apps/dashboard/
+COPY apps/dashvalidator/go.mod apps/dashvalidator/go.sum apps/dashvalidator/
+COPY apps/example/go.mod apps/example/go.sum apps/example/
+COPY apps/folder/go.mod apps/folder/go.sum apps/folder/
+COPY apps/iam/go.mod apps/iam/go.sum apps/iam/
+COPY apps/live/go.mod apps/live/go.sum apps/live/
+COPY apps/logsdrilldown/go.mod apps/logsdrilldown/go.sum apps/logsdrilldown/
+COPY apps/playlist/go.mod apps/playlist/go.sum apps/playlist/
+COPY apps/plugins/go.mod apps/plugins/go.sum apps/plugins/
+COPY apps/preferences/go.mod apps/preferences/go.sum apps/preferences/
+COPY apps/provisioning/go.mod apps/provisioning/go.sum apps/provisioning/
+COPY apps/quotas/go.mod apps/quotas/go.sum apps/quotas/
+COPY apps/scope/go.mod apps/scope/go.sum apps/scope/
+COPY apps/secret/go.mod apps/secret/go.sum apps/secret/
+COPY apps/shorturl/go.mod apps/shorturl/go.sum apps/shorturl/
+COPY pkg/aggregator/go.mod pkg/aggregator/go.sum pkg/aggregator/
+COPY pkg/apimachinery/go.mod pkg/apimachinery/go.sum pkg/apimachinery/
+COPY pkg/apiserver/go.mod pkg/apiserver/go.sum pkg/apiserver/
+COPY pkg/build/go.mod pkg/build/go.sum pkg/build/
+COPY pkg/build/wire/go.mod pkg/build/wire/go.sum pkg/build/wire/
+COPY pkg/codegen/go.mod pkg/codegen/go.sum pkg/codegen/
+COPY pkg/infra/features/go.mod pkg/infra/features/go.sum pkg/infra/features/
+COPY pkg/plugins/go.mod pkg/plugins/go.sum pkg/plugins/
+COPY pkg/plugins/codegen/go.mod pkg/plugins/codegen/go.sum pkg/plugins/codegen/
+COPY pkg/semconv/go.mod pkg/semconv/go.sum pkg/semconv/
+COPY pkg/storage/unified/resource/kv/go.mod pkg/storage/unified/resource/kv/go.sum pkg/storage/unified/resource/kv/
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
+# Copy full source
 COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY kindsv2 kindsv2
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
+COPY apps apps
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
@@ -137,7 +136,9 @@ COPY .github .github
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
-RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 RUN mkdir -p data/plugins-bundled
 
