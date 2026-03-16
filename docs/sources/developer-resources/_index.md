@@ -21,7 +21,7 @@ This section of the documentation contains additional resources for developers a
 
 Refer to the [Contribute to Grafana](https://grafana.com/docs/grafana-cloud/developer-resources/contribute) guide to learn the various ways you can contribute to Grafana. Read the [Grafana Labs Software Grant and Contributor License Agreement](https://grafana.com/docs/grafana-cloud/developer-resources/cla) before making any contribution.
 
-## Grafana developer portal
+## Data Model and the Grafana developer portal
 
 Go to the [Grafana developer portal](https://grafana.com/developers) to access the following documentation:
 
@@ -43,5 +43,5 @@ Learn about the following Grafana APIs:
 
 You might also find the following resources to be helpful:
 
-- [Grafana Tutorials:](https://grafana.com/tutorials/) Step-by-step guides that help you make the most of Grafana.
-- [Grafana Community Forums:](https://community.grafana.com) Get technical support for open source Grafana, Loki, and Tempo.
+- [Grafana Tutorials](https://grafana.com/tutorials/): Step-by-step guides that help you make the most of Grafana.
+- [Grafana Community Forums](https://community.grafana.com): Get technical support for open source Grafana, Loki, and Tempo.
