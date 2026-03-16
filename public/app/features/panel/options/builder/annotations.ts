@@ -53,7 +53,7 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     name: t('grafana-ui.builder.annotations.canvasControls.name', 'Hide lines and areas'),
     description: t(
       'grafana-ui.builder.annotations.canvasControls.desc',
-      'Displays annotation indicator lines and shaded regions'
+      'Hides annotation indicator lines and shaded regions'
     ),
     defaultValue: undefined,
     showIf: (_, __, annotations) =>
