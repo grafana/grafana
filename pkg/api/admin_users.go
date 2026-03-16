@@ -425,6 +425,136 @@ func (hs *HTTPServer) AdminRevokeUserAuthToken(c *contextmodel.ReqContext) respo
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }
 
+// swagger:route POST /admin/users/{user_id}/auth admin_users adminSetUserAuthInfo
+//
+// Link an OAuth identity to a user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authinfo:write` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+func (hs *HTTPServer) AdminSetUserAuthInfo(c *contextmodel.ReqContext) response.Response {
+	form := dtos.AdminSetUserAuthInfoForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+
+	if !login.IsKnownAuthModule(form.AuthModule) {
+		return response.Error(http.StatusBadRequest, "unknown auth module", nil)
+	}
+
+	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
+	}
+
+	// Check if user already has this auth module linked
+	_, err = hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{
+		UserId:     userID,
+		AuthModule: form.AuthModule,
+	})
+	if err == nil {
+		return response.Error(http.StatusConflict, "User already has an auth link for this module", nil)
+	}
+	if !errors.Is(err, user.ErrUserNotFound) {
+		return response.Error(http.StatusInternalServerError, "Failed to check existing auth info", err)
+	}
+
+	if err := hs.authInfoService.SetAuthInfo(c.Req.Context(), &login.SetAuthInfoCommand{
+		UserId:     userID,
+		UserUID:    usr.UID,
+		AuthModule: form.AuthModule,
+		AuthId:     form.AuthId,
+	}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to set auth info", err)
+	}
+
+	return response.Success("Auth info set")
+}
+
+// swagger:route DELETE /admin/users/{user_id}/auth/{auth_module} admin_users adminDeleteUserAuthInfo
+//
+// Unlink an OAuth identity from a user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authinfo:write` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminDeleteUserAuthInfo(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+
+	authModule := web.Params(c.Req)[":authModule"]
+	if !login.IsKnownAuthModule(authModule) {
+		return response.Error(http.StatusBadRequest, "unknown auth module", nil)
+	}
+
+	// Verify auth link exists
+	_, err = hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{
+		UserId:     userID,
+		AuthModule: authModule,
+	})
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(http.StatusNotFound, "Auth info not found for this user and module", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get auth info", err)
+	}
+
+	if err := hs.authInfoService.DeleteUserAuthInfoByModule(c.Req.Context(), userID, authModule); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete auth info", err)
+	}
+
+	return response.Success("Auth info deleted")
+}
+
+// swagger:parameters adminSetUserAuthInfo
+type AdminSetUserAuthInfoParams struct {
+	// in:body
+	// required:true
+	Body dtos.AdminSetUserAuthInfoForm `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminDeleteUserAuthInfo
+type AdminDeleteUserAuthInfoParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+	// in:path
+	// required:true
+	AuthModule string `json:"auth_module"`
+}
+
 // swagger:parameters adminUpdateUserPassword
 type AdminUpdateUserPasswordParams struct {
 	// in:body

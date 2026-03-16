@@ -13,6 +13,7 @@ type AuthInfoService interface {
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
+	DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error
 }
 
 //go:generate mockery --name Store --structname MockAuthInfoStore --outpkg authinfotest --filename auth_info_store_mock.go --output ./authinfotest/
@@ -23,6 +24,22 @@ type Store interface {
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
+	DeleteUserAuthInfoByModule(ctx context.Context, userID int64, authModule string) error
+}
+
+// IsKnownAuthModule returns true if the given module is a recognized auth module.
+func IsKnownAuthModule(module string) bool {
+	switch module {
+	case PasswordAuthModule, PasswordlessAuthModule, APIKeyAuthModule,
+		SAMLAuthModule, LDAPAuthModule, AuthProxyAuthModule,
+		JWTModule, ExtendedJWTModule, RenderModule,
+		AzureADAuthModule, GoogleAuthModule, GitLabAuthModule,
+		GithubAuthModule, GenericOAuthModule, GrafanaComAuthModule,
+		GrafanaNetAuthModule, OktaAuthModule:
+		return true
+	default:
+		return false
+	}
 }
 
 const (
