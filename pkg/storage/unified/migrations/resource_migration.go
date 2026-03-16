@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,37 +15,30 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
 type MigrationRunnerOption func(*MigrationRunner)
 
-// WithAutoEnableMode5 configures the runner to auto-enable mode 5 after successful migration.
-func WithAutoEnableMode5(cfg *setting.Cfg) MigrationRunnerOption {
-	return func(r *MigrationRunner) {
-		r.cfg = cfg
-		r.autoEnableMode5 = true
-	}
-}
-
 // MigrationRunner executes migrations without implementing the SQL migration interface.
 type MigrationRunner struct {
 	unifiedMigrator UnifiedMigrator
 	tableLocker     MigrationTableLocker
+	tableRenamer    MigrationTableRenamer
 	definition      MigrationDefinition
 	cfg             *setting.Cfg
-	autoEnableMode5 bool
 	log             log.Logger
 	resources       []schema.GroupResource
 	validators      []Validator
 }
 
 // NewMigrationRunner creates a new migration runner.
-func NewMigrationRunner(unifiedMigrator UnifiedMigrator, tableLocker MigrationTableLocker, def MigrationDefinition, validators []Validator, opts ...MigrationRunnerOption) *MigrationRunner {
+func NewMigrationRunner(unifiedMigrator UnifiedMigrator, tableLocker MigrationTableLocker, tableRenamer MigrationTableRenamer, cfg *setting.Cfg, def MigrationDefinition, validators []Validator, opts ...MigrationRunnerOption) *MigrationRunner {
 	r := &MigrationRunner{
 		unifiedMigrator: unifiedMigrator,
 		tableLocker:     tableLocker,
+		tableRenamer:    tableRenamer,
+		cfg:             cfg,
 		definition:      def,
 		log:             log.New("storage.unified.migration_runner." + def.ID),
 		resources:       def.GetGroupResources(),
@@ -86,7 +81,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		// Increase page cache to prevent cache spill during bulk inserts.
 		// When the cache spills, SQLite needs an EXCLUSIVE lock which deadlocks with the
 		// SHARED lock held by the legacy database rows cursor on another connection.
-		// Configurable via [unified_storage] migration_cache_size_kb (default: 50MB).
+		// Configurable via [unified_storage] migration_cache_size_kb (default: ~1GB).
 		cacheKB := 50000
 		if r.cfg.MigrationCacheSizeKB > 0 {
 			cacheKB = r.cfg.MigrationCacheSizeKB
@@ -98,7 +93,27 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		r.log.Info("Stored migrator transaction in context for bulk operations (SQLite compatibility)")
 	}
 
+	r.tableRenamer.Init(sess, mg)
+	if err := r.tableRenamer.RecoverRenamedTables(r.definition.RenameTables); err != nil {
+		return fmt.Errorf("failed to recover partial rename: %w", err)
+	}
 	lockTables := r.definition.GetLockTables()
+
+	// Skip migration if the table does not exist
+	// This is common for deployments that stop creating the legacy table for new instances
+	if r.definition.SkipWhenMissing {
+		for _, table := range lockTables {
+			found, err := sess.IsTableExist(table)
+			if err != nil {
+				return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
+			}
+			if !found {
+				r.log.Info("Migration is not required, the legacy SQL table does not exist", "table", table)
+				return nil
+			}
+		}
+	}
+
 	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
 	if err != nil {
 		return fmt.Errorf("failed to lock tables for migration: %w", err)
@@ -109,22 +124,20 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}()
 
-	if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
+	if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
 		if opts.DriverName != migrator.SQLite {
 			return err
 		}
 		r.log.Warn("SQLite migration failed, retrying with parquet buffer", "error", err)
 		ctx = resource.ContextWithParquetBuffer(ctx)
-		if err := r.migrateAllOrgs(ctx, sess, orgs, opts); err != nil {
+		if err := r.migrateAllOrgs(ctx, sess, mg, orgs, opts); err != nil {
 			return err
 		}
 	}
 
-	// Auto-enable mode 5 for resources after successful migration
-	if r.autoEnableMode5 && r.cfg != nil {
-		for _, gr := range r.resources {
-			r.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
-			r.cfg.EnableMode5(gr.Resource + "." + gr.Group)
+	if !r.cfg.DisableLegacyTableRename {
+		if err := r.tableRenamer.RenameTables(ctx, r.definition.RenameTables, unlockTables); err != nil {
+			return err
 		}
 	}
 
@@ -133,14 +146,14 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	return nil
 }
 
-func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, orgs []orgInfo, opts RunOptions) error {
+func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, orgs []orgInfo, opts RunOptions) error {
 	for _, org := range orgs {
 		info, err := types.ParseNamespace(types.OrgNamespaceFormatter(org.ID))
 		if err != nil {
 			r.log.Error("Failed to parse organization namespace", "org_id", org.ID, "error", err)
 			return fmt.Errorf("failed to parse namespace for org %d: %w", org.ID, err)
 		}
-		if err = r.MigrateOrg(ctx, sess, info, opts); err != nil {
+		if err = r.MigrateOrg(ctx, sess, mg.DBEngine, info, opts); err != nil {
 			return err
 		}
 	}
@@ -148,7 +161,7 @@ func (r *MigrationRunner) migrateAllOrgs(ctx context.Context, sess *xorm.Session
 }
 
 // MigrateOrg handles migration for a single organization.
-func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, info types.NamespaceInfo, opts RunOptions) error {
+func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, engine *xorm.Engine, info types.NamespaceInfo, opts RunOptions) error {
 	r.log.Info("Migrating organization", "org_id", info.OrgID, "namespace", info.Value)
 
 	// Create a service identity context for this namespace to authenticate with unified storage
@@ -189,8 +202,14 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 		return fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
 
-	// Validate the migration results
-	if err := r.validateMigration(ctx, sess, response, r.validators); err != nil {
+	// On MySQL with rename, use a separate session so validator SELECTs don't hold
+	// shared MDL on sess's transaction (would deadlock with RENAME's exclusive MDL).
+	validationSess := sess
+	if opts.DriverName == migrator.MySQL && len(r.definition.RenameTables) > 0 && !r.cfg.DisableLegacyTableRename {
+		validationSess = engine.NewSession()
+		defer validationSess.Close()
+	}
+	if err := r.validateMigration(ctx, validationSess, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration validation failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}
@@ -240,32 +259,23 @@ type ResourceMigration struct {
 	runner      *MigrationRunner
 	resources   []schema.GroupResource
 	migrationID string
-	autoMigrate bool // If true, auto-migrate resource if count is below threshold
-	hadErrors   bool // Tracks if errors occurred during migration (used with ignoreErrors)
 }
 
 // ResourceMigrationOption is a functional option for configuring ResourceMigration.
 type ResourceMigrationOption func(*ResourceMigration, *MigrationRunner)
-
-// WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
-func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
-	return func(m *ResourceMigration, r *MigrationRunner) {
-		m.autoMigrate = true
-		r.cfg = cfg
-		r.autoEnableMode5 = true
-	}
-}
 
 // NewResourceMigration creates a new migration for the specified resources.
 // It internally creates a MigrationRunner to handle the actual migration logic.
 func NewResourceMigration(
 	unifiedMigrator UnifiedMigrator,
 	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
+	cfg *setting.Cfg,
 	def MigrationDefinition,
 	validators []Validator,
 	opts ...ResourceMigrationOption,
 ) *ResourceMigration {
-	runner := NewMigrationRunner(unifiedMigrator, tableLocker, def, validators)
+	runner := NewMigrationRunner(unifiedMigrator, tableLocker, tableRenamer, cfg, def, validators)
 	m := &ResourceMigration{
 		runner:      runner,
 		resources:   def.GetGroupResources(),
@@ -278,8 +288,7 @@ func NewResourceMigration(
 }
 
 func (m *ResourceMigration) SkipMigrationLog() bool {
-	// Skip populating the log table if auto-migrate is enabled and errors occurred
-	return m.autoMigrate && m.hadErrors
+	return false
 }
 
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
@@ -291,23 +300,7 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 
 // Exec implements migrator.CodeMigration interface. Executes the migration across all organizations.
 // It delegates to the internal MigrationRunner for the actual migration logic.
-func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err error) {
-	// Track any errors that occur during migration
-	defer func() {
-		if err != nil {
-			if m.autoMigrate {
-				m.runner.log.Warn(
-					`[WARN] Resource migration failed and is currently skipped.
-This migration will be enforced in the next major Grafana release, where failures will block startup or resource loading.
-
-This warning is intended to help you detect and report issues early.
-Please investigate the failure and report it to the Grafana team so it can be addressed before the next major release.`,
-					"error", err)
-			}
-			m.hadErrors = true
-		}
-	}()
-
+func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	ctx := context.Background()
 
 	return m.runner.Run(ctx, sess, mg, RunOptions{

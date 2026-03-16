@@ -1,7 +1,5 @@
 import { VizPanel } from '@grafana/scenes';
 
-import { setupTabsTest, TabsTestSetup } from '../utils/test-utils';
-
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -10,31 +8,6 @@ import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager'
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
-
-let lastUndo: (() => void) | undefined;
-
-jest.mock('../edit-pane/shared', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    moveElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    edit: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-  },
-  ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
-  DashboardStateChangedEvent: jest.fn().mockImplementation(() => ({})),
-}));
 
 describe('DashboardLayoutOrchestrator', () => {
   describe('cross-tab drag cancel', () => {
@@ -161,31 +134,6 @@ describe('DashboardLayoutOrchestrator', () => {
     });
   });
 
-  describe('isDragging', () => {
-    it('should return false when nothing is being dragged', () => {
-      const { orchestrator } = setup();
-
-      expect(orchestrator.isDragging()).toBe(false);
-    });
-
-    it('should return true when dragging a grid item', () => {
-      const { orchestrator, gridItem } = setup();
-
-      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
-
-      expect(orchestrator.isDragging()).toBe(true);
-    });
-
-    it('should return true when dragging a row', () => {
-      const { orchestrator } = setupWithRows();
-
-      // Note: draggingRow is set via startRowDrag which requires more setup
-      // This test verifies the state check logic
-      orchestrator.setState({ draggingRow: undefined });
-      expect(orchestrator.isDragging()).toBe(false);
-    });
-  });
-
   describe('isDroppedElsewhere', () => {
     it('should return false when not dragging', () => {
       const { orchestrator } = setup();
@@ -262,88 +210,6 @@ describe('DashboardLayoutOrchestrator', () => {
       // Empty title should be falsy, which the orchestrator handles with fallback to 'Panel'
       expect(gridItem.state.body.state.title).toBe('');
       expect(gridItem.state.body.state.title || 'Panel').toBe('Panel');
-    });
-  });
-
-  describe('tab dragging', () => {
-    let elementsFromPointSpy: jest.SpyInstance<Element[], [number, number]>;
-
-    beforeAll(() => {
-      // polyfill for jsdom
-      if (!('elementsFromPoint' in document)) {
-        Object.defineProperty(document, 'elementsFromPoint', {
-          configurable: true,
-          writable: true,
-          value: () => [] as Element[],
-        });
-      }
-      elementsFromPointSpy = jest.spyOn(document, 'elementsFromPoint').mockReturnValue([]);
-    });
-
-    afterAll(() => {
-      elementsFromPointSpy?.mockRestore();
-    });
-
-    return [
-      {
-        name: 'Same row: move non-repeated tabs',
-        tabs: ['a b c'],
-        drag: 'a',
-        drop: 'c',
-        expected: ['b c a'],
-      },
-      {
-        name: 'Same row: move repeated tabs',
-        tabs: ['ab c'],
-        drag: 'a',
-        drop: 'c',
-        expected: ['c ab'],
-      },
-      {
-        name: 'Two rows: Move non-repeated tab (before)',
-        tabs: ['a b c', 'd e f'],
-        drag: 'b',
-        drop: 'e',
-        after: false,
-        expected: ['a c', 'd b e f'],
-      },
-      {
-        name: 'Two rows: Move non-repeated tab (after)',
-        tabs: ['a b c', 'd e f'],
-        drag: 'b',
-        drop: 'e',
-        after: true,
-        expected: ['a c', 'd e b f'],
-      },
-      {
-        name: 'Two rows: Move repeated tab to another',
-        tabs: ['a bc', 'd e f'],
-        drag: 'b',
-        drop: 'e',
-        after: true,
-        expected: ['a', 'd e bc f'],
-      },
-      {
-        name: 'Two rows: Move repeated tab to another between other repeated tabs',
-        tabs: ['a bc', 'd ef g'],
-        drag: 'b',
-        drop: 'e',
-        after: true,
-        expected: ['a', 'd ef bc g'],
-      },
-    ].forEach((scenario: TabsTestSetup) => {
-      it(scenario.name, () => {
-        const { performDrag, assertExpectedTabs, assertInitialTabs } = setupTabsTest(scenario);
-
-        assertInitialTabs();
-        performDrag();
-
-        assertExpectedTabs();
-
-        lastUndo?.();
-
-        assertInitialTabs();
-      });
     });
   });
 });
@@ -489,36 +355,6 @@ function setup() {
   });
 
   return { orchestrator, manager, gridItem, panel };
-}
-
-function setupWithRows() {
-  const panel = new VizPanel({
-    title: 'Panel A',
-    key: 'panel-1',
-    pluginId: 'table',
-  });
-
-  const gridItem = new AutoGridItem({
-    key: 'grid-item-1',
-    body: panel,
-  });
-
-  const manager = new AutoGridLayoutManager({
-    layout: new AutoGridLayout({ children: [gridItem] }),
-  });
-
-  const tabsManager = new TabsLayoutManager({
-    tabs: [new TabItem({ title: 'Tab 1', layout: manager })],
-  });
-
-  const orchestrator = new DashboardLayoutOrchestrator();
-
-  new DashboardScene({
-    body: tabsManager,
-    layoutOrchestrator: orchestrator,
-  });
-
-  return { orchestrator, manager, gridItem, panel, tabsManager };
 }
 
 function setupAutoGrid() {

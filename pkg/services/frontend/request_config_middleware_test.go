@@ -53,12 +53,12 @@ func enableSettingsOverridesToggle(t *testing.T) {
 		Variants:       map[string]any{"on": true, "off": false},
 	}
 
-	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
-		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]memprovider.InMemoryFlag{
-			featuremgmt.FlagFrontendServiceUseSettingsService: flag,
-		},
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFrontendServiceUseSettingsService: flag,
 	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

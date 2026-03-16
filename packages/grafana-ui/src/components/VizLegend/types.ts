@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { JSX } from 'react';
+import type { JSX, ReactNode } from 'react';
 
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
@@ -27,6 +27,8 @@ export interface VizLegendBaseProps<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
+  limit?: number;
+  filterAction?: ReactNode;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import * as React from 'react';
 
 import { FieldConfig, getMinMaxAndDelta, Field, isDataFrameWithValue } from '@grafana/data';
@@ -18,6 +19,7 @@ import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
+import { isTableCellStylesKeyEqual } from '../styles';
 import { SparklineCellProps, TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions, prepareSparklineValue } from '../utils';
 
@@ -110,14 +112,17 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
 }
 
-export const getStyles: TableCellStyles = (theme, { textAlign }) =>
-  css({
-    '&, & > a': {
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(1),
-      ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
-    },
-  });
+export const getStyles: TableCellStyles = memoize(
+  (theme, { textAlign }) =>
+    css({
+      '&, & > a': {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: theme.spacing(1),
+        ...(textAlign === 'right' && { flexDirection: 'row-reverse' }),
+      },
+    }),
+  { isMatchingKey: isTableCellStylesKeyEqual }
+);
