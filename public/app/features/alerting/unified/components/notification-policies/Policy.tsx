@@ -34,6 +34,7 @@ import {
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { trackNotificationPolicyExported } from '../../Analytics';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
@@ -642,7 +643,10 @@ export const useCreateDropdownMenuActions = (
         key="export-policy"
         icon="download-alt"
         label={t('alerting.use-create-dropdown-menu-actions.label-export', 'Export')}
-        onClick={toggleShowExportDrawer}
+        onClick={() => {
+          trackNotificationPolicyExported({ isDefaultPolicy: isActualDefaultPolicy });
+          toggleShowExportDrawer();
+        }}
       />
     );
   }

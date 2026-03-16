@@ -4,6 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, Route } from '../../../../../../plugins/datasource/alertmanager/types';
+import { trackNotificationPolicyExported } from '../../../Analytics';
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../../hooks/useAbilities';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
@@ -64,7 +65,10 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
         size="sm"
         data-testid="export-action"
         disabled={!exportPoliciesAllowed}
-        onClick={() => showExportDrawer(route.name ?? '')}
+        onClick={() => {
+          trackNotificationPolicyExported({ isDefaultPolicy: route.name === ROOT_ROUTE_NAME });
+          showExportDrawer(route.name ?? '');
+        }}
       >
         <Trans i18nKey="alerting.common.export">Export</Trans>
       </LinkButton>
