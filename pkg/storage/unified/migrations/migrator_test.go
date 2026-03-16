@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -522,12 +524,104 @@ func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
 	}
 }
 
+func TestUnifiedMigration_Migrate_UsesCompatibleBulkProcessStream(t *testing.T) {
+	gr := schema.GroupResource{Group: "test.grafana.app", Resource: "tests"}
+
+	tests := []struct {
+		name           string
+		batchedErr     error
+		expectFallback bool
+	}{
+		{
+			name: "uses batched stream when supported",
+		},
+		{
+			name:           "falls back to legacy stream when batched RPC is unavailable",
+			batchedErr:     status.Error(codes.Unimplemented, "rpc is not implemented"),
+			expectFallback: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := resource.NewMockResourceClient(t)
+			batchedStream := &noopBulkProcessBatchedClient{}
+			legacyStream := &noopBulkProcessClient{}
+
+			var batchedResult resourcepb.BulkStore_BulkProcessBatchedClient
+			if tt.batchedErr == nil {
+				batchedResult = batchedStream
+			}
+
+			mockClient.EXPECT().
+				BulkProcessBatched(mock.Anything).
+				Return(batchedResult, tt.batchedErr).
+				Once()
+
+			if tt.expectFallback {
+				mockClient.EXPECT().
+					BulkProcess(mock.Anything).
+					Return(legacyStream, nil).
+					Once()
+			}
+
+			registry := migrations.NewMigrationRegistry()
+			registry.Register(migrations.MigrationDefinition{
+				ID:          "test-migration",
+				MigrationID: "test migration",
+				Resources: []migrations.ResourceInfo{
+					{GroupResource: gr},
+				},
+				Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+					gr: func(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+						return stream.Send(&resourcepb.BulkRequest{Value: []byte("payload")})
+					},
+				},
+			})
+
+			migrator := migrations.ProvideUnifiedMigrator(mockClient, registry)
+			resp, err := migrator.Migrate(context.Background(), migrations.MigrateOptions{
+				Namespace: "default",
+				Resources: []schema.GroupResource{gr},
+			})
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			if tt.expectFallback {
+				require.Equal(t, 0, batchedStream.sendCount)
+				require.Equal(t, 1, legacyStream.sendCount)
+				return
+			}
+
+			require.Equal(t, 1, batchedStream.sendCount)
+			require.Equal(t, 0, legacyStream.sendCount)
+		})
+	}
+}
+
+type noopBulkProcessClient struct {
+	grpc.ClientStream
+	sendCount int
+}
+
+func (n *noopBulkProcessClient) Send(*resourcepb.BulkRequest) error {
+	n.sendCount++
+	return nil
+}
+
+func (n *noopBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, error) {
+	return &resourcepb.BulkResponse{}, nil
+}
+
 // noopBulkProcessBatchedClient is a minimal BulkStore_BulkProcessBatchedClient for testing.
 type noopBulkProcessBatchedClient struct {
 	grpc.ClientStream
+	sendCount int
 }
 
 func (n *noopBulkProcessBatchedClient) Send(*resourcepb.BulkRequestBatch) error {
+	n.sendCount++
 	return nil
 }
 

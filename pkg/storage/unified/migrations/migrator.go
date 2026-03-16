@@ -7,7 +7,9 @@ import (
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -65,6 +67,9 @@ func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts Mi
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	stream, err := r.client.BulkProcessBatched(ctx)
 	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return r.client.BulkProcess(ctx)
+		}
 		return nil, err
 	}
 	return newBulkProcessBatchingClient(stream, defaultBulkProcessBatchOptions()), nil
