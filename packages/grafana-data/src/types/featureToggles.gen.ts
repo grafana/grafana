@@ -1554,7 +1554,7 @@ export interface FeatureToggles {
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
@@ -1590,11 +1590,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamSync?: boolean;
-  /**
-  * Use the new team service that uses the app platform APIs
-  * @default false
-  */
-  kubernetesTeamService?: boolean;
   /**
   * Redirects the requests of the user service to the app platform APIs
   * @default false

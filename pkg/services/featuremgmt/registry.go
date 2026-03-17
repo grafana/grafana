@@ -2459,7 +2459,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesTeamsHandlerRedirect",
+			Name:         "kubernetesTeamsRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
@@ -2517,14 +2517,6 @@ var (
 		{
 			Name:         "kubernetesTeamSync",
 			Description:  "Use the new APIs for syncing users to teams",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "kubernetesTeamService",
-			Description:  "Use the new team service that uses the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
