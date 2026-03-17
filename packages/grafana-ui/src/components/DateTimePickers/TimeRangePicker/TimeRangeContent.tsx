@@ -47,7 +47,8 @@ interface InputState {
 }
 
 const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
+  from: () => t('time-picker.range-content.from-error', 'Please enter a past date or "now" in the From field'),
+  to: () => t('time-picker.range-content.to-error', 'Please enter a past date or "now" in the To field'),
   range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
 };
 
@@ -261,9 +262,9 @@ function valueToState(
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.default(),
+      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.from(),
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default() },
+    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.to() },
   ];
 }
 
