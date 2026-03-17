@@ -369,9 +369,21 @@ function NotificationStatusGroup({
           {integrations.map((integration) => (
             <IntegrationIcon key={integration} integration={integration} />
           ))}
-          <Text variant="bodySmall" truncate>
-            {receiverLabel}
-          </Text>
+          {receivers.length === 1 ? (
+            <a
+              href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(receivers[0])}`)}
+              className={styles.receiverLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Text variant="bodySmall">{receiverLabel}</Text>
+            </a>
+          ) : (
+            <Text variant="bodySmall" truncate>
+              {receiverLabel}
+            </Text>
+          )}
           <Text variant="bodySmall" color="secondary">
             · {integrationSummary}
           </Text>
@@ -576,5 +588,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   errorIcon: css({
     color: theme.colors.error.main,
+  }),
+
+  receiverLink: css({
+    color: theme.colors.text.link,
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
   }),
 });
