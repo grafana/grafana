@@ -53,7 +53,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 }
 
 func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	return s.k8sService.CreateServiceAccount(ctx, cmd)
+	return s.legacyService.CreateServiceAccount(ctx, cmd)
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
