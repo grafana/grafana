@@ -507,12 +507,6 @@ describe('prepConfig', () => {
       });
       return {
         heatmap,
-        heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 25 },
-        xBucketSize: 1000,
-        yBucketSize: 1,
-        yBucketCount: 3,
-        xLayout: HeatmapCellLayout.unknown,
-        yLayout: HeatmapCellLayout.unknown,
         ...overrides,
       };
     }
@@ -529,11 +523,6 @@ describe('prepConfig', () => {
       const dataRef = {
         current: {
           heatmap,
-          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 10 },
-          xBucketSize: 1000,
-          yBucketSize: 1,
-          yBucketCount: 2,
-          yLayout: HeatmapCellLayout.unknown,
         },
       };
       if (heatmap.meta) {
