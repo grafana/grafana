@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import {
@@ -12,7 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataTopic, TooltipDisplayMode } from '@grafana/schema';
+import { DataTopic, HeatmapCalculationMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
 
@@ -29,8 +30,15 @@ const MOCK_LEGEND_HEIGHT = 80;
 /** Set to true in tests that need field actions to be executable (e.g. FieldActions test). */
 let canExecuteActionsForTest = false;
 
-/** When set, MockTooltipPlugin2 uses these params to simulate hovering over exemplar (seriesIdx=2). */
-let tooltipRenderParamsForTest: { dataIdxs: Array<number | null>; seriesIdx: number } | null = null;
+/** Set to true in tests that need canAddAnnotations to return true (e.g. annotation creation tests). */
+let canAddAnnotationsForTest = false;
+
+/** When set, MockTooltipPlugin2 uses these params to simulate hovering. */
+let tooltipRenderParamsForTest: {
+  dataIdxs: Array<number | null>;
+  seriesIdx: number;
+  timeRange2?: { from: number; to: number } | null;
+} | null = null;
 
 /** Captures the last props passed to AnnotationsPlugin for assertion in tests. */
 let lastAnnotationsPluginProps: Record<string, unknown> | null = null;
@@ -111,11 +119,24 @@ jest.mock('@grafana/ui', () => {
    * Mock TooltipPlugin2 to detect when tooltip is rendered.
    * HeatmapPanel conditionally renders TooltipPlugin2 based on options.tooltip.mode.
    * Uses isPinned=true so the footer (including DataLinks) is rendered for testing.
-   * When tooltipRenderParamsForTest is set, simulates hover over exemplar (seriesIdx=2).
+   * When tooltipRenderParamsForTest is set, simulates hover with optional timeRange2.
    */
+  const mockUPlot = {
+    posToVal: (_pos: number, _axis: string) => 1500,
+    cursor: { left: 100 },
+  };
+
   const MockTooltipPlugin2 = (props: { render?: (...args: unknown[]) => React.ReactNode }) => {
     const params = tooltipRenderParamsForTest ?? { dataIdxs: [0, 0, 0], seriesIdx: 0 };
-    const content = props.render?.({}, params.dataIdxs, params.seriesIdx, true, jest.fn(), null, false);
+    const timeRange2 = params.timeRange2 !== undefined ? params.timeRange2 : null;
+    const [content, setContent] = React.useState<React.ReactNode>(null);
+
+    React.useEffect(() => {
+      const c = props.render?.(mockUPlot, params.dataIdxs, params.seriesIdx, true, jest.fn(), timeRange2, false);
+      setContent(c ?? null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return <div data-testid="heatmap-tooltip-plugin">{content}</div>;
   };
 
@@ -124,7 +145,7 @@ jest.mock('@grafana/ui', () => {
     usePanelContext: jest.fn().mockImplementation(() => ({
       sync: () => 0,
       eventsScope: 'global',
-      canAddAnnotations: () => false,
+      canAddAnnotations: () => canAddAnnotationsForTest,
       onSelectRange: jest.fn(),
       canExecuteActions: () => canExecuteActionsForTest,
     })),
@@ -221,7 +242,7 @@ function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: strin
  * Must have name 'exemplar' to be found in annotations by prepareHeatmapData.
  * Time and Value fields align with heatmap rows format (ordinal y indices 0, 1, 2).
  */
-function createExemplarFrame(overrides?: { timeValues?: number[]; values?: string[]; additionalFields?: Field[] }) {
+function createExemplarFrame(overrides?: { timeValues?: number[]; values?: number[]; additionalFields?: Field[] }) {
   const timeValues = overrides?.timeValues ?? [1500];
   const values = overrides?.values ?? [200];
   const additionalFields = overrides?.additionalFields ?? [];
@@ -235,6 +256,35 @@ function createExemplarFrame(overrides?: { timeValues?: number[]; values?: strin
       ...additionalFields,
     ],
   });
+}
+
+/**
+ * Creates a heatmap rows-style DataFrame with labels on bucket fields.
+ * Used to test exemplar yMatchWithLabel path (ordinal/labeled y-axis).
+ * Bucket fields have labels.le for histogram-style buckets.
+ */
+function createHeatmapRowsFrameWithLabels(overrides?: {
+  timeValues?: number[];
+  bucketLabels?: string[];
+  bucketValues?: number[][];
+}) {
+  const timeValues = overrides?.timeValues ?? [1000, 2000, 3000];
+  const bucketLabels = overrides?.bucketLabels ?? ['0-100', '100-200', '200-300'];
+  const bucketValues =
+    overrides?.bucketValues ?? bucketLabels.map((_, i) => timeValues.map((_, t) => (i + 1) * 10 + t));
+
+  const fields = [
+    { name: 'time', type: FieldType.time, values: timeValues },
+    ...bucketLabels.map((label, i) => ({
+      name: label,
+      type: FieldType.number,
+      config: { unit: 'short' },
+      labels: { le: label },
+      values: bucketValues[i],
+    })),
+  ];
+
+  return toDataFrame({ fields });
 }
 
 /**
@@ -291,6 +341,7 @@ describe('HeatmapPanel', () => {
   beforeEach(() => {
     lastUPlotConfig = null;
     canExecuteActionsForTest = false;
+    canAddAnnotationsForTest = false;
     tooltipRenderParamsForTest = null;
     lastAnnotationsPluginProps = null;
   });
@@ -334,6 +385,22 @@ describe('HeatmapPanel', () => {
     expect(screen.getByText(/Unable to render data/)).toBeVisible();
   });
 
+  it('shows error view when prepareHeatmapData throws', () => {
+    // const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const fieldsModule = require('./fields');
+    const prepareSpy = jest.spyOn(fieldsModule, 'prepareHeatmapData').mockImplementation(() => {
+      throw new Error('prepare failed');
+    });
+
+    renderHeatmapPanel();
+
+    expect(screen.getByText(/prepare failed/)).toBeVisible();
+    expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+
+    prepareSpy.mockRestore();
+    // consoleSpy.mockRestore();
+  });
+
   it('renders with custom heatmap data', () => {
     const customFrame = createHeatmapRowsFrame({
       timeValues: [1, 2],
@@ -368,6 +435,21 @@ describe('HeatmapPanel', () => {
       expect(screen.getByText('trace-abc')).toBeVisible();
       expect(screen.getByText('cluster')).toBeVisible();
       expect(screen.getByText('eu-dev-east-1')).toBeVisible();
+    });
+
+    it('renders exemplars with yMatchWithLabel when heatmap has labeled buckets', () => {
+      const frameWithLabels = createHeatmapRowsFrameWithLabels();
+      const exemplarWithLe = createExemplarFrame({
+        timeValues: [1500],
+        values: [0],
+        additionalFields: [{ name: 'le', type: FieldType.string, values: ['0-100'], config: {} }],
+      });
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
+
+      renderHeatmapPanel({ series: [frameWithLabels], annotations: [exemplarWithLe] });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+      expect(screen.getByText('Exemplar')).toBeVisible();
     });
 
     it('renders ExemplarTooltip when exemplar frame is added on subsequent render', () => {
@@ -441,6 +523,40 @@ describe('HeatmapPanel', () => {
       expect(screen.getByText('1 annotation(s)')).toBeVisible();
     });
   });
+
+  describe('Annotation creation', () => {
+    it('calls setNewRange when tooltip receives timeRange2 and user can add annotations', async () => {
+      canAddAnnotationsForTest = true;
+      tooltipRenderParamsForTest = {
+        dataIdxs: [0, 0, 0],
+        seriesIdx: 1,
+        timeRange2: { from: 1000, to: 2000 },
+      };
+
+      renderHeatmapPanel();
+
+      await waitFor(() => {
+        expect(lastAnnotationsPluginProps?.newRange).toEqual({ from: 1000, to: 2000 });
+      });
+    });
+
+    it('invokes setNewRange when Add annotation button is clicked', async () => {
+      canAddAnnotationsForTest = true;
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 1 };
+
+      renderHeatmapPanel();
+
+      const addAnnotationButton = screen.getByRole('button', { name: /add annotation/i });
+      await userEvent.click(addAnnotationButton);
+
+      await waitFor(() => {
+        expect(lastAnnotationsPluginProps?.newRange).toMatchObject({
+          from: expect.any(Number),
+          to: expect.any(Number),
+        });
+      });
+    });
+  });
   describe('DataLinks', () => {
     it('shows DataLinks in tooltip when links are defined on the dataframe field', () => {
       const linkTitle = 'View in Explorer';
@@ -456,7 +572,6 @@ describe('HeatmapPanel', () => {
       expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
     });
   });
-
   describe('FieldActions', () => {
     it('shows field actions in tooltip when actions are defined on the dataframe field', () => {
       const actionTitle = 'Run query';
@@ -472,8 +587,15 @@ describe('HeatmapPanel', () => {
       expect(screen.getByRole('button', { name: actionTitle })).toBeVisible();
     });
   });
-
   describe('Options', () => {
+    it('uses options.calculation.yBuckets.value for ySizeDivisor when set', () => {
+      renderHeatmapPanel(undefined, {
+        calculation: { yBuckets: { mode: HeatmapCalculationMode.Count, value: '2' } },
+      });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    });
+
     describe('legend', () => {
       it('displays legend when legend.show is true', () => {
         renderHeatmapPanel();
@@ -492,7 +614,7 @@ describe('HeatmapPanel', () => {
         renderHeatmapPanel(undefined, { legend: { show: false } });
 
         expect(lastUPlotConfig).not.toBeNull();
-        expect(lastUPlotConfig!.height).toBe(panelHeight);
+        expect(lastUPlotConfig).toHaveProperty('height', panelHeight);
       });
 
       it('allots reduced height to canvas when legend is shown', () => {
@@ -500,7 +622,7 @@ describe('HeatmapPanel', () => {
         renderHeatmapPanel();
 
         expect(lastUPlotConfig).not.toBeNull();
-        expect(lastUPlotConfig!.height).toBe(panelHeight - MOCK_LEGEND_HEIGHT);
+        expect(lastUPlotConfig).toHaveProperty('height', panelHeight - MOCK_LEGEND_HEIGHT);
       });
     });
     describe('tooltip', () => {

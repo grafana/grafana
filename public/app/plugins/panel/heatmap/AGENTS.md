@@ -45,7 +45,8 @@
 
 ### Typescript
 
-- Do not use non-null assertion operators or type assertions
+- Never add non-null assertion operators
+- Never add type assertions
 
 ## 🧪 Testing Strategies
 
@@ -55,6 +56,7 @@
 - Tests are clear and concise
 - Use/add test selectors from @grafana/e2e-selectors
 - Test utility methods are well documented and flexible
+- Collect code coverage and add test coverage if any lines changed in the current branch are uncovered
 
 ## Monorepo Conventions
 
@@ -70,3 +72,7 @@ https://grafana.com/docs/grafana/next/visualizations/panels-visualizations/visua
 - UPlot renders canvas visualization
 - UPlot hooks manage canvas user interactions which render React components (e.g. Tooltip)
 - Supports Exemplars and Annotations
+
+## Scripts
+
+- Code coverage: `yarn jest --coverage --collectCoverageFrom="public/app/plugins/panel/heatmap/**/*.{ts,tsx}" public/app/plugins/panel/heatmap/`
