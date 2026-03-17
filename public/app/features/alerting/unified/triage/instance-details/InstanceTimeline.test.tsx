@@ -199,7 +199,7 @@ describe('InstanceTimeline component', () => {
 
   it('filters to show only notifications', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
-    const notifications = [makeNotification({ timestamp: '1970-01-01T00:00:01.500Z' })];
+    const notifications = [makeNotification({ timestamp: '1970-01-01T00:00:01.500Z', outcome: 'error' })];
 
     render(<InstanceTimeline records={records} notifications={notifications} filter="notifications" />);
 
@@ -238,7 +238,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
-    expect(screen.getByText('1 notification')).toBeInTheDocument();
+    expect(screen.queryByText('1 notification')).not.toBeInTheDocument();
     expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
     expect(screen.getByText('· Slack #1')).toBeInTheDocument();
   });

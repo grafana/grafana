@@ -349,16 +349,20 @@ function NotificationStatusGroup({
               </Text>
             </>
           )}
-          <Text variant="bodySmall" color="secondary">
-            ·
-          </Text>
-          <Text variant="bodySmall">
-            {notifications.length === 1
-              ? t('alerting.instance-details.timeline-one-notification', '1 notification')
-              : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
-                  count: notifications.length,
-                })}
-          </Text>
+          {failedCount > 0 && (
+            <>
+              <Text variant="bodySmall" color="secondary">
+                ·
+              </Text>
+              <Text variant="bodySmall">
+                {notifications.length === 1
+                  ? t('alerting.instance-details.timeline-one-notification', '1 notification')
+                  : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
+                      count: notifications.length,
+                    })}
+              </Text>
+            </>
+          )}
           <Text variant="bodySmall" color="secondary">
             →
           </Text>
