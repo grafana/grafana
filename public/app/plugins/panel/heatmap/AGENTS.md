@@ -50,7 +50,7 @@
 - Aim for >90% code coverage
 - Tests are clear and concise
 - Use/add test selectors from @grafana/e2e-selectors
-- Bug fixes with unnecessary changes will be rejected
+- Test utility methods are well documented and flexible
 
 ## Monorepo Conventions
 

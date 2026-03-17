@@ -95,10 +95,20 @@ jest.mock('@grafana/ui', () => {
   };
   MockVizLayout.Legend = actual.VizLayout.Legend;
 
+  /**
+   * Mock TooltipPlugin2 to detect when tooltip is rendered.
+   * HeatmapPanel conditionally renders TooltipPlugin2 based on options.tooltip.mode.
+   */
+  const MockTooltipPlugin2 = (props: { render?: (...args: unknown[]) => React.ReactNode }) => {
+    const content = props.render?.({}, [0, 0], 0, false, jest.fn(), null, false);
+    return <div data-testid="heatmap-tooltip-plugin">{content}</div>;
+  };
+
   return {
     ...actual,
     usePanelContext: createUsePanelContextMock(),
     VizLayout: MockVizLayout,
+    TooltipPlugin2: MockTooltipPlugin2,
   };
 });
 
@@ -251,6 +261,28 @@ describe('HeatmapPanel', () => {
 
       expect(lastUPlotConfig).not.toBeNull();
       expect(lastUPlotConfig!.height).toBe(panelHeight - MOCK_LEGEND_HEIGHT);
+    });
+  });
+
+  describe('tooltip option', () => {
+    it('renders TooltipPlugin2 when tooltip mode is not None', () => {
+      renderHeatmapPanel(undefined, {
+        tooltip: {
+          mode: TooltipDisplayMode.Single,
+        },
+      });
+
+      expect(screen.getByTestId('heatmap-tooltip-plugin')).toBeVisible();
+    });
+
+    it('does not render TooltipPlugin2 when tooltip mode is None', () => {
+      renderHeatmapPanel(undefined, {
+        tooltip: {
+          mode: TooltipDisplayMode.None,
+        },
+      });
+
+      expect(screen.queryByTestId('heatmap-tooltip-plugin')).not.toBeInTheDocument();
     });
   });
 });
