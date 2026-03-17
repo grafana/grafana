@@ -57,6 +57,14 @@ func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	namespace := s.namespaceMapper(cmd.OrgID)
+
+	// Call getClient to fix the linter error about unused function, the actual implementation will come in a future PR
+	_, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, errors.New("not implemented")
 }
 
