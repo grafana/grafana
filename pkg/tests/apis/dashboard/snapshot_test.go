@@ -64,11 +64,17 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 			})
 
 			// Use the default org namespace
-			client := helper.GetResourceClient(apis.ResourceClientArgs{
+			adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
 				GVR:  dashv0.SnapshotResourceInfo.GroupVersionResource(),
 			})
-			ns := client.Args.Namespace
+			ns := adminClient.Args.Namespace
+
+			// Client for a user with no permissions (None role)
+			noneClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.None,
+				GVR:  dashv0.SnapshotResourceInfo.GroupVersionResource(),
+			})
 
 			// Create a dashboard with the UID referenced by snapshot tests,
 			// so the dashboard validation in the create handler passes.
@@ -76,13 +82,109 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			t.Log("Testing:", tc.description)
 
+			t.Run("RBAC denies GET without snapshots:read", func(t *testing.T) {
+				// First create a snapshot as admin
+				createResp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, createResp.Key)
+
+				// Try to get the snapshot as a user with no permissions
+				_, err := noneClient.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
+				require.Error(t, err, "user without snapshots:read should be denied")
+				assert.Contains(t, err.Error(), "forbidden", "error should indicate forbidden access")
+			})
+
+			t.Run("RBAC denies LIST without snapshots:read", func(t *testing.T) {
+				_, err := noneClient.Resource.List(context.Background(), metav1.ListOptions{})
+				require.Error(t, err, "user without snapshots:read should be denied")
+				assert.Contains(t, err.Error(), "forbidden", "error should indicate forbidden access")
+			})
+
+			t.Run("RBAC denies DELETE without snapshots:delete", func(t *testing.T) {
+				// First create a snapshot as admin
+				createResp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, createResp.Key)
+
+				// Try to delete the snapshot as a user with no permissions
+				err := noneClient.Resource.Delete(context.Background(), createResp.Key, metav1.DeleteOptions{})
+				require.Error(t, err, "user without snapshots:delete should be denied")
+				assert.Contains(t, err.Error(), "forbidden", "error should indicate forbidden access")
+			})
+
+			t.Run("RBAC denies POST /create without snapshots:create", func(t *testing.T) {
+				cmd := dashv0.DashboardCreateCommand{
+					Name:    "Test Snapshot RBAC",
+					Expires: 3600,
+					Dashboard: &common.Unstructured{
+						Object: map[string]interface{}{
+							"title":         "Test Dashboard RBAC",
+							"panels":        []interface{}{},
+							"schemaVersion": 39,
+						},
+					},
+				}
+				body, err := json.Marshal(cmd)
+				require.NoError(t, err)
+
+				path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/create",
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Group,
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Version,
+					ns,
+				)
+
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.None,
+					Method: http.MethodPost,
+					Path:   path,
+					Body:   body,
+				}, &dashv0.DashboardCreateResponse{})
+
+				assert.Equal(t, http.StatusForbidden, rsp.Response.StatusCode, "user without snapshots:create should get 403")
+			})
+
+			t.Run("RBAC denies DELETE /delete/{deleteKey} without snapshots:delete", func(t *testing.T) {
+				// Create a snapshot as admin to get a deleteKey
+				createResp := createSnapshotViaSubresource(t, helper, ns)
+				require.NotEmpty(t, createResp.DeleteKey)
+
+				path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/delete/%s",
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Group,
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Version,
+					ns,
+					createResp.DeleteKey,
+				)
+
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.None,
+					Method: http.MethodDelete,
+					Path:   path,
+				}, &map[string]interface{}{})
+
+				assert.Equal(t, http.StatusForbidden, rsp.Response.StatusCode, "user without snapshots:delete should get 403")
+			})
+
+			t.Run("RBAC denies GET /settings without snapshots:read", func(t *testing.T) {
+				path := fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/settings",
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Group,
+					dashv0.SnapshotResourceInfo.GroupVersionResource().Version,
+					ns,
+				)
+
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.None,
+					Method: http.MethodGet,
+					Path:   path,
+				}, &dashv0.SnapshotSharingOptions{})
+
+				assert.Equal(t, http.StatusForbidden, rsp.Response.StatusCode, "user without snapshots:read should get 403")
+			})
+
 			t.Run("create and get snapshot", func(t *testing.T) {
 				// Create a snapshot via the custom /snapshots/create subresource
 				createResp := createSnapshotViaSubresource(t, helper, ns)
 				require.NotEmpty(t, createResp.Key)
 
 				// Try to get the snapshot
-				got, err := client.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
+				got, err := adminClient.Resource.Get(context.Background(), createResp.Key, metav1.GetOptions{})
 				require.NoError(t, err, "Failed to get snapshot in mode %d", tc.dualWrite)
 				require.NotNil(t, got)
 				assert.Equal(t, createResp.Key, got.GetName())
@@ -128,7 +230,7 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				}
 
 				// List snapshots
-				list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+				list, err := adminClient.Resource.List(context.Background(), metav1.ListOptions{})
 
 				require.NoError(t, err)
 				require.NotNil(t, list)
@@ -155,13 +257,13 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				require.NotEmpty(t, resp.Key)
 
 				// Delete the snapshot
-				err := client.Resource.Delete(context.Background(), resp.Key, metav1.DeleteOptions{})
+				err := adminClient.Resource.Delete(context.Background(), resp.Key, metav1.DeleteOptions{})
 
 				// Both modes should support deletion
 				require.NoError(t, err)
 
 				// Verify it's deleted
-				_, err = client.Resource.Get(context.Background(), resp.Key, metav1.GetOptions{})
+				_, err = adminClient.Resource.Get(context.Background(), resp.Key, metav1.GetOptions{})
 
 				require.Error(t, err, "snapshot should be deleted")
 			})

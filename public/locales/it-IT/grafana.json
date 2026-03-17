@@ -2349,6 +2349,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6745,6 +6746,9 @@
       "tooltip-move-link-up": "Sposta collegamento in alto",
       "type": "Tipo"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
     },
@@ -7024,6 +7028,13 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Gestito da: Kubectl",
@@ -7381,6 +7392,13 @@
       "page-nav": {
         "text": {
           "settings": "Impostazioni"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12786,6 +12804,7 @@
       "empty": "Vuoto",
       "error-field-required": "Questo campo è obbligatorio.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Si è verificato un problema durante la connessione al repository. Verifica le impostazioni del repository e riprova.",
       "error-repository-status-unhealthy-title": "Stato del repository non integro",
@@ -12795,6 +12814,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Caricamento delle informazioni sulle risorse in corso...",
       "unmanaged-resources-label": "Risorse non gestite",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
@@ -12847,7 +12867,8 @@
     "connect-repository-button": {
       "configure": "Configura",
       "instance-fully-managed-tooltip": "La configurazione è disabilitata perché questa istanza è completamente gestita",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13072,7 @@
       "token-label": "Token di accesso",
       "token-required": "Il token Git è obbligatorio",
       "token-user-description": "Il nome utente che verrà utilizzato per accedere al repository con il token di accesso",
-      "url-description": "L'URL del repository Git",
+      "url-description": "",
       "url-pattern": "Deve essere un URL di repository Git valido",
       "url-required": "L'URL del repository è obbligatorio"
     },
@@ -13177,23 +13198,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",

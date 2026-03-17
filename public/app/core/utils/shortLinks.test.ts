@@ -78,6 +78,37 @@ describe('createShortLink using k8s API', () => {
   });
 });
 
+describe('createShortLink retries after failure', () => {
+  it('retries after k8s API failure instead of returning cached rejection', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    config.featureToggles.useKubernetesShortURLsAPI = true;
+
+    const mockLocation = { protocol: 'https:', host: 'www.test.grafana.com' };
+    Object.defineProperty(window, 'location', { value: mockLocation, writable: true });
+
+    const { dispatch } = require('app/store/store');
+    // dispatch is called for: 1) initiate (fail), 2) notifyApp (error), 3) initiate (success)
+    dispatch
+      .mockResolvedValueOnce({ error: { status: 504, data: { message: 'gateway timeout' } } })
+      .mockReturnValueOnce(undefined) // notifyApp error notification
+      .mockResolvedValueOnce({
+        data: {
+          metadata: { name: 'retried123', namespace: '1' },
+        },
+      });
+
+    const path = 'd/test/dashboard?orgId=1';
+
+    // First call should fail
+    await expect(createShortLink(path)).rejects.toThrow();
+
+    // Second call with same path should retry, not return cached rejection
+    const result = await createShortLink(path);
+    expect(result).toBe('https://www.test.grafana.com/goto/retried123?orgId=1');
+  });
+});
+
 describe('createAndCopyShortLink', () => {
   it('copies short link to clipboard via document.execCommand when navigator.clipboard is undefined', async () => {
     Object.assign(navigator, {

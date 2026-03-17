@@ -1060,18 +1060,29 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, defs, func() rest.Storage {
-		return b.snapshotStorage
-	}, b.dashboardService)
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessControl, defs,
+		func() rest.Storage {
+			return b.snapshotStorage
+		}, b.dashboardService)
 
 	return &builder.APIRoutes{
 		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
 	}
 }
 
-// The default authorizer is fine because authorization happens in storage where we know the parent folder
+// GetAuthorizer returns a composite authorizer that dispatches by resource type.
+// Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
+				return snapshotAuthorizer.Authorize(ctx, attr)
+			}
+			return serviceAuthorizer.Authorize(ctx, attr)
+		})
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
