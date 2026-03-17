@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	stdsync "sync"
+	"sync"
 	"syscall"
 	"time"
 
@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
@@ -153,7 +153,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create concurrent job driver: %w", err)
 	}
 
-	var wg stdsync.WaitGroup
+	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go func() {
@@ -278,8 +278,8 @@ func setupWorkers(
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
-	syncWorker := sync.NewSyncWorker(
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
+	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
 		statusPatcher.Patch,
