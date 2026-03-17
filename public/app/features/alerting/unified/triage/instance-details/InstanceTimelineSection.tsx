@@ -64,7 +64,7 @@ export function InstanceTimelineSection({
   return (
     <Box ref={loadingBarRef}>
       <Stack direction="column" gap={1}>
-        <Text variant="h5">{t('alerting.instance-details.instance-timeline', 'Instance Timeline')}</Text>
+        <Text variant="h5">{t('alerting.instance-details.instance-history-heading', 'History')}</Text>
 
         {isLoading && (
           <LoadingPlaceholder text={t('alerting.instance-details.timeline-loading', 'Loading timeline...')} />
