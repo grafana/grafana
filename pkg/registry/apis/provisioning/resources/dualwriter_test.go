@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -279,25 +280,12 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 	rw.On("Read", mock.Anything, "my-folder/_folder.json", "").Return(&repository.FileInfo{Data: data}, nil)
 
 	// Pre-populate the tree with the stable UID only — if effectiveFolderID is not
-	// called the hash-based UID won't match and EnsureFolderExists would be invoked.
+	// called the hash-based UID won't match and EnsureFolderExists would be invoked
+	// (which would panic since the dynamic client is nil).
 	tree := NewEmptyFolderTree()
 	tree.Add(Folder{ID: stableUID, Title: "my-folder", Path: "my-folder/"}, "")
 
-	// Provide a mock client that returns the folder with the same title so reconciliation is a no-op.
-	mockClient := &MockDynamicResourceInterface{}
-	mockClient.On("Get", mock.Anything, stableUID, metav1.GetOptions{}, []string(nil)).
-		Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
-					"name":        stableUID,
-					"namespace":   "default",
-					"annotations": map[string]interface{}{"grafana.app/managerId": config.Name},
-				},
-				"spec": map[string]interface{}{"title": "my-folder"},
-			},
-		}, nil)
-
-	fm := NewFolderManager(rw, mockClient, tree, WithFolderMetadataEnabled(true))
+	fm := NewFolderManager(rw, nil, tree, WithFolderMetadataEnabled(true))
 
 	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
 	require.NoError(t, err)
@@ -473,6 +461,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -501,6 +490,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -529,6 +519,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -606,6 +597,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
