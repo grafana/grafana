@@ -43,7 +43,7 @@
 - Use try-catch for async operations
 - Provide user-friendly error messages
 
-## 🧪 TESTING STRATEGIES
+## 🧪 Testing Strategies
 
 - Write tests for all business logic
 - Test user interactions, not implementation
@@ -51,6 +51,10 @@
 - Tests are clear and concise
 - Use/add test selectors from @grafana/e2e-selectors
 - Bug fixes with unnecessary changes will be rejected
+
+## Monorepo Conventions
+
+- Import shared modules using workspace names: `@grafana/example`
 
 ## 📦 Tech Stack
 
