@@ -226,6 +226,7 @@ receivers:
 			OrgID:                     orgID,
 			LastApplied:               time.Now().UTC().Unix(),
 		})
+		require.NoError(t, err)
 
 		originalConfig := definitions.ExtraConfiguration{
 			Identifier:    identifier,
