@@ -522,6 +522,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     padding: theme.spacing(0.75, 1.5),
     borderRadius: theme.shape.radius.default,
+    border: 'none',
     cursor: 'pointer',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
@@ -529,12 +530,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   summaryRowFiring: css({
-    border: `1px solid ${theme.colors.error.border}`,
     backgroundColor: theme.colors.error.transparent,
   }),
 
   summaryRowResolved: css({
-    border: `1px solid ${theme.colors.success.border}`,
     backgroundColor: theme.colors.success.transparent,
   }),
 
