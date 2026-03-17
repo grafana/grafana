@@ -390,7 +390,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	moa, am = newAm(cfg)
+	moa, _ = newAm(cfg)
 	require.NoError(t, err)
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)

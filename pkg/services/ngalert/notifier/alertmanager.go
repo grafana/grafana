@@ -249,7 +249,6 @@ func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConf
 	} else {
 		am.logger.Error("Failed to update config size metric", "configHash", am.appliedHash.String(), "error", err)
 	}
-
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
