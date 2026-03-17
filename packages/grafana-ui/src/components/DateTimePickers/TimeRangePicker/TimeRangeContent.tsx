@@ -21,6 +21,7 @@ import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
+import { TextLink } from '../../Link/TextLink';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
@@ -43,13 +44,31 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
-  errorMessage: string;
+  errorMessage: React.ReactNode;
+}
+
+const DOCS_LINK = 'https://grafana.com/docs/grafana/latest/dashboards/time-range-controls';
+
+function fieldErrorMessage(field: 'From' | 'To') {
+  return (
+    <>
+      {t(
+        field === 'From' ? 'time-picker.range-content.from-error' : 'time-picker.range-content.to-error',
+        field === 'From'
+          ? 'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.'
+          : 'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.'
+      )}{' '}
+      <TextLink href={DOCS_LINK} external>
+        {t('time-picker.range-content.error-see-docs', 'See time range syntax')}
+      </TextLink>
+    </>
+  );
 }
 
 const ERROR_MESSAGES = {
-  from: () => t('time-picker.range-content.from-error', 'Please enter a past date or "now" in the From field'),
-  to: () => t('time-picker.range-content.to-error', 'Please enter a past date or "now" in the To field'),
-  range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
+  from: () => fieldErrorMessage('From'),
+  to: () => fieldErrorMessage('To'),
+  range: () => t('time-picker.range-content.range-error', '"From" date must be before "To"'),
 };
 
 export const TimeRangeContent = (props: Props) => {
@@ -68,13 +87,11 @@ export const TimeRangeContent = (props: Props) => {
 
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
-  // Pre-touch fields that are already invalid when the form opens (e.g. an existing invalid range)
-  const [fromTouched, setFromTouched] = useState(fromValue.invalid);
-  const [toTouched, setToTouched] = useState(toValue.invalid);
   const [isOpen, setOpen] = useState(false);
 
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
+  const announceRef = useRef<HTMLDivElement>(null);
 
   const fromFieldId = useId();
   const toFieldId = useId();
@@ -84,8 +101,6 @@ export const TimeRangeContent = (props: Props) => {
     const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
     setFrom(fromValue);
     setTo(toValue);
-    setFromTouched(fromValue.invalid);
-    setToTouched(toValue.invalid);
   }, [value.raw.from, value.raw.to, timeZone]);
 
   const onOpen = useCallback(
@@ -98,9 +113,20 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
-      // Reveal errors and focus first invalid field so screen readers announce it
-      setFromTouched(true);
-      setToTouched(true);
+      // Announce the failure via the polite live region, then focus the first invalid field.
+      // The live region text is cleared and re-set so screen readers always re-announce it.
+      if (announceRef.current) {
+        announceRef.current.textContent = '';
+        // Yield to let the DOM clear before re-setting so screen readers detect the change
+        requestAnimationFrame(() => {
+          if (announceRef.current) {
+            announceRef.current.textContent = t(
+              'time-picker.range-content.submit-error',
+              'Please correct the errors in the time range fields before applying.'
+            );
+          }
+        });
+      }
       if (from.invalid) {
         fromInputRef.current?.focus();
       } else {
@@ -187,7 +213,7 @@ export const TimeRangeContent = (props: Props) => {
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}
-          invalid={from.invalid && fromTouched}
+          invalid={from.invalid}
           error={from.errorMessage}
         >
           <Input
@@ -195,7 +221,6 @@ export const TimeRangeContent = (props: Props) => {
             ref={fromInputRef}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
-            onBlur={() => setFromTouched(true)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.fromField}
@@ -205,17 +230,12 @@ export const TimeRangeContent = (props: Props) => {
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field
-          label={t('time-picker.range-content.to-input', 'To')}
-          invalid={to.invalid && toTouched}
-          error={to.errorMessage}
-        >
+        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
           <Input
             id={toFieldId}
             ref={toInputRef}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
-            onBlur={() => setToTouched(true)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.toField}
@@ -224,6 +244,7 @@ export const TimeRangeContent = (props: Props) => {
         </Field>
         {fyTooltip}
       </div>
+      <div ref={announceRef} aria-live="polite" className={style.srOnly} />
       <div className={style.buttonsContainer}>
         <Button
           data-testid={selectors.components.TimePicker.copyTimeRange}
@@ -318,6 +339,17 @@ function getStyles(theme: GrafanaTheme2) {
     tooltip: css({
       paddingLeft: theme.spacing(1),
       paddingTop: theme.spacing(3),
+    }),
+    srOnly: css({
+      position: 'absolute',
+      width: '1px',
+      height: '1px',
+      padding: 0,
+      margin: '-1px',
+      overflow: 'hidden',
+      clip: 'rect(0, 0, 0, 0)',
+      whiteSpace: 'nowrap',
+      border: 0,
     }),
   };
 }

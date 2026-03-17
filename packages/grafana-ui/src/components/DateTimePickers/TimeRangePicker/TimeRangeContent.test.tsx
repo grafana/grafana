@@ -262,7 +262,7 @@ describe('TimeRangeForm', () => {
 
           expect(error).toHaveLength(2);
           expect(error[0]).toBeVisible();
-          expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+          expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
         });
       });
 
@@ -367,7 +367,7 @@ describe('TimeRangeForm', () => {
 
       expect(error).toHaveLength(1);
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
     });
 
     it('should show error on invalid range', () => {
@@ -383,7 +383,7 @@ describe('TimeRangeForm', () => {
       const error = getAllByRole('alert');
 
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('"From" can\'t be after "To"');
+      expect(error[0]).toHaveTextContent('"From" date must be before "To"');
     });
 
     it('should not show range error when "to" is invalid', () => {
@@ -400,7 +400,7 @@ describe('TimeRangeForm', () => {
 
       expect(error).toHaveLength(1);
       expect(error[0]).toBeVisible();
-      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
     });
   });
 });
