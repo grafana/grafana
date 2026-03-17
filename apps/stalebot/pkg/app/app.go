@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/stalebot/pkg/apis/stalebot/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -67,9 +68,7 @@ func New(cfg app.Config) (app.App, error) {
 		fmt.Println("Stalebot is running!!!")
 		fmt.Println("Stalebot is running!!!")
 		if err := scanner.FindStaleDashboards(context.Background(), "default"); err != nil {
-			// log error
-			_ = err
-
+			logging.FromContext(context.Background()).Error("FindStaleDashboards failed", "error", err)
 		}
 	}()
 
