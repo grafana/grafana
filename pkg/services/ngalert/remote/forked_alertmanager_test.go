@@ -803,10 +803,3 @@ func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondar
 	}
 	return internal, remote, newRemotePrimaryForkedAlertmanager(log.NewNopLogger(), internal, remote)
 }
-
-// errConfigStore returns an error when a method is called.
-type errConfigStore struct{}
-
-func (s *errConfigStore) GetLatestAlertmanagerConfiguration(context.Context, int64) (*models.AlertConfiguration, error) {
-	return nil, errors.New("test error")
-}
