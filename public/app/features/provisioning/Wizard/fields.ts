@@ -91,7 +91,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       prWorkflow: {
         label: t('provisioning.github.pr-workflow-label', 'Enable pull request option when saving'),
         description: t(
-          'provisioning.github.pr-workflow-description',
+          'provisioning.github.pr-workflow-description', // trufflehog:ignore
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
