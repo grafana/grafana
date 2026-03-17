@@ -346,33 +346,6 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			require.Equal(t, int64(1), out.GetGeneration()) // still 1
 		})
 
-		t.Run("increment when ownerReferences change", func(t *testing.T) {
-			b := dash.DeepCopy()
-			b.OwnerReferences = []v1.OwnerReference{{
-				APIVersion: "iam.grafana.app/v0alpha1",
-				Kind:       "Team",
-				Name:       "test-team",
-				UID:        "00000000-0000-0000-0000-000000000001",
-			}}
-			out = getPreparedObject(t, ctx, s, b, dash)
-			require.Equal(t, int64(2), out.GetGeneration())
-		})
-
-		t.Run("allow ownerReferences change on non-repo managed resource", func(t *testing.T) {
-			managed := dash.DeepCopy()
-			managed.Annotations = map[string]string{
-				utils.AnnoKeyManagerKind: string(utils.ManagerKindPlugin),
-			}
-			b := managed.DeepCopy()
-			b.OwnerReferences = []v1.OwnerReference{{
-				APIVersion: "iam.grafana.app/v0alpha1",
-				Kind:       "Team",
-				Name:       "test-team",
-				UID:        "00000000-0000-0000-0000-000000000001",
-			}}
-			out = getPreparedObject(t, ctx, s, b, managed)
-			require.Equal(t, int64(2), out.GetGeneration())
-		})
 	})
 
 	t.Run("should fail invalid input", func(t *testing.T) {

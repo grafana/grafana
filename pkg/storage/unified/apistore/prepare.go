@@ -228,10 +228,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			}
 		}
 	}
-	if !v.hasChanged && !apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
-		v.hasChanged = true
-	}
-
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
