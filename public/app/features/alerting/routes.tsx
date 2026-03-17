@@ -278,6 +278,17 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
     },
     {
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "NotificationDetailPage" */ 'app/features/alerting/unified/notifications/NotificationDetailPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting" />,
+    },
+    {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()

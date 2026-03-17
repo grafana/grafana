@@ -344,6 +344,39 @@ func (_c *MockRepositoryResources_RemoveFolder_Call) RunAndReturn(run func(conte
 	return _c
 }
 
+// RemoveFolderFromTree provides a mock function with given fields: folderID
+func (_m *MockRepositoryResources) RemoveFolderFromTree(folderID string) {
+	_m.Called(folderID)
+}
+
+// MockRepositoryResources_RemoveFolderFromTree_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFolderFromTree'
+type MockRepositoryResources_RemoveFolderFromTree_Call struct {
+	*mock.Call
+}
+
+// RemoveFolderFromTree is a helper method to define mock.On call
+//   - folderID string
+func (_e *MockRepositoryResources_Expecter) RemoveFolderFromTree(folderID interface{}) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	return &MockRepositoryResources_RemoveFolderFromTree_Call{Call: _e.mock.On("RemoveFolderFromTree", folderID)}
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) Run(run func(folderID string)) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) Return() *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) RunAndReturn(run func(string)) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Run(run)
+	return _c
+}
+
 // RemoveResourceFromFile provides a mock function with given fields: ctx, path, ref
 func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
 	ret := _m.Called(ctx, path, ref)

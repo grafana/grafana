@@ -11,6 +11,7 @@ import {
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -18,6 +19,7 @@ import {
   DashboardLoaderSrvV2,
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
@@ -84,6 +86,10 @@ jest.mock('@grafana/runtime', () => {
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard/services/ReportRenderReadinessObserver', () => ({
+  initializeReportRenderReadinessObserver: jest.fn(),
 }));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -242,6 +248,38 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    it('should register report render readiness observer for render-authenticated normal route', async () => {
+      const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = 'render';
+
+      const loader = new DashboardScenePageStateManager({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
+    });
+
+    it('should not register report render readiness observer for non-render normal route', async () => {
+      const loadDashboardMock = setupLoadDashboardMock(MOCK_DASHBOARD);
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = '';
+
+      const loader = new DashboardScenePageStateManager({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+        expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
     });
 
     describe('reloadDashboardsOnParamsChange feature toggle', () => {
@@ -720,6 +758,66 @@ describe('DashboardScenePageStateManager v2', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should register report render readiness observer for render-authenticated normal route', async () => {
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = 'render';
+      const loader = new DashboardScenePageStateManagerV2({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(getDashSpy).toHaveBeenCalledTimes(1);
+        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
+    });
+
+    it('should not register report render readiness observer for non-render normal route', async () => {
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'fake-dash',
+            creationTimestamp: '',
+            resourceVersion: '1',
+          },
+          spec: { ...defaultDashboardV2Spec() },
+        },
+        getDashSpy
+      );
+
+      const originalAuthBy = contextSrv.user.authenticatedBy;
+      contextSrv.user.authenticatedBy = '';
+      const loader = new DashboardScenePageStateManagerV2({});
+
+      try {
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(getDashSpy).toHaveBeenCalledTimes(1);
+        expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
+      } finally {
+        contextSrv.user.authenticatedBy = originalAuthBy;
+      }
     });
 
     // TODO: Fix this test, v2 does not return undefined dashboard, but throws instead. The code needs to be updated.
@@ -1586,6 +1684,53 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(getDashSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should keep v2 manager state in sync after loadDashboard', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      const getDashSpy = jest.fn();
+      setupDashboardAPI(
+        {
+          access: {},
+          apiVersion: 'v2beta1',
+          kind: 'DashboardWithAccessInfo',
+          metadata: {
+            name: 'linked-dash',
+            creationTimestamp: '',
+            resourceVersion: '2',
+            generation: 2,
+          },
+          spec: { ...defaultDashboardV2Spec(), title: 'Linked dashboard' },
+        },
+        getDashSpy
+      );
+
+      await manager.loadDashboard({ uid: 'linked-dash', route: DashboardRoutes.Normal });
+
+      expect(getDashSpy).toHaveBeenCalledTimes(1);
+      expect(manager.state.dashboard?.state.uid).toBe('linked-dash');
+      expect(v2Manager.state.dashboard?.state.uid).toBe('linked-dash');
+    });
+
+    it('should not sync state back to v1 manager after loadDashboard', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      const v1SetStateSpy = jest.spyOn(manager['v1Manager'], 'setState');
+
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(v1SetStateSpy).not.toHaveBeenCalled();
+    });
+
     it('should maintain active manager state between operations', async () => {
       setupV1FailureV2Success();
 
@@ -1600,7 +1745,24 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(cachedDash).toBeDefined();
     });
 
-    it.todo('should handle snapshot loading for both v1 and v2');
+    it('should keep v2 manager state in sync after loadSnapshot', async () => {
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      manager.setActiveManager('v2');
+
+      const v2Manager = manager['v2Manager'] as DashboardScenePageStateManagerV2;
+      v2Manager.clearState();
+      expect(v2Manager.state.dashboard).toBeUndefined();
+
+      jest.spyOn(manager, 'loadSnapshotScene').mockResolvedValue(manager.state.dashboard!);
+
+      await manager.loadSnapshot('snapshot-slug');
+
+      expect(v2Manager.state.dashboard).toBeDefined();
+      expect(v2Manager.state.dashboard?.state.uid).toBe(manager.state.dashboard?.state.uid);
+    });
 
     it('should handle dashboard reloading with current active manager', async () => {
       setupV1FailureV2Success();
@@ -1795,6 +1957,27 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(loadDashboardMock).toHaveBeenCalledTimes(2);
       expect(manager.state.dashboard?.state.version).toBe(2);
+    });
+
+    it('should use v1 reloadDashboard implementation and update unified state', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({
+        dashboard: { uid: 'fake-dash', editable: true, version: 1 },
+        meta: {},
+      });
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      loadDashboardMock.mockResolvedValue({
+        dashboard: { uid: 'fake-dash', editable: true, version: 3, title: 'fake-dash' } as DashboardDataDTO,
+        meta: {},
+      });
+
+      await manager.reloadDashboard({ version: 3, scopes: [], from: 'now-1h', to: 'now' });
+
+      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      expect(loadDashboardMock).toHaveBeenCalledTimes(2);
+      expect(manager.state.dashboard?.state.version).toBe(3);
     });
   });
 

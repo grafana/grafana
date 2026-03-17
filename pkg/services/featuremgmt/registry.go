@@ -98,14 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "logsContextDatasourceUi",
-			Description:  "Allow datasource to provide custom UI for context view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
-		},
-		{
 			Name:         "lokiShardSplitting",
 			Description:  "Use stream shards to split queries into smaller subqueries",
 			Stage:        FeatureStageExperimental,
@@ -205,14 +197,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
-			Expression:   "false",
-		},
-		{
-			Name:         "enableDatagridEditing",
-			Description:  "Enables the edit functionality in the datagrid panel",
-			FrontendOnly: false, // The set of plugins returned in frontend settings changes based on this flag
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 		},
 		{
@@ -483,8 +467,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourceDisableIdApi",
-			Description:     "Does not register datasource apis that use the numeric id",
+			Name:            "datasourceLegacyIdApi",
+			Description:     "Register legacy datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // affects the routes at startup
@@ -602,6 +586,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "createAlertRuleFromPanel",
+			Description:  "Enables creating alert rules from a panel using a drawer UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -615,6 +607,14 @@ var (
 			RequiresDevMode: false,
 			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
+		},
+		{
+			Name:         "annotationsClustering",
+			Description:  "Enables annotation clustering and switches to refactored annotation code",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
 		},
 		{
 			Name:         "dashboardScene",
@@ -633,6 +633,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardAssistantPopover",
+			Description:  "Enables the assistant prompt popover on panel click in dashboard view mode",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -647,6 +655,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:        "sceneCsvExport",
+			Description: "Enables CSV export using scenes dashboard architecture",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:         "drilldownRecommendations",
@@ -926,6 +941,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardUnifiedDrilldownControls",
+			Description:  "Renders ad hoc filters and group by in a single unified control",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "adHocFilterDefaultValues",
 			Description:  "Enables configuring default origin filters for ad-hoc filter variables",
 			Stage:        FeatureStageExperimental,
@@ -976,6 +1000,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "newSavedQueriesExperience",
+			Description:  "Enables the new Saved queries (query library) modal experience",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
@@ -1010,6 +1042,14 @@ var (
 		{
 			Name:         "dashboardTemplatesAssistantButton",
 			Description:  "Enables the Assistant button in the dashboard templates card",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "suggestedDashboardsAssistantButton",
+			Description:  "Enables the 'Customize with Assistant' button on suggested dashboard cards",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
@@ -1486,6 +1526,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamLBACApiReadFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStagePrivatePreview,
@@ -1769,40 +1817,8 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
-			Name:         "kubernetesAuthzApis",
-			Description:  "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
-			Stage:        FeatureStageDeprecated,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "kubernetesAuthZHandlerRedirect",
-			Description:  "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
-			Stage:        FeatureStageDeprecated,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "kubernetesAuthZResourcePermissionsRedirect",
 			Description:  "Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "kubernetesAuthZRolesRedirect",
-			Description:  "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "kubernetesAuthZRoleBindingsRedirect",
-			Description:  "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1819,14 +1835,6 @@ var (
 		{
 			Name:         "kubernetesAuthzZanzanaSync",
 			Description:  "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
-			Name:         "kubernetesAuthzCoreRolesApi",
-			Description:  "Registers AuthZ Core Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1865,8 +1873,8 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesAuthnMutation",
-			Description:  "Enables create, delete, and update mutations for resources owned by IAM identity",
+			Name:         "kubernetesAuthzRolesAndRoleBindingsRedirect",
+			Description:  "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1923,6 +1931,14 @@ var (
 		{
 			Name:         "alertEnrichmentConditional",
 			Description:  "Enable conditional alert enrichment steps.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertEnrichmentPreview",
+			Description:  "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2221,6 +2237,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "vizLegendFacetedFilter",
+			Description:  "Enable faceted labels filter for series visibility in the legend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "heatmapRowsAxisOptions",
 			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
 			Stage:        FeatureStageExperimental,
@@ -2458,7 +2482,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "kubernetesTeamsHandlerRedirect",
+			Name:         "kubernetesTeamsRedirect",
 			Description:  "Redirects the request of the team endpoints to the app platform APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
@@ -2490,6 +2514,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesSsoSettingsApi",
+			Description:  "Enables SSO settings APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2514,9 +2546,26 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUsersRedirect",
+			Description:  "Redirects the requests of the user service to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingPolicyRoutingSettings",
+			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -2556,6 +2605,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryTriage",
 			Description:  "Enables the notification history timeline in the triage instance details drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryDetail",
+			Description:  "Enables the notification history detail page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2624,6 +2681,45 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
+			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			FrontendOnly:    true,
+		},
+		{
+			Name:         "flameGraphWithCallTree",
+			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:        "advisorDatasourceIntegration",
+			Description: "Enables the advisor report integration with datasource pages",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "inlineLogDetailsNoScrolls",
+			Description: "Enables an inline version of Log Details that creates no new scrolls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		}, {
+			Name:            "colorblindThemes",
+			Description:     "Enables the new colorblind-friendly themes",
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaFrontendPlatformSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 	}
 )

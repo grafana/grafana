@@ -326,8 +326,9 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	}
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
 	routeService := routes.NewService(configStore, ps.alertingStore, ps.alertingStore, ps.Cfg.UnifiedAlerting, features, ps.log, validation.ValidateProvenanceRelaxed, ps.tracer)
+	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	receiverSvc := notifier.NewReceiverService(
-		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
+		receiverAuthz,
 		configStore,
 		ps.alertingStore,
 		ps.alertingStore,
@@ -339,7 +340,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.tracer,
 		false,
 	)
-	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
+	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)

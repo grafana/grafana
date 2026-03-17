@@ -8,9 +8,9 @@ import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } 
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
-import { UPGRADE_URL } from '../constants';
-import { isFreeTierLicense } from '../utils/isFreeTierLicense';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
+import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
+import { isOnPrem } from '../utils/isOnPrem';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
@@ -19,9 +19,6 @@ import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
-
-// TODO use the limits from the API when they are available
-const FREE_TIER_FOLDER_RESOURCE_LIMIT = 20;
 
 export interface Props {
   settingsData?: RepositoryViewList;
@@ -52,6 +49,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isHealthy,
     isUnhealthy,
     healthStatusNotReady,
+    quota,
   } = useRepositoryStatus(repoName);
 
   const {
@@ -61,9 +59,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isLoading: isResourceStatsLoading,
   } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
-  const isQuotaExceeded = Boolean(
-    isFreeTierLicense() && selectedTarget === 'folder' && resourceCount > FREE_TIER_FOLDER_RESOURCE_LIMIT
-  );
+  const maxResourcesPerRepository = quota?.maxResourcesPerRepository ?? 0;
+  const isQuotaExceeded = maxResourcesPerRepository > 0 && resourceCount > maxResourcesPerRepository;
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
@@ -99,21 +96,34 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         },
       });
     } else if (isQuotaExceeded) {
+      const onPrem = isOnPrem();
       setStepStatusInfo({
         status: 'error',
         error: {
           title: t('provisioning.bootstrap-step.error-quota-exceeded-title', 'Resource quota exceeded'),
-          message: t(
-            'provisioning.bootstrap-step.error-quota-exceeded-message',
-            'The repository contains {{resourceCount}} resources, which exceeds the free-tier limit of {{limit}} resources per folder. To sync this repository, upgrade your account or reduce the number of resources.',
-            { resourceCount, limit: FREE_TIER_FOLDER_RESOURCE_LIMIT }
-          ),
+          message: onPrem
+            ? t(
+                'provisioning.bootstrap-step.error-quota-exceeded-message-onprem',
+                'This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
+                { resourceCount, limit: maxResourcesPerRepository }
+              )
+            : t(
+                'provisioning.bootstrap-step.error-quota-exceeded-message',
+                'This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                { resourceCount, limit: maxResourcesPerRepository }
+              ),
         },
-        action: {
-          label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
-          href: UPGRADE_URL,
-          external: true,
-        },
+        action: onPrem
+          ? {
+              label: t('provisioning.bootstrap-step.update-configuration-action', 'View configuration docs'),
+              href: CONFIGURE_GRAFANA_DOCS_URL,
+              external: true,
+            }
+          : {
+              label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
+              href: UPGRADE_URL,
+              external: true,
+            },
       });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
@@ -123,6 +133,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setStepStatusInfo,
     repositoryStatusError,
     retryRepositoryStatus,
+    maxResourcesPerRepository,
     isQuotaExceeded,
     resourceCount,
     isUnhealthy,
@@ -181,7 +192,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
                     <Stack direction="column" gap={3}>
                       {action.description}
                       <Text color="primary">{action.subtitle}</Text>
-                      <FreeTierLimitNote limitType="resource" />
+                      <QuotaLimitNote maxResourcesPerRepository={maxResourcesPerRepository} />
                     </Stack>
                     <div className={styles.divider} />
 

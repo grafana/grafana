@@ -164,6 +164,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
+    resetSearch,
   } = useOptions(props.options, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
@@ -241,6 +242,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
       return itemHeight;
     },
+    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
   });
@@ -292,6 +294,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onIsOpenChange: ({ isOpen, inputValue }) => {
       if (isOpen && inputValue === '') {
         updateOptions(inputValue);
+      }
+
+      if (!isOpen) {
+        resetSearch();
       }
     },
 
