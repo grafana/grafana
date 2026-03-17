@@ -144,6 +144,28 @@ func TestFolderTree(t *testing.T) {
 		assert.True(t, tree.In("a"))
 	})
 
+	t.Run("remove cascades to children", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+		tree.Add(Folder{ID: "b", Title: "B", Path: "a/b/"}, "a")
+		tree.Add(Folder{ID: "c", Title: "C", Path: "a/b/c/"}, "b")
+		tree.Add(Folder{ID: "d", Title: "D", Path: "d/"}, "")
+
+		assert.Equal(t, 4, tree.Count())
+		assert.True(t, tree.In("a"))
+		assert.True(t, tree.In("b"))
+		assert.True(t, tree.In("c"))
+		assert.True(t, tree.In("d"))
+
+		tree.Remove("b")
+
+		assert.Equal(t, 2, tree.Count())
+		assert.False(t, tree.In("b"))
+		assert.False(t, tree.In("c"))
+		assert.True(t, tree.In("a"))
+		assert.True(t, tree.In("d"))
+	})
+
 	t.Run("walk tree", func(t *testing.T) {
 		tree := &folderTree{
 			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},

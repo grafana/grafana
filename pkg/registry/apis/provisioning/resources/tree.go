@@ -110,10 +110,28 @@ func (t *folderTree) Add(folder Folder, parent string) {
 func (t *folderTree) Remove(folderID string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if _, exists := t.tree[folderID]; exists {
-		delete(t.tree, folderID)
-		delete(t.folders, folderID)
-		t.count--
+	if _, exists := t.tree[folderID]; !exists {
+		return
+	}
+
+	// Collect the folder and all descendants.
+	toDelete := []string{folderID}
+	for i := 0; i < len(toDelete); i++ {
+		current := toDelete[i]
+		for id, parent := range t.tree {
+			if parent == current {
+				toDelete = append(toDelete, id)
+			}
+		}
+	}
+
+	// Delete collected nodes and adjust count.
+	for _, id := range toDelete {
+		if _, exists := t.tree[id]; exists {
+			delete(t.tree, id)
+			delete(t.folders, id)
+			t.count--
+		}
 	}
 }
 
