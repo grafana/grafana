@@ -141,7 +141,6 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisab
 	}
 }
 
-
 // folderMetadataJSON generates a valid _folder.json payload with a stable UID and title.
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
