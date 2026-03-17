@@ -19,6 +19,23 @@ import {
   valuesToFills,
 } from './utils';
 
+type Nullable = number | null;
+type DataX = number[];
+type DataY = Array<number | null>;
+type SparseHeatmap = [DataX, DataY, Nullable[], Nullable[]];
+type DenseHeatmap = [number[], Nullable[], Nullable[]];
+
+/**
+ * Sparse heatmap data: xMax, yMin, yMax, count per cell.
+ * 4 cells with distinct xMax (100, 200) and y bounds (1-4, 4-16).
+ */
+const sparseHeatmapData: SparseHeatmap = [
+  [100, 200, 100, 200],
+  [1, 1, 4, 4],
+  [4, 4, 16, 16],
+  [5, 10, 15, 20],
+];
+
 /**
  * Creates a minimal uPlot instance for range callback tests.
  * Uses the real uPlot constructor so the instance satisfies uPlot types.
@@ -88,7 +105,7 @@ function getYScaleRangeInfo(builder: UPlotConfigBuilder): {
  * Used by heatmap path builder tests (dense and sparse).
  */
 function createOrientMock(
-  data: unknown[],
+  data: SparseHeatmap | DenseHeatmap,
   config: {
     scaleX?: Partial<uPlot.Scale>;
     scaleY?: Partial<uPlot.Scale>;
@@ -100,7 +117,7 @@ function createOrientMock(
   const scaleY: uPlot.Scale = { distr: 1, min: 0, max: 2, log: 2, ...config.scaleY };
   const valToPos = (v: number) => v;
 
-  return (u: uPlot, seriesIdx: number, drawCallback: (...args: unknown[]) => void) => {
+  return (u: uPlot, seriesIdx: number, drawCallback: uPlot.OrientCallback) => {
     drawCallback(
       {},
       data[0],
@@ -116,6 +133,7 @@ function createOrientMock(
       jest.fn(),
       jest.fn(),
       rect,
+      jest.fn(),
       jest.fn()
     );
   };
@@ -951,7 +969,7 @@ describe('heatmapPathsDense', () => {
      * Dense heatmap data: 2 columns x 3 rows.
      * xs: [1000, 1000, 1000, 2000, 2000, 2000], ys: [0, 1, 2, 0, 1, 2], counts: [5, 10, 15, 10, 20, 25]
      */
-    const denseHeatmapData: number[][] = [
+    const denseHeatmapData: DenseHeatmap = [
       [1000, 1000, 1000, 2000, 2000, 2000],
       [0, 1, 2, 0, 1, 2],
       [5, 10, 15, 10, 20, 25],
@@ -964,7 +982,7 @@ describe('heatmapPathsDense', () => {
     function invokeDensePathBuilder(
       opts: Parameters<typeof heatmapPathsDense>[0],
       overrides?: {
-        data?: Array<Array<number | null>>;
+        data?: SparseHeatmap | DenseHeatmap;
         scaleXDistr?: number;
         scaleYDistr?: number;
         scaleYLog?: 10 | 2;
@@ -980,7 +998,7 @@ describe('heatmapPathsDense', () => {
     ): { rect: jest.Mock; each: jest.Mock; ctx?: unknown } {
       const rect = jest.fn();
       const each = jest.fn();
-      const data = overrides?.data ?? denseHeatmapData;
+      const data: SparseHeatmap | DenseHeatmap = overrides?.data ?? denseHeatmapData;
       const pathBuilder = heatmapPathsDense({ ...opts, each });
       const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
         createOrientMock(data, {
@@ -1124,7 +1142,7 @@ describe('heatmapPathsDense', () => {
     });
 
     it('skips cells with null count', () => {
-      const dataWithNull: [number[], number[], Array<number | null>] = [
+      const dataWithNull: DenseHeatmap = [
         [1000, 1000, 2000, 2000],
         [0, 1, 0, 1],
         [5, null, 10, 20],
@@ -1246,17 +1264,6 @@ describe('heatmapPathsSparse', () => {
   });
 
   describe('draws and fills sparse heatmap grid cells', () => {
-    /**
-     * Sparse heatmap data: xMax, yMin, yMax, count per cell.
-     * 4 cells with distinct xMax (100, 200) and y bounds (1-4, 4-16).
-     */
-    const sparseHeatmapData: [number[], number[], number[], number[]] = [
-      [100, 200, 100, 200],
-      [1, 1, 4, 4],
-      [4, 4, 16, 16],
-      [5, 10, 15, 20],
-    ];
-
     /**
      * Invokes heatmapPathsSparse path builder by mocking uPlot.orient to capture and run the draw callback.
      */
