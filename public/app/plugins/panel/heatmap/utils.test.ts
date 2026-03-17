@@ -24,6 +24,37 @@ type DataX = number[];
 type DataY = Array<number | null>;
 type SparseHeatmap = [DataX, DataY, Nullable[], Nullable[]];
 type DenseHeatmap = [number[], Nullable[], Nullable[]];
+/** Points data for exemplar markers: [xValues, yValues] */
+type PointsData = [DataX, DataY];
+
+/** Mock canvas context used by path builder tests. */
+type MockCtx = {
+  save: jest.Mock;
+  restore: jest.Mock;
+  rect: jest.Mock;
+  clip: jest.Mock;
+  fillStyle: string;
+  fill: jest.Mock;
+};
+
+function createMockCtx(): MockCtx {
+  return {
+    save: jest.fn(),
+    restore: jest.fn(),
+    rect: jest.fn(),
+    clip: jest.fn(),
+    fillStyle: '',
+    fill: jest.fn(),
+  };
+}
+
+function createMockU(data: SparseHeatmap | DenseHeatmap | PointsData, ctx?: MockCtx): uPlot {
+  return {
+    data: { 1: data },
+    ctx: ctx ?? createMockCtx(),
+    bbox: { left: 0, top: 0, width: 100, height: 100 },
+  } as unknown as uPlot;
+}
 
 /**
  * Sparse heatmap data: xMax, yMin, yMax, count per cell.
@@ -102,20 +133,22 @@ function getYScaleRangeInfo(builder: UPlotConfigBuilder): {
 
 /**
  * Creates a uPlot.orient mock that invokes the draw callback with the given data and scales.
- * Used by heatmap path builder tests (dense and sparse).
+ * Used by heatmap path builder tests (dense, sparse, and points).
  */
 function createOrientMock(
-  data: SparseHeatmap | DenseHeatmap,
+  data: SparseHeatmap | DenseHeatmap | PointsData,
   config: {
     scaleX?: Partial<uPlot.Scale>;
     scaleY?: Partial<uPlot.Scale>;
     rect?: jest.Mock;
+    valToPosY?: (v: number) => number;
   } = {}
 ) {
   const rect = config.rect ?? jest.fn();
   const scaleX: uPlot.Scale = { distr: 1, min: 0, max: 2000, log: 2, ...config.scaleX };
   const scaleY: uPlot.Scale = { distr: 1, min: 0, max: 2, log: 2, ...config.scaleY };
   const valToPos = (v: number) => v;
+  const valToPosY = config.valToPosY ?? valToPos;
 
   return (u: uPlot, seriesIdx: number, drawCallback: uPlot.OrientCallback) => {
     drawCallback(
@@ -125,7 +158,7 @@ function createOrientMock(
       scaleX,
       scaleY,
       valToPos,
-      valToPos,
+      valToPosY,
       0,
       0,
       100,
@@ -986,16 +1019,9 @@ describe('heatmapPathsDense', () => {
         scaleXDistr?: number;
         scaleYDistr?: number;
         scaleYLog?: 10 | 2;
-        ctx?: {
-          save: jest.Mock;
-          restore: jest.Mock;
-          rect: jest.Mock;
-          clip: jest.Mock;
-          fillStyle: string;
-          fill: jest.Mock;
-        };
+        ctx?: MockCtx;
       }
-    ): { rect: jest.Mock; each: jest.Mock; ctx?: unknown } {
+    ): { rect: jest.Mock; each: jest.Mock; ctx?: MockCtx } {
       const rect = jest.fn();
       const each = jest.fn();
       const data: SparseHeatmap | DenseHeatmap = overrides?.data ?? denseHeatmapData;
@@ -1013,18 +1039,7 @@ describe('heatmapPathsDense', () => {
           rect,
         })
       );
-      const mockU = {
-        data: { 1: data },
-        ctx: overrides?.ctx ?? {
-          save: jest.fn(),
-          restore: jest.fn(),
-          rect: jest.fn(),
-          clip: jest.fn(),
-          fillStyle: '',
-          fill: jest.fn(),
-        },
-        bbox: { left: 0, top: 0, width: 100, height: 100 },
-      } as unknown as uPlot;
+      const mockU = createMockU(data, overrides?.ctx);
       pathBuilder(mockU, 1);
       orientSpy.mockRestore();
       return overrides?.ctx ? { rect, each, ctx: overrides.ctx } : { rect, each };
@@ -1200,14 +1215,7 @@ describe('heatmapPathsDense', () => {
     });
 
     it('calls ctx.save, rect, clip, fill, restore for each fill path', () => {
-      const ctx = {
-        save: jest.fn(),
-        restore: jest.fn(),
-        rect: jest.fn(),
-        clip: jest.fn(),
-        fillStyle: '',
-        fill: jest.fn(),
-      };
+      const ctx = createMockCtx();
       invokeDensePathBuilder(minimalPathbuilderOpts, { ctx });
       expect(ctx.save).toHaveBeenCalled();
       expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
@@ -1219,9 +1227,59 @@ describe('heatmapPathsDense', () => {
 });
 
 describe('heatmapPathsPoints', () => {
+  /**
+   * Points data: [xValues, yValues] for exemplar markers.
+   * 3 points at (100,1), (200,2), (300,3).
+   */
+  const pointsData: PointsData = [
+    [100, 200, 300],
+    [1, 2, 3],
+  ];
+
   const minimalPointsOpts = {
     each: jest.fn(),
   };
+
+  /**
+   * Invokes heatmapPathsPoints path builder by mocking uPlot.orient to capture and run the draw callback.
+   */
+  function invokePointsPathBuilder(
+    opts: Parameters<typeof heatmapPathsPoints>[0],
+    exemplarColor: string,
+    overrides?: {
+      data?: PointsData;
+      scaleY?: Partial<uPlot.Scale>;
+      yLayout?: HeatmapCellLayout;
+      ctx?: MockCtx;
+      valToPosY?: (v: number) => number;
+    }
+  ): { rect: jest.Mock; each: jest.Mock; valToPosY?: jest.Mock } {
+    const rect = jest.fn();
+    const each = jest.fn();
+    const data = overrides?.data ?? pointsData;
+    const valToPosY = overrides?.valToPosY ?? ((v: number) => v);
+    const pathBuilder = heatmapPathsPoints({ ...opts, each }, exemplarColor, overrides?.yLayout);
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(data, {
+        scaleX: { min: 0, max: 400 },
+        scaleY: overrides?.scaleY ?? { distr: 1, min: 0, max: 4 },
+        rect,
+        valToPosY,
+      })
+    );
+    const mockU = createMockU(data, overrides?.ctx);
+    pathBuilder(mockU, 1);
+    orientSpy.mockRestore();
+    const result: { rect: jest.Mock; each: jest.Mock; valToPosY?: jest.Mock } = { rect, each };
+    if (typeof valToPosY === 'function' && 'mock' in valToPosY) {
+      result.valToPosY = valToPosY as jest.Mock;
+    }
+    return result;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('returns a path builder function', () => {
     const pathBuilder = heatmapPathsPoints(minimalPointsOpts, 'rgba(255,0,255,0.7)');
@@ -1232,6 +1290,73 @@ describe('heatmapPathsPoints', () => {
   it('accepts optional yLayout', () => {
     const pathBuilder = heatmapPathsPoints(minimalPointsOpts, 'red', HeatmapCellLayout.le);
     expect(typeof pathBuilder).toBe('function');
+  });
+
+  describe('draws and fills exemplar points', () => {
+    it('draws rect for each point and calls each callback', () => {
+      const { rect, each } = invokePointsPathBuilder(minimalPointsOpts, 'rgba(255,0,255,0.7)');
+
+      expect(rect).toHaveBeenCalledTimes(3);
+      expect(each).toHaveBeenCalledTimes(3);
+    });
+
+    it('calls each with correct (u, seriesIdx, dataIdx, lft, top, wid, hgt)', () => {
+      const { each } = invokePointsPathBuilder(minimalPointsOpts, 'magenta');
+
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, expect.any(Number), expect.any(Number), 8, 8);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, expect.any(Number), expect.any(Number), 8, 8);
+    });
+
+    it('uses exemplarColor for fill palette', () => {
+      const customColor = 'rgba(0,128,255,0.9)';
+      const ctx = createMockCtx();
+      invokePointsPathBuilder(minimalPointsOpts, customColor, { ctx });
+
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
+      expect(ctx.clip).toHaveBeenCalled();
+      expect(ctx.fill).toHaveBeenCalled();
+      expect(ctx.restore).toHaveBeenCalled();
+    });
+
+    it('applies yShift -0.5 when yLayout is le (ordinal)', () => {
+      const valToPosY = jest.fn((v: number) => v);
+      const { valToPosY: spy } = invokePointsPathBuilder(minimalPointsOpts, 'red', {
+        yLayout: HeatmapCellLayout.le,
+        scaleY: { distr: 1, min: 0, max: 4 },
+        valToPosY,
+      });
+
+      expect(spy).toHaveBeenNthCalledWith(1, 0.5, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(2, 1.5, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(3, 2.5, expect.anything(), 100, 0);
+    });
+
+    it('applies yShift 0.5 when yLayout is ge (ordinal)', () => {
+      const valToPosY = jest.fn((v: number) => v);
+      const { valToPosY: spy } = invokePointsPathBuilder(minimalPointsOpts, 'red', {
+        yLayout: HeatmapCellLayout.ge,
+        scaleY: { distr: 1, min: 0, max: 4 },
+        valToPosY,
+      });
+
+      expect(spy).toHaveBeenNthCalledWith(1, 1.5, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(2, 2.5, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(3, 3.5, expect.anything(), 100, 0);
+    });
+
+    it('skips yShift when scaleY is sparse heatmap (distr 3, log 2)', () => {
+      const valToPosY = jest.fn((v: number) => v);
+      const { valToPosY: spy } = invokePointsPathBuilder(minimalPointsOpts, 'red', {
+        yLayout: HeatmapCellLayout.le,
+        scaleY: { distr: 3, log: 2, min: 0.5, max: 16 },
+        valToPosY,
+      });
+
+      expect(spy).toHaveBeenNthCalledWith(1, 1, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(2, 2, expect.anything(), 100, 0);
+      expect(spy).toHaveBeenNthCalledWith(3, 3, expect.anything(), 100, 0);
+    });
   });
 });
 
@@ -1269,16 +1394,7 @@ describe('heatmapPathsSparse', () => {
      */
     function invokeSparsePathBuilder(
       opts: Parameters<typeof heatmapPathsSparse>[0],
-      overrides?: {
-        ctx?: {
-          save: jest.Mock;
-          restore: jest.Mock;
-          rect: jest.Mock;
-          clip: jest.Mock;
-          fillStyle: string;
-          fill: jest.Mock;
-        };
-      }
+      overrides?: { ctx?: MockCtx }
     ): { rect: jest.Mock; each: jest.Mock } {
       const rect = jest.fn();
       const each = jest.fn();
@@ -1290,18 +1406,7 @@ describe('heatmapPathsSparse', () => {
           rect,
         })
       );
-      const mockU = {
-        data: { 1: sparseHeatmapData },
-        ctx: overrides?.ctx ?? {
-          save: jest.fn(),
-          restore: jest.fn(),
-          rect: jest.fn(),
-          clip: jest.fn(),
-          fillStyle: '',
-          fill: jest.fn(),
-        },
-        bbox: { left: 0, top: 0, width: 100, height: 100 },
-      } as unknown as uPlot;
+      const mockU = createMockU(sparseHeatmapData, overrides?.ctx);
       pathBuilder(mockU, 1);
       orientSpy.mockRestore();
       return { rect, each };
