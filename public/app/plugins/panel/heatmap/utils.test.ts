@@ -23,11 +23,14 @@ import {
  * Creates a minimal uPlot instance for range callback tests.
  * Uses the real uPlot constructor so the instance satisfies uPlot types.
  */
-function createMinimalUPlot(scaleKey: string, overrides?: { data?: uPlot.AlignedData; log?: number }): uPlot {
+function createMinimalUPlot(
+  scaleKey: string,
+  overrides?: { data?: uPlot.AlignedData; log?: number; height?: number }
+): uPlot {
   const scaleConfig: uPlot.Scale = overrides?.log ? { log: 2 } : {};
   const opts: uPlot.Options = {
     width: 100,
-    height: 100,
+    height: overrides?.height ?? 100,
     series: [{}, {}],
     scales: {
       x: {},
@@ -61,6 +64,27 @@ function getYScaleRangeInfo(builder: UPlotConfigBuilder): {
     throw new Error('Expected y scale with range function');
   }
   return { range, scaleKey };
+}
+
+/**
+ * Extracts the y-axis splits and values callbacks from a prepConfig builder (ordinal y-axis only).
+ */
+function getYAxisSplitsAndValues(builder: UPlotConfigBuilder): {
+  splits: uPlot.Axis.Splits;
+  values: uPlot.Axis.Values;
+  scaleKey: string;
+} | null {
+  const config = builder.getConfig();
+  const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
+  const scaleKey = yScale?.props.scaleKey ?? '';
+  if (!scaleKey) {
+    return null;
+  }
+  const axis = config.axes?.find((a) => a.scale === scaleKey);
+  if (!axis?.splits || !axis?.values) {
+    return null;
+  }
+  return { splits: axis.splits, values: axis.values, scaleKey };
 }
 
 describe('prepConfig', () => {
@@ -459,6 +483,316 @@ describe('prepConfig', () => {
         expect(result[0]).toBe(1);
         expect(result[1]).toBe(2);
       });
+    });
+  });
+
+  describe('ordinal y-axis splits and values', () => {
+    /**
+     * Creates HeatmapData with ordinal y display (meta.custom.yOrdinalDisplay).
+     * Used to exercise the splits and values callbacks for lines 399-438.
+     */
+    function createOrdinalHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+      const heatmap = createDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+          custom: {
+            yOrdinalDisplay: ['0.005', '0.01', '0.025', '0.05', '0.1', '0.25', '0.5', '1', '2.5', '5'],
+          },
+        },
+        fields: [
+          { name: 'x', type: FieldType.time, values: [1000, 1000, 1000, 2000, 2000, 2000] },
+          { name: 'y', type: FieldType.number, values: [0, 1, 2, 0, 1, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 10, 20, 25] },
+        ],
+      });
+      return {
+        heatmap,
+        heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 25 },
+        xBucketSize: 1000,
+        yBucketSize: 1,
+        yBucketCount: 3,
+        xLayout: HeatmapCellLayout.unknown,
+        yLayout: HeatmapCellLayout.unknown,
+        ...overrides,
+      };
+    }
+
+    it('splits returns [0, 1] when yOrdinalDisplay is missing', () => {
+      const heatmap = createDataFrame({
+        meta: { type: DataFrameType.HeatmapCells, custom: {} },
+        fields: [
+          { name: 'x', type: FieldType.time, values: [1000, 2000] },
+          { name: 'y', type: FieldType.number, values: [0, 1] },
+          { name: 'count', type: FieldType.number, values: [5, 10] },
+        ],
+      });
+      const dataRef = {
+        current: {
+          heatmap,
+          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 10 },
+          xBucketSize: 1000,
+          yBucketSize: 1,
+          yBucketCount: 2,
+          yLayout: HeatmapCellLayout.unknown,
+        },
+      };
+      if (heatmap.meta) {
+        heatmap.meta.custom = { yOrdinalDisplay: ['A', 'B'] };
+      }
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      if (heatmap.meta) {
+        heatmap.meta.custom = {};
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 100 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits).toEqual([0, 1]);
+    });
+
+    it('splits returns indices for unknown yLayout', () => {
+      const dataRef = { current: createOrdinalHeatmapData({ yLayout: HeatmapCellLayout.unknown }) };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 200 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
+    it('splits unshifts -1 for le yLayout', () => {
+      const dataRef = { current: createOrdinalHeatmapData({ yLayout: HeatmapCellLayout.le }) };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 200 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits[0]).toBe(-1);
+      expect(splits).toContain(0);
+      expect(splits).toContain(9);
+    });
+
+    it('splits pushes length for ge yLayout', () => {
+      const dataRef = { current: createOrdinalHeatmapData({ yLayout: HeatmapCellLayout.ge }) };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 200 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits[splits.length - 1]).toBe(10);
+      expect(splits).toContain(0);
+      expect(splits).toContain(9);
+    });
+
+    it('splits returns only first and last when height < 60', () => {
+      const dataRef = { current: createOrdinalHeatmapData() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 50 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits).toEqual([0, 9]);
+    });
+
+    it('splits thins when (height - 15) / splits.length < 10', () => {
+      const dataRef = { current: createOrdinalHeatmapData() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 100 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      expect(splits.length).toBeLessThan(10);
+      expect(splits.length).toBeGreaterThan(2);
+    });
+
+    it('values maps splits to yOrdinalDisplay labels', () => {
+      const dataRef = { current: createOrdinalHeatmapData() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 200 });
+      if (typeof info.splits !== 'function') {
+        throw new Error('Expected splits to be a function');
+      }
+      const splits = info.splits(u, 0, 0, 1, 0, 0);
+      if (typeof info.values !== 'function') {
+        throw new Error('Expected values to be a function');
+      }
+      const values = info.values(u, splits, 0, 0, 0);
+      expect(values[0]).toBe('0.005');
+      expect(values[values.length - 1]).toBe('5');
+    });
+
+    it('values returns yMinDisplay for v < 0 (Prometheus le style)', () => {
+      const heatmap = createDataFrame({
+        meta: {
+          type: DataFrameType.HeatmapCells,
+          custom: {
+            yOrdinalDisplay: ['0.005', '0.01', '0.05'],
+            yMinDisplay: '0.0',
+          },
+        },
+        fields: [
+          { name: 'x', type: FieldType.time, values: [1000, 2000] },
+          { name: 'yMax', type: FieldType.number, values: [0, 1, 2, 0, 1, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 10, 20, 25] },
+        ],
+      });
+      const dataRef = {
+        current: {
+          heatmap,
+          heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 25 },
+          yLayout: HeatmapCellLayout.le,
+        },
+      };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 100 });
+      if (typeof info.values !== 'function') {
+        throw new Error('Expected values to be a function');
+      }
+      const values = info.values(u, [-1, 0, 1, 2], 0, 0, 0);
+      expect(values[0]).toBe('0.0');
+      expect(values[1]).toBe('0.005');
+    });
+
+    it('values returns splits when yOrdinalDisplay is missing', () => {
+      const heatmap = createDataFrame({
+        meta: { type: DataFrameType.HeatmapCells, custom: { yOrdinalDisplay: ['A', 'B'] } },
+        fields: [
+          { name: 'x', type: FieldType.time, values: [1000, 2000] },
+          { name: 'y', type: FieldType.number, values: [0, 1] },
+          { name: 'count', type: FieldType.number, values: [5, 10] },
+        ],
+      });
+      const dataRef = {
+        current: {
+          heatmap,
+          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 10 },
+          yLayout: HeatmapCellLayout.unknown,
+        },
+      };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const info = getYAxisSplitsAndValues(builder);
+      expect(info).not.toBeNull();
+      if (!info) {
+        throw new Error('Expected info');
+      }
+      if (heatmap.meta) {
+        heatmap.meta.custom = {};
+      }
+      const u = createMinimalUPlot(info.scaleKey, { height: 100 });
+      if (typeof info.values !== 'function') {
+        throw new Error('Expected values to be a function');
+      }
+      const values = info.values(u, [0, 1], 0, 0, 0);
+      expect(values).toEqual([0, 1]);
     });
   });
 });
