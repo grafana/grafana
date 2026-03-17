@@ -152,7 +152,7 @@ function RendererAlert() {
       <div>
         <Trans i18nKey="share-modal.link.render-instructions">
           To render an image, you must install the{' '}
-          <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
+          <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/" external>
             Grafana Image Renderer
           </TextLink>
           . Please contact your Grafana administrator to install Grafana Image Renderer.
