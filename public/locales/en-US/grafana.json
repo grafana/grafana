@@ -6553,6 +6553,17 @@
       "label-link": "Link",
       "tooltip": "Add link to another dashboard or external site"
     },
+    "add-new-edit-pane": {
+      "group-layouts": "Group layouts"
+    },
+    "add-row": {
+      "add-label": "Add row",
+      "group-label": "Group into rows"
+    },
+    "add-tab": {
+      "add-label": "Add tab",
+      "group-label": "Group into tabs"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
