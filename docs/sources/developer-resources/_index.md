@@ -20,7 +20,7 @@ cards:
     - title: Developer tools
       height: 24
       href: ./developer-tools/
-      description: Learn about the Grafana Data Model and the Data Plane contract.
+      description: Learn about the development tools available in Grafana, as well as the Grafana data structure.
     - title: Grafana APIs
       height: 24
       href: ./api-reference/

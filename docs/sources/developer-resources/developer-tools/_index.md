@@ -7,7 +7,8 @@ keywords:
   - data model
   - developer portal
   - developer tools
-title: Grafana Data Model
+title: Developer tools
+menuTitle: Developer tools
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/developer-tools/
 ---
