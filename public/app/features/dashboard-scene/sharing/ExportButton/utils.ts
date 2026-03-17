@@ -36,7 +36,7 @@ export async function generateDashboardImage({
     if (!config.rendererAvailable) {
       return {
         blob: new Blob(),
-        error: 'Image renderer plugin not installed',
+        error: 'Grafana Image Renderer not installed',
       };
     }
 

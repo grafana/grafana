@@ -74,15 +74,15 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
         {!config.rendererAvailable && (
           <Alert
             severity="info"
-            title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+            title={t('share-modal.link.render-alert', 'Grafana Image Renderer not installed')}
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
               To render an image, you must install the{' '}
               <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
-                Grafana image renderer plugin
+                Grafana Image Renderer
               </TextLink>
-              . Please contact your Grafana administrator to install the plugin.
+              . Please contact your Grafana administrator to install Grafana Image Renderer.
             </Trans>
           </Alert>
         )}
