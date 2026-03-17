@@ -4,17 +4,20 @@ import (
 	"strings"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // ProvisioningAuth returns a middleware that gates /admin/provisioning/* routes.
 // Dashboard preview paths (/{slug}/dashboard/preview/{path}) only require a
-// signed-in user, while all other sub-paths still require OrgAdmin.
+// signed-in user, while all other sub-paths still require OrgAdmin via the
+// provided fallback handler.
 //
 // This allows non-admin users to access preview links posted in pull-request
 // comments by the git-sync backend, without relaxing access to the rest of
 // the provisioning admin UI.
-func ProvisioningAuth() func(c *contextmodel.ReqContext) {
+func ProvisioningAuth(fallback web.Handler) func(c *contextmodel.ReqContext) {
+	reqOrgAdmin := fallback.(func(*contextmodel.ReqContext))
+
 	return func(c *contextmodel.ReqContext) {
 		if isProvisioningPreviewPath(c.Req.URL.Path) {
 			if !c.IsSignedIn {
@@ -23,9 +26,7 @@ func ProvisioningAuth() func(c *contextmodel.ReqContext) {
 			return
 		}
 
-		if c.OrgRole != org.RoleAdmin {
-			accessForbidden(c)
-		}
+		reqOrgAdmin(c)
 	}
 }
 

@@ -125,7 +125,7 @@ func TestProvisioningAuth(t *testing.T) {
 				c.IsSignedIn = tt.isSignedIn
 				c.OrgRole = tt.orgRole
 			}))
-			server.Use(ProvisioningAuth())
+			server.Use(ProvisioningAuth(ReqOrgAdmin))
 			server.Get("/admin/provisioning/*", func(c *contextmodel.ReqContext) {
 				reached = true
 				c.Resp.WriteHeader(http.StatusOK)
