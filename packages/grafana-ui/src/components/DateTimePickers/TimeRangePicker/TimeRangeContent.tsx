@@ -108,10 +108,14 @@ export const TimeRangeContent = (props: Props) => {
 
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
+  // Refs to the aria-describedby target divs — updated imperatively on blur/submit
+  // so the error text is only announced when the user explicitly leaves a field or submits,
+  // not on every keystroke (which would interrupt the input's own speech output).
+  const fromErrorRef = useRef<HTMLDivElement>(null);
+  const toErrorRef = useRef<HTMLDivElement>(null);
 
   const fromFieldId = useId();
   const toFieldId = useId();
-  // IDs for the polite live regions — linked to inputs via aria-describedby
   const fromErrorId = `${fromFieldId}-error`;
   const toErrorId = `${toFieldId}-error`;
 
@@ -132,7 +136,14 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
-      // Focus first invalid field — aria-describedby will announce the error naturally
+      // Update the aria-describedby targets imperatively before focusing so the screen
+      // reader reads the error description when focus lands on the invalid field.
+      if (fromErrorRef.current) {
+        fromErrorRef.current.textContent = from.invalid ? from.errorDescription : '';
+      }
+      if (toErrorRef.current) {
+        toErrorRef.current.textContent = to.invalid ? to.errorDescription : '';
+      }
       if (from.invalid) {
         fromInputRef.current?.focus();
       } else {
@@ -145,7 +156,17 @@ export const TimeRangeContent = (props: Props) => {
     const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
 
     onApplyFromProps(timeRange);
-  }, [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]);
+  }, [
+    from.errorDescription,
+    from.invalid,
+    from.value,
+    onApplyFromProps,
+    timeZone,
+    to.errorDescription,
+    to.invalid,
+    to.value,
+    fiscalYearStartMonth,
+  ]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -219,10 +240,10 @@ export const TimeRangeContent = (props: Props) => {
       <div className={style.fieldContainer}>
         {/*
          * Field does not receive `error` — that would render FieldValidationMessage with role="alert"
-         * (assertive), which interrupts speech on every keystroke. Instead we:
-         *   1. Render FieldValidationMessage inside aria-hidden (visual only, no live region)
-         *   2. Render a role="status" (polite) live region for screen reader announcements
-         *   3. Link the input to the polite region via aria-describedby
+         * (assertive), which interrupts speech on every keystroke. Instead:
+         *   1. FieldValidationMessage sits inside aria-hidden (visual only, no live region)
+         *   2. A plain div (no aria-live) is the aria-describedby target — updated imperatively
+         *      only on blur or submit, so the error is never announced mid-typing
          */}
         <div className={style.fieldWrapper}>
           <Field
@@ -234,9 +255,14 @@ export const TimeRangeContent = (props: Props) => {
               id={fromFieldId}
               ref={fromInputRef}
               aria-invalid={from.invalid || undefined}
-              aria-describedby={from.invalid ? fromErrorId : undefined}
+              aria-describedby={fromErrorId}
               onClick={(event) => event.stopPropagation()}
               onChange={(event) => onChange(event.currentTarget.value, to.value)}
+              onBlur={() => {
+                if (fromErrorRef.current) {
+                  fromErrorRef.current.textContent = from.invalid ? from.errorDescription : '';
+                }
+              }}
               addonAfter={icon}
               onKeyDown={submitOnEnter}
               data-testid={selectors.components.TimePicker.fromField}
@@ -248,10 +274,9 @@ export const TimeRangeContent = (props: Props) => {
               <FieldValidationMessage>{from.errorMessage}</FieldValidationMessage>
             </div>
           )}
-          {/* Polite live region — announces without interrupting; also the aria-describedby target */}
-          <div id={fromErrorId} role="status" className={style.srOnly}>
-            {from.invalid ? from.errorDescription : ''}
-          </div>
+          {/* Plain div — no aria-live. Only populated on blur/submit so the error is read
+              on the next focus event, not mid-keystroke. */}
+          <div id={fromErrorId} ref={fromErrorRef} className={style.srOnly} />
         </div>
         {fyTooltip}
       </div>
@@ -262,9 +287,14 @@ export const TimeRangeContent = (props: Props) => {
               id={toFieldId}
               ref={toInputRef}
               aria-invalid={to.invalid || undefined}
-              aria-describedby={to.invalid ? toErrorId : undefined}
+              aria-describedby={toErrorId}
               onClick={(event) => event.stopPropagation()}
               onChange={(event) => onChange(from.value, event.currentTarget.value)}
+              onBlur={() => {
+                if (toErrorRef.current) {
+                  toErrorRef.current.textContent = to.invalid ? to.errorDescription : '';
+                }
+              }}
               addonAfter={icon}
               onKeyDown={submitOnEnter}
               data-testid={selectors.components.TimePicker.toField}
@@ -276,9 +306,7 @@ export const TimeRangeContent = (props: Props) => {
               <FieldValidationMessage>{to.errorMessage}</FieldValidationMessage>
             </div>
           )}
-          <div id={toErrorId} role="status" className={style.srOnly}>
-            {to.invalid ? to.errorDescription : ''}
-          </div>
+          <div id={toErrorId} ref={toErrorRef} className={style.srOnly} />
         </div>
         {fyTooltip}
       </div>

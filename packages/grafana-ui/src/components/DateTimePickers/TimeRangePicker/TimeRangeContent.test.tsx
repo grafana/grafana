@@ -258,10 +258,16 @@ describe('TimeRangeForm', () => {
 
           await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
-          const error = screen.getAllByRole('status').filter((el) => el.textContent?.trim());
-
-          expect(error).toHaveLength(2);
-          expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
+          // Both inputs should be marked invalid and their aria-describedby targets populated
+          const fromEl = screen.getByLabelText('From');
+          const toEl = screen.getByLabelText('To');
+          expect(fromEl).toHaveAttribute('aria-invalid', 'true');
+          expect(toEl).toHaveAttribute('aria-invalid', 'true');
+          // onApply writes the error description to the describedby target so focus announces it
+          const fromDescribedById = fromEl.getAttribute('aria-describedby')!;
+          expect(document.getElementById(fromDescribedById)).toHaveTextContent(
+            'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time'
+          );
         });
       });
 
@@ -361,11 +367,10 @@ describe('TimeRangeForm', () => {
           to: '2021-06-19 23:59:00',
         },
       };
-      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
-
-      expect(error).toHaveLength(1);
-      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
+      setup(invalidTimeRange, 'Asia/Tokyo');
+      // Visual error bubble is inside aria-hidden; getByText searches full DOM
+      expect(screen.getByText(/Enter a date.*From field/)).toBeInTheDocument();
+      expect(screen.queryByText(/Enter a date.*To field/)).not.toBeInTheDocument();
     });
 
     it('should show error on invalid range', () => {
@@ -377,10 +382,8 @@ describe('TimeRangeForm', () => {
           to: '2021-06-17 23:59:00',
         },
       };
-      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
-
-      expect(error[0]).toHaveTextContent('"From" date must be before "To"');
+      setup(invalidTimeRange, 'Asia/Tokyo');
+      expect(screen.getByText('"From" date must be before "To"')).toBeInTheDocument();
     });
 
     it('should not show range error when "to" is invalid', () => {
@@ -392,11 +395,10 @@ describe('TimeRangeForm', () => {
           to: 'foo',
         },
       };
-      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
-
-      expect(error).toHaveLength(1);
-      expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
+      setup(invalidTimeRange, 'Asia/Tokyo');
+      // To field error is shown, not a range error
+      expect(screen.getByText(/Enter a date.*To field/)).toBeInTheDocument();
+      expect(screen.queryByText('"From" date must be before "To"')).not.toBeInTheDocument();
     });
   });
 });
