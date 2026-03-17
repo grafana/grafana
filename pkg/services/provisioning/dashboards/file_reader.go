@@ -73,6 +73,7 @@ type FileReader struct {
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
 	foldersInUnified             bool
+	settingCfg                   *setting.Cfg
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -81,7 +82,7 @@ type FileReader struct {
 
 // NewDashboardFileReader returns a new filereader based on `config`
 func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
-	dashboardStore utils.DashboardStore, folderService folder.Service) (*FileReader, error) {
+	dashboardStore utils.DashboardStore, folderService folder.Service, settingCfg *setting.Cfg) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -106,6 +107,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		dashboardStore:               dashboardStore,
 		folderService:                folderService,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
+		settingCfg:                   settingCfg,
 		usageTracker:                 newUsageTracker(),
 	}, nil
 }
@@ -506,7 +508,7 @@ func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullp
 		return 0, "", fmt.Errorf("invalid folder full path: %s", folderFullpath)
 	}
 
-	maxDepth := setting.DefaultMaxNestedFolderDepth
+	maxDepth := fr.settingCfg.MaxNestedFolderDepth
 	if len(folderTitles) > maxDepth {
 		return 0, "", fmt.Errorf("nested folder depth %d exceeds maximum %d", len(folderTitles), maxDepth)
 	}

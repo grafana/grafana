@@ -62,7 +62,7 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
 		fakeStore := &fakeDashboardStore{}
-		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc)
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(6)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
@@ -81,10 +81,10 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc)
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc)
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
@@ -119,7 +119,7 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
 		fakeStore := &fakeDashboardStore{}
-		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc)
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, folderName)
 		require.NoError(t, err)
@@ -135,10 +135,10 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc)
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc)
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
@@ -194,13 +194,13 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
 			Options: map[string]any{"path": twoDashboardsWithUID},
 		}
-		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc)
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc)
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader3, err := NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc)
+		reader3, err := NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2, reader3})
@@ -219,7 +219,7 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 		ctx := context.Background()
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 
-		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc)
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, cfg1.Folder)
 		require.NoError(t, err)
@@ -236,7 +236,7 @@ func TestIntegrationDuplicatesValidator(t *testing.T) {
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first"}, titleUsageReaders)
 
-		r, err = NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc)
+		r, err = NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 		_, folderUID, err = r.getOrCreateFolder(ctx, cfg3, cfg3.Folder)
 		require.NoError(t, err)
