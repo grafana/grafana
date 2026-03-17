@@ -4208,6 +4208,20 @@
     },
     {
       "metadata": {
+        "name": "reportingHeaderSettings",
+        "resourceVersion": "1773744562248",
+        "creationTimestamp": "2026-03-17T10:49:22Z"
+      },
+      "spec": {
+        "description": "Enables configuration of PDF report settings",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingV2Layouts",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
