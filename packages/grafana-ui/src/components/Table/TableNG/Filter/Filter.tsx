@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { memo, useRef, useState } from 'react';
 
@@ -66,7 +66,10 @@ export const Filter = memo(({ name, rows, filter, setFilter, field, iconClassNam
         }
       }}
     >
-      <Icon name="filter" className={clsx(iconClassName, filterEnabled ? styles.filterIconEnabled : '')} />
+      <Icon
+        name="filter"
+        className={clsx(iconClassName ?? '', filterEnabled ? (styles.filterIconEnabled ?? '') : '')}
+      />
       {isPopoverVisible && ref.current && (
         <Popover
           content={

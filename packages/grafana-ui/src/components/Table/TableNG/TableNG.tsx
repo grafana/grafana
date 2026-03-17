@@ -1,6 +1,6 @@
 import 'react-data-grid/lib/styles.css';
 
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import {
   CSSProperties,
@@ -656,9 +656,9 @@ export function TableNG(props: TableNGProps) {
               key={key}
               {...props}
               className={clsx(
-                props.className,
-                cellParentStyles,
-                cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
+                props.className ?? '',
+                cellParentStyles ?? '',
+                cellSpecificStyles != null && maxRowHeight == null ? `${cellSpecificStyles ?? ''}` : ''
               )}
               style={style}
             />
@@ -710,7 +710,7 @@ export function TableNG(props: TableNGProps) {
           );
 
           if (maxRowHeight != null) {
-            result = <div className={clsx(maxHeightClassName, cellSpecificStyles)}>{result}</div>;
+            result = <div className={clsx(maxHeightClassName ?? '', cellSpecificStyles ?? '')}>{result}</div>;
           }
 
           return result;
@@ -754,10 +754,10 @@ export function TableNG(props: TableNGProps) {
               cellOptions: tooltipCellOptions,
               classes: tooltipClasses,
               className: clsx(
-                tooltipClasses.tooltipContent,
-                tooltipDefaultStyles,
-                tooltipSpecificStyles,
-                tooltipLinkStyles
+                tooltipClasses.tooltipContent ?? '',
+                tooltipDefaultStyles ?? '',
+                tooltipSpecificStyles ?? '',
+                tooltipLinkStyles ?? ''
               ),
               data: frame,
               disableSanitizeHtml,

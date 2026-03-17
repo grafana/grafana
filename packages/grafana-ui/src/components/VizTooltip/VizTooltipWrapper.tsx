@@ -11,7 +11,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export const VizTooltipWrapper = ({ children, className }: Props) => {
+export const VizTooltipWrapper = ({ children, className = '' }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>
