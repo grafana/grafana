@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -74,7 +75,13 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		`
 	err := json.Unmarshal([]byte(amConfig), &cfg)
 	require.NoError(t, err)
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+
+	err = env.Server.HTTPServer.AlertNG.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: amConfig,
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     1,
+	})
 	require.NoError(t, err)
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
