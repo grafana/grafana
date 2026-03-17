@@ -5,6 +5,7 @@ import { SceneObject } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
@@ -27,6 +28,14 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
 
   const { disableGrouping } = useNestingRestrictions(layout);
 
+  const label = useMemo(() => {
+    if (layout instanceof RowsLayoutManager) {
+      return t('dashboard-scene.add-row.add-label', 'Add row');
+    }
+
+    return t('dashboard-scene.add-row.group-label', 'Group into rows');
+  }, [layout]);
+
   const onAddRowClick = useCallback(() => {
     addNewRowTo(layout);
   }, [layout]);
@@ -34,7 +43,7 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
   return (
     <AddButton
       icon="list-ul"
-      label={t('dashboard-scene.add-row.label', 'Rows')}
+      label={label}
       onClick={onAddRowClick}
       disabled={disableGrouping}
       tooltip={

@@ -6550,7 +6550,8 @@
       "group-layouts": "Group layouts"
     },
     "add-row": {
-      "label": "Rows"
+      "add-label": "Add row",
+      "group-label": "Group into rows"
     },
     "add-tab": {
       "add-label": "Add tab",
