@@ -124,7 +124,16 @@ export function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
 function EntryDot({ entry }: { entry: TimelineEntry }) {
   const styles = useStyles2(getStyles);
 
-  if (entry.type !== 'notifications' || !entry.notifications) {
+  if (entry.type === 'state-change') {
+    const isFiringTransition =
+      entry.current === 'Alerting' ||
+      entry.current === 'Pending' ||
+      entry.current === 'NoData' ||
+      entry.current === 'Error';
+    return <div className={isFiringTransition ? styles.dotFiring : styles.dotResolved} />;
+  }
+
+  if (!entry.notifications) {
     return <div className={styles.dot} />;
   }
 
@@ -146,8 +155,7 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
     );
   }
 
-  const isFiring = entry.notifications.some((n) => n.status === 'firing');
-  return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
+  return <div className={styles.dot} />;
 }
 
 export type TimelineFilter = 'all' | 'states' | 'notifications';
