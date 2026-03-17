@@ -17,9 +17,9 @@ cards:
       height: 24
       href: ./contribute/
       description: Refer to the Contribute to Grafana guide to learn the various ways you can contribute to Grafana, and read the Grafana Labs Software Grant and Contributor License Agreement before making any contribution.
-    - title: Data Model
+    - title: Developer tools
       height: 24
-      href: ./data-model/
+      href: ./developer-tools/
       description: Learn about the Grafana Data Model and the Data Plane contract. 
     - title: Grafana APIs
       height: 24
