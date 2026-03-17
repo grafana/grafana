@@ -184,52 +184,43 @@ describe('buildTimelineEntries', () => {
 
 describe('InstanceTimeline component', () => {
   it('shows empty message when there are no records or notifications', () => {
-    render(<InstanceTimeline records={[]} notifications={[]} />);
+    render(<InstanceTimeline records={[]} notifications={[]} filter="all" />);
     expect(screen.getByText('No events found for this time range')).toBeInTheDocument();
   });
 
   it('renders state changes', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
 
-    render(<InstanceTimeline records={records} notifications={[]} />);
+    render(<InstanceTimeline records={records} notifications={[]} filter="all" />);
 
     expect(screen.getByText('Normal')).toBeInTheDocument();
     expect(screen.getByText('Alerting')).toBeInTheDocument();
   });
 
-  it('filters to show only notifications when filter is selected', async () => {
-    const user = userEvent.setup();
+  it('filters to show only notifications', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
     const notifications = [makeNotification({ timestamp: '1970-01-01T00:00:01.500Z' })];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
-
-    await user.click(screen.getByRole('radio', { name: 'Notifications' }));
+    render(<InstanceTimeline records={records} notifications={notifications} filter="notifications" />);
 
     expect(screen.queryByText('Normal')).not.toBeInTheDocument();
     expect(screen.getByText('1 notification')).toBeInTheDocument();
   });
 
-  it('filters to show only state changes when filter is selected', async () => {
-    const user = userEvent.setup();
+  it('filters to show only state changes', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
     const notifications = [makeNotification({ timestamp: '1970-01-01T00:00:01.500Z' })];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
-
-    await user.click(screen.getByRole('radio', { name: 'State changes' }));
+    render(<InstanceTimeline records={records} notifications={notifications} filter="states" />);
 
     expect(screen.getByText('Normal')).toBeInTheDocument();
     expect(screen.queryByText('1 notification')).not.toBeInTheDocument();
   });
 
-  it('shows empty filter message when no entries match the selected filter', async () => {
-    const user = userEvent.setup();
+  it('shows empty filter message when no entries match the selected filter', () => {
     const records = [makeRecord(1000, 'Normal', 'Alerting')];
 
-    render(<InstanceTimeline records={records} notifications={[]} />);
-
-    await user.click(screen.getByRole('radio', { name: 'Notifications' }));
+    render(<InstanceTimeline records={records} notifications={[]} filter="notifications" />);
 
     expect(screen.getByText('No matching events for this filter')).toBeInTheDocument();
   });
@@ -245,7 +236,7 @@ describe('InstanceTimeline component', () => {
       }),
     ];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
     expect(screen.getByText('1 notification')).toBeInTheDocument();
     expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
@@ -259,7 +250,7 @@ describe('InstanceTimeline component', () => {
       makeNotification({ timestamp: '1970-01-01T00:00:01.600Z', outcome: 'success' }),
     ];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
     expect(screen.queryByText(/failed/i)).not.toBeInTheDocument();
   });
@@ -281,7 +272,7 @@ describe('InstanceTimeline component', () => {
       }),
     ];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
     expect(screen.getByText('Webhook #2 failed')).toBeInTheDocument();
   });
@@ -298,7 +289,7 @@ describe('InstanceTimeline component', () => {
       }),
     ];
 
-    render(<InstanceTimeline records={records} notifications={notifications} />);
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
     const summaryButton = screen.getByRole('button', { name: /toggle notification details/i });
     await user.click(summaryButton);

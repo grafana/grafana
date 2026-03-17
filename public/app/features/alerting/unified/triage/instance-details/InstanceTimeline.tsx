@@ -7,7 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, LinkButton, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
@@ -87,11 +87,6 @@ export function buildTimelineGroups(records: LogRecord[], notifications: Notific
   return stateGroups;
 }
 
-interface InstanceTimelineProps {
-  records: LogRecord[];
-  notifications: NotificationEntry[];
-}
-
 interface TimelineEntry {
   timestamp: number;
   type: 'state-change' | 'notifications';
@@ -155,19 +150,16 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
   return <div className={isFiring ? styles.dotFiring : styles.dotResolved} />;
 }
 
-type TimelineFilter = 'all' | 'states' | 'notifications';
+export type TimelineFilter = 'all' | 'states' | 'notifications';
 
-export function InstanceTimeline({ records, notifications }: InstanceTimelineProps) {
+interface InstanceTimelineProps {
+  records: LogRecord[];
+  notifications: NotificationEntry[];
+  filter: TimelineFilter;
+}
+
+export function InstanceTimeline({ records, notifications, filter }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
-  const [filter, setFilter] = useState<TimelineFilter>('all');
-  const filterOptions = [
-    { label: t('alerting.instance-details.timeline-filter-all', 'All'), value: 'all' as const },
-    { label: t('alerting.instance-details.timeline-filter-states', 'State changes'), value: 'states' as const },
-    {
-      label: t('alerting.instance-details.timeline-filter-notifications', 'Notifications'),
-      value: 'notifications' as const,
-    },
-  ];
 
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
   const allEntries = useMemo(() => buildTimelineEntries(groups), [groups]);
@@ -192,8 +184,6 @@ export function InstanceTimeline({ records, notifications }: InstanceTimelinePro
 
   return (
     <Stack direction="column" gap={1}>
-      <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
-
       {entries.length === 0 ? (
         <Text color="secondary">
           {t('alerting.instance-details.timeline-filter-empty', 'No matching events for this filter')}
