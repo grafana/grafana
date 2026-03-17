@@ -186,11 +186,12 @@ function generateHeatmapBucketValues(
 function createHeatmapRowsFrame(overrides?: {
   timeValues?: number[];
   bucketNames?: string[];
-  bucketValues?: number[][];
+  bucketValues?: Array<Array<number | null>>;
 }) {
   const timeValues = overrides?.timeValues ?? [1000, 2000, 3000];
-  const bucketNames = overrides?.bucketNames ?? ['A', 'B', 'C'];
-  const bucketValues = overrides?.bucketValues ?? generateHeatmapBucketValues(bucketNames, timeValues);
+  const bucketValues = overrides?.bucketValues ?? generateHeatmapBucketValues(['A', 'B', 'C'], timeValues);
+  const bucketNames =
+    overrides?.bucketNames ?? Array.from({ length: bucketValues.length }, (_, i) => String.fromCharCode(65 + i));
 
   const fields = [
     { name: 'time', type: FieldType.time, values: timeValues },
@@ -641,6 +642,129 @@ describe('HeatmapPanel', () => {
 
         expect(screen.queryByTestId('heatmap-tooltip-plugin')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Regression tests derived from merged heatmap bug fixes
+  // ---------------------------------------------------------------------------
+
+  describe('Regression: negative values (PR #98887, #96741)', () => {
+    // Heatmap panels with all-negative bucket values previously crashed or
+    // rendered a blank canvas because boundedMinMax returned an inverted color
+    // range (minValue > maxValue).
+    it('renders without error when all bucket values are negative', () => {
+      const negativeFrame = createHeatmapRowsFrame({
+        bucketNames: ['A', 'B', 'C'],
+        bucketValues: [
+          [-30, -25, -20],
+          [-20, -15, -10],
+          [-10, -5, -1],
+        ],
+      });
+
+      renderHeatmapPanel({ series: [negativeFrame] });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    });
+
+    // A single series frame where every cell value is exactly 0 should render,
+    // not show an error view.
+    it('renders without error when all bucket values are zero', () => {
+      const zeroFrame = createHeatmapRowsFrame({
+        bucketValues: [
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
+        ],
+      });
+
+      renderHeatmapPanel({ series: [zeroFrame] });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    });
+  });
+
+  describe('Regression: all-null values (PR #89428)', () => {
+    // When every value in a bucket field is null, prepareHeatmapData must not
+    // throw and the panel must show the VizLayout container (not the error view).
+    it('renders without error when all bucket values are null', () => {
+      const nullFrame = createHeatmapRowsFrame({
+        bucketNames: ['A', 'B'],
+        bucketValues: [
+          [null, null, null],
+          [null, null, null],
+        ],
+      });
+
+      renderHeatmapPanel({ series: [nullFrame] });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+    });
+  });
+
+  describe('Regression: annotations and exemplars co-rendered (PR #95773)', () => {
+    // When both a regular annotation frame and an exemplar frame are present,
+    // the AnnotationsPlugin must render the annotation AND the exemplar tooltip
+    // must still be accessible on hover. Previously one would suppress the other.
+    it('renders both AnnotationsPlugin and ExemplarTooltip when annotations and exemplars are present', () => {
+      const annotationFrame = createAnnotationFrame({ text: ['Deploy'] });
+      const exemplarFrame = createExemplarFrame({
+        additionalFields: [{ name: 'traceID', type: FieldType.string, values: ['abc-123'], config: {} }],
+      });
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
+
+      renderHeatmapPanel({ annotations: [annotationFrame, exemplarFrame] });
+
+      // Annotation plugin rendered
+      expect(screen.getByTestId('annotations-plugin')).toBeVisible();
+      // Exemplar tooltip also rendered
+      expect(screen.getByText('Exemplar')).toBeVisible();
+      expect(screen.getByText('traceID')).toBeVisible();
+    });
+  });
+
+  describe('Regression: tooltip not shown when no cell hovered (PR #93254)', () => {
+    // When seriesIdx is 0 (no cell hovered, hovering empty space), the tooltip
+    // render prop must not show heatmap cell content — previously it could show
+    // stale data from the last hovered cell.
+    it('renders TooltipPlugin2 container but without cell content when seriesIdx is 0', () => {
+      tooltipRenderParamsForTest = { dataIdxs: [null, null, null], seriesIdx: 0 };
+
+      renderHeatmapPanel();
+
+      expect(screen.getByTestId('heatmap-tooltip-plugin')).toBeVisible();
+      // Cell-specific content (e.g. Bucket range, Count) must not be shown
+      expect(screen.queryByText(/Bucket|Count/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Regression: exemplar tooltip during re-render with changing hover state (PR #97818)', () => {
+    // Hovering off an exemplar (seriesIdx goes from 2 back to 0) must not leave
+    // a stale Exemplar tooltip visible. The component re-renders when
+    // tooltipRenderParamsForTest changes.
+    it('does not show Exemplar tooltip when seriesIdx switches from exemplar (2) to no-hover (0)', () => {
+      const exemplarFrame = createExemplarFrame({
+        additionalFields: [{ name: 'traceID', type: FieldType.string, values: ['trace-xyz'], config: {} }],
+      });
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
+
+      const { rerender } = renderHeatmapPanel({ annotations: [exemplarFrame] });
+      expect(screen.getByText('Exemplar')).toBeVisible();
+
+      // Simulate moving cursor off the exemplar marker
+      tooltipRenderParamsForTest = { dataIdxs: [null, null, null], seriesIdx: 0 };
+      const props = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [createHeatmapRowsFrame()],
+          timeRange: getDefaultTimeRange(),
+          annotations: [exemplarFrame],
+        },
+      });
+      rerender(<HeatmapPanel {...props} />);
+
+      expect(screen.queryByText('Exemplar')).not.toBeInTheDocument();
     });
   });
 });

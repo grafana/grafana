@@ -569,3 +569,93 @@ describe('valuesToFills', () => {
     });
   });
 });
+
+describe('Regression tests', () => {
+  describe('valuesToFills — negative value regressions', () => {
+    // Regression for "Heatmap: Fix negative value support" (PR #98887).
+    // When all values are negative, minValue < 0 and maxValue <= 0.
+    // The range calculation (maxValue - minValue) must still be positive so
+    // that indices are spread across the palette rather than all mapping to 0.
+    it('produces a spread of indices for an all-negative value range', () => {
+      const palette = ['c0', 'c1', 'c2', 'c3', 'c4'];
+      const values = [-100, -75, -50, -25, 0];
+      const fills = valuesToFills(values, palette, -100, 0);
+
+      // Each value should map to a distinct palette index
+      expect(new Set(fills).size).toBeGreaterThan(1);
+      expect(fills[0]).toBe(0); // -100 = min
+      expect(fills[4]).toBe(4); // 0 = max
+    });
+
+    // When minValue === maxValue and both are negative, range defaults to 1.
+    // All values should map to the first palette index (not throw or produce -1).
+    it('clamps to index 0 when minValue === maxValue and both are negative', () => {
+      const palette = ['c0', 'c1', 'c2'];
+      const fills = valuesToFills([-50, -50, -50], palette, -50, -50);
+      expect(fills).toEqual([0, 0, 0]);
+    });
+
+    // Regression for "Heatmap: Fix tooltip for negative values" (PR #96741).
+    // Values below minValue must still clamp to 0 (not produce a negative index)
+    // even when minValue itself is negative.
+    it('clamps values below a negative minValue to index 0', () => {
+      const palette = ['c0', 'c1', 'c2'];
+      const fills = valuesToFills([-200, -100, -50], palette, -100, -50);
+      expect(fills[0]).toBe(0); // -200 < minValue(-100), must clamp to 0
+    });
+  });
+
+  describe('boundedMinMax — negative value regressions', () => {
+    // Regression for "Heatmap: Fix negative value support" (PR #98887).
+    // boundedMinMax must return a valid [min, max] where min < max for
+    // all-negative datasets so the color scale is not inverted.
+    it('returns ordered [min, max] for all-negative values', () => {
+      const values = [-30, -20, -10];
+      const [min, max] = boundedMinMax(values);
+      expect(min).toBe(-30);
+      expect(max).toBe(-10);
+      expect(min).toBeLessThan(max);
+    });
+
+    // When filterValues.ge filters out all values, both min and max should be
+    // sentinel values (Infinity / -Infinity), not swapped or equal.
+    it('returns sentinel values when all values are filtered by hideGE', () => {
+      const values = [-10, -5, -1];
+      const [min, max] = boundedMinMax(values, undefined, undefined, -Infinity, -20);
+      expect(min).toBe(Infinity);
+      expect(max).toBe(-Infinity);
+    });
+
+    // Regression: a single negative value must produce min === max === that value.
+    it('handles single negative value', () => {
+      const [min, max] = boundedMinMax([-42]);
+      expect(min).toBe(-42);
+      expect(max).toBe(-42);
+    });
+  });
+
+  describe('calculateBucketExpansionFactor — Prometheus histogram regressions', () => {
+    // Regression for "Heatmap: Fix tooltip bucket range calculation when first bucket is 0" (PR #95987).
+    // Prometheus histograms commonly start with a [0, le] bucket.
+    // Division by the first yMin (0) produces Infinity, so the function must skip
+    // it and find the first non-zero yMin entry.
+    it('skips the leading zero bucket and returns the correct factor', () => {
+      // Typical Prometheus le buckets: 0.005, 0.01, 0.025, 0.05, 0.1, 0.25 …
+      const yMinValues = [0, 0.005, 0.01, 0.025, 0.05];
+      const yMaxValues = [0.005, 0.01, 0.025, 0.05, 0.1];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      // first valid bucket: 0.01 / 0.005 = 2
+      expect(factor).toBe(2);
+    });
+
+    // When every yMin in the dataset is 0 the function should not return Infinity
+    // or NaN — it must fall back to 1.
+    it('returns 1 when every yMin is 0 (prevents Infinity expansion)', () => {
+      const yMinValues = [0, 0, 0];
+      const yMaxValues = [0.1, 0.5, 1.0];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1);
+      expect(Number.isFinite(factor)).toBe(true);
+    });
+  });
+});
