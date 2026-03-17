@@ -22,6 +22,7 @@ type FolderTree interface {
 	In(folder string) bool
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
+	// Remove deletes folderID and all its descendants from the tree.
 	Remove(folderID string)
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
@@ -107,6 +108,7 @@ func (t *folderTree) Add(folder Folder, parent string) {
 	}
 }
 
+// Remove deletes folderID and all its descendants from the tree.
 func (t *folderTree) Remove(folderID string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
