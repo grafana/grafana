@@ -80,13 +80,24 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	}
 
 	// Execute ES|QL queries individually (each requires a separate HTTP call to /_query)
-	for _, q := range esqlQueries {
-		esqlResponse, err := e.executeEsqlQuery(q)
-		if err != nil {
-			response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
-			continue
+	if len(esqlQueries) > 0 {
+		cfg := backend.GrafanaConfigFromContext(e.ctx)
+		if !cfg.FeatureToggles().IsEnabled("elasticsearchESQLQuery") {
+			for _, q := range esqlQueries {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(
+					backend.DownstreamError(fmt.Errorf("ES|QL query feature is disabled. Enable the elasticsearchESQLQuery feature toggle to use this query type")),
+				)
+			}
+		} else {
+			for _, q := range esqlQueries {
+				esqlResponse, err := e.executeEsqlQuery(q)
+				if err != nil {
+					response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+					continue
+				}
+				response.Responses[q.RefID] = *esqlResponse
+			}
 		}
-		response.Responses[q.RefID] = *esqlResponse
 	}
 
 	// Execute regular queries as a batch via /_msearch
