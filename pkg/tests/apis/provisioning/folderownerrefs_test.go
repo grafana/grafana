@@ -48,7 +48,8 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 
 		_, err = helper.Folders.Resource.Patch(t.Context(), managedFolder.GetName(), types.JSONPatchType, ownerRefsPatch, metav1.PatchOptions{})
 		require.Error(t, err, "should fail to set ownerReferences on managed folder")
-		require.True(t, apierrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden status error, got: %v", err)
+		require.Contains(t, err.Error(), "cannot set owner references on folders managed by provisioning")
 	})
 
 	t.Run("should fail to set ownerReferences on provisioned folder via update", func(t *testing.T) {
@@ -66,7 +67,8 @@ func TestIntegrationFolderOwnerRefs_ProvisionedFolders(t *testing.T) {
 
 		_, err = helper.Folders.Resource.Update(t.Context(), managedFolder, metav1.UpdateOptions{})
 		require.Error(t, err, "should fail to set ownerReferences on managed folder via update")
-		require.True(t, apierrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden status error, got: %v", err)
+		require.Contains(t, err.Error(), "cannot set owner references on folders managed by provisioning")
 	})
 }
 
