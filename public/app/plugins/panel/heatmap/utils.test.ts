@@ -908,7 +908,7 @@ describe('heatmapPathsDense', () => {
     expect(typeof pathBuilder).toBe('function');
   });
 
-  describe('path builder callback (lines 593-698)', () => {
+  describe('draws and fills dense heatmap grid cells', () => {
     /**
      * Dense heatmap data: 2 columns x 3 rows.
      * xs: [1000, 1000, 1000, 2000, 2000, 2000], ys: [0, 1, 2, 0, 1, 2], counts: [5, 10, 15, 10, 20, 25]
