@@ -156,7 +156,6 @@ export const VizTooltipRow = ({
                       {SUCCESSFULLY_COPIED_TEXT}
                     </InlineToast>
                   )}
-                  {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
                     className={clsx(styles.label, isActive ? styles.activeSeries : '', CAN_COPY ? styles.copy : '')}
                     onMouseEnter={onMouseEnterLabel}
@@ -194,7 +193,6 @@ export const VizTooltipRow = ({
                 {SUCCESSFULLY_COPIED_TEXT}
               </InlineToast>
             )}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
             <div
               className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}

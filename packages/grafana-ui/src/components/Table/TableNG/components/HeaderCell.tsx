@@ -56,7 +56,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     }
   }, [filterable, displayName, filter, setFilter]);
 
-  /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
     <Stack
       ref={ref}

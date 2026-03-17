@@ -549,6 +549,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase.tsx": {
+    "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -726,9 +731,38 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/Table/TableNG/Cells/DataLinksCell.test.tsx": {
+    "unicorn/no-array-for-each": {
+      "count": 2
+    }
+  },
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
+    },
+    "unicorn/no-array-for-each": {
+      "count": 6
+    }
+  },
+  "packages/grafana-ui/src/components/Table/TableNG/TableNG.tsx": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 4
+    },
+    "react/display-name": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Table/TableNG/components/MaybeWrapWithLink.tsx": {
+    "jsx-a11y/anchor-is-valid": {
+      "count": 1
+    }
+  },
+  "packages/grafana-ui/src/components/Table/TableNG/components/TableCellActions.tsx": {
+    "jsx-a11y/click-events-have-key-events": {
+      "count": 1
+    },
+    "jsx-a11y/no-static-element-interactions": {
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/ExpandedRow.tsx": {
@@ -764,6 +798,9 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "unicorn/no-array-for-each": {
       "count": 2
     }
   },
@@ -808,6 +845,14 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/VizLegend/VizLegendTable.tsx": {
+    "jsx-a11y/click-events-have-key-events": {
+      "count": 1
+    },
+    "jsx-a11y/no-static-element-interactions": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/VizLegend/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -828,6 +873,14 @@
   },
   "packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter.tsx": {
     "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "packages/grafana-ui/src/components/VizTooltip/VizTooltipRow.tsx": {
+    "jsx-a11y/click-events-have-key-events": {
+      "count": 2
+    },
+    "jsx-a11y/no-static-element-interactions": {
       "count": 2
     }
   },
@@ -3775,6 +3828,11 @@
       "count": 1
     }
   },
+  "public/app/plugins/panel/barchart/migrations.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/barchart/quadtree.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -3783,6 +3841,11 @@
   "public/app/plugins/panel/bargauge/BarGaugePanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
+    }
+  },
+  "public/app/plugins/panel/bargauge/presets.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 2
     }
   },
   "public/app/plugins/panel/candlestick/CandlestickPanel.tsx": {
@@ -3818,8 +3881,18 @@
       "count": 2
     }
   },
+  "public/app/plugins/panel/canvas/editor/element/utils.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/canvas/editor/layer/tree.ts": {
     "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/canvas/utils.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },
@@ -3860,6 +3933,11 @@
   "public/app/plugins/panel/gauge/v1/GaugePanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
+    }
+  },
+  "public/app/plugins/panel/gauge/v2/presets.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 6
     }
   },
   "public/app/plugins/panel/geomap/GeomapPanel.tsx": {
@@ -4018,6 +4096,9 @@
     }
   },
   "public/app/plugins/panel/table/migrations.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    },
     "@typescript-eslint/no-explicit-any": {
       "count": 4
     }
@@ -4069,6 +4150,11 @@
   "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationTooltip2.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
+    }
+  },
+  "public/app/plugins/panel/timeseries/presets.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 2
     }
   },
   "public/app/plugins/panel/xychart/SeriesEditor.tsx": {

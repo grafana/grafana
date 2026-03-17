@@ -414,7 +414,7 @@ export function applyStyles(styles: React.CSSProperties, target: HTMLDivElement)
 
 export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement) {
   for (const key in styles) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     target.style[key as any] = '';
   }
 }

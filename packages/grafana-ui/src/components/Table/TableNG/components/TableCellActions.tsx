@@ -10,7 +10,6 @@ export const TableCellActions = memo(
   ({ field, value, setInspectCell, onCellFilterAdded, className, cellInspect, showFilters }: TableCellActionsProps) => (
     // stopping propagation to prevent clicks within the actions menu from triggering the cell click events
     // for things like the data links tooltip.
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div className={className} onClick={(ev) => ev.stopPropagation()}>
       {cellInspect && (
         <IconButton

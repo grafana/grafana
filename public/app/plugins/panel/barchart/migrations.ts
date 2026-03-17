@@ -58,7 +58,6 @@ const getReducer = (reducers: string[] | undefined) => {
 
   if (reducers) {
     for (const reducer of reducers) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
         if (reducer === 'current') {
           transformReducers.push(ReducerID.lastNotNull);

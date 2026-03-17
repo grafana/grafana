@@ -218,8 +218,6 @@ export function TableNG(props: TableNGProps) {
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const onCellClick: OnCellClick = useCallback(
     ({ column, row }, ev) => {
-      // we attach field to the column, but it doesn't
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const field = (column as unknown as TableColumn).field;
 
       // let the click event through for the expander column, since it has its own click handler for expanding/collapsing rows.
@@ -381,8 +379,6 @@ export function TableNG(props: TableNGProps) {
       return (row: TableRow) => (expandedRows.has(row.__index) ? TABLE.MAX_CELL_HEIGHT : 0);
     }
     if (typeof rowHeight === 'function') {
-      // this is safe because we only return a (row: TableRow) => string function when defaultNestedRowHeight is a string.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return rowHeight as unknown as (row: TableRow) => number;
     }
     if (typeof rowHeight === 'string') {
@@ -1024,7 +1020,6 @@ export function TableNG(props: TableNGProps) {
  */
 const renderRowFactory =
   (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
-  // eslint-disable-next-line react/display-name
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;

@@ -45,7 +45,6 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
         thresholds: {
           mode: ThresholdsMode.Percentage,
           steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             { value: null as unknown as number, color: 'green' },
             { value: 60, color: '#EAB839' },
             { value: 80, color: 'red' },
@@ -93,7 +92,6 @@ const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =
         thresholds: {
           mode: ThresholdsMode.Percentage,
           steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             { value: null as unknown as number, color: 'green' },
             { value: 60, color: '#EAB839' },
             { value: 80, color: 'red' },
@@ -180,7 +178,6 @@ const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
         thresholds: {
           mode: ThresholdsMode.Percentage,
           steps: [
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             { value: null as unknown as number, color: 'green' },
             { value: 60, color: '#EAB839' },
             { value: 80, color: 'red' },

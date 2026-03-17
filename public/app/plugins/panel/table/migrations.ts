@@ -366,7 +366,6 @@ interface LegacyTableFooterOptions {
 export const migrateFooterV2 = (panel: PanelModel<Options>) => {
   if (panel.options && 'footer' in panel.options) {
     // we need to cast the footer to the old type to work with it here.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const oldFooter = panel.options.footer as LegacyTableFooterOptions;
 
     if (oldFooter.show) {

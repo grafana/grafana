@@ -14,7 +14,6 @@ import { defaultOptions, Options } from './panelcfg.gen';
 const defaultPresetThresholds = {
   mode: ThresholdsMode.Percentage,
   steps: [
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     { value: null as unknown as number, color: 'green' },
     { value: 60, color: 'orange' },
     { value: 80, color: 'red' },

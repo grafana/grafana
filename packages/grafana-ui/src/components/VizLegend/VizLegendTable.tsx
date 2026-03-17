@@ -78,7 +78,6 @@ export const VizLegendTable = <T extends unknown>({
   const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
 
   if (!itemRenderer) {
-    /* eslint-disable-next-line react/display-name */
     itemRenderer = (item, index) => (
       <LegendTableItem
         key={`${item.label}-${index}`}
@@ -112,7 +111,6 @@ export const VizLegendTable = <T extends unknown>({
               }}
             >
               {columnTitle === nameSortKey && filterAction && (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
                   {filterAction}
                 </span>

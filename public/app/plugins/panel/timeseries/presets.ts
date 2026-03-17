@@ -187,7 +187,6 @@ const FC_SINGLE_THRESHOLD_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> =
     thresholds: {
       mode: ThresholdsMode.Percentage,
       steps: [
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         { value: null as unknown as number, color: 'green' },
         { value: 40, color: '#EAB839' },
         { value: 60, color: 'red' },

@@ -94,7 +94,6 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     ),
   },
   [TableCellDisplayMode.Sparkline]: {
-    // eslint-disable-next-line react/display-name
     renderer: wrapComponentInMemo(
       (props: TableCellRendererProps) => (
         <SparklineCell
