@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
@@ -97,6 +98,22 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		return fmt.Errorf("failed to recover partial rename: %w", err)
 	}
 	lockTables := r.definition.GetLockTables()
+
+	// Skip migration if the table does not exist
+	// This is common for deployments that stop creating the legacy table for new instances
+	if r.definition.SkipWhenMissing {
+		for _, table := range lockTables {
+			found, err := sess.IsTableExist(table)
+			if err != nil {
+				return fmt.Errorf("failed to check if table exists (%s): %w", table, err)
+			}
+			if !found {
+				r.log.Info("Migration is not required, the legacy SQL table does not exist", "table", table)
+				return nil
+			}
+		}
+	}
+
 	unlockTables, err := r.tableLocker.LockMigrationTables(ctx, sess, lockTables)
 	if err != nil {
 		return fmt.Errorf("failed to lock tables for migration: %w", err)

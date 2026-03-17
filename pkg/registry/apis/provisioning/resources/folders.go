@@ -108,6 +108,8 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if meta.Name != "" {
 			f.ID = meta.Name
 		}
+		// We use folder metadata here only to check if the folder exists
+		// for new folders, we'll be using the safepath.Walk below, so we don't need to set the title here for now.
 	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
 		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
 	}
@@ -120,6 +122,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
 			if meta.Name != "" {
 				f.ID = meta.Name
+			}
+			if meta.Spec.Title != "" {
+				f.Title = meta.Spec.Title
 			}
 		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
@@ -281,6 +286,11 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	leaf.ID = stableUID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
+}
+
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
 }
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {

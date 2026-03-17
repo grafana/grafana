@@ -47,6 +47,62 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 	}
 }
 
+func TestPullRequestJobRejected(t *testing.T) {
+	cfg := newTestRepo("my-repo", "default")
+	c := &jobsConnector{}
+
+	t.Run("PullRequest action returns bad request", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+		}
+
+		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "pull request jobs cannot be created via the API")
+	})
+
+	t.Run("Pull action is not rejected", func(t *testing.T) {
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		}
+
+		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		require.NoError(t, err)
+	})
+}
+
+func TestFixFolderMetadataFeatureGate(t *testing.T) {
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("rejected when flag is disabled", func(t *testing.T) {
+		c := &jobsConnector{folderMetadataEnabled: false}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+		}
+
+		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "provisioningFolderMetadata feature flag")
+	})
+
+	t.Run("allowed when flag is enabled", func(t *testing.T) {
+		c := &jobsConnector{folderMetadataEnabled: true}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+		}
+
+		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		require.NoError(t, err)
+	})
+}
+
 func TestAuthorizeResourceJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")

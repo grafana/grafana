@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -673,6 +674,7 @@ type Cfg struct {
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	NotifierSettleDelay  time.Duration
 
 	// SimulatedNetworkLatency is used for testing only
 	SimulatedNetworkLatency       time.Duration
@@ -820,6 +822,9 @@ func RedactedURL(value string) (string, error) {
 
 func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 	cfg.appliedEnvOverrides = make([]string, 0)
+
+	// First pass: apply overrides for keys that already exist in the ini file.
+	appliedKeys := make(map[string]bool)
 	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			envKey := EnvKey(section.Name(), key.Name())
@@ -828,6 +833,65 @@ func (cfg *Cfg) applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+			}
+			appliedKeys[envKey] = true
+		}
+	}
+
+	// Second pass: scan all GF_ environment variables and create new keys
+	// for any that match a known section but don't have a corresponding key yet.
+	// This allows env vars to add new config keys without requiring them to be
+	// pre-defined in defaults.ini or custom.ini.
+
+	// Build a mapping from env-style section prefix to ini section.
+	type sectionMapping struct {
+		prefix  string
+		section *ini.Section
+	}
+	sectionMappings := make([]sectionMapping, 0, len(file.Sections()))
+	for _, section := range file.Sections() {
+		prefix := EnvSectionPrefix(section.Name())
+		sectionMappings = append(sectionMappings, sectionMapping{prefix: prefix, section: section})
+	}
+
+	// Sort by prefix length descending so more specific sections match first.
+	// e.g., GF_AUTH_GOOGLE_ matches before GF_AUTH_.
+	sort.Slice(sectionMappings, func(i, j int) bool {
+		return len(sectionMappings[i].prefix) > len(sectionMappings[j].prefix)
+	})
+
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, "GF_") {
+			continue
+		}
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) != 2 || len(parts[1]) == 0 {
+			continue
+		}
+		envKey := parts[0]
+		envValue := parts[1]
+
+		if appliedKeys[envKey] {
+			continue
+		}
+
+		// Skip unified_storage env vars — they use camelCase key names
+		// and are handled by applyUnifiedStorageEnvOverrides which
+		// preserves the correct casing.
+		if strings.HasPrefix(envKey, EnvSectionPrefix("unified_storage")) {
+			continue
+		}
+
+		for _, m := range sectionMappings {
+			if strings.HasPrefix(envKey, m.prefix) {
+				keyName := strings.ToLower(envKey[len(m.prefix):])
+				if keyName == "" {
+					continue
+				}
+				m.section.Key(keyName).SetValue(envValue)
+				cfg.appliedEnvOverrides = append(cfg.appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+				appliedKeys[envKey] = true
+				break
 			}
 		}
 	}
@@ -952,12 +1016,22 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 	}
 }
 
+// envNameFromIniName converts an ini-style name (section or key) to the
+// uppercased, underscore-separated form used in GF_ environment variables.
+// Dots and dashes become underscores; everything is uppercased.
+func envNameFromIniName(name string) string {
+	s := strings.ToUpper(strings.ReplaceAll(name, ".", "_"))
+	return strings.ReplaceAll(s, "-", "_")
+}
+
+// EnvSectionPrefix returns the GF_ environment variable prefix for a given
+// ini section name, e.g. "auth.google" → "GF_AUTH_GOOGLE_".
+func EnvSectionPrefix(sectionName string) string {
+	return "GF_" + envNameFromIniName(sectionName) + "_"
+}
+
 func EnvKey(sectionName string, keyName string) string {
-	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
-	sN = strings.ReplaceAll(sN, "-", "_")
-	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
-	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
-	return envKey
+	return "GF_" + envNameFromIniName(sectionName) + "_" + envNameFromIniName(keyName)
 }
 
 func (cfg *Cfg) applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {

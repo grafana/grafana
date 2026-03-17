@@ -236,8 +236,15 @@ var (
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
 
-// authorizeJob dispatches pre-flight authorization checks based on the job action.
+// authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if spec.Action == provisioning.JobActionPullRequest {
+		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
+	}
+	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
+		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
+	}
+
 	switch spec.Action {
 	case provisioning.JobActionPush, provisioning.JobActionMigrate:
 		return c.authorizeResourceJob(ctx, repo, cfg, spec)
@@ -251,6 +258,7 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		}
 	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
 		// Read-only operations don't require pre-flight resource authorization.
+		// Pull is authorized inline in Connect.
 	}
 	return nil
 }

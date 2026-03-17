@@ -49,6 +49,35 @@ const (
 	WaitIntervalDefault = 100 * time.Millisecond
 )
 
+//nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
+const TestGithubPrivateKeyPEM = "-----BEGIN RSA PRIVATE KEY-----\n" + // trufflehog:ignore
+	`MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
+KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
+cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
+4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
+s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
+oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
+bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
+GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
+Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
+KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
+0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
+02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
+j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
+l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
+wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
+c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
+69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
+fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
+FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
+AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
+ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
+CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
+exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
++4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
+u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
+-----END RSA PRIVATE KEY-----`
+
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
@@ -733,6 +762,34 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 		}
 	}
 	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
+}
+
+// TriggerConnectionReconciliation forces the controller to re-process a connection
+// by touching its status (aging the health timestamp by 1ms).
+// Retries on conflict errors caused by optimistic locking.
+func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	const maxRetries = 5
+	for attempt := range maxRetries {
+		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get connection %s", name)
+
+		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
+		require.True(t, ok, "missing status.health on connection %s", name)
+
+		health["checked"] = time.Now().UnixMilli() - 1
+
+		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status for connection %s", name)
+	}
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo

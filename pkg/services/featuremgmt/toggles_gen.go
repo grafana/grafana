@@ -551,6 +551,10 @@ const (
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
 
+	// FlagTeamLBACApiReadFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
@@ -622,25 +626,9 @@ const (
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
-	// FlagKubernetesAuthzApis
-	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
-
-	// FlagKubernetesAuthZHandlerRedirect
-	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
-
 	// FlagKubernetesAuthZResourcePermissionsRedirect
 	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
-
-	// FlagKubernetesAuthZRolesRedirect
-	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
-
-	// FlagKubernetesAuthZRoleBindingsRedirect
-	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -666,9 +654,9 @@ const (
 	// Registers AuthZ Role Bindings /apis endpoint
 	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
 
-	// FlagKubernetesAuthnMutation
-	// Enables create, delete, and update mutations for resources owned by IAM identity
-	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+	// FlagKubernetesAuthzRolesAndRoleBindingsRedirect
+	// Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthzRolesAndRoleBindingsRedirect = "kubernetesAuthzRolesAndRoleBindingsRedirect"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
@@ -685,6 +673,10 @@ const (
 	// FlagAlertEnrichmentConditional
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
+
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
 
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
@@ -814,9 +806,9 @@ const (
 	// Enables team APIs in the app platform
 	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
 
-	// FlagKubernetesTeamsHandlerRedirect
+	// FlagKubernetesTeamsRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
-	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
 
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
@@ -830,6 +822,10 @@ const (
 	// Enables service account token APIs in the app platform
 	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
+	// FlagKubernetesSsoSettingsApi
+	// Enables SSO settings APIs in the app platform
+	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -841,6 +837,10 @@ const (
 	// FlagKubernetesTeamSync
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
+
+	// FlagKubernetesUsersRedirect
+	// Redirects the requests of the user service to the app platform APIs
+	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
@@ -865,6 +865,10 @@ const (
 	// FlagAlertingNotificationHistoryTriage
 	// Enables the notification history timeline in the triage instance details drawer
 	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
+
+	// FlagAlertingNotificationHistoryDetail
+	// Enables the notification history detail page
+	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
