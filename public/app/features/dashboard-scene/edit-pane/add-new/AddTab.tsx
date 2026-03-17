@@ -52,12 +52,6 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
   }, [layout]);
 
   return (
-    <AddButton
-      icon="layers"
-      label={label}
-      onClick={onAddTabClick}
-      disabled={disableTabs}
-      tooltip={disabledTooltip}
-    />
+    <AddButton icon="layers" label={label} onClick={onAddTabClick} disabled={disableTabs} tooltip={disabledTooltip} />
   );
 }
