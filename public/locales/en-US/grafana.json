@@ -2421,9 +2421,6 @@
       "label-use-existing-alert-instances": "Use existing alert instances",
       "reference": "Reference"
     },
-    "plugin-integrations": {
-      "tailored-apps": "Speed up your alerts creation now by using one of our tailored apps"
-    },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "This rule is managed by the {{pluginName}} plugin"
     },
@@ -2939,6 +2936,9 @@
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
       "export-group": "Export rules group",
+      "filter-sidebar": {
+        "rule-name-placeholder": "Filter by name..."
+      },
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -3088,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label": "Filter options",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Select namespace",
         "placeholder-search-input": "Search by name or enter filter query..."
       },
@@ -3121,6 +3119,9 @@
       "state": "State",
       "title-search-help": "Search help",
       "view-as": "View as"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": "Clear filters"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -4814,7 +4815,6 @@
     "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
-    "clear": "Clear",
     "collapse": "Collapse",
     "disabled": "Disabled",
     "discard": "Discard",
