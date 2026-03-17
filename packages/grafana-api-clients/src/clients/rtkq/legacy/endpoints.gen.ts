@@ -5489,7 +5489,10 @@ export type ReportSettings = {
   embeddedImageTheme?: string;
   id?: number;
   orgId?: number;
+  pdfDashboardTitleEnabled?: boolean;
+  pdfHeaderEnabled?: boolean;
   pdfTheme?: string;
+  pdfTimeRangeEnabled?: boolean;
   userId?: number;
 };
 export type HitType = string;
