@@ -4,6 +4,7 @@ import React from 'react';
 import {
   ActionType,
   DataFrame,
+  Field,
   FieldType,
   getDefaultTimeRange,
   HttpRequestMethod,
@@ -192,16 +193,18 @@ function createHeatmapRowsFrameWithLinks(linkConfig: { url: string; title: strin
  * Must have name 'exemplar' to be found in annotations by prepareHeatmapData.
  * Time and Value fields align with heatmap rows format (ordinal y indices 0, 1, 2).
  */
-function createExemplarFrame(overrides?: { timeValues?: number[]; valueLabels?: string[] }) {
+function createExemplarFrame(overrides?: { timeValues?: number[]; values?: string[]; additionalFields?: Field[] }) {
   const timeValues = overrides?.timeValues ?? [1500];
-  const valueLabels = overrides?.valueLabels ?? ['trace-123'];
+  const values = overrides?.values ?? [200];
+  const additionalFields = overrides?.additionalFields ?? [];
+
   return toDataFrame({
     name: 'exemplar',
     meta: { custom: { resultType: 'exemplar' } },
     fields: [
       { name: 'Time', type: FieldType.time, values: timeValues },
-      { name: 'Value', type: FieldType.number, values: timeValues.map((_, i) => i) },
-      { name: 'traceID', type: FieldType.string, values: valueLabels },
+      { name: 'Value', type: FieldType.number, values },
+      ...additionalFields,
     ],
   });
 }
@@ -318,14 +321,22 @@ describe('HeatmapPanel', () => {
   });
 
   describe('Exemplars', () => {
-    it('shows ExemplarTooltip when hovering over exemplar marker', () => {
-      const exemplarFrame = createExemplarFrame({ valueLabels: ['trace-abc'] });
+    it('renders ExemplarTooltip when hovering over exemplar marker', () => {
+      const exemplarFrame = createExemplarFrame({
+        additionalFields: [
+          { name: 'traceID', type: FieldType.string, values: ['trace-abc'], config: {} },
+          { name: 'cluster', type: FieldType.string, values: ['eu-dev-east-1'], config: {} },
+        ],
+      });
       tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
 
       renderHeatmapPanel({ annotations: [exemplarFrame] });
 
       expect(screen.getByText('Exemplar')).toBeVisible();
       expect(screen.getByText('trace-abc')).toBeVisible();
+      expect(screen.getByText('eu-dev-east-1')).toBeVisible();
+      expect(screen.getByText('cluster')).toBeVisible();
+      expect(screen.getByText('traceID')).toBeVisible();
     });
   });
   describe('Annotations', () => {});
