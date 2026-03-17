@@ -46,7 +46,7 @@ export function ConfigFormGithubCollapse({ register }: ConfigFormGithubCollapseP
                       <TextLink
                         variant="bodySmall"
                         external
-                        href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                        href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/"
                       >
                         Set up image rendering
                       </TextLink>
