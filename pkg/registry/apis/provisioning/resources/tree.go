@@ -22,6 +22,8 @@ type FolderTree interface {
 	In(folder string) bool
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
+	// Remove deletes folderID and all its descendants from the tree.
+	Remove(folderID string)
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
@@ -98,9 +100,41 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 func (t *folderTree) Add(folder Folder, parent string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	_, exists := t.tree[folder.ID]
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
-	t.count++
+	if !exists {
+		t.count++
+	}
+}
+
+// Remove deletes folderID and all its descendants from the tree.
+func (t *folderTree) Remove(folderID string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if _, exists := t.tree[folderID]; !exists {
+		return
+	}
+
+	// Collect the folder and all descendants.
+	toDelete := []string{folderID}
+	for i := 0; i < len(toDelete); i++ {
+		current := toDelete[i]
+		for id, parent := range t.tree {
+			if parent == current {
+				toDelete = append(toDelete, id)
+			}
+		}
+	}
+
+	// Delete collected nodes and adjust count.
+	for _, id := range toDelete {
+		if _, exists := t.tree[id]; exists {
+			delete(t.tree, id)
+			delete(t.folders, id)
+			t.count--
+		}
+	}
 }
 
 func (t *folderTree) Count() int {

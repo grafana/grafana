@@ -288,6 +288,11 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }
 
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
+}
+
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
