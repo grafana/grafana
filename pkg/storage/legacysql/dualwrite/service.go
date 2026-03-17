@@ -127,7 +127,6 @@ func ProvideService(
 			db:     kv,
 			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 		},
-		cfg:          cfg,
 		enabled:      enabled,
 		statusReader: statusReader,
 		metrics:      metrics,
@@ -136,7 +135,6 @@ func ProvideService(
 
 type service struct {
 	db           *keyvalueDB
-	cfg          *setting.Cfg
 	enabled      bool
 	statusReader unifiedmigrations.MigrationStatusReader
 	metrics      *dualWriterMetrics
@@ -149,7 +147,7 @@ func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) u
 	mode, err := m.statusReader.GetStorageMode(ctx, gr)
 	if err != nil {
 		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
-		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
+		return mode
 	}
 	return mode
 }

@@ -77,7 +77,7 @@ func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID 
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		count, err = sess.Table(migrationLogTableName).
-			Where("migration_id = ? AND success = ? AND error = ?", migrationID, true, "").
+			Where("migration_id = ? AND success = ?", migrationID, true).
 			Count()
 		return err
 	})
