@@ -46,9 +46,8 @@ let lastAnnotationsPluginProps: Record<string, unknown> | null = null;
 jest.mock('../timeseries/plugins/AnnotationPlugin', () => ({
   AnnotationsPlugin: (props: Record<string, unknown>) => {
     lastAnnotationsPluginProps = props;
-    return (props.annotations as unknown[]).length ? (
-      <div data-testid="annotations-plugin">{(props.annotations as unknown[]).length} annotation(s)</div>
-    ) : null;
+    const annotations = Array.isArray(props.annotations) ? props.annotations : [];
+    return annotations.length ? <div data-testid="annotations-plugin">{annotations.length} annotation(s)</div> : null;
   },
 }));
 
@@ -326,7 +325,7 @@ function getDefaultHeatmapPanelOptions(overrides?: Partial<Options>): Options {
     ...fullDefaultOptions,
     ...defaultOptions,
     ...overrides,
-  } as Options;
+  };
 }
 
 const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
