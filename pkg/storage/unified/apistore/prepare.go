@@ -228,10 +228,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			}
 		}
 	}
-	if !apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
-		if err := checkOwnerReferencesOnManagedResource(obj, previous); err != nil {
-			return v, err
-		}
+	if !v.hasChanged && !apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
 		v.hasChanged = true
 	}
 
