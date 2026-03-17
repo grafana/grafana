@@ -37,23 +37,8 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
 
   // Use Sidebar.Button when rendered inside the dashboard sidebar for consistent padding and icon size
   if (sidebarContext) {
-    return (
-      <Sidebar.Button
-        icon="bell"
-        title={title}
-        tooltip={tooltip}
-        onClick={onShowDrawer}
-        key="button-alerting"
-      />
-    );
+    return <Sidebar.Button icon="bell" title={title} tooltip={tooltip} onClick={onShowDrawer} key="button-alerting" />;
   }
 
-  return (
-    <ToolbarButton
-      tooltip={tooltip}
-      icon="bell"
-      onClick={onShowDrawer}
-      key="button-alerting"
-    />
-  );
+  return <ToolbarButton tooltip={tooltip} icon="bell" onClick={onShowDrawer} key="button-alerting" />;
 }
