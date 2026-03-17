@@ -36,10 +36,11 @@ const setup = () => {
 };
 
 const triggerEmptyState = async () => {
+  const user = userEvent.setup();
   // Type a nonsense query to trigger the empty state naturally, rather than relying on
   // kbar's useThrottledValue timing with an empty search (which causes flakiness)
   const input = screen.getByPlaceholderText('Search or jump to...');
-  await userEvent.type(input, 'zzznomatch');
+  await user.type(input, 'zzznomatch');
 };
 
 describe('CommandPalette', () => {
