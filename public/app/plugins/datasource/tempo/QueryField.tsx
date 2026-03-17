@@ -15,6 +15,8 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
+
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { TempoQueryType } from './dataquery.gen';
@@ -156,26 +158,35 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
           <InlineFieldRow>
             <InlineField label="Query type" grow={true}>
               <Stack gap={1} alignItems="center" justifyContent="space-between">
-                <RadioButtonGroup<TempoQueryType>
-                  options={queryTypeOptions}
-                  value={query.queryType}
-                  onChange={(v) => {
-                    reportInteraction('grafana_traces_query_type_changed', {
-                      datasourceType: 'tempo',
-                      app: app ?? '',
-                      grafana_version: config.buildInfo.version,
-                      newQueryType: v,
-                      previousQueryType: query.queryType ?? '',
-                    });
+                <Stack gap={1} alignItems="center">
+                  <RadioButtonGroup<TempoQueryType>
+                    options={queryTypeOptions}
+                    value={query.queryType}
+                    onChange={(v) => {
+                      reportInteraction('grafana_traces_query_type_changed', {
+                        datasourceType: 'tempo',
+                        app: app ?? '',
+                        grafana_version: config.buildInfo.version,
+                        newQueryType: v,
+                        previousQueryType: query.queryType ?? '',
+                      });
 
-                    this.onClearResults();
-                    onChange({
-                      ...query,
-                      queryType: v,
-                    });
-                  }}
-                  size="md"
-                />
+                      this.onClearResults();
+                      onChange({
+                        ...query,
+                        queryType: v,
+                      });
+                    }}
+                    size="md"
+                  />
+                  <QueryWithAssistantButton
+                    currentQuery={query}
+                    queries={[query]}
+                    dataSourceInstanceSettings={datasource.instanceSettings}
+                    datasourceApi={null}
+                    app={app}
+                  />
+                </Stack>
                 <Button
                   variant="secondary"
                   size="sm"
