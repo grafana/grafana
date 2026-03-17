@@ -24,7 +24,7 @@ Refer to the [Grafana developer portal](https://grafana.com/developers) to acces
 
 ## Plugin development
 
-You can create your own Grafana plugin to enhance Grafana's foundational features. Grafana plugin development allows you to create many different types of user experiences, such as:
+You can develop your own Grafana plugin to enhance the features of Grafana, such as:
 
 - Panel plugins to visualize data
 - Data source plugins to connect to a new database or other source of data
@@ -32,9 +32,9 @@ You can create your own Grafana plugin to enhance Grafana's foundational feature
 
 Refer to [Grafana plugin tools](https://grafana.com/developers/plugin-tools) for all the information.
 
-## Data structure in Grafana 
+## Data structure in Grafana
 
-Grafana supports a variety of different data sources, each with its own data model. To manage this, Grafana consolidates the query results from each of these data sources into one unified data structure called a **data frame**. Additionally, the **data plane** adds a property layer to the data frame with information about the data frame type and what the data frame holds. 
+Grafana supports a variety of different data sources, each with its own data model. To manage this, Grafana consolidates the query results from each of these data sources into one unified data structure called a **data frame**. Additionally, the **data plane** adds a property layer to the data frame with information about the data frame type and what the data frame holds.
 
 Refer to the [Grafana data structure documentation](https://grafana.com/developers/dataplane/) to learn more.
 
@@ -46,9 +46,9 @@ As of October 2025, the following data sources send data plane data in at least 
 - Loki
 - Azure Monitor
 - Azure Data Explorer
-- Bigquery
-- Clickhouse
-- Cloudlflare
+- BigQuery
+- ClickHouse
+- Cloudflare
 - Databricks
 - Influx
 - MySQL
