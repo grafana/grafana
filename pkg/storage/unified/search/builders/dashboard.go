@@ -3,9 +3,11 @@ package builders
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -242,8 +244,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		return nil, fmt.Errorf("invalid namespace")
 	}
 
-	tmp := &unstructured.Unstructured{}
-	err := tmp.UnmarshalJSON(value)
+	// Do not unmarshal spec, ReadDashboardWithLogContext already does that for the fields we need
+	tmp, err := unmarshalMetadataOnly(value)
 	if err != nil {
 		return nil, err
 	}
@@ -279,6 +281,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc := resource.NewIndexableDocument(key, rv, obj)
 	// TODO: add selectable fields
 	doc.Title = summary.Title
+	doc.TitleNgram = summary.Title
+	doc.TitlePhrase = strings.ToLower(summary.Title)
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
 
@@ -363,6 +367,27 @@ func DashboardFields() []string {
 	}
 
 	return append(baseFields, UsageInsightsFields()...)
+}
+
+// unmarshalMetadataOnly parses a K8s resource JSON and returns an
+// unstructured.Unstructured with only metadata populated (spec is omitted).
+// This avoids the cost of recursively parsing the (potentially huge) dashboard specs.
+func unmarshalMetadataOnly(data []byte) (*unstructured.Unstructured, error) {
+	var partial struct {
+		APIVersion string                 `json:"apiVersion"`
+		Kind       string                 `json:"kind"`
+		Metadata   map[string]interface{} `json:"metadata"`
+	}
+	if err := json.Unmarshal(data, &partial); err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": partial.APIVersion,
+			"kind":       partial.Kind,
+			"metadata":   partial.Metadata,
+		},
+	}, nil
 }
 
 func UsageInsightsFields() []string {
