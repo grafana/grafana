@@ -50,6 +50,23 @@ function createMinimalUPlot(
 }
 
 /**
+ * Extracts the x-scale range function and scale key from a prepConfig builder.
+ * @throws Error if the x scale or its range function is missing
+ */
+function getXScaleRangeInfo(builder: UPlotConfigBuilder): {
+  range: uPlot.Range.Function;
+  scaleKey: string;
+} {
+  const xScale = builder.scales.find((s) => s.props.scaleKey === 'x');
+  const range = xScale?.props.range;
+  const scaleKey = xScale?.props.scaleKey ?? '';
+  if (typeof range !== 'function' || !scaleKey) {
+    throw new Error('Expected x scale with range function');
+  }
+  return { range, scaleKey };
+}
+
+/**
  * Extracts the y-scale range function and scale key from a prepConfig builder.
  * @throws Error if the y scale or its range function is missing
  */
@@ -197,6 +214,101 @@ describe('prepConfig', () => {
     });
 
     expect(builder).toBeDefined();
+  });
+
+  describe('x-scale range callback', () => {
+    it('returns time range when x-axis is time (isTime=true)', () => {
+      const dataRef = { current: createMinimalHeatmapData() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const { range, scaleKey } = getXScaleRangeInfo(builder);
+      const u = createMinimalUPlot(scaleKey);
+      const result = range(u, 0, 1, scaleKey);
+      expect(result[0]).toBe(1000);
+      expect(result[1]).toBe(3000);
+    });
+
+    /**
+     * Creates minimal HeatmapData with numeric x-axis (isTime=false) for x-scale range tests.
+     */
+    function createNonTimeHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+      const heatmap = createDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'y', type: FieldType.number, values: [0, 1, 2] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15] },
+        ],
+      });
+      return {
+        heatmap,
+        xBucketSize: 2,
+        ...overrides,
+      };
+    }
+
+    it('returns [dataMin - xBucketSize, dataMax] for le xLayout', () => {
+      const dataRef = {
+        current: createNonTimeHeatmapData({ xLayout: HeatmapCellLayout.le, xBucketSize: 4 }),
+      };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const { range, scaleKey } = getXScaleRangeInfo(builder);
+      const u = createMinimalUPlot(scaleKey);
+      const result = range(u, 10, 20, scaleKey);
+      expect(result[0]).toBe(6);
+      expect(result[1]).toBe(20);
+    });
+
+    it('returns [dataMin, dataMax + xBucketSize] for ge xLayout', () => {
+      const dataRef = {
+        current: createNonTimeHeatmapData({ xLayout: HeatmapCellLayout.ge, xBucketSize: 4 }),
+      };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const { range, scaleKey } = getXScaleRangeInfo(builder);
+      const u = createMinimalUPlot(scaleKey);
+      const result = range(u, 10, 20, scaleKey);
+      expect(result[0]).toBe(10);
+      expect(result[1]).toBe(24);
+    });
+
+    it('returns [dataMin - offset, dataMax + offset] for unknown xLayout (offset = xBucketSize/2)', () => {
+      const dataRef = {
+        current: createNonTimeHeatmapData({ xLayout: HeatmapCellLayout.unknown, xBucketSize: 4 }),
+      };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'red',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+      const { range, scaleKey } = getXScaleRangeInfo(builder);
+      const u = createMinimalUPlot(scaleKey);
+      const result = range(u, 10, 20, scaleKey);
+      expect(result[0]).toBe(8);
+      expect(result[1]).toBe(22);
+    });
   });
 
   describe('y-scale range callback', () => {
@@ -472,7 +584,7 @@ describe('prepConfig', () => {
   describe('ordinal y-axis splits and values', () => {
     /**
      * Creates HeatmapData with ordinal y display (meta.custom.yOrdinalDisplay).
-     * Used to exercise the splits and values callbacks for lines 399-438.
+     * Used to exercise the splits and values callbacks for ordinalY (index) on the y-axis
      */
     function createOrdinalHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
       const heatmap = createDataFrame({
@@ -794,6 +906,333 @@ describe('heatmapPathsDense', () => {
       ySizeDivisor: 2,
     });
     expect(typeof pathBuilder).toBe('function');
+  });
+
+  describe('path builder callback (lines 593-698)', () => {
+    /**
+     * Dense heatmap data: 2 columns x 3 rows.
+     * xs: [1000, 1000, 1000, 2000, 2000, 2000], ys: [0, 1, 2, 0, 1, 2], counts: [5, 10, 15, 10, 20, 25]
+     */
+    const denseHeatmapData: [number[], number[], number[]] = [
+      [1000, 1000, 1000, 2000, 2000, 2000],
+      [0, 1, 2, 0, 1, 2],
+      [5, 10, 15, 10, 20, 25],
+    ];
+
+    /**
+     * Invokes heatmapPathsDense path builder by mocking uPlot.orient to capture and run the draw callback.
+     * Returns the rect and each mocks for assertions.
+     */
+    function invokeDensePathBuilder(
+      opts: Parameters<typeof heatmapPathsDense>[0],
+      overrides?: {
+        scaleXDistr?: number;
+        scaleYDistr?: number;
+        scaleYLog?: number;
+      }
+    ): { rect: jest.Mock; each: jest.Mock } {
+      const rect = jest.fn();
+      const each = jest.fn();
+      const pathBuilder = heatmapPathsDense({ ...opts, each });
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
+        const scaleX = {
+          distr: overrides?.scaleXDistr ?? 1,
+          log: 2,
+          min: 0,
+          max: 2000,
+        };
+        const scaleY = {
+          distr: overrides?.scaleYDistr ?? 1,
+          log: overrides?.scaleYLog ?? 2,
+          min: 0,
+          max: 2,
+        };
+        const valToPos = (v: number) => (v / 100) * 100;
+        drawCallback(
+          {},
+          denseHeatmapData[0],
+          denseHeatmapData[1],
+          scaleX,
+          scaleY,
+          valToPos,
+          valToPos,
+          0,
+          0,
+          100,
+          100,
+          jest.fn(),
+          jest.fn(),
+          rect,
+          jest.fn()
+        );
+      });
+      const mockU = {
+        data: { 1: denseHeatmapData },
+        ctx: {
+          save: jest.fn(),
+          restore: jest.fn(),
+          rect: jest.fn(),
+          clip: jest.fn(),
+          fillStyle: '',
+          fill: jest.fn(),
+        },
+        bbox: { left: 0, top: 0, width: 100, height: 100 },
+      } as unknown as uPlot;
+      pathBuilder(mockU, 1);
+      orientSpy.mockRestore();
+      return { rect, each };
+    }
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('draws rect for each visible cell and calls each callback', () => {
+      const { rect, each } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 0, 1, 2],
+            index: ['#a', '#b', '#c'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(6);
+      expect(each).toHaveBeenCalledTimes(6);
+    });
+
+    it('filters cells by hideLE and hideGE', () => {
+      const { rect, each } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        hideLE: 8,
+        hideGE: 22,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 0, 1, 2],
+            index: ['#a', '#b', '#c'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+      expect(each).toHaveBeenCalledTimes(4);
+    });
+
+    it('uses fillPalette from disp.fill.index when provided', () => {
+      const palette = ['#ff0000', '#00ff00', '#0000ff'];
+      const { rect } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 0, 1, 2],
+            index: palette,
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('uses [...new Set(fills)] when disp.fill.index is not provided', () => {
+      const { rect } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 0, 1, 0, 1],
+            // @ts-expect-error testing fallback when index is undefined
+            index: undefined,
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('uses log scale branch for x when scaleX.distr === 3', () => {
+      const { rect } = invokeDensePathBuilder(
+        {
+          ...minimalPathbuilderOpts,
+          disp: {
+            fill: {
+              values: () => [0, 1, 2, 0, 1, 2],
+              index: ['#a', '#b', '#c'],
+            },
+          },
+        },
+        { scaleXDistr: 3 }
+      );
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('uses log scale branch for y when scaleY.distr === 3', () => {
+      const { rect } = invokeDensePathBuilder(
+        {
+          ...minimalPathbuilderOpts,
+          disp: {
+            fill: {
+              values: () => [0, 1, 2, 0, 1, 2],
+              index: ['#a', '#b', '#c'],
+            },
+          },
+        },
+        { scaleYDistr: 3 }
+      );
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('uses ySizeDivisor when scaleY is log and ySizeDivisor !== 1', () => {
+      const { rect } = invokeDensePathBuilder(
+        {
+          ...minimalPathbuilderOpts,
+          ySizeDivisor: 2,
+          disp: {
+            fill: {
+              values: () => [0, 1, 2, 0, 1, 2],
+              index: ['#a', '#b', '#c'],
+            },
+          },
+        },
+        { scaleYDistr: 3 }
+      );
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('skips cells with null count', () => {
+      const dataWithNull: [number[], number[], Array<number | null>] = [
+        [1000, 1000, 2000, 2000],
+        [0, 1, 0, 1],
+        [5, null, 10, 20],
+      ];
+      const rect = jest.fn();
+      const each = jest.fn();
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
+        const scaleX = { distr: 1, min: 0, max: 2000 };
+        const scaleY = { distr: 1, min: 0, max: 1 };
+        const valToPos = (v: number) => v;
+        drawCallback(
+          {},
+          dataWithNull[0],
+          dataWithNull[1],
+          scaleX,
+          scaleY,
+          valToPos,
+          valToPos,
+          0,
+          0,
+          100,
+          100,
+          jest.fn(),
+          jest.fn(),
+          rect,
+          jest.fn()
+        );
+      });
+      const pathBuilder = heatmapPathsDense({
+        ...minimalPathbuilderOpts,
+        each,
+        disp: {
+          fill: {
+            values: () => [0, 0, 1, 2],
+            index: ['#a', '#b', '#c'],
+          },
+        },
+      });
+      const mockU = {
+        data: { 1: dataWithNull },
+        ctx: {
+          save: jest.fn(),
+          restore: jest.fn(),
+          rect: jest.fn(),
+          clip: jest.fn(),
+          fillStyle: '',
+          fill: jest.fn(),
+        },
+        bbox: { left: 0, top: 0, width: 100, height: 100 },
+      } as unknown as uPlot;
+      pathBuilder(mockU, 1);
+      orientSpy.mockRestore();
+      expect(rect).toHaveBeenCalledTimes(3);
+      expect(each).toHaveBeenCalledTimes(3);
+    });
+
+    it('applies xAlign -1 and yAlign 0 offsets correctly', () => {
+      const { rect } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        xAlign: -1,
+        yAlign: 0,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 0, 1, 2],
+            index: ['#a', '#b', '#c'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(6);
+      expect(rect).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number)
+      );
+    });
+
+    it('uses Math.round for tile size when gap >= CRISP_EDGES_GAP_MIN (4)', () => {
+      const { rect } = invokeDensePathBuilder({
+        ...minimalPathbuilderOpts,
+        gap: 5,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 0, 1, 2],
+            index: ['#a', '#b', '#c'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(6);
+    });
+
+    it('calls ctx.save, rect, clip, fill, restore for each fill path', () => {
+      const ctx = {
+        save: jest.fn(),
+        restore: jest.fn(),
+        rect: jest.fn(),
+        clip: jest.fn(),
+        fillStyle: '',
+        fill: jest.fn(),
+      };
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
+        const scaleX = { distr: 1, min: 0, max: 2000 };
+        const scaleY = { distr: 1, min: 0, max: 2 };
+        const valToPos = (v: number) => v;
+        drawCallback(
+          {},
+          denseHeatmapData[0],
+          denseHeatmapData[1],
+          scaleX,
+          scaleY,
+          valToPos,
+          valToPos,
+          0,
+          0,
+          100,
+          100,
+          jest.fn(),
+          jest.fn(),
+          jest.fn(),
+          jest.fn()
+        );
+      });
+      const pathBuilder = heatmapPathsDense(minimalPathbuilderOpts);
+      const mockU = {
+        data: { 1: denseHeatmapData },
+        ctx,
+        bbox: { left: 0, top: 0, width: 100, height: 100 },
+      } as unknown as uPlot;
+      pathBuilder(mockU, 1);
+      orientSpy.mockRestore();
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
+      expect(ctx.clip).toHaveBeenCalled();
+      expect(ctx.fill).toHaveBeenCalled();
+      expect(ctx.restore).toHaveBeenCalled();
+    });
   });
 });
 
