@@ -137,7 +137,7 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 		errhttp.Write(ctx, err, w)
 		return
 	}
-	permissions = filterPermissionsByGet(ctx, namespace, permissions, h.backend, h.authorizer)
+	permissions = filterPermissionsByGet(ctx, namespace, userUID, permissions, h.backend, h.authorizer)
 	result := &iamv0.PermissionsSearchResult{
 		Permissions: permissions,
 	}
@@ -146,9 +146,11 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 }
 
 // filterPermissionsByGet returns only permissions for which the caller has get_permissions on the target resource.
+// userUID is the subject being searched; it is used to check scoped users.permissions:read access.
 func filterPermissionsByGet(
 	ctx context.Context,
 	namespace string,
+	userUID string,
 	perms []iamv0.PermissionSpec,
 	backend *ResourcePermSqlBackend,
 	authorizer *iamauthorizer.ResourcePermissionsAuthorizer,
@@ -159,6 +161,12 @@ func filterPermissionsByGet(
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return nil
+	}
+	// caller with users.permissions:read on this specific user (or wildcard) may skip per-resource checks
+	if allowAll, err := authorizer.HasUsersPermissionsRead(ctx, authInfo, namespace, userUID); err != nil {
+		return nil
+	} else if allowAll {
+		return perms
 	}
 	filtered, err := iamauthorizer.CanViewTargets(authorizer, ctx, authInfo, perms, func(i int) (string, string, string, string, bool) {
 		grn, err := backend.ParseScope(perms[i].Scope)

@@ -52,9 +52,9 @@ func isAccessPolicy(authInfo types.AuthInfo) bool {
 	return types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 }
 
-// hasUsersPermissionsRead returns true if the caller has users.permissions:read (e.g. scope users:*).
-// When true, the caller may see all resource permissions without per-resource get_permissions checks.
-func (r *ResourcePermissionsAuthorizer) hasUsersPermissionsRead(ctx context.Context, authInfo types.AuthInfo, namespace string) (bool, error) {
+// HasUsersPermissionsRead returns true if the caller has users.permissions:read for the given user name.
+// When true, the caller may see all resource permissions that a given user has without per-resource get_permissions checks.
+func (r *ResourcePermissionsAuthorizer) HasUsersPermissionsRead(ctx context.Context, authInfo types.AuthInfo, namespace, name string) (bool, error) {
 	if authInfo == nil {
 		return false, storewrapper.ErrUnauthenticated
 	}
@@ -63,7 +63,7 @@ func (r *ResourcePermissionsAuthorizer) hasUsersPermissionsRead(ctx context.Cont
 		Group:     iamv0.GROUP,
 		Resource:  "users",
 		Verb:      utils.VerbGetPermissions,
-		Name:      "*",
+		Name:      name,
 	}
 	res, err := r.accessClient.Check(ctx, authInfo, checkReq, "")
 	if err != nil {
@@ -74,7 +74,7 @@ func (r *ResourcePermissionsAuthorizer) hasUsersPermissionsRead(ctx context.Cont
 
 // CanViewTargets returns only items for which the caller has get_permissions on the target resource.
 // getTarget(i) supplies the resource identity for item i; when ok is false that item is excluded.
-// If the caller has users.permissions:read, returns all items without per-resource checks.
+// Callers should check HasUsersPermissionsRead before calling this and short-circuit if true.
 func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context, authInfo types.AuthInfo, items []T, getTarget func(i int) (namespace, apiGroup, resource, name string, ok bool)) ([]T, error) {
 	if authInfo == nil {
 		return nil, storewrapper.ErrUnauthenticated
@@ -82,14 +82,6 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	n := len(items)
 	if n == 0 {
 		return nil, nil
-	}
-	// if caller has users.permissions:read, allow all items
-	if ns, _, _, _, ok := getTarget(0); ok {
-		if allowAll, err := r.hasUsersPermissionsRead(ctx, authInfo, ns); err != nil {
-			return nil, err
-		} else if allowAll {
-			return items, nil
-		}
 	}
 	accessPolicy := isAccessPolicy(authInfo)
 
@@ -162,13 +154,6 @@ func (r *ResourcePermissionsAuthorizer) AfterGet(ctx context.Context, obj runtim
 	}
 	switch o := obj.(type) {
 	case *iamv0.ResourcePermission:
-		// if the caller has users.permissions:read, allow access without checking the specific resource
-		if ok, err := r.hasUsersPermissionsRead(ctx, authInfo, o.Namespace); err != nil {
-			return err
-		} else if ok {
-			return nil
-		}
-
 		target := o.Spec.Resource
 		targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
