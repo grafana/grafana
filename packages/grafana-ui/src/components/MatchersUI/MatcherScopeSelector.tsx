@@ -12,61 +12,53 @@ export interface MatcherScopeSelectorProps extends Omit<RadioButtonGroupProps<Ma
   allowedScopes?: MatcherScope[];
 }
 
+export function buildScopeOptions(
+  providedUniqScopes: Set<MatcherScope>,
+  currentScope?: MatcherScope,
+  allowedScopes: MatcherScope[] = Array.from(providedUniqScopes)
+): Array<SelectableValue<MatcherScope>> {
+  const uniqScopes = new Set(providedUniqScopes);
+  uniqScopes.delete('series');
+  if (allowedScopes) {
+    uniqScopes.forEach((scope) => {
+      if (!allowedScopes.includes(scope)) {
+        uniqScopes.delete(scope);
+      }
+    });
+  }
+  const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
+  if (scopeNotFound) {
+    uniqScopes.add(currentScope);
+  }
+
+  const arr: Array<SelectableValue<MatcherScope>> = [
+    {
+      label: getGroupLabelForScope('series'),
+      description: getGroupDescriptionForScope('series'),
+      value: 'series',
+    },
+  ];
+
+  for (const scope of uniqScopes) {
+    arr.push({
+      label: getGroupLabelForScope(scope),
+      description: getGroupDescriptionForScope(scope),
+      value: scope,
+    });
+  }
+
+  return arr;
+}
+
 function useScopesOptions(
   providedUniqScopes: Set<MatcherScope>,
   currentScope?: MatcherScope,
-  allowedScopes?: MatcherScope[]
+  allowedScopes: MatcherScope[] = Array.from(providedUniqScopes)
 ): Array<SelectableValue<MatcherScope>> {
-  // process the detected scopes and remove disallowed ones
-  const uniqScopes = useMemo(() => {
-    const result = new Set(providedUniqScopes);
-    // Remove the series scope from the set, so we can gaurantee it's the first option, and also
-    // because it's the default scope, so if it's the only one detected, we should not show the scope selector.
-    result.delete('series');
-    if (allowedScopes) {
-      result.forEach((scope) => {
-        if (!allowedScopes.includes(scope)) {
-          result.delete(scope);
-        }
-      });
-    }
-    return result;
-  }, [providedUniqScopes, allowedScopes]);
-
-  // Check if the current scope is not found in the uniqScopes set
-  const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
-
-  return useMemo(() => {
-    if (uniqScopes.size === 0 && !scopeNotFound) {
-      return [];
-    }
-
-    const arr: Array<SelectableValue<MatcherScope>> = [
-      {
-        label: getGroupLabelForScope('series'),
-        description: getGroupDescriptionForScope('series'),
-        value: 'series',
-      },
-    ];
-
-    for (const scope of uniqScopes) {
-      arr.push({
-        label: getGroupLabelForScope(scope),
-        description: getGroupDescriptionForScope(scope),
-        value: scope,
-      });
-    }
-
-    if (scopeNotFound) {
-      arr.push({
-        label: getGroupLabelForScope(currentScope),
-        description: getGroupDescriptionForScope(currentScope),
-        value: currentScope,
-      });
-    }
-
-    return arr;
-  }, [uniqScopes, currentScope, scopeNotFound]);
+  return useMemo(
+    () => buildScopeOptions(providedUniqScopes, currentScope, allowedScopes),
+    [providedUniqScopes, currentScope, allowedScopes]
+  );
 }
 
 export function MatcherScopeSelector({ value, scopes, allowedScopes, ...rest }: MatcherScopeSelectorProps) {

@@ -17,7 +17,14 @@ import {
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { MatcherScope } from '@grafana/schema';
-import { fieldMatchersUI, getUniqueMatcherScopes, MatcherScopeSelector, useStyles2, ValuePicker } from '@grafana/ui';
+import {
+  fieldMatchersUI,
+  getUniqueMatcherScopes,
+  MatcherScopeSelector,
+  buildScopeOptions,
+  useStyles2,
+  ValuePicker,
+} from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
@@ -133,7 +140,8 @@ export function getFieldOverrideCategories(
     };
 
     const hasInvalidScope = override.matcher.scope && !uniqueMatcherScopes.has(override.matcher.scope);
-    const shouldShowScopeSelector = uniqueMatcherScopes.size > 1 || hasInvalidScope;
+    const scopeOptions = buildScopeOptions(uniqueMatcherScopes, override.matcher.scope, ALLOWED_SCOPES);
+    const shouldShowScopeSelector = scopeOptions.length > 1 || hasInvalidScope;
 
     const htmlId = `${overrideId}-matcher`;
     if (shouldShowScopeSelector) {
@@ -142,6 +150,7 @@ export function getFieldOverrideCategories(
         new OptionsPaneItemDescriptor({
           id: scopeId,
           title: t('grafana-ui.field-name-by-regex-matcher.scope', 'Target fields'),
+          // @todo tooltips should be possible to add to an OptionsPanelItemDescriptor
           // tooltip: t('grafana-ui.field-name-by-regex-matcher.scope-tooltip', 'To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default "dataframe" scope is applied if no scope is selected.'),
           render: function renderMatcherScopeEditor() {
             return (

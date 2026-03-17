@@ -107,6 +107,8 @@ export function getGroupDescriptionForScope(scope: MatcherScope): string | undef
       return t('grafana-ui.matchers.groups.annotation.description', 'Annotations series for this panel.');
     case 'series':
       return t('grafana-ui.matchers.groups.series.description', 'Fields from the dataframes in this panel.');
+    case 'exemplar':
+      return t('grafana-ui.matchers.groups.exemplar.description', 'Trace exemplars for this panel.');
     default:
       return undefined;
   }
