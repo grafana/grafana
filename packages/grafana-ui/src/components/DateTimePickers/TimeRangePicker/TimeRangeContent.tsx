@@ -22,7 +22,6 @@ import { Field } from '../../Forms/Field';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
-import { TextLink } from '../../Link/TextLink';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
@@ -81,9 +80,11 @@ function fieldErrorMessage(type: 'from' | 'to' | 'range'): React.ReactNode {
   return (
     <>
       {desc}{' '}
-      <TextLink href={DOCS_LINK} external>
+      {/* Plain <a> inherits font-size from FieldValidationMessage (12px).
+          TextLink would apply theme.typography.body (14px) and look oversized. */}
+      <a href={DOCS_LINK} target="_blank" rel="noreferrer">
         {t('time-picker.range-content.error-see-docs', 'See time range syntax')}
-      </TextLink>
+      </a>
     </>
   );
 }
