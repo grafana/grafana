@@ -56,6 +56,3 @@ As of October 2025, the following data sources send data plane data in at least 
 - Victoria metrics
 
 To see examples of data planes, refer to [data plane example data in GitHub](https://github.com/grafana/dataplane/tree/main/examples/data).
-
-
-
