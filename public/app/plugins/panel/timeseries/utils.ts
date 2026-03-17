@@ -287,7 +287,8 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
 
         if (mainFrame && mainFrame.fields.length === frame.fields.length) {
           // Match series indices with main frame
-          for (const [fieldIdx, field] of frame.fields.entries()) {
+          for (let fieldIdx = 0; fieldIdx < frame.fields.length; fieldIdx++) {
+            const field = frame.fields[fieldIdx];
             if (shouldProcessField(field, fieldIdx)) {
               const mainField = mainFrame.fields[fieldIdx];
               updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
@@ -295,7 +296,8 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
           }
         } else {
           // Fallback
-          for (const [fieldIdx, field] of frame.fields.entries()) {
+          for (let fieldIdx = 0; fieldIdx < frame.fields.length; fieldIdx++) {
+            const field = frame.fields[fieldIdx];
             if (shouldProcessField(field, fieldIdx)) {
               updateFieldDisplay(field, seriesIndex++);
             }
@@ -303,7 +305,8 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
         }
       } else {
         // Fallback when no baseRefId
-        for (const [fieldIdx, field] of frame.fields.entries()) {
+        for (let fieldIdx = 0; fieldIdx < frame.fields.length; fieldIdx++) {
+          const field = frame.fields[fieldIdx];
           if (shouldProcessField(field, fieldIdx)) {
             updateFieldDisplay(field, seriesIndex++);
           }
@@ -311,7 +314,8 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
       }
     } else {
       // Main frames
-      for (const [fieldIdx, field] of frame.fields.entries()) {
+      for (let fieldIdx = 0; fieldIdx < frame.fields.length; fieldIdx++) {
+        const field = frame.fields[fieldIdx];
         if (shouldProcessField(field, fieldIdx)) {
           updateFieldDisplay(field, seriesIndex++);
         }

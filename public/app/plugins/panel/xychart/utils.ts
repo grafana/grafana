@@ -78,7 +78,8 @@ export function prepSeries(
     let frameMatcher = seriesCfg.frame ? getFrameMatcher2(seriesCfg.frame.matcher) : null;
 
     // loop over all frames and fields, adding a new series for each y dim
-    for (const [frameIdx, frame] of frames.entries()) {
+    for (let frameIdx = 0; frameIdx < frames.length; frameIdx++) {
+      const frame = frames[frameIdx];
       // must match frame in manual mode
       if (frameMatcher != null && !frameMatcher(frame, frameIdx)) {
         continue;
@@ -240,7 +241,8 @@ function autoNameSeries(series: XYSeries[]) {
   const { prefix, suffix } = findCommonPrefixSuffixLengths(names);
 
   if (prefix < Infinity || suffix < Infinity) {
-    for (const [i, s] of series.entries()) {
+    for (let i = 0; i < series.length; i++) {
+      const s = series[i];
       s.name.value = names[i].slice(prefix, names[i].length - suffix).join(' ');
     }
   }

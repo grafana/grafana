@@ -95,7 +95,8 @@ export const buildColumnsWithMeta = (
     }
   }
 
-  for (const [idx, fieldName] of displayedFields.entries()) {
+  for (let idx = 0; idx < displayedFields.length; idx++) {
+    const fieldName = displayedFields[idx];
     if (pendingLabelState[fieldName]) {
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;

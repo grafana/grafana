@@ -287,7 +287,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     qt.clear();
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
-    for (const [i, s] of u.series.entries()) {
+    for (let i = 0; i < u.series.length; i++) {
+      const s = u.series[i];
       if (i > 0) {
         // @ts-ignore
         s._paths = null;
@@ -458,7 +459,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     const { size: sizeRange, color: colorRange } = getGlobalRanges(xySeries);
 
-    for (const [i, s] of xySeries.entries()) {
+    for (let i = 0; i < xySeries.length; i++) {
+      const s = xySeries[i];
       dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
     }
 
@@ -524,7 +526,9 @@ const getGlobalRanges = (xySeries: XYSeries[]) => {
   };
 
   for (const series of xySeries) {
-    for (const [fi, facet] of [series.size, series.color].entries()) {
+    const facets = [series.size, series.color];
+    for (let fi = 0; fi < facets.length; fi++) {
+      const facet = facets[fi];
       if (facet.field != null) {
         let range = fi === 0 ? ranges.size : ranges.color;
 

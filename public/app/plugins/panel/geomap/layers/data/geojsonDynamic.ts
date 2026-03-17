@@ -273,7 +273,10 @@ export function updateFeaturePropertiesForTooltip(
   const field = findField(frame, idField);
   if (field) {
     idToIdx.clear();
-    for (const [i, v] of field.values.entries()) {idToIdx.set(String(v), i);}
+    for (let i = 0; i < field.values.length; i++) {
+      const v = field.values[i];
+      idToIdx.set(String(v), i);
+    }
     
     source.forEachFeature((feature) => {
       const featureId = feature.getId();

@@ -114,7 +114,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
   const connections: ConnectionState[] = [];
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
-      for (const [index, c] of v.options.connections.entries()) {
+      for (let index = 0; index < v.options.connections.length; index++) {
+        const c = v.options.connections[index];
         // @TODO Remove after v10.x
         if (isString(c.color)) {
           c.color = { fixed: c.color };

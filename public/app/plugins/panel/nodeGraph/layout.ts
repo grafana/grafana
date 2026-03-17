@@ -274,7 +274,8 @@ function gridLayout(
     });
   }
 
-  for (const [index, node] of nodes.entries()) {
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
     const row = Math.floor(index / perRow);
     const column = index % perRow;
     node.x = column * spacingHorizontal - midPoint;

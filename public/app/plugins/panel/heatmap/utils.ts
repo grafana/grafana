@@ -136,7 +136,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     qt.clear();
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
-    for (const [i, s] of u.series.entries()) {
+    for (let i = 0; i < u.series.length; i++) {
+      const s = u.series[i];
       if (i > 0) {
         // @ts-ignore
         s._paths = null;
@@ -685,7 +686,8 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         //	u.ctx.globalAlpha = 0.8;
         u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
-        for (const [i, p] of fillPaths.entries()) {
+        for (let i = 0; i < fillPaths.length; i++) {
+          const p = fillPaths[i];
           u.ctx.fillStyle = fillPalette[i];
           u.ctx.fill(p);
         }
@@ -755,7 +757,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
         u.ctx.save();
         u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
-        for (const [i, p] of fillPaths.entries()) {
+        for (let i = 0; i < fillPaths.length; i++) {
+          const p = fillPaths[i];
           u.ctx.fillStyle = fillPalette[i];
           u.ctx.fill(p);
         }
@@ -873,7 +876,8 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         //	u.ctx.globalAlpha = 0.8;
         u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
-        for (const [i, p] of fillPaths.entries()) {
+        for (let i = 0; i < fillPaths.length; i++) {
+          const p = fillPaths[i];
           u.ctx.fillStyle = fillPalette[i];
           u.ctx.fill(p);
         }
