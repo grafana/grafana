@@ -14953,11 +14953,13 @@
     },
     "range-content": {
       "apply-button": "Apply time range",
-      "default-error": "Please enter a past date or \"{{now}}\"",
+      "error-see-docs": "See time range syntax",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
+      "from-error": "Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.",
       "from-input": "From",
       "open-input-calendar": "Open calendar",
-      "range-error": "\"From\" can't be after \"To\"",
+      "range-error": "\"From\" date must be before \"To\"",
+      "to-error": "Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.",
       "to-input": "To"
     },
     "range-picker": {

@@ -1,3 +1,6 @@
+# Local Claude Code personal instructions (not for shared use)
+CLAUDE.local.md
+
 node_modules
 npm-debug.log
 yarn-error.log
