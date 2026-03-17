@@ -250,7 +250,8 @@ func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simp
 	}
 
 	// Fail fast: return the first edge error, with SQL-specific wrapping
-	for _, ee := range result.EdgeErrors {
+	if len(result.EdgeErrors) > 0 {
+		ee := result.EdgeErrors[0]
 		if ee.IsMissingDep {
 			if node, ok := result.Registry[ee.RefID]; ok && node.NodeType() == TypeCMDNode {
 				if node.(*CMDNode).CMDType == TypeSQL {
@@ -327,9 +328,9 @@ type edgeError struct {
 // path (collect-all via ValidatePipeline).
 type graphBuildResult struct {
 	Graph       *simple.DirectedGraph
-	NodeResults []nodeResult        // one per query, in input order
-	EdgeErrors  []edgeError         // edge validation errors
-	Registry    map[string]Node     // refID -> Node for successfully built nodes
+	NodeResults []nodeResult    // one per query, in input order
+	EdgeErrors  []edgeError     // edge validation errors
+	Registry    map[string]Node // refID -> Node for successfully built nodes
 }
 
 // buildDependencyGraphAll builds the full dependency graph, always continuing
