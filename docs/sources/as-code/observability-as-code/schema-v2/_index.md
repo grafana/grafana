@@ -1,5 +1,5 @@
 ---
-description: A reference for the JSON dashboard schemas used with Observability as Code, including the experimental V2 schema.
+description: A reference for the JSON dashboard schemas used with Observability as Code, including the V2 schema.
 keywords:
   - configuration
   - as code
@@ -23,11 +23,11 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Dashboard JSON schema v2 is an [experimental](https://grafana.com/docs/release-life-cycle/) feature in self-managed Grafana. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+Dashboard JSON schema v2 is a [public preview](https://grafana.com/docs/release-life-cycle/) feature. Support is limited to enablement, configuration, and some troubleshooting. Documentation is limited, and SLAs are not available.
 
 **Do not enable this feature in production environments as it may result in the irreversible loss of data.**
 
-The feature is in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Cloud. For more information, refer to the [Cloud documentation](https://grafana.com/docs/grafana-cloud/visualizations/dashboards/build-dashboards/view-dashboard-json-model/#dashboard-json-model).
+For more information, refer to the [Cloud documentation](https://grafana.com/docs/grafana-cloud/visualizations/dashboards/build-dashboards/view-dashboard-json-model/#dashboard-json-model).
 
 {{< /admonition >}}
 
@@ -38,7 +38,6 @@ Observability as Code works with all versions of the JSON model, and it's fully 
 ## Before you begin
 
 Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle.
-To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
 It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
 
 For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
