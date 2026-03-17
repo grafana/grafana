@@ -1,4 +1,5 @@
-import { splitTimeRange } from './logsTimeSplitting';
+import { makeTimeRange } from '@grafana/data';
+import { splitTimeRange, splitTimeRangeAligned } from './logsTimeSplitting';
 
 describe('logs splitTimeRange', () => {
   it('should split time range into chunks', () => {
@@ -24,6 +25,22 @@ describe('logs splitTimeRange', () => {
       [Date.parse('2022-02-06T14:10:03.567'), Date.parse('2022-02-06T14:10:23.567')],
       [Date.parse('2022-02-06T14:10:23.567'), Date.parse('2022-02-06T14:10:43.567')],
       [Date.parse('2022-02-06T14:10:43.567'), Date.parse('2022-02-06T14:11:03.567')],
+    ]);
+  });
+});
+
+describe('logs splitTimeRangeAligned', () => {
+  it('should split time range into midnight-aligned chunks', () => {
+    const timeRange = makeTimeRange('2022-02-01T14:10:03.234', '2022-02-06T14:11:03.567');
+    const result = splitTimeRangeAligned(timeRange);
+
+    expect(result).toStrictEqual([
+      [Date.parse('2022-02-01T14:10:03.234'), Date.parse('2022-02-02T00:00:00.0')],
+      [Date.parse('2022-02-02T00:00:00.0'), Date.parse('2022-02-03T00:00:00.0')],
+      [Date.parse('2022-02-03T00:00:00.0'), Date.parse('2022-02-04T00:00:00.0')],
+      [Date.parse('2022-02-04T00:00:00.0'), Date.parse('2022-02-05T00:00:00.0')],
+      [Date.parse('2022-02-05T00:00:00.0'), Date.parse('2022-02-06T00:00:00.0')],
+      [Date.parse('2022-02-06T00:00:00.0'), Date.parse('2022-02-06T14:11:03.567')],
     ]);
   });
 });
