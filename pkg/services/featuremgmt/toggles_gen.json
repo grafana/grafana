@@ -3020,6 +3020,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersRedirect",
+        "resourceVersion": "1773676176614",
+        "creationTimestamp": "2026-03-16T15:49:36Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the user service to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "liveAPIServer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

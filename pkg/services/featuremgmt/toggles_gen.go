@@ -842,6 +842,10 @@ const (
 	// Use the new team service that uses the app platform APIs
 	FlagKubernetesTeamService = "kubernetesTeamService"
 
+	// FlagKubernetesUsersRedirect
+	// Redirects the requests of the user service to the app platform APIs
+	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"

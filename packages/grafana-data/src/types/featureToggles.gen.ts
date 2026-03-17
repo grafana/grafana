@@ -1596,6 +1596,11 @@ export interface FeatureToggles {
   */
   kubernetesTeamService?: boolean;
   /**
+  * Redirects the requests of the user service to the app platform APIs
+  * @default false
+  */
+  kubernetesUsersRedirect?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */

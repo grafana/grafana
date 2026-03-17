@@ -2531,6 +2531,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesUsersRedirect",
+			Description:  "Redirects the requests of the user service to the app platform APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingMultiplePolicies",
 			Description:  "Enables the ability to create multiple alerting policies",
 			Stage:        FeatureStageExperimental,
