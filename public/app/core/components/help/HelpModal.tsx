@@ -202,6 +202,13 @@ export const useShortcuts = () => {
             keys: ['d', 'x'],
             description: t('help-modal.shortcuts-description.toggle-exemplars', 'Toggle exemplars in all panel'),
           },
+          {
+            keys: ['d', 'p'],
+            description: t(
+              'help-modal.shortcuts-description.toggle-query-latency',
+              'Toggle query latency display on panel headers'
+            ),
+          },
         ],
       },
       {

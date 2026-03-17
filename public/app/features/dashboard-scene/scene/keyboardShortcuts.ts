@@ -128,6 +128,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
   });
 
+  // Toggle query latency badges
+  keybindings.addBinding({
+    key: 'd p',
+    onTrigger: () => scene.setState({ showQueryLatency: !scene.state.showQueryLatency }),
+  });
+
   // Refresh
   keybindings.addBinding({
     key: 'd r',
