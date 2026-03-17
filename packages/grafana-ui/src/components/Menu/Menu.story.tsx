@@ -125,8 +125,7 @@ export function Examples() {
           <Menu.Item label="Secondary" icon="cog" iconColor={theme.colors.secondary.text} />
           <Menu.Item label="Success" icon="plus" iconColor={theme.colors.success.text} />
           <Menu.Item label="Warning" icon="bell" iconColor={theme.colors.warning.text} />
-          <Menu.Item label="Info" icon="info-circle" iconColor={theme.colors.info.text} />
-          <Menu.Item label="Purple (viz color)" icon="download-alt" iconColor="#B877D9" />
+          <Menu.Item label="Purple" icon="download-alt" iconColor="#B877D9" />
           <Menu.Divider />
           <Menu.Item
             label="Destructive wins over iconColor"

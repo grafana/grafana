@@ -269,22 +269,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     destructive: css({
       color: theme.colors.error.text,
 
-      'svg, span': {
-        color: 'inherit',
+      svg: {
+        color: theme.colors.error.text,
       },
 
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.error.main,
         color: theme.colors.error.contrastText,
+
+        svg: {
+          color: theme.colors.error.contrastText,
+        },
       },
     }),
     disabled: css({
       color: theme.colors.action.disabledText,
       label: 'menu-item-disabled',
-
-      'svg, span': {
-        color: 'inherit',
-      },
 
       '&:hover, &:focus, &:focus-visible': {
         cursor: 'not-allowed',
@@ -294,9 +294,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     icon: css({
       opacity: 0.7,
-    }),
-    iconColored: css({
-      opacity: 1,
     }),
     rightWrapper: css({
       display: 'flex',
