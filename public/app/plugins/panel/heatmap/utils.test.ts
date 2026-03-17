@@ -37,6 +37,9 @@ type MockCtx = {
   fill: jest.Mock;
 };
 
+/**
+ * Mock CanvasRenderingContext2D
+ */
 function createMockCtx(): MockCtx {
   return {
     save: jest.fn(),
@@ -50,10 +53,12 @@ function createMockCtx(): MockCtx {
 
 function createMockU(data: SparseHeatmap | DenseHeatmap | PointsData, ctx?: MockCtx): uPlot {
   return {
+    // @ts-expect-error partial mock — only the fields consumed by path builders
     data: { 1: data },
+    // @ts-expect-error partial mock — only the fields consumed by path builders
     ctx: ctx ?? createMockCtx(),
     bbox: { left: 0, top: 0, width: 100, height: 100 },
-  } as unknown as uPlot;
+  };
 }
 
 /**
@@ -141,6 +146,7 @@ function createOrientMock(
     scaleX?: Partial<uPlot.Scale>;
     scaleY?: Partial<uPlot.Scale>;
     rect?: jest.Mock;
+    valToPosX?: (v: number) => number;
     valToPosY?: (v: number) => number;
   } = {}
 ) {
@@ -148,6 +154,7 @@ function createOrientMock(
   const scaleX: uPlot.Scale = { distr: 1, min: 0, max: 2000, log: 2, ...config.scaleX };
   const scaleY: uPlot.Scale = { distr: 1, min: 0, max: 2, log: 2, ...config.scaleY };
   const valToPos = (v: number) => v;
+  const valToPosX = config.valToPosX ?? valToPos;
   const valToPosY = config.valToPosY ?? valToPos;
 
   return (u: uPlot, seriesIdx: number, drawCallback: uPlot.OrientCallback) => {
@@ -157,7 +164,7 @@ function createOrientMock(
       data[1],
       scaleX,
       scaleY,
-      valToPos,
+      valToPosX,
       valToPosY,
       0,
       0,
@@ -964,6 +971,176 @@ describe('prepConfig', () => {
       expect(values).toEqual([0, 1]);
     });
   });
+
+  describe('cursor (dataIdx, focus.dist, points.bbox)', () => {
+    const denseHeatmapData: DenseHeatmap = [
+      [1000, 1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000],
+      [0, 1, 2, 0, 1, 2, 0, 1, 2],
+      [5, 10, 15, 10, 20, 25, 15, 20, 30],
+    ];
+
+    const originalDevicePixelRatio = global.devicePixelRatio;
+    beforeEach(() => {
+      Object.defineProperty(global, 'devicePixelRatio', { value: 1, configurable: true });
+    });
+    afterEach(() => {
+      Object.defineProperty(global, 'devicePixelRatio', { value: originalDevicePixelRatio, configurable: true });
+    });
+
+    /**
+     * Creates HeatmapData with heatmapColors for cursor tests.
+     * Uses valToPos mapping 0-3000 -> 0-100 (x) and 0-2 -> 0-100 (y) so rects fall in qt (0,0,100,100).
+     */
+    function createHeatmapDataForCursor(): HeatmapData {
+      return {
+        ...createMinimalHeatmapData(),
+        heatmapColors: {
+          values: [0, 1, 2, 0, 1, 2, 0, 1, 2],
+          palette: ['#000', '#333', '#666'],
+          minValue: 5,
+          maxValue: 30,
+        },
+      };
+    }
+
+    /**
+     * Builds prepConfig for cursor tests and returns the cursor config.
+     * @param selectionMode - Optional selection mode override
+     */
+    function buildCursorConfig(selectionMode?: HeatmapSelectionMode) {
+      const dataRef = { current: createHeatmapDataForCursor() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'rgba(255,0,255,0.7)',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        selectionMode,
+      });
+      const cursor = builder.getConfig().cursor;
+      if (!cursor) {
+        throw new Error('Expected cursor config');
+      }
+      return cursor;
+    }
+
+    /**
+     * Creates a prepConfig builder with cursor-test heatmap data, populates the internal
+     * quadtree via mocked uPlot.orient, and returns the cursor config + mock uPlot.
+     */
+    function buildCursorWithQuadtree() {
+      const dataRef = { current: createHeatmapDataForCursor() };
+      const builder = prepConfig({
+        dataRef,
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'rgba(255,0,255,0.7)',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+
+      const config = builder.getConfig();
+      const drawClearHook = config.hooks?.drawClear?.[0];
+      const heatmapPathBuilder = config.series?.[1]?.paths;
+      const cursor = config.cursor;
+
+      if (!drawClearHook || !heatmapPathBuilder || !cursor) {
+        throw new Error('Expected drawClear, heatmap paths, and cursor');
+      }
+
+      const mockU = createMockU(denseHeatmapData);
+      Object.assign(mockU, {
+        data: { 1: denseHeatmapData },
+        bbox: { left: 0, top: 0, width: 100, height: 100 },
+        cursor: { left: 60, top: 50 },
+        series: [{}, {}, {}],
+      });
+
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+        createOrientMock(denseHeatmapData, {
+          scaleX: { min: 0, max: 3000 },
+          scaleY: { min: 0, max: 2 },
+          valToPosX: (v) => (v / 3000) * 100,
+          valToPosY: (v) => (v / 2) * 100,
+        })
+      );
+
+      drawClearHook(mockU);
+      heatmapPathBuilder(mockU, 1, 0, 9);
+      orientSpy.mockRestore();
+
+      return { cursor, mockU };
+    }
+
+    it('returns dataIdx from quadtree when cursor is over a cell (seriesIdx 1)', () => {
+      const { cursor, mockU } = buildCursorWithQuadtree();
+
+      if (!cursor.dataIdx) {
+        throw new Error('Expected cursor.dataIdx');
+      }
+
+      const dataIdx = cursor.dataIdx(mockU, 1, 0, 1500);
+      expect(typeof dataIdx).toBe('number');
+      expect(dataIdx).toBeGreaterThanOrEqual(0);
+      expect(dataIdx).toBeLessThan(9);
+    });
+
+    it('returns null from dataIdx when seriesIdx is not 1', () => {
+      const cursor = buildCursorConfig();
+
+      if (!cursor.dataIdx) {
+        throw new Error('Expected cursor.dataIdx');
+      }
+
+      // @ts-expect-error partial mock — only cursor position needed
+      const mockU: uPlot = { cursor: { left: 60, top: 50 } };
+
+      expect(cursor.dataIdx(mockU, 0, 0, 0)).toBeNull();
+    });
+
+    it('focus.dist returns 0 when hRect matches seriesIdx, Infinity otherwise', () => {
+      const { cursor, mockU } = buildCursorWithQuadtree();
+
+      if (!cursor.dataIdx || !cursor.focus?.dist) {
+        throw new Error('Expected cursor.dataIdx and cursor.focus.dist');
+      }
+
+      cursor.dataIdx(mockU, 1, 0, 1500);
+
+      expect(cursor.focus.dist(mockU, 1, 0, 0, 0)).toBe(0);
+      expect(cursor.focus.dist(mockU, 2, 0, 0, 0)).toBe(Infinity);
+    });
+
+    it('points.bbox returns rect when hovered, off-canvas when not', () => {
+      const { cursor, mockU } = buildCursorWithQuadtree();
+
+      if (!cursor.dataIdx || !cursor.points?.bbox) {
+        throw new Error('Expected cursor.dataIdx and cursor.points.bbox');
+      }
+
+      cursor.dataIdx(mockU, 1, 0, 1500);
+
+      const bboxResult = cursor.points.bbox(mockU, 1);
+      expect(bboxResult).toMatchObject({
+        left: expect.any(Number),
+        top: expect.any(Number),
+        width: expect.any(Number),
+        height: expect.any(Number),
+      });
+      expect(bboxResult.left).toBeGreaterThanOrEqual(-10);
+      expect(bboxResult.top).toBeGreaterThanOrEqual(-10);
+
+      const bboxNotHovered = cursor.points.bbox(mockU, 2);
+      expect(bboxNotHovered).toMatchObject({ left: -10, top: -10, width: 0, height: 0 });
+    });
+
+    it('cursor.drag reflects selectionMode (X, Y, Xy)', () => {
+      expect(buildCursorConfig(HeatmapSelectionMode.X).drag).toMatchObject({ x: true, y: false });
+      expect(buildCursorConfig(HeatmapSelectionMode.Y).drag).toMatchObject({ x: false, y: true });
+      expect(buildCursorConfig(HeatmapSelectionMode.Xy).drag).toMatchObject({ x: true, y: true });
+    });
+  });
 });
 
 describe('heatmapPathsDense', () => {
@@ -1509,14 +1686,7 @@ describe('heatmapPathsSparse', () => {
     });
 
     it('calls ctx.save, rect, clip, fill, restore', () => {
-      const ctx = {
-        save: jest.fn(),
-        restore: jest.fn(),
-        rect: jest.fn(),
-        clip: jest.fn(),
-        fillStyle: '',
-        fill: jest.fn(),
-      };
+      const ctx = createMockCtx();
       invokeSparsePathBuilder(minimalPathbuilderOpts, { ctx });
       expect(ctx.save).toHaveBeenCalled();
       expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
