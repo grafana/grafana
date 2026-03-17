@@ -1,7 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import {
+  ActionType,
+  DataFrame,
+  FieldType,
+  getDefaultTimeRange,
+  HttpRequestMethod,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TooltipDisplayMode } from '@grafana/schema';
 
@@ -16,6 +24,17 @@ let lastUPlotConfig: { width: number; height: number } | null = null;
 
 /** Simulated legend height when legend is shown. VizLayout reserves this space for the color scale. */
 const MOCK_LEGEND_HEIGHT = 80;
+
+/** Set to true in tests that need field actions to be executable (e.g. FieldActions test). */
+let canExecuteActionsForTest = false;
+
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => ({
+    getCurrent: () => ({
+      formatDate: (v: number) => new Date(v).toISOString(),
+    }),
+  }),
+}));
 
 // Mock uPlot to avoid canvas initialization in tests.
 // HeatmapPanel uses UPlotChart which depends on uPlot for rendering the canvas visualization.
@@ -36,29 +55,6 @@ jest.mock('uplot', () => {
   mock.rangeLog = jest.fn((min: number, max: number) => [min, max]);
   return mock;
 });
-
-/**
- * Mocks usePanelContext with safe defaults for HeatmapPanel tests.
- * HeatmapPanelViz uses sync, eventsScope, canAddAnnotations, onSelectRange, and canExecuteActions.
- *
- * @param overrides - Partial overrides for the default mock values
- * @returns Mock implementation passed to jest.spyOn or jest.mock
- */
-function createUsePanelContextMock(overrides?: {
-  sync?: () => number;
-  canAddAnnotations?: () => boolean;
-  onSelectRange?: () => void;
-  canExecuteActions?: () => boolean;
-}) {
-  return jest.fn().mockReturnValue({
-    sync: () => 0,
-    eventsScope: 'global',
-    canAddAnnotations: () => false,
-    onSelectRange: jest.fn(),
-    canExecuteActions: () => false,
-    ...overrides,
-  });
-}
 
 jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
@@ -98,15 +94,22 @@ jest.mock('@grafana/ui', () => {
   /**
    * Mock TooltipPlugin2 to detect when tooltip is rendered.
    * HeatmapPanel conditionally renders TooltipPlugin2 based on options.tooltip.mode.
+   * Uses isPinned=true so the footer (including DataLinks) is rendered for testing.
    */
   const MockTooltipPlugin2 = (props: { render?: (...args: unknown[]) => React.ReactNode }) => {
-    const content = props.render?.({}, [0, 0], 0, false, jest.fn(), null, false);
+    const content = props.render?.({}, [0, 0], 0, true, jest.fn(), null, false);
     return <div data-testid="heatmap-tooltip-plugin">{content}</div>;
   };
 
   return {
     ...actual,
-    usePanelContext: createUsePanelContextMock(),
+    usePanelContext: jest.fn().mockImplementation(() => ({
+      sync: () => 0,
+      eventsScope: 'global',
+      canAddAnnotations: () => false,
+      onSelectRange: jest.fn(),
+      canExecuteActions: () => canExecuteActionsForTest,
+    })),
     VizLayout: MockVizLayout,
     TooltipPlugin2: MockTooltipPlugin2,
   };
@@ -164,6 +167,51 @@ function createHeatmapRowsFrame(overrides?: {
 }
 
 /**
+ * Creates a heatmap rows-style DataFrame with DataLinks on the first bucket field.
+ * Used for tests that verify link rendering in the tooltip footer.
+ *
+ * @param linkConfig - Link config (url, title) for the first bucket field
+ */
+function createHeatmapRowsFrameWithLinks(linkConfig: { url: string; title: string }) {
+  const frame = createHeatmapRowsFrame();
+  const firstBucketField = frame.fields[1];
+  firstBucketField.config = {
+    ...firstBucketField.config,
+    links: [{ url: linkConfig.url, title: linkConfig.title }],
+  };
+  return frame;
+}
+
+/**
+ * Creates a heatmap rows-style DataFrame with field actions on the first bucket field.
+ * Requires canExecuteActionsForTest=true and field.state.scopedVars for actions to render.
+ *
+ * @param actionConfig - Action config (title, url) for the first bucket field
+ */
+function createHeatmapRowsFrameWithActions(actionConfig: { title: string; url: string }) {
+  const frame = createHeatmapRowsFrame();
+  const firstBucketField = frame.fields[1];
+  firstBucketField.config = {
+    ...firstBucketField.config,
+    actions: [
+      {
+        type: ActionType.Fetch,
+        title: actionConfig.title,
+        [ActionType.Fetch]: {
+          url: actionConfig.url,
+          method: HttpRequestMethod.POST,
+          body: '{}',
+          queryParams: [],
+          headers: [['Content-Type', 'application/json']],
+        },
+      },
+    ],
+  };
+  firstBucketField.state = { scopedVars: {} };
+  return frame;
+}
+
+/**
  * Returns default HeatmapPanel options merged with any overrides.
  * Uses full defaultOptions from types.ts to ensure all required fields are present.
  */
@@ -187,13 +235,22 @@ const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
 describe('HeatmapPanel', () => {
   beforeEach(() => {
     lastUPlotConfig = null;
+    canExecuteActionsForTest = false;
   });
 
   /**
    * Renders HeatmapPanel with the given data and options.
    * Reusable across tests to avoid duplicating setup.
+   *
+   * @param dataOverrides - Override series or other data props
+   * @param optionsOverrides - Override panel options
+   * @param panelPropsOverrides - Override panel props (e.g. replaceVariables for DataLinks)
    */
-  function renderHeatmapPanel(dataOverrides?: Partial<{ series: DataFrame[] }>, optionsOverrides?: Partial<Options>) {
+  function renderHeatmapPanel(
+    dataOverrides?: Partial<{ series: DataFrame[] }>,
+    optionsOverrides?: Partial<Options>,
+    panelPropsOverrides?: Partial<{ replaceVariables: (v: string) => string }>
+  ) {
     const mergedOptions = { ...defaultPanelOptions, ...optionsOverrides };
     const props = getPanelProps<Options>(mergedOptions, {
       data: {
@@ -202,6 +259,7 @@ describe('HeatmapPanel', () => {
         timeRange: getDefaultTimeRange(),
         ...dataOverrides,
       },
+      ...panelPropsOverrides,
     });
     return render(<HeatmapPanel {...props} />);
   }
@@ -234,55 +292,86 @@ describe('HeatmapPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
   });
 
-  describe('legend option', () => {
-    it('displays legend when legend.show is true', () => {
-      renderHeatmapPanel(undefined, { legend: { show: true } });
+  describe('Exemplars', () => {});
+  describe('Annotations', () => {});
+  describe('DataLinks', () => {
+    it('shows DataLinks in tooltip when links are defined on the dataframe field', () => {
+      const linkTitle = 'View in Explorer';
+      const linkUrl = 'https://example.com';
+      const frameWithLinks = createHeatmapRowsFrameWithLinks({
+        url: linkUrl,
+        title: linkTitle,
+      });
 
-      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeVisible();
-    });
+      renderHeatmapPanel({ series: [frameWithLinks] }, undefined, { replaceVariables: (v) => v });
 
-    it('hides legend when legend.show is false', () => {
-      renderHeatmapPanel(undefined, { legend: { show: false } });
-
-      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
-    });
-
-    it('allots full panel height to canvas when legend is hidden', () => {
-      const panelHeight = 400;
-      renderHeatmapPanel(undefined, { legend: { show: false } });
-
-      expect(lastUPlotConfig).not.toBeNull();
-      expect(lastUPlotConfig!.height).toBe(panelHeight);
-    });
-
-    it('allots reduced height to canvas when legend is shown', () => {
-      const panelHeight = 400;
-      renderHeatmapPanel(undefined, { legend: { show: true } });
-
-      expect(lastUPlotConfig).not.toBeNull();
-      expect(lastUPlotConfig!.height).toBe(panelHeight - MOCK_LEGEND_HEIGHT);
+      expect(screen.getByText(linkTitle)).toBeVisible();
+      expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
     });
   });
 
-  describe('tooltip option', () => {
-    it('renders TooltipPlugin2 when tooltip mode is not None', () => {
-      renderHeatmapPanel(undefined, {
-        tooltip: {
-          mode: TooltipDisplayMode.Single,
-        },
+  describe('FieldActions', () => {
+    it('shows field actions in tooltip when actions are defined on the dataframe field', () => {
+      const actionTitle = 'Run query';
+      const actionUrl = 'https://api.example.com/run';
+      const frameWithActions = createHeatmapRowsFrameWithActions({
+        title: actionTitle,
+        url: actionUrl,
       });
 
-      expect(screen.getByTestId('heatmap-tooltip-plugin')).toBeVisible();
+      canExecuteActionsForTest = true;
+      renderHeatmapPanel({ series: [frameWithActions] }, undefined, { replaceVariables: (v) => v });
+
+      expect(screen.getByRole('button', { name: actionTitle })).toBeVisible();
     });
+  });
 
-    it('does not render TooltipPlugin2 when tooltip mode is None', () => {
-      renderHeatmapPanel(undefined, {
-        tooltip: {
-          mode: TooltipDisplayMode.None,
-        },
+  describe('Options', () => {
+    describe('legend', () => {
+      it('displays legend when legend.show is true', () => {
+        renderHeatmapPanel();
+
+        expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeVisible();
       });
 
-      expect(screen.queryByTestId('heatmap-tooltip-plugin')).not.toBeInTheDocument();
+      it('hides legend when legend.show is false', () => {
+        renderHeatmapPanel(undefined, { legend: { show: false } });
+
+        expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+      });
+
+      it('allots full panel height to canvas when legend is hidden', () => {
+        const panelHeight = 400;
+        renderHeatmapPanel(undefined, { legend: { show: false } });
+
+        expect(lastUPlotConfig).not.toBeNull();
+        expect(lastUPlotConfig!.height).toBe(panelHeight);
+      });
+
+      it('allots reduced height to canvas when legend is shown', () => {
+        const panelHeight = 400;
+        renderHeatmapPanel();
+
+        expect(lastUPlotConfig).not.toBeNull();
+        expect(lastUPlotConfig!.height).toBe(panelHeight - MOCK_LEGEND_HEIGHT);
+      });
+    });
+    describe('tooltip', () => {
+      it('renders TooltipPlugin2 when tooltip mode is not None', () => {
+        renderHeatmapPanel();
+
+        expect(screen.getByTestId('heatmap-tooltip-plugin')).toBeVisible();
+      });
+
+      it('does not render TooltipPlugin2 when tooltip mode is None', () => {
+        renderHeatmapPanel(undefined, {
+          tooltip: {
+            mode: TooltipDisplayMode.None,
+          },
+        });
+
+        expect(screen.queryByTestId('heatmap-tooltip-plugin')).not.toBeInTheDocument();
+      });
     });
   });
 });
