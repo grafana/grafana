@@ -1,5 +1,8 @@
+import uPlot from 'uplot';
+
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType } from '@grafana/data';
 import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
+import { UPlotConfigBuilder } from '@grafana/ui';
 
 import { HeatmapData } from './fields';
 import { HeatmapSelectionMode } from './panelcfg.gen';
@@ -15,6 +18,50 @@ import {
   toLogBase,
   valuesToFills,
 } from './utils';
+
+/**
+ * Creates a minimal uPlot instance for range callback tests.
+ * Uses the real uPlot constructor so the instance satisfies uPlot types.
+ */
+function createMinimalUPlot(scaleKey: string, overrides?: { data?: uPlot.AlignedData; log?: number }): uPlot {
+  const scaleConfig: uPlot.Scale = overrides?.log ? { log: 2 } : {};
+  const opts: uPlot.Options = {
+    width: 100,
+    height: 100,
+    series: [{}, {}],
+    scales: {
+      x: {},
+      [scaleKey]: scaleConfig,
+    },
+  };
+  const data: uPlot.AlignedData = overrides?.data ?? [
+    [0, 1],
+    [0, 1],
+  ];
+  const target = document.createElement('div');
+  const u = new uPlot(opts, data, target);
+  if (overrides?.data) {
+    u.setData(overrides.data);
+  }
+  return u;
+}
+
+/**
+ * Extracts the y-scale range function and scale key from a prepConfig builder.
+ * @throws Error if the y scale or its range function is missing
+ */
+function getYScaleRangeInfo(builder: UPlotConfigBuilder): {
+  range: uPlot.Range.Function;
+  scaleKey: string;
+} {
+  const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
+  const range = yScale?.props.range;
+  const scaleKey = yScale?.props.scaleKey ?? '';
+  if (typeof range !== 'function' || !scaleKey) {
+    throw new Error('Expected y scale with range function');
+  }
+  return { range, scaleKey };
+}
 
 describe('prepConfig', () => {
   const theme = createTheme();
@@ -145,42 +192,32 @@ describe('prepConfig', () => {
   });
 
   describe('y-scale range callback', () => {
-    function getYScaleRange(
-      builder: ReturnType<typeof prepConfig>
-    ):
-      | ((
-          u: { data: unknown[]; scales: Record<string, { log?: number }> },
-          dataMin: number,
-          dataMax: number
-        ) => [number | null, number | null])
-      | undefined {
-      const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
-      return yScale?.props.range as
-        | ((
-            u: { data: unknown[]; scales: Record<string, { log?: number }> },
-            dataMin: number,
-            dataMax: number
-          ) => [number | null, number | null])
-        | undefined;
+    /**
+     * Creates minimal sparse HeatmapData (yMin + yMax fields) for range callback tests.
+     */
+    function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+      const heatmap = createDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+          { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+          { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+      return {
+        heatmap,
+        heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 20 },
+        ...overrides,
+      };
     }
 
     describe('sparse heatmap', () => {
-      function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
-        const heatmap = createDataFrame({
-          meta: { type: DataFrameType.HeatmapCells },
-          fields: [
-            { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
-            { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
-            { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
-            { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
-          ],
-        });
-        return {
-          heatmap,
-          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 20 },
-          ...overrides,
-        };
-      }
+      const sparseData: uPlot.AlignedData = [
+        [0, 1, 2],
+        [0, 1, 4, 16],
+        [0, 5, 16, 64],
+      ];
 
       it('expands dataMax by bucket factor from yMin/yMax and applies explicit min/max', () => {
         const dataRef = { current: createSparseHeatmapData() };
@@ -193,15 +230,9 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = {
-          data: [null, [null, [1, 4, 16], [4, 16, 64], []]] as unknown[],
-          scales: { [yScaleKey]: {} } as Record<string, { log?: number }>,
-        };
-        const result = range!(u, 1, 16);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData });
+        const result = range(u, 1, 16, scaleKey);
         expect(result[0]).toBe(2);
         expect(result[1]).toBe(64);
       });
@@ -217,17 +248,11 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = {
-          data: [null, [null, [1, 4, 16], [4, 16, 64], []]] as unknown[],
-          scales: { [yScaleKey]: { log: 2 } },
-        };
-        const result = range!(u, 1, 64);
-        expect(result[0]).toBeLessThanOrEqual(2);
-        expect(result[1]).toBeGreaterThanOrEqual(64);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
+        const result = range(u, 1, 64, scaleKey);
+        expect(result[0]).toEqual(2);
+        expect(result[1]).toEqual(64);
       });
     });
 
@@ -242,11 +267,9 @@ describe('prepConfig', () => {
           exemplarColor: 'red',
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const u = { data: [], scales: {} };
-        const result = range!(u, 0, 2);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey);
+        const result = range(u, 0, 2, scaleKey);
         expect(result[0]).toBe(-1);
         expect(result[1]).toBe(3);
       });
@@ -261,11 +284,9 @@ describe('prepConfig', () => {
           exemplarColor: 'red',
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const u = { data: [], scales: {} };
-        const result = range!(u, 2, 8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey);
+        const result = range(u, 2, 8, scaleKey);
         expect(result[0]).toBe(0);
         expect(result[1]).toBe(8);
       });
@@ -280,11 +301,9 @@ describe('prepConfig', () => {
           exemplarColor: 'red',
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const u = { data: [], scales: {} };
-        const result = range!(u, 2, 8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey);
+        const result = range(u, 2, 8, scaleKey);
         expect(result[0]).toBe(2);
         expect(result[1]).toBe(10);
       });
@@ -299,11 +318,9 @@ describe('prepConfig', () => {
           exemplarColor: 'red',
           yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 0, max: 100 },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const u = { data: [], scales: {} };
-        const result = range!(u, 1, 2);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey);
+        const result = range(u, 1, 2, scaleKey);
         expect(result[0]).toBe(0);
         expect(result[1]).toBe(100);
       });
@@ -319,14 +336,11 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
-        const result = range!(u, 1, 4);
-        expect(result[0]).toBeLessThan(1);
-        expect(result[1]).toBeGreaterThan(4);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { log: 2 });
+        const result = range(u, 1, 4, scaleKey);
+        expect(result[0]).toEqual(0.7071067811865475);
+        expect(result[1]).toEqual(5.656854249492381);
       });
 
       it('expands log range by dividing scaleMin for le yLayout', () => {
@@ -340,14 +354,11 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
-        const result = range!(u, 2, 8);
-        expect(result[0]).toBeLessThan(2);
-        expect(result[1]).toBe(8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { log: 2 });
+        const result = range(u, 2, 8, scaleKey);
+        expect(result[0]).toEqual(1);
+        expect(result[1]).toEqual(8);
       });
 
       it('expands log range by multiplying scaleMax for ge yLayout', () => {
@@ -361,14 +372,11 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
-        const result = range!(u, 2, 8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { log: 2 });
+        const result = range(u, 2, 8, scaleKey);
         expect(result[0]).toBe(2);
-        expect(result[1]).toBeGreaterThan(8);
+        expect(result[1]).toEqual(16);
       });
 
       it('uses calculateBucketFactor from yValues when yBucketScale is provided', () => {
@@ -382,17 +390,15 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = {
-          data: [null, [null, [1, 2, 4, 8], []]] as unknown[],
-          scales: { [yScaleKey]: { log: 2 } },
-        };
-        const result = range!(u, 1, 8);
-        expect(result[0]).toBeLessThan(1);
-        expect(result[1]).toBe(8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const denseDataWithYValues: uPlot.AlignedData = [
+          [0, 1, 2, 3, 4],
+          [0, 1, 2, 4, 8],
+        ];
+        const u = createMinimalUPlot(scaleKey, { data: denseDataWithYValues, log: 2 });
+        const result = range(u, 1, 8, scaleKey);
+        expect(result[0]).toEqual(0.5);
+        expect(result[1]).toEqual(8);
       });
 
       it('snaps to log magnitude when ySizeDivisor is set and dataMin/dataMax are non-integer log', () => {
@@ -407,14 +413,11 @@ describe('prepConfig', () => {
           ySizeDivisor: 2,
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
-        const result = range!(u, 3, 6);
-        expect(result[0]).toBeLessThanOrEqual(2);
-        expect(result[1]).toBeGreaterThanOrEqual(8);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { log: 2 });
+        const result = range(u, 3, 6, scaleKey);
+        expect(result[0]).toEqual(1.414213562373095);
+        expect(result[1]).toEqual(11.313708498984761);
       });
 
       it('applies explicit min/max for log scale snapping to magnitude', () => {
@@ -428,14 +431,11 @@ describe('prepConfig', () => {
           yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 4, max: 32 },
           rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
-        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
-        const result = range!(u, 1, 16);
-        expect(result[0]).toBeLessThanOrEqual(4);
-        expect(result[1]).toBeGreaterThanOrEqual(32);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { log: 2 });
+        const result = range(u, 1, 16, scaleKey);
+        expect(result[0]).toEqual(4);
+        expect(result[1]).toEqual(32);
       });
 
       it('skips expansion when bucketSize is undefined', () => {
@@ -453,11 +453,9 @@ describe('prepConfig', () => {
           exemplarColor: 'red',
           yAxisConfig: { axisPlacement: AxisPlacement.Left },
         });
-        const range = getYScaleRange(builder);
-        expect(range).toBeDefined();
-
-        const u = { data: [], scales: {} };
-        const result = range!(u, 1, 2);
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey);
+        const result = range(u, 1, 2, scaleKey);
         expect(result[0]).toBe(1);
         expect(result[1]).toBe(2);
       });
@@ -466,12 +464,13 @@ describe('prepConfig', () => {
 });
 
 describe('heatmapPathsDense', () => {
+  const fillIndex: Array<CanvasRenderingContext2D['fillStyle']> = ['#000'];
   const minimalPathbuilderOpts = {
     each: jest.fn(),
     disp: {
       fill: {
         values: () => [0],
-        index: ['#000'] as Array<CanvasRenderingContext2D['fillStyle']>,
+        index: fillIndex,
       },
     },
   };
@@ -514,12 +513,13 @@ describe('heatmapPathsPoints', () => {
 });
 
 describe('heatmapPathsSparse', () => {
+  const fillIndex: Array<CanvasRenderingContext2D['fillStyle']> = ['#000'];
   const minimalPathbuilderOpts = {
     each: jest.fn(),
     disp: {
       fill: {
         values: () => [0],
-        index: ['#000'] as Array<CanvasRenderingContext2D['fillStyle']>,
+        index: fillIndex,
       },
     },
   };
@@ -953,7 +953,7 @@ describe('boundedMinMax', () => {
   describe('with hideGE filter', () => {
     it('excludes values greater than or equal to hideGE', () => {
       const values = [5, 10, 15, 20, 25];
-      const [min, max] = boundedMinMax(values, undefined, undefined, -Infinity, 20);
+      const [min, max] = boundedMinMax(values, undefined, undefined, 4, 16);
       expect(min).toBe(5);
       expect(max).toBe(15);
     });
@@ -1114,7 +1114,7 @@ describe('Regression tests', () => {
       const fills = valuesToFills(values, palette, -100, 0);
 
       // Each value should map to a distinct palette index
-      expect(new Set(fills).size).toBeGreaterThan(1);
+      expect(new Set(fills).size).toEqual(5);
       expect(fills[0]).toBe(0); // -100 = min
       expect(fills[4]).toBe(4); // 0 = max
     });
@@ -1144,9 +1144,7 @@ describe('Regression tests', () => {
     it('returns ordered [min, max] for all-negative values', () => {
       const values = [-30, -20, -10];
       const [min, max] = boundedMinMax(values);
-      expect(min).toBe(-30);
-      expect(max).toBe(-10);
-      expect(min).toBeLessThan(max);
+      expect([min, max]).toEqual([-30, -10]);
     });
 
     // When filterValues.ge filters out all values, both min and max should be
