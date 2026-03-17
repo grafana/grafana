@@ -84,6 +84,44 @@ function getYScaleRangeInfo(builder: UPlotConfigBuilder): {
 }
 
 /**
+ * Creates a uPlot.orient mock that invokes the draw callback with the given data and scales.
+ * Used by heatmap path builder tests (dense and sparse).
+ */
+function createOrientMock(
+  data: unknown[],
+  config: {
+    scaleX?: Partial<uPlot.Scale>;
+    scaleY?: Partial<uPlot.Scale>;
+    rect?: jest.Mock;
+  } = {}
+) {
+  const rect = config.rect ?? jest.fn();
+  const scaleX: uPlot.Scale = { distr: 1, min: 0, max: 2000, log: 2, ...config.scaleX };
+  const scaleY: uPlot.Scale = { distr: 1, min: 0, max: 2, log: 2, ...config.scaleY };
+  const valToPos = (v: number) => v;
+
+  return (u: uPlot, seriesIdx: number, drawCallback: (...args: unknown[]) => void) => {
+    drawCallback(
+      {},
+      data[0],
+      data[1],
+      scaleX,
+      scaleY,
+      valToPos,
+      valToPos,
+      0,
+      0,
+      100,
+      100,
+      jest.fn(),
+      jest.fn(),
+      rect,
+      jest.fn()
+    );
+  };
+}
+
+/**
  * Extracts the y-axis splits and values callbacks from a prepConfig builder (ordinal y-axis only).
  */
 function getYAxisSplitsAndValues(builder: UPlotConfigBuilder): {
@@ -913,7 +951,7 @@ describe('heatmapPathsDense', () => {
      * Dense heatmap data: 2 columns x 3 rows.
      * xs: [1000, 1000, 1000, 2000, 2000, 2000], ys: [0, 1, 2, 0, 1, 2], counts: [5, 10, 15, 10, 20, 25]
      */
-    const denseHeatmapData: [number[], number[], number[]] = [
+    const denseHeatmapData: number[][] = [
       [1000, 1000, 1000, 2000, 2000, 2000],
       [0, 1, 2, 0, 1, 2],
       [5, 10, 15, 10, 20, 25],
@@ -926,50 +964,40 @@ describe('heatmapPathsDense', () => {
     function invokeDensePathBuilder(
       opts: Parameters<typeof heatmapPathsDense>[0],
       overrides?: {
+        data?: Array<Array<number | null>>;
         scaleXDistr?: number;
         scaleYDistr?: number;
         scaleYLog?: 10 | 2;
+        ctx?: {
+          save: jest.Mock;
+          restore: jest.Mock;
+          rect: jest.Mock;
+          clip: jest.Mock;
+          fillStyle: string;
+          fill: jest.Mock;
+        };
       }
-    ): { rect: jest.Mock; each: jest.Mock } {
+    ): { rect: jest.Mock; each: jest.Mock; ctx?: unknown } {
       const rect = jest.fn();
       const each = jest.fn();
+      const data = overrides?.data ?? denseHeatmapData;
       const pathBuilder = heatmapPathsDense({ ...opts, each });
-      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
-        const scaleX: uPlot.Scale = {
-          distr: overrides?.scaleXDistr ?? 1,
-          log: 2,
-          min: 0,
-          max: 2000,
-        };
-        const scaleY: uPlot.Scale = {
-          distr: overrides?.scaleYDistr ?? 1,
-          log: overrides?.scaleYLog ?? 2,
-          min: 0,
-          max: 2,
-        };
-        const valToPos = (v: number) => (v / 100) * 100;
-        drawCallback(
-          {},
-          denseHeatmapData[0],
-          denseHeatmapData[1],
-          scaleX,
-          scaleY,
-          valToPos,
-          valToPos,
-          0,
-          0,
-          100,
-          100,
-          jest.fn(),
-          jest.fn(),
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+        createOrientMock(data, {
+          scaleX: overrides?.scaleXDistr != null ? { distr: overrides.scaleXDistr } : undefined,
+          scaleY:
+            overrides?.scaleYDistr != null || overrides?.scaleYLog != null
+              ? {
+                  ...(overrides.scaleYDistr != null && { distr: overrides.scaleYDistr }),
+                  ...(overrides.scaleYLog != null && { log: overrides.scaleYLog }),
+                }
+              : undefined,
           rect,
-          jest.fn(),
-          jest.fn()
-        );
-      });
+        })
+      );
       const mockU = {
-        data: { 1: denseHeatmapData },
-        ctx: {
+        data: { 1: data },
+        ctx: overrides?.ctx ?? {
           save: jest.fn(),
           restore: jest.fn(),
           rect: jest.fn(),
@@ -981,7 +1009,7 @@ describe('heatmapPathsDense', () => {
       } as unknown as uPlot;
       pathBuilder(mockU, 1);
       orientSpy.mockRestore();
-      return { rect, each };
+      return overrides?.ctx ? { rect, each, ctx: overrides.ctx } : { rect, each };
     }
 
     beforeEach(() => {
@@ -1101,55 +1129,18 @@ describe('heatmapPathsDense', () => {
         [0, 1, 0, 1],
         [5, null, 10, 20],
       ];
-      const rect = jest.fn();
-      const each = jest.fn();
-      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
-        const scaleX = { distr: 1, min: 0, max: 2000 };
-        const scaleY = { distr: 1, min: 0, max: 1 };
-        const valToPos = (v: number) => v;
-        drawCallback(
-          {},
-          dataWithNull[0],
-          dataWithNull[1],
-          scaleX,
-          scaleY,
-          valToPos,
-          valToPos,
-          0,
-          0,
-          100,
-          100,
-          jest.fn(),
-          jest.fn(),
-          rect,
-          jest.fn(),
-          jest.fn()
-        );
-      });
-      const pathBuilder = heatmapPathsDense({
-        ...minimalPathbuilderOpts,
-        each,
-        disp: {
-          fill: {
-            values: () => [0, 0, 1, 2],
-            index: ['#a', '#b', '#c'],
+      const { rect, each } = invokeDensePathBuilder(
+        {
+          ...minimalPathbuilderOpts,
+          disp: {
+            fill: {
+              values: () => [0, 0, 1, 2],
+              index: ['#a', '#b', '#c'],
+            },
           },
         },
-      });
-      const mockU = {
-        data: { 1: dataWithNull },
-        ctx: {
-          save: jest.fn(),
-          restore: jest.fn(),
-          rect: jest.fn(),
-          clip: jest.fn(),
-          fillStyle: '',
-          fill: jest.fn(),
-        },
-        bbox: { left: 0, top: 0, width: 100, height: 100 },
-      } as unknown as uPlot;
-      pathBuilder(mockU, 1);
-      orientSpy.mockRestore();
+        { data: dataWithNull }
+      );
       expect(rect).toHaveBeenCalledTimes(3);
       expect(each).toHaveBeenCalledTimes(3);
     });
@@ -1199,37 +1190,7 @@ describe('heatmapPathsDense', () => {
         fillStyle: '',
         fill: jest.fn(),
       };
-      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
-        const scaleX = { distr: 1, min: 0, max: 2000 };
-        const scaleY = { distr: 1, min: 0, max: 2 };
-        const valToPos = (v: number) => v;
-        drawCallback(
-          {},
-          denseHeatmapData[0],
-          denseHeatmapData[1],
-          scaleX,
-          scaleY,
-          valToPos,
-          valToPos,
-          0,
-          0,
-          100,
-          100,
-          jest.fn(),
-          jest.fn(),
-          jest.fn(),
-          jest.fn(),
-          jest.fn()
-        );
-      });
-      const pathBuilder = heatmapPathsDense(minimalPathbuilderOpts);
-      const mockU = {
-        data: { 1: denseHeatmapData },
-        ctx,
-        bbox: { left: 0, top: 0, width: 100, height: 100 },
-      } as unknown as uPlot;
-      pathBuilder(mockU, 1);
-      orientSpy.mockRestore();
+      invokeDensePathBuilder(minimalPathbuilderOpts, { ctx });
       expect(ctx.save).toHaveBeenCalled();
       expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
       expect(ctx.clip).toHaveBeenCalled();
@@ -1282,6 +1243,189 @@ describe('heatmapPathsSparse', () => {
       hideGE: 100,
     });
     expect(typeof pathBuilder).toBe('function');
+  });
+
+  describe('draws and fills sparse heatmap grid cells', () => {
+    /**
+     * Sparse heatmap data: xMax, yMin, yMax, count per cell.
+     * 4 cells with distinct xMax (100, 200) and y bounds (1-4, 4-16).
+     */
+    const sparseHeatmapData: [number[], number[], number[], number[]] = [
+      [100, 200, 100, 200],
+      [1, 1, 4, 4],
+      [4, 4, 16, 16],
+      [5, 10, 15, 20],
+    ];
+
+    /**
+     * Invokes heatmapPathsSparse path builder by mocking uPlot.orient to capture and run the draw callback.
+     */
+    function invokeSparsePathBuilder(
+      opts: Parameters<typeof heatmapPathsSparse>[0],
+      overrides?: {
+        ctx?: {
+          save: jest.Mock;
+          restore: jest.Mock;
+          rect: jest.Mock;
+          clip: jest.Mock;
+          fillStyle: string;
+          fill: jest.Mock;
+        };
+      }
+    ): { rect: jest.Mock; each: jest.Mock } {
+      const rect = jest.fn();
+      const each = jest.fn();
+      const pathBuilder = heatmapPathsSparse({ ...opts, each });
+      const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+        createOrientMock(sparseHeatmapData, {
+          scaleX: { max: 200 },
+          scaleY: { max: 16 },
+          rect,
+        })
+      );
+      const mockU = {
+        data: { 1: sparseHeatmapData },
+        ctx: overrides?.ctx ?? {
+          save: jest.fn(),
+          restore: jest.fn(),
+          rect: jest.fn(),
+          clip: jest.fn(),
+          fillStyle: '',
+          fill: jest.fn(),
+        },
+        bbox: { left: 0, top: 0, width: 100, height: 100 },
+      } as unknown as uPlot;
+      pathBuilder(mockU, 1);
+      orientSpy.mockRestore();
+      return { rect, each };
+    }
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('draws rect for each visible cell and calls each callback', () => {
+      const { rect, each } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+      expect(each).toHaveBeenCalledTimes(4);
+    });
+
+    it('filters cells by hideLE and hideGE', () => {
+      const { rect, each } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        hideLE: 8,
+        hideGE: 18,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(2);
+      expect(each).toHaveBeenCalledTimes(2);
+    });
+
+    it('uses fillPalette from disp.fill.index when provided', () => {
+      const { rect } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+    });
+
+    it('uses [...new Set(fills)] when disp.fill.index is not provided', () => {
+      const { rect } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 0, 1],
+            // @ts-expect-error testing fallback when index is undefined
+            index: undefined,
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+    });
+
+    it('caches tile bounds in xOffs and yOffs Maps', () => {
+      const { rect } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+      expect(rect).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Number)
+      );
+    });
+
+    it('skips cells when count <= hideLE or count >= hideGE', () => {
+      const { rect } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        hideLE: 20,
+        hideGE: 100,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(0);
+    });
+
+    it('calls ctx.save, rect, clip, fill, restore', () => {
+      const ctx = {
+        save: jest.fn(),
+        restore: jest.fn(),
+        rect: jest.fn(),
+        clip: jest.fn(),
+        fillStyle: '',
+        fill: jest.fn(),
+      };
+      invokeSparsePathBuilder(minimalPathbuilderOpts, { ctx });
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
+      expect(ctx.clip).toHaveBeenCalled();
+      expect(ctx.fill).toHaveBeenCalled();
+      expect(ctx.restore).toHaveBeenCalled();
+    });
+
+    it('uses Math.round for tile bounds when gap >= CRISP_EDGES_GAP_MIN (4)', () => {
+      const { rect } = invokeSparsePathBuilder({
+        ...minimalPathbuilderOpts,
+        gap: 5,
+        disp: {
+          fill: {
+            values: () => [0, 1, 2, 3],
+            index: ['#a', '#b', '#c', '#d'],
+          },
+        },
+      });
+      expect(rect).toHaveBeenCalledTimes(4);
+    });
   });
 });
 
