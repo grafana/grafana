@@ -212,7 +212,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Identity: cfg.GetName(),
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
-		Path:     folder.Path,
+		Path: folder.Path,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {

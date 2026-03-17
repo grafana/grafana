@@ -174,7 +174,7 @@ func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path
 	if !folderMetadataEnabled {
 		return f, nil
 	}
-	
+
 	meta, err := ReadFolderMetadata(ctx, reader, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
