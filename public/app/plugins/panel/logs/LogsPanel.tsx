@@ -136,6 +136,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Requires the `otelLogsFormatting`.
    * @alpha
    * showLogAttributes?: boolean
+   *
+   * Custom Prism grammar definition for highlighting. When used, the .prism-syntax-highlight CSS class name is applied to the component, to allow standard token colors to be applied.
+   * grammar?: Grammar
    */
 }
 const noCommonLabels: Labels = {};
