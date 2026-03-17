@@ -87,6 +87,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
+| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |

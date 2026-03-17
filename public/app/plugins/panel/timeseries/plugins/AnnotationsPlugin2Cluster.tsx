@@ -129,9 +129,10 @@ export const AnnotationsPlugin2Cluster = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      // @todo Add panel options https://github.com/grafana/grafana/issues/119763
-      const shouldRenderRegion = !options?.multiLane;
-      const shouldRenderLine = !options?.multiLane;
+      const regionOpacity = options?.regions?.opacity;
+      const lineWidth = options?.lines?.width;
+      const shouldRenderRegion = (regionOpacity !== undefined ? regionOpacity > 0 : undefined) ?? !options?.multiLane;
+      const shouldRenderLine = (lineWidth !== undefined ? lineWidth > 0 : undefined) ?? !options?.multiLane;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
       xAnnos.forEach((frame) => {
@@ -142,7 +143,7 @@ export const AnnotationsPlugin2Cluster = ({
           const y0 = u.bbox.top;
           const y1 = y0 + u.bbox.height;
 
-          ctx.lineWidth = 2;
+          ctx.lineWidth = lineWidth ?? 2;
           ctx.setLineDash([5, 5]);
 
           // Render region
@@ -166,7 +167,7 @@ export const AnnotationsPlugin2Cluster = ({
                 renderLine(ctx, y0, y1, x1, color);
 
                 if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+                  ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
                   ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
                 }
               }
@@ -210,7 +211,15 @@ export const AnnotationsPlugin2Cluster = ({
 
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, options?.multiLane, options?.clustering]);
+  }, [
+    config,
+    canvasRegionRendering,
+    getColorByName,
+    options?.multiLane,
+    options?.clustering,
+    options?.lines?.width,
+    options?.regions?.opacity,
+  ]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {

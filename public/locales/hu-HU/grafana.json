@@ -2349,6 +2349,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6745,6 +6746,9 @@
       "tooltip-move-link-up": "Hivatkozás felfelé mozgatása",
       "type": "Típus"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
@@ -7024,6 +7028,13 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Felügyeli: Kubectl",
@@ -7381,6 +7392,13 @@
       "page-nav": {
         "text": {
           "settings": "Beállítások"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12786,6 +12804,7 @@
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Hiba történt az adattárhoz való kapcsolódás során. Ellenőrizze az adattár beállításait, és próbálkozzon újra.",
       "error-repository-status-unhealthy-title": "Az adattár állapota nem megfelelő",
@@ -12795,6 +12814,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
       "unmanaged-resources-label": "Nem felügyelt erőforrások",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
@@ -12847,7 +12867,8 @@
     "connect-repository-button": {
       "configure": "Konfigurálás",
       "instance-fully-managed-tooltip": "A konfiguráció le van tiltva, mert ez a példány teljesen felügyelt",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13072,7 @@
       "token-label": "Hozzáférési token",
       "token-required": "A Git-token megadása kötelező",
       "token-user-description": "A hozzáférési tokennel az adattár eléréséhez használt felhasználónév",
-      "url-description": "A Git-adattár URL-címe",
+      "url-description": "",
       "url-pattern": "Érvényes Git adattári URL-nek kell lennie",
       "url-required": "Az adattár URL-címének megadása kötelező"
     },
@@ -13177,23 +13198,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "read-only-remote-tooltip": "Ez az erőforrás írásvédett, és Giten keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",

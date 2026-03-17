@@ -2335,6 +2335,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6708,6 +6709,9 @@
       "tooltip-move-link-up": "上移链接",
       "type": "类型"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "加载数据面板时出错"
     },
@@ -6986,6 +6990,11 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "管理者：Kubectl",
@@ -7342,6 +7351,13 @@
       "page-nav": {
         "text": {
           "settings": "设置"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12720,6 +12736,7 @@
       "empty": "空",
       "error-field-required": "此字段是必填字段。",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "连接到存储库时出现问题。请检查存储库设置，然后重试。",
       "error-repository-status-unhealthy-title": "存储库状态不健康",
@@ -12729,6 +12746,7 @@
       "retry-action": "",
       "text-loading-resource-information": "正在加载资源信息...",
       "unmanaged-resources-label": "非托管资源",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 个数据面板",
       "files-count_other": "{{count}} 个文件",
@@ -12778,7 +12796,8 @@
     "connect-repository-button": {
       "configure": "配置",
       "instance-fully-managed-tooltip": "配置已禁用，因为此实例已完全托管",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12979,7 +12998,7 @@
       "token-label": "访问令牌",
       "token-required": "Git 令牌为必填项",
       "token-user-description": "将用于使用访问令牌访问存储库的用户名",
-      "url-description": "Git 存储库 URL",
+      "url-description": "",
       "url-pattern": "必须是有效的 Git 存储库 URL",
       "url-required": "存储库 URL 为必填项"
     },
@@ -13105,15 +13124,17 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_other": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_other": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_other": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_other": "",
+      "message-resource_other": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",

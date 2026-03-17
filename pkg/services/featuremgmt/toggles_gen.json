@@ -512,6 +512,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryDetail",
+        "resourceVersion": "1773693012438",
+        "creationTimestamp": "2026-03-16T20:30:12Z"
+      },
+      "spec": {
+        "description": "Enables the notification history detail page",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistoryGlobal",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1306,6 +1320,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardAssistantPopover",
+        "resourceVersion": "1773181791824",
+        "creationTimestamp": "2026-03-10T22:29:51Z"
+      },
+      "spec": {
+        "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2452,12 +2480,15 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1773696968793",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
+        "deletionTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-16 21:36:08.79386 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesAndRoleBindingsRedirect instead",
         "stage": "deprecated",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2482,7 +2513,8 @@
       "metadata": {
         "name": "kubernetesAuthZRoleBindingsRedirect",
         "resourceVersion": "1772825568777",
-        "creationTimestamp": "2026-03-06T19:32:48Z"
+        "creationTimestamp": "2026-03-06T19:32:48Z",
+        "deletionTimestamp": "2026-03-16T21:36:08Z"
       },
       "spec": {
         "description": "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
@@ -2494,9 +2526,25 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZRolesAndRoleBindingsRedirect",
+        "resourceVersion": "1773696968793",
+        "creationTimestamp": "2026-03-16T21:36:08Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZRolesRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-16T21:36:08Z"
       },
       "spec": {
         "description": "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
@@ -2510,7 +2558,8 @@
       "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-25T15:05:32Z"
+        "creationTimestamp": "2025-07-25T15:05:32Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
       },
       "spec": {
         "description": "Enables create, delete, and update mutations for resources owned by IAM identity",
@@ -2524,7 +2573,8 @@
       "metadata": {
         "name": "kubernetesAuthzApis",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-06-18T07:43:01Z"
+        "creationTimestamp": "2025-06-18T07:43:01Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
       },
       "spec": {
         "description": "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
@@ -2586,6 +2636,20 @@
       },
       "spec": {
         "description": "Registers AuthZ Role Bindings /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRolesAndRoleBindingsRedirect",
+        "resourceVersion": "1773697166517",
+        "creationTimestamp": "2026-03-16T21:39:26Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2839,6 +2903,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesSsoSettingsApi",
+        "resourceVersion": "1773664314259",
+        "creationTimestamp": "2026-03-16T12:31:54Z"
+      },
+      "spec": {
+        "description": "Enables SSO settings APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesStars",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -2886,6 +2964,7 @@
         "name": "kubernetesTeamService",
         "resourceVersion": "1773147086908",
         "creationTimestamp": "2026-03-06T08:45:27Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-10 12:51:26.908818 +0000 UTC"
         }
@@ -2930,7 +3009,22 @@
       "metadata": {
         "name": "kubernetesTeamsHandlerRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z"
+      },
+      "spec": {
+        "description": "Redirects the request of the team endpoints to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsRedirect",
+        "resourceVersion": "1773677806097",
+        "creationTimestamp": "2026-03-16T16:16:46Z"
       },
       "spec": {
         "description": "Redirects the request of the team endpoints to the app platform APIs",
@@ -2962,6 +3056,20 @@
       },
       "spec": {
         "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesUsersRedirect",
+        "resourceVersion": "1773676176614",
+        "creationTimestamp": "2026-03-16T15:49:36Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the user service to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -3357,6 +3465,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "newSavedQueriesExperience",
+        "resourceVersion": "1773689097406",
+        "creationTimestamp": "2026-03-16T19:24:57Z"
+      },
+      "spec": {
+        "description": "Enables the new Saved queries (query library) modal experience",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -4500,6 +4622,19 @@
       },
       "spec": {
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamLBACApiReadFromAppPlatform",
+        "resourceVersion": "1773679095440",
+        "creationTimestamp": "2026-03-16T16:38:15Z"
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
