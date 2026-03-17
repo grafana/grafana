@@ -275,7 +275,7 @@
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "6.0.0-beta"
+    "typescript": "6.0.1-rc"
   },
   "dependencies": {
     "tslib": "2.8.1"
