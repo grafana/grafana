@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// FullSync computes and applies the diff between a repository state and Grafana, honoring ordering, quotas,
+// and folder metadata. It orchestrates compare, quota check, and phased application of deletions and creations.
 func FullSync(
 	ctx context.Context,
 	repo repository.Reader,
@@ -138,6 +140,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 	return false
 }
 
+// applyChange applies a single resource or folder change, handling delete/create/update and recording progress.
 func applyChange(
 	ctx context.Context,
 	change ResourceFileChange,
@@ -248,7 +251,7 @@ func applyChange(
 	writeSpan.End()
 }
 
-// instrument a function with a phase and metrics
+// instrumentedFullSyncPhase records timing metrics around a full-sync phase.
 func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metrics jobs.JobMetrics) error {
 	phaseStart := time.Now()
 	err := fn()
@@ -256,6 +259,13 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
+// applyChanges orders and executes the diff:
+// - deletions first (files then folders),
+// - then folder creations,
+// - then file creations.
+// It delegates to:
+// - serial folder handling,
+// - parallel resource handling with per-change timeouts.
 func applyChanges(
 	ctx context.Context,
 	changes []ResourceFileChange,
@@ -346,6 +356,7 @@ func applyChanges(
 	return nil
 }
 
+// applyFoldersSerially processes folder changes one by one.
 func applyFoldersSerially(
 	ctx context.Context,
 	folders []ResourceFileChange,
@@ -373,6 +384,8 @@ func applyFoldersSerially(
 	return nil
 }
 
+// applyResourcesInParallel applies non-folder changes concurrently up to maxSyncWorkers.
+// Folder changes are handled serially, this is for files.
 func applyResourcesInParallel(
 	ctx context.Context,
 	resources []ResourceFileChange,
@@ -427,7 +440,7 @@ loop:
 	return ctx.Err()
 }
 
-// wrapWithTimeout wraps a function call with a timeout context
+// wrapWithTimeout runs fn with a derived context that times out after the given duration.
 func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
