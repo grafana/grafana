@@ -911,11 +911,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		apiClient.CreateFolder(t, "default", "default")
 
 		// Post the alertmanager config.
-		cfg := apimodels.PostableUserConfig{}
-		err := json.Unmarshal([]byte(amConfig), &cfg)
-		require.NoError(t, err)
-
-		saveAndApplyAlertmanagerConfiguration(t, env, 1, cfg)
+		saveAndApplyAlertmanagerConfiguration(t, env, 1, amConfig)
 
 		// Verifying that all the receivers and routes have been registered.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -931,7 +927,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		b = getBody(t, resp.Body)
 
 		var receivers []alertingModels.ReceiverStatus
-		err = json.Unmarshal([]byte(b), &receivers)
+		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
 			require.NotNil(t, rcv.Name)
@@ -2800,9 +2796,14 @@ var expInactiveReceivers = map[string]struct{}{
 }
 
 // Drop-in replacement for removed api.
-func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, org int64, config apimodels.PostableUserConfig) {
+func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, org int64, rawConfig string) {
 	t.Helper()
-	err := env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.ProcessSecureSettings(context.Background(), org, config.AlertmanagerConfig.Receivers, nil)
+
+	config := apimodels.PostableUserConfig{}
+	err := json.Unmarshal([]byte(rawConfig), &config)
+	require.NoError(t, err)
+
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.ProcessSecureSettings(context.Background(), org, config.AlertmanagerConfig.Receivers, nil)
 	require.NoError(t, err)
 
 	cfgToSave, err := json.Marshal(&config)

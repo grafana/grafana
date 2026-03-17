@@ -1,13 +1,11 @@
 package alerting
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -54,13 +52,7 @@ func TestIntegrationAlertmanagerExtraConfigMerging(t *testing.T) {
 			}
 		}`
 
-		err := env.Server.HTTPServer.AlertNG.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: baseConfigJSON,
-			ConfigurationVersion:      "v1",
-			Default:                   false,
-			OrgID:                     1,
-		})
-		require.NoError(t, err)
+		saveAndApplyAlertmanagerConfiguration(t, env, 1, baseConfigJSON)
 
 		//now add extra configuration
 		extraHeaders := map[string]string{
