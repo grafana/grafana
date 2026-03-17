@@ -15,9 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
-// maxBatchCheckItems is the typical server limit for a single BatchCheck request.
-const maxBatchCheckItems = 50
-
 // TODO: Logs, Metrics, Traces?
 
 // ParentProvider interface for fetching parent information of resources
@@ -106,6 +103,10 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 		}
 		targetGR := schema.GroupResource{Group: apiGroup, Resource: resource}
 		parent := ""
+
+		// Fetch the parent of the resource
+		// It's not efficient to do for every item in the list, but it's a good starting point.
+		// Access Policies have global scope, so no parent check needed
 		if !accessPolicy && r.parentProvider.HasParent(targetGR) {
 			var err error
 			parent, err = r.parentProvider.GetParent(ctx, targetGR, ns, name)
@@ -126,8 +127,8 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 	}
 
 	allowed := make([]bool, n)
-	for start := 0; start < len(checks); start += maxBatchCheckItems {
-		end := start + maxBatchCheckItems
+	for start := 0; start < len(checks); start += types.MaxBatchCheckItems {
+		end := start + types.MaxBatchCheckItems
 		if end > len(checks) {
 			end = len(checks)
 		}
