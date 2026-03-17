@@ -62,6 +62,7 @@ composableKinds: PanelCfg: {
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
 					setDisplayedFields?:     _
+					grammar?: 			     _
 				} @cuetsy(kind="interface")
 			}
 		}]

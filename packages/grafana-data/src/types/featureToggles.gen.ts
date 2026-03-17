@@ -409,6 +409,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -1554,7 +1559,7 @@ export interface FeatureToggles {
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
@@ -1591,15 +1596,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
-  * Use the new team service that uses the app platform APIs
+  * Redirects the requests of the user service to the app platform APIs
   * @default false
   */
-  kubernetesTeamService?: boolean;
+  kubernetesUsersRedirect?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
+  * @default false
+  */
+  alertingPolicyRoutingSettings?: boolean;
   /**
   * Registers an API server for each backend app plugin exposing a settings endpoint
   * @default false
@@ -1625,6 +1635,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryTriage?: boolean;
+  /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false
