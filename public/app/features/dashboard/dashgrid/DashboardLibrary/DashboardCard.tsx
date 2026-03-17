@@ -273,11 +273,12 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.strong}`,
       borderRadius: theme.shape.radius.default,
       overflow: 'hidden',
-      gridGap: theme.spacing(1),
+      gridGap: 0,
       padding: theme.spacing(1),
     }),
     thumbnailContainer: css({
       gridArea: 'Thumbnail',
+      marginBottom: theme.spacing(1),
       overflow: 'hidden',
       display: 'flex',
       alignItems: 'center',
@@ -308,6 +309,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     logoContainer: css({
       gridArea: 'Thumbnail',
+      marginBottom: theme.spacing(1),
       overflow: 'hidden',
       display: 'flex',
       alignItems: 'center',
@@ -337,8 +339,8 @@ function getStyles(theme: GrafanaTheme2) {
       gridArea: 'Bottom',
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(0.5),
       wordBreak: 'break-word',
+      paddingTop: '2px',
     }),
     title: css({
       display: '-webkit-box',
@@ -362,16 +364,19 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     description: css({
       display: '-webkit-box',
-      WebkitLineClamp: 2,
+      WebkitLineClamp: 1,
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       margin: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
     actionsContainer: css({
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'nowrap',
+      marginTop: 'auto',
+      paddingTop: theme.spacing(1),
     }),
     detailsContainer: css({
       width: '340px',
@@ -396,13 +401,43 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-const DashboardCardSkeleton: SkeletonComponent = ({ rootProps }) => {
+interface DashboardCardSkeletonProps {
+  showCompatibilityBadge?: boolean;
+}
+
+const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
+  rootProps,
+  showCompatibilityBadge,
+}) => {
   const styles = useStyles2(getSkeletonStyles);
-  return <Skeleton width={350} height={300} containerClassName={styles.container} {...rootProps} />;
+  return (
+    <div className={styles.card} style={rootProps.style}>
+      <Skeleton containerClassName={styles.thumbnail} height="100%" />
+      <Skeleton height={22} width="70%" />
+      <Skeleton height={19} width="90%" />
+      {showCompatibilityBadge && <Skeleton height={33} width={100} />}
+    </div>
+  );
 };
 
-const getSkeletonStyles = () => ({
-  container: css({
+const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    width: '350px',
+    border: `1px solid ${theme.colors.border.strong}`,
+    borderRadius: theme.shape.radius.default,
+    overflow: 'hidden',
+    padding: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.75),
+    lineHeight: 1,
+  }),
+  thumbnail: css({
+    display: 'block',
+    width: '100%',
+    aspectRatio: '16/9',
+    borderRadius: theme.shape.radius.default,
+    overflow: 'hidden',
     lineHeight: 1,
   }),
 });
