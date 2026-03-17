@@ -154,3 +154,18 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
 - All standard build/test/lint commands are documented in the Commands section above.
+
+### Static analysis
+
+- check generated code against the appropriate static analysis tools (for example, generate JavaScript and TypeScript should pass type checks as well as ESLint and Prettier), and attempt to remediate issues automatically.
+- always confirm with the user before adding exceptions to static analysis (like inline ESLint or TS ignore comments).
+
+#### Frontend static analysis advice
+
+- for ESLint specifically, there is an `eslint-suppressions.json` file which contains ESLint excpetions per file. This file can be regenerated from ESLint using `yarn lint:ts --suppress-all`.
+- the rule for whether an ESLint exception should be added to the suppressions file or inlined is:
+  - if we intend to fix the exception eventually, it should be in `eslint-suppressions.json`
+  - if we do not intend to fix it, then it should be an inline comment.
+- if the user is asking to add new static analysis rules, always consider:
+  - whether a currently installed ESLint plugin has a rule that satisfies the request, rather than creating a new custom rule
+  - whether TypeScript types could enforce the requested rule. we should prefer good TypeScript types over ESLint rules in general.
