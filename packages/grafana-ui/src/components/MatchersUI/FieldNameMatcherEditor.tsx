@@ -15,7 +15,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const selectOptions = useMatcherSelectOptions(names, options, { scope });
 
   const onChange = useCallback(
-    (selection: ComboboxOption<string>) => {
+    (selection: ComboboxOption) => {
       if (!frameHasName(selection.value, names)) {
         return;
       }
