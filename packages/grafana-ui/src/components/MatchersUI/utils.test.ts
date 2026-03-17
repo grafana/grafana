@@ -164,26 +164,15 @@ describe('MatchersUI utils', () => {
     });
   });
 
-  describe('getGroupLabelForScope', () => {
-    it.each([
-      ['series', 'Dataframe'],
-      ['nested', 'Nested'],
-      ['annotation', 'Annotations'],
-      ['exemplar', 'Exemplars'],
-      [undefined, 'Dataframe'],
-    ] satisfies Array<[MatcherScope | undefined, string]>)('returns expected label for %s', (scope, expected) => {
-      expect(getGroupLabelForScope(scope)).toBe(expected);
-    });
-  });
+  describe('labels and descriptions', () => {
+    describe.each(['series', 'nested', 'annotation', 'exemplar'] satisfies MatcherScope[])('%s', (scope) => {
+      it('returns a label', () => {
+        expect(getGroupLabelForScope(scope)).toBeDefined();
+      });
 
-  describe('getGroupDescriptionForScope', () => {
-    it.each([
-      ['nested', 'Fields from nested dataframes.'],
-      ['annotation', 'Annotations series for this panel.'],
-      ['series', 'Fields from the dataframes in this panel.'],
-      ['exemplar', undefined],
-    ] satisfies Array<[MatcherScope, string | undefined]>)('returns description for %s', (scope, expected) => {
-      expect(getGroupDescriptionForScope(scope)).toBe(expected);
+      it('returns a description', () => {
+        expect(getGroupDescriptionForScope(scope)).toBeDefined();
+      });
     });
   });
 

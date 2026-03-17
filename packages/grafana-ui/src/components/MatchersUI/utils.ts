@@ -126,14 +126,29 @@ export function useFieldDisplayNames(
 }
 
 interface UseMatcherSelectOptionsProps {
+  /**
+   * An additional first option to add to the beginning of the list. This is useful for an "All" option, for example.
+   */
   firstItem?: ComboboxOption;
+  /**
+   * if set, filter the options by field type.
+   */
   fieldType?: string;
+  /**
+   * this controls whether and how entries are added to the combobox fo the base field name of a field with a display name.
+   */
   baseNameMode?: FieldNamePickerBaseNameMode;
+  /**
+   * if set, filter the options by matcher scope.
+   */
   scope?: MatcherScope;
 }
 
 /**
  * @internal
+ * given the FrameFieldsDisplayNames object other configuration options, this builds the options for the combobox, grouped by matcher scope.
+ * this is intended to be used by consumers of the MatchersUI, like FieldNamePicker and FieldTypeMatcherEditor. There are optional configuration
+ * options to augment and control the contents of the list.
  */
 export function useMatcherSelectOptions(
   displayNames: FrameFieldsDisplayNames,

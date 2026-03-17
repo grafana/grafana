@@ -18,7 +18,8 @@ export function buildScopeOptions(
   allowedScopes: MatcherScope[] = Array.from(providedUniqScopes)
 ): Array<SelectableValue<MatcherScope>> {
   const uniqScopes = new Set(providedUniqScopes);
-  uniqScopes.delete('series');
+
+  // we remove series from the list to then add it at the beginning of the returned options.
   if (allowedScopes) {
     uniqScopes.forEach((scope) => {
       if (!allowedScopes.includes(scope)) {
@@ -26,11 +27,12 @@ export function buildScopeOptions(
       }
     });
   }
-  const scopeNotFound = currentScope && currentScope !== 'series' && !uniqScopes.has(currentScope);
+  const scopeNotFound = currentScope && !uniqScopes.has(currentScope);
   if (scopeNotFound) {
     uniqScopes.add(currentScope);
   }
 
+  // always add series at the beginning of the list
   const arr: Array<SelectableValue<MatcherScope>> = [
     {
       label: getGroupLabelForScope('series'),
@@ -40,6 +42,9 @@ export function buildScopeOptions(
   ];
 
   for (const scope of uniqScopes) {
+    if (scope === 'series') {
+      continue;
+    }
     arr.push({
       label: getGroupLabelForScope(scope),
       description: getGroupDescriptionForScope(scope),
@@ -50,7 +55,7 @@ export function buildScopeOptions(
   return arr;
 }
 
-function useScopesOptions(
+function useMatcherScopesOptions(
   providedUniqScopes: Set<MatcherScope>,
   currentScope?: MatcherScope,
   allowedScopes: MatcherScope[] = Array.from(providedUniqScopes)
@@ -62,7 +67,7 @@ function useScopesOptions(
 }
 
 export function MatcherScopeSelector({ value, scopes, allowedScopes, ...rest }: MatcherScopeSelectorProps) {
-  const options = useScopesOptions(scopes, value, allowedScopes);
+  const options = useMatcherScopesOptions(scopes, value, allowedScopes);
   return <RadioButtonGroup {...rest} options={options} value={value ?? options[0]?.value} />;
 }
 
