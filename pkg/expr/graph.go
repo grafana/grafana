@@ -295,6 +295,110 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 	return res
 }
 
+// nodeResult holds the result of building a single pipeline node.
+type nodeResult struct {
+	Node    Node        // nil if building failed
+	CmdType CommandType // set for CMDNode (zero value TypeUnknown for other node types)
+	Err     error       // non-nil if building failed
+}
+
+// makeRawNode creates a rawNode from a Query, handling JSON marshal/unmarshal.
+func makeRawNode(query Query, idx int64) (*rawNode, error) {
+	rawQueryProp := make(map[string]any)
+	queryBytes, err := query.JSON.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(queryBytes, &rawQueryProp)
+	if err != nil {
+		return nil, err
+	}
+	return &rawNode{
+		Query:      rawQueryProp,
+		QueryRaw:   query.JSON,
+		RefID:      query.RefID,
+		TimeRange:  query.TimeRange,
+		QueryType:  query.QueryType,
+		DataSource: query.DataSource,
+		idx:        idx,
+	}, nil
+}
+
+// buildNode builds a single pipeline node from a raw query definition.
+// It uses concrete typed returns internally to avoid the Go nil interface gotcha
+// where a nil *CMDNode assigned to a Node interface appears non-nil.
+func (s *Service) buildNode(ctx context.Context, dp *simple.DirectedGraph, rn *rawNode, req *Request) nodeResult {
+	var node Node
+	var cmdType CommandType
+	var err error
+
+	switch NodeTypeFromDatasourceUID(rn.DataSource.UID) {
+	case TypeDatasourceNode:
+		var dsNode *DSNode
+		dsNode, err = s.buildDSNode(dp, rn, req)
+		if dsNode != nil {
+			node = dsNode
+		}
+	case TypeCMDNode:
+		var cmdNode *CMDNode
+		cmdNode, err = buildCMDNode(ctx, rn, s.features, s.cfg)
+		if cmdNode != nil {
+			node = cmdNode
+			cmdType = cmdNode.CMDType
+		}
+	case TypeMLNode:
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
+			node, err = s.buildMLNode(dp, rn, req)
+			if err != nil {
+				err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
+			}
+		}
+	}
+
+	if node == nil && err == nil {
+		err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(rn.DataSource.UID))
+	}
+
+	return nodeResult{Node: node, CmdType: cmdType, Err: err}
+}
+
+// validateEdgeConstraints checks if an edge from neededNode to cmdNode satisfies
+// all expression graph constraints. Returns an error if a constraint is violated.
+func validateEdgeConstraints(cmdNode *CMDNode, neededNode Node, neededVar string) error {
+	// SQL expressions can only take datasource query inputs
+	if _, ok := cmdNode.Command.(*SQLCommand); ok {
+		if _, ok := neededNode.(*DSNode); !ok {
+			return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+		}
+	}
+
+	// Self-reference check
+	if neededNode.ID() == cmdNode.ID() {
+		return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
+	}
+
+	// Classic conditions can only take datasource inputs
+	if cmdNode.CMDType == TypeClassicConditions {
+		if neededNode.NodeType() != TypeDatasourceNode {
+			return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
+		}
+	}
+
+	// Classic conditions and SQL cannot be inputs to other expressions
+	if neededNode.NodeType() == TypeCMDNode {
+		depCMD := neededNode.(*CMDNode)
+		if depCMD.CMDType == TypeClassicConditions {
+			return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+		}
+		if depCMD.CMDType == TypeSQL {
+			return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
+		}
+	}
+
+	return nil
+}
+
 // buildGraph creates a new graph populated with nodes for every query.
 func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
@@ -304,53 +408,17 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
 
-		rawQueryProp := make(map[string]any)
-		queryBytes, err := query.JSON.MarshalJSON()
-
+		rn, err := makeRawNode(query, int64(i))
 		if err != nil {
 			return nil, err
 		}
 
-		err = json.Unmarshal(queryBytes, &rawQueryProp)
-		if err != nil {
-			return nil, err
+		result := s.buildNode(ctx, dp, rn, req)
+		if result.Err != nil {
+			return nil, result.Err
 		}
 
-		rn := &rawNode{
-			Query:      rawQueryProp,
-			QueryRaw:   query.JSON,
-			RefID:      query.RefID,
-			TimeRange:  query.TimeRange,
-			QueryType:  query.QueryType,
-			DataSource: query.DataSource,
-			idx:        int64(i),
-		}
-
-		var node Node
-		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
-		case TypeDatasourceNode:
-			node, err = s.buildDSNode(dp, rn, req)
-		case TypeCMDNode:
-			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
-		case TypeMLNode:
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
-				node, err = s.buildMLNode(dp, rn, req)
-				if err != nil {
-					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
-				}
-			}
-		}
-
-		if node == nil && err == nil {
-			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		dp.AddNode(node)
+		dp.AddNode(result.Node)
 	}
 	return dp, nil
 }
@@ -383,36 +451,14 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
-			// If the input is SQL, conversion is handled differently
+			if err := validateEdgeConstraints(cmdNode, neededNode, neededVar); err != nil {
+				return err
+			}
+
+			// Mark DSNode as input to SQL expression for conversion handling
 			if _, ok := cmdNode.Command.(*SQLCommand); ok {
 				if dsNode, ok := neededNode.(*DSNode); ok {
 					dsNode.isInputToSQLExpr = true
-				} else {
-					// Only allow data source nodes as SQL expression inputs for now
-					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
-				}
-			}
-
-			if neededNode.ID() == cmdNode.ID() {
-				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
-			}
-
-			if cmdNode.CMDType == TypeClassicConditions {
-				if neededNode.NodeType() != TypeDatasourceNode {
-					return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
-				}
-			}
-
-			if neededNode.NodeType() == TypeCMDNode {
-				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
-					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
-				}
-			}
-
-			if neededNode.NodeType() == TypeCMDNode {
-				if neededNode.(*CMDNode).CMDType == TypeSQL {
-					// Do not allow SQL expressions to be inputs for other expressions for now
-					return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
 				}
 			}
 

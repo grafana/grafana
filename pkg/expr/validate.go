@@ -2,7 +2,6 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -10,13 +9,14 @@ import (
 	"gonum.org/v1/gonum/graph/topo"
 
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // ValidatePipeline validates the expression pipeline without executing it.
-// It attempts to build all nodes and edges, collecting per-node errors instead
-// of aborting on the first failure. This is intended for the authoring/editing
-// experience so the frontend can show per-node validation errors.
+// It reuses the same node-building (buildNode) and edge-validation
+// (validateEdgeConstraints) logic as the execution path, but collects
+// per-node errors instead of aborting on the first failure.
+// This is intended for the authoring/editing experience so the frontend
+// can show per-node validation errors.
 func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.PipelineValidation, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
@@ -38,35 +38,14 @@ func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.
 			continue
 		}
 
-		rawQueryProp := make(map[string]any)
-		queryBytes, err := query.JSON.MarshalJSON()
+		rn, err := makeRawNode(query, int64(i))
 		if err != nil {
 			nodeValidations = append(nodeValidations, queryV0.NodeValidation{
 				RefID: query.RefID,
-				Error: fmt.Sprintf("failed to marshal query JSON: %v", err),
+				Error: fmt.Sprintf("failed to process query JSON: %v", err),
 			})
 			isValid = false
 			continue
-		}
-
-		err = json.Unmarshal(queryBytes, &rawQueryProp)
-		if err != nil {
-			nodeValidations = append(nodeValidations, queryV0.NodeValidation{
-				RefID: query.RefID,
-				Error: fmt.Sprintf("failed to unmarshal query JSON: %v", err),
-			})
-			isValid = false
-			continue
-		}
-
-		rn := &rawNode{
-			Query:      rawQueryProp,
-			QueryRaw:   query.JSON,
-			RefID:      query.RefID,
-			TimeRange:  query.TimeRange,
-			QueryType:  query.QueryType,
-			DataSource: query.DataSource,
-			idx:        int64(i),
 		}
 
 		nv := queryV0.NodeValidation{
@@ -74,49 +53,28 @@ func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.
 			NodeType: NodeTypeFromDatasourceUID(query.DataSource.UID).String(),
 		}
 
-		var node Node
-		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
-		case TypeDatasourceNode:
+		if NodeTypeFromDatasourceUID(query.DataSource.UID) == TypeDatasourceNode {
 			nv.DatasourceUID = query.DataSource.UID
-			dsNode, dsErr := s.buildDSNode(graph, rn, req)
-			if dsNode != nil {
-				node = dsNode
-			}
-			err = dsErr
-		case TypeCMDNode:
-			cmdNode, cmdErr := buildCMDNode(ctx, rn, s.features, s.cfg)
-			if cmdNode != nil {
-				nv.CmdType = cmdNode.CMDType.String()
-				node = cmdNode
-			}
-			err = cmdErr
-		case TypeMLNode:
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
-				mlNode, mlErr := s.buildMLNode(graph, rn, req)
-				if mlNode != nil {
-					node = mlNode
-				}
-				err = mlErr
-			}
 		}
 
-		if node == nil && err == nil {
-			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
+		result := s.buildNode(ctx, graph, rn, req)
+		if result.CmdType != TypeUnknown {
+			nv.CmdType = result.CmdType.String()
 		}
 
-		if err != nil {
-			nv.Error = err.Error()
+		if result.Err != nil {
+			nv.Error = result.Err.Error()
 			isValid = false
 		} else {
-			graph.AddNode(node)
-			validNodes[query.RefID] = node
+			graph.AddNode(result.Node)
+			validNodes[query.RefID] = result.Node
 		}
 
 		nodeValidations = append(nodeValidations, nv)
 	}
 
 	// Phase 2: Build edges for valid nodes, collecting per-node edge errors
+	registry := buildNodeRegistry(graph)
 	nodeIt := graph.Nodes()
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
@@ -126,7 +84,7 @@ func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.
 
 		cmdNode := node.(*CMDNode)
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
-			neededNode, ok := validNodes[neededVar]
+			neededNode, ok := registry[neededVar]
 			if !ok {
 				updateNodeError(&nodeValidations, cmdNode.RefID(),
 					fmt.Sprintf("unable to find dependent node '%v'", neededVar))
@@ -134,46 +92,10 @@ func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.
 				continue
 			}
 
-			// Validate edge compatibility (same checks as buildGraphEdges)
-			if _, isSQLCmd := cmdNode.Command.(*SQLCommand); isSQLCmd {
-				if _, isDSNode := neededNode.(*DSNode); !isDSNode {
-					updateNodeError(&nodeValidations, cmdNode.RefID(),
-						fmt.Sprintf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID()))
-					isValid = false
-					continue
-				}
-			}
-
-			if neededNode.ID() == cmdNode.ID() {
-				updateNodeError(&nodeValidations, cmdNode.RefID(),
-					fmt.Sprintf("expression '%v' cannot reference itself", neededVar))
+			if err := validateEdgeConstraints(cmdNode, neededNode, neededVar); err != nil {
+				updateNodeError(&nodeValidations, cmdNode.RefID(), err.Error())
 				isValid = false
 				continue
-			}
-
-			if cmdNode.CMDType == TypeClassicConditions {
-				if neededNode.NodeType() != TypeDatasourceNode {
-					updateNodeError(&nodeValidations, cmdNode.RefID(),
-						fmt.Sprintf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType()))
-					isValid = false
-					continue
-				}
-			}
-
-			if neededNode.NodeType() == TypeCMDNode {
-				depCMD := neededNode.(*CMDNode)
-				if depCMD.CMDType == TypeClassicConditions {
-					updateNodeError(&nodeValidations, cmdNode.RefID(),
-						fmt.Sprintf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
-					isValid = false
-					continue
-				}
-				if depCMD.CMDType == TypeSQL {
-					updateNodeError(&nodeValidations, cmdNode.RefID(),
-						fmt.Sprintf("sql expressions can not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID()))
-					isValid = false
-					continue
-				}
 			}
 
 			edge := graph.NewEdge(neededNode, cmdNode)
