@@ -157,19 +157,14 @@ You can't have a Grafana user without a basic role assigned. The `None` role con
 
 #### Basic role modification
 
-You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. You can't delete basic roles.
+You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, [the change is not propagated to the other basic roles](#permission-propagation). You can't delete basic roles.
 
-Note that any modification to any of these basic role is not propagated to the other basic roles.
-For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
+You can modify basic roles using the configuration file or with the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions](ref:rbac-role-definitions-basic-role-assignments).
-To interact with the API and view or modify basic roles permissions, refer to [the table](ref:rbac-basic-role-uid-mapping) that maps basic role names to the associated UID.
+Note that:
 
-{{< admonition type="note" >}}
-You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
-{{< /admonition >}}
-
-For Cloud customers, contact Support to reset roles.
+- You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
+- If you're a Cloud customer, contact Support to reset roles.
 
 ### Fixed roles
 
