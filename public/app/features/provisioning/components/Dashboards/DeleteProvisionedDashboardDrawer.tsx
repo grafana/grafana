@@ -1,8 +1,11 @@
+import { Spinner } from '@grafana/ui';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
 import { DeleteProvisionedDashboardForm } from './DeleteProvisionedDashboardForm';
+import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -14,11 +17,23 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, canPushToConfiguredBranch, isNew, repository } =
-    useProvisionedDashboardData(dashboard);
+  const {
+    defaultValues,
+    loadedFromRef,
+    readOnly,
+    canPushToConfiguredBranch,
+    isNew,
+    repository,
+    repoDataStatus,
+    error,
+  } = useProvisionedDashboardData(dashboard);
 
-  if (!defaultValues) {
-    return null;
+  if (repoDataStatus === RepoViewStatus.Loading || !defaultValues) {
+    return <Spinner />;
+  }
+
+  if (repoDataStatus === RepoViewStatus.Error) {
+    return <FormLoadingErrorAlert error={error} />;
   }
 
   return (

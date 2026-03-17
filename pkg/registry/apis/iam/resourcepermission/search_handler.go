@@ -146,7 +146,6 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 }
 
 // filterPermissionsByGet returns only permissions for which the caller has get_permissions on the target resource.
-// Uses the same CanViewTarget helper as FilterList so auth logic lives in one place.
 func filterPermissionsByGet(
 	ctx context.Context,
 	namespace string,
@@ -161,19 +160,15 @@ func filterPermissionsByGet(
 	if !ok {
 		return nil
 	}
-	out := make([]iamv0.PermissionSpec, 0, len(perms))
-	for _, p := range perms {
-		grn, err := backend.ParseScope(p.Scope)
+	filtered, err := iamauthorizer.CanViewTargets(authorizer, ctx, authInfo, perms, func(i int) (string, string, string, string, bool) {
+		grn, err := backend.ParseScope(perms[i].Scope)
 		if err != nil {
-			continue
+			return "", "", "", "", false
 		}
-		allowed, err := authorizer.CanViewTarget(ctx, authInfo, namespace, grn.Group, grn.Resource, grn.Name)
-		if err != nil {
-			continue
-		}
-		if allowed {
-			out = append(out, p)
-		}
+		return namespace, grn.Group, grn.Resource, grn.Name, true
+	})
+	if err != nil {
+		return nil
 	}
-	return out
+	return filtered
 }
