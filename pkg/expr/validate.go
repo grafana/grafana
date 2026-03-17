@@ -4,126 +4,76 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
-	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
 // ValidatePipeline validates the expression pipeline without executing it.
-// It reuses the same node-building (buildNode) and edge-validation
-// (validateEdgeConstraints) logic as the execution path, but collects
-// per-node errors instead of aborting on the first failure.
-// This is intended for the authoring/editing experience so the frontend
-// can show per-node validation errors.
+// It calls the same graph-building code path as the execution pipeline
+// (buildDependencyGraphAll) but collects all per-node errors and returns
+// validation metadata instead of failing on the first error.
 func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.PipelineValidation, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
 
-	graph := simple.NewDirectedGraph()
-	validNodes := make(map[string]Node) // only successfully built nodes
-	var nodeValidations []queryV0.NodeValidation
+	result := s.buildDependencyGraphAll(ctx, req)
+
+	// Check for cycles via topological sort
+	_, topoErr := topo.SortStabilized(result.Graph, nil)
+
+	// Index edge errors by refID
+	edgeErrMap := make(map[string][]string)
+	for _, ee := range result.EdgeErrors {
+		edgeErrMap[ee.RefID] = append(edgeErrMap[ee.RefID], ee.Err.Error())
+	}
+
+	// Build the validation response
 	isValid := true
+	nodeValidations := make([]queryV0.NodeValidation, 0, len(result.NodeResults))
 
-	// Phase 1: Build all nodes, collecting per-node errors
-	for i, query := range req.Queries {
-		if query.DataSource == nil || query.DataSource.UID == "" {
-			nodeValidations = append(nodeValidations, queryV0.NodeValidation{
-				RefID: query.RefID,
-				Error: fmt.Sprintf("missing datasource uid in query with refId %v", query.RefID),
-			})
-			isValid = false
-			continue
-		}
+	for i, nr := range result.NodeResults {
+		query := req.Queries[i]
+		nv := queryV0.NodeValidation{RefID: query.RefID}
 
-		rn, err := makeRawNode(query, int64(i))
-		if err != nil {
-			nodeValidations = append(nodeValidations, queryV0.NodeValidation{
-				RefID: query.RefID,
-				Error: fmt.Sprintf("failed to process query JSON: %v", err),
-			})
-			isValid = false
-			continue
-		}
-
-		nv := queryV0.NodeValidation{
-			RefID:    query.RefID,
-			NodeType: NodeTypeFromDatasourceUID(query.DataSource.UID).String(),
-		}
-
-		if NodeTypeFromDatasourceUID(query.DataSource.UID) == TypeDatasourceNode {
-			nv.DatasourceUID = query.DataSource.UID
-		}
-
-		result := s.buildNode(ctx, graph, rn, req)
-		if result.CmdType != TypeUnknown {
-			nv.CmdType = result.CmdType.String()
-		}
-
-		if result.Err != nil {
-			nv.Error = result.Err.Error()
-			isValid = false
-		} else {
-			graph.AddNode(result.Node)
-			validNodes[query.RefID] = result.Node
-		}
-
-		nodeValidations = append(nodeValidations, nv)
-	}
-
-	// Phase 2: Build edges for valid nodes, collecting per-node edge errors
-	registry := buildNodeRegistry(graph)
-	nodeIt := graph.Nodes()
-	for nodeIt.Next() {
-		node := nodeIt.Node().(Node)
-		if node.NodeType() != TypeCMDNode {
-			continue
-		}
-
-		cmdNode := node.(*CMDNode)
-		for _, neededVar := range cmdNode.Command.NeedsVars() {
-			neededNode, ok := registry[neededVar]
-			if !ok {
-				updateNodeError(&nodeValidations, cmdNode.RefID(),
-					fmt.Sprintf("unable to find dependent node '%v'", neededVar))
-				isValid = false
-				continue
+		// Set type metadata if datasource was present
+		if query.DataSource != nil && query.DataSource.UID != "" {
+			nv.NodeType = NodeTypeFromDatasourceUID(query.DataSource.UID).String()
+			if NodeTypeFromDatasourceUID(query.DataSource.UID) == TypeDatasourceNode {
+				nv.DatasourceUID = query.DataSource.UID
 			}
-
-			if err := validateEdgeConstraints(cmdNode, neededNode, neededVar); err != nil {
-				updateNodeError(&nodeValidations, cmdNode.RefID(), err.Error())
-				isValid = false
-				continue
-			}
-
-			edge := graph.NewEdge(neededNode, cmdNode)
-			graph.SetEdge(edge)
 		}
-	}
 
-	// Phase 3: Populate DependsOn from successfully built nodes
-	for i := range nodeValidations {
-		nv := &nodeValidations[i]
-		if node, ok := validNodes[nv.RefID]; ok {
-			deps := node.NeedsVars()
-			if len(deps) > 0 {
+		// Set CmdType from built node
+		if nr.CmdType != TypeUnknown {
+			nv.CmdType = nr.CmdType.String()
+		}
+
+		// DependsOn from successfully built nodes
+		if nr.Node != nil {
+			if deps := nr.Node.NeedsVars(); len(deps) > 0 {
 				nv.DependsOn = deps
 			}
 		}
-	}
 
-	// Phase 4: Check for cycles via topological sort
-	_, err := topo.SortStabilized(graph, nil)
-	if err != nil {
-		isValid = false
-		// The topo error message includes the cycle info
-		for i := range nodeValidations {
-			if nodeValidations[i].Error == "" {
-				nodeValidations[i].Error = fmt.Sprintf("cycle detected in expression graph: %v", err)
-			}
+		// Collect errors: node build errors + edge errors + cycle errors
+		var errParts []string
+		if nr.Err != nil {
+			errParts = append(errParts, nr.Err.Error())
 		}
+		errParts = append(errParts, edgeErrMap[query.RefID]...)
+		if topoErr != nil && len(errParts) == 0 {
+			errParts = append(errParts, fmt.Sprintf("cycle detected in expression graph: %v", topoErr))
+		}
+		if len(errParts) > 0 {
+			nv.Error = strings.Join(errParts, "; ")
+			isValid = false
+		}
+
+		nodeValidations = append(nodeValidations, nv)
 	}
 
 	// Sort by RefID for stable output
@@ -135,18 +85,4 @@ func (s *Service) ValidatePipeline(ctx context.Context, req *Request) (*queryV0.
 		IsValid: isValid,
 		Nodes:   nodeValidations,
 	}, nil
-}
-
-// updateNodeError appends an error to an existing node validation entry.
-func updateNodeError(validations *[]queryV0.NodeValidation, refID, errMsg string) {
-	for i := range *validations {
-		if (*validations)[i].RefID == refID {
-			if (*validations)[i].Error != "" {
-				(*validations)[i].Error += "; " + errMsg
-			} else {
-				(*validations)[i].Error = errMsg
-			}
-			return
-		}
-	}
 }

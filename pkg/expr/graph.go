@@ -238,19 +238,30 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
+// It fails fast on the first error (used by the execution path).
 func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
-	graph, err := s.buildGraph(ctx, req)
-	if err != nil {
-		return nil, err
+	result := s.buildDependencyGraphAll(ctx, req)
+
+	// Fail fast: return the first node build error
+	for _, nr := range result.NodeResults {
+		if nr.Err != nil {
+			return nil, nr.Err
+		}
 	}
 
-	registry := buildNodeRegistry(graph)
-
-	if err := s.buildGraphEdges(graph, registry); err != nil {
-		return nil, err
+	// Fail fast: return the first edge error, with SQL-specific wrapping
+	for _, ee := range result.EdgeErrors {
+		if ee.IsMissingDep {
+			if node, ok := result.Registry[ee.RefID]; ok && node.NodeType() == TypeCMDNode {
+				if node.(*CMDNode).CMDType == TypeSQL {
+					return nil, sql.MakeTableNotFoundError(ee.RefID, ee.NeededVar)
+				}
+			}
+		}
+		return nil, ee.Err
 	}
 
-	return graph, nil
+	return result.Graph, nil
 }
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.
@@ -302,6 +313,65 @@ type nodeResult struct {
 	Err     error       // non-nil if building failed
 }
 
+// edgeError holds a per-node edge validation error.
+type edgeError struct {
+	RefID        string
+	NeededVar    string // the dependency refID that caused the error
+	IsMissingDep bool   // true when the dependency node doesn't exist
+	Err          error
+}
+
+// graphBuildResult contains the complete results of building a dependency graph,
+// including per-node and per-edge errors. This is the single code path used by
+// both the execution path (fail-fast via buildDependencyGraph) and the validation
+// path (collect-all via ValidatePipeline).
+type graphBuildResult struct {
+	Graph       *simple.DirectedGraph
+	NodeResults []nodeResult        // one per query, in input order
+	EdgeErrors  []edgeError         // edge validation errors
+	Registry    map[string]Node     // refID -> Node for successfully built nodes
+}
+
+// buildDependencyGraphAll builds the full dependency graph, always continuing
+// past errors to collect all per-node and per-edge results.
+func (s *Service) buildDependencyGraphAll(ctx context.Context, req *Request) *graphBuildResult {
+	graph := simple.NewDirectedGraph()
+	nodeResults := make([]nodeResult, 0, len(req.Queries))
+
+	// Phase 1: Build all nodes
+	for i, query := range req.Queries {
+		if query.DataSource == nil || query.DataSource.UID == "" {
+			nodeResults = append(nodeResults, nodeResult{
+				Err: fmt.Errorf("missing datasource uid in query with refId %v", query.RefID),
+			})
+			continue
+		}
+
+		rn, err := makeRawNode(query, int64(i))
+		if err != nil {
+			nodeResults = append(nodeResults, nodeResult{Err: err})
+			continue
+		}
+
+		nr := buildNode(ctx, s, graph, rn, req)
+		if nr.Err == nil && nr.Node != nil {
+			graph.AddNode(nr.Node)
+		}
+		nodeResults = append(nodeResults, nr)
+	}
+
+	// Phase 2: Build edges
+	registry := buildNodeRegistry(graph)
+	edgeErrors := buildAllEdges(graph, registry)
+
+	return &graphBuildResult{
+		Graph:       graph,
+		NodeResults: nodeResults,
+		EdgeErrors:  edgeErrors,
+		Registry:    registry,
+	}
+}
+
 // makeRawNode creates a rawNode from a Query, handling JSON marshal/unmarshal.
 func makeRawNode(query Query, idx int64) (*rawNode, error) {
 	rawQueryProp := make(map[string]any)
@@ -327,7 +397,7 @@ func makeRawNode(query Query, idx int64) (*rawNode, error) {
 // buildNode builds a single pipeline node from a raw query definition.
 // It uses concrete typed returns internally to avoid the Go nil interface gotcha
 // where a nil *CMDNode assigned to a Node interface appears non-nil.
-func (s *Service) buildNode(ctx context.Context, dp *simple.DirectedGraph, rn *rawNode, req *Request) nodeResult {
+func buildNode(ctx context.Context, s *Service, dp *simple.DirectedGraph, rn *rawNode, req *Request) nodeResult {
 	var node Node
 	var cmdType CommandType
 	var err error
@@ -399,60 +469,33 @@ func validateEdgeConstraints(cmdNode *CMDNode, neededNode Node, neededVar string
 	return nil
 }
 
-// buildGraph creates a new graph populated with nodes for every query.
-func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
-	dp := simple.NewDirectedGraph()
-
-	for i, query := range req.Queries {
-		if query.DataSource == nil || query.DataSource.UID == "" {
-			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
-		}
-
-		rn, err := makeRawNode(query, int64(i))
-		if err != nil {
-			return nil, err
-		}
-
-		result := s.buildNode(ctx, dp, rn, req)
-		if result.Err != nil {
-			return nil, result.Err
-		}
-
-		dp.AddNode(result.Node)
-	}
-	return dp, nil
-}
-
-// buildGraphEdges generates graph edges based on each node's dependencies.
-func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
-	nodeIt := dp.Nodes()
+// buildAllEdges validates and builds edges for all CMD nodes in the graph.
+// Valid edges are added to the graph. Returns per-node errors for invalid edges.
+func buildAllEdges(graph *simple.DirectedGraph, registry map[string]Node) []edgeError {
+	var errs []edgeError
+	nodeIt := graph.Nodes()
 
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
-
 		if node.NodeType() != TypeCMDNode {
-			// datasource node, nothing to do for now. Although if we want expression results to be
-			// used as datasource query params some day this will need change
 			continue
 		}
 
 		cmdNode := node.(*CMDNode)
-
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				if cmdNode.CMDType == TypeSQL {
-					// With the current flow, the SQL expression won't be executed with
-					// this missing dependency. But we collection the metric as there was an
-					// attempt to execute a SQL expression.
-					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					return e
-				}
-				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				errs = append(errs, edgeError{
+					RefID: cmdNode.RefID(), NeededVar: neededVar,
+					IsMissingDep: true,
+					Err:          fmt.Errorf("unable to find dependent node '%v'", neededVar),
+				})
+				continue
 			}
 
 			if err := validateEdgeConstraints(cmdNode, neededNode, neededVar); err != nil {
-				return err
+				errs = append(errs, edgeError{RefID: cmdNode.RefID(), NeededVar: neededVar, Err: err})
+				continue
 			}
 
 			// Mark DSNode as input to SQL expression for conversion handling
@@ -462,13 +505,12 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 				}
 			}
 
-			edge := dp.NewEdge(neededNode, cmdNode)
+			edge := graph.NewEdge(neededNode, cmdNode)
 			neededNode.SetInputTo(cmdNode.RefID())
-
-			dp.SetEdge(edge)
+			graph.SetEdge(edge)
 		}
 	}
-	return nil
+	return errs
 }
 
 // GetCommandsFromPipeline traverses the pipeline and extracts all CMDNode commands that match the type
