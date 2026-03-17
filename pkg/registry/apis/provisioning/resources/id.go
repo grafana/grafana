@@ -101,8 +101,6 @@ type Folder struct {
 	ID string
 	// Path is the full path to the folder, as given to the parse function.
 	Path string
-	// Checksum is the content hash of _folder.json when folder metadata is enabled.
-	Checksum string
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {

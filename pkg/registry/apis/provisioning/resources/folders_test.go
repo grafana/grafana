@@ -8,7 +8,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -330,48 +329,6 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 
 		newTitle, _, _ := unstructured.NestedString(updatedObj.Object, "spec", "title")
 		require.Equal(t, "New Title", newTitle, "the updated object should have the new title")
-	})
-
-	t.Run("updates source metadata when it has changed", func(t *testing.T) {
-		repo, cfg := newRepo(t)
-		tree := NewEmptyFolderTree()
-
-		var updatedObj *unstructured.Unstructured
-		client := &fakeDynamicResourceClient{
-			getFn: func(name string) (*unstructured.Unstructured, error) {
-				obj := managedFolder(name, "Same Title", cfg.Name)
-				meta, err := utils.MetaAccessor(obj)
-				require.NoError(t, err)
-				meta.SetSourceProperties(utils.SourceProperties{
-					Path:     "old-path",
-					Checksum: "old-checksum",
-				})
-				return obj, nil
-			},
-			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-				updatedObj = obj.DeepCopy()
-				return obj, nil
-			},
-		}
-
-		fm := NewFolderManager(repo, client, tree)
-		err := fm.EnsureFolderExists(ctx, Folder{
-			ID:       "folder-id",
-			Title:    "Same Title",
-			Path:     "new-path/",
-			Checksum: "new-checksum",
-		}, "")
-
-		require.NoError(t, err)
-		require.Equal(t, []string{"folder-id"}, client.updateCalls)
-
-		meta, err := utils.MetaAccessor(updatedObj)
-		require.NoError(t, err)
-		source, ok := meta.GetSourceProperties()
-		require.True(t, ok)
-		// Ensuring the path is preserved.
-		require.Equal(t, "old-path", source.Path)
-		require.Equal(t, "new-checksum", source.Checksum)
 	})
 
 	t.Run("returns error when update fails", func(t *testing.T) {

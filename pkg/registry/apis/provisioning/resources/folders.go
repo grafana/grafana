@@ -102,34 +102,20 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f := ParseFolder(dir, cfg.Name)
-	hasFolderMetadataTitle, err := ApplyFolderMetadata(ctx, fm.repo, &f, "", fm.folderMetadataEnabled)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, "", fm.folderMetadataEnabled)
 	if err != nil {
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		// Reconcile title: even though the folder exists in the tree,
-		// _folder.json may have a newer title that needs updating in Grafana.
-		if hasFolderMetadataTitle {
-			if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-				return "", fmt.Errorf("reconcile folder title: %w", err)
-			}
-		}
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f := ParseFolder(traverse, cfg.GetName())
-		hasFolderMetadataTitle, err := ApplyFolderMetadata(ctx, fm.repo, &f, "", fm.folderMetadataEnabled)
+		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, "", fm.folderMetadataEnabled)
 		if err != nil {
 			return err
 		}
 		if fm.tree.In(f.ID) {
-			if hasFolderMetadataTitle {
-				if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-					return fmt.Errorf("reconcile folder title for %s: %w", f.Path, err)
-				}
-			}
 			parent = f.ID
 			return nil
 		}
@@ -169,39 +155,17 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
 
-		needsUpdate := false
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		if currentTitle != folder.Title {
-			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
-				return fmt.Errorf("set folder title: %w", err)
-			}
-			needsUpdate = true
-		}
-
-		if folder.Checksum != "" {
-			meta, err := utils.MetaAccessor(obj)
-			if err != nil {
-				return fmt.Errorf("create meta accessor for existing object: %w", err)
-			}
-			currentSource, _ := meta.GetSourceProperties()
-			desiredSource := utils.SourceProperties{
-				// Here we keep the path as is - updating the folder path is outside of the scope of this function.
-				Path:     currentSource.Path,
-				Checksum: folder.Checksum,
-			}
-			if currentSource.Checksum != desiredSource.Checksum {
-				meta.SetSourceProperties(desiredSource)
-				needsUpdate = true
-			}
-		}
-
-		if needsUpdate {
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("update folder: %w", err)
+				return fmt.Errorf("update folder title: %w", err)
 			}
 		}
 
@@ -249,7 +213,6 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
 		Path:     folder.Path,
-		Checksum: folder.Checksum,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
