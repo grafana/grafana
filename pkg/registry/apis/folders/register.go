@@ -197,6 +197,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			service:        b.folderSvc,
 			namespacer:     b.namespacer,
 			tableConverter: folders.TableConverter(),
+			convertor:      opts.Scheme,
 		}
 		dw, err := opts.DualWriteBuilder(folders.GroupResource(), legacyStore, unified)
 		if err != nil {
