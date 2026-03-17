@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -289,42 +286,6 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 
 	hasMore := resp.Results.NextPageToken != ""
 	return children, hasMore, nil
-}
-
-var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by provisioning")
-
-func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Folder) error {
-	isManaged := func(f *folders.Folder) bool {
-		meta, err := utils.MetaAccessor(f)
-		if err != nil {
-			return false
-		}
-		kind := meta.GetAnnotation(utils.AnnoKeyManagerKind)
-		return kind != "" && utils.ParseManagerKindString(kind) != utils.ManagerKindUnknown
-	}
-
-	managed := isManaged(obj)
-	if !managed && old != nil {
-		managed = isManaged(old)
-	}
-	if !managed {
-		return nil
-	}
-
-	gr := schema.GroupResource{Group: folders.FolderResourceInfo.GroupVersionResource().Group, Resource: folders.FolderResourceInfo.GroupVersionResource().Resource}
-
-	if old == nil {
-		if len(obj.OwnerReferences) > 0 {
-			return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
-		}
-		return nil
-	}
-
-	if !apiequality.Semantic.DeepEqual(old.OwnerReferences, obj.OwnerReferences) {
-		return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
-	}
-
-	return nil
 }
 
 func validateOnDelete(ctx context.Context,

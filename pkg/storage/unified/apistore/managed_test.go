@@ -158,3 +158,66 @@ func TestManagedAuthorizer(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckOwnerReferencesOnManagedResource(t *testing.T) {
+	tests := []struct {
+		name    string
+		obj     runtime.Object
+		wantErr bool
+	}{
+		{
+			name:    "unmanaged resource is allowed",
+			obj:     &unstructured.Unstructured{},
+			wantErr: false,
+		},
+		{
+			name: "repo-managed resource is blocked",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "test-repo",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "terraform-managed resource is allowed",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind: string(utils.ManagerKindTerraform),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "plugin-managed resource is allowed",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind: string(utils.ManagerKindPlugin),
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj, err := utils.MetaAccessor(tt.obj)
+			require.NoError(t, err)
+
+			err = checkOwnerReferencesOnManagedResource(obj)
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "cannot set owner references on resources managed by a repository")
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
