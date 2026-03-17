@@ -386,7 +386,7 @@ describe('HeatmapPanel', () => {
   });
 
   it('shows error view when prepareHeatmapData throws', () => {
-    // const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     const fieldsModule = require('./fields');
     const prepareSpy = jest.spyOn(fieldsModule, 'prepareHeatmapData').mockImplementation(() => {
       throw new Error('prepare failed');
@@ -398,7 +398,7 @@ describe('HeatmapPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
 
     prepareSpy.mockRestore();
-    // consoleSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   it('renders with custom heatmap data', () => {
