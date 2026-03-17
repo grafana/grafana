@@ -125,6 +125,7 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 	}
 
 	if r.onlyCfg {
+		logger.Info("Resolved storage mode from config (migration log unavailable)", "resource", gr.String(), "mode", mode)
 		return mode, nil
 	}
 
@@ -138,6 +139,7 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 			return mode, fmt.Errorf("failed to resolve storage mode: resource=%s err=%w", gr.String(), err)
 		}
 		if exists {
+			logger.Info("Resolved storage mode from migration log", "resource", gr.String(), "mode", contract.StorageModeUnified)
 			r.cache.Set(gr.String(), contract.StorageModeUnified, gocache.NoExpiration)
 			return contract.StorageModeUnified, nil
 		}

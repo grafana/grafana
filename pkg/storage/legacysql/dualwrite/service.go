@@ -151,7 +151,6 @@ func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) u
 		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
 		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
 	}
-	logging.DefaultLogger.With("resource", resource, "mode", mode).Info("resolved dynamic storage mode")
 	return mode
 }
 

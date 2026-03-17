@@ -7,8 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -58,7 +56,6 @@ func (m *staticService) getStorageMode(ctx context.Context, gr schema.GroupResou
 		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
 		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
 	}
-	logging.DefaultLogger.With("resource", resource, "mode", mode).Info("resolved static storage mode")
 	return mode
 }
 
