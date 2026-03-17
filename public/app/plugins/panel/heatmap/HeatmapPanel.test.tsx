@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 
 import { DataFrame, FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,15 +11,24 @@ import { HeatmapPanel } from './HeatmapPanel';
 import { defaultOptions, Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
 
+/** Captures the last config (width, height) passed to uPlot for canvas dimension assertions */
+let lastUPlotConfig: { width: number; height: number } | null = null;
+
+/** Simulated legend height when legend is shown. VizLayout reserves this space for the color scale. */
+const MOCK_LEGEND_HEIGHT = 80;
+
 // Mock uPlot to avoid canvas initialization in tests.
 // HeatmapPanel uses UPlotChart which depends on uPlot for rendering the canvas visualization.
 jest.mock('uplot', () => {
   const mockPathsBars = jest.fn(() => () => '');
-  const mock = jest.fn().mockImplementation(() => ({
-    setData: jest.fn(),
-    setSize: jest.fn(),
-    destroy: jest.fn(),
-  })) as jest.Mock & {
+  const mock = jest.fn().mockImplementation((config: { width?: number; height?: number }) => {
+    lastUPlotConfig = { width: config?.width ?? 0, height: config?.height ?? 0 };
+    return {
+      setData: jest.fn(),
+      setSize: jest.fn(),
+      destroy: jest.fn(),
+    };
+  }) as jest.Mock & {
     paths: { bars: jest.Mock };
     rangeLog: (min: number, max: number) => [number, number];
   };
@@ -52,9 +62,43 @@ function createUsePanelContextMock(overrides?: {
 
 jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
+  const { selectors } = require('@grafana/e2e-selectors');
+
+  /**
+   * Mock VizLayout that simulates legend measurement for deterministic canvas dimension tests.
+   * When legend is shown, reserves MOCK_LEGEND_HEIGHT so the canvas receives reduced height.
+   */
+  const MockVizLayout = ({
+    width,
+    height,
+    legend,
+    children,
+  }: {
+    width: number;
+    height: number;
+    legend: React.ReactNode;
+    children: (w: number, h: number) => React.ReactNode;
+  }) => {
+    const vizHeight = legend ? height - MOCK_LEGEND_HEIGHT : height;
+    const vizWidth = width;
+
+    return (
+      <div data-testid={selectors.components.VizLayout.container}>
+        <div>{children(vizWidth, vizHeight)}</div>
+        {legend && (
+          <div data-testid={selectors.components.VizLayout.legend} style={{ height: MOCK_LEGEND_HEIGHT }}>
+            {legend}
+          </div>
+        )}
+      </div>
+    );
+  };
+  MockVizLayout.Legend = actual.VizLayout.Legend;
+
   return {
     ...actual,
     usePanelContext: createUsePanelContextMock(),
+    VizLayout: MockVizLayout,
   };
 });
 
@@ -131,6 +175,10 @@ const defaultPanelOptions: Options = getDefaultHeatmapPanelOptions({
 });
 
 describe('HeatmapPanel', () => {
+  beforeEach(() => {
+    lastUPlotConfig = null;
+  });
+
   /**
    * Renders HeatmapPanel with the given data and options.
    * Reusable across tests to avoid duplicating setup.
@@ -174,5 +222,35 @@ describe('HeatmapPanel', () => {
     renderHeatmapPanel({ series: [customFrame] });
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+  });
+
+  describe('legend option', () => {
+    it('displays legend when legend.show is true', () => {
+      renderHeatmapPanel(undefined, { legend: { show: true } });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeVisible();
+    });
+
+    it('hides legend when legend.show is false', () => {
+      renderHeatmapPanel(undefined, { legend: { show: false } });
+
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
+
+    it('allots full panel height to canvas when legend is hidden', () => {
+      const panelHeight = 400;
+      renderHeatmapPanel(undefined, { legend: { show: false } });
+
+      expect(lastUPlotConfig).not.toBeNull();
+      expect(lastUPlotConfig!.height).toBe(panelHeight);
+    });
+
+    it('allots reduced height to canvas when legend is shown', () => {
+      const panelHeight = 400;
+      renderHeatmapPanel(undefined, { legend: { show: true } });
+
+      expect(lastUPlotConfig).not.toBeNull();
+      expect(lastUPlotConfig!.height).toBe(panelHeight - MOCK_LEGEND_HEIGHT);
+    });
   });
 });
