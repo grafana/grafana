@@ -345,7 +345,6 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			out = getPreparedObject(t, ctx, s, b, dash)
 			require.Equal(t, int64(1), out.GetGeneration()) // still 1
 		})
-
 	})
 
 	t.Run("should fail invalid input", func(t *testing.T) {

@@ -228,6 +228,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			}
 		}
 	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
