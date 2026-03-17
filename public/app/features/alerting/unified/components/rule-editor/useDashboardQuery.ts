@@ -28,18 +28,17 @@ export function useDashboardQuery(dashboardUid?: string) {
   useEffect(() => {
     if (dashboardUid) {
       setIsFetching(true);
-      getDashboardAPI()
-        .getDashboardDTO(dashboardUid)
-        .then((dashboardDTO) => {
-          if ('dashboard' in dashboardDTO) {
-            setDashboard(ensureV1PanelsHaveIds(dashboardDTO));
-          } else if (isDashboardV2Resource(dashboardDTO)) {
-            setDashboard(dashboardDTO);
-          } else {
-            console.error('Something went wrong, unexpected dashboard format');
-          }
-          setIsFetching(false);
-        });
+      getDashboardAPI().then(async (api) => {
+        const dashboardDTO = await api.getDashboardDTO(dashboardUid);
+        if ('dashboard' in dashboardDTO) {
+          setDashboard(ensureV1PanelsHaveIds(dashboardDTO));
+        } else if (isDashboardV2Resource(dashboardDTO)) {
+          setDashboard(dashboardDTO);
+        } else {
+          console.error('Something went wrong, unexpected dashboard format');
+        }
+        setIsFetching(false);
+      });
     }
   }, [dashboardUid]);
 
