@@ -120,6 +120,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     },
   ],
   "liveNow": true,
+  "preferences": {},
   "preload": true,
   "tags": [
     "tag1",
