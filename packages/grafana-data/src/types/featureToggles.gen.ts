@@ -629,6 +629,11 @@ export interface FeatureToggles {
   */
   savedQueriesRBAC?: boolean;
   /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -960,6 +965,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -1136,32 +1146,10 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthzApis?: boolean;
-  /**
-  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthZHandlerRedirect?: boolean;
-  /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
   */
   kubernetesAuthZResourcePermissionsRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRolesRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRoleBindingsRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1193,10 +1181,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRoleBindingsApi?: boolean;
   /**
-  * Enables create, delete, and update mutations for resources owned by IAM identity
+  * Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
   * @default false
   */
-  kubernetesAuthnMutation?: boolean;
+  kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1566,7 +1554,7 @@ export interface FeatureToggles {
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
@@ -1583,6 +1571,11 @@ export interface FeatureToggles {
   */
   kubernetesServiceAccountTokensApi?: boolean;
   /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1598,10 +1591,10 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
-  * Use the new team service that uses the app platform APIs
+  * Redirects the requests of the user service to the app platform APIs
   * @default false
   */
-  kubernetesTeamService?: boolean;
+  kubernetesUsersRedirect?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false

@@ -2377,6 +2377,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6819,6 +6820,9 @@
       "tooltip-move-link-up": "Переместить ссылку вверх",
       "type": "Тип"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
@@ -7100,6 +7104,17 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_few": "",
+      "title-above-dashboard_many": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_few": "",
+      "title-controls-menu_many": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Управляется Kubectl",
@@ -7459,6 +7474,13 @@
       "page-nav": {
         "text": {
           "settings": "Параметры"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12918,6 +12940,7 @@
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Ошибка при подключении к репозиторию. Проверьте настройки и повторите попытку.",
       "error-repository-status-unhealthy-title": "Состояние репозитория: неисправно",
@@ -12927,6 +12950,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Загрузка информации о ресурсе...",
       "unmanaged-resources-label": "Неуправляемые ресурсы",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
@@ -12985,7 +13009,8 @@
     "connect-repository-button": {
       "configure": "Настроить",
       "instance-fully-managed-tooltip": "Конфигурация отключена, поскольку это полностью управляемый экземпляр",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13195,7 +13220,7 @@
       "token-label": "Токен доступа",
       "token-required": "Требуется токен Git",
       "token-user-description": "Имя пользователя, которое будет использоваться для доступа к репозиторию с токеном доступа",
-      "url-description": "URL-адрес репозитория Git",
+      "url-description": "",
       "url-pattern": "Должен быть действительным URL-адресом репозитория Git",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
@@ -13321,39 +13346,41 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_few": "",
       "message-both-repositories_many": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_few": "",
+      "message-both-repositories-onprem_many": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_few": "",
       "message-both-resources_many": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_few": "",
-      "message-repositories-info_many": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_few": "",
+      "message-both-resources-onprem_many": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_few": "",
       "message-repository_many": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_few": "",
-      "note-message-both-repositories_many": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_few": "",
-      "note-message-both-resources_many": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_few": "",
-      "note-message-repository_many": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_few": "",
-      "note-message-resource_many": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_few": "",
+      "message-repository-onprem_many": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_few": "",
+      "message-resource_many": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_few": "",
+      "message-resource-onprem_many": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Ресурс предназначен только для чтения и предоставлен в рамках подготовки файлов. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",
     "read-only-remote-tooltip": "Ресурс предназначен только для чтения и предоставлен в формате GIT. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",

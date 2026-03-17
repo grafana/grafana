@@ -395,7 +395,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -414,8 +414,9 @@ const DisplayedFields = ({
         return <LogLineBody log={log} key={field} styles={styles} />;
       }
       if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        const className = isCustomGrammar ? 'field prism-syntax-highlight' : 'field log-syntax-highlight';
         return (
-          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+          <span className={className} title={getNormalizedFieldName(field)} key={field}>
             <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
           </span>
         );
@@ -447,7 +448,7 @@ const DisplayedFields = ({
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
-  const { syntaxHighlighting } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting } = useLogListContext();
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
@@ -482,8 +483,12 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
+  const className = isCustomGrammar
+    ? 'field prism-syntax-highlight log-line-body'
+    : 'field log-syntax-highlight log-line-body';
+
   return (
-    <span className="field log-syntax-highlight log-line-body">
+    <span className={className}>
       <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );

@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "Error fetching notifications",
+      "integration-tooltip": "{{integration}} #{{index}}",
       "no-error-details": "No error details available",
       "notification-error": "Notification Error",
       "outcome-failed": "Failed",
@@ -2349,6 +2350,7 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
+      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -7284,6 +7286,8 @@
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "form-loading-error": "Error loading form",
+      "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -13071,7 +13075,7 @@
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "url-description": "The Git repository URL",
+      "url-description": "The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
     },
