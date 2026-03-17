@@ -229,7 +229,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 	if !apiequality.Semantic.DeepEqual(obj.GetOwnerReferences(), previous.GetOwnerReferences()) {
-		if err := checkOwnerReferencesOnManagedResource(previous); err != nil {
+		if err := checkOwnerReferencesOnManagedResource(obj, previous); err != nil {
 			return v, err
 		}
 		v.hasChanged = true

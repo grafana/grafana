@@ -66,20 +66,20 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	return nil
 }
 
-func checkOwnerReferencesOnManagedResource(previous utils.GrafanaMetaAccessor) error {
-	kind := previous.GetAnnotation(utils.AnnoKeyManagerKind)
-	if kind == "" {
+func checkOwnerReferencesOnManagedResource(obj utils.GrafanaMetaAccessor, previous utils.GrafanaMetaAccessor) error {
+	isRepoManaged := func(accessor utils.GrafanaMetaAccessor) bool {
+		kind := accessor.GetAnnotation(utils.AnnoKeyManagerKind)
+		return kind != "" && utils.ParseManagerKindString(kind) == utils.ManagerKindRepo
+	}
+	if !isRepoManaged(obj) && !isRepoManaged(previous) {
 		return nil
 	}
-	if utils.ParseManagerKindString(kind) == utils.ManagerKindRepo {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "cannot set owner references on resources managed by a repository",
-		}}
-	}
-	return nil
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: "cannot set owner references on resources managed by a repository",
+	}}
 }
 
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {

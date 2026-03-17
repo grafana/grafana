@@ -376,6 +376,42 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			require.Contains(t, err.Error(), "cannot set owner references on resources managed by a repository")
 		})
 
+		t.Run("block ownerReferences when adding repo-manager annotations", func(t *testing.T) {
+			b := dash.DeepCopy()
+			b.Annotations = map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "test-repo",
+			}
+			b.OwnerReferences = []v1.OwnerReference{{
+				APIVersion: "iam.grafana.app/v0alpha1",
+				Kind:       "Team",
+				Name:       "test-team",
+				UID:        "00000000-0000-0000-0000-000000000001",
+			}}
+			_, err := s.prepareObjectForUpdate(ctx, b, dash)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "cannot set owner references on resources managed by a repository")
+		})
+
+		t.Run("block ownerReferences when removing repo-manager annotations", func(t *testing.T) {
+			managed := dash.DeepCopy()
+			managed.Annotations = map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "test-repo",
+			}
+			b := managed.DeepCopy()
+			b.Annotations = nil
+			b.OwnerReferences = []v1.OwnerReference{{
+				APIVersion: "iam.grafana.app/v0alpha1",
+				Kind:       "Team",
+				Name:       "test-team",
+				UID:        "00000000-0000-0000-0000-000000000001",
+			}}
+			_, err := s.prepareObjectForUpdate(ctx, b, managed)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "cannot set owner references on resources managed by a repository")
+		})
+
 		t.Run("allow ownerReferences change on non-repo managed resource", func(t *testing.T) {
 			managed := dash.DeepCopy()
 			managed.Annotations = map[string]string{
