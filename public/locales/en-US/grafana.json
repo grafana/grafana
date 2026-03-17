@@ -3496,7 +3496,10 @@
       "hidden-label-count_other": "and {{ count }} more",
       "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
-        "instance-details": "Instance details"
+        "declare-incident": "Declare incident",
+        "instance-details": "Instance details",
+        "silence": "Silence this instance",
+        "silence-button": "Silence"
       },
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
