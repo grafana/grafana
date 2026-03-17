@@ -162,12 +162,16 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
     description: editableVariables[variableType].description,
   }));
 
-  if (!config.featureToggles.groupByVariable) {
-    // Remove group by variable type if feature toggle is off
-    return results.filter((option) => option.value !== 'groupby');
-  }
+  return results.filter((option) => {
+    if (option.value === 'groupby' && !config.featureToggles.groupByVariable) {
+      return false;
+    }
+    if (option.value === 'adhoc' && config.featureToggles.dashboardUnifiedDrilldownControls) {
+      return false;
+    }
 
-  return results;
+    return true;
+  });
 }
 
 export function getVariableEditor(type: EditableVariableType) {

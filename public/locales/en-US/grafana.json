@@ -6568,6 +6568,9 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-filters": {
+      "label": "Filter and Group by"
+    },
     "add-link": {
       "inline-instance-name": "New link",
       "label-link": "Link",
