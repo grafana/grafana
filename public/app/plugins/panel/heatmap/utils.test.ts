@@ -143,6 +143,326 @@ describe('prepConfig', () => {
 
     expect(builder).toBeDefined();
   });
+
+  describe('y-scale range callback', () => {
+    function getYScaleRange(
+      builder: ReturnType<typeof prepConfig>
+    ):
+      | ((
+          u: { data: unknown[]; scales: Record<string, { log?: number }> },
+          dataMin: number,
+          dataMax: number
+        ) => [number | null, number | null])
+      | undefined {
+      const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
+      return yScale?.props.range as
+        | ((
+            u: { data: unknown[]; scales: Record<string, { log?: number }> },
+            dataMin: number,
+            dataMax: number
+          ) => [number | null, number | null])
+        | undefined;
+    }
+
+    describe('sparse heatmap', () => {
+      function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+        const heatmap = createDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields: [
+            { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+            { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+            { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+            { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+          ],
+        });
+        return {
+          heatmap,
+          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 20 },
+          ...overrides,
+        };
+      }
+
+      it('expands dataMax by bucket factor from yMin/yMax and applies explicit min/max', () => {
+        const dataRef = { current: createSparseHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = {
+          data: [null, [null, [1, 4, 16], [4, 16, 64], []]] as unknown[],
+          scales: { [yScaleKey]: {} } as Record<string, { log?: number }>,
+        };
+        const result = range!(u, 1, 16);
+        expect(result[0]).toBe(2);
+        expect(result[1]).toBe(64);
+      });
+
+      it('uses uPlot.rangeLog for sparse log scale and snaps explicit min/max to magnitude', () => {
+        const dataRef = { current: createSparseHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 2, max: 64 },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = {
+          data: [null, [null, [1, 4, 16], [4, 16, 64], []]] as unknown[],
+          scales: { [yScaleKey]: { log: 2 } },
+        };
+        const result = range!(u, 1, 64);
+        expect(result[0]).toBeLessThanOrEqual(2);
+        expect(result[1]).toBeGreaterThanOrEqual(64);
+      });
+    });
+
+    describe('dense heatmap', () => {
+      it('expands linear range by yBucketSize/2 for unknown yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yBucketSize: 2, yLayout: HeatmapCellLayout.unknown }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const u = { data: [], scales: {} };
+        const result = range!(u, 0, 2);
+        expect(result[0]).toBe(-1);
+        expect(result[1]).toBe(3);
+      });
+
+      it('expands linear range by full yBucketSize for le yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yBucketSize: 2, yLayout: HeatmapCellLayout.le }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const u = { data: [], scales: {} };
+        const result = range!(u, 2, 8);
+        expect(result[0]).toBe(0);
+        expect(result[1]).toBe(8);
+      });
+
+      it('expands linear range by full yBucketSize for ge yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yBucketSize: 2, yLayout: HeatmapCellLayout.ge }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const u = { data: [], scales: {} };
+        const result = range!(u, 2, 8);
+        expect(result[0]).toBe(2);
+        expect(result[1]).toBe(10);
+      });
+
+      it('applies explicit min/max for linear scale', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yBucketSize: 1, yLayout: HeatmapCellLayout.unknown }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 0, max: 100 },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const u = { data: [], scales: {} };
+        const result = range!(u, 1, 2);
+        expect(result[0]).toBe(0);
+        expect(result[1]).toBe(100);
+      });
+
+      it('expands log range by sqrt(factor) for unknown yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.unknown }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
+        const result = range!(u, 1, 4);
+        expect(result[0]).toBeLessThan(1);
+        expect(result[1]).toBeGreaterThan(4);
+      });
+
+      it('expands log range by dividing scaleMin for le yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.le }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
+        const result = range!(u, 2, 8);
+        expect(result[0]).toBeLessThan(2);
+        expect(result[1]).toBe(8);
+      });
+
+      it('expands log range by multiplying scaleMax for ge yLayout', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.ge }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
+        const result = range!(u, 2, 8);
+        expect(result[0]).toBe(2);
+        expect(result[1]).toBeGreaterThan(8);
+      });
+
+      it('uses calculateBucketFactor from yValues when yBucketScale is provided', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.le }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = {
+          data: [null, [null, [1, 2, 4, 8], []]] as unknown[],
+          scales: { [yScaleKey]: { log: 2 } },
+        };
+        const result = range!(u, 1, 8);
+        expect(result[0]).toBeLessThan(1);
+        expect(result[1]).toBe(8);
+      });
+
+      it('snaps to log magnitude when ySizeDivisor is set and dataMin/dataMax are non-integer log', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.unknown }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+          ySizeDivisor: 2,
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
+        const result = range!(u, 3, 6);
+        expect(result[0]).toBeLessThanOrEqual(2);
+        expect(result[1]).toBeGreaterThanOrEqual(8);
+      });
+
+      it('applies explicit min/max for log scale snapping to magnitude', () => {
+        const dataRef = { current: createMinimalHeatmapData({ yLayout: HeatmapCellLayout.unknown }) };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left, min: 4, max: 32 },
+          rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const yScaleKey = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'))!.props.scaleKey;
+        const u = { data: [], scales: { [yScaleKey]: { log: 2 } } };
+        const result = range!(u, 1, 16);
+        expect(result[0]).toBeLessThanOrEqual(4);
+        expect(result[1]).toBeGreaterThanOrEqual(32);
+      });
+
+      it('skips expansion when bucketSize is undefined', () => {
+        const dataRef = {
+          current: createMinimalHeatmapData({
+            yBucketSize: undefined,
+            yLayout: HeatmapCellLayout.unknown,
+          }),
+        };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const range = getYScaleRange(builder);
+        expect(range).toBeDefined();
+
+        const u = { data: [], scales: {} };
+        const result = range!(u, 1, 2);
+        expect(result[0]).toBe(1);
+        expect(result[1]).toBe(2);
+      });
+    });
+  });
 });
 
 describe('heatmapPathsDense', () => {
