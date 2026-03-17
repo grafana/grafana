@@ -214,7 +214,9 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
-      <div className={styles.viewCol}>{/* View link column */}</div>
+      {config.featureToggles.alertingNotificationHistoryDetail && (
+        <div className={styles.viewCol}>{/* View link column */}</div>
+      )}
     </div>
   );
 }
