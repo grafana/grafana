@@ -33,10 +33,12 @@ export const geomapSuggestionsSupplier: VisualizationSuggestionsSupplier<Options
             showMeasure: false,
           };
           // FIXME: this doesn't work. I want to disable legends in the preview.
-          s.options?.layers?.forEach((layer) => {
-            layer.config = layer.config || {};
-            layer.config.showLegend = false;
-          });
+          if (s.options?.layers) {
+            for (const layer of s.options?.layers) {
+              layer.config = layer.config || {};
+              layer.config.showLegend = false;
+            }
+          }
         },
       },
     },

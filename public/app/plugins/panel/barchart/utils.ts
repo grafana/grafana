@@ -97,7 +97,7 @@ export function prepSeries(
             (field) => field.state?.displayName === colorFieldName || field.name === colorFieldName
           );
 
-    frame.fields.forEach((field) => {
+    for (const field of frame.fields) {
       if (field !== xField) {
         if (field.type === FieldType.number && !field.config.custom?.hideFrom?.viz) {
           const field2 = {
@@ -121,7 +121,7 @@ export function prepSeries(
           _rest.push(field);
         }
       }
-    });
+    }
 
     let warn: string | null = null;
 

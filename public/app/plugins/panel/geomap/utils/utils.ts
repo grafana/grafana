@@ -78,7 +78,7 @@ async function initGeojsonFiles() {
   for (let folder of ['maps', 'gazetteer']) {
     ds.listFiles(folder).subscribe({
       next: (frame) => {
-        frame.forEach((item) => {
+        for (const item of frame) {
           if (item.name.endsWith('.geojson')) {
             const value = `public/${folder}/${item.name}`;
             publicGeoJSONFiles!.push({
@@ -86,7 +86,7 @@ async function initGeojsonFiles() {
               label: value,
             });
           }
-        });
+        }
       },
     });
   }

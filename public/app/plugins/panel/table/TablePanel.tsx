@@ -212,14 +212,14 @@ const getCellActions = (
       const actionsOut: Array<ActionModel<Field>> = [];
       const actionLookup = new Set<string>();
 
-      actions.forEach((action) => {
+      for (const action of actions) {
         const key = action.title;
 
         if (!actionLookup.has(key)) {
           actionsOut.push(action);
           actionLookup.add(key);
         }
-      });
+      }
 
       return actionsOut;
     }

@@ -28,8 +28,8 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
     }
 
     // stamp origins for legend's calcs (from raw values)
-    data.series.forEach((frame, frameIndex) => {
-      frame.fields.forEach((field, fieldIndex) => {
+    for (const [frameIndex, frame] of data.series.entries()) {
+      for (const [fieldIndex, field] of frame.fields.entries()) {
         field.state = {
           ...field.state,
           origin: {
@@ -37,8 +37,8 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
             fieldIndex,
           },
         };
-      });
-    });
+      }
+    }
 
     cacheFieldDisplayNames(data.series);
 

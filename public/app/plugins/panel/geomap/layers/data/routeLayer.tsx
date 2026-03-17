@@ -276,7 +276,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                         [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y2]],
                       ])
                     );
-                    lineFeatures.forEach((feature) => feature.setStyle(lineStyle));
+                    for (const feature of lineFeatures) {feature.setStyle(lineStyle);}
                   }
                 }
               }
@@ -288,7 +288,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         crosshairFeature.setStyle(new Style({}));
-        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
+        for (const feature of lineFeatures) {feature.setStyle(new Style({}));}
       })
     );
 

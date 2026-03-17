@@ -440,7 +440,7 @@ export const TooltipPlugin2 = ({
 
             // get y selections
             if (yDrag) {
-              config.scales.forEach((scale) => {
+              for (const scale of config.scales) {
                 const key = scale.props.scaleKey;
 
                 if (key !== 'x') {
@@ -453,7 +453,7 @@ export const TooltipPlugin2 = ({
 
                   ySels.push(ySel);
                 }
-              });
+              }
             }
 
             if (xDrag) {

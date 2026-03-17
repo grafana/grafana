@@ -65,8 +65,8 @@ export const SeriesEditor = ({
         ? FieldNamePickerBaseNameMode.IncludeAll
         : FieldNamePickerBaseNameMode.OnlyBaseNames;
 
-  context.data.forEach((frame, frameIndex) => {
-    frame.fields.forEach((field, fieldIndex) => {
+  for (const [frameIndex, frame] of context.data.entries()) {
+    for (const [fieldIndex, field] of frame.fields.entries()) {
       field.state = {
         ...field.state,
         origin: {
@@ -74,8 +74,8 @@ export const SeriesEditor = ({
           fieldIndex,
         },
       };
-    });
-  });
+    }
+  }
 
   const frameInputId = useId();
   const xFieldInputId = useId();

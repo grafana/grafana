@@ -113,12 +113,12 @@ export class CanvasPanel extends Component<Props, State> {
               activePanelSubject.next({ panel: this });
             }
 
-            canvasInstances.forEach((canvasInstance) => {
+            for (const canvasInstance of canvasInstances) {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
                 canvasInstance.scene.connections.select(undefined);
               }
-            });
+            }
 
             this.panelContext?.onInstanceStateChange!({ scene: this.scene, selected: v, layer: this.scene.root });
           },
@@ -144,12 +144,12 @@ export class CanvasPanel extends Component<Props, State> {
               activePanelSubject.next({ panel: this });
             }
 
-            canvasInstances.forEach((canvasInstance) => {
+            for (const canvasInstance of canvasInstances) {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
                 canvasInstance.scene.connections.select(undefined);
               }
-            });
+            }
 
             setTimeout(() => {
               this.forceUpdate();

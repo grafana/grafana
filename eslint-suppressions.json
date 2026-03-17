@@ -731,6 +731,11 @@
       "count": 2
     }
   },
+  "packages/grafana-ui/src/components/Table/TableRT/ExpandedRow.tsx": {
+    "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -3765,6 +3770,9 @@
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
+    },
+    "unicorn/no-array-for-each": {
+      "count": 1
     }
   },
   "public/app/plugins/panel/barchart/quadtree.ts": {
@@ -3790,6 +3798,11 @@
       "count": 1
     }
   },
+  "public/app/plugins/panel/canvas/components/CanvasContextMenu.tsx": {
+    "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3803,6 +3816,11 @@
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
     "no-restricted-syntax": {
       "count": 2
+    }
+  },
+  "public/app/plugins/panel/canvas/editor/layer/tree.ts": {
+    "unicorn/no-array-for-each": {
+      "count": 1
     }
   },
   "public/app/plugins/panel/debug/CursorView.tsx": {
@@ -3905,6 +3923,11 @@
       "count": 2
     }
   },
+  "public/app/plugins/panel/geomap/utils/layers.ts": {
+    "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/geomap/utils/tooltip.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -4004,16 +4027,29 @@
       "count": 1
     }
   },
+  "public/app/plugins/panel/timeseries/TimeSeriesPanel.tsx": {
+    "unicorn/no-array-for-each": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/timeseries/migrations.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 4
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 6
+    },
+    "unicorn/no-array-for-each": {
+      "count": 1
     }
   },
   "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx": {
     "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx": {
+    "unicorn/no-array-for-each": {
       "count": 1
     }
   },

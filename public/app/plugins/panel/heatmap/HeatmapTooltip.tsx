@@ -300,7 +300,7 @@ const HeatmapHoverCell = ({
     }
 
     const vals: VizTooltipItem[] = getDisplayData(fromIdx, toIdx);
-    vals.forEach((val) => {
+    for (const val of vals) {
       contentItems.push({
         label: val.label,
         value: val.value,
@@ -309,7 +309,7 @@ const HeatmapHoverCell = ({
         colorPlacement: ColorPlacement.trailing,
         isActive: val.isActive,
       });
-    });
+    }
   }
 
   let footer: ReactNode;

@@ -206,10 +206,10 @@ describe('AnnotationsPlugin2', () => {
         await event(thirdMarker);
         const tags = screen.getAllByTestId('annotation-tag');
 
-        expectedTags.forEach((tag, index) => {
+        for (const [index, tag] of expectedTags.entries()) {
           expect(tags[index]).toBeVisible();
           expect(tags[index]).toHaveTextContent(tag);
-        });
+        }
       });
 
       describe('pinning', () => {

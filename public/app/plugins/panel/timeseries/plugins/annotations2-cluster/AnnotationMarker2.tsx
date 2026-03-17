@@ -81,7 +81,7 @@ export const AnnotationMarker2 = ({
   const actions: ActionModel[] = [];
 
   if (isHovering || isPinned) {
-    frame.fields.forEach((field) => {
+    for (const field of frame.fields) {
       // Since field overrides are not yet supported for annotation frames, every value in the field will have the same links... except the clustering index because it's generated on-the-fly and not had getFieldOverrides called on it
       const annotationIndexForLinks = isClustering ? 0 : annoIdx;
 
@@ -91,7 +91,7 @@ export const AnnotationMarker2 = ({
       if (canExecuteActions) {
         actions.push(...getFieldActions(frame, field, replaceVariables, annotationIndexForLinks));
       }
-    });
+    }
   }
 
   const isEditing = editAnnotationId !== null;

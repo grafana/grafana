@@ -17,12 +17,12 @@ export const BarGaugeLegend = memo(
 
     cacheFieldDisplayNames(data);
 
-    data.forEach((series, frameIndex) => {
-      series.fields.forEach((field, i) => {
+    for (const [frameIndex, series] of data.entries()) {
+      for (const [i, field] of series.fields.entries()) {
         const fieldIndex = i + 1;
 
         if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {
-          return;
+          continue;
         }
 
         const label = field.state?.displayName ?? field.name;
@@ -38,8 +38,8 @@ export const BarGaugeLegend = memo(
         };
 
         legendItems.push(item);
-      });
-    });
+      }
+    }
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>

@@ -74,7 +74,9 @@ export const getActions = (panel: GeomapPanel) => {
       // Add the layers in the right order
       const group = panel.map?.getLayers()!;
       group.clear();
-      panel.layers.forEach((v) => group.push(v.layer));
+      for (const v of panel.layers) {
+        group.push(v.layer);
+      }
     },
   };
 

@@ -556,6 +556,29 @@ module.exports = [
     },
   },
 
+  // Dataviz panel and UI component rules
+  {
+    name: 'grafana/dataviz-panel-rules',
+    files: [
+      'public/app/plugins/panel/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/BarGauge/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/DataLinks/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/Gauge/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/RadialGauge/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/Sparkline/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/Table/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/ValuePicker/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/VizLayout/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/VizLegend/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/VizRepeater/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/VizTooltip/**/*.{ts,tsx}',
+      'packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'unicorn/no-array-for-each': 'error',
+    },
+  },
+
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

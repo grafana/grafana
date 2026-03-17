@@ -33,17 +33,17 @@ const GroupedModeView = ({ rules, options }: Props) => {
     const hasInstancesWithMatchingLabels = (rule: CombinedRuleWithLocation) =>
       groupBy ? alertHasEveryLabelForCombinedRules(rule, groupBy) : true;
 
-    rules.forEach((rule) => {
+    for (const rule of rules) {
       const alertingRule = getAlertingRule(rule);
       const hasInstancesMatching = hasInstancesWithMatchingLabels(rule);
 
-      (alertingRule?.alerts ?? []).forEach((alert) => {
+      for (const alert of alertingRule?.alerts ?? []) {
         const mapKey = hasInstancesMatching ? createMapKey(groupBy, alert.labels) : UNGROUPED_KEY;
 
         const existingAlerts = groupedRules.get(mapKey)?.alerts ?? [];
         groupedRules.set(mapKey, { rule, alerts: [...existingAlerts, alert] });
-      });
-    });
+      }
+    }
 
     // move the "UNGROUPED" key to the last item in the Map, items are shown in insertion order
     const ungrouped = groupedRules.get(UNGROUPED_KEY)?.alerts ?? [];

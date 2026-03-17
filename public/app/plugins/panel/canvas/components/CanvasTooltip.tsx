@@ -85,19 +85,19 @@ export const CanvasTooltip = ({ scene }: Props) => {
   if ((element.options.links?.length ?? 0) > 0 && element.getLinks) {
     const linkLookup = new Set<string>();
 
-    element.getLinks({ valueRowIndex: getRowIndex(element.data.field, scene) }).forEach((link) => {
+    for (const link of element.getLinks({ valueRowIndex: getRowIndex(element.data.field, scene) })) {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
         linkLookup.add(key);
       }
-    });
+    }
   }
 
   if (scene.data?.series) {
-    getElementFields(scene.data?.series, element.options).forEach((field) => {
+    for (const field of getElementFields(scene.data?.series, element.options)) {
       links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
-    });
+    }
   }
 
   const actions: Array<ActionModel<Field>> = [];
@@ -131,13 +131,13 @@ export const CanvasTooltip = ({ scene }: Props) => {
       'canvas'
     );
 
-    actionsModel.forEach((action) => {
+    for (const action of actionsModel) {
       const key = `${action.title}/${Math.random()}`;
       if (!actionLookup.has(key)) {
         actions.push(action);
         actionLookup.add(key);
       }
-    });
+    }
   }
 
   return (

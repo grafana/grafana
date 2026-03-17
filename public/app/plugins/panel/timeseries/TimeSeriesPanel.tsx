@@ -73,11 +73,11 @@ export const TimeSeriesPanel = ({
       frames.forEach((frame: DataFrame) => {
         const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
-        frame.fields.forEach((field) => {
+        for (const field of frame.fields) {
           if (field.type !== FieldType.time) {
             compareDiffMs.push(diffMs);
           }
-        });
+        }
 
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment

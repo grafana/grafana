@@ -78,14 +78,14 @@ export const AnnotationMarker2 = ({
   const actions: ActionModel[] = [];
 
   if (isHovering || isPinned) {
-    frame.fields.forEach((field) => {
+    for (const field of frame.fields) {
       // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
       links.push(...getDataLinks(field, annoIdx));
 
       if (canExecuteActions) {
         actions.push(...getFieldActions(frame, field, replaceVariables, annoIdx));
       }
-    });
+    }
   }
 
   // Is the annotation being edited

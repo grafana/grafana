@@ -287,12 +287,12 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     qt.clear();
 
     // force-clear the path cache to cause drawBars() to rebuild new quadtree
-    u.series.forEach((s, i) => {
+    for (const [i, s] of u.series.entries()) {
       if (i > 0) {
         // @ts-ignore
         s._paths = null;
       }
-    });
+    }
   });
 
   builder.setMode(2);
@@ -352,7 +352,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     formatValue: xIsTime ? undefined : (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
-  xySeries.forEach((s, si) => {
+  for (const [si, s] of xySeries.entries()) {
     let field = s.y.field;
 
     const lineColor = s.color.fixed;
@@ -429,7 +429,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       fillColor: colorManipulator.alpha(pointColor ?? '#ffff', 0.5),
       show: !field.state?.hideFrom?.viz,
     });
-  });
+  }
 
   const dispColors = xySeries.map((s): FieldColorValuesWithCache => {
     const cfg: FieldColorValuesWithCache = {
@@ -458,9 +458,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     const { size: sizeRange, color: colorRange } = getGlobalRanges(xySeries);
 
-    xySeries.forEach((s, i) => {
+    for (const [i, s] of xySeries.entries()) {
       dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
-    });
+    }
 
     return [
       null,
@@ -523,8 +523,8 @@ const getGlobalRanges = (xySeries: XYSeries[]) => {
     },
   };
 
-  xySeries.forEach((series) => {
-    [series.size, series.color].forEach((facet, fi) => {
+  for (const series of xySeries) {
+    for (const [fi, facet] of [series.size, series.color].entries()) {
       if (facet.field != null) {
         let range = fi === 0 ? ranges.size : ranges.color;
 
@@ -544,8 +544,8 @@ const getGlobalRanges = (xySeries: XYSeries[]) => {
           }
         }
       }
-    });
-  });
+    }
+  }
 
   return ranges;
 };

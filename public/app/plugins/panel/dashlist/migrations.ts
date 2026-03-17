@@ -54,7 +54,9 @@ export async function dashlistMigrationHandler(panel: PanelModel<Options> & Angu
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
   if (previousVersion < 6.3) {
     const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'] as const;
-    oldProps.forEach((prop) => delete panel[prop]);
+    for (const prop of oldProps) {
+      delete panel[prop];
+    }
   }
 
   // Convert the folderId to folderUID. Uses the API to do the conversion.

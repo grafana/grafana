@@ -53,10 +53,10 @@ export function prepSeries(
 
   const { palette, getColorByName } = config.theme2.visualization;
 
-  mappedSeries.forEach((seriesCfg, seriesIdx) => {
+  for (const [seriesIdx, seriesCfg] of mappedSeries.entries()) {
     if (mapping === SeriesMapping.Manual) {
       if (seriesCfg.frame?.matcher == null || seriesCfg.x?.matcher == null || seriesCfg.y?.matcher == null) {
-        return;
+        continue;
       }
     }
 
@@ -78,10 +78,10 @@ export function prepSeries(
     let frameMatcher = seriesCfg.frame ? getFrameMatcher2(seriesCfg.frame.matcher) : null;
 
     // loop over all frames and fields, adding a new series for each y dim
-    frames.forEach((frame, frameIdx) => {
+    for (const [frameIdx, frame] of frames.entries()) {
       // must match frame in manual mode
       if (frameMatcher != null && !frameMatcher(frame, frameIdx)) {
-        return;
+        continue;
       }
 
       // shared across each series in this frame
@@ -105,19 +105,19 @@ export function prepSeries(
       // x field is required
       if (x != null) {
         // match y fields and create series
-        onlyNumFields.forEach((field) => {
+        for (const field of onlyNumFields) {
           if (field === x) {
-            return;
+            continue;
           }
 
           // in auto mode don't reuse already-mapped fields
           if (mapping === SeriesMapping.Auto && (field === color || field === size)) {
-            return;
+            continue;
           }
 
           // in manual mode only add single series for this config
           if (mapping === SeriesMapping.Manual && frameSeries.length > 0) {
-            return;
+            continue;
           }
 
           // if we match non-excluded y, create series
@@ -164,14 +164,14 @@ export function prepSeries(
 
             frameSeries.push(ser);
           }
-        });
+        }
 
         if (frameSeries.length === 0) {
           // TODO: could not create series, skip & show error?
         }
 
         // populate rest fields
-        frame.fields.forEach((field) => {
+        for (const field of frame.fields) {
           let isUsedField = frameSeries.some(
             ({ x, y, color, size }) =>
               x.field === field || y.field === field || color.field === field || size.field === field
@@ -180,14 +180,14 @@ export function prepSeries(
           if (!isUsedField) {
             restFields.push(field);
           }
-        });
+        }
 
         series.push(...frameSeries);
       } else {
         // x is missing in this frame!
       }
-    });
-  });
+    }
+  }
 
   if (series.length === 0) {
     // TODO: could not create series, skip & show error?
@@ -197,7 +197,7 @@ export function prepSeries(
     let paletteIdx = 0;
 
     // todo: populate min, max, mode from field + hints
-    series.forEach((s, i) => {
+    for (const [i, s] of series.entries()) {
       if (s.color.field == null) {
         // derive fixed color from y field config
         let colorCfg = s.y.field.config.color ?? { mode: FieldColorModeId.PaletteClassic };
@@ -218,7 +218,7 @@ export function prepSeries(
         s.size.fixed = s.y.field.config.custom.pointSize?.fixed ?? 5;
         // ser.size.mode =
       }
-    });
+    }
 
     autoNameSeries(series);
 
@@ -240,9 +240,9 @@ function autoNameSeries(series: XYSeries[]) {
   const { prefix, suffix } = findCommonPrefixSuffixLengths(names);
 
   if (prefix < Infinity || suffix < Infinity) {
-    series.forEach((s, i) => {
+    for (const [i, s] of series.entries()) {
       s.name.value = names[i].slice(prefix, names[i].length - suffix).join(' ');
-    });
+    }
   }
 }
 

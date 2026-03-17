@@ -177,12 +177,12 @@ export class GeomapPanel extends Component<Props, State> {
   doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
-    this.map?.getLayers().forEach((l) => {
+    for (const l of this.map?.getLayers()) {
       if (l instanceof MeasureVectorLayer) {
         this.map?.removeLayer(l);
         this.map?.addLayer(l);
       }
-    });
+    }
     onOptionsChange({
       ...options,
       basemap: layers[0].options,

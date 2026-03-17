@@ -10,13 +10,13 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
 
     const linkLookup = new Set<string>();
 
-    field.getLinks({ calculatedValue: disp, valueRowIndex: rowIdx }).forEach((link) => {
+    for (const link of field.getLinks({ calculatedValue: disp, valueRowIndex: rowIdx })) {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
         linkLookup.add(key);
       }
-    });
+    }
   }
 
   return links;
@@ -46,13 +46,13 @@ export const getFieldActions = (
       visualizationType
     );
 
-    actionsModel.forEach((action) => {
+    for (const action of actionsModel) {
       const key = `${action.title}`;
       if (!actionLookup.has(key)) {
         actions.push(action);
         actionLookup.add(key);
       }
-    });
+    }
   }
 
   return actions;

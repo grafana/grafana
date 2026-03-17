@@ -73,8 +73,12 @@ function mockDataFrame() {
     state: {},
   });
 
-  df1.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
-  df2.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+  for (const f of df1.fields) {
+    f.config.custom = f.config.custom ?? {};
+  }
+  for (const f of df2.fields) {
+    f.config.custom = f.config.custom ?? {};
+  }
 
   const info = prepSeries([df1], fieldConfig, StackingMode.None, createTheme());
 
@@ -197,7 +201,9 @@ describe('BarChart utils', () => {
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      for (const f of df.fields) {
+        f.config.custom = f.config.custom ?? {};
+      }
 
       const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
@@ -211,7 +217,9 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      for (const f of df.fields) {
+        f.config.custom = f.config.custom ?? {};
+      }
 
       const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
       const warning = assertIsDefined('warn' in info ? info : null);
@@ -225,7 +233,9 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      for (const f of df.fields) {
+        f.config.custom = f.config.custom ?? {};
+      }
 
       const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
 
@@ -250,7 +260,9 @@ describe('BarChart utils', () => {
           { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
         ],
       });
-      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+      for (const f of df.fields) {
+        f.config.custom = f.config.custom ?? {};
+      }
 
       const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
 

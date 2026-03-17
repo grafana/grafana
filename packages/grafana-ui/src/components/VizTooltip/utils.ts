@@ -170,23 +170,25 @@ export const getContentItems = (
     });
   }
 
-  _restFields?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
-      const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
-      const rawValue = field.values[dataIdxs[0]!];
-      const display = getTooltipDisplayValue(rawValue, field);
+  if (_restFields) {
+    for (const field of _restFields) {
+      if (!field.config.custom?.hideFrom?.tooltip) {
+        const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
+        const rawValue = field.values[dataIdxs[0]!];
+        const display = getTooltipDisplayValue(rawValue, field);
 
-      rows.push({
-        label: field.state?.displayName ?? field.name,
-        value: display.text,
-        color: FALLBACK_COLOR,
-        colorIndicator,
-        colorPlacement,
-        lineStyle: field.config.custom?.lineStyle,
-        isHiddenFromViz: true,
-      });
+        rows.push({
+          label: field.state?.displayName ?? field.name,
+          value: display.text,
+          color: FALLBACK_COLOR,
+          colorIndicator,
+          colorPlacement,
+          lineStyle: field.config.custom?.lineStyle,
+          isHiddenFromViz: true,
+        });
+      }
     }
-  });
+  }
 
   if (sortOrder !== SortOrder.None && rows.length > 1) {
     const cmp = allNumeric ? numberCmp : stringCmp;

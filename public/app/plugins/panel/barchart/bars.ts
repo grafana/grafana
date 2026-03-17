@@ -454,13 +454,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   });
 
   const init = (u: uPlot) => {
-    u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
+    for (const el of u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt')) {
       el.style.borderRadius = '0';
 
       if (opts.fullHighlight) {
         el.style.zIndex = '-1';
       }
-    });
+    }
   };
 
   const cursor: uPlot.Cursor = {
@@ -519,10 +519,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     qt.clear();
 
     // clear the path cache to force drawBars() to rebuild new quadtree
-    u.series.forEach((s) => {
+    for (const s of u.series) {
       // @ts-ignore
       s._paths = null;
-    });
+    }
 
     if (isStacked) {
       barsPctLayout = [null, ...distrOne(u.data[0].length, u.data.length - 1)];

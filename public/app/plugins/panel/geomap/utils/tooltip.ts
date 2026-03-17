@@ -160,9 +160,9 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
 
   if (!layers.length) {
     // clear mouse events
-    panel.layers.forEach((layer) => {
+    for (const layer of panel.layers) {
       layer.mouseEvents.next(undefined);
-    });
+    }
   }
 
   const found = Boolean(layers.length);

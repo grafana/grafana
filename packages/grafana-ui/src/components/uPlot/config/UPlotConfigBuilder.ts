@@ -235,11 +235,11 @@ export class UPlotConfigBuilder {
       config.padding = this.padding;
     }
 
-    this.stackingGroups.forEach((group) => {
-      getStackingBands(group).forEach((band) => {
+    for (const group of this.stackingGroups) {
+      for (const band of getStackingBands(group)) {
         this.addBand(band);
-      });
-    });
+      }
+    }
 
     if (this.bands.length) {
       config.bands = this.bands;

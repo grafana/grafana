@@ -55,10 +55,10 @@ describe('LogsTableFields', () => {
     expect(screen.getByText('Selected fields')).toBeVisible();
     expect(screen.getByPlaceholderText(/search fields by name/i)).toBeVisible();
 
-    [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, 'service', 'backend'].forEach((label) => {
+    for (const label of [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, 'service', 'backend']) {
       expect(screen.getByRole('checkbox', { name: label })).toBeInTheDocument();
       expect(screen.getByText(label)).toBeVisible();
-    });
+    }
   });
 
   it('Should collapse', async () => {

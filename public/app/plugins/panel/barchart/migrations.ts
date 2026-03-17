@@ -56,20 +56,22 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (p
 const getReducer = (reducers: string[] | undefined) => {
   const transformReducers: string[] = [];
 
-  reducers?.forEach((reducer) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
-      if (reducer === 'current') {
-        transformReducers.push(ReducerID.lastNotNull);
-      } else if (reducer === 'total') {
-        transformReducers.push(ReducerID.sum);
-      } else if (reducer === 'avg') {
-        transformReducers.push(ReducerID.mean);
+  if (reducers) {
+    for (const reducer of reducers) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
+        if (reducer === 'current') {
+          transformReducers.push(ReducerID.lastNotNull);
+        } else if (reducer === 'total') {
+          transformReducers.push(ReducerID.sum);
+        } else if (reducer === 'avg') {
+          transformReducers.push(ReducerID.mean);
+        }
+      } else {
+        transformReducers.push(reducer);
       }
-    } else {
-      transformReducers.push(reducer);
     }
-  });
+  }
 
   return reducers ? transformReducers : [ReducerID.sum];
 };

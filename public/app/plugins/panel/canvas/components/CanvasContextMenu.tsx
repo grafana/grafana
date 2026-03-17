@@ -73,9 +73,9 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
   useEffect(() => {
     if (scene.selecto) {
-      scene.selecto.getSelectableElements().forEach((element) => {
+      for (const element of scene.selecto.getSelectableElements()) {
         element.addEventListener('contextmenu', handleContextMenu);
-      });
+      }
     }
   }, [handleContextMenu, scene.selecto]);
 

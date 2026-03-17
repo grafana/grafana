@@ -57,9 +57,9 @@ const DEFAULT_ANNOTATION_COLOR_HEX8 = tinycolor(DEFAULT_ANNOTATION_COLOR).toHex8
 
 function getVals(frame: DataFrame) {
   let vals: Record<string, any[]> = {};
-  frame.fields.forEach((f) => {
+  for (const f of frame.fields) {
     vals[f.name] = f.values;
-  });
+  }
 
   return vals;
 }
@@ -164,7 +164,7 @@ export const AnnotationsPlugin2 = ({
       ctx.clip();
 
       // Multi-lane annotations do not support vertical lines or shaded regions
-      xAnnos.forEach((frame) => {
+      for (const frame of xAnnos) {
         let vals = getVals(frame);
         if (!multiLane) {
           let y0 = u.bbox.top;
@@ -192,10 +192,10 @@ export const AnnotationsPlugin2 = ({
             }
           }
         }
-      });
+      }
 
       // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
-      xyAnnos.forEach((frame) => {
+      for (const frame of xyAnnos) {
         let vals = getVals(frame);
 
         let xKey = config.scales[0].props.scaleKey;
@@ -225,7 +225,7 @@ export const AnnotationsPlugin2 = ({
           ctx.strokeStyle = color;
           ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
         }
-      });
+      }
 
       ctx.restore();
     });

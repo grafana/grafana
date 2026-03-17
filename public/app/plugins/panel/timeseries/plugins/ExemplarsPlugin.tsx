@@ -112,7 +112,7 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
   const visibleSeries = config.series.filter((series) => series.props.show);
   const visibleLabels: LabelWithExemplarUIData[] = [];
   if (frames?.length) {
-    visibleSeries.forEach((plotInstance) => {
+    for (const plotInstance of visibleSeries) {
       const frameIndex = plotInstance.props?.dataFrameFieldIndex?.frameIndex;
       const fieldIndex = plotInstance.props?.dataFrameFieldIndex?.fieldIndex;
 
@@ -126,7 +126,7 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
           });
         }
       }
-    });
+    }
   }
 
   return { labels: visibleLabels, totalSeriesCount: config.series.length };

@@ -12,9 +12,9 @@ export function DataLinksEditor({ value, onChange, item, context }: Props) {
       links={value}
       onChange={(links) => {
         if (links.some(({ oneClick }) => oneClick === true)) {
-          actions.forEach((action) => {
+          for (const action of actions) {
             action.oneClick = false;
-          });
+          }
         }
         onChange(links);
       }}

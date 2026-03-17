@@ -40,7 +40,7 @@ export const buildColumnsWithMeta = (
   // If we have labels and log lines
   if (dataFrame.fields.length && numberOfLogLines) {
     // Iterate through all of fields
-    dataFrame.fields.forEach((field) => {
+    for (const field of dataFrame.fields) {
       const fieldName = getFieldDisplayName(field);
       // Count the valid values
       const countOfValues = field.values.reduce((acc: number, value) => {
@@ -55,22 +55,22 @@ export const buildColumnsWithMeta = (
         active: false,
         index: undefined,
       });
-    });
+    }
 
     // Converting the map to an object
     pendingLabelState = Object.fromEntries(labelCardinality);
 
     // Convert count to percent of log lines
-    Object.keys(pendingLabelState).forEach((key) => {
+    for (const key of Object.keys(pendingLabelState)) {
       pendingLabelState[key].percentOfLinesWithLabel = normalize(
         pendingLabelState[key].percentOfLinesWithLabel,
         numberOfLogLines
       );
-    });
+    }
   }
 
   // Normalize the other fields
-  otherFields.forEach((field) => {
+  for (const field of otherFields) {
     const fieldName = getFieldDisplayName(field);
     const isActive = pendingLabelState[fieldName]?.active;
     const index = pendingLabelState[fieldName]?.index;
@@ -93,16 +93,16 @@ export const buildColumnsWithMeta = (
         index: undefined,
       };
     }
-  });
+  }
 
-  displayedFields.forEach((fieldName, idx) => {
+  for (const [idx, fieldName] of displayedFields.entries()) {
     if (pendingLabelState[fieldName]) {
       pendingLabelState[fieldName].active = true;
       pendingLabelState[fieldName].index = idx;
     } else {
       console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
     }
-  });
+  }
 
   // If nothing is selected, then select the default columns
   if (displayedFields.length === 0) {

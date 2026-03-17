@@ -287,35 +287,35 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
 
         if (mainFrame && mainFrame.fields.length === frame.fields.length) {
           // Match series indices with main frame
-          frame.fields.forEach((field, fieldIdx) => {
+          for (const [fieldIdx, field] of frame.fields.entries()) {
             if (shouldProcessField(field, fieldIdx)) {
               const mainField = mainFrame.fields[fieldIdx];
               updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
             }
-          });
+          }
         } else {
           // Fallback
-          frame.fields.forEach((field, fieldIdx) => {
+          for (const [fieldIdx, field] of frame.fields.entries()) {
             if (shouldProcessField(field, fieldIdx)) {
               updateFieldDisplay(field, seriesIndex++);
             }
-          });
+          }
         }
       } else {
         // Fallback when no baseRefId
-        frame.fields.forEach((field, fieldIdx) => {
+        for (const [fieldIdx, field] of frame.fields.entries()) {
           if (shouldProcessField(field, fieldIdx)) {
             updateFieldDisplay(field, seriesIndex++);
           }
-        });
+        }
       }
     } else {
       // Main frames
-      frame.fields.forEach((field, fieldIdx) => {
+      for (const [fieldIdx, field] of frame.fields.entries()) {
         if (shouldProcessField(field, fieldIdx)) {
           updateFieldDisplay(field, seriesIndex++);
         }
-      });
+      }
     }
   }
 };
@@ -342,13 +342,13 @@ export function getGroupedFilters(
   if (xField && xField.labels && xField.config.filterable) {
     const seriesFilters: AdHocFilterItem[] = [];
 
-    Object.entries(xField.labels).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(xField.labels)) {
       seriesFilters.push({
         key,
         operator: FILTER_FOR_OPERATOR,
         value,
       });
-    });
+    }
 
     groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
   }

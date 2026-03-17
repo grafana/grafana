@@ -281,22 +281,26 @@ export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | nu
     (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
   );
 
-  mainFrames?.forEach((frame) => {
-    const subFrames = frames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined);
-    const subFramesGrouped = groupBy(subFrames, (frame: DataFrame) => frame.meta?.custom?.parentRowIndex);
-    const subFramesByIndex = Object.keys(subFramesGrouped).map((key) => subFramesGrouped[key]);
-    const migratedFrame = { ...frame };
+  if (mainFrames) {
+    for (const frame of mainFrames) {
+      const subFrames = frames?.filter(
+        (df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined
+      );
+      const subFramesGrouped = groupBy(subFrames, (frame: DataFrame) => frame.meta?.custom?.parentRowIndex);
+      const subFramesByIndex = Object.keys(subFramesGrouped).map((key) => subFramesGrouped[key]);
+      const migratedFrame = { ...frame };
 
-    if (subFrames && subFrames.length > 0) {
-      migratedFrame.fields.push({
-        name: 'nested',
-        type: FieldType.nestedFrames,
-        config: {},
-        values: subFramesByIndex,
-      });
+      if (subFrames && subFrames.length > 0) {
+        migratedFrame.fields.push({
+          name: 'nested',
+          type: FieldType.nestedFrames,
+          config: {},
+          values: subFramesByIndex,
+        });
+      }
+      migratedFrames.push(migratedFrame);
     }
-    migratedFrames.push(migratedFrame);
-  });
+  }
 
   return migratedFrames;
 };

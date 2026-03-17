@@ -116,14 +116,14 @@ export const XYChartTooltip = ({
     addedFields.add(colorField);
   }
 
-  series._rest.forEach((field) => {
+  for (const field of series._rest) {
     if (!hideFromTooltip(field)) {
       contentItems.push({
         label: stripSeriesName(field.state?.displayName ?? field.name, label),
         value: fmt(field, field.values[rowIndex]),
       });
     }
-  });
+  }
 
   let footer: ReactNode;
 

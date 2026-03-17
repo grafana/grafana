@@ -79,29 +79,29 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   }
 
   if (searched && searched.status === 'fulfilled') {
-    searched?.value?.view.forEach((dash) => {
+    for (const dash of searched?.value?.view) {
       if (!dash.uid) {
-        return;
+        continue;
       }
       if (dashMap.has(dash.uid)) {
         dashMap.get(dash.uid)!.isSearchResult = true;
       } else {
         dashMap.set(dash.uid, { ...dash, isSearchResult: true });
       }
-    });
+    }
   }
 
   if (starred && starred.status === 'fulfilled') {
-    starred?.value?.view.forEach((dash) => {
+    for (const dash of starred?.value?.view) {
       if (!dash.uid) {
-        return;
+        continue;
       }
       if (dashMap.has(dash.uid)) {
         dashMap.get(dash.uid)!.isStarred = true;
       } else {
         dashMap.set(dash.uid, { ...dash, isStarred: true });
       }
-    });
+    }
   }
 
   return dashMap;

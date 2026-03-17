@@ -57,14 +57,14 @@ export const EdgeLabel = memo(function EdgeLabel(props: Props) {
   let offset = stats.length > 1 ? -5 : 2.5;
 
   const contents: JSX.Element[] = [];
-  stats.forEach((stat, index) => {
+  for (const [index, stat] of stats.entries()) {
     contents.push(
       <text key={index} className={styles.text} x={middle.x} y={middle.y + offset} textAnchor={'middle'}>
         {stat}
       </text>
     );
     offset += 15;
-  });
+  }
 
   return (
     <g className={styles.mainGroup}>

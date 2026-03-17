@@ -66,7 +66,7 @@ export const XYChartPanel2 = (props: Props2) => {
 
     const items: VizLegendItem[] = [];
 
-    series.forEach((s, idx) => {
+    for (const [idx, s] of series.entries()) {
       let yField = s.y.field;
       let config = yField.config;
       let custom = config.custom;
@@ -82,7 +82,7 @@ export const XYChartPanel2 = (props: Props2) => {
           getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField, theme),
         });
       }
-    });
+    }
 
     const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
 

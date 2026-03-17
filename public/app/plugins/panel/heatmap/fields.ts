@@ -102,9 +102,9 @@ export function prepareHeatmapData({
 
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
-  exemplars?.fields.forEach((field) => {
+  for (const field of exemplars?.fields) {
     field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
-  });
+  }
 
   if (options.calculate) {
     // if calculate is true, we need to have the default values for the calculation if they don't exist
@@ -170,14 +170,14 @@ export function prepareHeatmapData({
   }
 
   // config data links
-  rowsHeatmap.fields.forEach((field) => {
+  for (const field of rowsHeatmap.fields) {
     if ((field.config.links?.length ?? 0) === 0) {
-      return;
+      continue;
     }
 
     // this expects that the tooltip is able to identify the field and rowIndex from a dense hovered index
     field.getLinks = getLinksSupplier(rowsHeatmap!, field, field.state?.scopedVars ?? {}, replaceVariables);
-  });
+  }
 
   return {
     ...getDenseHeatmapData(

@@ -49,13 +49,13 @@ export const VizLegendTable = <T extends unknown>({
   if (sortKey != null) {
     let itemVals = new Map<VizLegendItem, number>();
 
-    items.forEach((item) => {
+    for (const item of items) {
       if (sortKey !== nameSortKey && item.getDisplayValues) {
         const stat = item.getDisplayValues().find((stat) => stat.title === sortKey);
         const val = stat == null || Number.isNaN(stat.numeric) ? -Infinity : stat.numeric;
         itemVals.set(item, val);
       }
-    });
+    }
 
     let sortMult = sortDesc ? -1 : 1;
 

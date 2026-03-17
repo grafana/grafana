@@ -68,7 +68,7 @@ export function getStackingBands(group: StackingGroup) {
 
   let rSeries = series.slice().reverse();
 
-  rSeries.forEach((si, i) => {
+  for (const [i, si] of rSeries.entries()) {
     if (i !== lastIdx) {
       let nextIdx = rSeries[i + 1];
       bands.push({
@@ -77,7 +77,7 @@ export function getStackingBands(group: StackingGroup) {
         dir: (-1 * dir) as 1 | -1,
       });
     }
-  });
+  }
 
   return bands;
 }
@@ -87,35 +87,35 @@ export function getStackingBands(group: StackingGroup) {
 export function getStackingGroups(frame: DataFrame) {
   let groups: Map<string, StackingGroup> = new Map();
 
-  frame.fields.forEach(({ config, values, type }, i) => {
+  for (const [i, { config, values, type }] of frame.fields.entries()) {
     // skip x or time field
     if (i === 0) {
-      return;
+      continue;
     }
 
     let { custom } = config;
 
     if (custom == null) {
-      return;
+      continue;
     }
 
     // TODO: currently all AlignedFrame fields end up in uplot series & data, even custom.hideFrom?.viz
     // ideally hideFrom.viz fields would be excluded so we can remove this
     if (custom.hideFrom?.viz) {
-      return;
+      continue;
     }
 
     let { stacking } = custom;
 
     if (stacking == null) {
-      return;
+      continue;
     }
 
     let { mode: stackingMode, group: stackingGroup } = stacking;
 
     // not stacking
     if (stackingMode === StackingMode.None) {
-      return;
+      continue;
     }
 
     // will this be stacked up or down after any transforms applied
@@ -147,7 +147,7 @@ export function getStackingGroups(frame: DataFrame) {
     }
 
     group.series.push(i);
-  });
+  }
 
   return [...groups.values()];
 }
@@ -171,14 +171,14 @@ export function preparePlotData2(
 
   // figure out at which time indices each stacking group has any values
   // (needed to avoid absorbing initial accum 0s at unrelated joined timestamps)
-  stackingGroups.forEach((group, groupIdx) => {
+  for (const [groupIdx, group] of stackingGroups.entries()) {
     let groupValsAtX = anyValsAtX[groupIdx];
 
-    group.series.forEach((seriesIdx) => {
+    for (const seriesIdx of group.series) {
       let field = frame.fields[seriesIdx];
 
       if (field.config.custom?.hideFrom?.viz) {
-        return;
+        continue;
       }
 
       let vals = field.values;
@@ -188,22 +188,22 @@ export function preparePlotData2(
           groupValsAtX[i] = true;
         }
       }
-    });
-  });
+    }
+  }
 
-  frame.fields.forEach((field, i) => {
+  for (const [i, field] of frame.fields.entries()) {
     let vals = field.values;
 
     if (i === 0) {
       data[i] = vals;
-      return;
+      continue;
     }
 
     let { custom } = field.config;
 
     if (!custom || custom.hideFrom?.viz) {
       data[i] = vals;
-      return;
+      continue;
     }
 
     // apply transforms
@@ -245,7 +245,7 @@ export function preparePlotData2(
         }
       }
     }
-  });
+  }
 
   if (onStackMeta) {
     let accumsBySeriesIdx = data.map((vals, i) => {
@@ -259,9 +259,9 @@ export function preparePlotData2(
   }
 
   // re-compute by percent
-  frame.fields.forEach((field, i) => {
+  for (const [i, field] of frame.fields.entries()) {
     if (i === 0 || field.config.custom?.hideFrom?.viz) {
-      return;
+      continue;
     }
 
     let stackingMode = field.config.custom?.stacking?.mode;
@@ -282,7 +282,7 @@ export function preparePlotData2(
         }
       }
     }
-  });
+  }
 
   return data;
 }

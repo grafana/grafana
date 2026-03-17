@@ -135,7 +135,7 @@ export const AnnotationsPlugin2Cluster = ({
       const shouldRenderLine = (lineWidth !== undefined ? lineWidth > 0 : undefined) ?? !options?.multiLane;
 
       // Multi-lane annotations do not support vertical lines or shaded regions
-      xAnnos.forEach((frame) => {
+      for (const frame of xAnnos) {
         const vals = getVals<AnnotationVals>(frame);
 
         // render line
@@ -174,10 +174,10 @@ export const AnnotationsPlugin2Cluster = ({
             }
           }
         }
-      });
+      }
 
       // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
-      xyAnnos.forEach((frame) => {
+      for (const frame of xyAnnos) {
         const vals = getVals<XYAnnoVals>(frame);
 
         const xKey = config.scales[0].props.scaleKey;
@@ -207,7 +207,7 @@ export const AnnotationsPlugin2Cluster = ({
           ctx.strokeStyle = color;
           ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
         }
-      });
+      }
 
       ctx.restore();
     });
