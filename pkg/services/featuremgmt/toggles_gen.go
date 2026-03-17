@@ -838,10 +838,6 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
-	// FlagKubernetesTeamService
-	// Use the new team service that uses the app platform APIs
-	FlagKubernetesTeamService = "kubernetesTeamService"
-
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
