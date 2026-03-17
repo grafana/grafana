@@ -53,7 +53,7 @@ export function prepSeries(
 
   const { palette, getColorByName } = config.theme2.visualization;
 
-  for (const [seriesIdx, seriesCfg] of mappedSeries.entries()) {
+  for (const seriesCfg of mappedSeries) {
     if (mapping === SeriesMapping.Manual) {
       if (seriesCfg.frame?.matcher == null || seriesCfg.x?.matcher == null || seriesCfg.y?.matcher == null) {
         continue;
@@ -197,7 +197,7 @@ export function prepSeries(
     let paletteIdx = 0;
 
     // todo: populate min, max, mode from field + hints
-    for (const [i, s] of series.entries()) {
+    for (const s of series) {
       if (s.color.field == null) {
         // derive fixed color from y field config
         let colorCfg = s.y.field.config.color ?? { mode: FieldColorModeId.PaletteClassic };

@@ -101,9 +101,10 @@ export function prepareHeatmapData({
   cacheFieldDisplayNames(frames);
 
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
-
-  for (const field of exemplars?.fields) {
-    field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+  if (exemplars != null) {
+    for (const field of exemplars.fields) {
+      field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+    }
   }
 
   if (options.calculate) {

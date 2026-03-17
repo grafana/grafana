@@ -177,12 +177,15 @@ export class GeomapPanel extends Component<Props, State> {
   doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
-    for (const l of this.map?.getLayers()) {
+    // the return type of `getLayers` is `Collection<Layer>` which cannot use a `for...of` loop, so we have to use `forEach`
+    // eslint-disable-next-line unicorn/no-array-for-each
+    this.map?.getLayers()?.forEach((l) => {
       if (l instanceof MeasureVectorLayer) {
         this.map?.removeLayer(l);
         this.map?.addLayer(l);
       }
-    }
+    });
+
     onOptionsChange({
       ...options,
       basemap: layers[0].options,

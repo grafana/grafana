@@ -352,7 +352,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     formatValue: xIsTime ? undefined : (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
-  for (const [si, s] of xySeries.entries()) {
+  for (const s of xySeries.values()) {
     let field = s.y.field;
 
     const lineColor = s.color.fixed;

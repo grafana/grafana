@@ -78,8 +78,8 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     }
   }
 
-  if (searched && searched.status === 'fulfilled') {
-    for (const dash of searched?.value?.view) {
+  if (searched && searched.status === 'fulfilled' && searched.value) {
+    for (const dash of searched.value.view) {
       if (!dash.uid) {
         continue;
       }
@@ -92,7 +92,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   }
 
   if (starred && starred.status === 'fulfilled') {
-    for (const dash of starred?.value?.view) {
+    for (const dash of starred.value!.view) {
       if (!dash.uid) {
         continue;
       }
