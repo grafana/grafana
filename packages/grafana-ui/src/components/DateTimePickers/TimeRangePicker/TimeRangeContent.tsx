@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { FormEvent, useCallback, useEffect, useId, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -68,7 +68,13 @@ export const TimeRangeContent = (props: Props) => {
 
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
+  // Pre-touch fields that are already invalid when the form opens (e.g. an existing invalid range)
+  const [fromTouched, setFromTouched] = useState(fromValue.invalid);
+  const [toTouched, setToTouched] = useState(toValue.invalid);
   const [isOpen, setOpen] = useState(false);
+
+  const fromInputRef = useRef<HTMLInputElement>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   const fromFieldId = useId();
   const toFieldId = useId();
@@ -78,6 +84,8 @@ export const TimeRangeContent = (props: Props) => {
     const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
     setFrom(fromValue);
     setTo(toValue);
+    setFromTouched(fromValue.invalid);
+    setToTouched(toValue.invalid);
   }, [value.raw.from, value.raw.to, timeZone]);
 
   const onOpen = useCallback(
@@ -90,6 +98,14 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
+      // Reveal errors and focus first invalid field so screen readers announce it
+      setFromTouched(true);
+      setToTouched(true);
+      if (from.invalid) {
+        fromInputRef.current?.focus();
+      } else {
+        toInputRef.current?.focus();
+      }
       return;
     }
 
@@ -171,13 +187,15 @@ export const TimeRangeContent = (props: Props) => {
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}
-          invalid={from.invalid}
+          invalid={from.invalid && fromTouched}
           error={from.errorMessage}
         >
           <Input
             id={fromFieldId}
+            ref={fromInputRef}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
+            onBlur={() => setFromTouched(true)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.fromField}
@@ -187,11 +205,17 @@ export const TimeRangeContent = (props: Props) => {
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
+        <Field
+          label={t('time-picker.range-content.to-input', 'To')}
+          invalid={to.invalid && toTouched}
+          error={to.errorMessage}
+        >
           <Input
             id={toFieldId}
+            ref={toInputRef}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
+            onBlur={() => setToTouched(true)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.toField}
