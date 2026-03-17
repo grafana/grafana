@@ -2350,7 +2350,6 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
-      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2360,8 +2359,9 @@
       "labels": "Labels:",
       "labels-filter-variable": {
         "label": {
-          "labels": "Labels"
-        }
+          "group-labels": "Group Labels"
+        },
+        "placeholder": "Filter by group label values"
       },
       "no-notifications": "No notifications found for the selected time range and filters",
       "outcome-filter-variable": {
