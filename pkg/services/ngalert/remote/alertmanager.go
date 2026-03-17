@@ -47,9 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
-const (
-	silenceOperationName = "/alertmanager/api/v2/silence/{uid}"
-)
+const silenceOperationName = "/alertmanager/api/v2/silence/{uid}"
 
 type stateStore interface {
 	GetSilences(ctx context.Context) (string, error)
