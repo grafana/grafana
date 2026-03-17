@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -186,10 +185,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			}
 			currentSource, _ := meta.GetSourceProperties()
 			desiredSource := utils.SourceProperties{
-				Path:     strings.TrimSuffix(folder.Path, "/"),
+				// Here we keep the path as is - updating the folder path is outside of the scope of this function.
+				Path:     currentSource.Path,
 				Checksum: folder.Checksum,
 			}
-			if currentSource.Path != desiredSource.Path || currentSource.Checksum != desiredSource.Checksum {
+			if currentSource.Checksum != desiredSource.Checksum {
 				meta.SetSourceProperties(desiredSource)
 				needsUpdate = true
 			}

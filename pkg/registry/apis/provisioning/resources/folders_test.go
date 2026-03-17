@@ -369,7 +369,8 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.NoError(t, err)
 		source, ok := meta.GetSourceProperties()
 		require.True(t, ok)
-		require.Equal(t, "new-path", source.Path)
+		// Ensuring the path is preserved.
+		require.Equal(t, "old-path", source.Path)
 		require.Equal(t, "new-checksum", source.Checksum)
 	})
 
