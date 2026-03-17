@@ -866,6 +866,10 @@ const (
 	// Enables the notification history timeline in the triage instance details drawer
 	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
 
+	// FlagAlertingNotificationHistoryDetail
+	// Enables the notification history detail page
+	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"

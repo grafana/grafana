@@ -625,6 +625,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardAssistantPopover",
+			Description:  "Enables the assistant prompt popover on panel click in dashboard view mode",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -2573,6 +2581,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryTriage",
 			Description:  "Enables the notification history timeline in the triage instance details drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryDetail",
+			Description:  "Enables the notification history detail page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
