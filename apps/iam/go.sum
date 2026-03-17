@@ -856,8 +856,8 @@ github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 h1:igFpQWV
 github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686/go.mod h1:ga4rxVfVsvUKEbmwx4/dryIRwHBYpuwP0mDB81aMR2Y=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrRoT6yV5+wkrOpcszoIsO4+4ds248=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
-github.com/grafana/schemads v0.0.1 h1:hw+8zJlZG/dFPbAlXs+PU86pwqG2tPO1mL8ws0S8/Do=
-github.com/grafana/schemads v0.0.1/go.mod h1:i/iRKic1c9i/ZjApKe7+BDQjPhlQO7gWycVRu7x6c1U=
+github.com/grafana/schemads v0.0.3 h1:vh8q6QcaCLtRhsZn+xlu5X663u4VK/yfDiqD8HwXIKE=
+github.com/grafana/schemads v0.0.3/go.mod h1:i/iRKic1c9i/ZjApKe7+BDQjPhlQO7gWycVRu7x6c1U=
 github.com/grafana/sqlds/v5 v5.0.4 h1:Q4T4wXI5tolN1EUQtN81I4SGBFlBF4tD8XYh34/kk24=
 github.com/grafana/sqlds/v5 v5.0.4/go.mod h1:BvFzzPgc2bmr3R78s1TuZr2gOELpBM9tt6m1DKI8Ts4=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec h1:wnzJov9RhSHGaTYGzTygL4qq986fLen8xSqnQgaMd28=

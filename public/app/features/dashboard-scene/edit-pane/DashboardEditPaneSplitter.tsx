@@ -12,6 +12,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from '../assistant/DashboardAssistantViewMode';
+import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -54,6 +56,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const assistantStyles = useStyles2(getAssistantViewModeStyles);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -63,21 +66,25 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
-  /**
-   * Enable / disable selection based on dashboard isEditing state
-   */
+  const { selectionContext, openPane, selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+
+  const { isEnabled: isAssistantEnabled, isViewModeWithPanelSelected } = useDashboardAssistantViewMode({
+    dashboard,
+    editPane,
+    isEditing,
+    selection,
+  });
+
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing || isAssistantEnabled) {
       editPane.enableSelection();
     } else {
       editPane.disableSelection();
     }
-  }, [isEditing, editPane]);
-
-  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  }, [isEditing, isAssistantEnabled, editPane]);
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) && Boolean(isEditing),
     contentMargin: 1,
     position: 'right',
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
@@ -144,12 +151,21 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   }
 
   return (
-    <div className={styles.container}>
+    <div
+      className={cx(
+        styles.container,
+        !isEditing && isAssistantEnabled && assistantStyles.viewModeHoverOverride,
+        isViewModeWithPanelSelected && assistantStyles.viewModeAnimatedBorder
+      )}
+    >
       <ElementSelectionContext.Provider value={selectionContext}>
         <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
           {controls}
         </div>
         {renderBody()}
+        {isViewModeWithPanelSelected && (
+          <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />
+        )}
       </ElementSelectionContext.Provider>
     </div>
   );

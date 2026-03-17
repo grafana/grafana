@@ -102,32 +102,18 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f := ParseFolder(dir, cfg.Name)
-	// Use stable UID from _folder.json if available
-	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-		// We use folder metadata here only to check if the folder exists
-		// for new folders, we'll be using the safepath.Walk below, so we don't need to set the title here for now.
-	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, "", fm.folderMetadataEnabled)
+	if err != nil {
+		return "", err
 	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f := ParseFolder(traverse, cfg.GetName())
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
-			if meta.Name != "" {
-				f.ID = meta.Name
-			}
-			if meta.Spec.Title != "" {
-				f.Title = meta.Spec.Title
-			}
-		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, "", fm.folderMetadataEnabled)
+		if err != nil {
+			return err
 		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
@@ -156,7 +142,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-// - it will update the title if it has changed
+// - it will update metadata-backed properties if they have changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -286,6 +272,11 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	leaf.ID = stableUID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
+}
+
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
 }
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {

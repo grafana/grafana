@@ -1,10 +1,18 @@
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
+
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
-import { CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
+import {
+  CONNECTIONS_URL,
+  CONNECT_URL,
+  GETTING_STARTED_URL,
+  PROVISIONING_PREVIEW_URL,
+  PROVISIONING_URL,
+} from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   const featureToggles = config.featureToggles || {};
@@ -91,7 +99,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
+      path: PROVISIONING_PREVIEW_URL + '/:slug/preview/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,
       component: SafeDynamicImport(
@@ -99,5 +107,17 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
           import(/* webpackChunkName: "DashboardScenePage" */ 'app/features/dashboard-scene/pages/DashboardScenePage')
       ),
     },
+    {
+      // This is a temporary route to redirect from old preview to the new preview URL
+      path: PROVISIONING_URL + '/:slug/dashboard/preview/*',
+      component: RedirectToProvisioningPreview,
+    },
   ];
+}
+
+function RedirectToProvisioningPreview() {
+  const { slug = '', '*': rest = '' } = useParams();
+  const location = useLocation();
+  // Preserve query params (ref, pull_request_url) from old PR comment links
+  return <Navigate replace to={`${PROVISIONING_PREVIEW_URL}/${slug}/preview/${rest}${location.search}`} />;
 }
