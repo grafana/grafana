@@ -6,17 +6,15 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 )
-
-var logger = log.New("stalebot.scanner")
 
 type DashboardScanner struct {
 	restConfig rest.Config
@@ -27,6 +25,8 @@ func NewDashboardScanner(restConfig rest.Config) *DashboardScanner {
 }
 
 func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace string) error {
+	log := logging.FromContext(ctx)
+
 	// Step 1: list all dashboards via typed client
 	clientRegistry := k8s.NewClientRegistry(s.restConfig, k8s.ClientConfig{})
 	rawClient, err := clientRegistry.ClientFor(dashboardv2beta1.DashboardKind())
@@ -38,7 +38,7 @@ func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace st
 	if err != nil {
 		return fmt.Errorf("list dashboards: %w", err)
 	}
-	logger.Info("Step 1: found dashboards", "count", len(dashboards.Items), "namespace", namespace)
+	log.Info("Step 1: found dashboards", "count", len(dashboards.Items), "namespace", namespace)
 
 	// uid → title
 	titles := make(map[string]string, len(dashboards.Items))
@@ -60,7 +60,7 @@ func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace st
 	if err != nil {
 		return fmt.Errorf("list dashboard stats: %w", err)
 	}
-	logger.Info("Step 2: found dashboard stats", "count", len(statsList.Items), "namespace", namespace)
+	log.Info("Step 2: found dashboard stats", "count", len(statsList.Items), "namespace", namespace)
 
 	// uid → views_last_30_days
 	views := make(map[string]int64, len(statsList.Items))
@@ -81,11 +81,7 @@ func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace st
 			stale = append(stale, uid)
 		}
 	}
-	logger.Info("Step 3: filtered by views_last_30_days == 0",
-		"total", len(titles),
-		"with_views", len(titles)-len(stale),
-		"stale", len(stale),
-	)
+	log.Info("Step 3: filtered by views_last_30_days == 0", "total", len(titles), "with_views", len(titles)-len(stale), "stale", len(stale))
 
 	for _, uid := range stale {
 		fmt.Printf("name=%s uid=%s\n", titles[uid], uid)
