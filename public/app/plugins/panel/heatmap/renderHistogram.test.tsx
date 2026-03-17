@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { renderHistogram } from './renderHistogram';
 
 describe('renderHistogram', () => {

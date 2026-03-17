@@ -59,8 +59,6 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   }),
 }));
 
-// Mock uPlot to avoid canvas initialization in tests.
-// HeatmapPanel uses UPlotChart which depends on uPlot for rendering the canvas visualization.
 jest.mock('uplot', () => {
   const mockPathsBars = jest.fn(() => () => '');
   const mock = jest.fn().mockImplementation((config: { width?: number; height?: number }) => {
@@ -83,10 +81,7 @@ jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
   const { selectors } = require('@grafana/e2e-selectors');
 
-  /**
-   * Mock VizLayout that simulates legend measurement for deterministic canvas dimension tests.
-   * When legend is shown, reserves MOCK_LEGEND_HEIGHT so the canvas receives reduced height.
-   */
+  /** Simulates legend measurement: when legend is shown, reserves MOCK_LEGEND_HEIGHT for canvas dimension tests. */
   const MockVizLayout = ({
     width,
     height,
@@ -114,12 +109,7 @@ jest.mock('@grafana/ui', () => {
   };
   MockVizLayout.Legend = actual.VizLayout.Legend;
 
-  /**
-   * Mock TooltipPlugin2 to detect when tooltip is rendered.
-   * HeatmapPanel conditionally renders TooltipPlugin2 based on options.tooltip.mode.
-   * Uses isPinned=true so the footer (including DataLinks) is rendered for testing.
-   * When tooltipRenderParamsForTest is set, simulates hover with optional timeRange2.
-   */
+  /** Mock TooltipPlugin2: uses isPinned=true so footer (DataLinks) renders; tooltipRenderParamsForTest simulates hover. */
   const mockUPlot = {
     posToVal: (_pos: number, _axis: string) => 1500,
     cursor: { left: 100 },
@@ -133,6 +123,7 @@ jest.mock('@grafana/ui', () => {
     React.useEffect(() => {
       const c = props.render?.(mockUPlot, params.dataIdxs, params.seriesIdx, true, jest.fn(), timeRange2, false);
       setContent(c ?? null);
+      // Intentionally empty deps: mock simulates one-time tooltip render for tests
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -476,8 +467,9 @@ describe('HeatmapPanel', () => {
       expect(screen.getByText('trace-abc')).toBeVisible();
     });
   });
+
   describe('Annotations', () => {
-    it('renders mocked AnnotationsPlugin with appropriate props', () => {
+    it('renders AnnotationsPlugin with correct props when annotations present', () => {
       const annotationFrame = createAnnotationFrame({ text: ['Deployment'] });
 
       renderHeatmapPanel({ annotations: [annotationFrame] });
@@ -557,8 +549,9 @@ describe('HeatmapPanel', () => {
       });
     });
   });
+
   describe('DataLinks', () => {
-    it('shows DataLinks in tooltip when links are defined on the dataframe field', () => {
+    it('shows DataLinks in tooltip when links are defined on the field', () => {
       const linkTitle = 'View in Explorer';
       const linkUrl = 'https://example.com';
       const frameWithLinks = createHeatmapRowsFrameWithLinks({
@@ -572,8 +565,9 @@ describe('HeatmapPanel', () => {
       expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
     });
   });
+
   describe('FieldActions', () => {
-    it('shows field actions in tooltip when actions are defined on the dataframe field', () => {
+    it('shows field actions in tooltip when actions are defined on the field', () => {
       const actionTitle = 'Run query';
       const actionUrl = 'https://api.example.com/run';
       const frameWithActions = createHeatmapRowsFrameWithActions({
@@ -587,6 +581,7 @@ describe('HeatmapPanel', () => {
       expect(screen.getByRole('button', { name: actionTitle })).toBeVisible();
     });
   });
+
   describe('Options', () => {
     it('uses options.calculation.yBuckets.value for ySizeDivisor when set', () => {
       renderHeatmapPanel(undefined, {
@@ -625,6 +620,7 @@ describe('HeatmapPanel', () => {
         expect(lastUPlotConfig).toHaveProperty('height', panelHeight - MOCK_LEGEND_HEIGHT);
       });
     });
+
     describe('tooltip', () => {
       it('renders TooltipPlugin2 when tooltip mode is not None', () => {
         renderHeatmapPanel();
@@ -643,10 +639,6 @@ describe('HeatmapPanel', () => {
       });
     });
   });
-
-  // ---------------------------------------------------------------------------
-  // Regression tests derived from merged heatmap bug fixes
-  // ---------------------------------------------------------------------------
 
   describe('Regression: negative values (PR #98887, #96741)', () => {
     // Heatmap panels with all-negative bucket values previously crashed or
