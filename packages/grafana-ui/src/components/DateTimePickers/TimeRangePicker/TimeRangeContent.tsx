@@ -44,44 +44,34 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
-  // Visual error content — rendered inside aria-hidden wrapper so role="alert" is suppressed
   errorMessage: React.ReactNode;
-  // Plain-text error — rendered in polite live region and linked via aria-describedby
   errorDescription: string;
 }
 
 const DOCS_LINK = 'https://grafana.com/docs/grafana/latest/dashboards/time-range-controls';
 
 const ERROR_MESSAGES = {
-  from: {
-    description: () =>
-      t(
-        'time-picker.range-content.from-error',
-        'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.'
-      ),
-  },
-  to: {
-    description: () =>
-      t(
-        'time-picker.range-content.to-error',
-        'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.'
-      ),
-  },
-  range: {
-    description: () => t('time-picker.range-content.range-error', '"From" date must be before "To"'),
-  },
+  from: () =>
+    t(
+      'time-picker.range-content.from-error',
+      'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.'
+    ),
+  to: () =>
+    t(
+      'time-picker.range-content.to-error',
+      'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.'
+    ),
+  range: () => t('time-picker.range-content.range-error', '"From" date must be before "To"'),
 };
 
 function fieldErrorMessage(type: 'from' | 'to' | 'range'): React.ReactNode {
-  const desc = ERROR_MESSAGES[type].description();
+  const desc = ERROR_MESSAGES[type]();
   if (type === 'range') {
     return desc;
   }
   return (
     <>
       {desc}{' '}
-      {/* Plain <a> inherits font-size from FieldValidationMessage (12px).
-          TextLink would apply theme.typography.body (14px) and look oversized. */}
       <a href={DOCS_LINK} target="_blank" rel="noreferrer">
         {t('time-picker.range-content.error-see-docs', 'See time range syntax')}
       </a>
@@ -109,9 +99,6 @@ export const TimeRangeContent = (props: Props) => {
 
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
-  // Refs to the aria-describedby target divs — updated imperatively on blur/submit
-  // so the error text is only announced when the user explicitly leaves a field or submits,
-  // not on every keystroke (which would interrupt the input's own speech output).
   const fromErrorRef = useRef<HTMLDivElement>(null);
   const toErrorRef = useRef<HTMLDivElement>(null);
 
@@ -137,8 +124,6 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
-      // Update the aria-describedby targets imperatively before focusing so the screen
-      // reader reads the error description when focus lands on the invalid field.
       if (fromErrorRef.current) {
         fromErrorRef.current.textContent = from.invalid ? from.errorDescription : '';
       }
@@ -239,13 +224,9 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <div className={style.fieldContainer}>
-        {/*
-         * Field does not receive `error` — that would render FieldValidationMessage with role="alert"
-         * (assertive), which interrupts speech on every keystroke. Instead:
-         *   1. FieldValidationMessage sits inside aria-hidden (visual only, no live region)
-         *   2. A plain div (no aria-live) is the aria-describedby target — updated imperatively
-         *      only on blur or submit, so the error is never announced mid-typing
-         */}
+        {/* Field does not receive `error` — role="alert" inside Field interrupts speech on every
+            keystroke. FieldValidationMessage is rendered aria-hidden (visual only); errors are
+            announced via aria-describedby targets updated imperatively on blur/submit. */}
         <div className={style.fieldWrapper}>
           <Field
             label={t('time-picker.range-content.from-input', 'From')}
@@ -275,8 +256,6 @@ export const TimeRangeContent = (props: Props) => {
               <FieldValidationMessage>{from.errorMessage}</FieldValidationMessage>
             </div>
           )}
-          {/* Plain div — no aria-live. Only populated on blur/submit so the error is read
-              on the next focus event, not mid-keystroke. */}
           <div id={fromErrorId} ref={fromErrorRef} className={style.srOnly} />
         </div>
         {fyTooltip}
@@ -375,13 +354,13 @@ function valueToState(
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
       errorMessage: fieldErrorMessage(fromErrorType),
-      errorDescription: ERROR_MESSAGES[fromErrorType].description(),
+      errorDescription: ERROR_MESSAGES[fromErrorType](),
     },
     {
       value: toValue,
       invalid: toInvalid,
       errorMessage: fieldErrorMessage('to'),
-      errorDescription: ERROR_MESSAGES.to.description(),
+      errorDescription: ERROR_MESSAGES.to(),
     },
   ];
 }
