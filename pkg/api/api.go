@@ -542,7 +542,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
 			// Note: push and publish do not use the same auth.
-			// Publish is channel-based and uses per-channel PublishAuth from pipeline rules, 
+			// Publish is channel-based and uses per-channel PublishAuth from pipeline rules,
 			// and Push is a single managed-stream endpoint where RBAC is used.
 
 			// the channel path is in the name
