@@ -13510,6 +13510,7 @@
       "github-app-select-connection": "Select a GitHub App connection",
       "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
       "github-enterprise-alert-title": "GitHub Enterprise Server",
+      "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
