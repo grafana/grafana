@@ -130,7 +130,6 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 
 		for _, req := range chunk {
 			count++
-			opts.Progress(count, fmt.Sprintf("%s (%d)", req.Key.Name, len(req.Value)))
 
 			err = stream.Send(req)
 			if err != nil {
