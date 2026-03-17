@@ -143,14 +143,14 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
   if (allFailed) {
     return (
       <Tooltip content={t('alerting.instance-details.timeline-dot-all-failed', 'All notifications failed')}>
-        <Icon name="times-circle" size="sm" className={styles.dotIconError} />
+        <Icon name="exclamation-circle" size="sm" className={styles.dotIconError} />
       </Tooltip>
     );
   }
   if (someFailed) {
     return (
       <Tooltip content={t('alerting.instance-details.timeline-dot-some-failed', 'Some notifications failed')}>
-        <Icon name="exclamation-triangle" size="sm" className={styles.dotIconWarning} />
+        <Icon name="exclamation-circle" size="sm" className={styles.dotIconError} />
       </Tooltip>
     );
   }
@@ -490,12 +490,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   dotIconError: css({
     color: theme.colors.error.main,
-    flexShrink: 0,
-    marginTop: theme.spacing(0.5),
-  }),
-
-  dotIconWarning: css({
-    color: theme.colors.warning.main,
     flexShrink: 0,
     marginTop: theme.spacing(0.5),
   }),
