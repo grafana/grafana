@@ -43,6 +43,10 @@
 - Use try-catch for async operations
 - Provide user-friendly error messages
 
+### Typescript
+
+- Do not use non-null assertion operators or type assertions
+
 ## 🧪 Testing Strategies
 
 - Write tests for all business logic

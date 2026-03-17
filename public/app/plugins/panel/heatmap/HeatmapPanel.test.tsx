@@ -12,7 +12,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { DataTopic, TooltipDisplayMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
 
@@ -31,6 +31,18 @@ let canExecuteActionsForTest = false;
 
 /** When set, MockTooltipPlugin2 uses these params to simulate hovering over exemplar (seriesIdx=2). */
 let tooltipRenderParamsForTest: { dataIdxs: Array<number | null>; seriesIdx: number } | null = null;
+
+/** Captures the last props passed to AnnotationsPlugin for assertion in tests. */
+let lastAnnotationsPluginProps: Record<string, unknown> | null = null;
+
+jest.mock('../timeseries/plugins/AnnotationPlugin', () => ({
+  AnnotationsPlugin: (props: Record<string, unknown>) => {
+    lastAnnotationsPluginProps = props;
+    return (props.annotations as unknown[]).length ? (
+      <div data-testid="annotations-plugin">{(props.annotations as unknown[]).length} annotation(s)</div>
+    ) : null;
+  },
+}));
 
 jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   getDashboardSrv: () => ({
@@ -189,6 +201,22 @@ function createHeatmapRowsFrameWithLinks(linkConfig: { url: string; title: strin
 }
 
 /**
+ * Creates a minimal x-axis annotation DataFrame for heatmap tests.
+ */
+function createAnnotationFrame(overrides?: { timeValues?: number[]; text?: string[] }) {
+  const timeValues = overrides?.timeValues ?? [1500];
+  const text = overrides?.text ?? ['Deployment'];
+  return toDataFrame({
+    name: 'annotation',
+    meta: { dataTopic: DataTopic.Annotations },
+    fields: [
+      { name: 'time', type: FieldType.time, values: timeValues },
+      { name: 'text', type: FieldType.string, values: text },
+    ],
+  });
+}
+
+/**
  * Creates a minimal exemplar DataFrame for heatmap tooltip tests.
  * Must have name 'exemplar' to be found in annotations by prepareHeatmapData.
  * Time and Value fields align with heatmap rows format (ordinal y indices 0, 1, 2).
@@ -264,6 +292,7 @@ describe('HeatmapPanel', () => {
     lastUPlotConfig = null;
     canExecuteActionsForTest = false;
     tooltipRenderParamsForTest = null;
+    lastAnnotationsPluginProps = null;
   });
 
   /**
@@ -339,7 +368,33 @@ describe('HeatmapPanel', () => {
       expect(screen.getByText('traceID')).toBeVisible();
     });
   });
-  describe('Annotations', () => {});
+  describe('Annotations', () => {
+    it('renders mocked AnnotationsPlugin with appropriate props', () => {
+      const annotationFrame = createAnnotationFrame({ text: ['Deployment'] });
+
+      renderHeatmapPanel({ annotations: [annotationFrame] });
+
+      expect(screen.getByTestId('annotations-plugin')).toBeVisible();
+      expect(screen.getByText('1 annotation(s)')).toBeVisible();
+
+      expect(lastAnnotationsPluginProps).toMatchObject({
+        annotations: [annotationFrame],
+        timeZone: 'utc',
+        newRange: null,
+        canvasRegionRendering: false,
+      });
+      expect(lastAnnotationsPluginProps).toHaveProperty('replaceVariables', expect.any(Function));
+      expect(lastAnnotationsPluginProps).toHaveProperty('setNewRange', expect.any(Function));
+      expect(lastAnnotationsPluginProps).toHaveProperty('options');
+      expect(lastAnnotationsPluginProps).toHaveProperty('config');
+    });
+
+    it('does not render annotations when annotations array is empty', () => {
+      renderHeatmapPanel({ annotations: [] });
+
+      expect(screen.queryByTestId('annotations-plugin')).not.toBeInTheDocument();
+    });
+  });
   describe('DataLinks', () => {
     it('shows DataLinks in tooltip when links are defined on the dataframe field', () => {
       const linkTitle = 'View in Explorer';
