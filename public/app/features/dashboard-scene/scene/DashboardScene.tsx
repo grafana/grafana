@@ -33,7 +33,6 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -49,7 +48,6 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
-import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -86,6 +84,7 @@ import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
+import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -259,18 +258,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
+    const destroyMutationClient = createMutationClient(this);
 
-    // Deactivation logic
     return () => {
-      setDashboardMutationClient(null);
-      mutationClient = undefined;
+      destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
