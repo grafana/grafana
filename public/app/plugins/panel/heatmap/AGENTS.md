@@ -56,11 +56,13 @@
 
 - Import shared modules using workspace names: `@grafana/example`
 
-## 📦 Tech Stack
-
-- React 18.3.1 & React 19+
-- TypeScript 5.9+
-
 ## Public documentation
 
 https://grafana.com/docs/grafana/next/visualizations/panels-visualizations/visualizations/heatmap/
+
+## Implementation overview
+
+- Renders Heatmap panel plugin
+- UPlot renders canvas visualization
+- UPlot hooks manage canvas user interactions which render React components (e.g. Tooltip)
+- Supports Exemplars and Annotations

@@ -28,6 +28,9 @@ const MOCK_LEGEND_HEIGHT = 80;
 /** Set to true in tests that need field actions to be executable (e.g. FieldActions test). */
 let canExecuteActionsForTest = false;
 
+/** When set, MockTooltipPlugin2 uses these params to simulate hovering over exemplar (seriesIdx=2). */
+let tooltipRenderParamsForTest: { dataIdxs: Array<number | null>; seriesIdx: number } | null = null;
+
 jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   getDashboardSrv: () => ({
     getCurrent: () => ({
@@ -95,9 +98,11 @@ jest.mock('@grafana/ui', () => {
    * Mock TooltipPlugin2 to detect when tooltip is rendered.
    * HeatmapPanel conditionally renders TooltipPlugin2 based on options.tooltip.mode.
    * Uses isPinned=true so the footer (including DataLinks) is rendered for testing.
+   * When tooltipRenderParamsForTest is set, simulates hover over exemplar (seriesIdx=2).
    */
   const MockTooltipPlugin2 = (props: { render?: (...args: unknown[]) => React.ReactNode }) => {
-    const content = props.render?.({}, [0, 0], 0, true, jest.fn(), null, false);
+    const params = tooltipRenderParamsForTest ?? { dataIdxs: [0, 0, 0], seriesIdx: 0 };
+    const content = props.render?.({}, params.dataIdxs, params.seriesIdx, true, jest.fn(), null, false);
     return <div data-testid="heatmap-tooltip-plugin">{content}</div>;
   };
 
@@ -183,6 +188,25 @@ function createHeatmapRowsFrameWithLinks(linkConfig: { url: string; title: strin
 }
 
 /**
+ * Creates a minimal exemplar DataFrame for heatmap tooltip tests.
+ * Must have name 'exemplar' to be found in annotations by prepareHeatmapData.
+ * Time and Value fields align with heatmap rows format (ordinal y indices 0, 1, 2).
+ */
+function createExemplarFrame(overrides?: { timeValues?: number[]; valueLabels?: string[] }) {
+  const timeValues = overrides?.timeValues ?? [1500];
+  const valueLabels = overrides?.valueLabels ?? ['trace-123'];
+  return toDataFrame({
+    name: 'exemplar',
+    meta: { custom: { resultType: 'exemplar' } },
+    fields: [
+      { name: 'Time', type: FieldType.time, values: timeValues },
+      { name: 'Value', type: FieldType.number, values: timeValues.map((_, i) => i) },
+      { name: 'traceID', type: FieldType.string, values: valueLabels },
+    ],
+  });
+}
+
+/**
  * Creates a heatmap rows-style DataFrame with field actions on the first bucket field.
  * Requires canExecuteActionsForTest=true and field.state.scopedVars for actions to render.
  *
@@ -236,18 +260,19 @@ describe('HeatmapPanel', () => {
   beforeEach(() => {
     lastUPlotConfig = null;
     canExecuteActionsForTest = false;
+    tooltipRenderParamsForTest = null;
   });
 
   /**
    * Renders HeatmapPanel with the given data and options.
    * Reusable across tests to avoid duplicating setup.
    *
-   * @param dataOverrides - Override series or other data props
+   * @param dataOverrides - Override series, annotations, or other data props
    * @param optionsOverrides - Override panel options
    * @param panelPropsOverrides - Override panel props (e.g. replaceVariables for DataLinks)
    */
   function renderHeatmapPanel(
-    dataOverrides?: Partial<{ series: DataFrame[] }>,
+    dataOverrides?: Partial<{ series: DataFrame[]; annotations?: DataFrame[] }>,
     optionsOverrides?: Partial<Options>,
     panelPropsOverrides?: Partial<{ replaceVariables: (v: string) => string }>
   ) {
@@ -292,7 +317,17 @@ describe('HeatmapPanel', () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
   });
 
-  describe('Exemplars', () => {});
+  describe('Exemplars', () => {
+    it('shows ExemplarTooltip when hovering over exemplar marker', () => {
+      const exemplarFrame = createExemplarFrame({ valueLabels: ['trace-abc'] });
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
+
+      renderHeatmapPanel({ annotations: [exemplarFrame] });
+
+      expect(screen.getByText('Exemplar')).toBeVisible();
+      expect(screen.getByText('trace-abc')).toBeVisible();
+    });
+  });
   describe('Annotations', () => {});
   describe('DataLinks', () => {
     it('shows DataLinks in tooltip when links are defined on the dataframe field', () => {
