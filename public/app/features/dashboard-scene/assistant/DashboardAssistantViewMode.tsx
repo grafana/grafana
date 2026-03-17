@@ -35,9 +35,7 @@ export function useDashboardAssistantViewMode({
 }: DashboardAssistantViewModeProps) {
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const isEnabled =
-    !!config.featureToggles.dashboardAssistantPopover &&
-    config.bootData.user.isSignedIn &&
-    isAssistantAvailable;
+    !!config.featureToggles.dashboardAssistantPopover && config.bootData.user.isSignedIn && isAssistantAvailable;
 
   useAssistantPanelHints(dashboard, isEditing, isEnabled);
 
