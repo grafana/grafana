@@ -3498,7 +3498,6 @@
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
         "instance-details": "Instance details",
-        "silence": "Silence this instance",
         "silence-button": "Silence"
       },
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
