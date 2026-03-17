@@ -509,13 +509,21 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               </span>
             )}
             {rpc && (
-              <span>
+              <span
+                className={cx(styles.svcName, {
+                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+                })}
+              >
                 <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
                 {rpc.serviceName}
               </span>
             )}
             {noInstrumentedServer && (
-              <span>
+              <span
+                className={cx(styles.svcName, {
+                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+                })}
+              >
                 <Icon name={'arrow-right'} />{' '}
                 <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
                 {noInstrumentedServer.serviceName}
