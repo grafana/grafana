@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -2081,8 +2082,8 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	rev := legacy_storage.ConfigRevision{
 		Config: policy_exports.Config(),
 	}
-	sut.policies = newFakeNotificationPolicyService(rev)
-	sut.routeService = routes.NewFakeService(rev)
+	p := newFakeNotificationPolicyService(rev)
+	sut.policies = p
 
 	policies := []string{legacy_storage.UserDefinedRoutingTreeName} //nolint:prealloc
 	for policy := range policy_exports.Config().ManagedRoutes {
@@ -2312,7 +2313,6 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(rev),
-		routeService:        rs,
 		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs),
@@ -2342,7 +2342,6 @@ func createTestRequestCtx() contextmodel.ReqContext {
 }
 
 type fakeNotificationPolicyService struct {
-	NotificationPolicyService
 	config legacy_storage.ConfigRevision
 	prov   models.Provenance
 }
@@ -2361,6 +2360,10 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 		},
 		prov: models.ProvenanceAPI,
 	}
+}
+
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 
 func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {

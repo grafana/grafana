@@ -325,7 +325,16 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		features = ps.alertingStore.FeatureToggles
 	}
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
-	routeService := routes.NewService(configStore, ps.alertingStore, ps.alertingStore, ps.Cfg.UnifiedAlerting, features, ps.log, validation.ValidateProvenanceRelaxed, ps.tracer)
+	routeService := routes.NewService(
+		configStore,
+		ps.alertingStore,
+		ps.alertingStore,
+		ps.Cfg.UnifiedAlerting,
+		features,
+		ps.log,
+		validation.ValidateProvenanceRelaxed,
+		ps.tracer,
+	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
@@ -343,7 +352,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
-		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
+		ps.alertingStore, ps.SQLStore, routeService, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore, routeService)
 	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
