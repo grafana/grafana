@@ -182,6 +182,7 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 		&datasourceV0.QueryTypeDefinition{},
 		&datasourceV0.QueryTypeDefinitionList{},
 		&datasourceV0.QueryResponseSQLSchemas{},
+		&datasourceV0.QueryResponseValidation{},
 	)
 }
 
@@ -316,6 +317,11 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {
 		sqlschemas.Post.RequestBody = query.Post.RequestBody
+	}
+
+	validate, ok := oas.Paths.Paths[root+"namespaces/{namespace}/validate"]
+	if ok && validate.Post != nil {
+		validate.Post.RequestBody = query.Post.RequestBody
 	}
 
 	return oas, nil

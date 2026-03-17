@@ -101,6 +101,10 @@ func (_m *FakeQueryService) GetSQLSchemas(ctx context.Context, user identity.Req
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 
+func (_m *FakeQueryService) ValidatePipeline(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (*queryV0.PipelineValidation, error) {
+	return nil, fmt.Errorf("validate pipeline not supported in mock")
+}
+
 // NewFakeQueryService creates a new instance of FakeQueryService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewFakeQueryService(t interface {

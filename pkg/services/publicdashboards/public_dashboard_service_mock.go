@@ -590,6 +590,10 @@ func (_m *FakePublicDashboardService) GetSQLSchemas(ctx context.Context, user id
 	return nil, fmt.Errorf("not implemented in public dashboards")
 }
 
+func (_m *FakePublicDashboardService) ValidatePipeline(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (*queryV0.PipelineValidation, error) {
+	return nil, fmt.Errorf("not implemented in public dashboards")
+}
+
 // NewFakePublicDashboardService creates a new instance of FakePublicDashboardService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewFakePublicDashboardService(t interface {

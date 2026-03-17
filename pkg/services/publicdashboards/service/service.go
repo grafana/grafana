@@ -524,6 +524,10 @@ func (pd *PublicDashboardServiceImpl) GetSQLSchemas(ctx context.Context, user id
 	return nil, fmt.Errorf("sql schema endpoint not supported with public dashboards")
 }
 
+func (pd *PublicDashboardServiceImpl) ValidatePipeline(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (*queryV0.PipelineValidation, error) {
+	return nil, fmt.Errorf("validate pipeline endpoint not supported with public dashboards")
+}
+
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true

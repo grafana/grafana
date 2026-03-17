@@ -41,6 +41,8 @@ type Service interface {
 	ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error)
 
 	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryV0.SQLSchemas, error)
+
+	ValidatePipeline(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (*queryV0.PipelineValidation, error)
 }
 
 // ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first

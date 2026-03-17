@@ -17,8 +17,51 @@ import (
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	sqlSchemas := defs[queryV1.OpenAPIPrefix+"QueryResponseSQLSchemas"].Schema
+	validationSchema := defs[queryV1.OpenAPIPrefix+"QueryResponseValidation"].Schema
 	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
+			{
+				Path: "query/validate",
+				Spec: &spec3.PathProps{
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"Query"},
+							OperationId: "validateExpressionPipeline",
+							Description: "Validate an expression pipeline without executing it. Returns per-node parse errors and graph structure.",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &validationSchema,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.GetValidation,
+			},
 			{
 				Path: "query/sqlschemas",
 				Spec: &spec3.PathProps{

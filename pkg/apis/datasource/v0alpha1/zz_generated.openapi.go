@@ -28,9 +28,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DatasourceAccessInfo{}.OpenAPIModelName():      schema_pkg_apis_datasource_v0alpha1_DatasourceAccessInfo(ref),
 		GenericDataSourceSpec{}.OpenAPIModelName():     schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
 		HealthCheckResult{}.OpenAPIModelName():         schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		NodeValidation{}.OpenAPIModelName():            schema_pkg_apis_datasource_v0alpha1_NodeValidation(ref),
+		PipelineValidation{}.OpenAPIModelName():        schema_pkg_apis_datasource_v0alpha1_PipelineValidation(ref),
 		QueryDataRequest{}.OpenAPIModelName():          schema_pkg_apis_datasource_v0alpha1_QueryDataRequest(ref),
 		QueryDataResponse{}.OpenAPIModelName():         schema_pkg_apis_datasource_v0alpha1_QueryDataResponse(ref),
 		QueryResponseSQLSchemas{}.OpenAPIModelName():   schema_pkg_apis_datasource_v0alpha1_QueryResponseSQLSchemas(ref),
+		QueryResponseValidation{}.OpenAPIModelName():   schema_pkg_apis_datasource_v0alpha1_QueryResponseValidation(ref),
 		QueryTypeDefinition{}.OpenAPIModelName():       schema_pkg_apis_datasource_v0alpha1_QueryTypeDefinition(ref),
 		QueryTypeDefinitionList{}.OpenAPIModelName():   schema_pkg_apis_datasource_v0alpha1_QueryTypeDefinitionList(ref),
 		SampleRows{}.OpenAPIModelName():                SampleRows{}.OpenAPIDefinition(),
@@ -641,6 +644,115 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 	}
 }
 
+func schema_pkg_apis_datasource_v0alpha1_NodeValidation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NodeValidation contains validation info for a single node in the expression pipeline.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"refID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"nodeType": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"cmdType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "\"Expression\", \"Datasource\", \"Machine Learning\"",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"dependsOn": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "refIDs this node depends on",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"datasourceUID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "parse error for this node, if any",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"refID", "nodeType"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_datasource_v0alpha1_PipelineValidation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PipelineValidation contains the validation result for an expression pipeline.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"isValid": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"nodes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NodeValidation{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"isValid", "nodes"},
+			},
+		},
+		Dependencies: []string{
+			NodeValidation{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_datasource_v0alpha1_QueryDataRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -794,6 +906,61 @@ func schema_pkg_apis_datasource_v0alpha1_QueryResponseSQLSchemas(ref common.Refe
 		},
 		Dependencies: []string{
 			SchemaInfo{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_datasource_v0alpha1_QueryResponseValidation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QueryResponseValidation wraps PipelineValidation as a Kubernetes API response object.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"isValid": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"nodes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NodeValidation{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"isValid", "nodes"},
+			},
+		},
+		Dependencies: []string{
+			NodeValidation{}.OpenAPIModelName()},
 	}
 }
 

@@ -76,6 +76,8 @@ type Service interface {
 	QueryDataNew(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
 
 	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryV0.SQLSchemas, error)
+
+	ValidatePipeline(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (*queryV0.PipelineValidation, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
