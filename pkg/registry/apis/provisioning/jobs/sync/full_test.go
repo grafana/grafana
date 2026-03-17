@@ -184,6 +184,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	tests := []struct {
 		name                  string
 		setupMocks            func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
+		verifyMocks           func(*testing.T, *resources.MockRepositoryResources)
 		changes               []ResourceFileChange
 		expectedError         string
 		description           string
@@ -634,8 +635,71 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "failed to apply with folder deletion",
-			description: "Should record an error when deleting a folder",
+			name:        "successful apply with folder deletion and metadata disabled",
+			description: "Should not remove the deleted folder from the in-memory tree when folder metadata is disabled",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionDeleted,
+					Path:   "to-be-deleted/",
+					Existing: &provisioning.ResourceListItem{
+						Name:     "test-folder",
+						Resource: "Folder",
+						Group:    "folders",
+					},
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
+
+				scheme := runtime.NewScheme()
+				require.NoError(t, metav1.AddMetaToScheme(scheme))
+				listGVK := schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    "FolderList",
+				}
+
+				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
+				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
+					Group:   resources.FolderResource.Group,
+					Version: resources.FolderResource.Version,
+					Kind:    resources.FolderResource.Resource,
+				}, &metav1.PartialObjectMetadata{})
+
+				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+					resources.FolderResource: listGVK.Kind,
+				})
+
+				fakeDynamicClient.PrependReactor("delete", "folders", func(action k8testing.Action) (bool, runtime.Object, error) {
+					return true, nil, nil
+				})
+
+				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+					Group:    "folders",
+					Resource: "Folder",
+				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{
+					Kind:    "Folder",
+					Group:   "folders",
+					Version: "v1",
+				}, nil)
+
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"test-folder",
+					"folders",
+					"Folder",
+				).WithPath("to-be-deleted/").
+					WithAction(repository.FileActionDeleted).
+					Build()).Return()
+			},
+			verifyMocks: func(t *testing.T, repoResources *resources.MockRepositoryResources) {
+				repoResources.AssertNotCalled(t, "RemoveFolderFromTree", "test-folder")
+			},
+		},
+		{
+			name:                  "failed to apply with folder deletion",
+			description:           "Should record an error when deleting a folder",
+			folderMetadataEnabled: true,
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionDeleted,
@@ -692,6 +756,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 						result.Error() != nil &&
 						result.Error().Error() == "deleting resource folders/Folder test-folder: delete failed"
 				})).Return()
+			},
+			verifyMocks: func(t *testing.T, repoResources *resources.MockRepositoryResources) {
+				repoResources.AssertNotCalled(t, "RemoveFolderFromTree", "test-folder")
 			},
 		},
 		{
@@ -755,6 +822,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {
 				require.NoError(t, err, tt.description)
+			}
+			if tt.verifyMocks != nil {
+				tt.verifyMocks(t, repoResources)
 			}
 		})
 	}

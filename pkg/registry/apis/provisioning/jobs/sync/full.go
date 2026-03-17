@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -193,8 +192,10 @@ func applyChange(
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
-			// Remove from in-memory tree so subsequent folder creations
-			// (e.g., at a new path with the same _folder.json UID) are not short-circuited.
+			// Keep this tree mutation scoped to folder metadata for now.
+			// It clears the deleted folder's stale in-memory entry so the same
+			// full sync can recreate that folder at a new path when _folder.json
+			// preserves the UID.
 			if folderMetadataEnabled && safepath.IsDir(change.Path) {
 				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 			}
@@ -383,9 +384,6 @@ func applyResourcesInParallel(
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
 ) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("applying resources in parallel test changes 1")
-
 	if len(resources) == 0 {
 		return nil
 	}
