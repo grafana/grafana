@@ -1,13 +1,13 @@
+import { useRef } from 'react';
 import { usePrevious } from 'react-use';
 
-import { PanelData, PanelProps } from '@grafana/data';
+import { DataFrame, Field, PanelData, PanelProps } from '@grafana/data';
 
 // import { CursorView } from './CursorView';
 // import { EventBusLoggerPanel } from './EventBusLogger';
 // import { RenderInfoViewer } from './RenderInfoViewer';
 // import { StateView } from './StateView';
 import { Options, DebugMode } from './panelcfg.gen';
-import { useRef } from 'react';
 
 type Props = PanelProps<Options>;
 
@@ -58,18 +58,35 @@ function useClearPreviousData(data?: PanelData) {
   prevVals.current ??= new Set();
   currVals.current ??= new Set();
 
+  // const prevFields = useRef<Set<Field>>();
+  // const currFields = useRef<Set<Field>>();
+  // prevFields.current ??= new Set();
+  // currFields.current ??= new Set();
+
+  // const prevFrames = useRef<Set<DataFrame>>();
+  // const currFrames = useRef<Set<DataFrame>>();
+  // prevFrames.current ??= new Set();
+  // currFrames.current ??= new Set();
+
   const currSeries = data?.series;
   const prevSeries = usePrevious(currSeries);
 
   if (currSeries != null && currSeries !== prevSeries) {
     // populate new
     currVals.current.clear();
+    // currFrames.current.clear();
 
     for (let i = 0; i < currSeries.length; i++) {
-      let fields = currSeries[i].fields;
+      let frame = currSeries[i];
 
-      for (let i = 0; i < fields.length; i++) {
-        currVals.current.add(fields[i].values);
+      // currFrames.current.add(frame);
+
+      for (let i = 0; i < frame.fields.length; i++) {
+        let field = frame.fields[i];
+
+        // currFields.current.add(field);
+
+        currVals.current.add(field.values);
       }
     }
 
@@ -82,6 +99,32 @@ function useClearPreviousData(data?: PanelData) {
     });
     prevVals.current.clear();
     prevVals.current = new Set(currVals.current);
+
+    if (prevSeries != null) {
+      for (let i = 0; i < prevSeries.length; i++) {
+        let frame = prevSeries[i];
+
+        frame.fields.length = 0;
+        // TODO: clear nanos and enums on fields,
+      }
+
+      prevSeries.length = 0;
+    }
+
+
+    // prevFields.current.forEach((field) => {
+    //   if (!currFields.current!.has(field)) {
+    //     vals.length = 0;
+    //   }
+    // });
+
+    // prevFrames.current.forEach((frame) => {
+    //   if (!currFrames.current!.has(frame)) {
+    //     // clear in parent, by index?
+    //   }
+    // });
+    // prevFrames.current.clear();
+    // prevFrames.current = new Set(currFrames.current);
 
     // prevSeries.length = 0;
   }
