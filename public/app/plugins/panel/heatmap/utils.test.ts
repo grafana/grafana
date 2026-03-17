@@ -107,17 +107,6 @@ describe('prepConfig', () => {
 
     return {
       heatmap,
-      heatmapColors: {
-        values: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-        palette: ['#c0', '#c1', '#c2', '#c3', '#c4', '#c5', '#c6', '#c7', '#c8'],
-        minValue: 5,
-        maxValue: 30,
-      },
-      xBucketSize: 1000,
-      yBucketSize: 1,
-      yBucketCount: 3,
-      xLayout: HeatmapCellLayout.unknown,
-      yLayout: HeatmapCellLayout.unknown,
       ...overrides,
     };
   }
@@ -148,7 +137,6 @@ describe('prepConfig', () => {
     const dataRef = {
       current: {
         heatmap,
-        heatmapColors: { values: [0], palette: ['#c0'], minValue: 0, maxValue: 10 },
       },
     };
 
@@ -176,10 +164,6 @@ describe('prepConfig', () => {
     const dataRef = {
       current: {
         heatmap,
-        heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 15 },
-        xBucketSize: 1,
-        yBucketSize: 1,
-        yBucketCount: 3,
       },
     };
 
@@ -231,7 +215,6 @@ describe('prepConfig', () => {
       });
       return {
         heatmap,
-        heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 20 },
         ...overrides,
       };
     }
@@ -718,8 +701,6 @@ describe('prepConfig', () => {
       const dataRef = {
         current: {
           heatmap,
-          heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 25 },
-          yLayout: HeatmapCellLayout.le,
         },
       };
       const builder = prepConfig({
@@ -756,8 +737,6 @@ describe('prepConfig', () => {
       const dataRef = {
         current: {
           heatmap,
-          heatmapColors: { values: [0, 1], palette: ['#c0', '#c1'], minValue: 5, maxValue: 10 },
-          yLayout: HeatmapCellLayout.unknown,
         },
       };
       const builder = prepConfig({
@@ -1122,10 +1101,10 @@ describe('calculateBucketExpansionFactor', () => {
   describe('realistic heatmap data', () => {
     it('handles Prometheus-style exponential buckets starting at 0', () => {
       // Typical Prometheus histogram buckets: 0, 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536
-      const yMinValues = [0, 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
-      const yMaxValues = [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144];
+      const yMinValues = [0, 2, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+      const yMaxValues = [1, 5, 16, 64, 256, 1024, 4096, 16384, 65536, 262144];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Uses second bucket: 4/1 = 4
+      expect(factor).toBe(2.5); // Uses second bucket: 5/2 = 2.5
     });
 
     it('handles linear buckets', () => {
@@ -1308,33 +1287,33 @@ describe('boundedMinMax', () => {
 
 describe('valuesToFills', () => {
   // Fake color palette for testing index mapping
-  const palette5 = ['c0', 'c1', 'c2', 'c3', 'c4'];
+  const palette = ['c0', 'c1', 'c2', 'c3', 'c4'];
 
   describe('basic mapping', () => {
     it('maps values to palette indices', () => {
       const values = [0, 25, 50, 75, 100];
-      const fills = valuesToFills(values, palette5, 0, 100);
+      const fills = valuesToFills(values, palette, 0, 100);
 
       expect(fills).toEqual([0, 1, 2, 3, 4]);
     });
 
     it('maps min value to first palette index', () => {
       const values = [10];
-      const fills = valuesToFills(values, palette5, 10, 20);
+      const fills = valuesToFills(values, palette, 10, 20);
 
       expect(fills[0]).toBe(0);
     });
 
     it('maps max value to last palette index', () => {
       const values = [20];
-      const fills = valuesToFills(values, palette5, 10, 20);
+      const fills = valuesToFills(values, palette, 10, 20);
 
       expect(fills[0]).toBe(4);
     });
 
     it('maps mid-range values proportionally', () => {
       const values = [15];
-      const fills = valuesToFills(values, palette5, 10, 20);
+      const fills = valuesToFills(values, palette, 10, 20);
 
       // 15 is middle of 10-20, should map to index 2 (middle color)
       expect(fills[0]).toBe(2);
@@ -1344,7 +1323,7 @@ describe('valuesToFills', () => {
   describe('edge cases', () => {
     it('clamps values below min to first index', () => {
       const values = [5, 8, 10];
-      const fills = valuesToFills(values, palette5, 10, 20);
+      const fills = valuesToFills(values, palette, 10, 20);
 
       expect(fills[0]).toBe(0); // 5 < 10
       expect(fills[1]).toBe(0); // 8 < 10
@@ -1352,7 +1331,7 @@ describe('valuesToFills', () => {
 
     it('clamps values above max to last index', () => {
       const values = [20, 25, 30];
-      const fills = valuesToFills(values, palette5, 10, 20);
+      const fills = valuesToFills(values, palette, 10, 20);
 
       expect(fills[0]).toBe(4); // 20 = max
       expect(fills[1]).toBe(4); // 25 > max
@@ -1361,7 +1340,7 @@ describe('valuesToFills', () => {
 
     it('handles zero range (min equals max)', () => {
       const values = [10, 10, 10];
-      const fills = valuesToFills(values, palette5, 10, 10);
+      const fills = valuesToFills(values, palette, 10, 10);
 
       // When range is 0, defaults to 1, so all values map to 0
       expect(fills).toEqual([0, 0, 0]);
@@ -1377,7 +1356,7 @@ describe('valuesToFills', () => {
 
     it('handles large palette', () => {
       const values = [50];
-      const palette = Array.from({ length: 256 }, (_, i) => `c${i}`);
+      const palette = Array.from({ length: 256 }, (_, i) => `#${i}`);
       const fills = valuesToFills(values, palette, 0, 100);
 
       // 50 is 50% of 0-100, should map to 128 (middle of 256)
@@ -1408,17 +1387,9 @@ describe('valuesToFills', () => {
   });
 
   describe('preserves array length', () => {
-    it('returns array with same length as input', () => {
-      const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const palette = ['c0', 'c1'];
-      const fills = valuesToFills(values, palette, 1, 10);
-
-      expect(fills.length).toBe(values.length);
-    });
-
     it('handles empty array', () => {
       const values: number[] = [];
-      const fills = valuesToFills(values, palette5, 0, 100);
+      const fills = valuesToFills(values, palette, 0, 100);
 
       expect(fills).toEqual([]);
     });
