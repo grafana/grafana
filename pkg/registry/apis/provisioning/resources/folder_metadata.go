@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -159,19 +160,36 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 // If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
 // Returns an error if reading the metadata file fails for reasons other than not existing.
 func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
-	if folderMetadataEnabled {
-		meta, err := ReadFolderMetadata(ctx, reader, path, ref)
-		if err != nil {
-			// Only fall back to hash-based ID if the file doesn't exist
-			if !errors.Is(err, repository.ErrFileNotFound) {
-				return "", fmt.Errorf("read folder metadata: %w", err)
-			}
-			// File doesn't exist - fall back to hash-based ID
-		} else if meta.Name != "" {
-			return meta.Name, nil
-		}
+	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled)
+	if err != nil {
+		return "", err
 	}
-	return ParseFolder(path, reader.Config().Name).ID, nil
+	return folder.ID, nil
+}
+
+// ParseFolderWithMetadata parses a Folder at the given path and applies stable UID, title, and checksum from folder metadata if it exists.
+// In case folderMetadataEnabled is false, it returns the parsed folder without applying metadata.
+func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (Folder, error) {
+	f := ParseFolder(path, reader.Config().Name)
+	if !folderMetadataEnabled {
+		return f, nil
+	}
+
+	meta, err := ReadFolderMetadata(ctx, reader, path, ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			return f, nil
+		}
+		return Folder{}, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
+
+	if meta.Name != "" {
+		f.ID = meta.Name
+	}
+	if meta.Spec.Title != "" {
+		f.Title = meta.Spec.Title
+	}
+	return f, nil
 }
 
 // ParseFolderResource constructs a ParsedResource for a folder at the given path.
