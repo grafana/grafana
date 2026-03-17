@@ -258,10 +258,9 @@ describe('TimeRangeForm', () => {
 
           await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
-          const error = screen.getAllByRole('alert');
+          const error = screen.getAllByRole('status').filter((el) => el.textContent?.trim());
 
           expect(error).toHaveLength(2);
-          expect(error[0]).toBeVisible();
           expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
         });
       });
@@ -363,10 +362,9 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('alert');
+      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
 
       expect(error).toHaveLength(1);
-      expect(error[0]).toBeVisible();
       expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
     });
 
@@ -380,9 +378,8 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('alert');
+      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
 
-      expect(error[0]).toBeVisible();
       expect(error[0]).toHaveTextContent('"From" date must be before "To"');
     });
 
@@ -396,10 +393,9 @@ describe('TimeRangeForm', () => {
         },
       };
       const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
-      const error = getAllByRole('alert');
+      const error = getAllByRole('status').filter((el) => el.textContent?.trim());
 
       expect(error).toHaveLength(1);
-      expect(error[0]).toBeVisible();
       expect(error[0]).toHaveTextContent('Enter a date (YYYY-MM-DD HH:mm:ss) or relative time');
     });
   });

@@ -19,6 +19,7 @@ import { t, Trans } from '@grafana/i18n';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
+import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { TextLink } from '../../Link/TextLink';
@@ -44,32 +45,48 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
+  // Visual error content — rendered inside aria-hidden wrapper so role="alert" is suppressed
   errorMessage: React.ReactNode;
+  // Plain-text error — rendered in polite live region and linked via aria-describedby
+  errorDescription: string;
 }
 
 const DOCS_LINK = 'https://grafana.com/docs/grafana/latest/dashboards/time-range-controls';
 
-function fieldErrorMessage(field: 'From' | 'To') {
+const ERROR_MESSAGES = {
+  from: {
+    description: () =>
+      t(
+        'time-picker.range-content.from-error',
+        'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.'
+      ),
+  },
+  to: {
+    description: () =>
+      t(
+        'time-picker.range-content.to-error',
+        'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.'
+      ),
+  },
+  range: {
+    description: () => t('time-picker.range-content.range-error', '"From" date must be before "To"'),
+  },
+};
+
+function fieldErrorMessage(type: 'from' | 'to' | 'range'): React.ReactNode {
+  const desc = ERROR_MESSAGES[type].description();
+  if (type === 'range') {
+    return desc;
+  }
   return (
     <>
-      {t(
-        field === 'From' ? 'time-picker.range-content.from-error' : 'time-picker.range-content.to-error',
-        field === 'From'
-          ? 'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the From field.'
-          : 'Enter a date (YYYY-MM-DD HH:mm:ss) or relative time (e.g. now, now-1h) in the To field.'
-      )}{' '}
+      {desc}{' '}
       <TextLink href={DOCS_LINK} external>
         {t('time-picker.range-content.error-see-docs', 'See time range syntax')}
       </TextLink>
     </>
   );
 }
-
-const ERROR_MESSAGES = {
-  from: () => fieldErrorMessage('From'),
-  to: () => fieldErrorMessage('To'),
-  range: () => t('time-picker.range-content.range-error', '"From" date must be before "To"'),
-};
 
 export const TimeRangeContent = (props: Props) => {
   const {
@@ -91,10 +108,12 @@ export const TimeRangeContent = (props: Props) => {
 
   const fromInputRef = useRef<HTMLInputElement>(null);
   const toInputRef = useRef<HTMLInputElement>(null);
-  const announceRef = useRef<HTMLDivElement>(null);
 
   const fromFieldId = useId();
   const toFieldId = useId();
+  // IDs for the polite live regions — linked to inputs via aria-describedby
+  const fromErrorId = `${fromFieldId}-error`;
+  const toErrorId = `${toFieldId}-error`;
 
   // Synchronize internal state with external value
   useEffect(() => {
@@ -113,20 +132,7 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
-      // Announce the failure via the polite live region, then focus the first invalid field.
-      // The live region text is cleared and re-set so screen readers always re-announce it.
-      if (announceRef.current) {
-        announceRef.current.textContent = '';
-        // Yield to let the DOM clear before re-setting so screen readers detect the change
-        requestAnimationFrame(() => {
-          if (announceRef.current) {
-            announceRef.current.textContent = t(
-              'time-picker.range-content.submit-error',
-              'Please correct the errors in the time range fields before applying.'
-            );
-          }
-        });
-      }
+      // Focus first invalid field — aria-describedby will announce the error naturally
       if (from.invalid) {
         fromInputRef.current?.focus();
       } else {
@@ -211,40 +217,71 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <div className={style.fieldContainer}>
-        <Field
-          label={t('time-picker.range-content.from-input', 'From')}
-          invalid={from.invalid}
-          error={from.errorMessage}
-        >
-          <Input
-            id={fromFieldId}
-            ref={fromInputRef}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(event.currentTarget.value, to.value)}
-            addonAfter={icon}
-            onKeyDown={submitOnEnter}
-            data-testid={selectors.components.TimePicker.fromField}
-            value={from.value}
-          />
-        </Field>
+        {/*
+         * Field does not receive `error` — that would render FieldValidationMessage with role="alert"
+         * (assertive), which interrupts speech on every keystroke. Instead we:
+         *   1. Render FieldValidationMessage inside aria-hidden (visual only, no live region)
+         *   2. Render a role="status" (polite) live region for screen reader announcements
+         *   3. Link the input to the polite region via aria-describedby
+         */}
+        <div className={style.fieldWrapper}>
+          <Field
+            label={t('time-picker.range-content.from-input', 'From')}
+            invalid={from.invalid}
+            noMargin={from.invalid}
+          >
+            <Input
+              id={fromFieldId}
+              ref={fromInputRef}
+              aria-invalid={from.invalid || undefined}
+              aria-describedby={from.invalid ? fromErrorId : undefined}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => onChange(event.currentTarget.value, to.value)}
+              addonAfter={icon}
+              onKeyDown={submitOnEnter}
+              data-testid={selectors.components.TimePicker.fromField}
+              value={from.value}
+            />
+          </Field>
+          {from.invalid && (
+            <div aria-hidden="true" className={style.fieldValidationWrapper}>
+              <FieldValidationMessage>{from.errorMessage}</FieldValidationMessage>
+            </div>
+          )}
+          {/* Polite live region — announces without interrupting; also the aria-describedby target */}
+          <div id={fromErrorId} role="status" className={style.srOnly}>
+            {from.invalid ? from.errorDescription : ''}
+          </div>
+        </div>
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
-          <Input
-            id={toFieldId}
-            ref={toInputRef}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(from.value, event.currentTarget.value)}
-            addonAfter={icon}
-            onKeyDown={submitOnEnter}
-            data-testid={selectors.components.TimePicker.toField}
-            value={to.value}
-          />
-        </Field>
+        <div className={style.fieldWrapper}>
+          <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} noMargin={to.invalid}>
+            <Input
+              id={toFieldId}
+              ref={toInputRef}
+              aria-invalid={to.invalid || undefined}
+              aria-describedby={to.invalid ? toErrorId : undefined}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => onChange(from.value, event.currentTarget.value)}
+              addonAfter={icon}
+              onKeyDown={submitOnEnter}
+              data-testid={selectors.components.TimePicker.toField}
+              value={to.value}
+            />
+          </Field>
+          {to.invalid && (
+            <div aria-hidden="true" className={style.fieldValidationWrapper}>
+              <FieldValidationMessage>{to.errorMessage}</FieldValidationMessage>
+            </div>
+          )}
+          <div id={toErrorId} role="status" className={style.srOnly}>
+            {to.invalid ? to.errorDescription : ''}
+          </div>
+        </div>
         {fyTooltip}
       </div>
-      <div ref={announceRef} aria-live="polite" className={style.srOnly} />
       <div className={style.buttonsContainer}>
         <Button
           data-testid={selectors.components.TimePicker.copyTimeRange}
@@ -303,13 +340,20 @@ function valueToState(
   // If "To" is invalid, we should not check the range anyways
   const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
 
+  const fromErrorType = rangeInvalid && !fromInvalid ? 'range' : 'from';
   return [
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.from(),
+      errorMessage: fieldErrorMessage(fromErrorType),
+      errorDescription: ERROR_MESSAGES[fromErrorType].description(),
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.to() },
+    {
+      value: toValue,
+      invalid: toInvalid,
+      errorMessage: fieldErrorMessage('to'),
+      errorDescription: ERROR_MESSAGES.to.description(),
+    },
   ];
 }
 
@@ -330,6 +374,13 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     fieldContainer: css({
       display: 'flex',
+    }),
+    fieldWrapper: css({
+      flex: 1,
+    }),
+    fieldValidationWrapper: css({
+      marginTop: theme.spacing(0.5),
+      marginBottom: theme.spacing(2),
     }),
     buttonsContainer: css({
       display: 'flex',
