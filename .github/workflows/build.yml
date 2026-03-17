@@ -70,7 +70,7 @@ jobs:
       - name: Login to Artifactory
         uses: docker/login-action@v1
         with:
-          registry: niartifacts.jfrog.io
+          registry: push.artifacts.ni.com
           username: ${{ vars.JFROG_USERNAME }}
           password: ${{ secrets.JFROG_ACCESS_TOKEN }}
       - name: Docker build and push (with latest)
