@@ -215,7 +215,7 @@ Grafana also supports typeahead of existing tags, provide at least one tag.
 For example, create an annotation query name `outages` and specify a tag `outage`. This query shows all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana only shows annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana shows annotations that contain any one of the tags you provided.
 
 {{< admonition type="warning" >}}
-If you enable **Display annotations** on an externally shared dashboard that uses tag-based annotation queries, those queries return matching annotations from **all dashboards** in the organization. This means annotations from dashboards that are not shared externally are visible to anyone with access to the shared dashboard. This is by design. Review which annotations may match your tags before enabling this option on a shared dashboard.
+If you enable **Display annotations** on an externally shared dashboard that uses tag-based annotation queries, those queries return matching annotations from _all dashboards_ in the organization. This means annotations from dashboards that are not shared externally are visible to anyone with access to the shared dashboard. This is by design. Review which annotations might match your tags before enabling this option on a shared dashboard.
 {{< /admonition >}}
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" alt="Annotation query options" >}}
