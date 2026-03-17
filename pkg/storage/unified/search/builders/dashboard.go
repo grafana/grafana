@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"slices"
 	"sort"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -278,11 +277,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	summary.UID = obj.GetName()
 	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc := resource.NewIndexableDocument(key, rv, obj, summary.Title)
 	// TODO: add selectable fields
-	doc.Title = summary.Title
-	doc.TitleNgram = summary.Title
-	doc.TitlePhrase = strings.ToLower(summary.Title)
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
 
