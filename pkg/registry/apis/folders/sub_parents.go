@@ -9,7 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -17,7 +18,8 @@ type subParentsREST struct {
 	getter  rest.Getter
 	parents parentsGetter
 
-	newFunc func() runtime.Object
+	convertor runtime.ObjectConvertor
+	newFunc   func() runtime.Object
 }
 
 var _ = rest.Connecter(&subParentsREST{})
@@ -49,8 +51,8 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if name == folder.GeneralFolderUID || name == folder.SharedWithMeFolderUID {
-			responder.Object(http.StatusOK, &folders.FolderInfoList{
-				Items: []folders.FolderInfo{},
+			responder.Object(http.StatusOK, &foldersv1beta1.FolderInfoList{
+				Items: []foldersv1beta1.FolderInfo{},
 			})
 			return
 		}
@@ -61,10 +63,16 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		folderObj, ok := obj.(*folders.Folder)
-		if !ok {
-			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
-			return
+		var folderObj *foldersv1beta1.Folder
+		switch v := obj.(type) {
+		case *foldersv1beta1.Folder:
+			folderObj = v
+		case *foldersv1.Folder:
+			folderObj = &foldersv1beta1.Folder{}
+			if err := r.convertor.Convert(v, folderObj, nil); err != nil {
+				responder.Error(fmt.Errorf("convert folder list: %w", err))
+				return
+			}
 		}
 
 		info, err := r.parents(ctx, folderObj)
