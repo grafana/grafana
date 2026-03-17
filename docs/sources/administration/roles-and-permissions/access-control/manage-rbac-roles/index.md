@@ -149,10 +149,6 @@ To change permissions for a basic role:
 
 1. Reload the provisioning configuration file. For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/admin/#reload-provisioning-configurations).
 
-### Update basic role permissions using the RBAC API
-
-Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
-
 #### Example: Modify the Grafana Admin role
 
 The following example modifies the `Grafana Admin` basic role permissions.
@@ -195,6 +191,10 @@ roles:
 You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
 Make sure to **increment** the role version for the changes to be accounted for.
 {{< /admonition >}}
+
+### Update basic role permissions using the RBAC API
+
+Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
 
 ## Reset basic roles to their default
 
