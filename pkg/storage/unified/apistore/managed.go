@@ -66,11 +66,12 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	return nil
 }
 
+func isRepoManaged(accessor utils.GrafanaMetaAccessor) bool {
+	kind := accessor.GetAnnotation(utils.AnnoKeyManagerKind)
+	return kind != "" && utils.ParseManagerKindString(kind) == utils.ManagerKindRepo
+}
+
 func checkOwnerReferencesOnManagedResource(obj utils.GrafanaMetaAccessor, previous utils.GrafanaMetaAccessor) error {
-	isRepoManaged := func(accessor utils.GrafanaMetaAccessor) bool {
-		kind := accessor.GetAnnotation(utils.AnnoKeyManagerKind)
-		return kind != "" && utils.ParseManagerKindString(kind) == utils.ManagerKindRepo
-	}
 	if !isRepoManaged(obj) && !isRepoManaged(previous) {
 		return nil
 	}
