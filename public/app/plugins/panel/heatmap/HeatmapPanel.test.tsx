@@ -361,11 +361,37 @@ describe('HeatmapPanel', () => {
 
       renderHeatmapPanel({ annotations: [exemplarFrame] });
 
+      // Exemplar tooltip title should be visible
+      expect(screen.getByText('Exemplar')).toBeVisible();
+      // Exemplar tooltip should render key/value labels
+      expect(screen.getByText('traceID')).toBeVisible();
+      expect(screen.getByText('trace-abc')).toBeVisible();
+      expect(screen.getByText('cluster')).toBeVisible();
+      expect(screen.getByText('eu-dev-east-1')).toBeVisible();
+    });
+
+    it('renders ExemplarTooltip when exemplar frame is added on subsequent render', () => {
+      const { rerender } = renderHeatmapPanel({ annotations: [] });
+
+      expect(screen.queryByText('Exemplar')).not.toBeInTheDocument();
+
+      const exemplarFrame = createExemplarFrame({
+        additionalFields: [{ name: 'traceID', type: FieldType.string, values: ['trace-abc'], config: {} }],
+      });
+      tooltipRenderParamsForTest = { dataIdxs: [0, 0, 0], seriesIdx: 2 };
+
+      const props = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [createHeatmapRowsFrame()],
+          timeRange: getDefaultTimeRange(),
+          annotations: [exemplarFrame],
+        },
+      });
+      rerender(<HeatmapPanel {...props} />);
+
       expect(screen.getByText('Exemplar')).toBeVisible();
       expect(screen.getByText('trace-abc')).toBeVisible();
-      expect(screen.getByText('eu-dev-east-1')).toBeVisible();
-      expect(screen.getByText('cluster')).toBeVisible();
-      expect(screen.getByText('traceID')).toBeVisible();
     });
   });
   describe('Annotations', () => {
@@ -393,6 +419,26 @@ describe('HeatmapPanel', () => {
       renderHeatmapPanel({ annotations: [] });
 
       expect(screen.queryByTestId('annotations-plugin')).not.toBeInTheDocument();
+    });
+
+    it('renders AnnotationsPlugin when annotation frame is added on subsequent render', () => {
+      const { rerender } = renderHeatmapPanel({ annotations: [] });
+
+      expect(screen.queryByTestId('annotations-plugin')).not.toBeInTheDocument();
+
+      const annotationFrame = createAnnotationFrame({ text: ['Deployment'] });
+      const props = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [createHeatmapRowsFrame()],
+          timeRange: getDefaultTimeRange(),
+          annotations: [annotationFrame],
+        },
+      });
+      rerender(<HeatmapPanel {...props} />);
+
+      expect(screen.getByTestId('annotations-plugin')).toBeVisible();
+      expect(screen.getByText('1 annotation(s)')).toBeVisible();
     });
   });
   describe('DataLinks', () => {
