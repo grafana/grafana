@@ -60,7 +60,7 @@ function renderIcon(icon: IconName | React.ReactNode) {
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size="lg" />;
+    return <Icon name={icon} size="md" />;
   }
 
   return icon;
@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: theme.spacing(5),
     }),
     iconWrapper: css({
-      padding: 3,
+      padding: 4,
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -131,7 +131,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         right: 0,
         bottom: 0,
         width: '100%',
-        height: '2px',
+        height: '4px',
+        clipPath: 'inset(2px 0 0 0)',
         borderBottomLeftRadius: theme.shape.radius.sm,
         borderBottomRightRadius: theme.shape.radius.sm,
         backgroundImage: theme.colors.gradients.brandHorizontal,

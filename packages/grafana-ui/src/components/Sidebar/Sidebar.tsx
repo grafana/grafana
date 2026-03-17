@@ -197,4 +197,4 @@ export const Sidebar = Object.assign(SidebarComp, {
   PaneHeader: SidebarPaneHeader,
 });
 
-export { type SidebarPosition, type SidebarContextValue, useSidebar } from './useSidebar';
+export { SidebarContext, type SidebarPosition, type SidebarContextValue, useSidebar } from './useSidebar';
