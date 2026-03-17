@@ -48,7 +48,7 @@ export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
 
   const onSetReducer = useCallback(
     (selection: ComboboxOption<ReducerID>) => {
-      return onChange({ ...options, reducer: selection.value! });
+      return onChange({ ...options, reducer: selection.value });
     },
     [options, onChange]
   );
