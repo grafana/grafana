@@ -336,7 +336,12 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             count++;
             return interval(0);
           }),
-          first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error || val.state === LoadingState.Streaming)
+          first(
+            (val) =>
+              val.state === LoadingState.Done ||
+              val.state === LoadingState.Error ||
+              val.state === LoadingState.Streaming
+          )
         );
       }
 
