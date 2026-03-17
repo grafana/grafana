@@ -1,13 +1,225 @@
-import { ScaleDistribution } from '@grafana/schema';
+import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType } from '@grafana/data';
+import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 
+import { HeatmapData } from './fields';
+import { HeatmapSelectionMode } from './panelcfg.gen';
 import {
   applyExplicitMinMax,
   boundedMinMax,
   calculateBucketExpansionFactor,
   calculateYSizeDivisor,
+  heatmapPathsDense,
+  heatmapPathsPoints,
+  heatmapPathsSparse,
+  prepConfig,
   toLogBase,
   valuesToFills,
 } from './utils';
+
+describe('prepConfig', () => {
+  const theme = createTheme();
+  const timeRange = { from: dateTime(1000), to: dateTime(3000), raw: { from: 'now-1h', to: 'now' } };
+
+  /**
+   * Creates minimal HeatmapData for prepConfig tests.
+   * Dense heatmap cells: x, y, count with 3x3 grid.
+   */
+  function createMinimalHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+    const heatmap = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [
+        { name: 'x', type: FieldType.time, values: [1000, 1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000] },
+        { name: 'y', type: FieldType.number, values: [0, 1, 2, 0, 1, 2, 0, 1, 2] },
+        { name: 'count', type: FieldType.number, values: [5, 10, 15, 10, 20, 25, 15, 20, 30] },
+      ],
+    });
+
+    return {
+      heatmap,
+      heatmapColors: {
+        values: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        palette: ['#c0', '#c1', '#c2', '#c3', '#c4', '#c5', '#c6', '#c7', '#c8'],
+        minValue: 5,
+        maxValue: 30,
+      },
+      xBucketSize: 1000,
+      yBucketSize: 1,
+      yBucketCount: 3,
+      xLayout: HeatmapCellLayout.unknown,
+      yLayout: HeatmapCellLayout.unknown,
+      ...overrides,
+    };
+  }
+
+  it('returns UPlotConfigBuilder for valid heatmap data', () => {
+    const dataRef = { current: createMinimalHeatmapData() };
+
+    const builder = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'rgba(255,0,255,0.7)',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    });
+
+    expect(builder).toBeDefined();
+    expect(builder.addScale).toBeDefined();
+    expect(builder.addAxis).toBeDefined();
+    expect(builder.addSeries).toBeDefined();
+  });
+
+  it('returns builder early when heatmap has no y field', () => {
+    const heatmap = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [{ name: 'x', type: FieldType.time, values: [1000, 2000] }],
+    });
+    const dataRef = {
+      current: {
+        heatmap,
+        heatmapColors: { values: [0], palette: ['#c0'], minValue: 0, maxValue: 10 },
+      },
+    };
+
+    const builder = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'rgba(255,0,255,0.7)',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    });
+
+    expect(builder).toBeDefined();
+  });
+
+  it('uses isTime=false when first field is not time', () => {
+    const heatmap = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [
+        { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'y', type: FieldType.number, values: [0, 1, 2] },
+        { name: 'count', type: FieldType.number, values: [5, 10, 15] },
+      ],
+    });
+    const dataRef = {
+      current: {
+        heatmap,
+        heatmapColors: { values: [0, 1, 2], palette: ['#c0', '#c1', '#c2'], minValue: 5, maxValue: 15 },
+        xBucketSize: 1,
+        yBucketSize: 1,
+        yBucketCount: 3,
+      },
+    };
+
+    const builder = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'rgba(255,0,255,0.7)',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    });
+
+    expect(builder).toBeDefined();
+  });
+
+  it('accepts optional cellGap, hideLE, hideGE, selectionMode, rowsFrame', () => {
+    const dataRef = { current: createMinimalHeatmapData() };
+
+    const builder = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'red',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      cellGap: 2,
+      hideLE: 0,
+      hideGE: 100,
+      selectionMode: HeatmapSelectionMode.Xy,
+      rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+    });
+
+    expect(builder).toBeDefined();
+  });
+});
+
+describe('heatmapPathsDense', () => {
+  const minimalPathbuilderOpts = {
+    each: jest.fn(),
+    disp: {
+      fill: {
+        values: () => [0],
+        index: ['#000'] as Array<CanvasRenderingContext2D['fillStyle']>,
+      },
+    },
+  };
+
+  it('returns a path builder function', () => {
+    const pathBuilder = heatmapPathsDense(minimalPathbuilderOpts);
+    expect(typeof pathBuilder).toBe('function');
+    expect(pathBuilder.length).toBe(2); // (u, seriesIdx)
+  });
+
+  it('accepts optional gap, hideLE, hideGE, xAlign, yAlign, ySizeDivisor', () => {
+    const pathBuilder = heatmapPathsDense({
+      ...minimalPathbuilderOpts,
+      gap: 2,
+      hideLE: 0,
+      hideGE: 100,
+      xAlign: 0,
+      yAlign: -1,
+      ySizeDivisor: 2,
+    });
+    expect(typeof pathBuilder).toBe('function');
+  });
+});
+
+describe('heatmapPathsPoints', () => {
+  const minimalPointsOpts = {
+    each: jest.fn(),
+  };
+
+  it('returns a path builder function', () => {
+    const pathBuilder = heatmapPathsPoints(minimalPointsOpts, 'rgba(255,0,255,0.7)');
+    expect(typeof pathBuilder).toBe('function');
+    expect(pathBuilder.length).toBe(2); // (u, seriesIdx)
+  });
+
+  it('accepts optional yLayout', () => {
+    const pathBuilder = heatmapPathsPoints(minimalPointsOpts, 'red', HeatmapCellLayout.le);
+    expect(typeof pathBuilder).toBe('function');
+  });
+});
+
+describe('heatmapPathsSparse', () => {
+  const minimalPathbuilderOpts = {
+    each: jest.fn(),
+    disp: {
+      fill: {
+        values: () => [0],
+        index: ['#000'] as Array<CanvasRenderingContext2D['fillStyle']>,
+      },
+    },
+  };
+
+  it('returns a path builder function', () => {
+    const pathBuilder = heatmapPathsSparse(minimalPathbuilderOpts);
+    expect(typeof pathBuilder).toBe('function');
+    expect(pathBuilder.length).toBe(2); // (u, seriesIdx)
+  });
+
+  it('accepts optional gap, hideLE, hideGE', () => {
+    const pathBuilder = heatmapPathsSparse({
+      ...minimalPathbuilderOpts,
+      gap: 2,
+      hideLE: 0,
+      hideGE: 100,
+    });
+    expect(typeof pathBuilder).toBe('function');
+  });
+});
 
 describe('toLogBase', () => {
   it('returns 10 when value is 10', () => {
