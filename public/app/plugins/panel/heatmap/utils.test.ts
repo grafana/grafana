@@ -928,20 +928,20 @@ describe('heatmapPathsDense', () => {
       overrides?: {
         scaleXDistr?: number;
         scaleYDistr?: number;
-        scaleYLog?: number;
+        scaleYLog?: 10 | 2;
       }
     ): { rect: jest.Mock; each: jest.Mock } {
       const rect = jest.fn();
       const each = jest.fn();
       const pathBuilder = heatmapPathsDense({ ...opts, each });
       const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation((u, seriesIdx, drawCallback) => {
-        const scaleX = {
+        const scaleX: uPlot.Scale = {
           distr: overrides?.scaleXDistr ?? 1,
           log: 2,
           min: 0,
           max: 2000,
         };
-        const scaleY = {
+        const scaleY: uPlot.Scale = {
           distr: overrides?.scaleYDistr ?? 1,
           log: overrides?.scaleYLog ?? 2,
           min: 0,
@@ -963,6 +963,7 @@ describe('heatmapPathsDense', () => {
           jest.fn(),
           jest.fn(),
           rect,
+          jest.fn(),
           jest.fn()
         );
       });
@@ -1121,6 +1122,7 @@ describe('heatmapPathsDense', () => {
           jest.fn(),
           jest.fn(),
           rect,
+          jest.fn(),
           jest.fn()
         );
       });
@@ -1213,6 +1215,7 @@ describe('heatmapPathsDense', () => {
           0,
           100,
           100,
+          jest.fn(),
           jest.fn(),
           jest.fn(),
           jest.fn(),
