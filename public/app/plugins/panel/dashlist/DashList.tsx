@@ -91,8 +91,8 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
     }
   }
 
-  if (starred && starred.status === 'fulfilled') {
-    for (const dash of starred.value!.view) {
+  if (starred && starred.status === 'fulfilled' && starred.value) {
+    for (const dash of starred.value.view) {
       if (!dash.uid) {
         continue;
       }
